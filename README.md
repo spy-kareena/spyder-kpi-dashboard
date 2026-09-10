@@ -12,6 +12,10 @@ Notes and override selections stay in that browser only.
 
 ## Hosting
 
-This is a static site. Cloudflare Pages, IIS, or any static host can serve the folder as-is. Default document is `index.html`.
+Cloudflare Pages serves the site and a login gate in `functions/_middleware.js`. Set the password as a Pages secret named `DASHBOARD_PASSWORD` — do not put it in this repo.
+
+Open `/logout` to clear the sign-in cookie.
+
+For IIS or another static host, serve `index.html` as the default document. That path does not use the Cloudflare login gate.
 
 SAP query templates used to generate exports are in `queries/`.
