@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+.wrangler
+node_modules
+*.log
+.env
+.env.*
+.idea
+.vscode
+.cursor
