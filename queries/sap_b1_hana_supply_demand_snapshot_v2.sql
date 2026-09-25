@@ -1,5 +1,9 @@
 -- SAP B1 HANA: monthly demand vs usable PO supply snapshot for the dashboard.
 -- Export to Excel or CSV and upload alongside the SO/PO KPI export.
+-- Quantities are in inventory UoM (OpenQty x NumPerMsr) so SO demand and PO supply net correctly.
+-- Stock on hand is not included: a "shortage" here is a gap in open PO coverage.
+-- RiskSupplyQty counts each PO line's open qty once if it is unconfirmed, has no commit date, is rescheduled,
+-- or is past its ship date (the separate risk columns can overlap and should not be added together).
 WITH "SO_LINES" AS (
     SELECT
         T1."ItemCode" AS "ItemCode",
@@ -58,10 +62,10 @@ WITH "SO_LINES" AS (
             ELSE 'SO Original Date'
         END AS "TimingSource",
         T0."DocNum" AS "DemandDocumentNumber",
-        T1."OpenQty" AS "DemandOpenQty",
+        T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1) AS "DemandOpenQty",
         CASE
             WHEN COALESCE(T1."U_PLS_Reschedule_Date_Line", T0."U_PLS_Reschedule_Date") = '1111-11-11'
-            THEN T1."OpenQty"
+            THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1)
             ELSE 0
         END AS "DemandNoCommitQty",
         CASE
@@ -72,7 +76,8 @@ WITH "SO_LINES" AS (
         0 AS "RescheduledSupplyQty",
         0 AS "UnconfirmedSupplyQty",
         0 AS "NoCommitSupplyQty",
-        0 AS "LateSupplyQty"
+        0 AS "LateSupplyQty",
+        0 AS "RiskSupplyQty"
     FROM "ORDR" T0
     INNER JOIN "RDR1" T1 ON T0."DocEntry" = T1."DocEntry"
     LEFT JOIN "OITM" T2 ON T1."ItemCode" = T2."ItemCode"
@@ -147,17 +152,17 @@ WITH "SO_LINES" AS (
         CASE
             WHEN T0."Confirmed" = 'Y'
                  AND (T1."U_PLS_Reschedule_Date_Line" IS NULL OR T1."U_PLS_Reschedule_Date_Line" <> '1111-11-11')
-            THEN T1."OpenQty"
+            THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1)
             ELSE 0
         END AS "UsableSupplyQty",
         CASE
             WHEN T1."U_PLS_Reschedule_Date_Line" IS NOT NULL
                  AND T1."U_PLS_Reschedule_Date_Line" <> '1111-11-11'
-            THEN T1."OpenQty"
+            THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1)
             ELSE 0
         END AS "RescheduledSupplyQty",
-        CASE WHEN T0."Confirmed" = 'N' THEN T1."OpenQty" ELSE 0 END AS "UnconfirmedSupplyQty",
-        CASE WHEN T1."U_PLS_Reschedule_Date_Line" = '1111-11-11' THEN T1."OpenQty" ELSE 0 END AS "NoCommitSupplyQty",
+        CASE WHEN T0."Confirmed" = 'N' THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1) ELSE 0 END AS "UnconfirmedSupplyQty",
+        CASE WHEN T1."U_PLS_Reschedule_Date_Line" = '1111-11-11' THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1) ELSE 0 END AS "NoCommitSupplyQty",
         CASE
             WHEN T1."OpenQty" > 0
                  AND (T1."U_PLS_Reschedule_Date_Line" IS NULL OR T1."U_PLS_Reschedule_Date_Line" <> '1111-11-11')
@@ -167,9 +172,16 @@ WITH "SO_LINES" AS (
                      THEN T1."U_PLS_Reschedule_Date_Line"
                      ELSE T1."ShipDate"
                  END
-            THEN T1."OpenQty"
+            THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1)
             ELSE 0
-        END AS "LateSupplyQty"
+        END AS "LateSupplyQty",
+        CASE
+            WHEN T0."Confirmed" = 'N'
+                 OR T1."U_PLS_Reschedule_Date_Line" IS NOT NULL
+                 OR CURRENT_DATE > T1."ShipDate"
+            THEN T1."OpenQty" * COALESCE(NULLIF(T1."NumPerMsr", 0), 1)
+            ELSE 0
+        END AS "RiskSupplyQty"
     FROM "OPOR" T0
     INNER JOIN "POR1" T1 ON T0."DocEntry" = T1."DocEntry"
     LEFT JOIN "OITM" T2 ON T1."ItemCode" = T2."ItemCode"
@@ -203,6 +215,7 @@ WITH "SO_LINES" AS (
         SUM("UnconfirmedSupplyQty") AS "UnconfirmedSupplyQty",
         SUM("NoCommitSupplyQty") AS "NoCommitSupplyQty",
         SUM("LateSupplyQty") AS "LateSupplyQty",
+        SUM("RiskSupplyQty") AS "RiskSupplyQty",
         COUNT(DISTINCT "DemandDocumentNumber") AS "DemandOrderCount"
     FROM "MONTHLY"
     GROUP BY
@@ -227,6 +240,7 @@ SELECT
     "UnconfirmedSupplyQty",
     "NoCommitSupplyQty",
     "LateSupplyQty",
+    "RiskSupplyQty",
     "DemandOrderCount",
     "UsableSupplyQty" - "DemandOpenQty" AS "MonthlyNetQty",
     SUM("UsableSupplyQty" - "DemandOpenQty") OVER (

@@ -1,4 +1,4 @@
-# Spyder KPI Dashboard 1v0 - IT Hosting Notes
+# Spyder KPI Dashboard 1v1 - IT Hosting Notes
 
 ## What this is
 
@@ -34,7 +34,7 @@ For any other internal static server, point the document root at this folder and
 
 The dashboard reads uploaded Excel/CSV files locally in the browser.
 
-Important: saved notes/override selections are stored in that user's browser storage. They are not shared between users unless a shared backend is added later.
+Important: saved notes/override selections are stored in that user's browser storage. They are not shared live between users unless a shared backend is added later. A **Share snapshot** file does carry the loaded rows and the notes on those rows, so treat snapshot files like the SAP export itself.
 
 If the team needs shared live notes, the next version should add a shared storage layer such as SharePoint List, SQL database, or another internal API.
 
@@ -43,7 +43,13 @@ If the team needs shared live notes, the next version should add a shared storag
 - No external data upload is required by this package.
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
-- Restrict access to internal users only, since uploaded KPI data may contain customer/order/vendor information.
+- Restrict access to internal users only. Uploaded KPI data never reaches the server, but the page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.
+- Cloudflare Pages: set `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32+ random characters) as Pages secrets for Production and Preview. Both are required; the site returns a "not configured" error until both are set. Changing either signs everyone out. Failed sign-ins are delayed by one second; for stronger protection put the project behind Cloudflare Access, or add a rate-limiting rule matching the path `/login` with method POST (and redirect `<project>.pages.dev` to the custom domain so the rule cannot be bypassed).
+- IIS: this package does not configure authentication, because the IIS authentication sections are locked by default and a web.config that sets them would fail on a default install. To require Windows sign-in, install the Windows Authentication role service, then in IIS Manager for this site disable Anonymous Authentication, enable Windows Authentication, and add an Authorization rule for the allowed AD group. The included web.config hides the `functions` and `tests` folders.
+
+## Tests
+
+With Node 18+ (no install needed): `node tests/dashboard.test.js` and `node tests/middleware.test.mjs`.
 
 ## Updating later
 

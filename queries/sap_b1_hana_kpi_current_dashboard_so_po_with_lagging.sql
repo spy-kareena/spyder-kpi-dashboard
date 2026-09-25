@@ -1,6 +1,12 @@
 -- SAP B1 HANA: current SO / delivery / PO lines for the KPI dashboard.
 -- Export the result to Excel or CSV, then upload that file in index.html.
 -- 1111-11-11 on the reschedule UDF means no commit date.
+-- Row kinds: one row per SO/PO line (open qty and open amount) plus one row per delivery / goods receipt
+-- (shipped qty and amount). AmountLocal is always local currency (CAD): the line's open amount (OpenSum)
+-- on order lines and the delivered line total on delivery/receipt rows.
+-- Order lines: ordered in the last 365 days, plus any line that is still open regardless of age.
+-- Deliveries/receipts: from December 1 of the year before last, so all of last year is covered for YoY/YTD.
+-- InventoryItem (OITM.InvntItem) is N for charge, service, and text lines; the dashboard keeps them out of shipping KPIs.
 SELECT
     CURRENT_DATE AS "ExportDate",
     'Sales Order' AS "SourceType",
@@ -12,9 +18,9 @@ SELECT
     CAST(NULL AS DATE) AS "ClosedDate",
     '' AS "CloseDateSource",
     '' AS "DeliveryDocNumber",
-    T1."ShipDate" AS "DueDate",
+    COALESCE(T1."ShipDate", T0."DocDueDate") AS "DueDate",
     T0."DocDueDate" AS "HeaderDueDate",
-    T1."ShipDate" AS "LineDueDate",
+    COALESCE(T1."ShipDate", T0."DocDueDate") AS "LineDueDate",
     T0."CardCode" AS "CustomerVendorCode",
     T0."CardName" AS "CustomerVendorName",
     C."GroupCode" AS "GroupCode",
@@ -65,14 +71,14 @@ SELECT
     END AS "Warehouse",
     T1."Quantity" AS "Quantity",
     T1."OpenQty" AS "OpenQuantity",
-    T1."OpenQty" * T1."Price" AS "AmountLocal",
-    CASE WHEN T0."DocCur" <> 'CAD' THEN T1."OpenQty" * T1."Price" ELSE T1."TotalFrgn" END AS "AmountForeign",
+    T1."OpenSum" AS "AmountLocal",
+    CASE WHEN T0."DocCur" <> 'CAD' THEN T1."OpenSumFC" ELSE T1."OpenSum" END AS "AmountForeign",
     T0."DocCur" AS "Currency",
     CASE
         WHEN T0."DocStatus" = 'C' OR T1."LineStatus" = 'C' THEN 'Closed'
         ELSE 'Open'
     END AS "Status",
-    DAYS_BETWEEN(T1."ShipDate", CURRENT_DATE) AS "DaysPastDue",
+    DAYS_BETWEEN(COALESCE(T1."ShipDate", T0."DocDueDate"), CURRENT_DATE) AS "DaysPastDue",
     CASE
         WHEN T0."DocStatus" = 'C' OR T1."LineStatus" = 'C' THEN 'Closed'
         WHEN T1."LineStatus" = 'O'
@@ -122,7 +128,8 @@ SELECT
         THEN 'Perfect'
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
-    CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'Uncovered' END AS "CoverageType"
+    CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'Uncovered' END AS "CoverageType",
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
 FROM ORDR T0
 INNER JOIN RDR1 T1 ON T0."DocEntry" = T1."DocEntry"
 LEFT JOIN OCRD C ON T0."CardCode" = C."CardCode"
@@ -133,7 +140,8 @@ LEFT JOIN OUDP D ON E."dept" = D."Code"
 LEFT JOIN OITM I ON T1."ItemCode" = I."ItemCode"
 LEFT JOIN OITB IG ON I."ItmsGrpCod" = IG."ItmsGrpCod"
 WHERE
-    T0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+    (T0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+        OR (T0."DocStatus" = 'O' AND T1."LineStatus" = 'O'))
     AND T0."CANCELED" = 'N'
 
 UNION ALL
@@ -246,7 +254,8 @@ SELECT
         END THEN 'Perfect'
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
-    'Covered' AS "CoverageType"
+    'Covered' AS "CoverageType",
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
 FROM ODLN D0
 INNER JOIN DLN1 D1 ON D0."DocEntry" = D1."DocEntry"
 LEFT JOIN RDR1 S1 ON D1."BaseType" = 17 AND D1."BaseEntry" = S1."DocEntry" AND D1."BaseLine" = S1."LineNum"
@@ -259,7 +268,7 @@ LEFT JOIN OUDP DEP ON E."dept" = DEP."Code"
 LEFT JOIN OITM I ON D1."ItemCode" = I."ItemCode"
 LEFT JOIN OITB IG ON I."ItmsGrpCod" = IG."ItmsGrpCod"
 WHERE
-    D0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+    D0."DocDate" >= ADD_MONTHS(ADD_YEARS(ADD_DAYS(CURRENT_DATE, 1 - DAYOFYEAR(CURRENT_DATE)), -1), -1)
     AND D0."CANCELED" = 'N'
     AND S0."CANCELED" = 'N'
 
@@ -276,9 +285,9 @@ SELECT
     CAST(NULL AS DATE) AS "ClosedDate",
     '' AS "CloseDateSource",
     '' AS "DeliveryDocNumber",
-    T1."ShipDate" AS "DueDate",
+    COALESCE(T1."ShipDate", T0."DocDueDate") AS "DueDate",
     T0."DocDueDate" AS "HeaderDueDate",
-    T1."ShipDate" AS "LineDueDate",
+    COALESCE(T1."ShipDate", T0."DocDueDate") AS "LineDueDate",
     T0."CardCode" AS "CustomerVendorCode",
     T0."CardName" AS "CustomerVendorName",
     C."GroupCode" AS "GroupCode",
@@ -329,14 +338,14 @@ SELECT
     END AS "Warehouse",
     T1."Quantity" AS "Quantity",
     T1."OpenQty" AS "OpenQuantity",
-    T1."OpenQty" * T1."Price" AS "AmountLocal",
-    CASE WHEN T0."DocCur" <> 'CAD' THEN T1."OpenQty" * T1."Price" ELSE T1."TotalFrgn" END AS "AmountForeign",
+    T1."OpenSum" AS "AmountLocal",
+    CASE WHEN T0."DocCur" <> 'CAD' THEN T1."OpenSumFC" ELSE T1."OpenSum" END AS "AmountForeign",
     T0."DocCur" AS "Currency",
     CASE
         WHEN T0."DocStatus" = 'C' OR T1."LineStatus" = 'C' THEN 'Closed'
         ELSE 'Open'
     END AS "Status",
-    DAYS_BETWEEN(T1."ShipDate", CURRENT_DATE) AS "DaysPastDue",
+    DAYS_BETWEEN(COALESCE(T1."ShipDate", T0."DocDueDate"), CURRENT_DATE) AS "DaysPastDue",
     CASE
         WHEN T0."DocStatus" = 'C' OR T1."LineStatus" = 'C' THEN 'Closed'
         WHEN T1."LineStatus" = 'O' AND T1."U_PLS_Reschedule_Date_Line" = '1111-11-11' THEN 'No Commit'
@@ -364,7 +373,7 @@ SELECT
     T0."Confirmed" AS "Confirmed",
     CASE
         WHEN T1."OpenQty" = 0 THEN 'Complete'
-        WHEN T1."OpenQty" > 0 AND T1."InvQty" > 0 THEN 'Partial'
+        WHEN T1."OpenQty" > 0 AND T1."OpenQty" < T1."Quantity" THEN 'Partial'
         ELSE 'Not Received'
     END AS "FillStatus",
     CASE
@@ -380,7 +389,8 @@ SELECT
         THEN 'Perfect'
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
-    CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'PO Open' END AS "CoverageType"
+    CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'PO Open' END AS "CoverageType",
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
 FROM OPOR T0
 INNER JOIN POR1 T1 ON T0."DocEntry" = T1."DocEntry"
 LEFT JOIN OCRD C ON T0."CardCode" = C."CardCode"
@@ -390,7 +400,8 @@ LEFT JOIN OUDP D ON E."dept" = D."Code"
 LEFT JOIN OITM I ON T1."ItemCode" = I."ItemCode"
 LEFT JOIN OITB IG ON I."ItmsGrpCod" = IG."ItmsGrpCod"
 WHERE
-    T0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+    (T0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+        OR (T0."DocStatus" = 'O' AND T1."LineStatus" = 'O'))
     AND T0."CANCELED" = 'N'
 
 UNION ALL
@@ -500,7 +511,8 @@ SELECT
         END THEN 'Perfect'
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
-    'Covered' AS "CoverageType"
+    'Covered' AS "CoverageType",
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
 FROM OPDN R0
 INNER JOIN PDN1 R1 ON R0."DocEntry" = R1."DocEntry"
 LEFT JOIN POR1 P1 ON R1."BaseType" = 22 AND R1."BaseEntry" = P1."DocEntry" AND R1."BaseLine" = P1."LineNum"
@@ -512,7 +524,7 @@ LEFT JOIN OUDP DEP ON E."dept" = DEP."Code"
 LEFT JOIN OITM I ON R1."ItemCode" = I."ItemCode"
 LEFT JOIN OITB IG ON I."ItmsGrpCod" = IG."ItmsGrpCod"
 WHERE
-    R0."DocDate" >= ADD_DAYS(CURRENT_DATE, -365)
+    R0."DocDate" >= ADD_MONTHS(ADD_YEARS(ADD_DAYS(CURRENT_DATE, 1 - DAYOFYEAR(CURRENT_DATE)), -1), -1)
     AND R0."CANCELED" = 'N'
     AND P0."CANCELED" = 'N'
 
