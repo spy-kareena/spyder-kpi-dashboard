@@ -4830,7 +4830,7 @@ function renderResults(){
       html+=`
       ${snapshots.some(s=>s.dated)?`<div class="filter-bar inline-controls rise">
         <label>Report week <select id="build-risk-snapshot" class="select" onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===br?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>
-        <span class="filter-note">${esc(`${br.sheet||br.label} ·${fmtNum(snapshots.length)} report ${snapshots.length===1?'week':'weeks'} loaded; weeks are never added together`)}</span>
+        <span class="filter-note">${esc(`${br.sheet||br.label} · ${fmtNum(snapshots.length)} report ${snapshots.length===1?'week':'weeks'} loaded; weeks are never added together`)}</span>
       </div>`:''}
       <section class="grid-5 rise rise-1">
         ${renderStatCard('CTB report rows',fmtNum(br.rows.length),br.dated?`CM / month rows in the ${esc(br.label)} report`:'CM / month rows imported','','neutral')}

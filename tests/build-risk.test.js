@@ -79,6 +79,7 @@ test('every weekly sheet is read and the newest week is shown by default; other 
   assert.equal(page.run('buildRiskRows.filter(r=>/May|Sheet10/.test(r.snapshotSheet)).length'), 0);
   const h = html(page);
   assert.match(h, /<select id="build-risk-snapshot"[^>]*><option value="2026-09-30" selected>Sep 30<\/option><option value="2026-09-24">Sep 24<\/option>/);
+  assert.match(h, /0930 - Orders at Risk · 2 report weeks loaded/);
   // Sep 30 only: DSM 10+6, Price 0+28, Lacombe 13. The Sep 24 week is never added in.
   assert.equal(stat(h, 'Clear to build'), 8 + 6 + 26 + 9);
   assert.equal(stat(h, 'At risk'), 2 + 2 + 5);
