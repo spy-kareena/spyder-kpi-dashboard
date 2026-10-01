@@ -158,7 +158,7 @@ if (check) {
   await work;
   const info = loadedFiles();
   if (!info.loaded) {
-    log(lastError || 'No export files given. Usage: node mcp/spyder-kpi-mcp.mjs --check "C:\\path\\to\\kpi_export.xls"');
+    if (!lastError) log('Usage: node mcp/spyder-kpi-mcp.mjs --check "C:\\path\\to\\kpi_export.xls"');
     process.exit(1);
   }
   process.stdout.write(`${JSON.stringify(await callTool('get_overview', {}), null, 2)}\n`, () => process.exit(0));
