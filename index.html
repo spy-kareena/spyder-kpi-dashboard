@@ -3454,7 +3454,7 @@ const NAV_GROUPS=[
   ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]]
 ];
-const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk'};
+const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search'};
 function renderSidebar(){
   const el=document.getElementById('app-sidebar');
   if(!el)return;
@@ -3485,16 +3485,18 @@ function renderSidebar(){
   const meta=loaded
     ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}`
     : 'Add a SAP export to begin';
-  const active=document.activeElement;
-  const refocus=active&&el.contains&&el.contains(active)?focusSelector(active):'';
+  const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
+    <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (/ or Ctrl+K)" aria-keyshortcuts="/ Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}</div>`).join('')}</nav>
     <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()" title="Load another export (supply / demand or Clear To Build) next to this one">Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()">New file</button></div>`:''}</div>`;
-  if(refocus){const target=el.querySelector(refocus);if(target)target.focus({preventScroll:true});}
+  restoreFocus(el,focus);
 }
 function setTab(t){
   if(!hasLoadedData())return;
   const changed=activeTab!==t;
+  // Going to any other page ends the search, so the box does not keep showing an old query.
+  if(t!=='search'){searchQuery='';clearTimeout(searchTimer);}
   activeTab=t;
   showResults();
   if(changed&&window.scrollY>0&&window.scrollTo)window.scrollTo(0,0);
@@ -3713,7 +3715,8 @@ function renderResults(){
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
   const openPoCount=activeTab==='purchaseorders'?((poData(m)||{}).poAllOpenRows||[]).length:0;
   const asOfShort=displayDate(reportAsOfDate||reportToday());
-  const headMeta=activeTab==='purchaseorders'
+  const headMeta=activeTab==='search'?globalSearchMeta(m)
+    : activeTab==='purchaseorders'
     ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
     : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
@@ -4420,6 +4423,8 @@ function renderResults(){
       </section>`;
     }
   }
+  // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
+  if(activeTab==='search')html+=renderGlobalSearchPage(m);
   // Supply / Demand detail: shortages and risk rows by warehouse.
   if(activeTab==='supplyweekly'){
     const sd=m.supplyDemand;
@@ -4899,15 +4904,14 @@ function renderResults(){
     }
   }
   // Redraws replace the whole results DOM; put focus and listbox scroll back so keyboard use keeps working.
-  const active=document.activeElement;
-  const refocus=active&&el.contains&&el.contains(active)?focusSelector(active):'';
+  const focus=captureFocus(el);
   const scrolls=[...el.querySelectorAll('select[id]')].map(sel=>[sel.id,sel.scrollTop]);
   const entering=activeTab!==lastRenderedTab||allLoadedRows!==lastRenderedRows;
   lastRenderedTab=activeTab;lastRenderedRows=allLoadedRows;
   if(el.classList)el.classList.toggle('entering',entering);
   el.innerHTML=html;
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
-  if(refocus){const target=el.querySelector(refocus);if(target)target.focus({preventScroll:true});}
+  restoreFocus(el,focus);
   runCountUps(el,entering);
 }
 // Hero numbers count up from their previous value (from zero when a page opens). The markup already holds the
