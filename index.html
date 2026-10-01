@@ -461,6 +461,18 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .card.flush{padding:0;overflow:hidden}
 .table-scroll>.data-table{min-width:760px}
 
+/* Global search */
+.sidebar-search{margin-top:-12px}
+.sidebar-search input{width:100%;font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-900);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.sidebar-search input::placeholder{color:var(--gray-400)}
+.sidebar-search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+.sidebar-search input:disabled{background:var(--gray-50);cursor:not-allowed}
+.lines-table.search{min-width:1120px}
+.lines-table .c-type{color:var(--gray-600);font-size:12px}
+.lines-table .sub{display:block;font-size:12px;color:var(--gray-500);overflow-wrap:anywhere}
+.search-results mark{background:var(--accent-tint);color:var(--accent-strong);border-radius:3px;box-shadow:0 0 0 1px var(--accent-border)}
+@media (max-width:980px){.sidebar-search{margin-top:0}}
+
 /* Monthly */
 .month-spot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .month-card{display:grid;gap:10px;align-content:start}
@@ -3278,6 +3290,162 @@ function resetApp(){
   document.getElementById('upload-error').style.display='none';
   document.getElementById('file-input').value='';
   showUpload();
+}
+// --- Global search: sidebar box ("/" or Ctrl/Cmd+K), Search page over every loaded row ---
+let searchQuery='';
+let searchPrevTab='weekly';
+let searchTimer=null;
+function onGlobalSearchInput(value){
+  searchQuery=String(value||'');
+  clearTimeout(searchTimer);
+  searchTimer=setTimeout(applyGlobalSearch,150);
+}
+// 2+ characters open the Search page; fewer go back to the page the search started from.
+function applyGlobalSearch(){
+  clearTimeout(searchTimer);
+  if(!hasLoadedData())return;
+  if(searchQuery.trim().length>=2){
+    if(activeTab!=='search')searchPrevTab=activeTab;
+    setTab('search');
+  }else if(activeTab==='search'){
+    activeTab=searchPrevTab;
+    showResults();
+  }
+}
+function clearGlobalSearch(){
+  clearTimeout(searchTimer);
+  searchQuery='';
+  // Emptied before the redraw so the focus restore does not put the old text back.
+  const box=document.getElementById('global-search');
+  if(box)box.value='';
+  if(activeTab==='search')setTab(searchPrevTab);
+}
+function globalSearchKey(e){
+  if(e.key==='Escape'){e.preventDefault();clearGlobalSearch();}
+}
+function globalSearchShortcut(e){
+  const t=e.target||{};
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||'')||t.isContentEditable)return;
+  const slash=e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey;
+  const ctrlK=(e.ctrlKey||e.metaKey)&&!e.altKey&&String(e.key).toLowerCase()==='k';
+  const box=document.getElementById('global-search');
+  if(!(slash||ctrlK)||!box||box.disabled)return;
+  e.preventDefault();
+  box.focus();
+  if(box.select)box.select();
+}
+document.addEventListener('keydown',globalSearchShortcut);
+function searchTerms(q){
+  return String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
+}
+function searchRowDate(r,open){
+  return open?(r.effectiveDueDate||r.dueDate||r.lineDueDate):(r.closeDate||r.effectiveDueDate||r.dueDate||r.lineDueDate);
+}
+function searchRowType(r){
+  const po=/purchase/i.test(String(r.sourceType||''));
+  const ship=(isShipmentRow(r)&&!isOrderLineRow(r))||/delivery|receipt/i.test(String(r.sourceType||''));
+  return ship?(po?'Receipt':'Delivery'):(po?'Purchase order':'Sales order');
+}
+// Rows where every term appears in one of the searchable fields. Order lines: open first by due date, then
+// shipped / closed newest first. Cached per metrics object, so a data load or status override recomputes it.
+function globalSearchResults(m){
+  const q=searchQuery.trim();
+  return cachedByFilter(m,`search|${q}`,()=>{
+    const terms=searchTerms(q);
+    const hit=fields=>{const s=fields.join(' ').toLowerCase();return terms.length>0&&terms.every(t=>s.includes(t));};
+    const rows=parsedRows
+      .filter(r=>hit([r.documentNumber,r.lineNumber,r.deliveryDocNumber,r.customerPONumber,r.code,r.name,r.itemCode,r.itemDescription,r.warehouseName,r.warehouse,r.owner,r.project]))
+      .map(r=>{const open=r.statusBucket!=='Closed';const d=parseDate(searchRowDate(r,open));return {r,open,t:d?d.getTime():null};})
+      .sort((a,b)=>a.open!==b.open?(a.open?-1:1)
+        :(a.t===null)!==(b.t===null)?(a.t===null?1:-1)
+        :(a.open?a.t-b.t:b.t-a.t)||String(a.r.documentNumber||'').localeCompare(String(b.r.documentNumber||''),undefined,{numeric:true}));
+    const supply=supplyDemandRows.filter(r=>hit([r.itemCode,r.itemDescription,r.itemGroup,r.warehouseName,r.warehouseCode,r.yearMonth]));
+    const ctb=buildRiskRows.filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
+    return {q,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
+  });
+}
+function globalSearchMeta(m){
+  const s=globalSearchResults(m);
+  return s.q.length<2?'Type at least 2 characters to search':`${fmtNum(s.total)} ${s.total===1?'match':'matches'} for “${s.q}”`;
+}
+// Escapes text and wraps each term in <mark>; matching runs on the raw text so entities like &amp; stay intact.
+function searchHighlighter(terms){
+  if(!terms.length)return esc;
+  const re=new RegExp([...terms].sort((a,b)=>b.length-a.length).map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'gi');
+  return v=>{
+    const s=String(v??'');
+    let out='',last=0;
+    for(const hit of s.matchAll(re)){
+      out+=`${esc(s.slice(last,hit.index))}<mark>${esc(hit[0])}</mark>`;
+      last=hit.index+hit[0].length;
+    }
+    return out+esc(s.slice(last));
+  };
+}
+function renderGlobalSearchPage(m){
+  const back=`<button type="button" class="link-btn" data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Order Health')}</button>`;
+  const s=globalSearchResults(m);
+  if(s.q.length<2)return `<section class="card rise"><p class="empty-note">Type at least 2 characters in the search box to find orders, items and customers.</p>${back}</section>`;
+  const hl=searchHighlighter(s.terms);
+  const matched=v=>s.terms.some(t=>String(v||'').toLowerCase().includes(t));
+  const has=v=>String(v??'').trim()!=='';
+  const tone={Late:'bad','Past Due':'bad','No Commit':'bad',Rescheduled:'warn'};
+  const more=!!tableMore.search||printMode;
+  const shown=s.rows.slice(0,more?500:100);
+  const body=shown.map(({r,open})=>{
+    const type=searchRowType(r);
+    const po=/purchase/i.test(String(r.sourceType||''));
+    const status=open?r.statusBucket:type==='Delivery'?'Shipped':type==='Receipt'?'Received':'Closed';
+    const refs=[has(r.lineNumber)?`Line ${hl(r.lineNumber)}`:'',has(r.deliveryDocNumber)?`${po?'Receipt':'Delivery'} ${hl(r.deliveryDocNumber)}`:'',has(r.customerPONumber)?`${po?'Vendor ref':'Cust PO'} ${hl(r.customerPONumber)}`:''].filter(Boolean).join(' · ');
+    // Owner and project have no column; show them only when they are why the row matched.
+    const extra=[matched(r.owner)?`Owner ${hl(r.owner)}`:'',matched(r.project)?`Project ${hl(r.project)}`:''].filter(Boolean).join(' · ');
+    const wh=rowWarehouse(r);
+    return `<tr class="line-row${isNoteEditorVisible(r)?' editing':''}">
+      <td class="c-type">${esc(type)}</td>
+      <td class="c-doc">${hl(r.documentNumber||'—')}${refs?`<span class="sub">${refs}</span>`:''}</td>
+      <td class="c-name">${hl(r.name||'—')}${has(r.code)||extra?`<span class="sub">${[has(r.code)?hl(r.code):'',extra].filter(Boolean).join(' · ')}</span>`:''}</td>
+      <td class="c-wh">${hl(wh)}${has(r.warehouse)&&String(r.warehouse).trim()!==wh?`<span class="sub">${hl(r.warehouse)}</span>`:''}</td>
+      <td class="c-item"><strong>${hl(r.itemCode||'—')}</strong><span class="desc">${hl(String(r.itemDescription||'').substring(0,160))}</span></td>
+      <td class="c-date">${esc(displayDate(searchRowDate(r,open))||'—')}</td>
+      <td class="num c-qty">${fmtNum(open?r.openQuantity:r.quantity)}</td>
+      <td class="num c-val">${money(open?openLineValue(r):r.amountLocal)}</td>
+      <td><div class="c-status"><span class="status-chip ${open?tone[status]||'':'good'}">${esc(status)}</span>${open&&r.dueText?`<span class="timing">${esc(r.dueText)}</span>`:''}</div></td>
+      <td class="c-notes print-hide">${renderNoteButton(r)}</td>
+    </tr>${renderNoteEditorRow(r,10)}${renderPrintNoteRow(r,10)}`;
+  }).join('');
+  const firstOf=(list,noun)=>list.length>20?`first 20 of ${fmtNum(list.length)} matching ${noun}`:`${fmtNum(list.length)} matching ${noun}`;
+  const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply,'rows'),limit:20,empty:'No supply / demand rows match.'}):'';
+  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb,'rows'),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
+    head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
+    rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
+  return `<section class="section rise rise-1 search-results">
+    <div class="section-head"><h2 class="section-title">Order lines</h2><span class="count-badge">${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span><div class="section-tools">${back}</div></div>
+    <div class="table">
+      <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
+      <div class="table-scroll"><table class="lines-table search">
+        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:84px"></colgroup>
+        <thead><tr><th>Type</th><th>Doc #</th><th>Customer / vendor</th><th>Warehouse</th><th>Item / description</th><th title="Due date for open lines, close date for shipped and closed lines">Date</th><th class="num">Qty</th><th class="num">Value</th><th>Status</th><th class="print-hide">Notes</th></tr></thead>
+        <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
+      </table></div>
+      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search" onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
+    </div>
+  </section>${supplyTable?`<div class="rise rise-2">${supplyTable}</div>`:''}${ctbTable?`<div class="rise rise-3">${ctbTable}</div>`:''}`;
+}
+// Redraws rebuild the sidebar and the page; put focus, typed text and the caret back on the same control.
+function captureFocus(root){
+  const a=document.activeElement;
+  const sel=a&&root.contains&&root.contains(a)?focusSelector(a):'';
+  if(!sel)return null;
+  let caret=null;
+  try{if(typeof a.selectionStart==='number')caret=[a.value,a.selectionStart,a.selectionEnd,a.selectionDirection||'none'];}catch(e){}
+  return {sel,caret};
+}
+function restoreFocus(root,f){
+  const t=f&&root.querySelector(f.sel);
+  if(!t)return;
+  if(f.caret&&t.value!==f.caret[0])t.value=f.caret[0];
+  t.focus({preventScroll:true});
+  if(f.caret)try{t.setSelectionRange(f.caret[1],f.caret[2],f.caret[3]);}catch(e){}
 }
 function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
