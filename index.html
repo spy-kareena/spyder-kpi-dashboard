@@ -3353,12 +3353,13 @@ function globalSearchResults(m){
   return cachedByFilter(m,`search|${q}`,()=>{
     const terms=searchTerms(q);
     const hit=fields=>{const s=fields.join(' ').toLowerCase();return terms.length>0&&terms.every(t=>s.includes(t));};
+    const byDoc=new Intl.Collator(undefined,{numeric:true}).compare;
     const rows=parsedRows
       .filter(r=>hit([r.documentNumber,r.lineNumber,r.deliveryDocNumber,r.customerPONumber,r.code,r.name,r.itemCode,r.itemDescription,r.warehouseName,r.warehouse,r.owner,r.project]))
       .map(r=>{const open=r.statusBucket!=='Closed';const d=parseDate(searchRowDate(r,open));return {r,open,t:d?d.getTime():null};})
       .sort((a,b)=>a.open!==b.open?(a.open?-1:1)
         :(a.t===null)!==(b.t===null)?(a.t===null?1:-1)
-        :(a.open?a.t-b.t:b.t-a.t)||String(a.r.documentNumber||'').localeCompare(String(b.r.documentNumber||''),undefined,{numeric:true}));
+        :(a.open?a.t-b.t:b.t-a.t)||byDoc(String(a.r.documentNumber||''),String(b.r.documentNumber||'')));
     const supply=supplyDemandRows.filter(r=>hit([r.itemCode,r.itemDescription,r.itemGroup,r.warehouseName,r.warehouseCode,r.yearMonth]));
     const ctb=buildRiskRows.filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
     return {q,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
