@@ -551,6 +551,55 @@ details.about p{margin:0}
 .heat-3{background:var(--accent-mid);color:#fff}
 .heat-4{background:var(--accent);color:#fff}
 
+/* Ask AI drawer (outside #results-screen, so redraws never touch it) */
+.ai-panel{position:fixed;top:0;right:0;z-index:40;width:420px;max-width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#fff;border-left:1px solid var(--gray-200);box-shadow:-16px 0 40px rgba(16,24,40,.12);font-size:13px;color:var(--gray-900)}
+.ai-panel[hidden],.ai-panel [hidden]{display:none!important}
+.ai-head{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--gray-200)}
+.ai-head h2{margin:0;font-size:15px;font-weight:600}
+.ai-mode{margin-right:auto;font-size:12px;color:var(--gray-500)}
+.ai-close{font:inherit;font-size:20px;line-height:1;border:0;background:none;color:var(--gray-500);cursor:pointer;padding:2px 7px;border-radius:6px}
+.ai-close:hover{background:var(--gray-100);color:var(--gray-900)}
+.ai-settings{padding:16px 18px 20px;display:grid;gap:14px;align-content:start;overflow-y:auto}
+.ai-settings p{margin:0;line-height:1.55;color:var(--gray-600)}
+.ai-notice{background:var(--warn-tint);border:1px solid var(--warn-border);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
+.ai-notice p{color:var(--warn-text)}
+.ai-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;font-weight:500;color:var(--gray-700);line-height:1.45;cursor:pointer}
+.ai-check input{margin:2px 0 0;accent-color:var(--accent)}
+.ai-field{display:grid;gap:6px;font-size:12px;font-weight:500;color:var(--gray-600)}
+.ai-field input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);color:var(--gray-900)}
+.ai-panel .select{max-width:none;width:100%}
+.ai-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ai-status{font-size:12px;color:var(--gray-500);min-height:16px}
+.ai-status.bad{color:var(--crit-text)}.ai-status.good{color:var(--good-text)}
+.ai-chat{display:flex;flex-direction:column;flex:1;min-height:0}
+.ai-log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.ai-empty{color:var(--gray-500);line-height:1.55;font-size:12.5px}
+.ai-msg{max-width:92%;padding:9px 12px;border-radius:12px;line-height:1.5;overflow-wrap:anywhere}
+.ai-msg.user{align-self:flex-end;background:var(--accent-tint);border:1px solid var(--accent-border);white-space:pre-wrap}
+.ai-msg.model{align-self:flex-start;background:var(--gray-50);border:1px solid var(--gray-200)}
+.ai-msg.error{align-self:flex-start;background:var(--crit-tint);border:1px solid var(--crit-border);color:var(--crit-text)}
+.ai-msg.pending{color:var(--gray-500);display:flex;gap:8px;align-items:center}
+.ai-msg.pending .dots>span{width:6px;height:6px}
+.ai-msg p{margin:0 0 6px}.ai-msg p:last-child{margin-bottom:0}
+.ai-msg ul,.ai-msg ol{margin:2px 0 6px;padding-left:18px}
+.ai-msg code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 4px}
+.ai-table{overflow-x:auto;margin:4px 0 6px}
+.ai-msg table{border-collapse:collapse;font-size:12px}
+.ai-msg th,.ai-msg td{padding:4px 8px;border-bottom:1px solid var(--gray-200);text-align:left;white-space:nowrap}
+.ai-msg th{font-weight:600;color:var(--gray-600)}
+.ai-tools{margin-top:6px;font-size:12px;color:var(--gray-500)}
+.ai-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
+.ai-chips .chip{text-align:left}
+.ai-compose{border-top:1px solid var(--gray-200);padding:12px 18px 14px;display:grid;gap:8px}
+.ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
+.ai-compose .link-btn{margin-left:auto}
+.ai-foot{font-size:12px;color:var(--gray-400)}
+.ai-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Very wide screens keep the page beside the open drawer; the page keeps its 4-column width (>=880px) there */
+@media screen and (min-width:1600px){body.ai-open .main{padding-right:456px}}
+@media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
+@media print{.ai-panel{display:none!important}}
+
 /* Metrics timeline */
 .rate-card{display:grid;gap:10px;align-content:start}
 .rate-card .kpi-value{line-height:1.1}
@@ -803,6 +852,40 @@ button.trow.po-wh-cols{font-size:13px}
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
+  <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
+    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
+    <div class="ai-settings" id="ai-settings" hidden>
+      <div class="ai-notice">
+        <p>Questions, and the dashboard data needed to answer them (order lines, customers, vendors, values), are sent from this browser to Google's Gemini API. On the free tier Google may use prompts and responses to improve its products (<a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Gemini API terms</a>). Don't use it for data your company hasn't approved for sharing.</p>
+        <label class="ai-check"><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> I understand. Allow Ask AI on this browser.</label>
+      </div>
+      <p id="ai-server-note" hidden>This site has a Gemini key set up on its server, so you don't need your own.</p>
+      <div id="ai-key-box" class="stack">
+        <label class="ai-field" for="ai-key">Gemini API key<input type="password" id="ai-key" autocomplete="off" spellcheck="false" placeholder="Paste your key"></label>
+        <label class="ai-check"><input type="checkbox" id="ai-remember"> Remember on this browser (otherwise only until this tab closes)</label>
+        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-key-save" onclick="aiSaveKey()">Save key</button><button type="button" class="btn btn-sm" id="ai-key-remove" onclick="aiRemoveKey()">Remove key</button></div>
+        <p class="ai-foot">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>. It stays in this browser and is sent only to Google.</p>
+      </div>
+      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" onchange="aiSetModel(this.value)"></select></label>
+      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" onclick="aiShowSettings(false)">Back to chat</button></div>
+      <p class="ai-status" id="ai-settings-status" role="status"></p>
+    </div>
+    <div class="ai-chat" id="ai-chat">
+      <div class="ai-log" id="ai-log"></div>
+      <p class="ai-sr" id="ai-announce" role="status"></p>
+      <div class="ai-chips" id="ai-chips" role="group" aria-label="Suggested questions">
+        <button type="button" class="chip" data-q="What is at risk right now, and which customers have the most value at risk?" onclick="aiSend(this.dataset.q)">What is at risk right now?</button>
+        <button type="button" class="chip" data-q="Which warehouses have the most past-due open value?" onclick="aiSend(this.dataset.q)">Past due by warehouse</button>
+        <button type="button" class="chip" data-q="Which vendors have the most late purchase order lines and value?" onclick="aiSend(this.dataset.q)">Late POs by vendor</button>
+        <button type="button" class="chip" data-q="Summarize OTD, fill rate and reschedule hit rate as of the export date." onclick="aiSend(this.dataset.q)">How are we performing?</button>
+      </div>
+      <div class="ai-compose">
+        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends, Shift+Enter for a new line)" onkeydown="aiInputKey(event)"></textarea>
+        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" onclick="aiClear()">Clear chat</button></div>
+        <span class="ai-foot">Answers come from Gemini and can be wrong. Check key numbers on the page.</span>
+      </div>
+    </div>
+  </aside>
   </main>
 </div>
 <script id="kpi-app">
@@ -1023,6 +1106,7 @@ async function exportShareSnapshot(){
 function buildSnapshotHtml(payload){
   const root=document.documentElement.cloneNode(true);
   root.querySelectorAll('#sheetjs-lib,#embedded-snapshot-data,#snapshot-download-box').forEach(n=>n.remove());
+  aiResetClone(root);
   const results=root.querySelector('#results-screen');
   if(results){results.innerHTML='';results.style.display='none';}
   const upload=root.querySelector('#upload-screen');
@@ -3371,6 +3455,501 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
   const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
   return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1360:1000,className:editable?'editable-rows':'',empty});
 }
+// --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Gemini chat (and later an MCP server) ---
+// Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
+// the call and put back afterwards, so the page on screen never changes.
+const AI_SCOPES=['at_risk','no_commit','rescheduled','due_this_week','open','po_late','po_no_commit','po_open','all'];
+const AI_GROUPS=['warehouse','customer','owner','vendor','due_month','status'];
+const aiR=v=>Math.round(num(v)*100)/100;
+const aiLimit=(v,fallback)=>Math.max(1,Math.min(100,Math.round(Number(v))||fallback));
+const aiAsOf=()=>({as_of:displayDate(reportToday()),as_of_basis:reportAsOfDate?'export date':'viewer today (the export has no ExportDate column)'});
+const aiNoRows=()=>parsedRows.length?null:{loaded:false,hint:hasLoadedData()?'The loaded files have no sales or purchase order lines. Load the SAP KPI export to answer this.':'No export is loaded. Load the SAP KPI export on the upload screen first.'};
+const aiTile=rows=>({orders:rowDocCount(rows),lines:rows.length,open_value:aiR(rowOpenAmount(rows))});
+const aiPoTile=rows=>({lines:rows.length,open_value:aiR(rowOpenAmount(rows)),open_qty:aiR(rowOpenQty(rows))});
+const aiDaysLate=r=>hasOpenWork(r)?(r.originalDaysPastDue??daysFromToday(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate)):null;
+function aiWithFilters(f,fn){
+  const saved=[weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache];
+  try{
+    weeklyWarehouseFilter=f.warehouse||['ALL'];weeklyCustomerFilter=f.customer||['ALL'];weeklySegmentFilter=f.segment||['ALL'];weeklyOwnerFilter=f.owner||['ALL'];
+    weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];
+    poWarehouseFilter=f.poWarehouse||['ALL'];poVendorFilter=f.vendor||['ALL'];
+    return fn();
+  }finally{
+    [weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache]=saved;
+  }
+}
+// A name the model typed, matched to a filter option: exact code or label first, then part of a label.
+function aiMatch(q,options){
+  const s=String(q||'').trim().toLowerCase();
+  if(!s)return null;
+  const opts=options.map(o=>typeof o==='string'?{value:o,label:o}:o);
+  const hit=opts.find(o=>o.value.toLowerCase()===s||o.label.toLowerCase()===s)||opts.find(o=>o.label.toLowerCase().includes(s));
+  return hit?hit.value:null;
+}
+// Long lists are cut until the JSON fits ~30 KB, so one tool result never floods the request.
+function aiCap(res,key){
+  while(JSON.stringify(res).length>30000&&res[key].length>1){res[key]=res[key].slice(0,Math.ceil(res[key].length*0.8));res.truncated=true;}
+  if('returned' in res)res.returned=res[key].length;
+  return res;
+}
+function aiStatus(r){
+  if(r.statusBucket==='Closed')return isShipmentRow(r)?(/purchase order/i.test(String(r.sourceType||''))?'Received':'Shipped'):'Closed';
+  const bucket=weeklyRiskBucket(r);
+  return bucket==='nocommit'?'No commit date':bucket==='missed'?'Missed reschedule':bucket==='future'?'Rescheduled':bucket==='late'?'Past due':isManuallyUrgent(r)?'Urgent':'Open';
+}
+function aiLine(r){
+  const po=/purchase order/i.test(String(r.sourceType||''));
+  const out={type:`${r.sourceType||'Order'}${isOrderLineRow(r)?'':po?' receipt':' delivery'}`,doc:String(r.documentNumber||''),line:String(r.lineNumber??''),[po?'vendor':'customer']:String(r.name||'').trim()||rowCustomer(r),
+    warehouse:rowWarehouse(r),item:String(r.itemCode||''),description:String(r.itemDescription||'').slice(0,80),original_due:displayDate(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate),
+    reschedule:r.noCommitDate?'no commit date':displayDate(rowRealRescheduleDate(r)),days_past_original_due:aiDaysLate(r),open_qty:r.openQuantity,open_value:aiR(openLineValue(r)),
+    status:aiStatus(r),override:String(r.overrideStatus||''),notes:String(r.overrideNotes||'').slice(0,240)};
+  if(hasRealDate(r.closeDate))out.closed=displayDate(r.closeDate);
+  return out;
+}
+function aiScopeRows(scope){
+  const m=currentMetrics();
+  return aiWithFilters({},()=>{
+    if(scope==='all')return parsedRows;
+    if(scope.startsWith('po_')){const po=poData(m);return po?{po_late:po.poLateRows,po_no_commit:po.poNoCommitRows,po_open:po.poAllOpenRows}[scope]:[];}
+    const oh=orderHealthData(m);
+    return {at_risk:oh.lateTileRows,no_commit:oh.noCommitRows,rescheduled:oh.activeRescheduleRows,due_this_week:oh.dueThisWeekRows,open:oh.allOrderRows}[scope];
+  });
+}
+function aiScopeError(a,extra){
+  if(!AI_SCOPES.includes(a.scope))return {error:`scope must be one of ${AI_SCOPES.join(', ')}`};
+  if(extra&&!AI_GROUPS.includes(a.by))return {error:`by must be one of ${AI_GROUPS.join(', ')}`};
+  if(a.scope.startsWith('po_')&&!poSourceRows().length)return {loaded:false,hint:'This export has no purchase order lines.'};
+  return null;
+}
+function aiOrderHealth(oh){
+  const inOther=new Set([...oh.pastDueNoReschedule,...oh.noCommitRows,...oh.activeRescheduleRows]);
+  const otd=oh.otd3Mo,hit=oh.reschedulePerf;
+  return {
+    at_risk:{...aiTile(oh.lateTileRows),past_due_no_reschedule_lines:oh.pastDueNoReschedule.length,no_commit_lines:oh.noCommitRows.length,rescheduled_lines:oh.activeRescheduleRows.length,other_marked_urgent_lines:oh.urgentRows.filter(r=>!inOther.has(r)).length},
+    no_commit:aiTile(oh.noCommitRows),rescheduled:aiTile(oh.activeRescheduleRows),this_week_focus:aiTile(oh.dueThisWeekRows),
+    due_next_week:aiTile(oh.dueNextWeekRows),due_this_month:aiTile(oh.notShippedThisMonthRows),all_open:aiTile(oh.allOrderRows),
+    otd_3mo:{rate_pct:otd.scored.length?otd.rate:null,early_or_on_time:otd.early.length+otd.onTime.length,deliveries_scored:otd.scored.length,shipped_value:aiR(oh.otd3MoAmt),target_pct:90},
+    shipped_this_week:{lines:oh.closedThisWeekRows.length,value:aiR(oh.closedWkAmt),last_week_lines:oh.closedLastWeekRows.length,last_week_value:aiR(rowShippedAmount(oh.closedLastWeekRows))},
+    fill_rate:{rate_pct:oh.fillRate,lines_still_open:oh.fillOpenRows.length,target_pct:90},
+    reschedule_hit_12mo:{rate_pct:hit.closed.length?hit.rate:null,met_commit:hit.met.length,closed_reschedules:hit.closed.length,target_pct:90}
+  };
+}
+function aiPurchaseOrders(po){
+  const otd=po.poOtd3Mo,hit=po.poReschedulePerf;
+  return {
+    late_missed_commit:aiPoTile(po.poLateRows),no_commit:aiPoTile(po.poNoCommitRows),future_reschedules:aiPoTile(po.poFutureRescheduleRows),this_week_focus:aiPoTile(po.poDueThisWeekRows),
+    due_this_month:aiPoTile(po.poDueThisMonthRows),unconfirmed:aiPoTile(po.poUnconfirmedRows),missing_price:aiPoTile(po.poMissingPriceRows),all_open:aiPoTile(po.poAllOpenRows),
+    on_time_3mo:{rate_pct:otd.scored.length?otd.rate:null,early_or_on_time:otd.early.length+otd.onTime.length,receipts_scored:otd.scored.length,received_value:aiR(po.poOtdAmt),target_pct:90},
+    received_this_week:{lines:po.poReceivedThisWeekRows.length,value:aiR(po.poReceivedWeekAmt)},
+    fill_rate:{rate_pct:po.poFillRate,lines_still_open:po.filteredPoOpen.length,target_pct:90},
+    reschedule_hit_12mo:{rate_pct:hit.closed.length?hit.rate:null,met_commit:hit.met.length,closed_reschedules:hit.closed.length,target_pct:90}
+  };
+}
+function aiOverview(a){
+  if(!hasLoadedData())return aiNoRows();
+  const so=allLoadedRows.filter(r=>!/purchase order/i.test(String(r.sourceType||''))).length;
+  const out={...aiAsOf(),shared_snapshot:isSnapshotView,
+    files:{names:loadedFiles.map(f=>f.name),rows:{sales_order_rows:so,purchase_order_rows:allLoadedRows.length-so,supply_demand_rows:supplyDemandRows.length,clear_to_build_rows:buildRiskRows.length}},
+    data_check:{rows_or_files_needing_attention:dataQualityIssues.length,examples:dataQualityIssues.slice(0,5).map(i=>i.message),quarantine_rows_excluded:excludedQuarantineRows,non_inventory_rows:allLoadedRows.filter(r=>r.isNonInventory).length,non_inventory_included:includeNonInventory}};
+  if(!parsedRows.length)return {...out,order_health:null,purchase_orders:null,note:'No sales or purchase order lines are loaded.'};
+  const m=currentMetrics();
+  const base=aiWithFilters({},()=>({oh:orderHealthData(m),po:poData(m)}));
+  const find=(q,options)=>q&&options?aiMatch(q,options):null;
+  const wh=find(a.warehouse,base.oh.weeklyWarehouseOptions),poWh=find(a.warehouse,base.po&&base.po.poWarehouseOptions);
+  const customer=find(a.customer,base.oh.weeklyCustomerOptions),owner=find(a.owner,base.oh.weeklyOwnerOptions),segment=find(a.segment,base.oh.weeklySegmentOptions),vendor=find(a.vendor,base.po&&base.po.poVendorOptions);
+  const missing=[['warehouse',a.warehouse,wh||poWh],['customer',a.customer,customer],['owner',a.owner,owner],['segment',a.segment,segment],['vendor',a.vendor,vendor]].filter(([,q,v])=>q&&!v).map(([k,q])=>`${k} "${q}"`);
+  if(missing.length)return {...aiAsOf(),error:`No ${missing.join(', ')} in the loaded data.`,hint:'Call group_totals to list the names that exist.'};
+  const f={warehouse:wh&&[wh],customer:customer&&[customer],owner:owner&&[owner],segment:segment&&[segment],poWarehouse:poWh&&[poWh],vendor:vendor&&[vendor]};
+  return aiWithFilters(f,()=>({...out,
+    filters:{warehouse:wh||poWh||'All',customer:customer||'All',owner:owner||'All',segment:segment||'All',vendor:vendor||'All',applies:'customer, owner and segment filter sales orders; vendor filters purchase orders'},
+    order_health:a.warehouse&&!wh?{note:`No sales order lines in warehouse ${a.warehouse}.`}:aiOrderHealth(orderHealthData(m)),
+    purchase_orders:!base.po?{loaded:false,hint:'This export has no purchase order lines.'}:a.warehouse&&!poWh?{note:`No purchase order lines in warehouse ${a.warehouse}.`}:aiPurchaseOrders(poData(m))
+  }));
+}
+const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
+const KPI_TOOLS=[
+  {name:'get_overview',
+    description:'Headline numbers: every Order Health tile (at risk with its past due / no commit / rescheduled split, no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
+    parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it'},customer:{type:'string',description:'Customer code or name'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name'}},required:[]},
+    run:(a={})=>aiOverview(a)},
+  {name:'search_lines',
+    description:'Find order lines. scope: at_risk, no_commit, rescheduled, due_this_week (This week focus: at risk plus due this week), open (all open sales order lines), po_late, po_no_commit, po_open, or all (every loaded sales and purchase order row, open and closed, with deliveries and receipts). Returns the most overdue first: type, document, line, customer or vendor, warehouse, item, description, original due, reschedule, open qty, open value, status, saved override and notes, plus the total number of matches.',
+    parameters:{type:'object',properties:{query:{type:'string',description:'Words that must all appear in the document number, item, description, customer / vendor, warehouse, customer PO or notes. Leave out to list the whole scope.'},scope:{type:'string',enum:AI_SCOPES,description:'Which set of lines to search'},...AI_TEXT_FILTERS,limit:{type:'integer',description:'Rows to return (default 25, max 100)'}},required:['scope']},
+    run:(a={})=>{
+      const err=aiNoRows()||aiScopeError(a);if(err)return err;
+      const words=String(a.query||'').toLowerCase().split(/\s+/).filter(Boolean);
+      const has=(text,q)=>!q||String(text).toLowerCase().includes(String(q).trim().toLowerCase());
+      const rows=aiScopeRows(a.scope).filter(r=>{
+        if(!has(rowWarehouse(r),a.warehouse)||!has(rowCustomerLabel(r),a.customer)||!has(poVendorLabel(r),a.vendor))return false;
+        const text=[r.documentNumber,r.itemCode,r.itemDescription,r.name,r.code,rowWarehouse(r),r.customerPONumber,r.deliveryDocNumber,r.overrideStatus,r.overrideNotes].join(' ').toLowerCase();
+        return words.every(w=>text.includes(w));
+      });
+      const days=new Map(rows.map(r=>[r,aiDaysLate(r)??-1e9])),byDoc=new Intl.Collator('en',{numeric:true}).compare;
+      const sorted=[...rows].sort((x,y)=>days.get(y)-days.get(x)||byDoc(String(x.documentNumber||''),String(y.documentNumber||'')));
+      return aiCap({...aiAsOf(),scope:a.scope,total_matches:rows.length,open_value_of_matches:aiR(rowOpenAmount(rows)),returned:0,sorted:'most days past original due first',rows:sorted.slice(0,aiLimit(a.limit,25)).map(aiLine)},'rows');
+    }},
+  {name:'group_totals',
+    description:'Lines, orders and open value for a scope (same scopes as search_lines), grouped by warehouse, customer, owner, vendor, due_month or status, largest open value first.',
+    parameters:{type:'object',properties:{scope:{type:'string',enum:AI_SCOPES,description:'Which set of lines to total'},by:{type:'string',enum:AI_GROUPS,description:'How to group the lines'},limit:{type:'integer',description:'Groups to return (default 25, max 100)'}},required:['scope','by']},
+    run:(a={})=>{
+      const err=aiNoRows()||aiScopeError(a,true);if(err)return err;
+      const keyOf={warehouse:rowWarehouse,customer:rowCustomerLabel,owner:rowOwner,vendor:poVendorLabel,due_month:r=>monthKey(r.effectiveDueDate||r.dueDate||r.lineDueDate)||'No date',status:aiStatus}[a.by];
+      const rows=aiScopeRows(a.scope),map=new Map();
+      rows.forEach(r=>{const k=keyOf(r);if(!map.has(k))map.set(k,[]);map.get(k).push(r);});
+      const groups=[...map].map(([key,g])=>({key,...aiTile(g)})).sort((x,y)=>y.open_value-x.open_value||y.lines-x.lines);
+      return aiCap({...aiAsOf(),scope:a.scope,by:a.by,total_groups:groups.length,totals:aiTile(rows),returned:0,groups:groups.slice(0,aiLimit(a.limit,25))},'groups');
+    }},
+  {name:'get_monthly',
+    description:"This year's monthly sales order delivery summary (Monthly page): shipped value and rows by delivery month, open value and rows by current due month, at-risk rows (past due plus no commit), and the undated buckets.",
+    parameters:{type:'object',properties:{},required:[]},
+    run:()=>{
+      const err=aiNoRows();if(err)return err;
+      const m=currentMetrics(),year=reportToday().getFullYear();
+      const months=m.byMonth.filter(g=>g.key.startsWith(`${year}-`)).map(g=>({month:g.key,label:g.label,shipped_value:aiR(g.closedAmount),shipped_rows:g.closedRows,open_value:aiR(g.openAmount),open_rows:g.openRows,at_risk_rows:g.lateRows+g.atRiskRows,rescheduled_rows:g.rescheduledRows}));
+      const other=m.byMonth.filter(g=>!/^\d{4}-\d{2}$/.test(g.key)).map(g=>({bucket:g.label,open_rows:g.openRows,open_value:aiR(g.openAmount),closed_no_delivery_rows:g.closedUnknownRows}));
+      return {...aiAsOf(),year,basis:'Shipped = delivery rows by delivery date; open = open lines by current due month (reschedule date when set).',months,other_buckets:other,
+        totals:{shipped_value:aiR(months.reduce((s,x)=>s+x.shipped_value,0)),open_value:aiR(months.reduce((s,x)=>s+x.open_value,0))}};
+    }},
+  {name:'get_build_risk',
+    description:'Build Risk page: Clear To Build report totals (orders, clear to build, at risk, late) and each contract manufacturer / month bucket with the open sales order demand matched to it.',
+    parameters:{type:'object',properties:{},required:[]},
+    run:()=>{
+      if(!buildRiskRows.length)return {loaded:false,hint:'No Clear To Build report is loaded. Use Add file to load the CTB report (Excel or CSV) next to the KPI export.'};
+      const br=currentMetrics().buildRisk;
+      const buckets=br.matched.map(r=>({cm:r.cm,month:r.monthKey,total:r.total,clear_to_build:r.clearToBuild,at_risk:r.atRisk,late:r.late,matched_so_lines:r.matchedRows.length,matched_open_qty:aiR(r.matchedOpenQty),matched_open_value:aiR(r.matchedOpenValue),notes:String(r.notes||'').slice(0,160)}))
+        .sort((x,y)=>y.late-x.late||y.at_risk-x.at_risk||y.matched_open_value-x.matched_open_value);
+      return aiCap({loaded:true,...aiAsOf(),ctb_rows:br.rows.length,total_orders:br.totalOrders,clear_to_build:br.totalClearToBuild,clear_to_build_pct:pct(br.totalClearToBuild,br.totalOrders),at_risk:br.totalAtRisk,late:br.totalLate,
+        matched_open_value:aiR(br.matchedOpenValue),matched_open_qty:aiR(br.matchedOpenQty),buckets:buckets.slice(0,60)},'buckets');
+    }},
+  {name:'get_supply_demand',
+    description:'Supply / Demand page: open sales order demand vs open PO supply (stock on hand not included): shortage and supply-risk totals, by month, by warehouse, and the first shortage rows.',
+    parameters:{type:'object',properties:{},required:[]},
+    run:()=>{
+      if(!supplyDemandRows.length)return {loaded:false,hint:'No supply / demand snapshot is loaded. Run queries/sap_b1_hana_supply_demand_snapshot_v2.sql in SAP, export it, and use Add file.'};
+      const sd=currentMetrics().supplyDemand;
+      const group=g=>({key:g.key,demand_qty:aiR(g.demandQty),demand_value:aiR(g.demandValue),usable_supply_qty:aiR(g.usableQty),monthly_net_qty:aiR(g.monthlyNetQty),shortage_rows:g.cumulativeShortageRows,supply_risk_rows:g.riskRows});
+      return aiCap({loaded:true,...aiAsOf(),shortage_rows:sd.shortageRows.length,shortage_qty:aiR(sd.shortageQty),supply_risk_rows:sd.riskRows.length,demand_qty:aiR(sd.demandQty),demand_value:aiR(sd.demandValue),usable_supply_qty:aiR(sd.usableQty),
+        unconfirmed_qty:aiR(sd.unconfirmedQty),no_commit_qty:aiR(sd.noCommitQty),rescheduled_qty:aiR(sd.rescheduledQty),late_qty:aiR(sd.lateQty),by_month:sd.byMonth.map(group),by_warehouse:sd.byWarehouse.slice(0,15).map(group),
+        first_shortages:sd.shortageRows.slice(0,25).map(r=>({month:r.yearMonth,warehouse:r.warehouseName,item:r.itemCode,description:String(r.itemDescription||'').slice(0,60),demand_qty:aiR(r.demandOpenQty),usable_supply_qty:aiR(r.usableSupplyQty),cumulative_net_qty:aiR(r.cumulativeNetQty),supply_risk:r.supplyRiskFlag||''}))},'first_shortages');
+    }}
+];
+function aiRunTool(name,args){
+  const tool=KPI_TOOLS.find(t=>t.name===name);
+  if(!tool)return {error:`Unknown tool ${name}`};
+  try{
+    const out=tool.run(args&&typeof args==='object'?args:{});
+    return out&&typeof out==='object'&&!Array.isArray(out)?out:{result:out};
+  }catch(err){return {error:String(err&&err.message||err)};}
+}
+// Gemini rejects an OBJECT schema with no properties, so tools without arguments are declared without parameters.
+function aiDeclarations(){
+  return KPI_TOOLS.map(({name,description,parameters:p})=>Object.keys(p.properties).length
+    ?{name,description,parameters:{type:'object',properties:p.properties,...(p.required.length?{required:p.required}:{})}}
+    :{name,description});
+}
+
+// --- Ask AI panel: a Gemini chat that answers from KPI_TOOLS. Nothing is sent before the consent box is ticked. ---
+const AI_GOOGLE_BASE='https://generativelanguage.googleapis.com/v1beta';
+const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
+const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
+const AI_MAX_ROUNDS=6;
+const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
+const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
+const aiEl=id=>document.getElementById(id);
+const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
+// A newly loaded export starts a new chat, so follow-up questions never mix in tool results from the old data.
+function aiSyncData(){if(aiState.rows!==allLoadedRows){aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];}}
+function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
+function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
+function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
+const aiKey=()=>aiGet(AI_KEY_STORE,'session')||aiGet(AI_KEY_STORE)||aiState.memKey;
+const aiConsented=()=>aiGet(AI_CONSENT_STORE)==='1';
+function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
+function aiToggle(force){
+  aiState.open=force===undefined?!aiState.open:!!force;
+  const panel=aiEl('ai-panel');
+  if(panel)panel.hidden=!aiState.open;
+  if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
+  const button=document.querySelector('[data-focus-key="ask-ai"]');
+  if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
+  if(!aiState.open){aiFocus(button);return;}
+  aiSyncData();
+  aiRenderLog();
+  aiShowSettings(!aiConsented());
+  aiPrepare();
+}
+function aiPanelKey(e){
+  if(e.key==='Escape'){e.preventDefault();aiToggle(false);}
+}
+function aiInputKey(e){
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();aiSend();}
+}
+function aiShowSettings(show){
+  aiEl('ai-settings').hidden=!show;
+  aiEl('ai-chat').hidden=!!show;
+  aiEl('ai-consent').checked=aiConsented();
+  if(show)aiEl('ai-remember').checked=!!aiGet(AI_KEY_STORE);
+  aiSyncSettings();
+  aiFocus(!show?'ai-input':!aiConsented()?'ai-consent':aiState.server?'ai-model':'ai-key');
+}
+function aiSyncSettings(){
+  const server=!!aiState.server,hasKey=!!aiKey();
+  aiEl('ai-server-note').hidden=!server;
+  aiEl('ai-key-box').hidden=server;
+  aiEl('ai-key-remove').disabled=!hasKey;
+  aiEl('ai-mode').textContent=`${server?'Server key':hasKey?'Your key':'Not set up'}${aiState.model?` · ${aiState.model}`:''}`;
+  const models=aiState.models.length?aiState.models:[aiState.model||aiGet(AI_MODEL_STORE)||'gemini-2.5-flash'];
+  aiEl('ai-model').innerHTML=models.map(n=>`<option value="${esc(n)}"${n===aiState.model?' selected':''}>${esc(n)}</option>`).join('');
+}
+function aiSettingsStatus(text,tone){
+  const el=aiEl('ai-settings-status');
+  el.textContent=text;
+  el.className=`ai-status${tone?` ${tone}`:''}`;
+}
+function aiSetConsent(on){
+  aiSet(AI_CONSENT_STORE,on?'1':'');
+  aiSettingsStatus(on?'Thanks. Ask AI is allowed on this browser.':'Ask AI is turned off on this browser.',on?'good':'');
+  if(on)aiPrepare();
+}
+// Server mode: a site that serves /api/gemini with a key set up there; the page needs no key of its own.
+function aiCheckServer(){
+  if(!aiState.serverCheck)aiState.serverCheck=(async()=>{
+    let server=false;
+    if(/^https?:$/.test(String(location.protocol||''))){
+      try{const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});server=res.ok&&(await res.json()).configured===true;}catch(err){}
+    }
+    aiState.server=server;
+  })();
+  return aiState.serverCheck;
+}
+async function aiPrepare(){
+  if(!aiConsented())return;
+  await aiCheckServer();
+  aiSyncSettings();
+  if(!aiState.models.length&&(aiState.server||aiKey()))await aiLoadModels();
+  if(!aiState.server&&!aiKey()&&aiState.open&&aiEl('ai-settings').hidden)aiShowSettings(true);
+}
+// Opening the panel, ticking consent and saving a key can all ask for the list at once; they share one request.
+function aiLoadModels(){
+  if(!aiState.modelLoad)aiState.modelLoad=(async()=>{
+    let names=[];
+    try{
+      const data=await aiFetch('models?pageSize=100');
+      names=(data.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name||''))
+        .map(x=>String(x.name).replace(/^models\//,'')).filter(n=>AI_MODEL_RE.test(n)&&!/tts|image|audio|live/.test(n));
+      if(!names.length)aiSettingsStatus('No Gemini Flash models are available for this key.','bad');
+    }catch(err){aiSettingsStatus(aiErrorText(err),'bad');}
+    aiState.models=names;
+    const saved=aiGet(AI_MODEL_STORE);
+    aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||(AI_MODEL_RE.test(saved)?saved:'gemini-2.5-flash');
+    aiSyncSettings();
+  })().finally(()=>{aiState.modelLoad=null;});
+  return aiState.modelLoad;
+}
+function aiSetModel(name){
+  if(!AI_MODEL_RE.test(name))return;
+  aiState.model=name;
+  aiSet(AI_MODEL_STORE,name);
+  aiSyncSettings();
+}
+function aiSaveKey(){
+  const input=aiEl('ai-key'),key=String(input.value||'').trim();
+  if(!key){aiSettingsStatus('Paste a Gemini API key first.','bad');return;}
+  const remember=aiEl('ai-remember').checked;
+  aiSet(AI_KEY_STORE,'');aiSet(AI_KEY_STORE,'','session');
+  const saved=aiSet(AI_KEY_STORE,key,remember?'local':'session');
+  aiState.memKey=saved?'':key;
+  input.value='';
+  aiSettingsStatus(!saved?'This browser blocked saving the key; it is kept until the page is closed.':remember?'Key saved on this browser.':'Key saved until this tab closes.','good');
+  aiState.models=[];
+  aiPrepare();
+}
+function aiRemoveKey(){
+  aiSet(AI_KEY_STORE,'');aiSet(AI_KEY_STORE,'','session');
+  aiState.memKey='';aiState.models=[];
+  aiEl('ai-key').value='';
+  aiSettingsStatus('Key removed from this browser.','');
+  aiSyncSettings();
+}
+const aiFail=message=>Object.assign(new Error(message),{aiFriendly:true});
+function aiErrorText(err){return err&&err.aiFriendly?err.message:'Something went wrong talking to Gemini. Try again.';}
+function aiHttpError(status,data,server){
+  const message=String(data&&data.error&&data.error.message||'');
+  if(server&&status===401)return 'Your sign-in to this site has expired. Reload the page and sign in again.';
+  if(status===401||status===403||(status===400&&/api[ _]?key/i.test(message)))return server?'The server\'s Gemini key was rejected. Ask whoever runs this site to check GEMINI_API_KEY.':'Google did not accept this API key. Check it in Settings, or create a new one in Google AI Studio.';
+  if(status===429)return 'Gemini\'s free-tier limit was reached (requests per minute or per day). Wait a minute and try again, or pick a lighter model in Settings.';
+  if(status===404)return 'That Gemini model is not available. Pick another model in Settings.';
+  if(status===503&&data&&data.configured===false)return 'This site has no Gemini key set up on its server.';
+  if(status===413)return 'The question and its data were too large to send. Clear the chat and ask a narrower question.';
+  if(status>=500)return `Gemini is busy or unavailable right now (error ${status}). Try again in a moment.`;
+  return `Gemini could not answer (error ${status}${message?`: ${message.slice(0,200)}`:''}).`;
+}
+// Own-key mode calls Google directly with the key in a header (never in the URL); server mode calls /api/gemini.
+async function aiFetch(path,{body,signal}={}){
+  const server=!!aiState.server,headers={};
+  if(body)headers['content-type']='application/json';
+  if(!server){const key=aiKey();if(!key)throw aiFail('Add a Gemini API key in Settings first.');headers['x-goog-api-key']=key;}
+  let res;
+  try{res=await fetch(`${server?'/api/gemini':AI_GOOGLE_BASE}/${path}`,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,signal});}
+  catch(err){
+    if(err&&err.name==='AbortError')throw err;
+    throw aiFail(server?'Could not reach this site\'s Gemini service. Check the connection and try again.':'Could not reach Google\'s Gemini API. Check the network connection; a firewall, proxy or browser extension may be blocking generativelanguage.googleapis.com.');
+  }
+  let data={};
+  try{data=await res.json();}catch(err){}
+  if(!res.ok)throw aiFail(aiHttpError(res.status,data,server));
+  return data;
+}
+function aiSystemPrompt(){
+  return `You are an operations KPI analyst for Spyder Controls. You answer questions about the SAP Business One KPI dashboard loaded in the user's browser: sales orders, purchase orders, deliveries, receipts, supply / demand and Clear To Build data. The report's as-of date is ${displayDate(reportToday())}.
+Answer only from tool results: call the tools for every number and never guess or use outside knowledge. Cite the numbers you use and the as-of date. If the data needed is not loaded, or a tool returns nothing, say so plainly. Keep answers short: a sentence or two, then a few bullets or a small table only when it helps. Values are open (or shipped) value in the export's local currency. "At risk" means open lines past due with no reschedule, with no commit date, rescheduled, or marked Urgent.`;
+}
+// One question: call Gemini, run any functionCalls locally, send the results back, up to AI_MAX_ROUNDS lookups.
+// The model's content is kept exactly as returned (thoughtSignature included), as Gemini requires.
+async function aiAsk(question,signal){
+  const history=aiState.history,start=history.length,used=[];
+  history.push({role:'user',parts:[{text:question}]});
+  try{
+    for(let round=0;;round++){
+      const last=round>=AI_MAX_ROUNDS;
+      const data=await aiFetch(`models/${aiState.model}:generateContent`,{signal,body:{
+        systemInstruction:{parts:[{text:aiSystemPrompt()}]},contents:history,tools:[{functionDeclarations:aiDeclarations()}],
+        ...(last?{toolConfig:{functionCallingConfig:{mode:'NONE'}}}:{})}});
+      const cand=(data.candidates||[])[0];
+      const blocked=(data.promptFeedback&&data.promptFeedback.blockReason)||(cand&&/SAFETY|BLOCKLIST|PROHIBITED|SPII/.test(cand.finishReason||''));
+      if(blocked)throw aiFail('Gemini declined to answer this one (its safety filter blocked it). Try rephrasing the question.');
+      if(!cand||!cand.content)throw aiFail('Gemini returned an empty answer. Try again or rephrase the question.');
+      history.push(cand.content);
+      const parts=cand.content.parts||[],calls=parts.filter(p=>p.functionCall);
+      if(calls.length&&last)throw aiFail('This question needed too many lookups. Try a narrower question.');
+      if(!calls.length){
+        const text=parts.filter(p=>p.text&&!p.thought).map(p=>p.text).join('').trim();
+        if(!text)throw aiFail('Gemini returned an empty answer. Try again or rephrase the question.');
+        return {text,used:[...new Set(used)]};
+      }
+      history.push({role:'user',parts:calls.map(({functionCall:fc})=>{
+        used.push(fc.name);
+        return {functionResponse:{name:fc.name,...(fc.id?{id:fc.id}:{}),response:aiRunTool(fc.name,fc.args)}};
+      })});
+    }
+  }catch(err){
+    history.length=start;
+    throw err;
+  }
+}
+// Old exchanges are dropped once the history nears the proxy's 1 MB limit (each one carries its tool results).
+function aiTrimHistory(){
+  const h=aiState.history;
+  while(h.length&&JSON.stringify(h).length>300000){
+    const next=h.findIndex((c,i)=>i>0&&c.role==='user'&&(c.parts||[]).some(p=>typeof p.text==='string'));
+    h.splice(0,next>0?next:h.length);
+  }
+}
+async function aiSend(text){
+  if(aiState.busy)return;
+  const input=aiEl('ai-input');
+  const question=String(text===undefined?input.value:text).trim();
+  if(!question)return;
+  if(!aiConsented()){aiShowSettings(true);aiSettingsStatus('Tick the box above to allow Ask AI before asking a question.','bad');return;}
+  if(!hasLoadedData()){aiState.messages.push({role:'error',text:'Load a KPI export first: Ask AI answers from the data loaded in this dashboard.'});aiRenderLog();aiAnnounce(aiState.messages[aiState.messages.length-1].text);return;}
+  aiState.busy=true;
+  aiSyncData();
+  // Messages go to this chat's list; after Clear chat or a new export, a late answer or "Stopped." is dropped.
+  const log=aiState.messages,start=log.length;
+  try{
+    await aiCheckServer();
+    if(!aiState.server&&!aiKey()){aiShowSettings(true);aiSettingsStatus('Add a Gemini API key first, or ask whoever runs this site to set one up on the server.','bad');return;}
+    if(!aiState.model)await aiLoadModels();
+    if(text===undefined)input.value='';
+    aiTrimHistory();
+    log.push({role:'user',text:question});
+    aiState.controller=typeof AbortController==='function'?new AbortController():null;
+    aiRenderLog();
+    aiAnnounce('Looking it up…');
+    const answer=await aiAsk(question,aiState.controller?aiState.controller.signal:undefined);
+    log.push({role:'model',text:answer.text,used:answer.used});
+  }catch(err){
+    const stopped=err&&err.name==='AbortError';
+    if(!stopped&&!(err&&err.aiFriendly))console.error('Ask AI request failed',err);
+    log.push({role:'error',text:stopped?'Stopped.':aiErrorText(err)});
+  }finally{
+    aiState.busy=false;aiState.controller=null;
+    aiRenderLog();
+    if(log===aiState.messages&&log.length>start)aiAnnounce(log[log.length-1].text);
+    const active=document.activeElement,panel=aiEl('ai-panel');
+    if(aiState.open&&!aiEl('ai-chat').hidden&&(!active||active===document.body||(panel.contains&&panel.contains(active))))aiFocus('ai-input');
+  }
+}
+function aiStop(){if(aiState.controller)aiState.controller.abort();}
+function aiClear(){
+  aiStop();
+  aiState.history=[];aiState.messages=[];
+  aiRenderLog();
+  aiFocus('ai-input');
+}
+function aiRenderLog(){
+  const log=aiEl('ai-log');
+  if(!log)return;
+  const messages=aiState.messages.map(m=>m.role==='user'?`<div class="ai-msg user">${esc(m.text)}</div>`
+    :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}${m.used&&m.used.length?`<div class="ai-tools">Looked up: ${esc(m.used.join(', '))}</div>`:''}</div>`
+    :`<div class="ai-msg error">${esc(m.text)}</div>`).join('');
+  log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: what is at risk, which customers, vendors or warehouses drive it, what is due next, or how OTD and fill are doing. Answers use the same numbers as these pages, as of the export date.</p>')
+    +(aiState.busy?'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>':'');
+  log.scrollTop=log.scrollHeight;
+  aiEl('ai-send').disabled=aiState.busy;
+  aiEl('ai-stop').hidden=!aiState.busy;
+  aiEl('ai-chips').hidden=aiState.messages.length>0;
+}
+// Model text is escaped first; only these few markdown forms become tags, so the model cannot add markup.
+function aiInline(s){
+  return s.split(/(`[^`]+`)/).map((part,i)=>i%2?`<code>${part.slice(1,-1)}</code>`:part
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*(?!\s)(.+?)\*(?!\w)/g,'$1<em>$2</em>')
+    .replace(/(^|[^_\w])_(?!\s)(.+?)_(?!\w)/g,'$1<em>$2</em>')).join('');
+}
+function aiMarkdown(text){
+  const lines=esc(text).replace(/\r/g,'').split('\n'),out=[];
+  let para=[],list=null;
+  const flush=()=>{
+    if(para.length){out.push(`<p>${para.map(aiInline).join('<br>')}</p>`);para=[];}
+    if(list){out.push(`<${list.tag}>${list.items.map(i=>`<li>${aiInline(i)}</li>`).join('')}</${list.tag}>`);list=null;}
+  };
+  const isRow=l=>/^\s*\|.*\|\s*$/.test(l||'');
+  const cells=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>aiInline(c.trim()));
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(isRow(line)&&/^\s*\|?\s*:?-{3,}/.test(lines[i+1]||'')){
+      flush();
+      const head=cells(line),body=[];
+      for(i+=2;isRow(lines[i]);i++)body.push(cells(lines[i]));
+      i--;
+      out.push(`<div class="ai-table"><table><thead><tr>${head.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${body.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      continue;
+    }
+    const bullet=line.match(/^\s*[-*•]\s+(.*)$/),numbered=line.match(/^\s*\d+[.)]\s+(.*)$/);
+    if(bullet||numbered){
+      const tag=bullet?'ul':'ol';
+      if(para.length||(list&&list.tag!==tag))flush();
+      if(!list)list={tag,items:[]};
+      list.items.push((bullet||numbered)[1]);
+      continue;
+    }
+    if(!line.trim()){flush();continue;}
+    if(list)flush();
+    para.push(line.replace(/^\s*#{1,6}\s+(.*)$/,'**$1**'));
+  }
+  flush();
+  return out.join('');
+}
+// Shared snapshots copy the page DOM; the chat, model list and typed values must not travel with them.
+function aiResetClone(root){
+  root.querySelector('body')?.classList.remove('ai-open');
+  const panel=root.querySelector('#ai-panel');
+  if(!panel)return;
+  panel.hidden=true;
+  panel.querySelectorAll('#ai-log,#ai-announce,#ai-model,#ai-mode,#ai-settings-status').forEach(n=>{n.innerHTML='';});
+  panel.querySelectorAll('input,textarea').forEach(n=>{n.removeAttribute('value');n.removeAttribute('checked');n.textContent='';});
+}
 // Pages that need a separate export show what they need, how to get it, and a preview of what they will show.
 const SUPPLY_QUERY='queries/sap_b1_hana_supply_demand_snapshot_v2.sql';
 const NEEDS_FILE={
@@ -3921,7 +4500,7 @@ function renderResults(){
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions"><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button></div>
+    <div class="actions"><button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button></div>
   </div>`;
 
   // Order Health: late, missed reschedule, no-commit, and OTD tiles.
