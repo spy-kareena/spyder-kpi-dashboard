@@ -214,6 +214,7 @@ test('tool loop: a functionCall round, then text; thoughtSignature kept; key onl
   assert.match(log, /<strong>\$2,200<\/strong>/);
   assert.match(log, /<li>Past due: 1<\/li>/);
   assert.match(log, /Looked up: get_overview/);
+  assert.match(page.els['ai-announce'].textContent, /^At risk: \$2,200 across 3 lines/, 'the answer is announced once, without markdown');
   assert.equal(page.run('aiState.history.length'), 4);
   assert.deepEqual(page.errors, []);
   for (const el of Object.values(page.els)) {
@@ -260,6 +261,38 @@ test('Stop aborts the request and Clear chat empties it', async () => {
   assert.equal(page.run('aiState.history.length'), 0);
   page.run('aiClear()');
   assert.equal(page.run('aiState.messages.length'), 0);
+  // Clear chat while a question is pending: the request stops and nothing comes back into the cleared chat.
+  mockFetch(page, [(url, init) => new Promise((resolve, reject) => {
+    init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+  })]);
+  const again = page.run("aiSend('another slow one')");
+  await new Promise((r) => setTimeout(r, 20));
+  page.run('aiClear()');
+  await again;
+  assert.deepEqual([page.run('aiState.messages.length'), page.run('aiState.history.length'), page.run('aiState.busy')], [0, 0, false]);
+});
+
+test('a newly loaded export starts a new chat', async () => {
+  const page = await loaded({ storage: { spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' } });
+  const text = (t) => ({ candidates: [{ content: { role: 'model', parts: [{ text: t }] }, finishReason: 'STOP' }] });
+  const calls = mockFetch(page, [text('First answer'), text('Second answer'), text('Third answer')]);
+  await page.run("aiSend('first')");
+  await page.run("aiSend('second')");
+  assert.equal(JSON.parse(calls[calls.length - 1].init.body).contents.length, 3, 'same data: the follow-up carries the earlier turn');
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }]);
+  await page.run("aiSend('third')");
+  assert.deepEqual(JSON.parse(calls[calls.length - 1].init.body).contents, [{ role: 'user', parts: [{ text: 'third' }] }]);
+  assert.deepEqual(page.run('aiState.messages.map(m=>m.text)'), ['third', 'Third answer']);
+});
+
+test('server-key mode: requests go through /api/gemini without a key; an expired sign-in is explained', async () => {
+  const page = await loaded({ storage: { spyderKpiAiConsentV1: '1' } });
+  page.ctx.location.protocol = 'https:';
+  const calls = mockFetch(page, [{ configured: true }, { status: 401, body: {} }]);
+  await page.run("aiSend('hello')");
+  assert.deepEqual(calls.map((c) => c.url), ['/api/gemini/status', '/api/gemini/models?pageSize=100', '/api/gemini/models/gemini-3.5-flash:generateContent']);
+  assert.ok(calls.every((c) => !(c.init.headers || {})['x-goog-api-key']));
+  assert.match(page.els['ai-log'].innerHTML, /sign-in to this site has expired/);
 });
 
 test('markdown renderer escapes HTML and renders the small markdown subset', () => {
@@ -279,8 +312,10 @@ test('a shared snapshot copy drops the chat, model list and typed values', () =>
   const log = node('<div class="ai-msg user">secret question</div>');
   const input = node('');
   const panel = { hidden: false, querySelectorAll: (sel) => (sel.startsWith('#ai-log') ? [log] : [input]) };
-  page.ctx.aiResetClone({ querySelector: (sel) => (sel === '#ai-panel' ? panel : null) });
+  const body = { removed: [], classList: { remove(c) { body.removed.push(c); } } };
+  page.ctx.aiResetClone({ querySelector: (sel) => (sel === '#ai-panel' ? panel : sel === 'body' ? body : null) });
   assert.equal(panel.hidden, true);
+  assert.deepEqual(body.removed, ['ai-open'], 'the copy does not keep the open-drawer page padding');
   assert.equal(log.innerHTML, '');
   assert.deepEqual([input.attrs, input.textContent], [{}, '']);
   assert.match(require('./harness').HTML, /aiResetClone\(root\);/);

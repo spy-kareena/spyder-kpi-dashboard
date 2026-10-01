@@ -528,7 +528,7 @@ details.about p{margin:0}
 .ai-settings{padding:16px 18px 20px;display:grid;gap:14px;align-content:start;overflow-y:auto}
 .ai-settings p{margin:0;line-height:1.55;color:var(--gray-600)}
 .ai-notice{background:var(--warn-tint);border:1px solid var(--warn-border);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
-.ai-notice p{color:#7a4708}
+.ai-notice p{color:var(--warn-text)}
 .ai-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;font-weight:500;color:var(--gray-700);line-height:1.45;cursor:pointer}
 .ai-check input{margin:2px 0 0;accent-color:var(--accent)}
 .ai-field{display:grid;gap:6px;font-size:12px;font-weight:500;color:var(--gray-600)}
@@ -560,8 +560,9 @@ details.about p{margin:0}
 .ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
 .ai-compose .link-btn{margin-left:auto}
 .ai-foot{font-size:12px;color:var(--gray-400)}
-/* Wide screens keep the page beside the open drawer instead of under it */
-@media (min-width:1180px){body.ai-open .main{padding-right:456px}}
+.ai-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Very wide screens keep the page beside the open drawer; the page keeps its 4-column width (>=880px) there */
+@media screen and (min-width:1600px){body.ai-open .main{padding-right:456px}}
 @media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
 @media print{.ai-panel{display:none!important}}
 
@@ -836,7 +837,8 @@ button.trow.po-wh-cols{font-size:13px}
       <p class="ai-status" id="ai-settings-status" role="status"></p>
     </div>
     <div class="ai-chat" id="ai-chat">
-      <div class="ai-log" id="ai-log" aria-live="polite"></div>
+      <div class="ai-log" id="ai-log"></div>
+      <p class="ai-sr" id="ai-announce" role="status"></p>
       <div class="ai-chips" id="ai-chips" role="group" aria-label="Suggested questions">
         <button type="button" class="chip" data-q="What is at risk right now, and which customers have the most value at risk?" onclick="aiSend(this.dataset.q)">What is at risk right now?</button>
         <button type="button" class="chip" data-q="Which warehouses have the most past-due open value?" onclick="aiSend(this.dataset.q)">Past due by warehouse</button>
@@ -3449,8 +3451,11 @@ const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
 const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
 const AI_MAX_ROUNDS=6;
 const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[]};
+const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
+const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
+// A newly loaded export starts a new chat, so follow-up questions never mix in tool results from the old data.
+function aiSyncData(){if(aiState.rows!==allLoadedRows){aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];}}
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
 function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
@@ -3465,6 +3470,7 @@ function aiToggle(force){
   const button=document.querySelector('[data-focus-key="ask-ai"]');
   if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
   if(!aiState.open){aiFocus(button);return;}
+  aiSyncData();
   aiRenderLog();
   aiShowSettings(!aiConsented());
   aiPrepare();
@@ -3566,6 +3572,7 @@ const aiFail=message=>Object.assign(new Error(message),{aiFriendly:true});
 function aiErrorText(err){return err&&err.aiFriendly?err.message:'Something went wrong talking to Gemini. Try again.';}
 function aiHttpError(status,data,server){
   const message=String(data&&data.error&&data.error.message||'');
+  if(server&&status===401)return 'Your sign-in to this site has expired. Reload the page and sign in again.';
   if(status===401||status===403||(status===400&&/api[ _]?key/i.test(message)))return server?'The server\'s Gemini key was rejected. Ask whoever runs this site to check GEMINI_API_KEY.':'Google did not accept this API key. Check it in Settings, or create a new one in Google AI Studio.';
   if(status===429)return 'Gemini\'s free-tier limit was reached (requests per minute or per day). Wait a minute and try again, or pick a lighter model in Settings.';
   if(status===404)return 'That Gemini model is not available. Pick another model in Settings.';
@@ -3641,26 +3648,31 @@ async function aiSend(text){
   const question=String(text===undefined?input.value:text).trim();
   if(!question)return;
   if(!aiConsented()){aiShowSettings(true);aiSettingsStatus('Tick the box above to allow Ask AI before asking a question.','bad');return;}
-  if(!hasLoadedData()){aiState.messages.push({role:'error',text:'Load a KPI export first: Ask AI answers from the data loaded in this dashboard.'});aiRenderLog();return;}
+  if(!hasLoadedData()){aiState.messages.push({role:'error',text:'Load a KPI export first: Ask AI answers from the data loaded in this dashboard.'});aiRenderLog();aiAnnounce(aiState.messages[aiState.messages.length-1].text);return;}
   aiState.busy=true;
+  aiSyncData();
+  // Messages go to this chat's list; after Clear chat or a new export, a late answer or "Stopped." is dropped.
+  const log=aiState.messages,start=log.length;
   try{
     await aiCheckServer();
     if(!aiState.server&&!aiKey()){aiShowSettings(true);aiSettingsStatus('Add a Gemini API key first, or ask whoever runs this site to set one up on the server.','bad');return;}
     if(!aiState.model)await aiLoadModels();
     if(text===undefined)input.value='';
     aiTrimHistory();
-    aiState.messages.push({role:'user',text:question});
+    log.push({role:'user',text:question});
     aiState.controller=typeof AbortController==='function'?new AbortController():null;
     aiRenderLog();
+    aiAnnounce('Looking it up…');
     const answer=await aiAsk(question,aiState.controller?aiState.controller.signal:undefined);
-    aiState.messages.push({role:'model',text:answer.text,used:answer.used});
+    log.push({role:'model',text:answer.text,used:answer.used});
   }catch(err){
     const stopped=err&&err.name==='AbortError';
     if(!stopped&&!(err&&err.aiFriendly))console.error('Ask AI request failed',err);
-    aiState.messages.push({role:'error',text:stopped?'Stopped.':aiErrorText(err)});
+    log.push({role:'error',text:stopped?'Stopped.':aiErrorText(err)});
   }finally{
     aiState.busy=false;aiState.controller=null;
     aiRenderLog();
+    if(log===aiState.messages&&log.length>start)aiAnnounce(log[log.length-1].text);
     const active=document.activeElement,panel=aiEl('ai-panel');
     if(aiState.open&&!aiEl('ai-chat').hidden&&(!active||active===document.body||(panel.contains&&panel.contains(active))))aiFocus('ai-input');
   }
@@ -3728,6 +3740,7 @@ function aiMarkdown(text){
 }
 // Shared snapshots copy the page DOM; the chat, model list and typed values must not travel with them.
 function aiResetClone(root){
+  root.querySelector('body')?.classList.remove('ai-open');
   const panel=root.querySelector('#ai-panel');
   if(!panel)return;
   panel.hidden=true;
