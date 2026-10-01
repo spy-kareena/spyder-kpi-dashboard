@@ -52,7 +52,8 @@ class FileReader {
 const page = vm.createContext({
   console: { log: quiet, info: quiet, debug: quiet, warn: log, error: log },
   document: {
-    getElementById: (id) => els[id] || (els[id] = stub(id)), querySelector: () => null, querySelectorAll: () => [],
+    // No embedded snapshot: this is the full page, and its data comes only from load().
+    getElementById: (id) => (id === 'embedded-snapshot-data' ? null : els[id] || (els[id] = stub(id))), querySelector: () => null, querySelectorAll: () => [],
     createElement: stub, body: stub('body'), documentElement: { outerHTML: html }, addEventListener() {}, title: '',
   },
   alert: (m) => alerts.push(String(m)), confirm: () => true,

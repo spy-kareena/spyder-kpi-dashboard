@@ -625,6 +625,17 @@ details.about p{margin:0}
 .preview-item span{font-size:12.5px;color:var(--gray-500);line-height:1.5}
 .preview-item .skeleton{border-radius:8px;animation-duration:2.4s}
 
+/* Connect an AI (help page) */
+.connect-intro{margin:0;font-size:14px;color:var(--gray-600);line-height:1.6;max-width:720px}
+.connect-card{display:grid;gap:14px;font-size:13.5px;color:var(--gray-700);line-height:1.6}
+.connect-card p,.connect-card ul{margin:0}
+.connect-card ul{padding-left:20px;display:grid;gap:6px}
+.connect-code{display:grid;gap:8px}
+.connect-code pre{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;background:var(--gray-100);color:var(--gray-700);border-radius:6px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.connect-copy{display:flex;align-items:center;gap:10px}
+.connect-table td{vertical-align:top}
+.connect-table code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+
 /* Upload */
 /* #upload-screen and #results-screen are shown and hidden inline, so section spacing is a sibling margin */
 #upload-screen>*+*,#results-screen>*+*{margin-top:24px}
@@ -3992,6 +4003,55 @@ function renderNeedsFile(kind){
     </div>
   </section>`;
 }
+// Help page: ways to ask an AI about the export (Ask AI here, or the MCP server in mcp/ for Claude and other apps).
+// It works before any file is loaded. Setup details and troubleshooting are in docs/MCP.md.
+const CONNECT_SNIPPETS={
+  'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2),
+  'connect-code':'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'
+};
+function renderConnectPage(){
+  const code=id=>`<div class="connect-code"><pre id="${id}">${esc(CONNECT_SNIPPETS[id])}</pre><div class="connect-copy print-hide"><button type="button" class="btn" data-copy="${id}" data-focus-key="copy-${id}" onclick="copyConnectSnippet(this)">Copy</button><span class="section-sub" id="${id}-status" role="status"></span></div></div>`;
+  const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
+  const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
+  return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
+  ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
+    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
+  ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
+      ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
+      ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
+      ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>. This opens claude_desktop_config.json:<code>Windows: %APPDATA%\\Claude\\claude_desktop_config.json</code><code>macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</code>Add the lines below with your two paths (keep the double backslashes), save, then restart Claude.')}
+    </div>
+    ${code('connect-desktop')}
+    <p>If the file already has an "mcpServers" section, put the "spyder-kpi" entry inside it. After a new export, ask Claude to load it (for example “Load C:\\Exports\\kpi_export.xls”), or change the path and restart Claude.</p>`)}
+  ${section(3,'Option 3: Claude Code','one command in a terminal',`<p>Run this once with your two paths. Then start <strong>claude</strong> and type <strong>/mcp</strong> to check that spyder-kpi is connected.</p>${code('connect-code')}`)}
+  ${section(4,'Option 4: Any other MCP app','Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers',`<table class="data-table connect-table"><thead><tr><th scope="col">Setting</th><th scope="col">Value</th></tr></thead><tbody>
+      <tr><td class="m">Transport</td><td>stdio (a local command)</td></tr>
+      <tr><td class="m">Command</td><td><code>node</code></td></tr>
+      <tr><td class="m">Arguments</td><td>The full path of <code>mcp\\spyder-kpi-mcp.mjs</code>, then the full path of each export file</td></tr>
+    </tbody></table>`,'card flush')}
+  ${section(5,'Example questions','the last one needs Options 2 to 4',`<ul>
+      <li>What is at risk right now, and why?</li>
+      <li>Which customers have the most past due value?</li>
+      <li>Show the late purchase orders by vendor.</li>
+      <li>Which orders are due next week in the CM warehouses?</li>
+      <li>How was on-time delivery over the last 3 months?</li>
+      <li>Load C:\\Exports\\kpi_export.xls and give me the overview.</li>
+    </ul>`)}
+  ${section(6,'Privacy','read before you connect',`<p>The server runs on your computer and reads only the files you list. The AI app you connect receives the tool answers (order lines, customers, values) and sends them to its provider. Use only an AI app your company approves.</p>`)}`;
+}
+function copyConnectSnippet(btn){
+  const id=btn.dataset.copy,text=CONNECT_SNIPPETS[id],status=document.getElementById(`${id}-status`);
+  const done=ok=>{if(status)status.textContent=ok?'Copied':'Copy did not work. Select the text and press Ctrl+C.';};
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy');}catch(e){}
+    ta.remove();btn.focus();done(ok);
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>done(true),fallback);
+  else fallback();
+}
 // Ranked horizontal bars (label · bar · value); negative values draw red, as in the supply net-quantity view.
 function renderRankRows(items,{empty='Nothing to show.'}={}){
   if(!items.length)return `<div class="empty-note">${esc(empty)}</div>`;
@@ -4233,9 +4293,10 @@ function hasLoadedData(){
 }
 const NAV_GROUPS=[
   ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
-  ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]]
+  ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
+  ['Help',[['connect','Connect an AI']]]
 ];
-const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search'};
+const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',connect:'Connect an AI'};
 function renderSidebar(){
   const el=document.getElementById('app-sidebar');
   if(!el)return;
@@ -4253,7 +4314,7 @@ function renderSidebar(){
   const item=([id,label])=>{
     const active=onResults&&activeTab===id;
     const badge=badges[id]?`<span class="nav-badge" title="${id==='weekly'?'At-risk orders':'Late PO lines'}">${fmtNum(badges[id])}</span>`:'';
-    return `<button type="button" class="nav-item${active?' active':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded?'':' disabled'}><span class="nav-text">${esc(label)}</span>${badge}</button>`;
+    return `<button type="button" class="nav-item${active?' active':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}><span class="nav-text">${esc(label)}</span>${badge}</button>`;
   };
   const fileName=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'No export loaded');
   const kinds=[
@@ -4274,7 +4335,8 @@ function renderSidebar(){
   restoreFocus(el,focus);
 }
 function setTab(t){
-  if(!hasLoadedData())return;
+  // Connect an AI is a help page, so it opens before any export is loaded.
+  if(!hasLoadedData()&&t!=='connect')return;
   const changed=activeTab!==t;
   // Going to any other page ends the search, so the box does not keep showing an old query.
   if(t!=='search'){searchQuery='';clearTimeout(searchTimer);}
@@ -4499,14 +4561,17 @@ function renderResults(){
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
   const openPoCount=activeTab==='purchaseorders'?((poData(m)||{}).poAllOpenRows||[]).length:0;
   const asOfShort=displayDate(reportAsOfDate||reportToday());
-  const headMeta=activeTab==='search'?globalSearchMeta(m)
+  const loaded=hasLoadedData();
+  const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
+    : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='purchaseorders'
     ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
     : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions"><button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button></div>
+    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button>`
+      :'<button type="button" class="btn btn-primary" data-focus-key="load-export" onclick="showUpload()">Load an export</button>'}</div>
   </div>`;
 
   // Order Health: late, missed reschedule, no-commit, and OTD tiles.
@@ -5269,6 +5334,7 @@ function renderResults(){
   }
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
+  if(activeTab==='connect')html+=renderConnectPage();
   // Supply / Demand detail: shortages and risk rows by warehouse.
   if(activeTab==='supplyweekly'){
     const sd=m.supplyDemand;

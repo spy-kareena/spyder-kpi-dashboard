@@ -180,6 +180,65 @@ test('--check prints the overview and exits; exits 1 without files', () => {
   assert.match(none.stderr, /No export files given/);
 });
 
+// --- The "Connect an AI" help page in index.html --------------------------------------------------------
+const unescape = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+
+test('Connect an AI opens before any export is loaded, with working setup snippets', () => {
+  const page = loadPage();
+  const sidebar = () => page.els['app-sidebar'].innerHTML;
+  assert.doesNotMatch(sidebar().match(/<button[^>]*data-focus-key="nav-connect"[^>]*>/)[0], /disabled/);
+  assert.match(sidebar().match(/<button[^>]*data-focus-key="nav-weekly"[^>]*>/)[0], /disabled/);
+  page.run("setTab('connect')");
+  page.run("setTab('weekly')"); // still no data: other pages stay closed
+  assert.equal(page.run('activeTab'), 'connect');
+  const html = page.els['results-screen'].innerHTML;
+  assert.match(html, /<h1 class="page-title">Connect an AI<\/h1>/);
+  assert.match(html, /onclick="showUpload\(\)">Load an export</);
+  assert.doesNotMatch(html, /Share snapshot|Export PDF/);
+  for (const t of ['Option 1: Ask AI in this dashboard', 'Option 2: Claude Desktop', 'Option 3: Claude Code', 'Option 4: Any other MCP app', 'Example questions', 'Privacy']) assert.ok(html.includes(t), t);
+  assert.match(html, /onclick="aiToggle\(true\)"/);
+  assert.match(html, /href="docs\/AI_ASSISTANT\.md"/);
+  assert.match(html, /%APPDATA%\\Claude\\claude_desktop_config\.json/);
+  assert.match(html, /Settings → Developer → Edit Config/);
+
+  const config = JSON.parse(unescape(html.match(/<pre id="connect-desktop">([^<]*)<\/pre>/)[1]));
+  assert.deepEqual(config.mcpServers['spyder-kpi'], { command: 'node', args: ['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs', 'C:\\path\\to\\kpi_export.xls'] });
+  assert.equal(unescape(html.match(/<pre id="connect-code">([^<]*)<\/pre>/)[1]),
+    'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"');
+  // Copy buttons read the snippet id from data-copy and are left out of print.
+  assert.equal((html.match(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" onclick="copyConnectSnippet\(this\)">Copy<\/button>/g) || []).length, 2);
+});
+
+test('Connect an AI keeps the usual actions when an export is loaded; Copy uses the clipboard or a fallback', async () => {
+  const page = await pageFor(ROWS_A);
+  page.run("setTab('connect')");
+  const html = page.els['results-screen'].innerHTML;
+  assert.match(html, /answers use the export as of 2026-09-03/);
+  assert.match(html, /data-focus-key="ask-ai"[^>]*>Ask AI</);
+  assert.match(html, />Share snapshot</);
+
+  let copied = '';
+  page.ctx.navigator.clipboard = { writeText: async (t) => { copied = t; } };
+  const btn = { dataset: { copy: 'connect-code' }, focus() {} };
+  page.ctx.copyConnectSnippet(btn);
+  await new Promise((r) => setTimeout(r, 5));
+  assert.match(copied, /^claude mcp add spyder-kpi -- node "C:\\path/);
+  assert.equal(page.els['connect-code-status'].textContent, 'Copied');
+
+  // No clipboard API (e.g. plain http): a hidden textarea and execCommand('copy').
+  delete page.ctx.navigator.clipboard;
+  let selected = '';
+  page.ctx.document.createElement = () => ({ style: {}, setAttribute() {}, remove() {}, select() { selected = this.value; } });
+  page.ctx.document.body.appendChild = (c) => c;
+  page.ctx.document.execCommand = (cmd) => cmd === 'copy';
+  page.ctx.copyConnectSnippet({ dataset: { copy: 'connect-desktop' }, focus() {} });
+  assert.match(selected, /"mcpServers"/);
+  assert.equal(page.els['connect-desktop-status'].textContent, 'Copied');
+  page.ctx.document.execCommand = () => false;
+  page.ctx.copyConnectSnippet({ dataset: { copy: 'connect-desktop' }, focus() {} });
+  assert.match(page.els['connect-desktop-status'].textContent, /Select the text/);
+});
+
 await run();
 for (const c of children) c.kill();
 fs.rmSync(dir, { recursive: true, force: true });
