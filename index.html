@@ -1178,6 +1178,7 @@ function applyRowOverride(r){
   r.overrideStatus=saved&&saved.status!==undefined?saved.status:r.fileOverrideStatus;
   r.overrideNotes=saved&&saved.notes!==undefined?saved.notes:r.fileOverrideNotes;
   r.hasOverride=!!(r.overrideStatus||r.overrideNotes);
+  r.isDeleted=!!(saved&&saved.deleted);
   applyRiskOverride(r);
   return r;
 }
@@ -1216,19 +1217,65 @@ function uniqueRows(rows){
 function updateRowOverride(key,field,value){
   const cleanKey=String(key||'');
   if(!cleanKey)return;
-  const matches=allLoadedRows.filter(r=>rowKey(r)===cleanKey);
-  // Carry an older legacy-key entry over to the current key so editing one field keeps the other.
-  const legacyKeys=[...new Set(matches.flatMap(rowKeyCandidates))].filter(k=>k!==cleanKey&&rowOverrides[k]);
-  const current={...(legacyKeys.length?rowOverrides[legacyKeys[0]]:{}),...(rowOverrides[cleanKey]||{})};
-  current[field]=value;
-  legacyKeys.forEach(k=>delete rowOverrides[k]);
-  if(!current.status&&!current.notes)delete rowOverrides[cleanKey];
-  else rowOverrides[cleanKey]=current;
+  writeRowOverride(cleanKey,allLoadedRows.filter(r=>rowKey(r)===cleanKey),field,value);
   saveRowOverrides();
-  matches.forEach(applyRowOverride);
   if(field==='status')invalidateMetrics();
   // Status overrides move rows between KPI tiles (e.g. Urgent, Not At Risk), so redraw; notes need no redraw.
   if(field==='status')renderResults();
+}
+// Sets one field of a line's saved override (undefined removes it). An older legacy-key entry moves to the
+// current key so editing one field keeps the others. Callers save and redraw.
+function writeRowOverride(cleanKey,matches,field,value){
+  const legacyKeys=[...new Set(matches.flatMap(rowKeyCandidates))].filter(k=>k!==cleanKey&&rowOverrides[k]);
+  const current={...(legacyKeys.length?rowOverrides[legacyKeys[0]]:{}),...(rowOverrides[cleanKey]||{})};
+  if(value===undefined)delete current[field];else current[field]=value;
+  legacyKeys.forEach(k=>delete rowOverrides[k]);
+  // A deleted line keeps its entry with no note, so it stays hidden here and in shared snapshots.
+  if(!current.status&&!current.notes&&!current.deleted)delete rowOverrides[cleanKey];
+  else rowOverrides[cleanKey]=current;
+  matches.forEach(applyRowOverride);
+}
+// One field on many lines (bulk override, delete, restore): one save, one metrics reset, one redraw.
+function setRowOverrides(keys,field,value){
+  const wanted=new Set(keys);
+  const byKey=new Map();
+  allLoadedRows.forEach(r=>{const k=rowKey(r);if(wanted.has(k))(byKey.get(k)||byKey.set(k,[]).get(k)).push(r);});
+  byKey.forEach((rows,k)=>writeRowOverride(k,rows,field,value));
+  saveRowOverrides();
+  applyInventoryScope();
+  renderResults();
+}
+// Linked lines ticked for bulk actions (rowKey values) and every key of the list the table last drew.
+let linkedSelection=new Set();
+let linkedListKeys=[];
+let linkedBulkStatus='';
+function toggleLinkedRow(key,on){
+  if(on)linkedSelection.add(String(key));else linkedSelection.delete(String(key));
+  renderResults();
+}
+function selectAllLinked(on){
+  linkedSelection=new Set(on?linkedListKeys:[]);
+  renderResults();
+}
+function applyLinkedOverride(){
+  if(linkedSelection.size)setRowOverrides(linkedSelection,'status',linkedBulkStatus);
+}
+function deleteLinkedSelection(){
+  const n=linkedSelection.size;
+  if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI in this browser and in snapshots you share. Restore them from Data check.`))return;
+  const keys=[...linkedSelection];
+  linkedSelection.clear();
+  setRowOverrides(keys,'deleted',true);
+}
+function restoreDeletedLines(key){
+  setRowOverrides(key?[String(key)]:allLoadedRows.filter(r=>r.isDeleted).map(rowKey),'deleted',undefined);
+}
+// Column headers sort as 'col:<column>:<asc|desc>'. Qty, value and lead start high to low; the rest A to Z / oldest first.
+function sortLinkedColumn(col){
+  const [kind,current,dir]=String(weeklyLineSort).split(':');
+  const first=['qty','value','lead'].includes(col)?'desc':'asc';
+  weeklyLineSort=`col:${col}:${kind==='col'&&current===col?(dir==='asc'?'desc':'asc'):first}`;
+  renderResults();
 }
 function toggleRowNote(key){
   const cleanKey=String(key||'');
@@ -1407,6 +1454,7 @@ function setWeeklyWarehousePreset(kind){
 function setWeeklyTileFilter(id){
   weeklyTileFilter=weeklyTileFilter===id?'':id;
   weeklyLinkedShowAll=false;
+  linkedSelection.clear();
   if(weeklyTileFilter==='otd3mo')weeklyOtdFilter='total';
   if(weeklyTileFilter==='reschedhit')weeklyRescheduleFilter='total';
   renderResults();
@@ -2077,7 +2125,8 @@ function addFiles(files){
   if(files.length&&!isSnapshotView)handleFiles([...loadedFiles,...files],{adding:true});
 }
 function applyInventoryScope(){
-  parsedRows=includeNonInventory?allLoadedRows:allLoadedRows.filter(r=>!r.isNonInventory);
+  // Lines deleted from Linked lines stay out of every page and KPI until restored from Data check.
+  parsedRows=allLoadedRows.filter(r=>!r.isDeleted&&(includeNonInventory||!r.isNonInventory));
   invalidateMetrics();
 }
 function setIncludeNonInventory(value){
@@ -3339,12 +3388,15 @@ function renderDataQualityNote(){
   if(excludedQuarantineRows)parts.push(`${fmtNum(excludedQuarantineRows)} quarantine-warehouse rows excluded by design`);
   const nonInventory=allLoadedRows.filter(r=>r.isNonInventory).length;
   if(nonInventory)parts.push(`${fmtNum(nonInventory)} non-inventory rows (charges, services) ${includeNonInventory?'included':'left out of shipping KPIs'}`);
+  const deleted=allLoadedRows.filter(r=>r.isDeleted);
+  if(deleted.length)parts.push(`${fmtNum(deleted.length)} ${deleted.length===1?'line you deleted is':'lines you deleted are'} hidden`);
   if(!parts.length)return '';
+  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI in this browser.<br><button type="button" class="btn" data-focus-key="restore-deleted" onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
   const scopeHelp=nonInventory?`<p>Non-inventory items (e.g. PPV, tariff, NRE charges) are closed by invoice, not shipped, so they are left out of late, OTD, and fill KPIs by default.<br><button type="button" class="btn" data-focus-key="toggle-noninventory" onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button></p>`:'';
   const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
   const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';
   const dateHelp=issues.some(i=>i.kind==='date')?'<p>Dates outside 1990–2099 (e.g. year 0202 or 2626) are treated as missing, so those rows are not counted as late or on time until the date is fixed in SAP.</p>':'';
-  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
+  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
 }
 
 // The KPI query's AmountLocal is already the OPEN amount on order-line rows (RDR1/POR1.OpenSum, local currency)
