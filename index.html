@@ -1274,19 +1274,28 @@ function toggleLinkedRow(key,on){
   if(on)linkedSelection.add(String(key));else linkedSelection.delete(String(key));
   renderResults();
 }
+// Clear, Delete and Apply can remove the button that had focus; keep keyboard users in the table.
+function keepLinkedFocus(){
+  const a=document.activeElement,box=document.getElementById('linked-select-all');
+  if((!a||a===document.body)&&box&&box.focus)box.focus({preventScroll:true});
+}
 function selectAllLinked(on){
   linkedSelection=new Set(on?linkedListKeys:[]);
   renderResults();
+  keepLinkedFocus();
 }
 function applyLinkedOverride(){
   if(linkedSelection.size)setRowOverrides(linkedSelection,'status',linkedBulkStatus);
+  keepLinkedFocus();
 }
 function deleteLinkedSelection(){
   const n=linkedSelection.size;
-  if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI in this browser and in snapshots you share. Restore them from Data check.`))return;
+  const where=isSnapshotView?'in this tab until it is closed (changes in a shared snapshot are not saved)':'in this browser and in snapshots you share';
+  if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI ${where}. Restore them from Data check.`))return;
   const keys=[...linkedSelection];
   linkedSelection.clear();
   setRowOverrides(keys,'deleted',true);
+  keepLinkedFocus();
 }
 function restoreDeletedLines(key){
   setRowOverrides(key?[String(key)]:allLoadedRows.filter(r=>r.isDeleted).map(rowKey),'deleted',undefined);
@@ -3412,7 +3421,7 @@ function renderDataQualityNote(){
   const deleted=allLoadedRows.filter(r=>r.isDeleted);
   if(deleted.length)parts.push(`${fmtNum(deleted.length)} ${deleted.length===1?'line you deleted is':'lines you deleted are'} hidden`);
   if(!parts.length)return '';
-  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI in this browser.<br><button type="button" class="btn" data-focus-key="restore-deleted" onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
+  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI in this browser.<br><button type="button" class="btn" data-focus-key="restore-deleted" onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}" onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
   const scopeHelp=nonInventory?`<p>Non-inventory items (e.g. PPV, tariff, NRE charges) are closed by invoice, not shipped, so they are left out of late, OTD, and fill KPIs by default.<br><button type="button" class="btn" data-focus-key="toggle-noninventory" onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button></p>`:'';
   const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
   const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';

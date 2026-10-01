@@ -134,6 +134,28 @@ test('delete hides lines from every KPI, persists, travels in snapshots, and res
   assert.doesNotMatch(html(page), /you deleted/);
 });
 
+test('in a shared snapshot, delete is for this tab only and says so; focus stays in the table; restore buttons name their line', async () => {
+  const src = await atRiskPage(pastDue(3));
+  const snap = loadPage();
+  snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
+  snap.els['embedded-snapshot-data'].textContent = src.run("JSON.stringify({parsedRows:allLoadedRows,rowOverrides,weeklyTileFilter:'late'})");
+  await snap.run('loadEmbeddedSnapshot()');
+  // Clear selection removes the button that had focus; focus moves to the select-all box instead of the page.
+  let focused = 0;
+  snap.ctx.document.getElementById('linked-select-all').focus = () => { focused++; };
+  snap.ctx.document.activeElement = snap.ctx.document.body;
+  snap.run(`toggleLinkedRow(${JSON.stringify(keyOf(snap, '1000'))},true);selectAllLinked(false)`);
+  assert.equal(focused, 1);
+  let asked = '';
+  snap.ctx.confirm = (m) => { asked = m; return true; };
+  snap.run(`toggleLinkedRow(${JSON.stringify(keyOf(snap, '1000'))},true);deleteLinkedSelection()`);
+  assert.match(asked, /in this tab until it is closed/);
+  assert.equal(focused, 2);
+  assert.equal(atRiskCount(snap), 2);
+  assert.deepEqual(snap.storage, {});
+  assert.match(html(snap), /aria-label="Restore 1000 SPY-100"/);
+});
+
 test('every column header sorts the list ascending and descending on the values shown', async () => {
   const page = await atRiskPage(SORT_ROWS);
   // Ascending order for each column; blanks and the no-commit / no-reschedule badges stay after the dated lines.
