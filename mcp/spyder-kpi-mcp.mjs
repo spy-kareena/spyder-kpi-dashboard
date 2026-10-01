@@ -99,13 +99,13 @@ async function load(paths) {
   if (box.style.display === 'block' || alerts.length) throw new Error(box.style.display === 'block' ? box.textContent : alerts.join(' '));
 }
 
-function loadedFiles() {
+function loadedInfo() {
   const files = run('loadedFiles').map((f) => ({ name: f.name, path: f.path, kind: f.kind, rows_read: f.rows }));
   const extra = lastError ? { last_load_error: lastError } : {};
   if (!files.length) return { loaded: false, hint: HOW_TO_LOAD, ...extra };
   const o = plain(page.aiRunTool('get_overview', {}));
   return { loaded: true, as_of: o.as_of, as_of_basis: o.as_of_basis, files, rows: o.files.rows,
-    rows_or_files_needing_attention: o.data_check.rows_or_files_needing_attention, ...extra };
+    data_check: o.data_check, ...extra };
 }
 
 // --- Tools ------------------------------------------------------------------------------------------------
@@ -122,22 +122,22 @@ const TOOLS = [
 const kpiNames = new Set(kpiTools.map((t) => t.name));
 
 async function callTool(name, args) {
-  if (name === 'loaded_files') return loadedFiles();
+  if (name === 'loaded_files') return loadedInfo();
   if (name === 'load_exports') {
     const paths = args.paths;
     if (!Array.isArray(paths) || !paths.length || paths.some((p) => typeof p !== 'string' || !unquote(p))) {
       return { error: 'paths must be a list of full file paths, e.g. ["C:\\\\Exports\\\\kpi_export.xls"]' };
     }
     try { await load(paths); lastError = ''; } catch (err) {
-      const now = loadedFiles();
+      const now = loadedInfo();
       return { error: err.message, still_loaded: now.loaded ? now.files.map((f) => f.name) : [] };
     }
-    return loadedFiles();
+    return loadedInfo();
   }
   if (!kpiNames.has(name)) return { error: `Unknown tool ${name}. Tools: ${TOOLS.map((t) => t.name).join(', ')}.` };
   const out = plain(page.aiRunTool(name, args));
   // The page's hints speak of its upload screen; here files come in through load_exports.
-  if (out.loaded === false) out.hint = run('hasLoadedData()') ? `${out.hint} With this connector, call load_exports with every file to use (the KPI export plus this one).` : HOW_TO_LOAD;
+  if (out.loaded === false) out.hint = run('hasLoadedData()') ? `${out.hint} With this connector, call load_exports with the paths of every file to use.` : HOW_TO_LOAD;
   return out;
 }
 
@@ -149,14 +149,14 @@ serial(async () => {
   if (!startFiles.length) { log('No export files given. Tools will explain how to load them (load_exports).'); return; }
   try {
     await load(startFiles);
-    const info = loadedFiles();
+    const info = loadedInfo();
     log(`Loaded ${info.files.length} file(s), as of ${info.as_of}: ${info.files.map((f) => `${f.name} (${f.rows_read} rows)`).join(', ')}`);
   } catch (err) { lastError = err.message; log(`Could not load the export files: ${err.message}`); }
 });
 
 if (check) {
   await work;
-  const info = loadedFiles();
+  const info = loadedInfo();
   if (!info.loaded) {
     if (!lastError) log('Usage: node mcp/spyder-kpi-mcp.mjs --check "C:\\path\\to\\kpi_export.xls"');
     process.exit(1);
