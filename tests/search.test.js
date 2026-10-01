@@ -1,0 +1,209 @@
+// Global search tests. Run: node tests/search.test.js (fixtures are synthetic).
+'use strict';
+const assert = require('node:assert/strict');
+const { loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+const { test, run } = createSuite();
+
+const wait = (ms = 200) => new Promise((r) => setTimeout(r, ms));
+const closed = (o) => sapRow({ OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', CloseDateSource: 'Delivery', OpenQuantity: '0', FillStatus: 'Complete', ...o });
+const po = (o) => sapRow({ SourceType: 'Purchase Order', KPIArea: 'Purchase Orders', OrderType: 'Purchase Order', CustomerVendorCode: 'VEND', CustomerVendorName: 'Vendor Co', ...o });
+const ROWS = [
+  sapRow({ DocumentNumber: '500', LineNumber: '1', CustomerPONumber: 'CPO-778', 'Project Code': 'PRJ-9' }),
+  closed({ DocumentNumber: '500', LineNumber: '1', ClosedDate: '08/05/2026', DeliveryDocNumber: '4411' }),
+  sapRow({ DocumentNumber: '501', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Marine', 'Item No.': 'SPY-200', ItemDescription: 'Wiring harness', Warehouse: 'CM - Delta', DueDate: '09/20/2026', LineDueDate: '09/20/2026', HeaderDueDate: '09/20/2026' }),
+  po({ DocumentNumber: '40', DueDate: '08/15/2026', LineDueDate: '08/15/2026', HeaderDueDate: '08/15/2026' }),
+];
+async function loaded(rows = ROWS, extra = []) {
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(rows) }, ...extra]);
+  return page;
+}
+// Runs a search right away (skips the debounce) and returns [type, doc #] per order-line match.
+function search(page, q) {
+  page.run(`onGlobalSearchInput(${JSON.stringify(q)});applyGlobalSearch()`);
+  return page.run('globalSearchResults(currentMetrics()).rows.map(x=>[searchRowType(x.r),x.r.documentNumber])');
+}
+const html = (page) => page.els['results-screen'].innerHTML;
+
+test('every term must match (AND) across document, PO, customer, item, warehouse, owner and project fields', async () => {
+  const page = await loaded();
+  assert.deepEqual(search(page, 'firefly controller'), [['Sales order', '500'], ['Delivery', '500']]);
+  assert.deepEqual(search(page, 'SPY-100 vendor'), [['Purchase order', '40']]);
+  assert.deepEqual(search(page, 'cpo-778 lacombe'), [['Sales order', '500']]);
+  assert.deepEqual(search(page, 'jamie prj-9'), [['Sales order', '500']]);
+  assert.deepEqual(search(page, '4411'), [['Delivery', '500']]);
+  assert.deepEqual(search(page, 'acme delta harness'), [['Sales order', '501']]);
+  assert.deepEqual(search(page, 'firefly delta'), []);
+  // Sales and purchase orders come back together, open lines first by due date.
+  assert.deepEqual(search(page, 'spy-100'), [['Sales order', '500'], ['Purchase order', '40'], ['Delivery', '500']]);
+  search(page, 'SPY-100 vendor');
+  assert.equal(page.run('activeTab'), 'search');
+  assert.match(html(page), /<h1 class="page-title">Search<\/h1>/);
+  assert.match(html(page), /<span class="page-meta"[^>]*>1 match for “SPY-100 vendor”<\/span>/);
+  assert.match(html(page), /<mark>Vendor<\/mark> Co/);
+  assert.match(html(page), /<td class="c-type">Purchase order<\/td>/);
+  assert.doesNotMatch(html(page), /undefined|NaN/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('highlighting escapes first: search text and SAP text cannot inject markup', async () => {
+  const page = await loaded([
+    sapRow({ DocumentNumber: '700', CustomerVendorName: '<script>alert(1)</script> Co' }),
+    sapRow({ DocumentNumber: '701', CustomerVendorName: 'Amp & Co' }),
+  ]);
+  assert.deepEqual(search(page, '<script>'), [['Sales order', '700']]);
+  assert.doesNotMatch(html(page), /<script/i);
+  assert.match(html(page), /<mark>&lt;script&gt;<\/mark>alert\(1\)&lt;\/script&gt; Co/);
+  assert.match(html(page), /match(es)? for “&lt;script&gt;”/);
+  assert.match(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*value="&lt;script&gt;"/);
+  search(page, 'amp');
+  assert.match(html(page), /<mark>Amp<\/mark> &amp; Co/);
+  assert.doesNotMatch(html(page), /&<mark>/);
+  // Regex characters are matched literally.
+  assert.deepEqual(search(page, '(1)'), [['Sales order', '700']]);
+  assert.deepEqual(page.errors, []);
+});
+
+test('order: open lines by due date (undated last), then shipped / closed newest first', async () => {
+  const x = { 'Item No.': 'ORD-X' };
+  const due = (d) => ({ DueDate: d, LineDueDate: d, HeaderDueDate: d });
+  const page = await loaded([
+    closed({ ...x, DocumentNumber: '602', ClosedDate: '08/05/2026', DeliveryDocNumber: '1' }),
+    sapRow({ ...x, DocumentNumber: '600', ...due('09/20/2026') }),
+    sapRow({ ...x, DocumentNumber: '604', ...due('') }),
+    closed({ ...x, DocumentNumber: '603', ClosedDate: '08/25/2026', DeliveryDocNumber: '2' }),
+    sapRow({ ...x, DocumentNumber: '601', ...due('08/10/2026') }),
+  ]);
+  assert.deepEqual(search(page, 'ord-x').map((r) => r[1]), ['601', '600', '604', '603', '602']);
+  assert.match(html(page), /Shipped<\/span>/);
+});
+
+test('typing opens Search after the debounce; Esc, clearing and nav return to the previous page', async () => {
+  const page = await loaded();
+  page.run('setTab("purchaseorders")');
+  page.run('onGlobalSearchInput("s")');
+  await wait();
+  assert.equal(page.run('activeTab'), 'purchaseorders', 'one character does not search');
+  page.run('onGlobalSearchInput("spy")');
+  assert.equal(page.run('activeTab'), 'purchaseorders', 'debounced');
+  await wait();
+  assert.equal(page.run('activeTab'), 'search');
+  assert.match(html(page), /Back to Purchase Orders/);
+  assert.doesNotMatch(page.els['app-sidebar'].innerHTML, /nav-item active/);
+  page.run('onGlobalSearchInput("spy-100")');
+  await wait();
+  assert.equal(page.run('searchPrevTab'), 'purchaseorders', 'refining keeps the page to go back to');
+  let prevented = false;
+  page.ctx.globalSearchKey({ key: 'Escape', preventDefault: () => { prevented = true; } });
+  assert.ok(prevented);
+  assert.equal(page.run('activeTab'), 'purchaseorders');
+  assert.equal(page.run('searchQuery'), '');
+  assert.match(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*value=""/);
+  // Clearing the box goes back too.
+  page.run('onGlobalSearchInput("spy")');
+  await wait();
+  page.run('onGlobalSearchInput("")');
+  await wait();
+  assert.equal(page.run('activeTab'), 'purchaseorders');
+  // Picking a page in the sidebar ends the search.
+  page.run('onGlobalSearchInput("spy")');
+  await wait();
+  page.run('setTab("monthly")');
+  assert.equal(page.run('searchQuery'), '');
+  page.run('onGlobalSearchInput("spy")');
+  await wait();
+  page.run('clearGlobalSearch()');
+  assert.equal(page.run('activeTab'), 'monthly');
+});
+
+test('no data: the box is disabled, typing and shortcuts do nothing', async () => {
+  const page = loadPage();
+  page.run('renderSidebar()');
+  assert.match(page.els['app-sidebar'].innerHTML, /<input type="search" id="global-search"[^>]*placeholder="Search orders, items, customers…"[^>]*aria-label="[^"]+"[^>]* disabled>/);
+  page.run('onGlobalSearchInput("spy")');
+  await wait();
+  assert.equal(page.run('activeTab'), 'weekly');
+  assert.doesNotMatch(html(page), /page-title">Search/);
+  let focused = 0;
+  page.els['global-search'] = { disabled: true, focus: () => { focused++; } };
+  page.ctx.globalSearchShortcut({ key: '/', target: { tagName: 'BODY' }, preventDefault() {} });
+  assert.equal(focused, 0);
+});
+
+test('"/" and Ctrl/Cmd+K focus the box unless the user is typing in a field', async () => {
+  const page = await loaded();
+  let focused = 0;
+  page.els['global-search'] = { disabled: false, focus: () => { focused++; }, select() {} };
+  const key = (key, tagName, mods = {}) => {
+    let prevented = false;
+    page.ctx.globalSearchShortcut({ key, target: { tagName }, preventDefault: () => { prevented = true; }, ...mods });
+    return prevented;
+  };
+  assert.equal(key('/', 'BODY'), true);
+  assert.equal(key('k', 'BUTTON', { ctrlKey: true }), true);
+  assert.equal(key('K', 'BODY', { metaKey: true }), true);
+  assert.equal(focused, 3);
+  for (const tag of ['INPUT', 'TEXTAREA', 'SELECT']) assert.equal(key('/', tag), false, tag);
+  assert.equal(key('k', 'BODY'), false);
+  assert.equal(focused, 3);
+});
+
+test('redraws keep focus, typed text and caret in the search box', async () => {
+  const page = await loaded();
+  const sidebar = page.els['app-sidebar'];
+  const old = { id: 'global-search', dataset: {}, value: 'spy-1', selectionStart: 3, selectionEnd: 3, selectionDirection: 'none' };
+  const fresh = { value: 'spy-', focus() { this.focused = true; }, setSelectionRange(a, b, d) { this.range = [a, b, d]; } };
+  page.ctx.document.activeElement = old;
+  sidebar.contains = (n) => n === old;
+  sidebar.querySelector = (sel) => (sel === '[id="global-search"]' ? fresh : null);
+  page.run('renderSidebar()');
+  assert.equal(fresh.focused, true);
+  assert.equal(fresh.value, 'spy-1');
+  assert.deepEqual(fresh.range, [3, 3, 'none']);
+});
+
+test('notes and overrides can be edited from search results', async () => {
+  const page = await loaded();
+  search(page, 'cpo-778');
+  const key = page.run('parsedRows.find(r=>r.customerPONumber==="CPO-778").rowKey');
+  assert.match(html(page), /Add note/);
+  page.run(`toggleRowNote(${JSON.stringify(key)})`);
+  assert.match(html(page), /<textarea class="row-note"/);
+  page.run(`updateRowOverride(${JSON.stringify(key)},'status','Urgent')`);
+  assert.equal(page.run('activeTab'), 'search');
+  assert.match(html(page), /note-btn has-note/);
+});
+
+test('first 100 matches, "Show up to 500" shows the rest', async () => {
+  const rows = Array.from({ length: 120 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i), 'Item No.': 'BULK-1' }));
+  const page = await loaded(rows);
+  search(page, 'bulk-1');
+  assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 100);
+  assert.match(html(page), /Showing 100 of 120 · add another word/);
+  assert.match(html(page), /Show up to 500/);
+  page.run('toggleTableMore("search")');
+  assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 120);
+  assert.match(html(page), /Show fewer/);
+});
+
+test('supply / demand and Clear To Build matches are listed when those files are loaded', async () => {
+  const sdHeaders = ['ExportDate', 'Item No.', 'ItemDescription', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'SupplyRiskFlag'];
+  const sd = [
+    { ExportDate: '09/03/2026', 'Item No.': 'SPY-200', WarehouseCode: '11', WarehouseName: 'Spyder - Lacombe', YearMonth: '2026-09', DemandOpenQty: '8', UsableSupplyQty: '0', MonthlyNetQty: '-8', CumulativeNetQty: '-8', SupplyRiskFlag: 'OK' },
+    { ExportDate: '09/03/2026', 'Item No.': 'SPY-300', WarehouseCode: '11', WarehouseName: 'Spyder - Lacombe', YearMonth: '2026-09', DemandOpenQty: '1', UsableSupplyQty: '1', MonthlyNetQty: '0', CumulativeNetQty: '0', SupplyRiskFlag: 'OK' },
+  ];
+  const ctb = 'CM,Month,Total,Clear To Build,At Risk,Late,Notes\r\nDSM,Sep 2026,5,4,1,0,SPY-200 short\r\nIMS,Sep 2026,3,3,0,0,\r\n';
+  const page = await loaded(ROWS, [{ name: 'supply.xls', bytes: utf16Tsv(sdHeaders, sd) }, { name: 'ctb.csv', bytes: new Uint8Array(Buffer.from(ctb)) }]);
+  assert.deepEqual(search(page, 'spy-200'), [['Sales order', '501']]);
+  assert.deepEqual(page.run('(s=>[s.supply.map(r=>r.itemCode),s.ctb.map(r=>r.cm)])(globalSearchResults(currentMetrics()))'), [['SPY-200'], ['DSM']]);
+  assert.match(html(page), /3 matches for “spy-200”/);
+  assert.match(html(page), /<h2>Supply \/ demand<\/h2><span class="section-sub">1 matching rows/);
+  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching rows/);
+  assert.doesNotMatch(html(page), /undefined|NaN/);
+  // Order lines only: no secondary tables.
+  const plain = await loaded();
+  search(plain, 'spy-200');
+  assert.doesNotMatch(html(plain), /Clear To Build|Supply \/ demand/);
+});
+
+run();
