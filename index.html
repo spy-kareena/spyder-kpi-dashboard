@@ -560,6 +560,8 @@ details.about p{margin:0}
 .ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
 .ai-compose .link-btn{margin-left:auto}
 .ai-foot{font-size:12px;color:var(--gray-400)}
+/* Wide screens keep the page beside the open drawer instead of under it */
+@media (min-width:1180px){body.ai-open .main{padding-right:456px}}
 @media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
 @media print{.ai-panel{display:none!important}}
 
@@ -3459,6 +3461,7 @@ function aiToggle(force){
   aiState.open=force===undefined?!aiState.open:!!force;
   const panel=aiEl('ai-panel');
   if(panel)panel.hidden=!aiState.open;
+  if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
   const button=document.querySelector('[data-focus-key="ask-ai"]');
   if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
   if(!aiState.open){aiFocus(button);return;}
@@ -3529,7 +3532,7 @@ function aiLoadModels(){
     }catch(err){aiSettingsStatus(aiErrorText(err),'bad');}
     aiState.models=names;
     const saved=aiGet(AI_MODEL_STORE);
-    aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||saved||'gemini-2.5-flash';
+    aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||(AI_MODEL_RE.test(saved)?saved:'gemini-2.5-flash');
     aiSyncSettings();
   })().finally(()=>{aiState.modelLoad=null;});
   return aiState.modelLoad;
