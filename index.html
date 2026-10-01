@@ -191,7 +191,8 @@ button{font-family:inherit}
 .sidebar{padding:0 14px 24px}
 .sidebar::-webkit-scrollbar{display:none}
 .sidebar-brand{padding:20px 10px 0;display:grid;gap:7px;justify-items:start}
-.sidebar .logo{margin-left:-2px}
+/* The source image is a 200x200 square with the wordmark in the middle; show only the wordmark band */
+.sidebar .logo{margin-left:-2px;height:25px;object-fit:cover;object-position:center}
 .sidebar .product{font-size:12px;letter-spacing:.02em}
 .nav{display:grid;gap:16px}
 .nav-item{text-align:left}
@@ -605,7 +606,7 @@ details.about p{margin:0}
   /* Narrow screens: the sidebar becomes a compact top bar with a scrolling page strip */
   .sidebar{position:relative;height:auto;gap:10px;padding:10px 16px 12px;border-bottom:1px solid var(--gray-200)}
   .sidebar-brand{padding:0;display:flex;align-items:center;gap:10px}
-  .sidebar .logo{width:96px;height:auto;margin:-26px 0 -26px -6px}
+  .sidebar .logo{width:96px;height:19px;margin:0 0 0 -2px}
   .nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
   .nav::-webkit-scrollbar{display:none}
   .nav-group{display:flex;gap:4px}
@@ -3318,7 +3319,7 @@ function renderSidebar(){
     : 'Add a SAP export to begin';
   const active=document.activeElement;
   const refocus=active&&el.contains&&el.contains(active)?focusSelector(active):'';
-  el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="128"><span class="product">KPI Visualizer</span></div>
+  el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}</div>`).join('')}</nav>
     <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()" title="Load another export (supply / demand or Clear To Build) next to this one">Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()">New file</button></div>`:''}</div>`;
   if(refocus){const target=el.querySelector(refocus);if(target)target.focus({preventScroll:true});}
