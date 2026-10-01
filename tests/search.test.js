@@ -160,6 +160,17 @@ test('redraws keep focus, typed text and caret in the search box', async () => {
   assert.equal(fresh.focused, true);
   assert.equal(fresh.value, 'spy-1');
   assert.deepEqual(fresh.range, [3, 3, 'none']);
+  // Same for a note textarea in the results when the page redraws.
+  const results = page.els['results-screen'];
+  const note = { dataset: { key: 'K1' }, classList: ['row-note'], value: 'late part', selectionStart: 2, selectionEnd: 4, selectionDirection: 'forward' };
+  const freshNote = { value: 'late', focus() { this.focused = true; }, setSelectionRange(a, b, d) { this.range = [a, b, d]; } };
+  page.ctx.document.activeElement = note;
+  results.contains = (n) => n === note;
+  results.querySelector = (sel) => (sel === '.row-note[data-key="K1"]' ? freshNote : null);
+  page.run('renderResults()');
+  assert.equal(freshNote.focused, true);
+  assert.equal(freshNote.value, 'late part');
+  assert.deepEqual(freshNote.range, [2, 4, 'forward']);
 });
 
 test('notes and overrides can be edited from search results', async () => {
@@ -172,6 +183,13 @@ test('notes and overrides can be edited from search results', async () => {
   page.run(`updateRowOverride(${JSON.stringify(key)},'status','Urgent')`);
   assert.equal(page.run('activeTab'), 'search');
   assert.match(html(page), /note-btn has-note/);
+  // A status override recomputes the results: "Not At Risk" turns the Past Due line into a plain open line.
+  assert.match(html(page), /status-chip bad">Past Due</);
+  page.run(`updateRowOverride(${JSON.stringify(key)},'status','Not At Risk')`);
+  assert.match(html(page), /status-chip ">Open</);
+  // A new export replaces the cached results for the same query.
+  await upload(page, [{ name: 'kpi2.xls', bytes: sapExport([sapRow({ DocumentNumber: '800', CustomerPONumber: 'CPO-778' })]) }]);
+  assert.deepEqual(search(page, 'cpo-778'), [['Sales order', '800']]);
 });
 
 test('first 100 matches, "Show up to 500" shows the rest', async () => {
@@ -197,8 +215,8 @@ test('supply / demand and Clear To Build matches are listed when those files are
   assert.deepEqual(search(page, 'spy-200'), [['Sales order', '501']]);
   assert.deepEqual(page.run('(s=>[s.supply.map(r=>r.itemCode),s.ctb.map(r=>r.cm)])(globalSearchResults(currentMetrics()))'), [['SPY-200'], ['DSM']]);
   assert.match(html(page), /3 matches for “spy-200”/);
-  assert.match(html(page), /<h2>Supply \/ demand<\/h2><span class="section-sub">1 matching rows/);
-  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching rows/);
+  assert.match(html(page), /<h2>Supply \/ demand<\/h2><span class="section-sub">1 matching row</);
+  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching row</);
   assert.doesNotMatch(html(page), /undefined|NaN/);
   // Order lines only: no secondary tables.
   const plain = await loaded();
