@@ -175,6 +175,21 @@ test('a single CTB report as CSV still works: no week picker, and it is a separa
   assert.equal(stat(html(mixed, 'setBuildRiskSnapshot("undated")'), 'Clear to build'), 4);
 });
 
+test('the workbook alone works, sheet names are escaped, and a share snapshot keeps every week', async () => {
+  const page = loadPage();
+  await upload(page, [{ name: 'ctb.xlsx', bytes: workbook(page, [{ ...SEP30, name: '0930 <img src=x onerror=x>' }, SEP24]) }]);
+  const h = html(page);
+  assert.match(h, /<option value="2026-09-30" selected>/);
+  assert.match(h, /0930 &lt;img src=x onerror=x&gt; · 2 report weeks loaded/);
+  assert.doesNotMatch(h, /<img|NaN|undefined/);
+  assert.match(h, /No open sales orders fall in CM \/ month buckets/);
+  // A share snapshot carries the normalized rows (report week included) and is read back as-is.
+  const shared = loadPage();
+  shared.run(`isSnapshotView=true;buildRiskRows=JSON.parse(${JSON.stringify(page.run('JSON.stringify(buildRiskRows)'))});invalidateMetrics();showResults()`);
+  assert.equal(stat(html(shared), 'Clear to build'), 49);
+  assert.equal(stat(html(shared, 'setBuildRiskSnapshot("2026-09-24")'), 'Clear to build'), 15);
+});
+
 test('CM names in the report map to their warehouses', () => {
   const page = loadPage();
   const map = page.run(`["DSM","August","Price","IMS","Logican","Dorigo","Lacombe","Spyder - Lacombe","Lacombe - Engineering","Intransit - Lacombe/McBride","CM SFG - August Electronics","CM - Logican"].map(cmKey)`);
