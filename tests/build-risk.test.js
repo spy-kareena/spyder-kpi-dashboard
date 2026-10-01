@@ -118,9 +118,9 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
     ['Lacombe', 'Lacombe', 'September', '2026-09', false, 13, 9, 5, 4, 0, '69%'],
     ['Lacombe', 'Lacombe', 'Total', '', true, 13, 9, 5, 4, 0, '69%'],
   ]);
-  // Lacombe firm sales orders match Spyder - Lacombe lines only, not the other Lacombe warehouses.
+  // The Lacombe block is shown but matched to no sales order lines (it covers only a few firm orders).
   const lac = page.run('currentMetrics().buildRisk.snapshots[0].matched.find(r=>r.cm==="Lacombe").matchedRows.map(r=>r.documentNumber)');
-  assert.deepEqual(lac, ['71003']);
+  assert.deepEqual(lac, []);
 });
 
 test('the blank notes header is read as Notes; notes keep their line breaks and are escaped', async () => {
@@ -193,7 +193,7 @@ test('the workbook alone works, sheet names are escaped, and a share snapshot ke
 test('CM names in the report map to their warehouses', () => {
   const page = loadPage();
   const map = page.run(`["DSM","August","Price","IMS","Logican","Dorigo","Lacombe","Spyder - Lacombe","Lacombe - Engineering","Intransit - Lacombe/McBride","CM SFG - August Electronics","CM - Logican"].map(cmKey)`);
-  assert.deepEqual(map, ['DSM', 'August Electronics', 'Price', 'IMS', 'Logican', 'Dorigo', 'Lacombe', 'Lacombe', '', '', 'August Electronics', 'Logican']);
+  assert.deepEqual(map, ['DSM', 'August Electronics', 'Price', 'IMS', 'Logican', 'Dorigo', 'Lacombe', '', '', '', 'August Electronics', 'Logican']);
 });
 
 run();

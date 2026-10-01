@@ -1047,7 +1047,8 @@ async function exportShareSnapshot(){
     buildRiskRows,
     supplyDemandRows,
     rowOverrides:sharedOverrides,
-    activeTab,
+    // A snapshot saved from Search opens on the page the search started from.
+    activeTab:activeTab==='search'?searchPrevTab:activeTab,
     weeklyWarehouseFilter,
     weeklyCustomerFilter,
     weeklySegmentFilter,
@@ -1070,6 +1071,7 @@ async function exportShareSnapshot(){
     shipScenarioTargetDate,
     shipScenarioDateBasis,
     originalDeliveryMonthFilter,
+    buildRiskSnapshot,
     reportAsOfDate:reportAsOfDate?displayDate(reportAsOfDate):'',
     dataQualityIssues,
     excludedQuarantineRows,
@@ -1180,12 +1182,14 @@ async function loadEmbeddedSnapshot(){
     shipScenarioTargetDate=data.shipScenarioTargetDate||'';
     shipScenarioDateBasis=data.shipScenarioDateBasis||'effective';
     originalDeliveryMonthFilter=data.originalDeliveryMonthFilter||'ALL';
+    buildRiskSnapshot=String(data.buildRiskSnapshot||'');
     reportAsOfDate=parseDate(data.reportAsOfDate)||parseDate(parsedRows[0]&&parsedRows[0].exportDate)||null;
     dataQualityIssues=Array.isArray(data.dataQualityIssues)?data.dataQualityIssues:[];
     excludedQuarantineRows=Number(data.excludedQuarantineRows)||0;
     snapshotCreatedAt=String(data.createdAt||'');
     allLoadedRows.forEach(applyRowOverride);
-    invalidateMetrics();
+    // Deleted lines follow the snapshot's overrides, so the scope is applied after them.
+    applyInventoryScope();
     showResults();
   }catch(err){
     console.error('Could not load embedded KPI snapshot',err);
@@ -1866,8 +1870,9 @@ function reportMonthKey(v){
 function cmKey(v){
   const s=String(v??'').toLowerCase();
   if(!s)return '';
-  // The CTB "Lacombe" block is Spyder's own firm sales orders: the Spyder - Lacombe warehouse, not the other Lacombe sites.
-  if(s.trim()==='lacombe'||s.includes('spyder - lacombe'))return 'Lacombe';
+  // The CTB "Lacombe" block covers a handful of Spyder's own firm orders; matching it to every Spyder - Lacombe line
+  // would flood the risk buckets, so it gets its own key that no warehouse maps to (shown, never matched).
+  if(s.trim()==='lacombe')return 'Lacombe';
   const names=[
     ['august','August Electronics'],
     ['alta','Alta'],
@@ -2228,7 +2233,7 @@ async function handleFiles(files,{adding=false}={}){
     if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length)throw new Error('No rows found in these exports.');
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
     if(!adding){resetViewState();applyInventoryScope();}
-    if(isSnapshotView){isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);}
+    if(isSnapshotView){isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
     if(duplicateRows)dataQualityIssues.unshift({kind:'file',message:`Ignored ${fmtNum(duplicateRows)} rows that were already in another uploaded file.`});
     if(unrecognized.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${unrecognized.join(', ')}: not a recognized KPI, supply/demand, or Clear To Build export.`});
     if(skippedText)dataQualityIssues.unshift({kind:'file',message:`Skipped ${skippedText}`});
@@ -4052,6 +4057,7 @@ function showUploadError(msg){
 // View settings that belong to one report: page, filters, picked cards, sorts, scenario dates, open notes.
 function resetViewState(){
   activeTab='weekly';weeklyWarehouseFilter=['ALL'];weeklyCustomerFilter=['ALL'];weeklySegmentFilter=['ALL'];weeklyOwnerFilter=['ALL'];weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyTileFilter='late';weeklyOtdFilter='total';weeklyRescheduleFilter='total';weeklyLineSort='default';weeklyLeadingCollapsed=false;weeklyLaggingCollapsed=false;weeklyAdvancedOpen=false;weeklyOffenderView='customers';weeklyLinkedShowAll=false;weeklyScorecardAll=false;poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='';poLineSort='default';poLinkedShowAll=false;poWarehouseAll=false;supplyWarehouseFilter=['ALL'];shipScenarioStartDate='';shipScenarioTargetDate='';shipScenarioDateBasis='effective';originalDeliveryMonthFilter='ALL';tableMore={};includeNonInventory=false;dataCheckOpen=false;expandedNoteRows=new Set();collapsedNoteRows=new Set();
+  linkedSelection=new Set();linkedBulkStatus='';searchQuery='';searchPrevTab='weekly';clearTimeout(searchTimer);buildRiskSnapshot='';
 }
 function resetApp(){
   invalidateMetrics();
