@@ -3377,8 +3377,9 @@ const KPI_TOOLS=[
         const text=[r.documentNumber,r.itemCode,r.itemDescription,r.name,r.code,rowWarehouse(r),r.customerPONumber,r.deliveryDocNumber,r.overrideStatus,r.overrideNotes].join(' ').toLowerCase();
         return words.every(w=>text.includes(w));
       });
-      const lines=rows.map(aiLine).sort((x,y)=>(y.days_past_original_due??-1e9)-(x.days_past_original_due??-1e9)||x.doc.localeCompare(y.doc,undefined,{numeric:true}));
-      return aiCap({...aiAsOf(),scope:a.scope,total_matches:lines.length,open_value_of_matches:aiR(rowOpenAmount(rows)),returned:0,sorted:'most days past original due first',rows:lines.slice(0,aiLimit(a.limit,25))},'rows');
+      const days=new Map(rows.map(r=>[r,aiDaysLate(r)??-1e9])),byDoc=new Intl.Collator('en',{numeric:true}).compare;
+      const sorted=[...rows].sort((x,y)=>days.get(y)-days.get(x)||byDoc(String(x.documentNumber||''),String(y.documentNumber||'')));
+      return aiCap({...aiAsOf(),scope:a.scope,total_matches:rows.length,open_value_of_matches:aiR(rowOpenAmount(rows)),returned:0,sorted:'most days past original due first',rows:sorted.slice(0,aiLimit(a.limit,25)).map(aiLine)},'rows');
     }},
   {name:'group_totals',
     description:'Lines, orders and open value for a scope (same scopes as search_lines), grouped by warehouse, customer, owner, vendor, due_month or status, largest open value first.',
@@ -3446,7 +3447,7 @@ const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
 const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
 const AI_MAX_ROUNDS=6;
 const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,server:null,serverCheck:null,models:[],model:'',memKey:'',busy:false,controller:null,history:[],messages:[]};
+const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[]};
 const aiEl=id=>document.getElementById(id);
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
@@ -3516,18 +3517,22 @@ async function aiPrepare(){
   if(!aiState.models.length&&(aiState.server||aiKey()))await aiLoadModels();
   if(!aiState.server&&!aiKey()&&aiState.open&&aiEl('ai-settings').hidden)aiShowSettings(true);
 }
-async function aiLoadModels(){
-  let names=[];
-  try{
-    const data=await aiFetch('models?pageSize=100');
-    names=(data.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name||''))
-      .map(x=>String(x.name).replace(/^models\//,'')).filter(n=>AI_MODEL_RE.test(n)&&!/tts|image|audio|live/.test(n));
-    if(!names.length)aiSettingsStatus('No Gemini Flash models are available for this key.','bad');
-  }catch(err){aiSettingsStatus(aiErrorText(err),'bad');}
-  aiState.models=names;
-  const saved=aiGet(AI_MODEL_STORE);
-  aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||saved||'gemini-2.5-flash';
-  aiSyncSettings();
+// Opening the panel, ticking consent and saving a key can all ask for the list at once; they share one request.
+function aiLoadModels(){
+  if(!aiState.modelLoad)aiState.modelLoad=(async()=>{
+    let names=[];
+    try{
+      const data=await aiFetch('models?pageSize=100');
+      names=(data.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name||''))
+        .map(x=>String(x.name).replace(/^models\//,'')).filter(n=>AI_MODEL_RE.test(n)&&!/tts|image|audio|live/.test(n));
+      if(!names.length)aiSettingsStatus('No Gemini Flash models are available for this key.','bad');
+    }catch(err){aiSettingsStatus(aiErrorText(err),'bad');}
+    aiState.models=names;
+    const saved=aiGet(AI_MODEL_STORE);
+    aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||saved||'gemini-2.5-flash';
+    aiSyncSettings();
+  })().finally(()=>{aiState.modelLoad=null;});
+  return aiState.modelLoad;
 }
 function aiSetModel(name){
   if(!AI_MODEL_RE.test(name))return;
