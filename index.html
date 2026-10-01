@@ -3744,7 +3744,7 @@ function aiResetClone(root){
   const panel=root.querySelector('#ai-panel');
   if(!panel)return;
   panel.hidden=true;
-  panel.querySelectorAll('#ai-log,#ai-model,#ai-mode,#ai-settings-status').forEach(n=>{n.innerHTML='';});
+  panel.querySelectorAll('#ai-log,#ai-announce,#ai-model,#ai-mode,#ai-settings-status').forEach(n=>{n.innerHTML='';});
   panel.querySelectorAll('input,textarea').forEach(n=>{n.removeAttribute('value');n.removeAttribute('checked');n.textContent='';});
 }
 // Pages that need a separate export show what they need, how to get it, and a preview of what they will show.

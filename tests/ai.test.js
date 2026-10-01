@@ -311,12 +311,14 @@ test('a shared snapshot copy drops the chat, model list and typed values', () =>
   const node = (html) => ({ innerHTML: html, textContent: 'typed', attrs: { value: 'v', checked: '' }, removeAttribute(a) { delete this.attrs[a]; } });
   const log = node('<div class="ai-msg user">secret question</div>');
   const input = node('');
-  const panel = { hidden: false, querySelectorAll: (sel) => (sel.startsWith('#ai-log') ? [log] : [input]) };
+  const seen = [];
+  const panel = { hidden: false, querySelectorAll: (sel) => (seen.push(sel), sel.startsWith('#ai-log') ? [log] : [input]) };
   const body = { removed: [], classList: { remove(c) { body.removed.push(c); } } };
   page.ctx.aiResetClone({ querySelector: (sel) => (sel === '#ai-panel' ? panel : sel === 'body' ? body : null) });
   assert.equal(panel.hidden, true);
   assert.deepEqual(body.removed, ['ai-open'], 'the copy does not keep the open-drawer page padding');
   assert.equal(log.innerHTML, '');
+  for (const id of ['ai-log', 'ai-announce', 'ai-model', 'ai-mode', 'ai-settings-status']) assert.ok(seen[0].split(',').includes(`#${id}`), `#${id} is emptied in the copy`);
   assert.deepEqual([input.attrs, input.textContent], [{}, '']);
   assert.match(require('./harness').HTML, /aiResetClone\(root\);/);
 });
