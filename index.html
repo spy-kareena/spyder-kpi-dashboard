@@ -438,18 +438,21 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .lines-table.so{min-width:1060px}
 
 /* Linked lines: row selection, bulk actions, header sort, deleted lines in Data check */
-.lines-table .c-check{padding-right:8px}
+.lines-table .c-check{padding-right:6px}
 .row-check{width:16px;height:16px;margin:0;vertical-align:top;accent-color:var(--accent);cursor:pointer}
-.lines-table td.c-check .row-check{margin-top:1px}
 .lines-table tbody tr.line-row.selected{background:var(--accent-tint)}
 .th-sort{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;display:inline-flex;align-items:baseline;gap:3px;text-align:inherit;cursor:pointer;border-radius:4px}
 .th-sort:hover{color:var(--gray-700)}
 .lines-table th[aria-sort] .th-sort{color:var(--accent-strong);font-weight:600}
-.bulk-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.linked-tools{flex-wrap:wrap}
+.bulk-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-left:auto}
 .bulk-count{font-weight:600;color:var(--accent-strong)}
 .btn-danger{color:var(--crit-text);border-color:var(--crit-border)}
 .btn-danger:hover{background:var(--crit-tint);border-color:var(--crit)}
-.lines-table .c-notes{padding-left:14px}
+.lines-table .c-notes{padding-left:12px}
+/* Room for the checkbox and Notes columns without squeezing Item / Description; the note editor lines up with Customer */
+.lines-table.so,.lines-table.po{min-width:1100px}
+.lines-table.so .note-editor{padding-left:104px}
 .data-check-pop ul.dc-deleted{list-style:none;padding-left:0}
 .dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .dc-deleted .link-btn{flex-shrink:0}
@@ -4060,9 +4063,9 @@ function renderResults(){
         return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}" onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
       };
       return `<div class="table">
-        <div class="table-tools"><label>Sort rows <select id="weekly-line-sort" class="select" onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
+        <div class="table-tools linked-tools"><label>Sort rows <select id="weekly-line-sort" class="select" onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
         <div class="table-scroll"><table class="lines-table so">
-          <colgroup><col class="col-check" style="width:44px"><col style="width:64px"><col style="width:122px"><col style="width:110px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:150px"><col style="width:114px"><col style="width:62px"><col class="col-notes" style="width:112px"></colgroup>
+          <colgroup><col class="col-check" style="width:42px"><col style="width:64px"><col style="width:112px"><col style="width:100px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:146px"><col style="width:124px"><col style="width:62px"><col class="col-notes" style="width:110px"></colgroup>
           <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list" onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide">Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
             const rowValue=cellValue(r);
@@ -4270,7 +4273,7 @@ function renderResults(){
         return `<div class="table">
           <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select" onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
           <div class="table-scroll"><table class="lines-table po">
-            <colgroup><col style="width:64px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col style="width:124px"><col class="col-notes" style="width:112px"></colgroup>
+            <colgroup><col style="width:64px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col style="width:124px"><col class="col-notes" style="width:110px"></colgroup>
             <thead><tr><th>PO #</th><th>Vendor</th><th>Warehouse</th><th>Item / Description</th><th>Due date</th><th class="num">Qty open</th><th class="num">Value</th><th>Status</th><th>Reschedule</th><th class="print-hide">Notes</th></tr></thead>
             <tbody>${shown.map((r,i)=>{
               const reschedule=realPoReschedule(r);
