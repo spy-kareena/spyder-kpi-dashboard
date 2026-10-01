@@ -160,6 +160,20 @@ test('the same workbook loaded twice is not double counted', async () => {
   assert.equal(single.run('buildRiskRows.length'), 8);
 });
 
+test('a single CTB report as CSV still works: no week picker, and it is a separate pick next to a workbook', async () => {
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late,Notes\r\nIMS,Sep 2026,5,4,1,0,"a\nb"\r\n,Oct 2026,,,,,\r\n'));
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }]);
+  const h = html(page);
+  assert.doesNotMatch(h, /build-risk-snapshot|CTB % by CM/);
+  assert.equal(stat(h, 'Clear to build'), 4);
+  assert.match(h, /a<br>b/);
+  const mixed = loadPage();
+  await upload(mixed, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.xlsx', bytes: workbook(mixed, [SEP30]) }, { name: 'ctb.csv', bytes: csv }]);
+  assert.match(html(mixed), /<option value="2026-09-30" selected>Sep 30<\/option><option value="undated">Undated report<\/option>/);
+  assert.equal(stat(html(mixed, 'setBuildRiskSnapshot("undated")'), 'Clear to build'), 4);
+});
+
 test('CM names in the report map to their warehouses', () => {
   const page = loadPage();
   const map = page.run(`["DSM","August","Price","IMS","Logican","Dorigo","Lacombe","Spyder - Lacombe","Lacombe - Engineering","Intransit - Lacombe/McBride","CM SFG - August Electronics","CM - Logican"].map(cmKey)`);
