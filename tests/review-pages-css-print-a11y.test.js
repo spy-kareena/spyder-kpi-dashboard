@@ -72,4 +72,20 @@ test('heat map is an ARIA table; cells are focusable with their breakdown as tex
   assert.match(CSS, /\.heat-slot:focus-visible \.heat-cell\{outline:2px solid var\(--accent\)/);
 });
 
+// WCAG contrast from the :root tokens.
+const TOKENS = Object.fromEntries([...CSS.match(/:root\{([\s\S]*?)\}/)[1].matchAll(/--([\w-]+):(#[0-9a-f]{3,6})/gi)].map((m) => [m[1], m[2]]));
+const hex = (c) => (c.length === 4 ? c.replace(/^#(.)(.)(.)$/, '#$1$1$2$2$3$3') : c);
+const lum = (c) => { const n = parseInt(hex(c).slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255].map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); };
+const ratio = (a, b) => { const [x, y] = [lum(TOKENS[a] || a), lum(TOKENS[b] || b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+
+test('informational text no longer uses --gray-400; --gray-500 reads at 4.5:1 on page surfaces', () => {
+  assert.ok(!/[{;]color:var\(--gray-400\)/.test(CSS), 'a text rule still uses --gray-400');
+  for (const sel of ['.nav-label', '.muted', '.loaded-label', '.kpi-tag', '.bullet-scale', '.rank-no', '.table-tools .hint', '.ai-foot', '.heat-0', '.data-table .muted']) {
+    assert.match(CSS, new RegExp(`(^|\\})${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{[^}]*color:var\\(--gray-500\\)`, 'm'), sel);
+  }
+  assert.match(CSS, /\.lines-table \.c-item \.desc\{color:var\(--gray-500\)/);
+  assert.match(CSS, /\.sidebar-search input::placeholder\{color:var\(--gray-500\)\}/);
+  for (const bg of ['white', 'gray-50', 'accent-tint']) assert.ok(ratio('gray-500', bg) >= 4.5, bg);
+});
+
 run();
