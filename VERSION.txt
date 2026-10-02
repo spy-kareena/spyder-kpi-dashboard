@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 1v2
+Version: 1v3
 Package date: 2026-10-01
 
 Main file: index.html
@@ -8,3 +8,8 @@ Type: Static offline-capable browser dashboard
 1v2: linked-lines bulk select (override / delete with restore) and column sort, dashboard-wide search,
 Clear To Build workbook support on Build Risk (weekly snapshots), Ask AI (Google Gemini), MCP connector
 (mcp/spyder-kpi-mcp.mjs) with a Connect an AI help page, compact logo.
+
+1v3: senior frontend review fixes (46 confirmed issues). Ask AI / MCP get_build_risk works with the CTB workbook;
+newer exports replace older ones of the same kind instead of double counting; override select no longer saves on
+every arrow key; faster Add file and redraws; CTB week/year fixes; search limited to the picked CTB week and
+announced to screen readers; Ctrl/Cmd+K only (no bare "/"); keyboard, contrast, focus and print fixes.
