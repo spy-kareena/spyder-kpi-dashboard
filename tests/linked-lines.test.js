@@ -107,7 +107,7 @@ test('delete hides lines from every KPI, persists, travels in snapshots, and res
   page.run('setIncludeNonInventory(true)');
   assert.equal(page.run('parsedRows.length'), 3);
   // The Data check pill appears and lists the deleted lines with Restore buttons.
-  assert.match(html(page), /Data check<\/summary><div class="data-check-pop"><strong>2 lines you deleted are hidden/);
+  assert.match(html(page), /Data check<\/summary><div class="data-check-pop"[^>]*><strong>2 lines you deleted are hidden/);
   assert.match(html(page), /onclick="restoreDeletedLines\(\)">Restore all/);
   assert.equal([...html(page).matchAll(/class="dc-restore link-btn"/g)].length, 2);
   assert.match(html(page), /<li><span>1000 · Firefly RV · SPY-100<\/span>/);
