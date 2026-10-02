@@ -2194,12 +2194,24 @@ function rescheduleStats(rows){
     rate:closed.length?Math.round((met.length/closed.length)*100):0
   };
 }
+// A delivery's timing against its original date: days from that date to the close date, and days late (for the
+// 2-day tolerance). Row dates never change after loading, so each row is worked out once; redraws reuse it.
+const otdTimingCache=new WeakMap();
+function otdTiming(r){
+  let t=otdTimingCache.get(r);
+  if(t===undefined){
+    const due=hasRealDate(r.closeDate)?originalHeaderDate(r):null;
+    t=due?{days:daysBetweenDates(due,r.closeDate),late:deliveryLateDays(r)}:null;
+    otdTimingCache.set(r,t);
+  }
+  return t;
+}
 function otdStats(rows){
-  const scored=rows.filter(r=>hasRealDate(r.closeDate)&&originalHeaderDate(r));
-  const early=scored.filter(r=>daysBetweenDates(originalHeaderDate(r),r.closeDate)<0);
-  const onTime=scored.filter(r=>daysBetweenDates(originalHeaderDate(r),r.closeDate)===0);
-  const tolerance=scored.filter(isToleranceDelivery);
-  const late=scored.filter(r=>deliveryLateDays(r)>2);
+  const scored=rows.filter(otdTiming);
+  const early=scored.filter(r=>otdTiming(r).days<0);
+  const onTime=scored.filter(r=>otdTiming(r).days===0);
+  const tolerance=scored.filter(r=>otdTiming(r).late>=1&&otdTiming(r).late<=2);
+  const late=scored.filter(r=>otdTiming(r).late>2);
   return {scored,early,onTime,tolerance,late,rate:scored.length?Math.round(((early.length+onTime.length)/scored.length)*100):0};
 }
 const realDateCache=new Map();
@@ -3111,20 +3123,16 @@ function getMetrics(){
   const onTrackRows=rows.filter(r=>!r.isLate&&!r.isPastDue&&!r.isAtRisk);
   const unconfirmedRows=rows.filter(r=>r.isUnconfirmed);
   const missingPriceRows=rows.filter(r=>r.isMissingPrice);
-  const shipmentsByLine=indexShipmentsByLine(allRows);
-  const perfect=perfectOrderStats(allRows,shipmentsByLine);
-  const perfectEligibleRows=perfect.eligible;
-  const perfectRows=perfect.perfect;
-  const notPerfectRows=perfect.notPerfect;
-  const perfectOrderRate=perfect.rate;
+  // Aggregates that only some pages (and Ask AI / MCP tools) read are built on first read, so the redraw after an
+  // override, delete or restore on Order Health or Purchase Orders does not rebuild them.
+  const once=build=>{let done=false,value;return ()=>{if(!done){value=build();done=true;}return value;};};
+  const shipmentsByLine=once(()=>indexShipmentsByLine(allRows));
+  const perfect=once(()=>perfectOrderStats(allRows,shipmentsByLine()));
+  const backorder=once(()=>backorderStats(allRows,shipmentsByLine()));
   const filledRows=rows.filter(r=>r.quantity>0&&r.openQuantity<r.quantity);
   const onTimeRows=onTrackRows;
-  const backorder=backorderStats(allRows,shipmentsByLine);
-  const backorderRows=backorder.backorder;
   const partialShipRows=rows.filter(r=>r.quantity>0&&r.openQuantity>0&&r.openQuantity<r.quantity);
-  const backorderRate=backorder.rate;
   const partialShipRate=rows.length?Math.round((partialShipRows.length/rows.length)*100):0;
-  const warehouseKpis=buildWarehouseKpis(allRows,shipmentsByLine);
   const docCount=new Set(rows.map(r=>`${r.sourceType}-${r.documentNumber}`)).size;
   const today=reportToday();
   const lastMonthKey=monthKey(addMonths(today,-1));
@@ -3137,10 +3145,6 @@ function getMetrics(){
   const closedThisMonthRows=deliveredClosedRows.filter(r=>closeKey(r)===thisMonthKey);
   const openThisMonthRows=rows.filter(r=>r.isOpen&&dueKey(r)===thisMonthKey);
   const openNextMonthRows=rows.filter(r=>r.isOpen&&dueKey(r)===nextMonthKey);
-  const byMonth=groupByMonth(allRows,shipmentsByLine);
-  const byOriginalHeaderMonth=groupByOriginalHeaderMonth(allRows,shipmentsByLine);
-  const warehouseTimeline=buildWarehouseTimeline(rows);
-  const metricTimeline=buildMetricTimeline(rows);
   const statusOrder={'Open':1,'Past Due':2,'Late':3,'Open Next Month':4,'No Commit':5,'Rescheduled':6,'Closed':7};
   const byStatus=groupBy(rows,r=>r.statusBucket).sort((a,b)=>(statusOrder[a.key]||99)-(statusOrder[b.key]||99));
   // ── Weekly window helpers ──
@@ -3188,11 +3192,22 @@ function getMetrics(){
   const noCommitPastDue=noCommitRows.filter(r=>r.originalDaysPastDue!==null&&r.originalDaysPastDue>0).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
   const actionRequiredRows=uniqueRows([...urgentOverrideRows,...pastDueNoReschedule,...missedRescheduleRows,...noCommitPastDue]).sort((a,b)=>((b.originalDaysPastDue||b.effectiveDaysPastDue||0)-(a.originalDaysPastDue||a.effectiveDaysPastDue||0)));
   const dueThisWeekRows=uniqueRows([...actionRequiredRows,...dueThisWeekDateRows]);
-  const buildRisk=buildRiskSummary(rows);
-  const supplyDemand=buildSupplyDemandSummary();
+  const byMonth=once(()=>groupByMonth(allRows,shipmentsByLine()));
+  const byOriginalHeaderMonth=once(()=>groupByOriginalHeaderMonth(allRows,shipmentsByLine()));
+  const warehouseTimeline=once(()=>buildWarehouseTimeline(rows));
+  const metricTimeline=once(()=>buildMetricTimeline(rows));
+  const warehouseKpis=once(()=>buildWarehouseKpis(allRows,shipmentsByLine()));
+  const buildRisk=once(()=>buildRiskSummary(rows));
+  const supplyDemand=once(()=>buildSupplyDemandSummary());
   return {
-    backorderQty:backorder.backorderQty,backorderDueQty:backorder.orderedQty,
-    rows,allRows,totalAmount,openAmount,totalQty,openQty,filledQty,lateRows,pastDueRows,atRiskRows,rescheduledRows,attentionRows,openRows,onTrackRows,closedRows,closedLastMonthRows,closedThisMonthRows,openThisMonthRows,openNextMonthRows,byMonth,byOriginalHeaderMonth,warehouseTimeline,metricTimeline,unconfirmedRows,missingPriceRows,perfectEligibleRows,perfectRows,notPerfectRows,perfectOrderRate,filledRows,onTimeRows,backorderRows,partialShipRows,backorderRate,partialShipRate,warehouseKpis,docCount,buildRisk,supplyDemand,
+    get backorderQty(){return backorder().backorderQty;},get backorderDueQty(){return backorder().orderedQty;},
+    get backorderRows(){return backorder().backorder;},get backorderRate(){return backorder().rate;},
+    get perfectEligibleRows(){return perfect().eligible;},get perfectRows(){return perfect().perfect;},
+    get notPerfectRows(){return perfect().notPerfect;},get perfectOrderRate(){return perfect().rate;},
+    get byMonth(){return byMonth();},get byOriginalHeaderMonth(){return byOriginalHeaderMonth();},
+    get warehouseTimeline(){return warehouseTimeline();},get metricTimeline(){return metricTimeline();},
+    get warehouseKpis(){return warehouseKpis();},get buildRisk(){return buildRisk();},get supplyDemand(){return supplyDemand();},
+    rows,allRows,totalAmount,openAmount,totalQty,openQty,filledQty,lateRows,pastDueRows,atRiskRows,rescheduledRows,attentionRows,openRows,onTrackRows,closedRows,closedLastMonthRows,closedThisMonthRows,openThisMonthRows,openNextMonthRows,unconfirmedRows,missingPriceRows,filledRows,onTimeRows,partialShipRows,partialShipRate,docCount,
     closedLastWeekRows,closedThisWeekRows,otdLast3MonthRows,dueThisWeekRows,dueNextWeekRows,activeRescheduleRows,rescheduledThisWeekRows,genericRescheduleRows,missingLineRescheduleData,pastDueNoReschedule,pastDueWithReschedule,missedRescheduleRows,noCommitRows,noCommitPastDue,actionRequiredRows,notShippedThisMonthRows,monthName,
     bySource:groupBy(rows,r=>r.sourceType),
     byArea:groupBy(rows,r=>r.kpiArea),

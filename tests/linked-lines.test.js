@@ -306,6 +306,31 @@ test('Order Health and PO linked lines leave Item / Description about 200px at t
   assert.ok(so >= 190 && po >= 190, `Item / Description gets ${so}px (SO) and ${po}px (PO)`);
 });
 
+test('an override redraws Order Health without building other pages\' aggregates; delivery date math is worked out once', async () => {
+  const delivery = (doc, closed) => sapRow({ DocumentNumber: doc, 'Internal Number': doc, LineDueDate: '08/10/2026', DueDate: '08/10/2026', HeaderDueDate: '08/10/2026', OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', ClosedDate: closed, CloseDateSource: 'Delivery', DeliveryDocNumber: `D${doc}`, OpenQuantity: '0' });
+  // Early, on time, 1 and 2 days late (tolerance), 5 days late.
+  const page = await atRiskPage([...pastDue(3), delivery('801', '08/08/2026'), delivery('802', '08/10/2026'), delivery('803', '08/11/2026'), delivery('804', '08/12/2026'), delivery('805', '08/15/2026')]);
+  const otd = "(()=>{const s=otdStats(parsedRows.filter(isShipmentRow));return [s.scored,s.early,s.onTime,s.tolerance,s.late].map(x=>x.map(r=>r.documentNumber))})()";
+  assert.deepEqual(page.run(otd), [['801', '802', '803', '804', '805'], ['801'], ['802'], ['803', '804'], ['805']]);
+  page.run('var parses=0;var realParse=parseDate;parseDate=function(){parses++;return realParse.apply(this,arguments)}');
+  assert.deepEqual(page.run(otd), [['801', '802', '803', '804', '805'], ['801'], ['802'], ['803', '804'], ['805']]);
+  assert.equal(page.run('parses'), 0);
+  page.run('parseDate=realParse');
+
+  const pages = { groupByMonth: 'monthly', groupByOriginalHeaderMonth: 'monthly', buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
+  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
+  page.run(`updateRowOverride(${JSON.stringify(keyOf(page, '1000'))},'status','Urgent')`);
+  page.run('selectAllLinked(true);linkedBulkStatus="Hold";applyLinkedOverride()');
+  assert.deepEqual(page.run('built'), {});
+  // Each page builds what it shows on first view, once per metrics object, with the same numbers as before.
+  for (const [fn, tab] of Object.entries(pages)) {
+    page.run(`setTab('${tab}');renderResults()`);
+    assert.equal(page.run(`built.${fn}`), 1, fn);
+  }
+  assert.equal(page.run('currentMetrics().perfectOrderRate'), page.run('perfectOrderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).rate'));
+  assert.equal(page.run('currentMetrics().backorderQty'), page.run('backorderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).backorderQty'));
+});
+
 test('the guides promise row selection and header sort only on Order Health linked lines, where they exist', async () => {
   const page = await atRiskPage([...pastDue(1), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700' })]);
   assert.match(html(page), /class="row-check"[\s\S]*class="th-sort"/);
