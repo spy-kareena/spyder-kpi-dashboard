@@ -176,6 +176,18 @@ test('Fill rate and On-track rate show a neutral dash when no sales-order lines 
   assert.deepEqual(kpi(html(so), 'On-track rate'), ['crit', '0%']);
 });
 
+test('Metrics: "Rescheduled, commit ahead" counts the same lines as the timeline Rescheduled column', async () => {
+  const page = await loaded([
+    sapRow({ DocumentNumber: '1', RescheduleDate: '10/01/2026', LineRescheduleDate: '10/01/2026', RescheduleFlag: 'Rescheduled' }), // into next month: Open Next Month
+    sapRow({ DocumentNumber: '2', RescheduleDate: '11/15/2026', LineRescheduleDate: '11/15/2026', RescheduleFlag: 'Rescheduled' }),
+    sapRow({ DocumentNumber: '3' }),
+  ]);
+  page.run('setTab("metrics")');
+  const strip = Number(html(page).match(/Rescheduled, commit ahead[\s\S]*?class="ms-big[^>]*>(\d+)</)[1]);
+  assert.equal(strip, page.run('currentMetrics().metricTimeline.reduce((s,g)=>s+g.rescheduledRows,0)'));
+  assert.equal(strip, 1);
+});
+
 test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));

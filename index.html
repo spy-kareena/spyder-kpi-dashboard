@@ -5652,7 +5652,8 @@ function renderResults(){
     const mt=m.metricTimeline;
     const thisMk=monthKey(reportToday());
     const onTrackRate=pct(m.onTrackRows.length,m.rows.length);
-    const commitAhead=m.rows.filter(r=>weeklyRiskBucket(r)==='future').length;
+    // The same count as the timeline's Rescheduled column and the At-risk chart (a reschedule into next month is Open Next Month there).
+    const commitAhead=m.rescheduledRows.length;
     const lateCount=m.pastDueRows.length+m.lateRows.length;
     const rateCard=(label,valueText,rate,tone,target,targetLabel,sub)=>`<div class="card rate-card">
         <div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-tag">${targetLabel}</span></div>
