@@ -36,6 +36,8 @@ For any other internal static server, point the document root at this folder and
 
 The dashboard reads uploaded Excel/CSV files locally in the browser.
 
+The files of the last report are kept in that browser (IndexedDB, database `spyderKpiReport`) so the report reopens on the next visit; loading a new report replaces them. To remove them, clear the site data for the dashboard in the browser settings. On a shared computer, use a separate browser profile per person.
+
 Important: saved notes/override selections are stored in that user's browser storage. They are not shared live between users unless a shared backend is added later. A **Share snapshot** file does carry the loaded rows and the notes on those rows, so treat snapshot files like the SAP export itself.
 
 If the team needs shared live notes, the next version should add a shared storage layer such as SharePoint List, SQL database, or another internal API.

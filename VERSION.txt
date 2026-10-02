@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 1v3
+Version: 1v4
 Package date: 2026-10-01
 
 Main file: index.html
@@ -13,3 +13,6 @@ Clear To Build workbook support on Build Risk (weekly snapshots), Ask AI (Google
 newer exports replace older ones of the same kind instead of double counting; override select no longer saves on
 every arrow key; faster Add file and redraws; CTB week/year fixes; search limited to the picked CTB week and
 announced to screen readers; Ctrl/Cmd+K only (no bare "/"); keyboard, contrast, focus and print fixes.
+
+1v4: the last loaded report reopens on the next visit (files kept in the browser's IndexedDB) until a new
+report replaces it; icons on Ask AI, Share snapshot and Export PDF.
