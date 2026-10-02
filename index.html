@@ -2241,7 +2241,8 @@ async function handleFiles(files,{adding=false}={}){
     loadedFiles=valid;
     allLoadedRows=normalizeRows(allRaw);
     applyInventoryScope();
-    buildRiskRows=normalizeBuildRiskRows(allBuildRaw);
+    const ctb=normalizeBuildRiskRows(allBuildRaw);
+    buildRiskRows=ctb.rows;duplicateRows+=ctb.duplicateRows;
     supplyDemandRows=normalizeSupplyDemandRows(allSupplyDemandRaw);
     if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length)throw new Error('No rows found in these exports.');
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
@@ -2442,12 +2443,18 @@ function normalizeBuildRiskRows(raw){
   });
   // A report week that comes in from more than one file keeps the copy from the file added last, so an updated
   // workbook replaces the older one (Add file re-reads every file, oldest first). Within one file the first sheet wins.
-  const seen=new Set();
+  // An undated block (CSV, sheet named without a date) is dropped only when another block has the same rows.
+  // Dropped copies of identical rows are counted for the Data check note.
+  const seen=new Set(),sigs=new Set();
+  let duplicateRows=0;
   [...blocks].sort((a,b)=>b.file-a.file).forEach(b=>{
-    b.skip=!!b.key&&seen.has(b.key);
-    seen.add(b.key);
+    b.rows=b.rows.filter(r=>r.cm&&(r.month||r.isTotal));
+    const sig=JSON.stringify(b.rows),id=b.key||sig;
+    b.skip=seen.has(id);
+    if(b.skip&&sigs.has(sig))duplicateRows+=b.rows.length;
+    seen.add(id);sigs.add(sig);
   });
-  return blocks.filter(b=>!b.skip).flatMap(b=>b.rows.filter(r=>r.cm&&(r.month||r.isTotal)));
+  return {rows:blocks.filter(b=>!b.skip).flatMap(b=>b.rows),duplicateRows};
 }
 
 function readExportFile(file){

@@ -178,6 +178,34 @@ test('an updated workbook added later replaces the weeks it repeats', async () =
   assert.deepEqual(page.run(weeks), [['2026-09-30', 5, 'old'], ['2026-10-07', 7, 'new week']]);
 });
 
+test('undated CTB data loaded twice (CSV, or a sheet named without a date) is counted once and reported', async () => {
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nDSM,Sep 2026,7,5,2,0\r\n,Oct 2026,8,6,2,0\r\n'));
+  const note = /Ignored 2 rows that were already in another uploaded file/;
+  const dq = (page) => page.run('dataQualityIssues.map(i=>i.message)').join(' ');
+  const added = loadPage();
+  await upload(added, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }]);
+  await addFile(added, [{ name: 'ctb.csv', bytes: csv }]);
+  const together = loadPage();
+  await upload(together, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }, { name: 'ctb (1).csv', bytes: csv }]);
+  const sheets = loadPage();
+  const wb = workbook(sheets, [{ name: 'Sheet1', aoa: [HEAD, ['DSM', 'Sep 2026', 7, 5, 2, 0], [_, 'Oct 2026', 8, 6, 2, 0]] }]);
+  await upload(sheets, [{ name: 'kpi.xls', bytes: KPI }, { name: 'a.xlsx', bytes: wb }, { name: 'b.xlsx', bytes: wb }]);
+  for (const page of [added, together, sheets]) {
+    const h = html(page);
+    assert.equal(stat(h, 'CTB report rows'), 2);
+    assert.equal(stat(h, 'Clear to build'), 11);
+    assert.equal(stat(h, 'At risk'), 4);
+    assert.match(dq(page), note);
+  }
+  // Two different undated reports are both kept, and the same dated workbook twice is now reported too.
+  const other = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nIMS,Sep 2026,4,4,0,0\r\n'));
+  const both = loadPage();
+  await upload(both, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }, { name: 'ims.csv', bytes: other }]);
+  assert.equal(stat(html(both), 'Clear to build'), 15);
+  assert.doesNotMatch(dq(both), /Ignored/);
+  assert.match(dq(await loaded(undefined, ['copy.xlsx'])), /Ignored 11 rows that were already in another uploaded file/);
+});
+
 test('a single CTB report as CSV still works: no week picker, and it is a separate pick next to a workbook', async () => {
   const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late,Notes\r\nIMS,Sep 2026,5,4,1,0,"a\nb"\r\n,Oct 2026,,,,,\r\n'));
   const page = loadPage();
