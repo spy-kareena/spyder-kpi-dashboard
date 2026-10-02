@@ -211,6 +211,8 @@ test('notes and overrides can be edited from search results', async () => {
   search(page, 'cpo-778');
   const key = page.run('parsedRows.find(r=>r.customerPONumber==="CPO-778").rowKey');
   assert.match(html(page), /Add note/);
+  // Wide enough for the 74px "Add note" button plus the last cell's 12px + 20px padding, as on Order Health.
+  assert.match(html(page), /<col class="col-notes" style="width:110px"><\/colgroup>/);
   page.run(`toggleRowNote(${JSON.stringify(key)})`);
   assert.match(html(page), /<textarea class="row-note"/);
   page.run(`updateRowOverride(${JSON.stringify(key)},'status','Urgent')`);

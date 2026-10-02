@@ -4270,7 +4270,7 @@ function renderGlobalSearchPage(m){
     <div class="table">
       <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
       <div class="table-scroll"><table class="lines-table search">
-        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:84px"></colgroup>
+        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
         <thead><tr><th>Type</th><th>Doc #</th><th>Customer / vendor</th><th>Warehouse</th><th>Item / description</th><th title="Due date for open lines, close date for shipped and closed lines">Date</th><th class="num">Qty</th><th class="num">Value</th><th>Status</th><th class="print-hide">Notes</th></tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
