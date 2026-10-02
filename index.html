@@ -1076,10 +1076,18 @@ async function exportShareSnapshot(){
     weeklyLineSort,
     weeklyLeadingCollapsed,
     weeklyLaggingCollapsed,
+    weeklyAdvancedOpen,
+    weeklyOffenderView,
+    weeklyLinkedShowAll,
+    weeklyScorecardAll,
     poWarehouseFilter,
     poVendorFilter,
     poTileFilter,
     poLineSort,
+    poLinkedShowAll,
+    poWarehouseAll,
+    tableMore,
+    dataCheckOpen,
     supplyWarehouseFilter,
     shipScenarioStartDate,
     shipScenarioTargetDate,
@@ -1188,10 +1196,18 @@ async function loadEmbeddedSnapshot(){
     weeklyLineSort=data.weeklyLineSort||'default';
     weeklyLeadingCollapsed=!!data.weeklyLeadingCollapsed;
     weeklyLaggingCollapsed=!!data.weeklyLaggingCollapsed;
+    weeklyAdvancedOpen=!!data.weeklyAdvancedOpen;
+    weeklyOffenderView=String(data.weeklyOffenderView||'customers');
+    weeklyLinkedShowAll=!!data.weeklyLinkedShowAll;
+    weeklyScorecardAll=!!data.weeklyScorecardAll;
     poWarehouseFilter=data.poWarehouseFilter||['ALL'];
     poVendorFilter=data.poVendorFilter||['ALL'];
     poTileFilter=data.poTileFilter||'';
     poLineSort=data.poLineSort||'default';
+    poLinkedShowAll=!!data.poLinkedShowAll;
+    poWarehouseAll=!!data.poWarehouseAll;
+    tableMore=data.tableMore&&typeof data.tableMore==='object'&&!Array.isArray(data.tableMore)?data.tableMore:{};
+    dataCheckOpen=!!data.dataCheckOpen;
     supplyWarehouseFilter=data.supplyWarehouseFilter||['ALL'];
     shipScenarioStartDate=data.shipScenarioStartDate||'';
     shipScenarioTargetDate=data.shipScenarioTargetDate||'';
