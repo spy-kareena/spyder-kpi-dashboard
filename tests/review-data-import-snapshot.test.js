@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+const { loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const SERVER = path.join(__dirname, '..', 'mcp', 'spyder-kpi-mcp.mjs');
@@ -150,6 +150,36 @@ test('a load normalizes each header once per file, not once per cell, and signs 
   assert.equal(page.run('parsedRows.length'), 200);
   assert.equal(calls.signatures, 2);
   assert.match(fileIssues(page).join(' '), /Ignored 200 rows/);
+});
+
+// --- Share snapshot ---------------------------------------------------------------------------------
+async function saveSnapshot(page) {
+  let payload = '';
+  Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
+  await page.ctx.exportShareSnapshot();
+  return payload;
+}
+async function openSnapshot(payload, today) {
+  const snap = loadPage({ today });
+  snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
+  snap.els['embedded-snapshot-data'].textContent = payload;
+  await snap.run('loadEmbeddedSnapshot()');
+  return snap;
+}
+
+test('a snapshot of an export without ExportDate keeps the numbers of the day it was saved', async () => {
+  const headers = SAP_HEADERS.filter((h) => h !== 'ExportDate');
+  const due = (doc, d) => sapRow({ DocumentNumber: doc, DueDate: d, HeaderDueDate: d, LineDueDate: d });
+  const saver = loadPage({ today: '2026-09-10' });
+  await upload(saver, [{ name: 'no-date.xls', bytes: utf16Tsv(headers, [due('700', '09/20/2026'), due('701', '09/22/2026')]) }]);
+  const kpis = (p) => p.run('(()=>{const m=currentMetrics();return {asOf:displayDate(reportToday()),atRisk:orderHealthData(m).lateTileRows.length,pastDue:m.pastDueRows.length+m.lateRows.length,buckets:m.rows.map(r=>r.statusBucket)};})()');
+  const saved = kpis(saver);
+  assert.deepEqual(saved, { asOf: '2026-09-10', atRisk: 0, pastDue: 0, buckets: ['Open', 'Open'] });
+
+  const viewer = await openSnapshot(await saveSnapshot(saver), '2026-09-30');
+  assert.deepEqual(kpis(viewer), saved);
+  assert.match(viewer.els['results-screen'].innerHTML, /As of 2026-09-10, the day the snapshot was saved \(no ExportDate column\)/);
+  assert.equal(viewer.run('aiAsOf().as_of'), '2026-09-10');
 });
 
 run();

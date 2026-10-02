@@ -952,6 +952,8 @@ let excludedQuarantineRows = 0;
 // Set when this page is a shared snapshot file; notes edited there are not written to browser storage.
 let isSnapshotView = false;
 let snapshotCreatedAt = '';
+// A snapshot of an export without ExportDate is pinned to the day it was saved (its numbers were computed then).
+let snapshotAsOfSaveDay = false;
 let overrideSaveFailed = false;
 let loadedFiles = [];
 // Every normalized SO/PO row; parsedRows is this minus non-inventory lines unless the user includes them.
@@ -1084,7 +1086,8 @@ async function exportShareSnapshot(){
     shipScenarioDateBasis,
     originalDeliveryMonthFilter,
     buildRiskSnapshot,
-    reportAsOfDate:reportAsOfDate?displayDate(reportAsOfDate):'',
+    reportAsOfDate:displayDate(reportToday()),
+    reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
     excludedQuarantineRows,
     createdAt:new Date().toISOString()
@@ -1199,6 +1202,7 @@ async function loadEmbeddedSnapshot(){
     dataQualityIssues=Array.isArray(data.dataQualityIssues)?data.dataQualityIssues:[];
     excludedQuarantineRows=Number(data.excludedQuarantineRows)||0;
     snapshotCreatedAt=String(data.createdAt||'');
+    snapshotAsOfSaveDay=!!data.reportAsOfSaveDay&&!!reportAsOfDate;
     allLoadedRows.forEach(applyRowOverride);
     // Deleted lines follow the snapshot's overrides, so the scope is applied after them.
     applyInventoryScope();
@@ -3535,7 +3539,7 @@ const AI_SCOPES=['at_risk','no_commit','rescheduled','due_this_week','open','po_
 const AI_GROUPS=['warehouse','customer','owner','vendor','due_month','status'];
 const aiR=v=>Math.round(num(v)*100)/100;
 const aiLimit=(v,fallback)=>Math.max(1,Math.min(100,Math.round(Number(v))||fallback));
-const aiAsOf=()=>({as_of:displayDate(reportToday()),as_of_basis:reportAsOfDate?'export date':'viewer today (the export has no ExportDate column)'});
+const aiAsOf=()=>({as_of:displayDate(reportToday()),as_of_basis:reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?'the day the snapshot was saved (the export has no ExportDate column)':'export date'):'viewer today (the export has no ExportDate column)'});
 const aiNoRows=()=>parsedRows.length?null:{loaded:false,hint:hasLoadedData()?'The loaded files have no sales or purchase order lines. Load the SAP KPI export to answer this.':'No export is loaded. Load the SAP KPI export on the upload screen first.'};
 const aiTile=rows=>({orders:rowDocCount(rows),lines:rows.length,open_value:aiR(rowOpenAmount(rows))});
 const aiPoTile=rows=>({lines:rows.length,open_value:aiR(rowOpenAmount(rows)),open_qty:aiR(rowOpenQty(rows))});
@@ -4613,7 +4617,7 @@ let lastRenderedRows=null;
 function renderResults(){
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
-  const asOfText=(reportAsOfDate?`As of export date ${displayDate(reportAsOfDate)}`:`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
+  const asOfText=(reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?`As of ${displayDate(reportAsOfDate)}, the day the snapshot was saved (no ExportDate column)`:`As of export date ${displayDate(reportAsOfDate)}`):`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
 
   renderSidebar();
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
