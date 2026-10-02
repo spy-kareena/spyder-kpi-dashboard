@@ -59,8 +59,10 @@ test('heat map is an ARIA table; cells are focusable with their breakdown as tex
   assert.match(m, /class="heat-grid head" role="row"[^>]*><div role="columnheader">Warehouse<\/div><div role="columnheader">/);
   assert.match(m, /class="heat-grid row" role="row"[^>]*><div class="heat-name" role="rowheader"/);
   const cells = m.match(/<div class="heat-slot"[^>]*>/g);
-  assert.ok(cells.length >= 2);
-  for (const c of cells) assert.match(c, /role="cell" tabindex="0" data-tip="[^"]+" onfocus="showHeatDetail\(this\.dataset\.tip\)"/);
+  for (const c of cells) assert.match(c, /role="cell"( tabindex="0")? data-tip="[^"]+" onfocus="showHeatDetail\(this\.dataset\.tip\)"/);
+  // Cells with lines are Tab stops; empty cells ("nothing open") are not.
+  assert.deepEqual(cells.map((c) => [/tabindex/.test(c), /nothing open/.test(c)]).filter(([t, empty]) => t === empty), []);
+  assert.ok(cells.filter((c) => /tabindex/.test(c)).length >= 2);
   assert.match(m, /<span class="sr-only">, Spyder - Lacombe · [^<]*open · 1 rows[^<]*late[^<]*<\/span>/);
   assert.ok(!/late-badge" aria-label/.test(m), 'no aria-label on the generic badge span');
   assert.match(m, /<span class="late-badge" aria-hidden="true">1<\/span>/);

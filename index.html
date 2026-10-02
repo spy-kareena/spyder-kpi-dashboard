@@ -5767,8 +5767,9 @@ function renderResults(){
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
           const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
-          // Each cell is focusable and carries its breakdown as text (read by screen readers, shown in the line above on focus or hover).
-          return `<div class="heat-slot" role="cell" tabindex="0" data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
+          // Each cell carries its breakdown as text (read by screen readers, shown under the grid on focus or hover);
+          // cells with lines are Tab stops, empty ones are not.
+          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
       ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover or Tab to a cell for its breakdown.</p>':''}
