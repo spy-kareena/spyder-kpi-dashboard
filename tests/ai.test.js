@@ -101,7 +101,7 @@ test('get_overview equals the Order Health tiles with all filters, and leaves pa
   const filtered = hero(page.els['results-screen'].innerHTML);
   assert.deepEqual(tool(page, 'get_overview').order_health.at_risk, oh.at_risk);
   const f = tool(page, 'get_overview', { warehouse: 'alta' });
-  assert.equal(f.filters.warehouse, 'CM - Alta');
+  assert.deepEqual(f.filters.warehouse, ['CM - Alta']);
   assert.deepEqual([f.order_health.at_risk.open_value, f.order_health.at_risk.orders], [filtered.value, filtered.first]);
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['CM - Alta']);
   assert.match(tool(page, 'get_overview', { customer: 'nobody here' }).error, /No customer "nobody here"/);
@@ -241,6 +241,7 @@ test('consent is required before any request; no data and HTTP errors give frien
   assert.equal(page.run('aiState.history.length'), 0, 'failed questions leave no half turns behind');
 
   const empty = loadPage({ storage: { spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' } });
+  await new Promise((r) => setTimeout(r, 10)); // the stub DOM's empty embedded snapshot finishes "loading" (a load clears the chat)
   const none = mockFetch(empty);
   await empty.run("aiSend('hello')");
   assert.equal(none.length, 0);

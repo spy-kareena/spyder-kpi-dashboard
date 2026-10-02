@@ -3509,13 +3509,14 @@ function aiWithFilters(f,fn){
     [weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache]=saved;
   }
 }
-// A name the model typed, matched to a filter option: exact code or label first, then part of a label.
+// A name the model typed, matched to filter options: the exact code or label alone, else every label that contains it
+// (so "CM" means every CM warehouse, as in search_lines).
 function aiMatch(q,options){
   const s=String(q||'').trim().toLowerCase();
-  if(!s)return null;
+  if(!s)return [];
   const opts=options.map(o=>typeof o==='string'?{value:o,label:o}:o);
-  const hit=opts.find(o=>o.value.toLowerCase()===s||o.label.toLowerCase()===s)||opts.find(o=>o.label.toLowerCase().includes(s));
-  return hit?hit.value:null;
+  const exact=opts.filter(o=>o.value.toLowerCase()===s||o.label.toLowerCase()===s);
+  return exact.length?exact:opts.filter(o=>o.label.toLowerCase().includes(s));
 }
 // Long lists are cut until the JSON fits ~30 KB, so one tool result never floods the request.
 function aiCap(res,key){
@@ -3585,23 +3586,24 @@ function aiOverview(a){
   if(!parsedRows.length)return {...out,order_health:null,purchase_orders:null,note:'No sales or purchase order lines are loaded.'};
   const m=currentMetrics();
   const base=aiWithFilters({},()=>({oh:orderHealthData(m),po:poData(m)}));
-  const find=(q,options)=>q&&options?aiMatch(q,options):null;
+  const find=(q,options)=>q&&options?aiMatch(q,options):[];
   const wh=find(a.warehouse,base.oh.weeklyWarehouseOptions),poWh=find(a.warehouse,base.po&&base.po.poWarehouseOptions);
   const customer=find(a.customer,base.oh.weeklyCustomerOptions),owner=find(a.owner,base.oh.weeklyOwnerOptions),segment=find(a.segment,base.oh.weeklySegmentOptions),vendor=find(a.vendor,base.po&&base.po.poVendorOptions);
-  const missing=[['warehouse',a.warehouse,wh||poWh],['customer',a.customer,customer],['owner',a.owner,owner],['segment',a.segment,segment],['vendor',a.vendor,vendor]].filter(([,q,v])=>q&&!v).map(([k,q])=>`${k} "${q}"`);
+  const missing=[['warehouse',a.warehouse,wh.length||poWh.length],['customer',a.customer,customer.length],['owner',a.owner,owner.length],['segment',a.segment,segment.length],['vendor',a.vendor,vendor.length]].filter(([,q,n])=>q&&!n).map(([k,q])=>`${k} "${q}"`);
   if(missing.length)return {...aiAsOf(),error:`No ${missing.join(', ')} in the loaded data.`,hint:'Call group_totals to list the names that exist.'};
-  const f={warehouse:wh&&[wh],customer:customer&&[customer],owner:owner&&[owner],segment:segment&&[segment],poWarehouse:poWh&&[poWh],vendor:vendor&&[vendor]};
+  const values=hits=>hits.length?hits.map(o=>o.value):null,names=hits=>hits.length?[...new Set(hits.map(o=>o.label))]:'All';
+  const f={warehouse:values(wh),customer:values(customer),owner:values(owner),segment:values(segment),poWarehouse:values(poWh),vendor:values(vendor)};
   return aiWithFilters(f,()=>({...out,
-    filters:{warehouse:wh||poWh||'All',customer:customer||'All',owner:owner||'All',segment:segment||'All',vendor:vendor||'All',applies:'customer, owner and segment filter sales orders; vendor filters purchase orders'},
-    order_health:a.warehouse&&!wh?{note:`No sales order lines in warehouse ${a.warehouse}.`}:aiOrderHealth(orderHealthData(m)),
-    purchase_orders:!base.po?{loaded:false,hint:'This export has no purchase order lines.'}:a.warehouse&&!poWh?{note:`No purchase order lines in warehouse ${a.warehouse}.`}:aiPurchaseOrders(poData(m))
+    filters:{warehouse:names([...wh,...poWh]),customer:names(customer),owner:names(owner),segment:names(segment),vendor:names(vendor),applies:'customer, owner and segment filter sales orders; vendor filters purchase orders; a list means every matching name is included'},
+    order_health:a.warehouse&&!wh.length?{note:`No sales order lines in warehouse ${a.warehouse}.`}:aiOrderHealth(orderHealthData(m)),
+    purchase_orders:!base.po?{loaded:false,hint:'This export has no purchase order lines.'}:a.warehouse&&!poWh.length?{note:`No purchase order lines in warehouse ${a.warehouse}.`}:aiPurchaseOrders(poData(m))
   }));
 }
 const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
 const KPI_TOOLS=[
   {name:'get_overview',
     description:'Headline numbers: every Order Health tile (at risk with its past due / no commit / rescheduled split, no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
-    parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it'},customer:{type:'string',description:'Customer code or name'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name'}},required:[]},
+    parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it (every matching warehouse is included)'},customer:{type:'string',description:'Customer code or name, or part of it (every match is included)'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name, or part of it (every match is included)'}},required:[]},
     run:(a={})=>aiOverview(a)},
   {name:'search_lines',
     description:'Find order lines. scope: at_risk, no_commit, rescheduled, due_this_week (This week focus: at risk plus due this week), open (all open sales order lines), po_late, po_no_commit, po_open, or all (every loaded sales and purchase order row, open and closed, with deliveries and receipts). Returns the most overdue first: type, document, line, customer or vendor, warehouse, item, description, original due, reschedule, open qty, open value, status, saved override and notes, plus the total number of matches.',
@@ -3642,14 +3644,16 @@ const KPI_TOOLS=[
         totals:{shipped_value:aiR(months.reduce((s,x)=>s+x.shipped_value,0)),open_value:aiR(months.reduce((s,x)=>s+x.open_value,0))}};
     }},
   {name:'get_build_risk',
-    description:'Build Risk page: Clear To Build report totals (orders, clear to build, at risk, late) and each contract manufacturer / month bucket with the open sales order demand matched to it.',
+    description:'Build Risk page: Clear To Build report totals (orders, clear to build, at risk, late) and each contract manufacturer / month bucket with the open sales order demand matched to it, for the report week picked on the page (newest by default). report_weeks lists every loaded week.',
     parameters:{type:'object',properties:{},required:[]},
     run:()=>{
-      if(!buildRiskRows.length)return {loaded:false,hint:'No Clear To Build report is loaded. Use Add file to load the CTB report (Excel or CSV) next to the KPI export.'};
-      const br=currentMetrics().buildRisk;
+      const all=buildRiskRows.length?currentMetrics().buildRisk:null;
+      // The same report week the Build Risk page shows; weeks are never added together.
+      const br=all&&(all.snapshots.find(s=>s.key===buildRiskSnapshot)||all.snapshots[0]);
+      if(!br)return {loaded:false,hint:'No Clear To Build report is loaded. Use Add file to load the CTB report (Excel or CSV) next to the KPI export.'};
       const buckets=br.matched.map(r=>({cm:r.cm,month:r.monthKey,total:r.total,clear_to_build:r.clearToBuild,at_risk:r.atRisk,late:r.late,matched_so_lines:r.matchedRows.length,matched_open_qty:aiR(r.matchedOpenQty),matched_open_value:aiR(r.matchedOpenValue),notes:String(r.notes||'').slice(0,160)}))
         .sort((x,y)=>y.late-x.late||y.at_risk-x.at_risk||y.matched_open_value-x.matched_open_value);
-      return aiCap({loaded:true,...aiAsOf(),ctb_rows:br.rows.length,total_orders:br.totalOrders,clear_to_build:br.totalClearToBuild,clear_to_build_pct:pct(br.totalClearToBuild,br.totalOrders),at_risk:br.totalAtRisk,late:br.totalLate,
+      return aiCap({loaded:true,...aiAsOf(),report_week:br.label,report_sheet:br.sheet,report_weeks:all.snapshots.map(s=>s.label),ctb_rows:br.rows.length,total_orders:br.totalOrders,clear_to_build:br.totalClearToBuild,clear_to_build_pct:pct(br.totalClearToBuild,br.totalOrders),at_risk:br.totalAtRisk,late:br.totalLate,
         matched_open_value:aiR(br.matchedOpenValue),matched_open_qty:aiR(br.matchedOpenQty),buckets:buckets.slice(0,60)},'buckets');
     }},
   {name:'get_supply_demand',
@@ -3685,11 +3689,13 @@ const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
 const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
 const AI_MAX_ROUNDS=6;
 const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
+const aiState={open:false,opener:'',server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
-// A newly loaded export starts a new chat, so follow-up questions never mix in tool results from the old data.
-function aiSyncData(){if(aiState.rows!==allLoadedRows){aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];}}
+// A newly loaded export starts a new chat (showResults checks after every load), so follow-up questions never mix in
+// tool results from the old data and old answers leave the screen. A question still pending is stopped; its late
+// answer or "Stopped." goes to the old chat and is dropped.
+function aiSyncData(){if(aiState.rows!==allLoadedRows){aiStop();aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];aiRenderLog();}}
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
 function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
@@ -3697,22 +3703,37 @@ const aiKey=()=>aiGet(AI_KEY_STORE,'session')||aiGet(AI_KEY_STORE)||aiState.memK
 const aiConsented=()=>aiGet(AI_CONSENT_STORE)==='1';
 function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
 function aiToggle(force){
+  const wasOpen=aiState.open;
   aiState.open=force===undefined?!aiState.open:!!force;
   const panel=aiEl('ai-panel');
   if(panel)panel.hidden=!aiState.open;
+  if(panel&&panel.setAttribute)panel.setAttribute('aria-modal',String(aiState.open&&aiCoversPage()));
   if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
-  // Before any export is loaded the page head has no Ask AI button; the help page's Open Ask AI takes its place.
-  const button=document.querySelector('[data-focus-key="ask-ai"],[data-focus-key="connect-ask-ai"]');
-  if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
-  if(!aiState.open){aiFocus(button);return;}
+  // Every Ask AI button (page head, Connect an AI) reports the state; closing returns focus to the one that opened
+  // the drawer (found again by its focus key, as the page may have re-rendered), else to the first one.
+  const buttons=[...document.querySelectorAll('[aria-controls="ai-panel"]')];
+  buttons.forEach(b=>b.setAttribute('aria-expanded',String(aiState.open)));
+  if(!aiState.open){aiFocus(buttons.find(b=>b.dataset.focusKey===aiState.opener)||buttons[0]);return;}
+  if(!wasOpen){const a=document.activeElement;aiState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
   aiSyncData();
   aiRenderLog();
   aiShowSettings(!aiConsented());
   aiPrepare();
 }
+// Below 1600px no page space is kept for the drawer (see .ai-open .main), so it covers page controls: Tab and
+// Shift+Tab cycle inside it instead of moving focus onto a control hidden underneath.
+const aiCoversPage=()=>!(typeof matchMedia==='function'&&matchMedia('(min-width:1600px)').matches);
 function aiPanelKey(e){
-  if(e.key==='Escape'){e.preventDefault();aiToggle(false);}
+  if(e.key!=='Tab'||!aiCoversPage())return;
+  const items=[...aiEl('ai-panel').querySelectorAll('a[href],button,input,select,textarea')].filter(el=>!el.disabled&&el.getClientRects().length);
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(!first)return;
+  if(e.shiftKey?active===first:active===last){e.preventDefault();aiFocus(e.shiftKey?last:first);}
 }
+// Esc closes the drawer wherever focus is (a click on the page may have moved it out); Esc in the search box
+// clears the search instead (it calls preventDefault).
+function aiDocKey(e){if(e.key==='Escape'&&aiState.open&&!e.defaultPrevented){e.preventDefault();aiToggle(false);}}
+document.addEventListener('keydown',aiDocKey);
 function aiInputKey(e){
   if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();aiSend();}
 }
@@ -3727,7 +3748,8 @@ function aiShowSettings(show){
 function aiSyncSettings(){
   const server=!!aiState.server,hasKey=!!aiKey();
   aiEl('ai-server-note').hidden=!server;
-  aiEl('ai-key-box').hidden=server;
+  // With a server key the box is only needed to remove a personal key saved here earlier.
+  aiEl('ai-key-box').hidden=server&&!hasKey;
   aiEl('ai-key-remove').disabled=!hasKey;
   aiEl('ai-mode').textContent=`${server?'Server key':hasKey?'Your key':'Not set up'}${aiState.model?` · ${aiState.model}`:''}`;
   const models=aiState.models.length?aiState.models:[aiState.model||aiGet(AI_MODEL_STORE)||'gemini-2.5-flash'];
@@ -3744,13 +3766,21 @@ function aiSetConsent(on){
   if(on)aiPrepare();
 }
 // Server mode: a site that serves /api/gemini with a key set up there; the page needs no key of its own.
+// Own-key mode only when the site has no /api/gemini (404) or says it has no key. Any other answer (the password
+// gate's 401 after the sign-in expired, a sign-in page) is an error, so company data never quietly moves to a personal key.
 function aiCheckServer(){
   if(!aiState.serverCheck)aiState.serverCheck=(async()=>{
-    let server=false;
+    let server=false,error='';
     if(/^https?:$/.test(String(location.protocol||''))){
-      try{const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});server=res.ok&&(await res.json()).configured===true;}catch(err){}
+      try{
+        const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});
+        let data=null;try{data=await res.json();}catch(err){}
+        server=res.ok&&!!data&&data.configured===true;
+        if(!server&&res.status!==404&&!(data&&data.configured===false))error=aiHttpError(data&&typeof data==='object'?res.status:401,data,true);
+      }catch(err){error='Could not reach this site\'s Gemini service. Check the connection and try again.';}
     }
-    aiState.server=server;
+    aiState.server=server;aiState.serverError=error;
+    if(error)aiState.serverCheck=null; // asked again next time, e.g. after signing in
   })();
   return aiState.serverCheck;
 }
@@ -3758,6 +3788,7 @@ async function aiPrepare(){
   if(!aiConsented())return;
   await aiCheckServer();
   aiSyncSettings();
+  if(aiState.serverError){aiSettingsStatus(aiState.serverError,'bad');return;}
   if(!aiState.models.length&&(aiState.server||aiKey()))await aiLoadModels();
   if(!aiState.server&&!aiKey()&&aiState.open&&aiEl('ai-settings').hidden)aiShowSettings(true);
 }
@@ -3827,10 +3858,11 @@ async function aiFetch(path,{body,signal}={}){
     if(err&&err.name==='AbortError')throw err;
     throw aiFail(server?'Could not reach this site\'s Gemini service. Check the connection and try again.':'Could not reach Google\'s Gemini API. Check the network connection; a firewall, proxy or browser extension may be blocking generativelanguage.googleapis.com.');
   }
-  let data={};
+  let data;
   try{data=await res.json();}catch(err){}
-  if(!res.ok)throw aiFail(aiHttpError(res.status,data,server));
-  return data;
+  // In server mode a 2xx without JSON is a sign-in page, not Gemini: the site's session has expired.
+  if(!res.ok||(server&&!(data&&typeof data==='object')))throw aiFail(aiHttpError(res.ok?401:res.status,data,server));
+  return data||{};
 }
 function aiSystemPrompt(){
   return `You are an operations KPI analyst for Spyder Controls. You answer questions about the SAP Business One KPI dashboard loaded in the user's browser: sales orders, purchase orders, deliveries, receipts, supply / demand and Clear To Build data. The report's as-of date is ${displayDate(reportToday())}.
@@ -3890,6 +3922,7 @@ async function aiSend(text){
   const log=aiState.messages,start=log.length;
   try{
     await aiCheckServer();
+    if(aiState.serverError)throw aiFail(aiState.serverError);
     if(!aiState.server&&!aiKey()){aiShowSettings(true);aiSettingsStatus('Add a Gemini API key first, or ask whoever runs this site to set one up on the server.','bad');return;}
     if(!aiState.model)await aiLoadModels();
     if(text===undefined)input.value='';
@@ -4031,7 +4064,7 @@ function renderConnectPage(){
   const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
   return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
   ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and, if it asks for one, paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
-    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
+    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
       ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
@@ -4101,6 +4134,7 @@ function showResults(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('results-screen').style.display='block';
   renderResults();
+  aiSyncData();
 }
 function showLoading(msg){
   document.getElementById('upload-screen').style.display='none';
