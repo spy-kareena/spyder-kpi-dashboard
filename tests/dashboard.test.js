@@ -76,7 +76,7 @@ test('implausible dates are listed in the data check instead of producing huge l
   assert.equal(page.run('parsedRows[0].statusBucket'), 'Open');
   page.run('setTab("weekly")');
   // The header shows a "Data check" pill; its popover lists what needs fixing.
-  assert.match(page.els['results-screen'].innerHTML, /Data check<\/summary><div class="data-check-pop"><strong>1 row/);
+  assert.match(page.els['results-screen'].innerHTML, /Data check<\/summary><div class="data-check-pop"[^>]*><strong>1 row/);
 });
 
 // --- Notes / overrides -------------------------------------------------------------------------------

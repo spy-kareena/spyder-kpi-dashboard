@@ -67,13 +67,13 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .sidebar .logo{width:128px;display:block}
 .sidebar .product{font-size:11.5px;font-weight:500;color:var(--gray-500)}
 .nav-group{display:grid;gap:2px}
-.nav-label{padding:0 10px 6px;font-size:12px;font-weight:500;color:var(--gray-400)}
+.nav-label{padding:0 10px 6px;font-size:12px;font-weight:500;color:var(--gray-500)}
 .nav-item{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;font:inherit;font-size:13px;font-weight:500;padding:8px 10px;border:0;border-radius:var(--r-ctl);background:transparent;color:var(--gray-600);cursor:pointer;white-space:nowrap;transition:background .18s,color .18s}
 .nav-item::before{content:"";width:5px;height:5px;border-radius:99px;background:var(--gray-300);margin-right:-2px}
 .nav-item:hover{background:var(--gray-50)}
 .nav-item.active{background:var(--accent-tint);color:var(--accent-strong);font-weight:600}
 .nav-item.active::before{background:var(--accent)}
-.nav-badge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);background:var(--crit-tint);color:var(--crit)}
+.nav-badge{font-size:11px;font-weight:600;padding:1px 7px;border-radius:var(--r-pill);background:var(--crit-tint);color:var(--crit-text)}
 .main{background:var(--gray-50);border-left:1px solid var(--gray-200);padding:30px 36px 72px;display:grid;gap:24px;align-content:start;min-width:0}
 .page-head{display:flex;justify-content:space-between;align-items:center;gap:16px}
 .page-title{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em}
@@ -84,7 +84,7 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .btn:hover{border-color:var(--gray-400);transform:translateY(-1px)}
 .btn-primary{border:0;background:var(--accent);color:#fff;font-weight:600;padding:8px 15px}
 .btn-primary:hover{background:var(--accent-strong)}
-.link-btn{font:inherit;font-size:12px;font-weight:600;border:0;background:none;color:var(--accent);cursor:pointer;padding:0}
+.link-btn{font:inherit;font-size:12px;font-weight:600;border:0;background:none;color:var(--accent-strong);cursor:pointer;padding:0}
 .select{font:inherit;font-size:12px;font-weight:500;padding:6px 9px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);max-width:190px;cursor:pointer}
 .segmented{display:flex;background:var(--gray-100);border-radius:9px;padding:3px;gap:2px}
 .segmented button{font:inherit;font-size:12px;font-weight:500;padding:5px 11px;border:0;border-radius:7px;background:transparent;color:var(--gray-500);cursor:pointer;transition:all .18s}
@@ -117,6 +117,8 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .mini-strip{display:grid;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-bar);overflow:hidden;box-shadow:var(--sh-rest)}
 .mini-strip>button{font:inherit;text-align:left;border:0;border-right:1px solid var(--gray-100);background:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 .mini-strip>button:hover{background:var(--gray-50)}.mini-strip>button.selected{background:var(--accent-tint)}
+/* The strip clips overflow, so the focus ring sits inside each tile */
+.mini-strip>button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 
 /* Bars, bullet, tracker */
 .track{height:6px;border-radius:99px;background:var(--gray-100);overflow:hidden}
@@ -134,7 +136,7 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .badge.warn{background:var(--warn-tint);border-color:var(--warn-border);color:var(--warn-text)}
 .badge.good{background:var(--good-tint);border-color:var(--good-border);color:var(--good-text)}
 .tone-cell{text-align:center;font-size:12px;font-weight:600;border-radius:var(--r-cell);padding:4px 0}
-.tone-cell.good{background:var(--good-tint);color:var(--good)}.tone-cell.warning{background:var(--warn-tint);color:var(--warn)}.tone-cell.critical{background:var(--crit-tint);color:var(--crit)}
+.tone-cell.good{background:var(--good-tint);color:var(--good-text)}.tone-cell.warning{background:var(--warn-tint);color:var(--warn-text)}.tone-cell.critical{background:var(--crit-tint);color:var(--crit-text)}
 .late-badge{position:absolute;top:-7px;right:-7px;display:grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:99px;background:#fff;border:1px solid var(--crit-border);color:var(--crit-text);font-size:11.5px;font-weight:600;box-shadow:0 1px 3px rgba(16,24,40,.12)}
 
 /* Tables (grid-based rows) */
@@ -150,7 +152,7 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .note-btn{font:inherit;font-size:12px;font-weight:500;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--gray-300);background:#fff;color:var(--gray-700);cursor:pointer}
 .note-btn.has-note{background:var(--accent-tint);border-color:var(--accent-border);color:var(--accent-strong)}
 .note-editor{display:grid;grid-template-columns:210px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 20px 14px 84px;background:var(--gray-50);border-top:1px solid var(--gray-200)}
-.note-editor textarea{font:inherit;font-size:13px;min-height:56px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;resize:vertical}
+.note-editor textarea{font:inherit;font-size:13px;min-height:56px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);padding:8px 10px;resize:vertical}
 
 /* Skeleton */
 .skeleton{border-radius:var(--r-card);background:linear-gradient(100deg,var(--gray-100) 40%,var(--gray-50) 50%,var(--gray-100) 60%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
@@ -177,15 +179,16 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 html{background:var(--white)}
 button{font-family:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.muted{color:var(--gray-400)}
-.crit-text{color:var(--crit)}.warn-text{color:var(--warn)}.good-text{color:var(--good)}
+.muted{color:var(--gray-500)}
+/* Small status text uses the darker tone tokens (4.5:1); the bright tones stay for fills and large KPI values */
+.crit-text{color:var(--crit-text)}.warn-text{color:var(--warn-text)}.good-text{color:var(--good-text)}
 
 /* The page column never grows past the viewport; wide tables scroll inside their cards */
 .main{grid-template-columns:minmax(0,1fr)}
 #upload-screen,#loading-screen,#results-screen{min-width:0}
 /* Card grids size to the card, never to their longest label */
 .chart-card,.list-card,.rate-card,.month-card,.card.kpi,.need-main,.need-preview,.stack{grid-template-columns:minmax(0,1fr)}
-.col-labels>span,.col-chart .col-val{overflow:hidden;text-overflow:clip}
+.col-chart .col-val{overflow:hidden;text-overflow:clip}
 
 /* Sidebar */
 .sidebar{padding:0 14px 24px}
@@ -203,7 +206,7 @@ button{font-family:inherit}
 .nav-badge{font-size:12px}
 .nav-badge.accent{background:var(--gray-100);color:var(--gray-600)}
 .loaded-card{margin-top:auto;border:1px solid var(--gray-200);border-radius:12px;padding:12px;display:grid;gap:7px;background:var(--white);box-shadow:var(--sh-rest)}
-.loaded-label{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--gray-400)}
+.loaded-label{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--gray-500)}
 .live-dot{width:7px;height:7px;border-radius:99px;background:#12b76a;box-shadow:0 0 0 3px #d1fadf}
 .live-dot.off{background:var(--gray-300);box-shadow:0 0 0 3px var(--gray-100)}
 .loaded-name{font-size:12px;font-weight:600;word-break:break-all;line-height:1.4}
@@ -215,7 +218,7 @@ button{font-family:inherit}
 /* Page header */
 /* Above the sections below it, so the Data check popover is never covered (even mid-animation) */
 .page-head{min-height:36px;position:relative;z-index:5}
-.page-head-main{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+.page-head-main{position:relative;display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
 .page-title{white-space:nowrap}
 .page-meta{white-space:nowrap}
 .page-head .actions{display:flex;gap:8px;flex-shrink:0}
@@ -223,11 +226,12 @@ button{font-family:inherit}
 .btn-primary:hover{box-shadow:0 6px 16px var(--accent-ring)}
 .btn-lg{font-size:13.5px;padding:10px 16px}
 .btn-sm{font-size:12px;padding:7px 13px;border-radius:8px}
-details.data-check{position:relative;display:inline-block;padding:0;border:0;background:none}
+/* The popover hangs from the title row, not the pill: the pill can sit anywhere along the row, and 400px from there ran off screen */
+details.data-check{display:inline-block;padding:0;border:0;background:none}
 details.data-check>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--warn-text);background:var(--warn-tint);border:1px solid var(--warn-border);border-radius:var(--r-pill);padding:3px 10px;white-space:nowrap;transition:background .15s}
 details.data-check>summary::-webkit-details-marker{display:none}
 details.data-check>summary:hover{background:#fef0c7}
-.data-check-pop{position:absolute;top:30px;left:0;z-index:6;width:400px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--warn-border);border-radius:12px;padding:13px 14px;font-size:12.5px;line-height:1.55;color:#7a4708;box-shadow:0 16px 40px rgba(16,24,40,.12)}
+.data-check-pop{position:absolute;top:100%;left:0;margin-top:6px;z-index:6;width:400px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--warn-border);border-radius:12px;padding:13px 14px;font-size:12.5px;line-height:1.55;color:#7a4708;box-shadow:0 16px 40px rgba(16,24,40,.12)}
 .data-check-pop p{margin:6px 0 0}
 .data-check-pop ul{margin:6px 0 0;padding-left:18px;max-height:220px;overflow:auto}
 .data-check-pop li{margin:2px 0}
@@ -258,7 +262,7 @@ details.data-check>summary:hover{background:#fef0c7}
 .section-head{flex-wrap:wrap}
 .section-head .section-tools{margin-left:auto}
 .count-badge{font-size:12px;font-weight:600;padding:2px 9px;border-radius:var(--r-pill);border:1px solid var(--gray-300);background:var(--gray-100);color:var(--gray-600);white-space:nowrap}
-.count-badge.bad{background:var(--crit-tint);border-color:var(--crit-border);color:var(--crit)}
+.count-badge.bad{background:var(--crit-tint);border-color:var(--crit-border);color:var(--crit-text)}
 .count-badge.warn{background:var(--warn-tint);border-color:var(--warn-border);color:var(--warn-text)}
 .count-badge.good{background:var(--good-tint);border-color:var(--good-border);color:var(--good-text)}
 .grid-lead{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:14px}
@@ -277,7 +281,7 @@ details.data-check>summary:hover{background:#fef0c7}
 .kpi-row.tight{gap:6px}
 .kpi-unit{font-size:12.5px;color:var(--gray-500)}
 .kpi-unit.sm{font-size:12px}
-.kpi-tag{font-size:12px;color:var(--gray-400)}
+.kpi-tag{font-size:12px;color:var(--gray-500)}
 .kpi-label .dot{flex-shrink:0}
 .dot.halo{background:#f04438;box-shadow:0 0 0 3px #fee4e2}
 .dot.neutral{background:var(--gray-400)}
@@ -316,7 +320,7 @@ details.data-check>summary:hover{background:#fef0c7}
 .bullet .fill>i{display:block;height:100%;border-radius:99px}
 .bullet.thin{height:8px}
 .bullet.thin .target{top:-4px;height:16px}
-.bullet-scale{display:flex;justify-content:space-between;font-size:12px;color:var(--gray-400)}
+.bullet-scale{display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500)}
 .bullet-scale span:last-child{padding-right:2%}
 .fill-good{background:var(--good)}.fill-warn{background:var(--warn)}.fill-crit{background:var(--crit)}.fill-accent{background:var(--accent)}.fill-soft{background:var(--accent-border)}
 .delta{white-space:nowrap}
@@ -365,11 +369,11 @@ button.rank-item.selected .rank-name{color:var(--accent-strong)}
 .rank-top{display:flex;justify-content:space-between;gap:10px;font-size:12.5px}
 .rank-top.lg{font-size:13px}
 .rank-left{display:flex;gap:8px;min-width:0;align-items:baseline}
-.rank-no{font-size:12px;color:var(--gray-400);width:16px;flex-shrink:0}
+.rank-no{font-size:12px;color:var(--gray-500);width:16px;flex-shrink:0}
 .rank-name{font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-val{white-space:nowrap;font-size:12px}
 .rank-val strong{font-weight:600}
-.rank-val .muted{color:var(--gray-400)}
+.rank-val .muted{color:var(--gray-500)}
 .rank-track{height:6px;background:var(--gray-100);border-radius:99px;margin-left:24px;overflow:hidden}
 .rank-track>i{display:block;height:6px;border-radius:99px}
 .empty-note{font-size:12.5px;color:var(--gray-500);padding:6px 0}
@@ -385,7 +389,8 @@ button.rank-item.selected .rank-name{color:var(--accent-strong)}
 .col-chart .col-bar{width:100%;border-radius:5px 5px 0 0;transition:filter .15s}
 .col-chart .col-bar:hover{filter:brightness(.88)}
 .col-labels{display:flex;gap:8px}
-.col-labels>span{flex:1;text-align:center;font-size:12px;color:var(--gray-500);min-width:0;white-space:nowrap}
+/* Axis labels wrap at their space ("Sep" over "13", "Aug" over "'26") in narrow columns instead of being cut mid-word */
+.col-labels>span{flex:1;text-align:center;font-size:12px;line-height:1.3;color:var(--gray-500);min-width:0}
 .col-chart.tall{height:150px;gap:12px;border-bottom:1px solid var(--gray-200)}
 .col-chart.tall .col{gap:5px}
 .col-chart.tall .col-val{color:var(--gray-600)}
@@ -409,7 +414,7 @@ button.rank-item.selected .rank-name{color:var(--accent-strong)}
 .lines-table .c-wh{color:var(--gray-500)}
 .lines-table .c-item{min-width:0}
 .lines-table .c-item strong{display:block;font-weight:600;overflow-wrap:anywhere}
-.lines-table .c-item .desc{color:var(--gray-400);font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lines-table .c-item .desc{color:var(--gray-500);font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .lines-table .c-date{font-weight:600;white-space:nowrap;font-size:12px}
 .lines-table .c-qty{font-weight:600;color:var(--warn-text);font-size:12px}
 .lines-table .c-val{font-weight:600;font-size:12px}
@@ -432,7 +437,7 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .note-editor .btn-primary{align-self:end;box-shadow:none}
 .tfoot .link-btn{font-size:12px}
 .table-tools label{display:flex;align-items:center;gap:8px;font-weight:600}
-.table-tools .hint{color:var(--gray-400)}
+.table-tools .hint{color:var(--gray-500)}
 .table-scroll{overflow-x:auto}
 
 /* Linked lines: row selection, bulk actions, header sort, deleted lines in Data check */
@@ -483,8 +488,8 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 
 /* Global search */
 .sidebar-search{margin-top:-12px}
-.sidebar-search input{width:100%;font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-900);box-shadow:0 1px 2px rgba(16,24,40,.05)}
-.sidebar-search input::placeholder{color:var(--gray-400)}
+.sidebar-search input{width:100%;font:inherit;font-size:12.5px;padding:7px 10px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);background:#fff;color:var(--gray-900);box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.sidebar-search input::placeholder{color:var(--gray-500)}
 .sidebar-search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
 .sidebar-search input:disabled{background:var(--gray-50);cursor:not-allowed}
 .lines-table.search{min-width:1120px}
@@ -515,7 +520,7 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .pair-col.current{background:var(--accent-tint)}
 .pair-col>i{flex:1;max-width:22px;border-radius:4px 4px 0 0}
 .pair-labels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding:0 4px;margin-top:-8px}
-.pair-labels>span{text-align:center;font-size:12px;color:var(--gray-500);white-space:nowrap}
+.pair-labels>span{text-align:center;font-size:12px;line-height:1.3;color:var(--gray-500)}
 .pair-labels>span.current{color:var(--accent-strong);font-weight:600}
 details.about{background:#fff;border:1px solid var(--gray-200);border-radius:14px;padding:14px 18px;font-size:12.5px;color:var(--gray-600);line-height:1.55}
 details.about>summary{cursor:pointer;font-weight:500;color:var(--gray-700)}
@@ -527,7 +532,7 @@ details.about p{margin:0}
 
 /* Warehouse timeline */
 .rank-rows{display:grid;gap:12px}
-.rank-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.6fr) 84px;gap:14px;align-items:center;font-size:13px}
+.rank-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(48px,1fr) 84px;gap:14px;align-items:center;font-size:13px}
 .rank-row .rank-name{font-weight:500}
 .rank-row .rv{text-align:right;font-weight:600}
 .hbar{position:relative;height:8px;border-radius:99px;background:var(--gray-100)}
@@ -544,10 +549,13 @@ details.about p{margin:0}
 .heat-cell{position:relative;height:34px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:500;transition:transform .15s;cursor:default}
 .heat-cell:hover{transform:scale(1.06)}
 .heat-cell .late-badge{z-index:1;font-size:12px}
-.heat-0{background:var(--gray-50);color:var(--gray-400)}
+.heat-slot:focus-visible{outline:none}
+.heat-slot:focus-visible .heat-cell{outline:2px solid var(--accent);outline-offset:2px}
+.heat-detail{margin:0;padding:10px 22px 12px;font-size:12px;line-height:1.45;color:var(--gray-700)}
+.heat-0{background:var(--gray-50);color:var(--gray-500)}
 .heat-1{background:var(--accent-tint);color:var(--accent-strong)}
 .heat-2{background:var(--accent-border);color:var(--gray-900)}
-.heat-3{background:var(--accent-mid);color:#fff}
+.heat-3{background:var(--accent-mid);color:var(--gray-900)}
 .heat-4{background:var(--accent);color:#fff}
 
 /* Ask AI drawer (outside #results-screen, so redraws never touch it) */
@@ -562,10 +570,11 @@ details.about p{margin:0}
 .ai-settings p{margin:0;line-height:1.55;color:var(--gray-600)}
 .ai-notice{background:var(--warn-tint);border:1px solid var(--warn-border);border-radius:12px;padding:12px 14px;display:grid;gap:10px}
 .ai-notice p{color:var(--warn-text)}
+.ai-notice a{color:var(--accent-strong)}
 .ai-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;font-weight:500;color:var(--gray-700);line-height:1.45;cursor:pointer}
 .ai-check input{margin:2px 0 0;accent-color:var(--accent)}
 .ai-field{display:grid;gap:6px;font-size:12px;font-weight:500;color:var(--gray-600)}
-.ai-field input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);color:var(--gray-900)}
+.ai-field input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);color:var(--gray-900)}
 .ai-panel .select{max-width:none;width:100%}
 .ai-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ai-status{font-size:12px;color:var(--gray-500);min-height:16px}
@@ -590,10 +599,10 @@ details.about p{margin:0}
 .ai-chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 18px 10px}
 .ai-chips .chip{text-align:left}
 .ai-compose{border-top:1px solid var(--gray-200);padding:12px 18px 14px;display:grid;gap:8px}
-.ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
+.ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-500);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
 .ai-compose .link-btn{margin-left:auto}
-.ai-foot{font-size:12px;color:var(--gray-400)}
-.ai-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ai-foot{font-size:12px;color:var(--gray-500)}
+.ai-sr,.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* Very wide screens keep the page beside the open drawer; the page keeps its 4-column width (>=880px) there */
 @media screen and (min-width:1600px){body.ai-open .main{padding-right:456px}}
 @media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
@@ -724,7 +733,6 @@ details.about p{margin:0}
   .pair-chart,.pair-labels{gap:4px}
   .need-card{padding:22px;gap:24px}
   .card{padding:16px 18px}
-  .pair-labels>span{font-size:12px;overflow:hidden;text-overflow:clip}
 }
 
 /* Print: sidebar and controls hidden, cards flattened */
@@ -750,7 +758,7 @@ details.about p{margin:0}
   .lines-table th,.lines-table td,.data-table th,.data-table td{padding:4px 5px!important}
   .lines-table .c-item .desc{-webkit-line-clamp:unset}
   .data-table{font-size:8pt}
-  .note-btn,.lines-table .c-notes,.lines-table col.col-notes{display:none!important}
+  .note-btn,.lines-table .c-notes,.lines-table col.col-notes,.editable-rows .row-override,.editable-rows .row-note{display:none!important}
   tr.note-editor-row{display:none!important}
   .print-note-row.has-print-note{display:table-row!important}
   .print-note-row.has-print-note td{display:table-cell!important;padding:0 5px 5px 20px!important;border-bottom:1px solid var(--gray-200)!important}
@@ -763,23 +771,25 @@ details.about p{margin:0}
 .trow .soft-cell{font-size:12px;color:var(--gray-500)}
 .trow .risk-cell{font-size:12px;font-weight:600;color:var(--crit)}
 .sc-cols>.num{font-size:12px}
-.tone-cell.none{color:var(--gray-400);font-weight:500}
+.tone-cell.none{color:var(--gray-500);font-weight:500}
 .print-only{display:none}
 .kpi.static{cursor:default}
 button.trow.po-wh-cols{font-size:13px}
-.trow .warn-cell{font-size:12px;color:var(--warn)}
+.trow .warn-cell{font-size:12px;color:var(--warn-text)}
 .trow .strong-cell{font-weight:600;text-align:right}
 .list-card.roomy{gap:14px}
 .grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
 .mini-strip.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .kpi.static:hover{transform:none;box-shadow:var(--sh-rest)}
-.rank-row.wide{grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 96px}
+/* Names get the larger share, and their own line on phones (the bar column left them about 85px); rows carry the full name as a title */
+.rank-row.wide{grid-template-columns:minmax(0,2fr) minmax(48px,1fr) 96px}
+@media (max-width:640px){.rank-row{grid-template-columns:minmax(0,1fr) 84px;row-gap:6px}.rank-row.wide{grid-template-columns:minmax(0,1fr) 96px}.rank-row .rank-name{grid-column:1/-1}}
 .rank-row .rank-name{min-width:0}
 .rank-sub{display:block;font-size:12px;font-weight:400;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:1180px){.grid-5{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.grid-5,.mini-strip.cols-2{grid-template-columns:minmax(0,1fr)}}
 .data-table .crit-dark{color:var(--crit-dark)}
-.data-table .warn-soft{color:var(--warn)}
+.data-table .warn-soft{color:var(--warn-text)}
 .data-table .tone-good{color:var(--good-text);font-weight:500}
 .data-table .tone-warning{color:var(--warn-text);font-weight:500}
 .data-table .tone-critical{color:var(--crit-text);font-weight:500}
@@ -789,9 +799,9 @@ button.trow.po-wh-cols{font-size:13px}
 .fill-neutral{background:var(--gray-400)}
 .heat-scroll{overflow-x:auto;padding-top:8px}
 .heat-grid{min-width:680px}
-.rank-row .rv.good-text{color:var(--good)}.rank-row .rv.warn-text{color:var(--warn)}.rank-row .rv.crit-text{color:var(--crit)}
 .editable-rows .row-override,.editable-rows .row-note{font:inherit;font-size:12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);padding:5px 8px;width:100%}
-.editable-rows .row-note{min-height:34px;resize:vertical}
+/* Empty text fields need a 3:1 edge to be found (--gray-300 is 1.5:1) */
+.editable-rows .row-note{min-height:34px;resize:vertical;border-color:var(--gray-500)}
 /* On screen the override and note controls keep a readable width (every option fits); print shrinks to the page. */
 @media screen{.editable-rows .row-override{min-width:140px}.editable-rows .row-note{min-width:200px}.editable-rows .due-cell{white-space:nowrap}}
 .mini-strip.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
@@ -803,7 +813,7 @@ button.trow.po-wh-cols{font-size:13px}
 .data-table .good-soft{color:var(--good-text)}
 .data-table .crit-strong{color:var(--crit);font-weight:600}
 .data-table .qty-cell{color:var(--warn-text);font-weight:600}
-.data-table .muted{color:var(--gray-400)}
+.data-table .muted{color:var(--gray-500)}
 .data-table .date,.data-table td.m{white-space:nowrap}
 .data-table span.m{white-space:nowrap}
 .data-table td .sub{display:inline;margin-left:4px}
@@ -1737,14 +1747,25 @@ function isUsableScenarioDate(value){
   const d=/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?parseDate(value):null;
   return !!d&&Math.abs(d-reportToday())<=5*366*24*60*60*1000;
 }
-function setShipScenarioStartDate(value){
+// A date input fires change on every segment typed or arrowed, and a redraw rebuilds it with the caret on the first
+// segment. So keyboard edits (typed) apply on Enter or when focus leaves; calendar picks apply at once. The blur
+// redraw waits a tick so focus has already moved on and is put back on that control.
+let shipScenarioPending=false;
+function setShipScenarioStartDate(value,typed){
   if(value&&!isUsableScenarioDate(value))return;
   shipScenarioStartDate=value||'';
-  renderResults();
+  shipScenarioPending=true;
+  if(!typed)commitShipScenarioDates();
 }
-function setShipScenarioTargetDate(value){
+function setShipScenarioTargetDate(value,typed){
   if(value&&!isUsableScenarioDate(value))return;
   shipScenarioTargetDate=value||'';
+  shipScenarioPending=true;
+  if(!typed)commitShipScenarioDates();
+}
+function commitShipScenarioDates(){
+  if(!shipScenarioPending)return;
+  shipScenarioPending=false;
   renderResults();
 }
 function setShipScenarioDateBasis(value){
@@ -3591,6 +3612,11 @@ function renderToneCell(rate,good,warn){
   if(rate===null||rate===undefined)return '<div class="tone-cell none">—</div>';
   return `<div class="tone-cell ${toneFor(rate,good,warn)}">${fmtNum(rate)}%</div>`;
 }
+// The scorecard and PO-by-warehouse rows are buttons in a div grid: each is named "column value, ..." so a screen
+// reader hears which number is which, and the visual header row is hidden from assistive tech.
+function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNum(rate)}%`;}
+// Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
+function showHeatDetail(tip){const el=document.getElementById('wh-heat-detail');if(el)el.textContent=tip;}
 // Card with a data table; long tables show their first rows with a "Show all" toggle (state kept per table key).
 let tableMore={};
 function toggleTableMore(key){
@@ -4262,7 +4288,7 @@ function copyConnectSnippet(btn){
 function renderRankRows(items,{empty='Nothing to show.'}={}){
   if(!items.length)return `<div class="empty-note">${esc(empty)}</div>`;
   const max=Math.max(1,...items.map(i=>Math.abs(i.value)));
-  return `<div class="rank-rows">${items.map((i,n)=>`<div class="rank-row wide" title="${esc(i.sub||'')}"><span class="rank-name">${esc(i.label)}<span class="rank-sub">${esc(i.sub||'')}</span></span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(Math.abs(i.value)/max*100).toFixed(1)}%;background:${i.color||'var(--accent)'};animation-delay:${Math.min(n,12)*40}ms"></i></div></div><span class="rv${i.tone?` ${i.tone}-text`:''}">${i.text}</span></div>`).join('')}</div>`;
+  return `<div class="rank-rows">${items.map((i,n)=>`<div class="rank-row wide" title="${esc(i.sub?`${i.label} · ${i.sub}`:i.label)}"><span class="rank-name">${esc(i.label)}<span class="rank-sub">${esc(i.sub||'')}</span></span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(Math.abs(i.value)/max*100).toFixed(1)}%;background:${i.color||'var(--accent)'};animation-delay:${Math.min(n,12)*40}ms"></i></div></div><span class="rv${i.tone?` ${i.tone}-text`:''}">${i.text}</span></div>`).join('')}</div>`;
 }
 function renderStatCard(label,value,sub,tone='',dot=''){
   return `<div class="card kpi static"><span class="kpi-label">${dot?`<span class="dot ${dot}"></span>`:''}${esc(label)}</span><span class="kpi-value${tone?` ${tone}`:''}">${esc(value)}</span><span class="kpi-sub">${sub}</span></div>`;
@@ -4572,7 +4598,9 @@ function renderDataQualityNote(){
   const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
   const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';
   const dateHelp=issues.some(i=>i.kind==='date')?'<p>Dates outside 1990–2099 (e.g. year 0202 or 2626) are treated as missing, so those rows are not counted as late or on time until the date is fixed in SAP.</p>':'';
-  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
+  // The open popover covers the filters below it, so it closes on Esc and when focus leaves it (the popover itself
+  // takes focus on click, so clicking its text keeps it open).
+  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open" onkeydown="if(event.key==='Escape'&amp;&amp;this.open){this.open=false;this.querySelector('summary').focus();}" onfocusout="if(this.open&amp;&amp;!this.contains(event.relatedTarget))this.open=false"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop" tabindex="-1"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
 }
 
 // The KPI query's AmountLocal is already the OPEN amount on order-line rows (RDR1/POR1.OpenSum, local currency)
@@ -4727,11 +4755,12 @@ function renderShipTargetScenario(sd,today){
     </tr>`;
   };
   const calendarMax=sd.maxDayValue;
+  const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return `<section class="section rise">
     <div class="section-head"><h2 class="section-title">Ship target scenario</h2><span class="section-sub">open lines booked by the end date, by ${esc(sd.scenarioDateLabel)}</span></div>
     <div class="filter-bar inline-controls">
-      <label>Start date <input type="date" id="ship-scenario-start" value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value)"></label>
-      <label>End date <input type="date" id="ship-scenario-end" value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value)"></label>
+      <label>Start date <input type="date" id="ship-scenario-start" value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End date <input type="date" id="ship-scenario-end" value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>Calendar basis <select id="ship-scenario-basis" class="select" onchange="setShipScenarioDateBasis(this.value)">
         <option value="effective"${sd.useEffective?' selected':''}>Include reschedule dates</option>
         <option value="original"${!sd.useEffective?' selected':''}>Original line delivery only</option>
@@ -4904,7 +4933,9 @@ function renderResults(){
     // ---------- How we performed (lagging indicators) ----------
     const series=cachedByFilter(m,`${ohKey}|series`,()=>monthlyRateSeries(shipRowsAll,reschedulePerf.closed,reschedulePerf.met));
     const otdTone=otd3Mo.scored.length?toneFor(otd3Mo.rate,90,75):'neutral';
-    const fillTone=toneFor(fillRate,90,70);
+    // No ordered qty in view (e.g. only a Clear To Build or supply file loaded): nothing to score, so "—" not a red 0%.
+    const hasFill=fillLineRows.some(r=>(num(r.quantity)||0)>0);
+    const fillTone=hasFill?toneFor(fillRate,90,70):'neutral';
     const hitTone=reschedulePerf.closed.length?toneFor(reschedulePerf.rate,90,75):'neutral';
     const {weeks,weekMax}=cachedByFilter(m,`${ohKey}|weeks`,()=>{
       const weeks=weekWindows(thisWeekStart,12,-1).reverse();
@@ -4930,7 +4961,7 @@ function renderResults(){
         </button>
         <button type="button" class="card kpi lag${selected('fillrate')}" ${tileAttrs('fillrate')}>
           <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="kpi-tag">target 90%</span></div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${fmtNum(fillRate)}%</span><span class="kpi-unit">of ordered qty</span></div>
+          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${hasFill?`${fmtNum(fillRate)}%`:'—'}</span><span class="kpi-unit">of ordered qty</span></div>
           <div class="bullet-wrap">${renderBullet(fillRate,fillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
           <span class="kpi-sub">Delivered or closed qty of ordered qty · ${fmtNum(fillOpenRows.length)} lines still open</span>
         </button>
@@ -4998,8 +5029,8 @@ function renderResults(){
     <div class="grid-split rise rise-4">
       <section class="table" aria-label="Warehouse scorecard">
         <div class="card-head"><h2>Warehouse scorecard</h2><span class="section-sub">${focusedWarehouse?'click the row again to show all warehouses':'click a row to focus the page'}</span></div>
-        <div class="thead sc-cols"><div>Warehouse</div><div class="num">Open</div><div class="num">At risk</div><div class="num">Past due</div><div class="num">OTD 3 mo</div><div class="num">Fill</div><div class="num">Resched</div></div>
-        ${scorecardShown.map(g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}">
+        <div class="thead sc-cols" aria-hidden="true"><div>Warehouse</div><div class="num">Open</div><div class="num">At risk</div><div class="num">Past due</div><div class="num">OTD 3 mo</div><div class="num">Fill</div><div class="num">Resched</div></div>
+        ${scorecardShown.map(g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}" aria-label="${esc(`${g.name}: open ${moneyShort(g.openAmt)}, at risk ${g.riskAmt?moneyShort(g.riskAmt):'none'}, past due ${g.pastDue?fmtNum(g.pastDue):'none'}, OTD 3 mo ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, resched ${rateLabel(g.hitRate)}`)}">
           <div class="name" title="${esc(g.name)}">${esc(g.name)}</div>
           <div class="num soft-cell">${moneyShort(g.openAmt)}</div>
           <div class="num ${g.riskAmt?'risk-cell':'muted'}">${g.riskAmt?moneyShort(g.riskAmt):'—'}</div>
@@ -5205,8 +5236,8 @@ function renderResults(){
         if(weeklyLineSort==='date')return sortDate(a)-sortDate(b)||defaultSort(a,b);
         return defaultSort(a,b);
       });
-      const limit=weeklyLinkedShowAll||printMode?80:20;
-      const shown=sorted.slice(0,limit);
+      // Print lists every line (the screen caps stay for speed).
+      const shown=printMode?sorted:sorted.slice(0,weeklyLinkedShowAll?80:20);
       const sortOptions=[['default','Default'],['warehouse','Warehouse'],['customer','Customer'],['owner','Document Owner'],['date','Date'],['status','Status'],['value','Value high to low']];
       const arrow=sortDir>0?'↑':'↓';
       // While a header sort is on, the select shows it as an extra choice so the other choices still switch back.
@@ -5432,7 +5463,7 @@ function renderResults(){
           if(poLineSort==='value')return openLineValue(b)-openLineValue(a)||defaultSort(a,b);
           return defaultSort(a,b);
         });
-        const shown=sorted.slice(0,poLinkedShowAll||printMode?100:20);
+        const shown=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
         const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
         return `<div class="table">
           <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select" onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
@@ -5527,8 +5558,8 @@ function renderResults(){
       <div class="grid-split rise rise-4">
         <section class="table" aria-label="Open PO value by warehouse">
           <div class="card-head lg"><h2>Open PO value by warehouse</h2><span class="section-sub">${focusedPoWarehouse?'click the row again to show all':'click a row to filter'}</span></div>
-          <div class="thead po-wh-cols"><div>Warehouse</div><div class="num">Lines</div><div>Open value</div><div class="num">Late</div><div class="num">No commit</div><div class="num">Future</div></div>
-          ${poGroupsShown.map(g=>`<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}">
+          <div class="thead po-wh-cols" aria-hidden="true"><div>Warehouse</div><div class="num">Lines</div><div>Open value</div><div class="num">Late</div><div class="num">No commit</div><div class="num">Future</div></div>
+          ${poGroupsShown.map(g=>`<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(`${g.key}: ${fmtNum(g.rows.length)} lines, open value ${moneyShort(g.openValue)}, late ${g.lateRows?fmtNum(g.lateRows):'none'}, no commit ${g.noCommitRows?fmtNum(g.noCommitRows):'none'}, future ${g.futureRows?fmtNum(g.futureRows):'none'}`)}">
             <div class="name m" title="${esc(g.key)}">${esc(g.key)}</div>
             <div class="num soft-cell">${fmtNum(g.rows.length)}</div>
             <div class="bar-cell xs"><div class="track"><i class="grow-w" style="width:${(g.openValue/poGroupMax*100).toFixed(1)}%"></i></div><span class="strong-cell">${moneyShort(g.openValue)}</span></div>
@@ -5838,7 +5869,8 @@ function renderResults(){
     const mt=m.metricTimeline;
     const thisMk=monthKey(reportToday());
     const onTrackRate=pct(m.onTrackRows.length,m.rows.length);
-    const commitAhead=m.rows.filter(r=>weeklyRiskBucket(r)==='future').length;
+    // The same count as the timeline's Rescheduled column and the At-risk chart (a reschedule into next month is Open Next Month there).
+    const commitAhead=m.rescheduledRows.length;
     const lateCount=m.pastDueRows.length+m.lateRows.length;
     const rateCard=(label,valueText,rate,tone,target,targetLabel,sub)=>`<div class="card rate-card">
         <div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-tag">${targetLabel}</span></div>
@@ -5870,7 +5902,7 @@ function renderResults(){
     <section class="section rise rise-1">
       <div class="section-head"><h2 class="section-title">Order quality rates</h2><span class="section-sub">open and closed sales order lines</span></div>
       <div class="grid-4">
-        ${rateCard('On-track rate',`${onTrackRate}%`,onTrackRate,toneFor(onTrackRate,90,75),90,'target 90%',`${fmtNum(m.onTrackRows.length)} not late/no-commit rows`)}
+        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} not late/no-commit rows`)}
         ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time, never rescheduled`)}
         ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in the last 12 months missed its original date (late or still open)`)}
         ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} open lines have shipped part of their qty`)}
@@ -5939,20 +5971,23 @@ function renderResults(){
       </div>
       <div class="card list-card roomy">
         <div class="list-head"><h2>On-track rate by warehouse</h2><span class="section-sub">lowest first · target 90% · 5+ open lines</span></div>
-        <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
+        <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${g.key} · ${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
       </div>
     </section>
     <section class="table rise rise-2">
-      <div class="card-head lg"><div class="card-head-text"><h2>Open value by warehouse and due month</h2><span class="section-sub">Darker blue = more open value. The red badge counts late or past-due lines. Hover a cell for detail.</span></div></div>
-      <div class="heat-scroll">
-        <div class="heat-grid head" style="${heatCols}"><div>Warehouse</div>${months.map(mo=>`<div>${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
-        ${heatShown.map((x,ri)=>`<div class="heat-grid row" style="${heatCols}"><div class="heat-name" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
+      <div class="card-head lg"><div class="card-head-text"><h2>Open value by warehouse and due month</h2><span class="section-sub">Darker blue = more open value. The red badge counts late or past-due lines.</span></div></div>
+      <div class="heat-scroll" role="table" aria-label="Open value by warehouse and due month">
+        <div class="heat-grid head" role="row" style="${heatCols}"><div role="columnheader">Warehouse</div>${months.map(mo=>`<div role="columnheader">${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
+        ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
           const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
-          return `<div class="heat-slot"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms" title="${esc(tip)}">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-label="${fmtNum(g.lateRows)} late lines">${fmtNum(g.lateRows)}</span>`:''}</div></div>`;
+          // Each cell carries its breakdown as text (read by screen readers, shown under the grid on focus or hover);
+          // cells with lines are Tab stops, empty ones are not.
+          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
+      ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover or Tab to a cell for its breakdown.</p>':''}
       ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat" onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
     </section>
     <div class="rise rise-3">${renderTableCard({key:'wh-summary',title:'Warehouse KPI summary',note:'all warehouses with open or closed lines',
