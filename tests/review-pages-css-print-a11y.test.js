@@ -153,4 +153,22 @@ test('print hides the Build Risk override / note controls; the print-only text c
   assert.match(printCss(), /\.editable-rows \.row-override,\.editable-rows \.row-note\{display:none!important\}/);
 });
 
+test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
+  const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
+  const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));
+  const page = await loaded([...so, ...po]);
+  const lines = () => html(page).split('class="line-row').length - 1;
+  page.run('setTab("weekly");toggleWeeklyLinkedAll()');
+  assert.equal(lines(), 80);
+  page.run('refreshForPrint()');
+  assert.equal(lines(), 90);
+  assert.match(html(page), /Showing 90 of 90 rows/);
+  page.run('endPrintMode();setTab("purchaseorders")');
+  assert.equal(lines(), 20);
+  page.run('refreshForPrint()');
+  assert.equal(lines(), 105);
+  page.run('endPrintMode()');
+  assert.equal(lines(), 20);
+});
+
 run();

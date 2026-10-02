@@ -5016,8 +5016,8 @@ function renderResults(){
         if(weeklyLineSort==='date')return sortDate(a)-sortDate(b)||defaultSort(a,b);
         return defaultSort(a,b);
       });
-      const limit=weeklyLinkedShowAll||printMode?80:20;
-      const shown=sorted.slice(0,limit);
+      // Print lists every line (the screen caps stay for speed).
+      const shown=printMode?sorted:sorted.slice(0,weeklyLinkedShowAll?80:20);
       const sortOptions=[['default','Default'],['warehouse','Warehouse'],['customer','Customer'],['owner','Document Owner'],['date','Date'],['status','Status'],['value','Value high to low']];
       const arrow=sortDir>0?'↑':'↓';
       // While a header sort is on, the select shows it as an extra choice so the other choices still switch back.
@@ -5243,7 +5243,7 @@ function renderResults(){
           if(poLineSort==='value')return openLineValue(b)-openLineValue(a)||defaultSort(a,b);
           return defaultSort(a,b);
         });
-        const shown=sorted.slice(0,poLinkedShowAll||printMode?100:20);
+        const shown=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
         const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
         return `<div class="table">
           <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select" onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
