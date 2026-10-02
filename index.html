@@ -3495,13 +3495,14 @@ function aiWithFilters(f,fn){
     [weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache]=saved;
   }
 }
-// A name the model typed, matched to a filter option: exact code or label first, then part of a label.
+// A name the model typed, matched to filter options: the exact code or label alone, else every label that contains it
+// (so "CM" means every CM warehouse, as in search_lines).
 function aiMatch(q,options){
   const s=String(q||'').trim().toLowerCase();
-  if(!s)return null;
+  if(!s)return [];
   const opts=options.map(o=>typeof o==='string'?{value:o,label:o}:o);
-  const hit=opts.find(o=>o.value.toLowerCase()===s||o.label.toLowerCase()===s)||opts.find(o=>o.label.toLowerCase().includes(s));
-  return hit?hit.value:null;
+  const exact=opts.filter(o=>o.value.toLowerCase()===s||o.label.toLowerCase()===s);
+  return exact.length?exact:opts.filter(o=>o.label.toLowerCase().includes(s));
 }
 // Long lists are cut until the JSON fits ~30 KB, so one tool result never floods the request.
 function aiCap(res,key){
@@ -3571,23 +3572,24 @@ function aiOverview(a){
   if(!parsedRows.length)return {...out,order_health:null,purchase_orders:null,note:'No sales or purchase order lines are loaded.'};
   const m=currentMetrics();
   const base=aiWithFilters({},()=>({oh:orderHealthData(m),po:poData(m)}));
-  const find=(q,options)=>q&&options?aiMatch(q,options):null;
+  const find=(q,options)=>q&&options?aiMatch(q,options):[];
   const wh=find(a.warehouse,base.oh.weeklyWarehouseOptions),poWh=find(a.warehouse,base.po&&base.po.poWarehouseOptions);
   const customer=find(a.customer,base.oh.weeklyCustomerOptions),owner=find(a.owner,base.oh.weeklyOwnerOptions),segment=find(a.segment,base.oh.weeklySegmentOptions),vendor=find(a.vendor,base.po&&base.po.poVendorOptions);
-  const missing=[['warehouse',a.warehouse,wh||poWh],['customer',a.customer,customer],['owner',a.owner,owner],['segment',a.segment,segment],['vendor',a.vendor,vendor]].filter(([,q,v])=>q&&!v).map(([k,q])=>`${k} "${q}"`);
+  const missing=[['warehouse',a.warehouse,wh.length||poWh.length],['customer',a.customer,customer.length],['owner',a.owner,owner.length],['segment',a.segment,segment.length],['vendor',a.vendor,vendor.length]].filter(([,q,n])=>q&&!n).map(([k,q])=>`${k} "${q}"`);
   if(missing.length)return {...aiAsOf(),error:`No ${missing.join(', ')} in the loaded data.`,hint:'Call group_totals to list the names that exist.'};
-  const f={warehouse:wh&&[wh],customer:customer&&[customer],owner:owner&&[owner],segment:segment&&[segment],poWarehouse:poWh&&[poWh],vendor:vendor&&[vendor]};
+  const values=hits=>hits.length?hits.map(o=>o.value):null,names=hits=>hits.length?[...new Set(hits.map(o=>o.label))]:'All';
+  const f={warehouse:values(wh),customer:values(customer),owner:values(owner),segment:values(segment),poWarehouse:values(poWh),vendor:values(vendor)};
   return aiWithFilters(f,()=>({...out,
-    filters:{warehouse:wh||poWh||'All',customer:customer||'All',owner:owner||'All',segment:segment||'All',vendor:vendor||'All',applies:'customer, owner and segment filter sales orders; vendor filters purchase orders'},
-    order_health:a.warehouse&&!wh?{note:`No sales order lines in warehouse ${a.warehouse}.`}:aiOrderHealth(orderHealthData(m)),
-    purchase_orders:!base.po?{loaded:false,hint:'This export has no purchase order lines.'}:a.warehouse&&!poWh?{note:`No purchase order lines in warehouse ${a.warehouse}.`}:aiPurchaseOrders(poData(m))
+    filters:{warehouse:names([...wh,...poWh]),customer:names(customer),owner:names(owner),segment:names(segment),vendor:names(vendor),applies:'customer, owner and segment filter sales orders; vendor filters purchase orders; a list means every matching name is included'},
+    order_health:a.warehouse&&!wh.length?{note:`No sales order lines in warehouse ${a.warehouse}.`}:aiOrderHealth(orderHealthData(m)),
+    purchase_orders:!base.po?{loaded:false,hint:'This export has no purchase order lines.'}:a.warehouse&&!poWh.length?{note:`No purchase order lines in warehouse ${a.warehouse}.`}:aiPurchaseOrders(poData(m))
   }));
 }
 const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
 const KPI_TOOLS=[
   {name:'get_overview',
     description:'Headline numbers: every Order Health tile (at risk with its past due / no commit / rescheduled split, no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
-    parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it'},customer:{type:'string',description:'Customer code or name'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name'}},required:[]},
+    parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it (every matching warehouse is included)'},customer:{type:'string',description:'Customer code or name, or part of it (every match is included)'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name, or part of it (every match is included)'}},required:[]},
     run:(a={})=>aiOverview(a)},
   {name:'search_lines',
     description:'Find order lines. scope: at_risk, no_commit, rescheduled, due_this_week (This week focus: at risk plus due this week), open (all open sales order lines), po_late, po_no_commit, po_open, or all (every loaded sales and purchase order row, open and closed, with deliveries and receipts). Returns the most overdue first: type, document, line, customer or vendor, warehouse, item, description, original due, reschedule, open qty, open value, status, saved override and notes, plus the total number of matches.',

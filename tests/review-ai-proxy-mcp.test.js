@@ -151,4 +151,21 @@ test('an expired sign-in never switches Ask AI to a remembered personal key, and
   assert.match(local.els['ai-log'].innerHTML, /Own-key answer/);
 });
 
+// --- get_overview filters by part of a name ---------------------------------------------------------------
+test('get_overview with part of a name covers every match, like search_lines', async () => {
+  const page = await kpiPage();
+  for (const [arg, q, names] of [['warehouse', 'CM', ['CM - Alta', 'CM - Bravo']], ['customer', 'aqua', ['AQUHOT - Aqua Hot', 'AQUMAR - Aqua Marine']]]) {
+    const o = tool(page, 'get_overview', { [arg]: q });
+    const s = tool(page, 'search_lines', { scope: 'at_risk', [arg]: q });
+    assert.equal(s.total_matches, 2);
+    assert.deepEqual([o.order_health.at_risk.lines, o.order_health.at_risk.open_value], [s.total_matches, s.open_value_of_matches], `${arg} ${q}`);
+    assert.deepEqual(o.filters[arg], names);
+  }
+  // An exact code or name picks that one alone.
+  const exact = tool(page, 'get_overview', { customer: 'AQUHOT' });
+  assert.deepEqual([exact.filters.customer, exact.order_health.at_risk.lines], [['AQUHOT - Aqua Hot'], 1]);
+  assert.equal(tool(page, 'get_overview').filters.warehouse, 'All');
+  assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL'], 'the page filters are left alone');
+});
+
 run();
