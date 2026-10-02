@@ -140,11 +140,11 @@ test('no data: the box is disabled, typing and shortcuts do nothing', async () =
   assert.doesNotMatch(html(page), /page-title"[^>]*>Search/);
   let focused = 0;
   page.els['global-search'] = { disabled: true, focus: () => { focused++; } };
-  page.ctx.globalSearchShortcut({ key: '/', target: { tagName: 'BODY' }, preventDefault() {} });
+  page.ctx.globalSearchShortcut({ key: 'k', ctrlKey: true, target: { tagName: 'BODY' }, preventDefault() {} });
   assert.equal(focused, 0);
 });
 
-test('"/" and Ctrl/Cmd+K focus the box unless the user is typing in a field', async () => {
+test('Ctrl/Cmd+K focuses the box unless the user is typing in a field; a bare "/" does nothing (WCAG 2.1.4)', async () => {
   const page = await loaded();
   let focused = 0;
   page.els['global-search'] = { disabled: false, focus: () => { focused++; }, select() {} };
@@ -153,13 +153,15 @@ test('"/" and Ctrl/Cmd+K focus the box unless the user is typing in a field', as
     page.ctx.globalSearchShortcut({ key, target: { tagName }, preventDefault: () => { prevented = true; }, ...mods });
     return prevented;
   };
-  assert.equal(key('/', 'BODY'), true);
+  assert.equal(key('/', 'BODY'), false);
+  assert.equal(key('/', 'BUTTON'), false);
   assert.equal(key('k', 'BUTTON', { ctrlKey: true }), true);
   assert.equal(key('K', 'BODY', { metaKey: true }), true);
-  assert.equal(focused, 3);
-  for (const tag of ['INPUT', 'TEXTAREA', 'SELECT']) assert.equal(key('/', tag), false, tag);
+  assert.equal(focused, 2);
+  for (const tag of ['INPUT', 'TEXTAREA', 'SELECT']) assert.equal(key('k', tag, { ctrlKey: true }), false, tag);
   assert.equal(key('k', 'BODY'), false);
-  assert.equal(focused, 3);
+  assert.equal(focused, 2);
+  assert.ok(page.els['app-sidebar'].innerHTML.includes('title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K"'));
 });
 
 test('redraws keep focus, typed text and caret in the search box', async () => {

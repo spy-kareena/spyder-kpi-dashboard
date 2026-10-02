@@ -4130,7 +4130,7 @@ function resetApp(){
   document.getElementById('file-input').value='';
   showUpload();
 }
-// --- Global search: sidebar box ("/" or Ctrl/Cmd+K), Search page over every loaded row ---
+// --- Global search: sidebar box (Ctrl/Cmd+K), Search page over every loaded row ---
 let searchQuery='';
 let searchPrevTab='weekly';
 let searchTimer=null;
@@ -4162,13 +4162,13 @@ function clearGlobalSearch(){
 function globalSearchKey(e){
   if(e.key==='Escape'){e.preventDefault();clearGlobalSearch();}
 }
+// Ctrl/Cmd+K only: a bare one-key shortcut like '/' fires on stray or speech-input keys and cannot be turned off (WCAG 2.1.4).
 function globalSearchShortcut(e){
   const t=e.target||{};
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||'')||t.isContentEditable)return;
-  const slash=e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey;
   const ctrlK=(e.ctrlKey||e.metaKey)&&!e.altKey&&String(e.key).toLowerCase()==='k';
   const box=document.getElementById('global-search');
-  if(!(slash||ctrlK)||!box||box.disabled)return;
+  if(!ctrlK||!box||box.disabled)return;
   e.preventDefault();
   box.focus();
   if(box.select)box.select();
@@ -4337,7 +4337,7 @@ function renderSidebar(){
     : 'Add a SAP export to begin';
   const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
-    <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (/ or Ctrl+K)" aria-keyshortcuts="/ Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
+    <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}</div>`).join('')}</nav>
     <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()" title="Load another export (supply / demand or Clear To Build) next to this one">Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()">New file</button></div>`:''}</div>`;
   restoreFocus(el,focus);
