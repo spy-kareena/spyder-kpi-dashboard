@@ -35,7 +35,7 @@ The connector is a small program in the `mcp` folder (`mcp/spyder-kpi-mcp.mjs`).
 ```
 
 - In JSON, every `\` in a Windows path is written twice (`\\`).
-- If the file already has an `"mcpServers"` section, put the `"spyder-kpi"` entry inside it.
+- If the file already has settings, keep them: put the `"spyder-kpi"` entry inside its `"mcpServers"` section, or add the `"mcpServers"` part after the last setting, separated by a comma. The whole file must stay one `{ ... }` block.
 - To also load a supply / demand snapshot or a Clear To Build report, add its path to `args` after the KPI export.
 
 ## Option 3: Claude Code
