@@ -1033,10 +1033,13 @@ function downloadPreparedSnapshot(){
 }
 function showSnapshotDownloadLink(fileName,contents){
   let box=document.getElementById('snapshot-download-box');
+  const created=!box;
   if(!box){
     box=document.createElement('div');
     box.id='snapshot-download-box';
     box.className='snapshot-download-box';
+    // A status region, so screen readers announce the message; a new one is filled once it is in the page.
+    box.setAttribute('role','status');
     const results=document.getElementById('results-screen');
     const head=results?.querySelector('.page-head');
     if(head&&head.parentNode){
@@ -1045,7 +1048,9 @@ function showSnapshotDownloadLink(fileName,contents){
       document.body.appendChild(box);
     }
   }
-  box.innerHTML=`<strong>Snapshot ready.</strong><button type="button" class="btn" onclick="downloadPreparedSnapshot()">Download ${esc(fileName)}</button><span>Send the downloaded .html file, not a copy of this browser page. ${esc(contents||'')}</span>`;
+  const html=`<strong>Snapshot ready.</strong><button type="button" class="btn" onclick="downloadPreparedSnapshot()">Download ${esc(fileName)}</button><span>Send the downloaded .html file, not a copy of this browser page. ${esc(contents||'')}</span>`;
+  if(created)setTimeout(()=>{box.innerHTML=html;},50);
+  else box.innerHTML=html;
 }
 async function exportShareSnapshot(){
   if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length){

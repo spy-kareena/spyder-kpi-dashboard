@@ -195,4 +195,22 @@ test('a snapshot opens with the Top offenders ranking and expanded lists it was 
   assert.deepEqual(old.run(VIEW), { weeklyOffenderView: 'customers', weeklyLinkedShowAll: false, weeklyScorecardAll: false, weeklyAdvancedOpen: false, tableMore: {}, dataCheckOpen: false, poWarehouseAll: false, poLinkedShowAll: false });
 });
 
+test('without a save picker, "Snapshot ready" is a status message screen readers announce', async () => {
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport([sapRow({})]) }]);
+  const doc = page.ctx.document;
+  const getById = doc.getElementById;
+  let box = null;
+  doc.getElementById = (id) => (id === 'snapshot-download-box' ? box : getById(id));
+  doc.createElement = () => (box = { attrs: {}, innerHTML: '', setAttribute(k, v) { this.attrs[k] = v; } });
+  Object.assign(page.ctx, { buildSnapshotHtml: () => '', downloadPreparedSnapshot() {} });
+  assert.equal(page.ctx.showSaveFilePicker, undefined);
+  await page.ctx.exportShareSnapshot();
+  assert.equal(box.attrs.role, 'status');
+  // The region is in the page before its text arrives, so the text is announced.
+  assert.equal(box.innerHTML, '');
+  await new Promise((r) => setTimeout(r, 80));
+  assert.match(box.innerHTML, /^<strong>Snapshot ready\.<\/strong>/);
+});
+
 run();
