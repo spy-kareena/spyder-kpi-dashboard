@@ -3731,7 +3731,8 @@ function aiShowSettings(show){
 function aiSyncSettings(){
   const server=!!aiState.server,hasKey=!!aiKey();
   aiEl('ai-server-note').hidden=!server;
-  aiEl('ai-key-box').hidden=server;
+  // With a server key the box is only needed to remove a personal key saved here earlier.
+  aiEl('ai-key-box').hidden=server&&!hasKey;
   aiEl('ai-key-remove').disabled=!hasKey;
   aiEl('ai-mode').textContent=`${server?'Server key':hasKey?'Your key':'Not set up'}${aiState.model?` · ${aiState.model}`:''}`;
   const models=aiState.models.length?aiState.models:[aiState.model||aiGet(AI_MODEL_STORE)||'gemini-2.5-flash'];

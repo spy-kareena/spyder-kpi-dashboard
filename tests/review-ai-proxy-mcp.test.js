@@ -168,6 +168,22 @@ test('get_overview with part of a name covers every match, like search_lines', a
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL'], 'the page filters are left alone');
 });
 
+// --- Remove key in server-key mode -----------------------------------------------------------------------
+test('with a server key, a personal key saved earlier can still be removed', async () => {
+  const storage = { spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' };
+  const page = await kpiPage(storage);
+  route(page, async (url) => ({ ok: true, status: 200, json: async () => (/status$/.test(url) ? { configured: true } : { models: [] }) }));
+  page.run('aiToggle(true)');
+  await page.run('aiPrepare()');
+  page.run('aiShowSettings(true)');
+  assert.equal(page.run('aiState.server'), true);
+  assert.equal(page.els['ai-server-note'].hidden, false);
+  assert.deepEqual([page.els['ai-key-box'].hidden, page.els['ai-key-remove'].disabled], [false, false], 'Remove key is reachable');
+  page.run('aiRemoveKey()');
+  assert.equal(storage.spyderKpiGeminiKeyV1, undefined);
+  assert.equal(page.els['ai-key-box'].hidden, true, 'with nothing saved, server mode needs no key box');
+});
+
 // --- Chat reset on a new export ----------------------------------------------------------------------------
 test('loading an export clears the chat at once and drops an answer still pending from the old data', async () => {
   const page = await kpiPage({ spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' });
