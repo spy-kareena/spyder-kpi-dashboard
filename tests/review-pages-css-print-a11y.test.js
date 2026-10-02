@@ -153,6 +153,14 @@ test('print hides the Build Risk override / note controls; the print-only text c
   assert.match(printCss(), /\.editable-rows \.row-override,\.editable-rows \.row-note\{display:none!important\}/);
 });
 
+test('empty text fields have a 3:1 border (search, Ask AI key and question, note editors)', () => {
+  for (const sel of ['.note-editor textarea', '.sidebar-search input', '.ai-field input', '.ai-compose textarea']) {
+    assert.match(CSS, new RegExp(`(^|\\})${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{[^}]*border:1px solid var\\(--gray-500\\)`, 'm'), sel);
+  }
+  assert.match(CSS, /\.editable-rows \.row-note\{[^}]*border-color:var\(--gray-500\)\}/);
+  for (const bg of ['white', 'gray-50']) assert.ok(ratio('gray-500', bg) >= 3, bg);
+});
+
 test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));
