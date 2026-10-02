@@ -161,6 +161,23 @@ test('the same workbook loaded twice is not double counted', async () => {
   assert.equal(single.run('buildRiskRows.length'), 8);
 });
 
+// Add file, awaited: the page re-reads every loaded file plus the new ones, as addFiles does.
+async function addFile(page, files) { page.ctx.__added = files; await page.run('handleFiles([...loadedFiles,...__added],{adding:true})'); }
+const dsmWeek = (week, ctb, note) => ({ name: `${week} - Orders at Risk`, aoa: [[...HEAD, 'Notes'], ['DSM', 'September', 10, ctb, 10 - ctb, 0, 0, '', '', note]] });
+
+test('an updated workbook added later replaces the weeks it repeats', async () => {
+  const page = loadPage({ today: '2026-10-08' });
+  const v1 = workbook(page, [dsmWeek('0930', 5, 'old')]);
+  const v2 = workbook(page, [dsmWeek('1007', 7, 'new week'), dsmWeek('0930', 9, 'corrected')]);
+  await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb-v1.xlsx', bytes: v1 }]);
+  await addFile(page, [{ name: 'ctb-v2.xlsx', bytes: v2 }]);
+  const weeks = 'buildRiskRows.map(r=>[r.snapshot,r.clearToBuild,r.notes]).sort()';
+  assert.deepEqual(page.run(weeks), [['2026-09-30', 9, 'corrected'], ['2026-10-07', 7, 'new week']]);
+  // Adding the older workbook again makes it the newest file: the file added last wins.
+  await addFile(page, [{ name: 'ctb-v1 (1).xlsx', bytes: v1 }]);
+  assert.deepEqual(page.run(weeks), [['2026-09-30', 5, 'old'], ['2026-10-07', 7, 'new week']]);
+});
+
 test('a single CTB report as CSV still works: no week picker, and it is a separate pick next to a workbook', async () => {
   const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late,Notes\r\nIMS,Sep 2026,5,4,1,0,"a\nb"\r\n,Oct 2026,,,,,\r\n'));
   const page = loadPage();
