@@ -3675,7 +3675,7 @@ const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
 const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
 const AI_MAX_ROUNDS=6;
 const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
+const aiState={open:false,opener:'',server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
 // A newly loaded export starts a new chat (showResults checks after every load), so follow-up questions never mix in
@@ -3689,15 +3689,18 @@ const aiKey=()=>aiGet(AI_KEY_STORE,'session')||aiGet(AI_KEY_STORE)||aiState.memK
 const aiConsented=()=>aiGet(AI_CONSENT_STORE)==='1';
 function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
 function aiToggle(force){
+  const wasOpen=aiState.open;
   aiState.open=force===undefined?!aiState.open:!!force;
   const panel=aiEl('ai-panel');
   if(panel)panel.hidden=!aiState.open;
   if(panel&&panel.setAttribute)panel.setAttribute('aria-modal',String(aiState.open&&aiCoversPage()));
   if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
-  // Before any export is loaded the page head has no Ask AI button; the help page's Open Ask AI takes its place.
-  const button=document.querySelector('[data-focus-key="ask-ai"],[data-focus-key="connect-ask-ai"]');
-  if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
-  if(!aiState.open){aiFocus(button);return;}
+  // Every Ask AI button (page head, Connect an AI) reports the state; closing returns focus to the one that opened
+  // the drawer (found again by its focus key, as the page may have re-rendered), else to the first one.
+  const buttons=[...document.querySelectorAll('[aria-controls="ai-panel"]')];
+  buttons.forEach(b=>b.setAttribute('aria-expanded',String(aiState.open)));
+  if(!aiState.open){aiFocus(buttons.find(b=>b.dataset.focusKey===aiState.opener)||buttons[0]);return;}
+  if(!wasOpen){const a=document.activeElement;aiState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
   aiSyncData();
   aiRenderLog();
   aiShowSettings(!aiConsented());
@@ -4047,7 +4050,7 @@ function renderConnectPage(){
   const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
   return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
   ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and, if it asks for one, paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
-    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
+    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
       ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
