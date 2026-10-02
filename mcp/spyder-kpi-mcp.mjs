@@ -137,7 +137,7 @@ async function callTool(name, args) {
   if (!kpiNames.has(name)) return { error: `Unknown tool ${name}. Tools: ${TOOLS.map((t) => t.name).join(', ')}.` };
   const out = plain(page.aiRunTool(name, args));
   // The page's hints speak of its upload screen; here files come in through load_exports.
-  if (out.loaded === false) out.hint = run('hasLoadedData()') ? `${out.hint} With this connector, call load_exports with the paths of every file to use.` : HOW_TO_LOAD;
+  if (out.loaded === false) out.hint = run('hasLoadedData()') ? `${out.hint} With this connector, call load_exports with the paths of every file to use.` : HOW_TO_LOAD + (lastError ? ` Last load error: ${lastError}` : '');
   return out;
 }
 
@@ -145,7 +145,10 @@ async function callTool(name, args) {
 let work = Promise.resolve();
 const serial = (fn) => { const p = work.then(fn); work = p.catch(() => {}); return p; };
 
-serial(async () => {
+// The start files load after the first tools/list reply (or at the first tools/call), not at launch: parsing a
+// large export blocks for seconds, and the initialize / tools/list handshake must not wait for it.
+let started = null;
+const startLoad = () => started ??= serial(async () => {
   if (!startFiles.length) { log('No export files given. Tools will explain how to load them (load_exports).'); return; }
   try {
     await load(startFiles);
@@ -155,7 +158,7 @@ serial(async () => {
 });
 
 if (check) {
-  await work;
+  await startLoad();
   const info = loadedInfo();
   if (!info.loaded) {
     if (!lastError) log('Usage: node mcp/spyder-kpi-mcp.mjs --check "C:\\path\\to\\kpi_export.xls"');
@@ -183,6 +186,7 @@ function serve() {
         const args = params.arguments ?? {};
         if (typeof params.name !== 'string') throw rpcError(-32602, 'tools/call needs params.name');
         if (typeof args !== 'object' || Array.isArray(args)) throw rpcError(-32602, 'params.arguments must be an object');
+        startLoad();
         const out = await serial(() => callTool(params.name, args)).catch((err) => ({ error: String(err && err.message || err) }));
         return { content: [{ type: 'text', text: JSON.stringify(out) }], ...('error' in out ? { isError: true } : {}) };
       }
@@ -203,7 +207,8 @@ function serve() {
     }
   }
 
-  const send = (m) => { if (m) process.stdout.write(`${JSON.stringify(m)}\n`); };
+  // Resolves once the reply is flushed, so exiting on stdin close never cuts one off.
+  const send = (m) => m && new Promise((done) => process.stdout.write(`${JSON.stringify(m)}\n`, done));
   let pending = Promise.resolve();
   const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   rl.on('line', (line) => {
@@ -211,6 +216,7 @@ function serve() {
     let msg;
     try { msg = JSON.parse(line); } catch { send(failure(null, -32700, 'Parse error')); return; }
     const p = handle(msg).then(send, (err) => log(err));
+    if (msg && msg.method === 'tools/list') p.then(() => setImmediate(startLoad));
     pending = Promise.all([pending, p]);
   });
   rl.on('close', () => pending.then(() => process.exit(0)));

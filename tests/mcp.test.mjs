@@ -37,7 +37,8 @@ function start(args = [], env = {}) {
   const waiting = new Map();
   const nullIds = [];
   const lines = [];
-  child.stderr.resume();
+  const stderr = [];
+  child.stderr.on('data', (d) => stderr.push(String(d)));
   readline.createInterface({ input: child.stdout }).on('line', (line) => {
     const msg = JSON.parse(line);
     assert.equal(msg.jsonrpc, '2.0', `stdout line is not JSON-RPC: ${line.slice(0, 80)}`);
@@ -58,7 +59,7 @@ function start(args = [], env = {}) {
     const { result } = await request('tools/call', { name, arguments: args });
     return { isError: !!result.isError, data: JSON.parse(result.content[0].text) };
   };
-  return { child, request, raw, notify, call, lines };
+  return { child, request, raw, notify, call, lines, stderr };
 }
 
 async function pageFor(rows) {
@@ -85,6 +86,8 @@ test('initialize echoes a supported protocol version, falls back to the newest, 
   server.notify('notifications/initialized');
   assert.deepEqual((await server.request('ping')).result, {});
   assert.equal(server.lines.length, before + 1, 'the notification got a reply');
+  // A large export takes seconds to parse, so the start files load only after the handshake (tools/list).
+  assert.doesNotMatch(server.stderr.join(''), /Loaded/);
 });
 
 test('tools/list has every KPI tool plus load_exports and loaded_files', async () => {
@@ -176,6 +179,10 @@ test('with no files it still starts and tools say how to load; SPYDER_KPI_FILES 
 
   const fromEnv = start([], { SPYDER_KPI_FILES: `"${FILE_B}";` });
   assert.deepEqual((await fromEnv.call('loaded_files')).data.files.map((f) => f.name), ['kpi export b.xls']);
+
+  // A start file that cannot be read: the tools say why, so the AI can tell the user.
+  const missing = start([path.join(dir, 'gone.xls')]);
+  assert.match((await missing.call('get_overview')).data.hint, /load_exports[\s\S]*Last load error: Cannot read .*gone\.xls: file not found/);
 });
 
 test('--check prints the overview and exits; exits 1 without files', () => {
