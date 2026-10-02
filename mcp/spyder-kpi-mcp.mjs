@@ -213,9 +213,9 @@ function serve() {
   const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   rl.on('line', (line) => {
     if (!line.trim()) return;
-    let msg;
-    try { msg = JSON.parse(line); } catch { send(failure(null, -32700, 'Parse error')); return; }
-    const p = handle(msg).then(send, (err) => log(err));
+    let msg, reply;
+    try { msg = JSON.parse(line); reply = handle(msg); } catch { reply = Promise.resolve(failure(null, -32700, 'Parse error')); }
+    const p = reply.then(send, (err) => log(err));
     if (msg && msg.method === 'tools/list') p.then(() => setImmediate(startLoad));
     pending = Promise.all([pending, p]);
   });
