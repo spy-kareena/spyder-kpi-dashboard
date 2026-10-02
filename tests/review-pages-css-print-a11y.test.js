@@ -106,4 +106,11 @@ test('small status text uses the darker tone tokens and passes 4.5:1', () => {
   assert.ok(!/\.rank-row \.rv\.\w+-text\{/.test(CSS), 'rank values use the shared tone text classes');
 });
 
+test('Data check popover hangs from the title row (left edge of the page), not from the pill', () => {
+  // Headless Chrome at 660/768/1024/1366px: popover 16-416 or 265-665 on every page, no horizontal scroll.
+  assert.match(CSS, /\.page-head-main\{position:relative;/);
+  assert.match(CSS, /\ndetails\.data-check\{(?![^}]*position)[^}]*\}/);
+  assert.match(CSS, /\.data-check-pop\{position:absolute;top:100%;left:0;[^}]*width:400px;max-width:calc\(100vw - 32px\)/);
+});
+
 run();

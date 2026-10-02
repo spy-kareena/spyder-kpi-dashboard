@@ -218,7 +218,7 @@ button{font-family:inherit}
 /* Page header */
 /* Above the sections below it, so the Data check popover is never covered (even mid-animation) */
 .page-head{min-height:36px;position:relative;z-index:5}
-.page-head-main{display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
+.page-head-main{position:relative;display:flex;align-items:center;gap:12px;min-width:0;flex-wrap:wrap}
 .page-title{white-space:nowrap}
 .page-meta{white-space:nowrap}
 .page-head .actions{display:flex;gap:8px;flex-shrink:0}
@@ -226,11 +226,12 @@ button{font-family:inherit}
 .btn-primary:hover{box-shadow:0 6px 16px var(--accent-ring)}
 .btn-lg{font-size:13.5px;padding:10px 16px}
 .btn-sm{font-size:12px;padding:7px 13px;border-radius:8px}
-details.data-check{position:relative;display:inline-block;padding:0;border:0;background:none}
+/* The popover hangs from the title row, not the pill: the pill can sit anywhere along the row, and 400px from there ran off screen */
+details.data-check{display:inline-block;padding:0;border:0;background:none}
 details.data-check>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--warn-text);background:var(--warn-tint);border:1px solid var(--warn-border);border-radius:var(--r-pill);padding:3px 10px;white-space:nowrap;transition:background .15s}
 details.data-check>summary::-webkit-details-marker{display:none}
 details.data-check>summary:hover{background:#fef0c7}
-.data-check-pop{position:absolute;top:30px;left:0;z-index:6;width:400px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--warn-border);border-radius:12px;padding:13px 14px;font-size:12.5px;line-height:1.55;color:#7a4708;box-shadow:0 16px 40px rgba(16,24,40,.12)}
+.data-check-pop{position:absolute;top:100%;left:0;margin-top:6px;z-index:6;width:400px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--warn-border);border-radius:12px;padding:13px 14px;font-size:12.5px;line-height:1.55;color:#7a4708;box-shadow:0 16px 40px rgba(16,24,40,.12)}
 .data-check-pop p{margin:6px 0 0}
 .data-check-pop ul{margin:6px 0 0;padding-left:18px;max-height:220px;overflow:auto}
 .data-check-pop li{margin:2px 0}
