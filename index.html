@@ -2355,8 +2355,9 @@ function isCtbSheet(ws){
 }
 const CTB_MONTH_RE=/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i;
 // Report week from a sheet name: "0930 - Orders at Risk" (MMDD), "716 - Orders at Risk" (MDD), "June - Orders At
-// Risk 62" (the month word says where the month digits end: Jun 2). Sheet names carry no year: it is the report
-// date's year, or the year before when that would put the week more than 60 days after the report date.
+// Risk 62" (the month word says where the month digits end: Jun 2). Sheet names carry no year: it is the latest year
+// that puts the week no more than 60 days after today. Today, not the export date: the export date is never after
+// today, and an older export (or a December export next to a January sheet) must not push new weeks back a year.
 function ctbSheetDate(name){
   const s=String(name||'');
   const digits=(s.match(/\d{1,4}/)||[''])[0].replace(/^0+/,'');
@@ -2371,11 +2372,12 @@ function ctbSheetDate(name){
     day=Number(digits.length===2?digits[1]:digits.slice(-2));
   }
   if(!(month>=1&&month<=12&&day>=1&&day<=31))return null;
-  const today=reportToday();
-  let d=new Date(today.getFullYear(),month-1,day);
-  if(d.getDate()!==day)return null;
-  if(d-today>60*864e5)d=new Date(today.getFullYear()-1,month-1,day);
-  return d;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let y=today.getFullYear()+1;y>=today.getFullYear()-1;y--){
+    const d=new Date(y,month-1,day);
+    if(d.getDate()===day&&d-today<=60*864e5)return d;
+  }
+  return null;
 }
 // Year-less CTB months ("December") take the year nearest the report week, so December in a January report is last year.
 function ctbMonthNear(key,date){

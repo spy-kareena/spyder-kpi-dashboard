@@ -140,7 +140,7 @@ test('CTB % by CM trend: one row per CM, weeks oldest to newest, tone and toolti
   assert.match(card, /<td class="m">Price<\/td><td class="num muted">—<\/td><td class="num"><span class="pill good"[^>]*>93%</);
 });
 
-test('sheet names give the report week; the year comes from the report date and months take the nearest year', async () => {
+test('sheet names give the report week; the year comes from today and months take the nearest year', async () => {
   const page = loadPage({ today: '2026-01-20' });
   const sheet = (name, months) => ({ name, aoa: [HEAD, ...months.map((m) => [m === months[0] ? 'IMS' : _, m, 4, 3, 1, 0, 0, '75%', '0%'])] });
   const wb = workbook(page, [sheet('0115 - Orders at Risk', ['December', 'January']), sheet('1230 - Orders at Risk', ['December']),
@@ -148,6 +148,24 @@ test('sheet names give the report week; the year comes from the report date and 
   await upload(page, [{ name: 'ctb.xlsx', bytes: wb }]);
   assert.deepEqual(page.run('buildRiskRows.map(r=>[r.snapshot,r.monthKey])'), [
     ['2026-01-15', '2025-12'], ['2026-01-15', '2026-01'], ['2025-12-30', '2025-12'], ['2025-06-02', '2025-06'], ['2025-07-16', '2025-07'],
+  ]);
+});
+
+test('an export older than the workbook does not push the newest weeks back a year', async () => {
+  const sheet = (name, months) => ({ name, aoa: [HEAD, ...months.map((m) => [m === months[0] ? 'DSM' : _, m, 4, 3, 1, 0, 0, '75%', '0%'])] });
+  const kpi = (exportDate, dueDate) => sapExport([sapRow({ ExportDate: exportDate, DocumentNumber: '81001', Warehouse: 'CM - DSM', ...due(dueDate) })]);
+  // A July export next to a workbook written through September.
+  const july = loadPage({ today: '2026-10-01' });
+  await upload(july, [{ name: 'kpi.xls', bytes: kpi('07/15/2026', '09/20/2026') },
+    { name: 'ctb.xlsx', bytes: workbook(july, [sheet('0930 - Orders at Risk', ['September']), sheet('0908 - Orders at Risk', ['September']), sheet('0521 - Orders at Risk', ['May'])]) }]);
+  assert.deepEqual(july.run('currentMetrics().buildRisk.snapshots.map(s=>s.key)'), ['2026-09-30', '2026-09-08', '2026-05-21']);
+  assert.match(html(july), /<option value="2026-09-30" selected>/);
+  // A late-December export next to a January sheet: the January week is the newest, and its months are next year.
+  const jan = loadPage({ today: '2027-01-10' });
+  await upload(jan, [{ name: 'kpi.xls', bytes: kpi('12/28/2026', '01/20/2027') },
+    { name: 'ctb.xlsx', bytes: workbook(jan, [sheet('0106 - Orders at Risk', ['January', 'February']), sheet('1230 - Orders at Risk', ['January'])]) }]);
+  assert.deepEqual(jan.run('currentMetrics().buildRisk.snapshots.map(s=>[s.key,s.matched.map(r=>[r.monthKey,r.matchedRows.length])])'), [
+    ['2027-01-06', [['2027-01', 1], ['2027-02', 0]]], ['2026-12-30', [['2027-01', 1]]],
   ]);
 });
 
