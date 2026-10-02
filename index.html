@@ -222,6 +222,7 @@ button{font-family:inherit}
 .page-title{white-space:nowrap}
 .page-meta{white-space:nowrap}
 .page-head .actions{display:flex;gap:8px;flex-shrink:0}
+.btn .ico{width:15px;height:15px;margin:-2px 6px 0 -2px;vertical-align:middle;flex:none}
 .btn-primary{box-shadow:0 4px 12px var(--accent-ring)}
 .btn-primary:hover{box-shadow:0 6px 16px var(--accent-ring)}
 .btn-lg{font-size:13.5px;padding:10px 16px}
@@ -4816,7 +4817,7 @@ function renderResults(){
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button>`
+    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
       :'<button type="button" class="btn btn-primary" data-focus-key="load-export" onclick="showUpload()">Load an export</button>'}</div>
   </div>`;
 
