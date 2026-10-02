@@ -1648,14 +1648,25 @@ function isUsableScenarioDate(value){
   const d=/^\d{4}-\d{2}-\d{2}$/.test(String(value||''))?parseDate(value):null;
   return !!d&&Math.abs(d-reportToday())<=5*366*24*60*60*1000;
 }
-function setShipScenarioStartDate(value){
+// A date input fires change on every segment typed or arrowed, and a redraw rebuilds it with the caret on the first
+// segment. So keyboard edits (typed) apply on Enter or when focus leaves; calendar picks apply at once. The blur
+// redraw waits a tick so focus has already moved on and is put back on that control.
+let shipScenarioPending=false;
+function setShipScenarioStartDate(value,typed){
   if(value&&!isUsableScenarioDate(value))return;
   shipScenarioStartDate=value||'';
-  renderResults();
+  shipScenarioPending=true;
+  if(!typed)commitShipScenarioDates();
 }
-function setShipScenarioTargetDate(value){
+function setShipScenarioTargetDate(value,typed){
   if(value&&!isUsableScenarioDate(value))return;
   shipScenarioTargetDate=value||'';
+  shipScenarioPending=true;
+  if(!typed)commitShipScenarioDates();
+}
+function commitShipScenarioDates(){
+  if(!shipScenarioPending)return;
+  shipScenarioPending=false;
   renderResults();
 }
 function setShipScenarioDateBasis(value){
@@ -4517,11 +4528,12 @@ function renderShipTargetScenario(sd,today){
     </tr>`;
   };
   const calendarMax=sd.maxDayValue;
+  const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return `<section class="section rise">
     <div class="section-head"><h2 class="section-title">Ship target scenario</h2><span class="section-sub">open lines booked by the end date, by ${esc(sd.scenarioDateLabel)}</span></div>
     <div class="filter-bar inline-controls">
-      <label>Start date <input type="date" id="ship-scenario-start" value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value)"></label>
-      <label>End date <input type="date" id="ship-scenario-end" value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value)"></label>
+      <label>Start date <input type="date" id="ship-scenario-start" value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End date <input type="date" id="ship-scenario-end" value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>Calendar basis <select id="ship-scenario-basis" class="select" onchange="setShipScenarioDateBasis(this.value)">
         <option value="effective"${sd.useEffective?' selected':''}>Include reschedule dates</option>
         <option value="original"${!sd.useEffective?' selected':''}>Original line delivery only</option>
