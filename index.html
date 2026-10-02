@@ -547,6 +547,9 @@ details.about p{margin:0}
 .heat-cell{position:relative;height:34px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:500;transition:transform .15s;cursor:default}
 .heat-cell:hover{transform:scale(1.06)}
 .heat-cell .late-badge{z-index:1;font-size:12px}
+.heat-slot:focus-visible{outline:none}
+.heat-slot:focus-visible .heat-cell{outline:2px solid var(--accent);outline-offset:2px}
+.heat-detail{margin:0;padding:10px 22px 12px;font-size:12px;line-height:1.45;color:var(--gray-700)}
 .heat-0{background:var(--gray-50);color:var(--gray-400)}
 .heat-1{background:var(--accent-tint);color:var(--accent-strong)}
 .heat-2{background:var(--accent-border);color:var(--gray-900)}
@@ -596,7 +599,7 @@ details.about p{margin:0}
 .ai-compose textarea{font:inherit;font-size:13px;min-height:60px;max-height:180px;resize:vertical;border:1px solid var(--gray-300);border-radius:var(--r-ctl);padding:8px 10px;color:var(--gray-900)}
 .ai-compose .link-btn{margin-left:auto}
 .ai-foot{font-size:12px;color:var(--gray-400)}
-.ai-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ai-sr,.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* Very wide screens keep the page beside the open drawer; the page keeps its 4-column width (>=880px) there */
 @media screen and (min-width:1600px){body.ai-open .main{padding-right:456px}}
 @media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
@@ -3433,6 +3436,11 @@ function renderToneCell(rate,good,warn){
   if(rate===null||rate===undefined)return '<div class="tone-cell none">—</div>';
   return `<div class="tone-cell ${toneFor(rate,good,warn)}">${fmtNum(rate)}%</div>`;
 }
+// The scorecard and PO-by-warehouse rows are buttons in a div grid: each is named "column value, ..." so a screen
+// reader hears which number is which, and the visual header row is hidden from assistive tech.
+function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNum(rate)}%`;}
+// Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
+function showHeatDetail(tip){const el=document.getElementById('wh-heat-detail');if(el)el.textContent=tip;}
 // Card with a data table; long tables show their first rows with a "Show all" toggle (state kept per table key).
 let tableMore={};
 function toggleTableMore(key){
@@ -4797,8 +4805,8 @@ function renderResults(){
     <div class="grid-split rise rise-4">
       <section class="table" aria-label="Warehouse scorecard">
         <div class="card-head"><h2>Warehouse scorecard</h2><span class="section-sub">${focusedWarehouse?'click the row again to show all warehouses':'click a row to focus the page'}</span></div>
-        <div class="thead sc-cols"><div>Warehouse</div><div class="num">Open</div><div class="num">At risk</div><div class="num">Past due</div><div class="num">OTD 3 mo</div><div class="num">Fill</div><div class="num">Resched</div></div>
-        ${scorecardShown.map(g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}">
+        <div class="thead sc-cols" aria-hidden="true"><div>Warehouse</div><div class="num">Open</div><div class="num">At risk</div><div class="num">Past due</div><div class="num">OTD 3 mo</div><div class="num">Fill</div><div class="num">Resched</div></div>
+        ${scorecardShown.map(g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}" aria-label="${esc(`${g.name}: open ${moneyShort(g.openAmt)}, at risk ${g.riskAmt?moneyShort(g.riskAmt):'none'}, past due ${g.pastDue?fmtNum(g.pastDue):'none'}, OTD 3 mo ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, resched ${rateLabel(g.hitRate)}`)}">
           <div class="name" title="${esc(g.name)}">${esc(g.name)}</div>
           <div class="num soft-cell">${moneyShort(g.openAmt)}</div>
           <div class="num ${g.riskAmt?'risk-cell':'muted'}">${g.riskAmt?moneyShort(g.riskAmt):'—'}</div>
@@ -5326,8 +5334,8 @@ function renderResults(){
       <div class="grid-split rise rise-4">
         <section class="table" aria-label="Open PO value by warehouse">
           <div class="card-head lg"><h2>Open PO value by warehouse</h2><span class="section-sub">${focusedPoWarehouse?'click the row again to show all':'click a row to filter'}</span></div>
-          <div class="thead po-wh-cols"><div>Warehouse</div><div class="num">Lines</div><div>Open value</div><div class="num">Late</div><div class="num">No commit</div><div class="num">Future</div></div>
-          ${poGroupsShown.map(g=>`<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}">
+          <div class="thead po-wh-cols" aria-hidden="true"><div>Warehouse</div><div class="num">Lines</div><div>Open value</div><div class="num">Late</div><div class="num">No commit</div><div class="num">Future</div></div>
+          ${poGroupsShown.map(g=>`<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(`${g.key}: ${fmtNum(g.rows.length)} lines, open value ${moneyShort(g.openValue)}, late ${g.lateRows?fmtNum(g.lateRows):'none'}, no commit ${g.noCommitRows?fmtNum(g.noCommitRows):'none'}, future ${g.futureRows?fmtNum(g.futureRows):'none'}`)}">
             <div class="name m" title="${esc(g.key)}">${esc(g.key)}</div>
             <div class="num soft-cell">${fmtNum(g.rows.length)}</div>
             <div class="bar-cell xs"><div class="track"><i class="grow-w" style="width:${(g.openValue/poGroupMax*100).toFixed(1)}%"></i></div><span class="strong-cell">${moneyShort(g.openValue)}</span></div>
@@ -5742,16 +5750,18 @@ function renderResults(){
       </div>
     </section>
     <section class="table rise rise-2">
-      <div class="card-head lg"><div class="card-head-text"><h2>Open value by warehouse and due month</h2><span class="section-sub">Darker blue = more open value. The red badge counts late or past-due lines. Hover a cell for detail.</span></div></div>
-      <div class="heat-scroll">
-        <div class="heat-grid head" style="${heatCols}"><div>Warehouse</div>${months.map(mo=>`<div>${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
-        ${heatShown.map((x,ri)=>`<div class="heat-grid row" style="${heatCols}"><div class="heat-name" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
+      <div class="card-head lg"><div class="card-head-text"><h2>Open value by warehouse and due month</h2><span class="section-sub">Darker blue = more open value. The red badge counts late or past-due lines.</span></div></div>
+      <div class="heat-scroll" role="table" aria-label="Open value by warehouse and due month">
+        <div class="heat-grid head" role="row" style="${heatCols}"><div role="columnheader">Warehouse</div>${months.map(mo=>`<div role="columnheader">${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
+        ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
           const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
-          return `<div class="heat-slot"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms" title="${esc(tip)}">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-label="${fmtNum(g.lateRows)} late lines">${fmtNum(g.lateRows)}</span>`:''}</div></div>`;
+          // Each cell is focusable and carries its breakdown as text (read by screen readers, shown in the line above on focus or hover).
+          return `<div class="heat-slot" role="cell" tabindex="0" data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
+      ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover or Tab to a cell for its breakdown.</p>':''}
       ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat" onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
     </section>
     <div class="rise rise-3">${renderTableCard({key:'wh-summary',title:'Warehouse KPI summary',note:'all warehouses with open or closed lines',
