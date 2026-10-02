@@ -52,7 +52,14 @@ export async function onRequest(context) {
     return withSecurityHeaders(await next());
   }
 
-  return loginPage(false, 401);
+  // The page's background calls (Ask AI's /api/gemini/*) need a status they can read, not a 200 sign-in form.
+  if (url.pathname.startsWith('/api/')) {
+    return new Response(JSON.stringify({ error: { code: 401, message: 'Your sign-in to this site has expired. Reload the page and sign in again.' } }), {
+      status: 401,
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
+    });
+  }
+  return loginPage(false);
 }
 
 // Session token: v1.<issued unix seconds>.<random nonce>.<HMAC-SHA256 of the first three parts>.
@@ -168,6 +175,7 @@ function loginPage(failed, status) {
 </body>
 </html>`;
   return new Response(html, {
+    // A page load without a session gets the form with 200; only a wrong password is an error status.
     status: failed ? status : 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',

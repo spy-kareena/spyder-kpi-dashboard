@@ -3673,7 +3673,7 @@ const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
 const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
 const AI_MAX_ROUNDS=6;
 const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,server:null,serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
+const aiState={open:false,server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
 // A newly loaded export starts a new chat, so follow-up questions never mix in tool results from the old data.
@@ -3732,13 +3732,21 @@ function aiSetConsent(on){
   if(on)aiPrepare();
 }
 // Server mode: a site that serves /api/gemini with a key set up there; the page needs no key of its own.
+// Own-key mode only when the site has no /api/gemini (404) or says it has no key. Any other answer (the password
+// gate's 401 after the sign-in expired, a sign-in page) is an error, so company data never quietly moves to a personal key.
 function aiCheckServer(){
   if(!aiState.serverCheck)aiState.serverCheck=(async()=>{
-    let server=false;
+    let server=false,error='';
     if(/^https?:$/.test(String(location.protocol||''))){
-      try{const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});server=res.ok&&(await res.json()).configured===true;}catch(err){}
+      try{
+        const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});
+        let data=null;try{data=await res.json();}catch(err){}
+        server=res.ok&&!!data&&data.configured===true;
+        if(!server&&res.status!==404&&!(data&&data.configured===false))error=aiHttpError(data&&typeof data==='object'?res.status:401,data,true);
+      }catch(err){error='Could not reach this site\'s Gemini service. Check the connection and try again.';}
     }
-    aiState.server=server;
+    aiState.server=server;aiState.serverError=error;
+    if(error)aiState.serverCheck=null; // asked again next time, e.g. after signing in
   })();
   return aiState.serverCheck;
 }
@@ -3746,6 +3754,7 @@ async function aiPrepare(){
   if(!aiConsented())return;
   await aiCheckServer();
   aiSyncSettings();
+  if(aiState.serverError){aiSettingsStatus(aiState.serverError,'bad');return;}
   if(!aiState.models.length&&(aiState.server||aiKey()))await aiLoadModels();
   if(!aiState.server&&!aiKey()&&aiState.open&&aiEl('ai-settings').hidden)aiShowSettings(true);
 }
@@ -3815,10 +3824,11 @@ async function aiFetch(path,{body,signal}={}){
     if(err&&err.name==='AbortError')throw err;
     throw aiFail(server?'Could not reach this site\'s Gemini service. Check the connection and try again.':'Could not reach Google\'s Gemini API. Check the network connection; a firewall, proxy or browser extension may be blocking generativelanguage.googleapis.com.');
   }
-  let data={};
+  let data;
   try{data=await res.json();}catch(err){}
-  if(!res.ok)throw aiFail(aiHttpError(res.status,data,server));
-  return data;
+  // In server mode a 2xx without JSON is a sign-in page, not Gemini: the site's session has expired.
+  if(!res.ok||(server&&!(data&&typeof data==='object')))throw aiFail(aiHttpError(res.ok?401:res.status,data,server));
+  return data||{};
 }
 function aiSystemPrompt(){
   return `You are an operations KPI analyst for Spyder Controls. You answer questions about the SAP Business One KPI dashboard loaded in the user's browser: sales orders, purchase orders, deliveries, receipts, supply / demand and Clear To Build data. The report's as-of date is ${displayDate(reportToday())}.
@@ -3878,6 +3888,7 @@ async function aiSend(text){
   const log=aiState.messages,start=log.length;
   try{
     await aiCheckServer();
+    if(aiState.serverError)throw aiFail(aiState.serverError);
     if(!aiState.server&&!aiKey()){aiShowSettings(true);aiSettingsStatus('Add a Gemini API key first, or ask whoever runs this site to set one up on the server.','bad');return;}
     if(!aiState.model)await aiLoadModels();
     if(text===undefined)input.value='';
