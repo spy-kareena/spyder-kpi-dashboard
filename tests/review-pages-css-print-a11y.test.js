@@ -88,4 +88,22 @@ test('informational text no longer uses --gray-400; --gray-500 reads at 4.5:1 on
   for (const bg of ['white', 'gray-50', 'accent-tint']) assert.ok(ratio('gray-500', bg) >= 4.5, bg);
 });
 
+test('small status text uses the darker tone tokens and passes 4.5:1', () => {
+  const rule = (sel) => { const m = CSS.match(new RegExp(`(?:^|\\})${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{([^}]*)\\}`, 'm')); assert.ok(m, sel); return m[1]; };
+  const colorOf = (sel) => (rule(sel).match(/(?:^|;)color:(?:var\(--([\w-]+)\)|(#[0-9a-f]+))/) || []).slice(1).find(Boolean);
+  const cases = [
+    ['.tone-cell.good', 'good-tint'], ['.tone-cell.warning', 'warn-tint'], ['.tone-cell.critical', 'crit-tint'],
+    ['.crit-text', 'white'], ['.warn-text', 'white'], ['.good-text', 'white'], ['.warn-text', 'accent-tint'],
+    ['.trow .warn-cell', 'white'], ['.data-table .warn-soft', 'white'], ['.count-badge.bad', 'crit-tint'],
+    ['.heat-3', '#53b1fd'], ['.heat-4', 'accent'], ['.link-btn', 'gray-50'], ['.link-btn', 'warn-tint'], ['.ai-notice a', 'warn-tint'],
+  ];
+  for (const [sel, bg] of cases) {
+    const fg = colorOf(sel);
+    assert.ok(fg, `${sel} has a colour`);
+    assert.ok(ratio(fg === '#fff' ? '#ffffff' : fg, bg) >= 4.5, `${sel} (${fg}) on ${bg}: ${ratio(fg === '#fff' ? '#ffffff' : fg, bg).toFixed(2)}`);
+  }
+  assert.ok(/\.nav-badge\{[^}]*background:var\(--crit-tint\);color:var\(--crit-text\)\}/.test(CSS));
+  assert.ok(!/\.rank-row \.rv\.\w+-text\{/.test(CSS), 'rank values use the shared tone text classes');
+});
+
 run();
