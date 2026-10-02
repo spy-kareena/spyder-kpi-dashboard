@@ -3,7 +3,7 @@
 // "Orders at Risk" workbook (merged CM cells, blank spacer rows, Grand Total rows, a Lacombe section).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const HEAD = ['CM ', 'Month', 'Total', 'Clear To Build', 'At Risk', 'Late', 'Closed', '% CTB', '% Late Orders'];
@@ -125,6 +125,15 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   const h = html(page);
   assert.match(h, /Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines/);
   assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
+});
+
+test('risk-bucket orders: the Override and Notes controls keep a readable width on screen', async () => {
+  const h = html(await loaded());
+  const table = h.slice(h.indexOf('Sales orders in risk buckets') - 200);
+  assert.match(table, /<section class="table editable-rows">[\s\S]*?style="min-width:1600px"/);
+  assert.match(table, /<td class="due-cell soft">Due in/);
+  // 140px fits the longest option ("Waiting on Production") with padding and arrow; print keeps its own sizing.
+  assert.match(HTML, /@media screen\{\.editable-rows \.row-override\{min-width:140px\}\.editable-rows \.row-note\{min-width:200px\}\.editable-rows \.due-cell\{white-space:nowrap\}\}/);
 });
 
 test('the blank notes header is read as Notes; notes keep their line breaks and are escaped', async () => {

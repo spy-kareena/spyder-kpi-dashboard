@@ -793,6 +793,8 @@ button.trow.po-wh-cols{font-size:13px}
 .rank-row .rv.good-text{color:var(--good)}.rank-row .rv.warn-text{color:var(--warn)}.rank-row .rv.crit-text{color:var(--crit)}
 .editable-rows .row-override,.editable-rows .row-note{font:inherit;font-size:12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);padding:5px 8px;width:100%}
 .editable-rows .row-note{min-height:34px;resize:vertical}
+/* On screen the override and note controls keep a readable width (every option fits); print shrinks to the page. */
+@media screen{.editable-rows .row-override{min-width:140px}.editable-rows .row-note{min-width:200px}.editable-rows .due-cell{white-space:nowrap}}
 .mini-strip.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .mini-strip.cols-5>div{flex-direction:column;align-items:flex-start;gap:6px}
 .mini-strip.cols-5 .ms-num{text-align:left}
@@ -3468,7 +3470,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
     return `<tr>
       <td class="strong">${esc(r.documentNumber)}</td>
       <td>${esc(r.name)}</td>
-      <td class="${/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft'}">${esc(r.dueText||'')}</td>
+      <td class="due-cell ${/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft'}">${esc(r.dueText||'')}</td>
       <td class="date ${/\d{4}-/.test(effective||'')?'soft':'muted'}">${esc(effective||'—')}</td>
       <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
@@ -3481,7 +3483,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
     </tr>`;
   };
   const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
-  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1360:1000,className:editable?'editable-rows':'',empty});
+  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty});
 }
 // --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Gemini chat (and later an MCP server) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
