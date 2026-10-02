@@ -2188,6 +2188,8 @@ function warehouseLabel(v){
 }
 
 // --- File import and column mapping ---
+// Rows (and duplicate-check signatures) of each file already read, so Add file does not read the loaded files again.
+const fileReadCache=new WeakMap();
 async function handleFiles(files,{adding=false}={}){
   const valid=files.filter(f=>f&&f.name.match(/\.(xlsx|xls|csv|txt|tsv)$/i));
   const skipped=files.filter(f=>f&&!valid.includes(f)).map(f=>f.name);
@@ -2210,14 +2212,18 @@ async function handleFiles(files,{adding=false}={}){
     const noRows=[];
     exportHeaders=new Set();
     for(const file of valid){
-      let rows;
-      try{rows=await readExportFile(file);}
-      catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
+      let read=fileReadCache.get(file);
+      if(!read){
+        try{read={rows:await readExportFile(file)};}
+        catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
+        fileReadCache.set(file,read);
+      }
+      const rows=read.rows;
       if(!rows.length){noRows.push(file.name);continue;}
       const headers=new Set();
       rows.forEach(r=>Object.keys(r).forEach(k=>headers.add(normalizeHeader(k))));
       headers.forEach(h=>exportHeaders.add(h));
-      entries.push({file,rows,kind:isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':isKpiExportHeaderSet(headers)?'kpi':''});
+      entries.push({file,read,rows,kind:isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':isKpiExportHeaderSet(headers)?'kpi':''});
     }
     const olderNotes=[
       ...leaveOutOlderExports(entries,'kpi',rows=>normalizeRows(rows).map(rowKey)),
@@ -2233,23 +2239,30 @@ async function handleFiles(files,{adding=false}={}){
     // separate one) is dropped so totals are not doubled. Duplicates inside one file are kept.
     const seenRows=new Set();
     let duplicateRows=0;
-    for(const {file,rows,kind,leftOut} of entries){
+    let newKpiRows=false;
+    for(const {file,read,rows,kind,leftOut} of entries){
       if(leftOut)continue;
       if(!kind){unrecognized.push(file.name);continue;}
       used.push(file);
       // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows.
       if(kind==='ctb'){allBuildRaw.push(...rows);continue;}
-      const signatures=rowSignatures(rows);
+      const signatures=read.signatures||(read.signatures=rowSignatures(rows));
       const raw=rows.filter((r,i)=>!seenRows.has(signatures[i]));
       duplicateRows+=rows.length-raw.length;
       signatures.forEach(sig=>seenRows.add(sig));
       (kind==='sd'?allSupplyDemandRaw:allRaw).push(...raw);
+      if(kind==='kpi'&&raw.length&&!previous.loadedFiles.includes(file))newKpiRows=true;
     }
     if(unrecognized.length&&!allRaw.length&&!allBuildRaw.length&&!allSupplyDemandRaw.length){
       throw new Error(`${unrecognized.join(', ')} does not look like a KPI export (no document number, source type, or due date columns).`);
     }
     reportAsOfDate=detectExportDate(allRaw.length?allRaw:allSupplyDemandRaw);
-    allLoadedRows=normalizeRows(allRaw);
+    // Add file that brings no new KPI rows keeps the lines already normalized (with their notes and deletions).
+    if(adding&&!newKpiRows&&+reportAsOfDate===+previous.reportAsOfDate){
+      allLoadedRows=previous.allLoadedRows;
+      dataQualityIssues=previous.dataQualityIssues.filter(i=>i.kind!=='file');
+      excludedQuarantineRows=previous.excludedQuarantineRows;
+    }else allLoadedRows=normalizeRows(allRaw);
     applyInventoryScope();
     buildRiskRows=normalizeBuildRiskRows(allBuildRaw);
     supplyDemandRows=normalizeSupplyDemandRows(allSupplyDemandRaw);
@@ -2290,7 +2303,7 @@ function leaveOutOlderExports(entries,kind,lineKeys){
   const newerKeys=new Set();
   const notes=[];
   dates.forEach(d=>{
-    const group=dated.filter(x=>+x.date===d).map(x=>({...x,keys:lineKeys(x.e.rows)}));
+    const group=dated.filter(x=>+x.date===d).map(x=>({...x,keys:x.e.read.lineKeys||(x.e.read.lineKeys=lineKeys(x.e.rows))}));
     group.forEach(x=>{
       if(!x.keys.some(k=>newerKeys.has(k)))return;
       x.e.leftOut=true;

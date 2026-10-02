@@ -104,4 +104,32 @@ test('a newer supply / demand snapshot replaces the older one', async () => {
   assert.equal(page.run('parsedRows.length'), 1);
 });
 
+test('Add file reads and normalizes only the new file; notes, deletions and date checks stay', async () => {
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport([sapRow({ DocumentNumber: '1' }), sapRow({ DocumentNumber: '2' }), sapRow({ DocumentNumber: '3', DueDate: '07/16/0202' })]) }]);
+  const [k1, k2] = page.run('allLoadedRows.slice(0,2).map(rowKey)');
+  page.run(`updateRowOverride(${JSON.stringify(k1)},'notes','call buyer')`);
+  page.run(`setRowOverrides([${JSON.stringify(k2)}],"deleted",true)`);
+  const before = page.run('({rows:parsedRows.length,issues:dataQualityIssues.map(i=>i.message)})');
+  assert.equal(before.rows, 2);
+  assert.equal(before.issues.length, 1);
+
+  const calls = { read: 0, normalize: 0 };
+  const read = page.ctx.readExportFile;
+  const normalize = page.ctx.normalizeRows;
+  page.ctx.readExportFile = (f) => { calls.read++; return read(f); };
+  page.ctx.normalizeRows = (raw) => { calls.normalize++; return normalize(raw); };
+  await addFile(page, { name: 'sd.xls', bytes: sdDay('09/03/2026', '20') });
+  await addFile(page, { name: 'notes.csv', bytes: Buffer.from('a,b\n1,2\n') });
+  assert.deepEqual(calls, { read: 2, normalize: 0 });
+  assert.deepEqual(page.run('({rows:parsedRows.length,issues:dataQualityIssues.filter(i=>i.kind!=="file").map(i=>i.message)})'), before);
+  assert.equal(page.run('allLoadedRows[0].overrideNotes'), 'call buyer');
+  assert.equal(page.run('supplyDemandRows.length'), 1);
+
+  // A new KPI file is normalized with the rest.
+  await addFile(page, { name: 'po.xls', bytes: sapExport([sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '40' })]) });
+  assert.equal(calls.normalize, 1);
+  assert.equal(page.run('parsedRows.length'), 3);
+});
+
 run();
