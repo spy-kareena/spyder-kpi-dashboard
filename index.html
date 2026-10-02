@@ -1485,12 +1485,16 @@ function overrideSelectEvent(sel,e){
   }
   else if(e.type==='keyup')delete d.stepping;
   else if(e.type==='change'){if(d.stepping)d.held='1';else commitOverrideSelect(sel);}
-  else if(e.type==='blur'&&d.held)setTimeout(()=>{
-    // A mouse press that took focus away is still down; a redraw under it would swallow its click.
-    const root=document.documentElement;
-    if(root.matches&&root.matches(':active'))addEventListener('pointerup',()=>setTimeout(()=>commitOverrideSelect(sel)),{once:true});
-    else if(d.held)commitOverrideSelect(sel);
-  });
+  else if(e.type==='blur'&&d.held){
+    // Save once focus has moved. A mouse press that took focus away is still down then, and a redraw under it
+    // would swallow its click, so wait for the release.
+    const commit=()=>{if(d.held)commitOverrideSelect(sel);};
+    setTimeout(()=>{
+      const root=document.documentElement;
+      if(root.matches&&root.matches(':active'))addEventListener('pointerup',()=>setTimeout(commit),{once:true});
+      else commit();
+    });
+  }
 }
 function commitOverrideSelect(sel){
   const d=sel.dataset;
