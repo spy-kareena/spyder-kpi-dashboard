@@ -3678,8 +3678,10 @@ const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1
 const aiState={open:false,server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
-// A newly loaded export starts a new chat, so follow-up questions never mix in tool results from the old data.
-function aiSyncData(){if(aiState.rows!==allLoadedRows){aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];}}
+// A newly loaded export starts a new chat (showResults checks after every load), so follow-up questions never mix in
+// tool results from the old data and old answers leave the screen. A question still pending is stopped; its late
+// answer or "Stopped." goes to the old chat and is dropped.
+function aiSyncData(){if(aiState.rows!==allLoadedRows){aiStop();aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];aiRenderLog();}}
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
 function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
@@ -4114,6 +4116,7 @@ function showResults(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('results-screen').style.display='block';
   renderResults();
+  aiSyncData();
 }
 function showLoading(msg){
   document.getElementById('upload-screen').style.display='none';

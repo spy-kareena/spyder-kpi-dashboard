@@ -241,6 +241,7 @@ test('consent is required before any request; no data and HTTP errors give frien
   assert.equal(page.run('aiState.history.length'), 0, 'failed questions leave no half turns behind');
 
   const empty = loadPage({ storage: { spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' } });
+  await new Promise((r) => setTimeout(r, 10)); // the stub DOM's empty embedded snapshot finishes "loading" (a load clears the chat)
   const none = mockFetch(empty);
   await empty.run("aiSend('hello')");
   assert.equal(none.length, 0);

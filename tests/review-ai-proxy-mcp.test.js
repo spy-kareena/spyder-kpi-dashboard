@@ -168,6 +168,38 @@ test('get_overview with part of a name covers every match, like search_lines', a
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL'], 'the page filters are left alone');
 });
 
+// --- Chat reset on a new export ----------------------------------------------------------------------------
+test('loading an export clears the chat at once and drops an answer still pending from the old data', async () => {
+  const page = await kpiPage({ spyderKpiGeminiKeyV1: KEY, spyderKpiAiConsentV1: '1' });
+  const answer = (t) => ({ ok: true, status: 200, json: async () => ({ candidates: [{ content: { role: 'model', parts: [{ text: t }] } }] }) });
+  let next = async () => answer('At risk lines: 3');
+  page.ctx.fetch = async (url, init = {}) => (/models\?/.test(url) ? { ok: true, status: 200, json: async () => ({ models: [] }) } : next(url, init));
+  page.ctx.sessionStorage = memStorage();
+  page.ctx.AbortController = AbortController;
+  page.run('aiToggle(true)');
+  await page.run("aiSend('What is at risk?')");
+  assert.match(page.els['ai-log'].innerHTML, /At risk lines: 3/);
+
+  // New file with only part of the data: the old answer leaves the screen without another question being sent.
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(KPI_ROWS.slice(0, 1)) }]);
+  assert.doesNotMatch(page.els['ai-log'].innerHTML, /At risk lines/);
+  assert.deepEqual([page.run('aiState.messages.length'), page.run('aiState.history.length')], [0, 0]);
+
+  // A question pending while another export loads is stopped, and nothing from it lands in the new chat.
+  let release;
+  next = (url, init) => new Promise((resolve, reject) => {
+    release = () => resolve(answer('Late answer from the old data'));
+    init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' })));
+  });
+  const pending = page.run("aiSend('Second question')");
+  await new Promise((r) => setTimeout(r, 20));
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(KPI_ROWS) }]);
+  release();
+  await pending;
+  assert.deepEqual([page.run('aiState.messages.length'), page.run('aiState.history.length'), page.run('aiState.busy')], [0, 0, false]);
+  assert.doesNotMatch(page.els['ai-log'].innerHTML, /Second question|Late answer|Stopped/);
+});
+
 // --- Ask AI drawer keyboard -------------------------------------------------------------------------------
 // A fake focusable control; hidden ones have no client rects, like display:none in a browser.
 function control(doc, name, { hidden = false, disabled = false, attrs = {} } = {}) {
