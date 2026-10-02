@@ -1,4 +1,4 @@
-# Spyder KPI Dashboard 1v1 - IT Hosting Notes
+# Spyder KPI Dashboard 1v2 - IT Hosting Notes
 
 ## What this is
 
@@ -12,6 +12,8 @@ It does not need a database, application server, Node, Python, or internet acces
 - `queries/` - SAP B1 HANA query templates used to generate Excel exports
 - `samples/` - example CSV for a local smoke test
 - `VERSION.txt` - package/version marker
+- `functions/` - Cloudflare Pages Functions: the sign-in gate and the optional Ask AI key proxy (`functions/api/gemini/`)
+- `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node 18+) to connect Claude or other AI apps; see `docs/MCP.md`
 - `web.config` - optional IIS static hosting config
 
 ## Hosting
@@ -40,7 +42,7 @@ If the team needs shared live notes, the next version should add a shared storag
 
 ## Security notes
 
-- No external data upload is required by this package.
+- No external data upload is required by this package. The optional **Ask AI** panel sends questions and the data needed to answer them to Google's Gemini API, only after the user ticks a consent box; on the free tier Google may use that data to improve its products. See `docs/AI_ASSISTANT.md`. To offer it without per-user keys on Cloudflare Pages, set the `GEMINI_API_KEY` Pages secret; the `/api/gemini` proxy is behind the same sign-in gate. IIS has no proxy, so users there enter their own key.
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
 - Restrict access to internal users only. Uploaded KPI data never reaches the server, but the page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.
@@ -49,7 +51,7 @@ If the team needs shared live notes, the next version should add a shared storag
 
 ## Tests
 
-With Node 18+ (no install needed): `node tests/dashboard.test.js` and `node tests/middleware.test.mjs`.
+With Node 18+ (no install needed): `node tests/run-all.js`.
 
 ## Updating later
 

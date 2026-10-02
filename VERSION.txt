@@ -1,6 +1,10 @@
 Spyder KPI Dashboard
-Version: 1v1
-Package date: 2026-09-24
+Version: 1v2
+Package date: 2026-10-01
 
 Main file: index.html
 Type: Static offline-capable browser dashboard
+
+1v2: linked-lines bulk select (override / delete with restore) and column sort, dashboard-wide search,
+Clear To Build workbook support on Build Risk (weekly snapshots), Ask AI (Google Gemini), MCP connector
+(mcp/spyder-kpi-mcp.mjs) with a Connect an AI help page, compact logo.
