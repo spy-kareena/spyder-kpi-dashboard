@@ -2209,6 +2209,9 @@ async function handleFiles(files,{adding=false}={}){
     const allBuildRaw=[];
     const allSupplyDemandRaw=[];
     const unrecognized=[];
+    // Files that gave rows; an empty or unrecognized file is reported in Data check, not listed as loaded.
+    const used=[];
+    const noRows=[];
     // A row that already came in with an earlier file (same file twice, or a combined export plus a
     // separate one) is dropped so totals are not doubled. Duplicates inside one file are kept.
     const seenRows=new Set();
@@ -2218,35 +2221,38 @@ async function handleFiles(files,{adding=false}={}){
       let fileRows;
       try{fileRows=await readExportFile(file);}
       catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
+      if(!fileRows.length){noRows.push(file.name);continue;}
       // Every row of a sheet carries the same columns, so each file is classified once by its header row.
       const headers=new Set();
       fileRows.forEach(r=>Object.keys(r).forEach(k=>headers.add(normalizeHeader(k))));
       headers.forEach(h=>exportHeaders.add(h));
       const sample=fileRows[0]||{};
       // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows.
-      if(isBuildRiskRow(sample)){allBuildRaw.push(...fileRows);continue;}
+      if(isBuildRiskRow(sample)){allBuildRaw.push(...fileRows);used.push(file);continue;}
       const signatures=rowSignatures(fileRows);
       const raw=fileRows.filter((r,i)=>!seenRows.has(signatures[i]));
       duplicateRows+=fileRows.length-raw.length;
       signatures.forEach(sig=>seenRows.add(sig));
       if(isSupplyDemandRow(sample))allSupplyDemandRaw.push(...raw);
       else if(isKpiExportHeaderSet(headers))allRaw.push(...raw);
-      else if(raw.length)unrecognized.push(file.name);
+      else{unrecognized.push(file.name);continue;}
+      used.push(file);
     }
     if(unrecognized.length&&!allRaw.length&&!allBuildRaw.length&&!allSupplyDemandRaw.length){
       throw new Error(`${unrecognized.join(', ')} does not look like a KPI export (no document number, source type, or due date columns).`);
     }
     reportAsOfDate=detectExportDate(allRaw.length?allRaw:allSupplyDemandRaw);
-    loadedFiles=valid;
     allLoadedRows=normalizeRows(allRaw);
     applyInventoryScope();
     buildRiskRows=normalizeBuildRiskRows(allBuildRaw);
     supplyDemandRows=normalizeSupplyDemandRows(allSupplyDemandRaw);
     if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length)throw new Error('No rows found in these exports.');
+    loadedFiles=used;
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
     if(!adding){resetViewState();applyInventoryScope();}
     if(isSnapshotView){isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
     if(duplicateRows)dataQualityIssues.unshift({kind:'file',message:`Ignored ${fmtNum(duplicateRows)} rows that were already in another uploaded file.`});
+    if(noRows.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${noRows.join(', ')}: no rows in the file.`});
     if(unrecognized.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${unrecognized.join(', ')}: not a recognized KPI, supply/demand, or Clear To Build export.`});
     if(skippedText)dataQualityIssues.unshift({kind:'file',message:`Skipped ${skippedText}`});
     document.getElementById('upload-error').style.display='none';
