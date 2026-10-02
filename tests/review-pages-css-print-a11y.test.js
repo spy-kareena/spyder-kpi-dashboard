@@ -134,4 +134,23 @@ test('Data check popover closes on Esc (focus back on the pill) and when focus l
   assert.match(html(page), /<div class="data-check-pop" tabindex="-1">/);
 });
 
+// Text of every @media print block (brace-matched).
+const printCss = () => {
+  const out = [];
+  for (let i = CSS.indexOf('@media print{'); i >= 0; i = CSS.indexOf('@media print{', i + 1)) {
+    let depth = 0, j = CSS.indexOf('{', i);
+    for (let k = j; k < CSS.length; k++) { if (CSS[k] === '{') depth++; else if (CSS[k] === '}' && --depth === 0) { out.push(CSS.slice(j + 1, k)); break; } }
+  }
+  return out.join('\n');
+};
+
+test('print hides the Build Risk override / note controls; the print-only text copies remain', async () => {
+  const page = await loaded();
+  const table = page.run("renderRowsTable(parsedRows,{key:'t',title:'T',editable:true})");
+  assert.match(table, /class="table editable-rows"/);
+  assert.match(table, /class="row-override[^"]*"[\s\S]*?<span class="print-only">/);
+  assert.match(table, /class="row-note[^"]*"[\s\S]*?<span class="print-only">/);
+  assert.match(printCss(), /\.editable-rows \.row-override,\.editable-rows \.row-note\{display:none!important\}/);
+});
+
 run();
