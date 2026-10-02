@@ -2194,8 +2194,8 @@ async function handleFiles(files,{adding=false}={}){
   document.getElementById('file-input').value='';
   // Adding a file to a report on screen must never lose that report: on failure the previous state comes back.
   const hadReport=adding&&document.getElementById('results-screen').style.display==='block';
-  // A report can also be on hand when New file opened the upload screen; a failed replacement keeps it.
-  const keepPrevious=hadReport||hasLoadedData();
+  // Any failed load puts the previous state back: the report on hand (also when New file opened the upload
+  // screen), or nothing on a first load, so a file that failed is never listed as loaded.
   const previous={reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles};
   const fail=message=>{
     if(hadReport){showResults();alert(message);}
@@ -2252,10 +2252,8 @@ async function handleFiles(files,{adding=false}={}){
     document.getElementById('upload-error').style.display='none';
     showResults();
   }catch(err){
-    if(keepPrevious){
-      ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
-      invalidateMetrics();
-    }
+    ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
+    invalidateMetrics();
     fail(err&&err.message||'Could not read this file.');
   }
 }
