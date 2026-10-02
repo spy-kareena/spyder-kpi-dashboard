@@ -863,6 +863,7 @@ button.trow.po-wh-cols{font-size:13px}
   </div>
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
+  <p class="ai-sr" id="search-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
     <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
@@ -4572,6 +4573,11 @@ function renderResults(){
     : activeTab==='purchaseorders'
     ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
     : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
+  // The page head is rebuilt on every redraw, so screen readers hear the search count from one persistent
+  // status node, and only when the text changes.
+  const announce=document.getElementById('search-announce');
+  const said=activeTab==='search'?headMeta:'';
+  if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>

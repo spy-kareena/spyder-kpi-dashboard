@@ -1,7 +1,7 @@
 // Global search tests. Run: node tests/search.test.js (fixtures are synthetic).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const wait = (ms = 200) => new Promise((r) => setTimeout(r, ms));
@@ -114,6 +114,20 @@ test('typing opens Search after the debounce; Esc, clearing and nav return to th
   await wait();
   page.run('clearGlobalSearch()');
   assert.equal(page.run('activeTab'), 'monthly');
+});
+
+test('the match count is announced from one persistent status node, only when it changes', async () => {
+  // Static markup, outside the sidebar and results that redraws replace.
+  assert.match(HTML, /<div id="results-screen" style="display:none"><\/div>\s*<p class="ai-sr" id="search-announce" role="status"><\/p>/);
+  const page = await loaded();
+  const said = [];
+  page.els['search-announce'] = { get textContent() { return said.length ? said[said.length - 1] : ''; }, set textContent(v) { said.push(v); } };
+  search(page, 'spy-100');
+  page.run('renderResults()');
+  search(page, 'zzqq');
+  page.run('clearGlobalSearch()');
+  page.run('renderResults()');
+  assert.deepEqual(said, ['3 matches for “spy-100”', '0 matches for “zzqq”', '']);
 });
 
 test('no data: the box is disabled, typing and shortcuts do nothing', async () => {
