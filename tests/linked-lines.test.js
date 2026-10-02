@@ -306,4 +306,18 @@ test('Order Health and PO linked lines leave Item / Description about 200px at t
   assert.ok(so >= 190 && po >= 190, `Item / Description gets ${so}px (SO) and ${po}px (PO)`);
 });
 
+test('the guides promise row selection and header sort only on Order Health linked lines, where they exist', async () => {
+  const page = await atRiskPage([...pastDue(1), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700' })]);
+  assert.match(html(page), /class="row-check"[\s\S]*class="th-sort"/);
+  page.run("setTab('purchaseorders')");
+  const po = html(page).match(/<section[^>]*id="po-linked-lines"[\s\S]*?<\/section>/)[0];
+  assert.match(po, /<td class="c-doc">700<\/td>/);
+  assert.doesNotMatch(po, /row-check|th-sort/);
+  for (const file of ['README.md', 'docs/USER_QUICK_START.md']) {
+    const claim = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', file), 'utf8').split('\n').find((l) => /tick rows/.test(l));
+    assert.match(claim, /Order Health/, file);
+    assert.doesNotMatch(claim, /any linked-lines list/i, file);
+  }
+});
+
 run();
