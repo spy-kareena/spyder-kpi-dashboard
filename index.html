@@ -2220,8 +2220,7 @@ async function handleFiles(files,{adding=false}={}){
       }
       const rows=read.rows;
       if(!rows.length){noRows.push(file.name);continue;}
-      const headers=new Set();
-      rows.forEach(r=>Object.keys(r).forEach(k=>headers.add(normalizeHeader(k))));
+      const headers=new Set(Object.keys(rows[0]).map(normalizeHeader));
       headers.forEach(h=>exportHeaders.add(h));
       entries.push({file,read,rows,kind:isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':isKpiExportHeaderSet(headers)?'kpi':''});
     }
@@ -2240,16 +2239,21 @@ async function handleFiles(files,{adding=false}={}){
     const seenRows=new Set();
     let duplicateRows=0;
     let newKpiRows=false;
+    // Signatures start with the header list, so only a kind loaded more than once can hold duplicates.
+    const kinds=entries.filter(e=>!e.leftOut).map(e=>e.kind);
     for(const {file,read,rows,kind,leftOut} of entries){
       if(leftOut)continue;
       if(!kind){unrecognized.push(file.name);continue;}
       used.push(file);
       // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows.
       if(kind==='ctb'){allBuildRaw.push(...rows);continue;}
-      const signatures=read.signatures||(read.signatures=rowSignatures(rows));
-      const raw=rows.filter((r,i)=>!seenRows.has(signatures[i]));
-      duplicateRows+=rows.length-raw.length;
-      signatures.forEach(sig=>seenRows.add(sig));
+      let raw=rows;
+      if(kinds.indexOf(kind)!==kinds.lastIndexOf(kind)){
+        const signatures=read.signatures||(read.signatures=rowSignatures(rows));
+        raw=rows.filter((r,i)=>!seenRows.has(signatures[i]));
+        duplicateRows+=rows.length-raw.length;
+        signatures.forEach(sig=>seenRows.add(sig));
+      }
       (kind==='sd'?allSupplyDemandRaw:allRaw).push(...raw);
       if(kind==='kpi'&&raw.length&&!previous.loadedFiles.includes(file))newKpiRows=true;
     }
@@ -2296,7 +2300,9 @@ function rowSignatures(rows){
 // is used. Same-day or undated exports (e.g. separate SO and PO files) are all kept. Returns Data check notes.
 // ponytail: lineKeys normalizes each dated file again; that only runs when exports of one kind have different dates.
 function leaveOutOlderExports(entries,kind,lineKeys){
-  const dated=entries.filter(e=>e.kind===kind).map(e=>({e,date:detectExportDate(e.rows)})).filter(x=>x.date);
+  const ofKind=entries.filter(e=>e.kind===kind);
+  if(ofKind.length<2)return [];
+  const dated=ofKind.map(e=>({e,date:detectExportDate(e.rows)})).filter(x=>x.date);
   const dates=[...new Set(dated.map(x=>+x.date))].sort((a,b)=>b-a);
   if(dates.length<2)return [];
   const newest=`${dated.filter(x=>+x.date===dates[0]).map(x=>x.e.file.name).join(', ')} (exported ${displayDate(new Date(dates[0]))})`;
@@ -2649,9 +2655,13 @@ function formatSheetDatesIso(ws,date1904){
 }
 
 function normalizeRows(raw){
+  // Rows of one file share their columns, so the [column, normalized name] pairs are rebuilt only when they change.
+  let keys=[],pairs=[];
   const rows=raw.map(r=>{
+    const rowKeys=Object.keys(r);
+    if(rowKeys.length!==keys.length||rowKeys.some((k,i)=>k!==keys[i])){keys=rowKeys;pairs=keys.map(k=>[k,normalizeHeader(k)]);}
     const mapped={};
-    Object.keys(r).forEach(k=>mapped[normalizeHeader(k)]=r[k]);
+    for(const [k,n] of pairs)mapped[n]=r[k];
     const row={
       exportDate:pick(mapped,['exportdate']),
       sourceType:sourceFromDocType(pick(mapped,['sourcetype','doctype'])),

@@ -132,4 +132,24 @@ test('Add file reads and normalizes only the new file; notes, deletions and date
   assert.equal(page.run('parsedRows.length'), 3);
 });
 
+test('a load normalizes each header once per file, not once per cell, and signs rows only for a repeated kind', async () => {
+  const page = loadPage();
+  const calls = { header: 0, signatures: 0 };
+  const header = page.ctx.normalizeHeader;
+  const signatures = page.ctx.rowSignatures;
+  page.ctx.normalizeHeader = (h) => { calls.header++; return header(h); };
+  page.ctx.rowSignatures = (rows) => { calls.signatures++; return signatures(rows); };
+  const rows = Array.from({ length: 200 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(rows) }, { name: 'sd.xls', bytes: sdDay('09/03/2026', '20') }]);
+  assert.equal(page.run('parsedRows.length'), 200);
+  assert.ok(calls.header < 500, `normalizeHeader ran ${calls.header} times for 200 rows x 45 columns`);
+  assert.equal(calls.signatures, 0);
+
+  // The same export twice is still caught.
+  await upload(page, [{ name: 'a.xls', bytes: sapExport(rows) }, { name: 'b.xls', bytes: sapExport(rows) }]);
+  assert.equal(page.run('parsedRows.length'), 200);
+  assert.equal(calls.signatures, 2);
+  assert.match(fileIssues(page).join(' '), /Ignored 200 rows/);
+});
+
 run();
