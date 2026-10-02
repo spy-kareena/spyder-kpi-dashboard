@@ -3628,14 +3628,16 @@ const KPI_TOOLS=[
         totals:{shipped_value:aiR(months.reduce((s,x)=>s+x.shipped_value,0)),open_value:aiR(months.reduce((s,x)=>s+x.open_value,0))}};
     }},
   {name:'get_build_risk',
-    description:'Build Risk page: Clear To Build report totals (orders, clear to build, at risk, late) and each contract manufacturer / month bucket with the open sales order demand matched to it.',
+    description:'Build Risk page: Clear To Build report totals (orders, clear to build, at risk, late) and each contract manufacturer / month bucket with the open sales order demand matched to it, for the report week picked on the page (newest by default). report_weeks lists every loaded week.',
     parameters:{type:'object',properties:{},required:[]},
     run:()=>{
-      if(!buildRiskRows.length)return {loaded:false,hint:'No Clear To Build report is loaded. Use Add file to load the CTB report (Excel or CSV) next to the KPI export.'};
-      const br=currentMetrics().buildRisk;
+      const all=buildRiskRows.length?currentMetrics().buildRisk:null;
+      // The same report week the Build Risk page shows; weeks are never added together.
+      const br=all&&(all.snapshots.find(s=>s.key===buildRiskSnapshot)||all.snapshots[0]);
+      if(!br)return {loaded:false,hint:'No Clear To Build report is loaded. Use Add file to load the CTB report (Excel or CSV) next to the KPI export.'};
       const buckets=br.matched.map(r=>({cm:r.cm,month:r.monthKey,total:r.total,clear_to_build:r.clearToBuild,at_risk:r.atRisk,late:r.late,matched_so_lines:r.matchedRows.length,matched_open_qty:aiR(r.matchedOpenQty),matched_open_value:aiR(r.matchedOpenValue),notes:String(r.notes||'').slice(0,160)}))
         .sort((x,y)=>y.late-x.late||y.at_risk-x.at_risk||y.matched_open_value-x.matched_open_value);
-      return aiCap({loaded:true,...aiAsOf(),ctb_rows:br.rows.length,total_orders:br.totalOrders,clear_to_build:br.totalClearToBuild,clear_to_build_pct:pct(br.totalClearToBuild,br.totalOrders),at_risk:br.totalAtRisk,late:br.totalLate,
+      return aiCap({loaded:true,...aiAsOf(),report_week:br.label,report_sheet:br.sheet,report_weeks:all.snapshots.map(s=>s.label),ctb_rows:br.rows.length,total_orders:br.totalOrders,clear_to_build:br.totalClearToBuild,clear_to_build_pct:pct(br.totalClearToBuild,br.totalOrders),at_risk:br.totalAtRisk,late:br.totalLate,
         matched_open_value:aiR(br.matchedOpenValue),matched_open_qty:aiR(br.matchedOpenQty),buckets:buckets.slice(0,60)},'buckets');
     }},
   {name:'get_supply_demand',
