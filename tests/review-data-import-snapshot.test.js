@@ -64,4 +64,44 @@ test('Add file with an empty, header-only or unrecognized file reports it and do
   assert.ok(reads <= 2, `read ${reads} files`);
 });
 
+const kpiDay = (date, open) => sapExport(['1', '2', '3'].map((doc) => sapRow({ DocumentNumber: doc, ExportDate: date, OpenQuantity: open, DueDate: '10/20/2026', LineDueDate: '10/20/2026', HeaderDueDate: '10/20/2026' })));
+const kpiTotals = (page) => page.run('({rows:allLoadedRows.length,openQty:allLoadedRows.reduce((t,r)=>t+r.openQuantity,0),asOf:displayDate(reportAsOfDate),files:loadedFiles.map(f=>f.name)})');
+
+test('a newer KPI export of the same lines replaces the older one, whether added later or loaded together', async () => {
+  const added = loadPage();
+  await upload(added, [{ name: 'kpi_0903.xls', bytes: kpiDay('09/03/2026', '10.000') }]);
+  assert.deepEqual(kpiTotals(added), { rows: 3, openQty: 30, asOf: '2026-09-03', files: ['kpi_0903.xls'] });
+  await addFile(added, { name: 'kpi_0910.xls', bytes: kpiDay('09/10/2026', '4.000') });
+  assert.deepEqual(kpiTotals(added), { rows: 3, openQty: 12, asOf: '2026-09-10', files: ['kpi_0910.xls'] });
+  assert.deepEqual(fileIssues(added), ['Left out kpi_0903.xls (exported 2026-09-03): kpi_0910.xls (exported 2026-09-10) is a newer export of the same lines, so they are not counted twice.']);
+
+  // Both at once, newer first: same result. An older file added to a newer report is left out too.
+  const together = loadPage();
+  await upload(together, [{ name: 'kpi_0910.xls', bytes: kpiDay('09/10/2026', '4.000') }, { name: 'kpi_0903.xls', bytes: kpiDay('09/03/2026', '10.000') }]);
+  assert.deepEqual(kpiTotals(together), { rows: 3, openQty: 12, asOf: '2026-09-10', files: ['kpi_0910.xls'] });
+  assert.equal(together.run('new Set(allLoadedRows.map(rowKey)).size'), 3);
+});
+
+test('separate SO and PO exports from different days are both kept', async () => {
+  const page = loadPage();
+  const po = sapExport([sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '40', ExportDate: '09/10/2026' })]);
+  await upload(page, [{ name: 'so.xls', bytes: sapExport([sapRow({ ExportDate: '09/09/2026' })]) }, { name: 'po.xls', bytes: po }]);
+  assert.deepEqual(kpiTotals(page), { rows: 2, openQty: 20, asOf: '2026-09-10', files: ['so.xls', 'po.xls'] });
+  assert.deepEqual(fileIssues(page), []);
+});
+
+const SD_HEADERS = ['#', 'ExportDate', 'Item No.', 'ItemDescription', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'DemandOpenValue', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'RiskSupplyQty', 'SupplyRiskFlag'];
+const sdDay = (date, demand) => utf16Tsv(SD_HEADERS, [{ ExportDate: date, 'Item No.': 'SPY-100', WarehouseCode: '01', WarehouseName: 'Lacombe', YearMonth: '2026-10', DemandOpenQty: demand, DemandOpenValue: '100', UsableSupplyQty: '0', MonthlyNetQty: `-${demand}`, CumulativeNetQty: `-${demand}`, RiskSupplyQty: '0' }]);
+
+test('a newer supply / demand snapshot replaces the older one', async () => {
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport([sapRow({})]) }, { name: 'sd_0903.xls', bytes: sdDay('09/03/2026', '20') }]);
+  assert.equal(page.run('supplyDemandRows.reduce((t,r)=>t+r.demandOpenQty,0)'), 20);
+  await addFile(page, { name: 'sd_0910.xls', bytes: sdDay('09/10/2026', '12') });
+  assert.deepEqual(page.run('supplyDemandRows.map(r=>r.demandOpenQty)'), [12]);
+  assert.deepEqual(page.run('loadedFiles.map(f=>f.name)'), ['kpi.xls', 'sd_0910.xls']);
+  assert.match(fileIssues(page).join(' '), /Left out sd_0903\.xls \(exported 2026-09-03\): sd_0910\.xls/);
+  assert.equal(page.run('parsedRows.length'), 1);
+});
+
 run();
