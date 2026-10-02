@@ -2,7 +2,7 @@
 // Run with `node tests/linked-lines.test.js`. Fixtures are synthetic (no SAP data).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 // Export date is 09/03/2026, so every line due in August is past due and lands on the At Risk card.
@@ -292,6 +292,18 @@ test('every column header sorts the list ascending and descending on the values 
   // The Sort rows select still switches back to its own choices.
   page.run("setWeeklyLineSort('default')");
   assert.doesNotMatch(html(page), /Column: |aria-sort/);
+});
+
+test('Order Health and PO linked lines leave Item / Description about 200px at the table minimum width', async () => {
+  // Screen min-width of the table: the last plain (not print !important) rule that names it.
+  const css = HTML.replace(/\/\*[\s\S]*?\*\//g, '');
+  const cssMin = (cls) => Number([...css.matchAll(/([^{}]+)\{min-width:(\d+)px\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(`.lines-table.${cls}`)).pop()[2]);
+  const fixedCols = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">\\s*<colgroup>([\\s\\S]*?)</colgroup>`))[1].matchAll(/width:(\d+)px/g)].reduce((t, m) => t + Number(m[1]), 0);
+  const page = await atRiskPage([...pastDue(2), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorName: 'Acme Parts' })]);
+  const so = cssMin('so') - fixedCols(html(page), 'so');
+  page.run("setTab('purchaseorders')");
+  const po = cssMin('po') - fixedCols(html(page), 'po');
+  assert.ok(so >= 190 && po >= 190, `Item / Description gets ${so}px (SO) and ${po}px (PO)`);
 });
 
 run();

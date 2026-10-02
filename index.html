@@ -434,8 +434,6 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .table-tools label{display:flex;align-items:center;gap:8px;font-weight:600}
 .table-tools .hint{color:var(--gray-400)}
 .table-scroll{overflow-x:auto}
-.lines-table.po{min-width:980px}
-.lines-table.so{min-width:1060px}
 
 /* Linked lines: row selection, bulk actions, header sort, deleted lines in Data check */
 .lines-table .c-check{padding-right:6px}
@@ -450,8 +448,9 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .btn-danger{color:var(--crit-text);border-color:var(--crit-border)}
 .btn-danger:hover{background:var(--crit-tint);border-color:var(--crit)}
 .lines-table .c-notes{padding-left:12px}
-/* Room for the checkbox and Notes columns without squeezing Item / Description; the note editor lines up with Customer */
-.lines-table.so,.lines-table.po{min-width:1100px}
+/* The fixed columns take about 1000px; the rest (about 200px) keeps item codes on one line in Item / Description.
+   Narrower screens scroll the table sideways. The note editor lines up with Customer. */
+.lines-table.so,.lines-table.po{min-width:1200px}
 .lines-table.so .note-editor{padding-left:104px}
 .data-check-pop ul.dc-deleted{list-style:none;padding-left:0}
 .dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
