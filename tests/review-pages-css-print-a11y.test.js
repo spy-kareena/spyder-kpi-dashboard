@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
+const CSS = HTML.match(/<style>([\s\S]*?)<\/style>/)[1];
 const html = (page) => page.els['results-screen'].innerHTML;
 async function loaded(rows = [sapRow({})]) {
   const page = loadPage();
@@ -24,6 +25,11 @@ test('ship target dates: keyboard edits wait for Enter or blur, calendar picks a
   assert.equal(page.run('window.__renders'), 1, 'one redraw for the pending edits, none when nothing is pending');
   page.run("setShipScenarioStartDate('2026-09-11')");
   assert.equal(page.run('window.__renders'), 2);
+});
+
+test('mini-strip tiles draw their focus ring inside the clipped strip', () => {
+  assert.match(CSS, /\.mini-strip\{[^}]*overflow:hidden/);
+  assert.match(CSS, /\.mini-strip>button:focus-visible\{outline:2px solid var\(--accent\);outline-offset:-2px\}/);
 });
 
 run();
