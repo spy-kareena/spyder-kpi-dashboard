@@ -151,6 +151,15 @@ test('sheet names give the report week; the year comes from today and months tak
   ]);
 });
 
+test('year-less months in a CSV report take the year nearest the as-of date', async () => {
+  const page = loadPage({ today: '2027-01-06' });
+  const kpi = sapExport(['12/20/2026', '01/20/2027'].map((d, i) => sapRow({ ExportDate: '01/05/2027', DocumentNumber: `8100${i + 1}`, Warehouse: 'CM - DSM', ...due(d) })));
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nDSM,December,5,3,2,0\r\n,January,10,8,2,0\r\n'));
+  await upload(page, [{ name: 'kpi.xls', bytes: kpi }, { name: 'ctb.csv', bytes: csv }]);
+  assert.deepEqual(page.run('currentMetrics().buildRisk.snapshots[0].matched.map(r=>[r.monthKey,r.matchedRows.map(m=>m.documentNumber)])'),
+    [['2026-12', ['81001']], ['2027-01', ['81002']]]);
+});
+
 test('an export older than the workbook does not push the newest weeks back a year', async () => {
   const sheet = (name, months) => ({ name, aoa: [HEAD, ...months.map((m) => [m === months[0] ? 'DSM' : _, m, 4, 3, 1, 0, 0, '75%', '0%'])] });
   const kpi = (exportDate, dueDate) => sapExport([sapRow({ ExportDate: exportDate, DocumentNumber: '81001', Warehouse: 'CM - DSM', ...due(dueDate) })]);

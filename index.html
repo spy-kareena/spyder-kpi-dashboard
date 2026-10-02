@@ -2379,7 +2379,8 @@ function ctbSheetDate(name){
   }
   return null;
 }
-// Year-less CTB months ("December") take the year nearest the report week, so December in a January report is last year.
+// Year-less CTB months ("December") take the year nearest the report week (the as-of date for an undated report),
+// so December in a January report is last year.
 function ctbMonthNear(key,date){
   const m=Number(key.slice(5)),y=date.getFullYear();
   const dist=yr=>Math.abs(new Date(yr,m-1,15)-date);
@@ -2423,7 +2424,7 @@ function normalizeBuildRiskRows(raw){
     // Month rows with no numbers at all are stale placeholders.
     if(allBlank)return;
     let mk=reportMonthKey(month);
-    if(mk&&snap.date&&!/\d/.test(month))mk=ctbMonthNear(mk,snap.date);
+    if(mk&&!/\d/.test(month))mk=ctbMonthNear(mk,snap.date||reportToday());
     snap.rows.push({
       cm,
       cmKey:cmKey(cm),
