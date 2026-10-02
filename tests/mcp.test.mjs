@@ -221,7 +221,8 @@ test('Connect an AI opens before any export is loaded, with working setup snippe
   assert.equal(unescape(html.match(/<pre id="connect-code">([^<]*)<\/pre>/)[1]),
     'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"');
   // Copy buttons read the snippet id from data-copy and are left out of print.
-  assert.equal((html.match(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" onclick="copyConnectSnippet\(this\)">Copy<\/button>/g) || []).length, 2);
+  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)" onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
+  assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config', 'Copy the Claude Code command'], 'each Copy button has its own accessible name');
 });
 
 test('Connect an AI keeps the usual actions when an export is loaded; Copy uses the clipboard or a fallback', async () => {
@@ -252,6 +253,12 @@ test('Connect an AI keeps the usual actions when an export is loaded; Copy uses 
   page.ctx.document.execCommand = () => false;
   page.ctx.copyConnectSnippet({ dataset: { copy: 'connect-desktop' }, focus() {} });
   assert.match(page.els['connect-desktop-status'].textContent, /Select the text/);
+
+  // A snapshot shared from the help page opens on Order Health.
+  let payload = '';
+  Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
+  await page.ctx.exportShareSnapshot();
+  assert.equal(JSON.parse(payload).activeTab, 'weekly');
 });
 
 await run();

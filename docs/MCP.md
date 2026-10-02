@@ -6,7 +6,7 @@ The dashboard has the same steps on its **Connect an AI** page (sidebar, under *
 
 ## Option 1: Ask AI in this dashboard (Google Gemini)
 
-There is nothing to install. Click **Ask AI** at the top of any page, tick the consent box and paste a free Google AI Studio key. Your question and the numbers needed to answer it go from your browser to Google. See [AI_ASSISTANT.md](AI_ASSISTANT.md).
+There is nothing to install. Click **Ask AI** at the top of any page, tick the consent box and, if it asks for one, paste a free Google AI Studio key (a hosted site may have a key set up already). Your question and the numbers needed to answer it go from your browser to Google. See [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
 ## Option 2: Claude Desktop
 
@@ -40,13 +40,13 @@ The connector is a small program in the `mcp` folder (`mcp/spyder-kpi-mcp.mjs`).
 
 ## Option 3: Claude Code
 
-Run this once in a terminal, with your two paths:
+Run this once in a terminal, with your two paths, in the folder where you use Claude Code:
 
 ```
 claude mcp add spyder-kpi -- node "C:\path\to\spyder-kpi-dashboard\mcp\spyder-kpi-mcp.mjs" "C:\path\to\kpi_export.xls"
 ```
 
-Then start `claude` and type `/mcp` to check that spyder-kpi is connected.
+Then start `claude` in that folder and type `/mcp` to check that spyder-kpi is connected. `claude mcp add` adds the server for the current folder only; to use it in every folder, add `--scope user` after `add` (`claude mcp add --scope user spyder-kpi -- node ...`).
 
 ## Option 4: Any other MCP app
 
@@ -109,7 +109,7 @@ node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"
 
 It loads the file, prints the overview (the same numbers as Order Health and Purchase Orders) and exits. If the file cannot be read, it prints why and exits with code 1.
 
-**"node" is not recognized / command not found.** Node.js is not installed, or the AI app started before it was installed. Install Node.js 18+ from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer). `node --version` in a new terminal should print v18 or newer. If the app still can't find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`.
+**"node" is not recognized / command not found.** Node.js is not installed, or the AI app started before it was installed. Install Node.js 18+ from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer). `node --version` in a new terminal should print v18 or newer. If the app still can't find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`. On a Mac, Claude Desktop does not see the Terminal's PATH (for example when Node.js came from nvm or Homebrew): run `which node` in Terminal and use the path it prints, such as `/opt/homebrew/bin/node`.
 
 **Paths with spaces.** In the Claude Desktop config each path is its own quoted string in `args`, so spaces are fine. In a terminal command (Claude Code, `--check`), put each path in double quotes. Use full paths, not paths relative to the dashboard folder.
 

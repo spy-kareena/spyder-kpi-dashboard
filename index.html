@@ -1059,8 +1059,8 @@ async function exportShareSnapshot(){
     buildRiskRows,
     supplyDemandRows,
     rowOverrides:sharedOverrides,
-    // A snapshot saved from Search opens on the page the search started from.
-    activeTab:activeTab==='search'?searchPrevTab:activeTab,
+    // A snapshot saved from Search opens on the page the search started from; one saved from the help page on Order Health.
+    activeTab:activeTab==='search'?searchPrevTab:activeTab==='connect'?'weekly':activeTab,
     weeklyWarehouseFilter,
     weeklyCustomerFilter,
     weeklySegmentFilter,
@@ -4011,20 +4011,20 @@ const CONNECT_SNIPPETS={
   'connect-code':'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'
 };
 function renderConnectPage(){
-  const code=id=>`<div class="connect-code"><pre id="${id}">${esc(CONNECT_SNIPPETS[id])}</pre><div class="connect-copy print-hide"><button type="button" class="btn" data-copy="${id}" data-focus-key="copy-${id}" onclick="copyConnectSnippet(this)">Copy</button><span class="section-sub" id="${id}-status" role="status"></span></div></div>`;
+  const code=(id,label)=>`<div class="connect-code"><pre id="${id}">${esc(CONNECT_SNIPPETS[id])}</pre><div class="connect-copy print-hide"><button type="button" class="btn" data-copy="${id}" data-focus-key="copy-${id}" aria-label="${esc(label)}" onclick="copyConnectSnippet(this)">Copy</button><span class="section-sub" id="${id}-status" role="status"></span></div></div>`;
   const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
   const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
   return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
-  ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
+  ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and, if it asks for one, paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
     <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
       ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
       ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>. This opens claude_desktop_config.json:<code>Windows: %APPDATA%\\Claude\\claude_desktop_config.json</code><code>macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</code>Add the lines below with your two paths (keep the double backslashes), save, then restart Claude.')}
     </div>
-    ${code('connect-desktop')}
+    ${code('connect-desktop','Copy the Claude Desktop config')}
     <p>If the file already has an "mcpServers" section, put the "spyder-kpi" entry inside it. After a new export, ask Claude to load it (for example “Load C:\\Exports\\kpi_export.xls”), or change the path and restart Claude.</p>`)}
-  ${section(3,'Option 3: Claude Code','one command in a terminal',`<p>Run this once with your two paths. Then start <strong>claude</strong> and type <strong>/mcp</strong> to check that spyder-kpi is connected.</p>${code('connect-code')}`)}
+  ${section(3,'Option 3: Claude Code','one command in a terminal',`<p>Run this once with your two paths, in the folder where you use Claude Code (to use it in every folder, add <strong>--scope user</strong> after <strong>add</strong>). Then start <strong>claude</strong> there and type <strong>/mcp</strong> to check that spyder-kpi is connected.</p>${code('connect-code','Copy the Claude Code command')}`)}
   ${section(4,'Option 4: Any other MCP app','Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers',`<table class="data-table connect-table"><thead><tr><th scope="col">Setting</th><th scope="col">Value</th></tr></thead><tbody>
       <tr><td class="m">Transport</td><td>stdio (a local command)</td></tr>
       <tr><td class="m">Command</td><td><code>node</code></td></tr>
