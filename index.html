@@ -3687,7 +3687,8 @@ function aiToggle(force){
   const panel=aiEl('ai-panel');
   if(panel)panel.hidden=!aiState.open;
   if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
-  const button=document.querySelector('[data-focus-key="ask-ai"]');
+  // Before any export is loaded the page head has no Ask AI button; the help page's Open Ask AI takes its place.
+  const button=document.querySelector('[data-focus-key="ask-ai"],[data-focus-key="connect-ask-ai"]');
   if(button&&button.setAttribute)button.setAttribute('aria-expanded',String(aiState.open));
   if(!aiState.open){aiFocus(button);return;}
   aiSyncData();
