@@ -793,6 +793,8 @@ button.trow.po-wh-cols{font-size:13px}
 .rank-row .rv.good-text{color:var(--good)}.rank-row .rv.warn-text{color:var(--warn)}.rank-row .rv.crit-text{color:var(--crit)}
 .editable-rows .row-override,.editable-rows .row-note{font:inherit;font-size:12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);padding:5px 8px;width:100%}
 .editable-rows .row-note{min-height:34px;resize:vertical}
+/* On screen the override and note controls keep a readable width (every option fits); print shrinks to the page. */
+@media screen{.editable-rows .row-override{min-width:140px}.editable-rows .row-note{min-width:200px}.editable-rows .due-cell{white-space:nowrap}}
 .mini-strip.cols-5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .mini-strip.cols-5>div{flex-direction:column;align-items:flex-start;gap:6px}
 .mini-strip.cols-5 .ms-num{text-align:left}
@@ -2215,7 +2217,7 @@ async function handleFiles(files,{adding=false}={}){
     const seenRows=new Set();
     let duplicateRows=0;
     exportHeaders=new Set();
-    for(const file of valid){
+    for(const [fileIndex,file] of valid.entries()){
       let fileRows;
       try{fileRows=await readExportFile(file);}
       catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
@@ -2224,8 +2226,9 @@ async function handleFiles(files,{adding=false}={}){
       fileRows.forEach(r=>Object.keys(r).forEach(k=>headers.add(normalizeHeader(k))));
       headers.forEach(h=>exportHeaders.add(h));
       const sample=fileRows[0]||{};
-      // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows.
-      if(isBuildRiskRow(sample)){allBuildRaw.push(...fileRows);continue;}
+      // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows:
+      // normalizeBuildRiskRows finds repeats per sheet, using the file each row came from.
+      if(isBuildRiskRow(sample)){fileRows.forEach(r=>r.__ctbFile=fileIndex);allBuildRaw.push(...fileRows);continue;}
       const signatures=rowSignatures(fileRows);
       const raw=fileRows.filter((r,i)=>!seenRows.has(signatures[i]));
       duplicateRows+=fileRows.length-raw.length;
@@ -2241,7 +2244,8 @@ async function handleFiles(files,{adding=false}={}){
     loadedFiles=valid;
     allLoadedRows=normalizeRows(allRaw);
     applyInventoryScope();
-    buildRiskRows=normalizeBuildRiskRows(allBuildRaw);
+    const ctb=normalizeBuildRiskRows(allBuildRaw);
+    buildRiskRows=ctb.rows;duplicateRows+=ctb.duplicateRows;
     supplyDemandRows=normalizeSupplyDemandRows(allSupplyDemandRaw);
     if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length)throw new Error('No rows found in these exports.');
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
@@ -2338,8 +2342,6 @@ function normalizeSupplyDemandRows(raw){
 
 // Clear To Build report week picked on the Build Risk page ('' = newest).
 let buildRiskSnapshot='';
-// Numbers each workbook read, so the same sheet arriving in two files is two blocks (see normalizeBuildRiskRows).
-let ctbReads=0;
 function setBuildRiskSnapshot(v){buildRiskSnapshot=String(v||'');renderResults();}
 // A Clear To Build sheet is known by its header row (CM, Month, Clear To Build, At Risk / Late). The newest sheets
 // leave the notes header blank, so a blank header right after "% Late Orders" is named Notes.
@@ -2356,8 +2358,9 @@ function isCtbSheet(ws){
 }
 const CTB_MONTH_RE=/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i;
 // Report week from a sheet name: "0930 - Orders at Risk" (MMDD), "716 - Orders at Risk" (MDD), "June - Orders At
-// Risk 62" (the month word says where the month digits end: Jun 2). Sheet names carry no year: it is the report
-// date's year, or the year before when that would put the week more than 60 days after the report date.
+// Risk 62" (the month word says where the month digits end: Jun 2). Sheet names carry no year: it is the latest year
+// that puts the week no more than 60 days after today. Today, not the export date: the export date is never after
+// today, and an older export (or a December export next to a January sheet) must not push new weeks back a year.
 function ctbSheetDate(name){
   const s=String(name||'');
   const digits=(s.match(/\d{1,4}/)||[''])[0].replace(/^0+/,'');
@@ -2372,13 +2375,15 @@ function ctbSheetDate(name){
     day=Number(digits.length===2?digits[1]:digits.slice(-2));
   }
   if(!(month>=1&&month<=12&&day>=1&&day<=31))return null;
-  const today=reportToday();
-  let d=new Date(today.getFullYear(),month-1,day);
-  if(d.getDate()!==day)return null;
-  if(d-today>60*864e5)d=new Date(today.getFullYear()-1,month-1,day);
-  return d;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let y=today.getFullYear()+1;y>=today.getFullYear()-1;y--){
+    const d=new Date(y,month-1,day);
+    if(d.getDate()===day&&d-today<=60*864e5)return d;
+  }
+  return null;
 }
-// Year-less CTB months ("December") take the year nearest the report week, so December in a January report is last year.
+// Year-less CTB months ("December") take the year nearest the report week (the as-of date for an undated report),
+// so December in a January report is last year.
 function ctbMonthNear(key,date){
   const m=Number(key.slice(5)),y=date.getFullYear();
   const dist=yr=>Math.abs(new Date(yr,m-1,15)-date);
@@ -2398,19 +2403,15 @@ function normalizeBuildRiskRows(raw){
   const blank=v=>{const s=String(v??'').trim();return s===''||/^#div\/0!?$/i.test(s);};
   const pctText=v=>blank(v)?'':v;
   let currentCm='',block=null,snap=null;
-  // A report week whose rows already came in from another file (same workbook loaded twice) is dropped.
-  const done=new Set();
-  const out=[];
+  // One block per sheet read (a CSV file is one block); handleFiles tags each row with its file's place in the upload.
+  const blocks=[];
   raw.forEach(r=>{
     const sheet=r.__ctbSheet||'';
-    if(`${r.__ctbRead}|${sheet}`!==block){
-      if(snap&&snap.key)done.add(snap.key);
-      block=`${r.__ctbRead}|${sheet}`;currentCm='';
+    if(`${r.__ctbFile}|${sheet}`!==block){
+      block=`${r.__ctbFile}|${sheet}`;currentCm='';
       const d=sheet?ctbSheetDate(sheet):null;
-      snap={key:d?displayDate(d):'',date:d,label:d?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'',sheet};
-      snap.skip=!!snap.key&&done.has(snap.key);
+      blocks.push(snap={key:d?displayDate(d):'',date:d,label:d?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'',sheet,file:r.__ctbFile,rows:[]});
     }
-    if(snap.skip)return;
     const mapped={};
     Object.keys(r).forEach(k=>mapped[normalizeHeader(k)]=r[k]);
     const cmRaw=String(pick(mapped,['cm'])||'').trim();
@@ -2426,8 +2427,8 @@ function normalizeBuildRiskRows(raw){
     // Month rows with no numbers at all are stale placeholders.
     if(allBlank)return;
     let mk=reportMonthKey(month);
-    if(mk&&snap.date&&!/\d/.test(month))mk=ctbMonthNear(mk,snap.date);
-    out.push({
+    if(mk&&!/\d/.test(month))mk=ctbMonthNear(mk,snap.date||reportToday());
+    snap.rows.push({
       cm,
       cmKey:cmKey(cm),
       month,
@@ -2446,7 +2447,20 @@ function normalizeBuildRiskRows(raw){
       snapshotSheet:snap.sheet
     });
   });
-  return out.filter(r=>r.cm&&(r.month||r.isTotal));
+  // A report week that comes in from more than one file keeps the copy from the file added last, so an updated
+  // workbook replaces the older one (Add file re-reads every file, oldest first). Within one file the first sheet wins.
+  // An undated block (CSV, sheet named without a date) is dropped only when another block has the same rows.
+  // Dropped copies of identical rows are counted for the Data check note.
+  const seen=new Set(),sigs=new Set();
+  let duplicateRows=0;
+  [...blocks].sort((a,b)=>b.file-a.file).forEach(b=>{
+    b.rows=b.rows.filter(r=>r.cm&&(r.month||r.isTotal));
+    const sig=JSON.stringify(b.rows),id=b.key||sig;
+    b.skip=seen.has(id);
+    if(b.skip&&sigs.has(sig))duplicateRows+=b.rows.length;
+    seen.add(id);sigs.add(sig);
+  });
+  return {rows:blocks.filter(b=>!b.skip).flatMap(b=>b.rows),duplicateRows};
 }
 
 function readExportFile(file){
@@ -2466,8 +2480,7 @@ function readExportFile(file){
         const sheetRows=ws=>{formatSheetDatesIso(ws,date1904);return XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});};
         // A Clear To Build workbook keeps one sheet per report week: read every such sheet, tagged with its name.
         const ctbSheets=wb.SheetNames.filter(n=>isCtbSheet(wb.Sheets[n]));
-        const read=++ctbReads;
-        if(ctbSheets.length){resolve(ctbSheets.flatMap(n=>sheetRows(wb.Sheets[n]).map(r=>({...r,__ctbSheet:n,__ctbRead:read}))));return;}
+        if(ctbSheets.length){resolve(ctbSheets.flatMap(n=>sheetRows(wb.Sheets[n]).map(r=>({...r,__ctbSheet:n}))));return;}
         const ws=wb.Sheets[wb.SheetNames[0]];
         if(!ws){resolve([]);return;}
         resolve(sheetRows(ws));
@@ -3458,7 +3471,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
     return `<tr>
       <td class="strong">${esc(r.documentNumber)}</td>
       <td>${esc(r.name)}</td>
-      <td class="${/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft'}">${esc(r.dueText||'')}</td>
+      <td class="due-cell ${/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft'}">${esc(r.dueText||'')}</td>
       <td class="date ${/\d{4}-/.test(effective||'')?'soft':'muted'}">${esc(effective||'—')}</td>
       <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
@@ -3471,7 +3484,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
     </tr>`;
   };
   const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
-  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1360:1000,className:editable?'editable-rows':'',empty});
+  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty});
 }
 // --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Gemini chat (and later an MCP server) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
@@ -5834,7 +5847,7 @@ function renderResults(){
       ${weeks.length>1?`<div class="rise rise-4">${renderTableCard({key:'br-trend',title:'CTB % by CM',note:`clear to build share of each CM’s orders, last ${fmtNum(weeks.length)} report weeks (oldest to newest)`,
         head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90})}</div>`:''}
       <div class="rise rise-5">${renderRowsTable(riskRows.slice(0,60),{key:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} rows (latest-risk buckets first)`:`${fmtNum(riskRows.length)} rows in buckets the report marks at risk or late`,limit:12,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'})}</div>
-      <details class="about"><summary>About these numbers</summary><div class="about-body"><p>This view matches sales orders to the Clear To Build report by CM / warehouse and due month. It is a demand-risk overlay, not exact PO allocation, unless the source report includes PO / item-level detail.</p><p>A Clear To Build workbook holds one sheet per report week. Every number above comes from the week picked at the top; weeks are never added together. The Lacombe firm sales orders block is matched to the Spyder - Lacombe warehouse.</p></div></details>`;
+      <details class="about"><summary>About these numbers</summary><div class="about-body"><p>This view matches sales orders to the Clear To Build report by CM / warehouse and due month. It is a demand-risk overlay, not exact PO allocation, unless the source report includes PO / item-level detail.</p><p>A Clear To Build workbook holds one sheet per report week. Every number above comes from the week picked at the top; weeks are never added together. The Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines.</p></div></details>`;
     }
   }
   // Redraws replace the whole results DOM; put focus and listbox scroll back so keyboard use keeps working.

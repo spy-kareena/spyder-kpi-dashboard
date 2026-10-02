@@ -3,7 +3,7 @@
 // "Orders at Risk" workbook (merged CM cells, blank spacer rows, Grand Total rows, a Lacombe section).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const HEAD = ['CM ', 'Month', 'Total', 'Clear To Build', 'At Risk', 'Late', 'Closed', '% CTB', '% Late Orders'];
@@ -121,6 +121,19 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   // The Lacombe block is shown but matched to no sales order lines (it covers only a few firm orders).
   const lac = page.run('currentMetrics().buildRisk.snapshots[0].matched.find(r=>r.cm==="Lacombe").matchedRows.map(r=>r.documentNumber)');
   assert.deepEqual(lac, []);
+  // ... and "About these numbers" says so.
+  const h = html(page);
+  assert.match(h, /Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines/);
+  assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
+});
+
+test('risk-bucket orders: the Override and Notes controls keep a readable width on screen', async () => {
+  const h = html(await loaded());
+  const table = h.slice(h.indexOf('Sales orders in risk buckets') - 200);
+  assert.match(table, /<section class="table editable-rows">[\s\S]*?style="min-width:1600px"/);
+  assert.match(table, /<td class="due-cell soft">Due in/);
+  // 140px fits the longest option ("Waiting on Production") with padding and arrow; print keeps its own sizing.
+  assert.match(HTML, /@media screen\{\.editable-rows \.row-override\{min-width:140px\}\.editable-rows \.row-note\{min-width:200px\}\.editable-rows \.due-cell\{white-space:nowrap\}\}/);
 });
 
 test('the blank notes header is read as Notes; notes keep their line breaks and are escaped', async () => {
@@ -140,7 +153,7 @@ test('CTB % by CM trend: one row per CM, weeks oldest to newest, tone and toolti
   assert.match(card, /<td class="m">Price<\/td><td class="num muted">—<\/td><td class="num"><span class="pill good"[^>]*>93%</);
 });
 
-test('sheet names give the report week; the year comes from the report date and months take the nearest year', async () => {
+test('sheet names give the report week; the year comes from today and months take the nearest year', async () => {
   const page = loadPage({ today: '2026-01-20' });
   const sheet = (name, months) => ({ name, aoa: [HEAD, ...months.map((m) => [m === months[0] ? 'IMS' : _, m, 4, 3, 1, 0, 0, '75%', '0%'])] });
   const wb = workbook(page, [sheet('0115 - Orders at Risk', ['December', 'January']), sheet('1230 - Orders at Risk', ['December']),
@@ -148,6 +161,33 @@ test('sheet names give the report week; the year comes from the report date and 
   await upload(page, [{ name: 'ctb.xlsx', bytes: wb }]);
   assert.deepEqual(page.run('buildRiskRows.map(r=>[r.snapshot,r.monthKey])'), [
     ['2026-01-15', '2025-12'], ['2026-01-15', '2026-01'], ['2025-12-30', '2025-12'], ['2025-06-02', '2025-06'], ['2025-07-16', '2025-07'],
+  ]);
+});
+
+test('year-less months in a CSV report take the year nearest the as-of date', async () => {
+  const page = loadPage({ today: '2027-01-06' });
+  const kpi = sapExport(['12/20/2026', '01/20/2027'].map((d, i) => sapRow({ ExportDate: '01/05/2027', DocumentNumber: `8100${i + 1}`, Warehouse: 'CM - DSM', ...due(d) })));
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nDSM,December,5,3,2,0\r\n,January,10,8,2,0\r\n'));
+  await upload(page, [{ name: 'kpi.xls', bytes: kpi }, { name: 'ctb.csv', bytes: csv }]);
+  assert.deepEqual(page.run('currentMetrics().buildRisk.snapshots[0].matched.map(r=>[r.monthKey,r.matchedRows.map(m=>m.documentNumber)])'),
+    [['2026-12', ['81001']], ['2027-01', ['81002']]]);
+});
+
+test('an export older than the workbook does not push the newest weeks back a year', async () => {
+  const sheet = (name, months) => ({ name, aoa: [HEAD, ...months.map((m) => [m === months[0] ? 'DSM' : _, m, 4, 3, 1, 0, 0, '75%', '0%'])] });
+  const kpi = (exportDate, dueDate) => sapExport([sapRow({ ExportDate: exportDate, DocumentNumber: '81001', Warehouse: 'CM - DSM', ...due(dueDate) })]);
+  // A July export next to a workbook written through September.
+  const july = loadPage({ today: '2026-10-01' });
+  await upload(july, [{ name: 'kpi.xls', bytes: kpi('07/15/2026', '09/20/2026') },
+    { name: 'ctb.xlsx', bytes: workbook(july, [sheet('0930 - Orders at Risk', ['September']), sheet('0908 - Orders at Risk', ['September']), sheet('0521 - Orders at Risk', ['May'])]) }]);
+  assert.deepEqual(july.run('currentMetrics().buildRisk.snapshots.map(s=>s.key)'), ['2026-09-30', '2026-09-08', '2026-05-21']);
+  assert.match(html(july), /<option value="2026-09-30" selected>/);
+  // A late-December export next to a January sheet: the January week is the newest, and its months are next year.
+  const jan = loadPage({ today: '2027-01-10' });
+  await upload(jan, [{ name: 'kpi.xls', bytes: kpi('12/28/2026', '01/20/2027') },
+    { name: 'ctb.xlsx', bytes: workbook(jan, [sheet('0106 - Orders at Risk', ['January', 'February']), sheet('1230 - Orders at Risk', ['January'])]) }]);
+  assert.deepEqual(jan.run('currentMetrics().buildRisk.snapshots.map(s=>[s.key,s.matched.map(r=>[r.monthKey,r.matchedRows.length])])'), [
+    ['2027-01-06', [['2027-01', 1], ['2027-02', 0]]], ['2026-12-30', [['2027-01', 1]]],
   ]);
 });
 
@@ -159,6 +199,51 @@ test('the same workbook loaded twice is not double counted', async () => {
   // A one-sheet workbook twice: the repeated sheet arrives right after itself.
   const single = await loaded([SEP30], ['copy.xlsx']);
   assert.equal(single.run('buildRiskRows.length'), 8);
+});
+
+// Add file, awaited: the page re-reads every loaded file plus the new ones, as addFiles does.
+async function addFile(page, files) { page.ctx.__added = files; await page.run('handleFiles([...loadedFiles,...__added],{adding:true})'); }
+const dsmWeek = (week, ctb, note) => ({ name: `${week} - Orders at Risk`, aoa: [[...HEAD, 'Notes'], ['DSM', 'September', 10, ctb, 10 - ctb, 0, 0, '', '', note]] });
+
+test('an updated workbook added later replaces the weeks it repeats', async () => {
+  const page = loadPage({ today: '2026-10-08' });
+  const v1 = workbook(page, [dsmWeek('0930', 5, 'old')]);
+  const v2 = workbook(page, [dsmWeek('1007', 7, 'new week'), dsmWeek('0930', 9, 'corrected')]);
+  await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb-v1.xlsx', bytes: v1 }]);
+  await addFile(page, [{ name: 'ctb-v2.xlsx', bytes: v2 }]);
+  const weeks = 'buildRiskRows.map(r=>[r.snapshot,r.clearToBuild,r.notes]).sort()';
+  assert.deepEqual(page.run(weeks), [['2026-09-30', 9, 'corrected'], ['2026-10-07', 7, 'new week']]);
+  // Adding the older workbook again makes it the newest file: the file added last wins.
+  await addFile(page, [{ name: 'ctb-v1 (1).xlsx', bytes: v1 }]);
+  assert.deepEqual(page.run(weeks), [['2026-09-30', 5, 'old'], ['2026-10-07', 7, 'new week']]);
+});
+
+test('undated CTB data loaded twice (CSV, or a sheet named without a date) is counted once and reported', async () => {
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nDSM,Sep 2026,7,5,2,0\r\n,Oct 2026,8,6,2,0\r\n'));
+  const note = /Ignored 2 rows that were already in another uploaded file/;
+  const dq = (page) => page.run('dataQualityIssues.map(i=>i.message)').join(' ');
+  const added = loadPage();
+  await upload(added, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }]);
+  await addFile(added, [{ name: 'ctb.csv', bytes: csv }]);
+  const together = loadPage();
+  await upload(together, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }, { name: 'ctb (1).csv', bytes: csv }]);
+  const sheets = loadPage();
+  const wb = workbook(sheets, [{ name: 'Sheet1', aoa: [HEAD, ['DSM', 'Sep 2026', 7, 5, 2, 0], [_, 'Oct 2026', 8, 6, 2, 0]] }]);
+  await upload(sheets, [{ name: 'kpi.xls', bytes: KPI }, { name: 'a.xlsx', bytes: wb }, { name: 'b.xlsx', bytes: wb }]);
+  for (const page of [added, together, sheets]) {
+    const h = html(page);
+    assert.equal(stat(h, 'CTB report rows'), 2);
+    assert.equal(stat(h, 'Clear to build'), 11);
+    assert.equal(stat(h, 'At risk'), 4);
+    assert.match(dq(page), note);
+  }
+  // Two different undated reports are both kept, and the same dated workbook twice is now reported too.
+  const other = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nIMS,Sep 2026,4,4,0,0\r\n'));
+  const both = loadPage();
+  await upload(both, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }, { name: 'ims.csv', bytes: other }]);
+  assert.equal(stat(html(both), 'Clear to build'), 15);
+  assert.doesNotMatch(dq(both), /Ignored/);
+  assert.match(dq(await loaded(undefined, ['copy.xlsx'])), /Ignored 11 rows that were already in another uploaded file/);
 });
 
 test('a single CTB report as CSV still works: no week picker, and it is a separate pick next to a workbook', async () => {
