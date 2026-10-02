@@ -4288,8 +4288,10 @@ function captureFocus(root){
   return {sel,caret};
 }
 function restoreFocus(root,f){
-  const t=f&&root.querySelector(f.sel);
-  if(!t)return;
+  if(!f)return;
+  const t=root.querySelector(f.sel);
+  // The focused control is gone (e.g. a Back button that left its page): focus the page heading, not <body>.
+  if(!t){const h=root.querySelector('h1[tabindex="-1"]');if(h)h.focus({preventScroll:true});return;}
   if(f.caret&&t.value!==f.caret[0])t.value=f.caret[0];
   t.focus({preventScroll:true});
   if(f.caret)try{t.setSelectionRange(f.caret[1],f.caret[2],f.caret[3]);}catch(e){}
@@ -4580,7 +4582,7 @@ function renderResults(){
   if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
-    <div class="page-head-main"><h1 class="page-title">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
+    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
     <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button>`
       :'<button type="button" class="btn btn-primary" data-focus-key="load-export" onclick="showUpload()">Load an export</button>'}</div>
   </div>`;

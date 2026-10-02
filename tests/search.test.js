@@ -38,7 +38,7 @@ test('every term must match (AND) across document, PO, customer, item, warehouse
   assert.deepEqual(search(page, 'spy-100'), [['Sales order', '500'], ['Purchase order', '40'], ['Delivery', '500']]);
   search(page, 'SPY-100 vendor');
   assert.equal(page.run('activeTab'), 'search');
-  assert.match(html(page), /<h1 class="page-title">Search<\/h1>/);
+  assert.match(html(page), /<h1 class="page-title"[^>]*>Search<\/h1>/);
   assert.match(html(page), /<span class="page-meta"[^>]*>1 match for “SPY-100 vendor”<\/span>/);
   assert.match(html(page), /<mark>Vendor<\/mark> Co/);
   assert.match(html(page), /<td class="c-type">Purchase order<\/td>/);
@@ -137,7 +137,7 @@ test('no data: the box is disabled, typing and shortcuts do nothing', async () =
   page.run('onGlobalSearchInput("spy")');
   await wait();
   assert.equal(page.run('activeTab'), 'weekly');
-  assert.doesNotMatch(html(page), /page-title">Search/);
+  assert.doesNotMatch(html(page), /page-title"[^>]*>Search/);
   let focused = 0;
   page.els['global-search'] = { disabled: true, focus: () => { focused++; } };
   page.ctx.globalSearchShortcut({ key: '/', target: { tagName: 'BODY' }, preventDefault() {} });
@@ -185,6 +185,23 @@ test('redraws keep focus, typed text and caret in the search box', async () => {
   assert.equal(freshNote.focused, true);
   assert.equal(freshNote.value, 'late part');
   assert.deepEqual(freshNote.range, [2, 4, 'forward']);
+});
+
+test('"Back to <page>" moves focus to the new page heading instead of dropping it', async () => {
+  const page = await loaded();
+  search(page, 'spy');
+  assert.match(html(page), /data-focus-key="search-back" onclick="clearGlobalSearch\(\)">Back to Order Health</);
+  const results = page.els['results-screen'];
+  const back = { dataset: { focusKey: 'search-back' } };
+  const h1 = { focus() { this.focused = true; } };
+  page.ctx.document.activeElement = back;
+  results.contains = (n) => n === back;
+  // Mimics the DOM: a selector only finds what the redrawn markup contains.
+  results.querySelector = (sel) => (sel === 'h1[tabindex="-1"]' && /<h1 class="page-title" tabindex="-1">Order Health</.test(results.innerHTML) ? h1
+    : sel === '[data-focus-key="search-back"]' && results.innerHTML.includes('data-focus-key="search-back"') ? back : null);
+  page.run('clearGlobalSearch()');
+  assert.equal(page.run('activeTab'), 'weekly');
+  assert.equal(h1.focused, true);
 });
 
 test('notes and overrides can be edited from search results', async () => {
