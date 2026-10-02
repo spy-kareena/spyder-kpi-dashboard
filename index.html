@@ -863,6 +863,7 @@ button.trow.po-wh-cols{font-size:13px}
   </div>
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
+  <p class="ai-sr" id="search-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
     <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
@@ -4129,7 +4130,7 @@ function resetApp(){
   document.getElementById('file-input').value='';
   showUpload();
 }
-// --- Global search: sidebar box ("/" or Ctrl/Cmd+K), Search page over every loaded row ---
+// --- Global search: sidebar box (Ctrl/Cmd+K), Search page over every loaded row ---
 let searchQuery='';
 let searchPrevTab='weekly';
 let searchTimer=null;
@@ -4161,13 +4162,13 @@ function clearGlobalSearch(){
 function globalSearchKey(e){
   if(e.key==='Escape'){e.preventDefault();clearGlobalSearch();}
 }
+// Ctrl/Cmd+K only: a bare one-key shortcut like '/' fires on stray or speech-input keys and cannot be turned off (WCAG 2.1.4).
 function globalSearchShortcut(e){
   const t=e.target||{};
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||'')||t.isContentEditable)return;
-  const slash=e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey;
   const ctrlK=(e.ctrlKey||e.metaKey)&&!e.altKey&&String(e.key).toLowerCase()==='k';
   const box=document.getElementById('global-search');
-  if(!(slash||ctrlK)||!box||box.disabled)return;
+  if(!ctrlK||!box||box.disabled)return;
   e.preventDefault();
   box.focus();
   if(box.select)box.select();
@@ -4191,7 +4192,7 @@ const searchCache=new WeakMap();
 function globalSearchResults(m){
   const q=searchQuery.trim();
   const cached=searchCache.get(m);
-  if(cached&&cached.q===q)return cached;
+  if(cached&&cached.q===q&&cached.week===buildRiskSnapshot)return cached;
   const terms=searchTerms(q);
   const hit=fields=>{const s=fields.join(' ').toLowerCase();return terms.length>0&&terms.every(t=>s.includes(t));};
   const byDoc=new Intl.Collator(undefined,{numeric:true}).compare;
@@ -4202,8 +4203,11 @@ function globalSearchResults(m){
       :(a.t===null)!==(b.t===null)?(a.t===null?1:-1)
       :(a.open?a.t-b.t:b.t-a.t)||byDoc(String(a.r.documentNumber||''),String(b.r.documentNumber||'')));
   const supply=supplyDemandRows.filter(r=>hit([r.itemCode,r.itemDescription,r.itemGroup,r.warehouseName,r.warehouseCode,r.yearMonth]));
-  const ctb=buildRiskRows.filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
-  const value={q,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
+  // Clear To Build: only the report week picked on Build Risk (newest by default); weeks are never mixed.
+  const snaps=ctbSnapshots(buildRiskRows);
+  const ctbWeek=snaps.find(x=>x.key===buildRiskSnapshot)||snaps[0];
+  const ctb=(ctbWeek?ctbWeek.rows:[]).filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
+  const value={q,week:buildRiskSnapshot,ctbWeek,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
   searchCache.set(m,value);
   return value;
 }
@@ -4258,7 +4262,7 @@ function renderGlobalSearchPage(m){
   }).join('');
   const firstOf=list=>list.length>20?`first 20 of ${fmtNum(list.length)} matching rows`:`${fmtNum(list.length)} matching ${list.length===1?'row':'rows'}`;
   const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand rows match.'}):'';
-  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
+  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report (pick the week on Build Risk)`:''),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
   return `<section class="section rise rise-1 search-results">
@@ -4266,7 +4270,7 @@ function renderGlobalSearchPage(m){
     <div class="table">
       <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
       <div class="table-scroll"><table class="lines-table search">
-        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:84px"></colgroup>
+        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
         <thead><tr><th>Type</th><th>Doc #</th><th>Customer / vendor</th><th>Warehouse</th><th>Item / description</th><th title="Due date for open lines, close date for shipped and closed lines">Date</th><th class="num">Qty</th><th class="num">Value</th><th>Status</th><th class="print-hide">Notes</th></tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
@@ -4284,8 +4288,10 @@ function captureFocus(root){
   return {sel,caret};
 }
 function restoreFocus(root,f){
-  const t=f&&root.querySelector(f.sel);
-  if(!t)return;
+  if(!f)return;
+  const t=root.querySelector(f.sel);
+  // The focused control is gone (e.g. a Back button that left its page): focus the page heading, not <body>.
+  if(!t){const h=root.querySelector('h1[tabindex="-1"]');if(h)h.focus({preventScroll:true});return;}
   if(f.caret&&t.value!==f.caret[0])t.value=f.caret[0];
   t.focus({preventScroll:true});
   if(f.caret)try{t.setSelectionRange(f.caret[1],f.caret[2],f.caret[3]);}catch(e){}
@@ -4331,7 +4337,7 @@ function renderSidebar(){
     : 'Add a SAP export to begin';
   const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
-    <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (/ or Ctrl+K)" aria-keyshortcuts="/ Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
+    <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}</div>`).join('')}</nav>
     <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()" title="Load another export (supply / demand or Clear To Build) next to this one">Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()">New file</button></div>`:''}</div>`;
   restoreFocus(el,focus);
@@ -4569,9 +4575,14 @@ function renderResults(){
     : activeTab==='purchaseorders'
     ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
     : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
+  // The page head is rebuilt on every redraw, so screen readers hear the search count from one persistent
+  // status node, and only when the text changes.
+  const announce=document.getElementById('search-announce');
+  const said=activeTab==='search'?headMeta:'';
+  if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note" title="Note changes in a shared snapshot are not saved">Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
-    <div class="page-head-main"><h1 class="page-title">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
+    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta" title="${esc(asOfText)}">${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
     <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()">Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()">Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()">Export PDF</button>`
       :'<button type="button" class="btn btn-primary" data-focus-key="load-export" onclick="showUpload()">Load an export</button>'}</div>
   </div>`;

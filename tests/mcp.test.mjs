@@ -207,7 +207,7 @@ test('Connect an AI opens before any export is loaded, with working setup snippe
   page.run("setTab('weekly')"); // still no data: other pages stay closed
   assert.equal(page.run('activeTab'), 'connect');
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /<h1 class="page-title">Connect an AI<\/h1>/);
+  assert.match(html, /<h1 class="page-title"[^>]*>Connect an AI<\/h1>/);
   assert.match(html, /onclick="showUpload\(\)">Load an export</);
   assert.doesNotMatch(html, /Share snapshot|Export PDF/);
   for (const t of ['Option 1: Ask AI in this dashboard', 'Option 2: Claude Desktop', 'Option 3: Claude Code', 'Option 4: Any other MCP app', 'Example questions', 'Privacy']) assert.ok(html.includes(t), t);
