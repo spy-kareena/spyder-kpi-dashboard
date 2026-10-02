@@ -224,4 +224,22 @@ test('supply / demand and Clear To Build matches are listed when those files are
   assert.doesNotMatch(html(plain), /Clear To Build|Supply \/ demand/);
 });
 
+test('Clear To Build matches come from one report week: the newest, or the one picked on Build Risk', async () => {
+  const page = loadPage();
+  const head = ['CM ', 'Month', 'Total', 'Clear To Build', 'At Risk', 'Late', 'Closed', '% CTB', '% Late Orders'];
+  const sheet = (name, ctb) => ({ name, aoa: [head, ['IMS', 'September', 10, ctb, 10 - ctb, 0, 0, '', ''], [null, 'TOTAL', 10, ctb, 10 - ctb, 0, 0, '', '']] });
+  const wb = page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify([sheet('0924 - Orders at Risk', 5), sheet('0930 - Orders at Risk', 8)])})XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.aoa),s.name);return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`);
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }, { name: 'ctb.xlsx', bytes: new Uint8Array(wb) }]);
+  const ctb = () => page.run('globalSearchResults(currentMetrics()).ctb.map(r=>[r.snapshot,r.clearToBuild])');
+  search(page, 'ims');
+  assert.deepEqual(ctb(), [['2026-09-30', 8]]);
+  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching row · Sep 30 report/);
+  // The same query after picking another week on Build Risk is not served from the cache.
+  page.run('setTab("buildrisk");setBuildRiskSnapshot("2026-09-24")');
+  search(page, 'ims');
+  assert.deepEqual(ctb(), [['2026-09-24', 5]]);
+  assert.match(html(page), /1 matching row · Sep 24 report/);
+  assert.deepEqual(page.errors, []);
+});
+
 run();

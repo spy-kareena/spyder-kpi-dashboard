@@ -4191,7 +4191,7 @@ const searchCache=new WeakMap();
 function globalSearchResults(m){
   const q=searchQuery.trim();
   const cached=searchCache.get(m);
-  if(cached&&cached.q===q)return cached;
+  if(cached&&cached.q===q&&cached.week===buildRiskSnapshot)return cached;
   const terms=searchTerms(q);
   const hit=fields=>{const s=fields.join(' ').toLowerCase();return terms.length>0&&terms.every(t=>s.includes(t));};
   const byDoc=new Intl.Collator(undefined,{numeric:true}).compare;
@@ -4202,8 +4202,11 @@ function globalSearchResults(m){
       :(a.t===null)!==(b.t===null)?(a.t===null?1:-1)
       :(a.open?a.t-b.t:b.t-a.t)||byDoc(String(a.r.documentNumber||''),String(b.r.documentNumber||'')));
   const supply=supplyDemandRows.filter(r=>hit([r.itemCode,r.itemDescription,r.itemGroup,r.warehouseName,r.warehouseCode,r.yearMonth]));
-  const ctb=buildRiskRows.filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
-  const value={q,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
+  // Clear To Build: only the report week picked on Build Risk (newest by default); weeks are never mixed.
+  const snaps=ctbSnapshots(buildRiskRows);
+  const ctbWeek=snaps.find(x=>x.key===buildRiskSnapshot)||snaps[0];
+  const ctb=(ctbWeek?ctbWeek.rows:[]).filter(r=>!r.isTotal&&hit([r.cm,r.month,r.notes]));
+  const value={q,week:buildRiskSnapshot,ctbWeek,terms,rows,supply,ctb,total:rows.length+supply.length+ctb.length};
   searchCache.set(m,value);
   return value;
 }
@@ -4258,7 +4261,7 @@ function renderGlobalSearchPage(m){
   }).join('');
   const firstOf=list=>list.length>20?`first 20 of ${fmtNum(list.length)} matching rows`:`${fmtNum(list.length)} matching ${list.length===1?'row':'rows'}`;
   const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand rows match.'}):'';
-  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
+  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report (pick the week on Build Risk)`:''),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
   return `<section class="section rise rise-1 search-results">
