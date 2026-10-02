@@ -863,6 +863,7 @@ button.trow.po-wh-cols{font-size:13px}
   </div>
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
+  <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
     <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
@@ -1351,11 +1352,37 @@ function uniqueRows(rows){
 function updateRowOverride(key,field,value){
   const cleanKey=String(key||'');
   if(!cleanKey)return;
-  writeRowOverride(cleanKey,allLoadedRows.filter(r=>rowKey(r)===cleanKey),field,value);
+  const matches=allLoadedRows.filter(r=>rowKey(r)===cleanKey);
+  writeRowOverride(cleanKey,matches,field,value);
   saveRowOverrides();
-  if(field==='status')invalidateMetrics();
   // Status overrides move rows between KPI tiles (e.g. Urgent, Not At Risk), so redraw; notes need no redraw.
-  if(field==='status')renderResults();
+  if(field!=='status')return;
+  const noteButtons=()=>[...document.querySelectorAll('button.note-btn')];
+  const at=noteButtons().findIndex(b=>b.dataset.key===cleanKey);
+  invalidateMetrics();
+  renderResults();
+  // The line left this list (e.g. Not At Risk on At Risk): focus the line that took its place and say so.
+  const now=noteButtons();
+  if(at<0||now.some(b=>b.dataset.key===cleanKey))return;
+  refocus(now[at]||now[now.length-1],linkedListAnchor());
+  const r=matches[0]||{};
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${value||'No override'} and left this list.`);
+}
+// A redraw can remove the control that had focus. If focus fell to the page body, move it to the first of
+// these that is on the page.
+function refocus(...targets){
+  const a=document.activeElement;
+  if(a&&a!==document.body)return;
+  const el=targets.find(t=>t&&t.focus);
+  if(el)el.focus({preventScroll:true});
+}
+// The KPI card that picks the open linked-lines list (Order Health or Purchase Orders).
+function linkedListAnchor(){
+  return document.querySelector(activeTab==='purchaseorders'?`[data-focus-key="potile-${poTileFilter||'late'}"]`:`[data-focus-key="tile-${weeklyTileFilter}"]`);
+}
+function announce(text){
+  const el=document.getElementById('page-announce');
+  if(el)el.textContent=text;
 }
 // Sets one field of a line's saved override (undefined removes it). An older legacy-key entry moves to the
 // current key so editing one field keeps the others. Callers save and redraw.
@@ -1441,10 +1468,35 @@ function toggleRowNote(key){
     if(button)button.focus();
   }
 }
+// Windows fires change on every arrow key of a closed select. Saving each one redraws the page and can take the
+// line off the list mid-way (at Not At Risk), so a change made by stepping the closed select is held until Enter or
+// until focus leaves the select. A pick from the open list (mouse, or Enter / Alt+Down then Enter) saves at once.
+function overrideSelectEvent(sel,e){
+  const d=sel.dataset;
+  if(e.type==='keydown'){
+    // Keys that step a closed select; Enter, Space, Alt+Down and F4 open the list instead.
+    if(!e.altKey&&(/^(Arrow|Page|Home|End)/.test(e.key)||(e.key.length===1&&e.key!==' ')))d.stepping='1';
+    if(e.key==='Enter'&&d.held){e.preventDefault();commitOverrideSelect(sel);}
+  }
+  else if(e.type==='keyup')delete d.stepping;
+  else if(e.type==='change'){if(d.stepping)d.held='1';else commitOverrideSelect(sel);}
+  else if(e.type==='blur'&&d.held)setTimeout(()=>{
+    // A mouse press that took focus away is still down; a redraw under it would swallow its click.
+    const root=document.documentElement;
+    if(root.matches&&root.matches(':active'))addEventListener('pointerup',()=>setTimeout(()=>commitOverrideSelect(sel)),{once:true});
+    else if(d.held)commitOverrideSelect(sel);
+  });
+}
+function commitOverrideSelect(sel){
+  const d=sel.dataset;
+  delete d.held;
+  const row=allLoadedRows.find(r=>rowKey(r)===d.key);
+  if(row&&String(row.overrideStatus||'')!==sel.value)updateRowOverride(d.key,'status',sel.value);
+}
 function renderOverrideSelect(r){
   const key=esc(rowKey(r));
   const current=String(r.overrideStatus||'');
-  return `<select class="row-override" data-key="${key}" onchange="updateRowOverride(this.dataset.key,'status',this.value)" aria-label="Override status for ${esc(r.documentNumber)}">
+  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}">
     ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt||'No override')}</option>`).join('')}
   </select>`;
 }

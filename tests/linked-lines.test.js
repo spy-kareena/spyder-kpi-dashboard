@@ -30,6 +30,10 @@ const shownDocs = (page) => [...html(page).matchAll(/<td class="c-doc">([^<]*)<\
 const atRiskCount = (page) => page.run('orderHealthData(currentMetrics()).lateTileRows.length');
 const keyOf = (page, doc) => page.run(`rowKey(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
 const saved = (page) => JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}');
+// The DOM stub has no live elements: fake the rendered controls a selector finds (data-key and focus() only).
+function fakeControls(page, pattern, focused) {
+  return [...html(page).matchAll(pattern)].map((m) => ({ dataset: { key: m[1].replace(/&amp;/g, '&') }, focus() { focused.push(this.dataset.key); } }));
+}
 
 test('select all covers every row of the list, not just the 20 shown; partial selection is indeterminate', async () => {
   const page = await atRiskPage(pastDue(25));
@@ -154,6 +158,64 @@ test('in a shared snapshot, delete is for this tab only and says so; focus stays
   assert.equal(atRiskCount(snap), 2);
   assert.deepEqual(snap.storage, {});
   assert.match(html(snap), /aria-label="Restore 1000 SPY-100"/);
+});
+
+test('override select: stepping the closed select waits for Enter or blur, a pick from the list saves at once, a line leaving the list keeps focus nearby', async () => {
+  const page = await atRiskPage(pastDue(3));
+  const k0 = keyOf(page, '1000');
+  page.run(`toggleRowNote(${JSON.stringify(k0)})`);
+  const select = html(page).match(/<select class="row-override"[^>]*>/)[0];
+  for (const ev of ['keydown', 'keyup', 'change', 'blur']) assert.match(select, new RegExp(`on${ev}="overrideSelectEvent\\(this,event\\)"`));
+  // Windows fires change on every arrow key of a closed select: nothing is saved and the line stays, even past Not At Risk.
+  page.run(`var sel={dataset:{key:${JSON.stringify(k0)}},value:''};var prevented=0;var key=(key,more)=>overrideSelectEvent(sel,{type:'keydown',key,preventDefault(){prevented++},...more});var arrow=v=>{key('ArrowDown');sel.value=v;overrideSelectEvent(sel,{type:'change'});}`);
+  for (const v of ['Urgent', 'Close Short', 'Short Ship', 'Hold', 'Not At Risk', 'Shipping Delay']) {
+    page.run(`arrow(${JSON.stringify(v)})`);
+    assert.equal(saved(page)[k0], undefined, v);
+    assert.equal(atRiskCount(page), 3, v);
+  }
+  // Enter saves the held change (and does not also open the list).
+  page.run("key('Enter')");
+  assert.deepEqual(saved(page)[k0], { status: 'Shipping Delay' });
+  assert.equal(page.run('prevented'), 1);
+  // With nothing held, Enter opens the list as usual; Enter, Space, F4 and Alt+Down open it and do not count as stepping.
+  page.run("overrideSelectEvent(sel,{type:'keyup'});key('Enter');key(' ');key('F4');key('ArrowDown',{altKey:true})");
+  assert.equal(page.run('prevented'), 1);
+  // A pick from the open list (mouse, or arrows + Enter inside the list, which send no keydown to the select) saves at once.
+  page.run("sel.value='Urgent';overrideSelectEvent(sel,{type:'change'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Urgent' });
+  // Type-ahead letters step the closed select too.
+  page.run("key('S');sel.value='Short Ship';overrideSelectEvent(sel,{type:'change'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Urgent' });
+  page.run("overrideSelectEvent(sel,{type:'keyup'});key('Enter')");
+  assert.deepEqual(saved(page)[k0], { status: 'Short Ship' });
+  // Leaving the select saves a held change once the focus move has settled; a blur with nothing held saves nothing.
+  page.run("arrow('Hold');overrideSelectEvent(sel,{type:'blur'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Short Ship' });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(saved(page)[k0], { status: 'Hold' });
+  page.run("sel.value='';overrideSelectEvent(sel,{type:'blur'})");
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(saved(page)[k0], { status: 'Hold' });
+
+  // A committed Not At Risk takes the line off At Risk: focus goes to the line that took its place, and it is announced.
+  const focused = [];
+  const doc = page.ctx.document;
+  doc.querySelectorAll = (s) => (s === 'button.note-btn' ? fakeControls(page, /<button type="button" class="note-btn[^"]*" data-key="([^"]*)"/g, focused) : []);
+  doc.querySelector = (s) => (s === '[data-focus-key="tile-late"]' ? { focus() { focused.push('tile-late'); } } : null);
+  doc.activeElement = doc.body;
+  const before = doc.querySelectorAll('button.note-btn').map((b) => b.dataset.key);
+  const at = before.indexOf(k0);
+  page.run("overrideSelectEvent(sel,{type:'keyup'});sel.value='Not At Risk';overrideSelectEvent(sel,{type:'change'})");
+  assert.equal(atRiskCount(page), 2);
+  assert.deepEqual(focused, [before[at + 1]]);
+  assert.equal(page.els['page-announce'].textContent, '1000 SPY-100 set to Not At Risk and left this list.');
+  // A status that keeps the line in the list leaves focus to the redraw.
+  page.run(`updateRowOverride(${JSON.stringify(before[at + 1])},'status','Urgent')`);
+  assert.equal(focused.length, 1);
+  // The last line leaving the list: focus the At Risk card.
+  for (const k of before.filter((k) => k !== k0)) page.run(`updateRowOverride(${JSON.stringify(k)},'status','Not At Risk')`);
+  assert.equal(atRiskCount(page), 0);
+  assert.equal(focused[focused.length - 1], 'tile-late');
 });
 
 test('every column header sorts the list ascending and descending on the values shown', async () => {
