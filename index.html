@@ -955,6 +955,8 @@ let excludedQuarantineRows = 0;
 // Set when this page is a shared snapshot file; notes edited there are not written to browser storage.
 let isSnapshotView = false;
 let snapshotCreatedAt = '';
+// A snapshot of an export without ExportDate is pinned to the day it was saved (its numbers were computed then).
+let snapshotAsOfSaveDay = false;
 let overrideSaveFailed = false;
 let loadedFiles = [];
 // Every normalized SO/PO row; parsedRows is this minus non-inventory lines unless the user includes them.
@@ -1034,10 +1036,13 @@ function downloadPreparedSnapshot(){
 }
 function showSnapshotDownloadLink(fileName,contents){
   let box=document.getElementById('snapshot-download-box');
+  const created=!box;
   if(!box){
     box=document.createElement('div');
     box.id='snapshot-download-box';
     box.className='snapshot-download-box';
+    // A status region, so screen readers announce the message; a new one is filled once it is in the page.
+    box.setAttribute('role','status');
     const results=document.getElementById('results-screen');
     const head=results?.querySelector('.page-head');
     if(head&&head.parentNode){
@@ -1046,7 +1051,9 @@ function showSnapshotDownloadLink(fileName,contents){
       document.body.appendChild(box);
     }
   }
-  box.innerHTML=`<strong>Snapshot ready.</strong><button type="button" class="btn" onclick="downloadPreparedSnapshot()">Download ${esc(fileName)}</button><span>Send the downloaded .html file, not a copy of this browser page. ${esc(contents||'')}</span>`;
+  const html=`<strong>Snapshot ready.</strong><button type="button" class="btn" onclick="downloadPreparedSnapshot()">Download ${esc(fileName)}</button><span>Send the downloaded .html file, not a copy of this browser page. ${esc(contents||'')}</span>`;
+  if(created)setTimeout(()=>{box.innerHTML=html;},50);
+  else box.innerHTML=html;
 }
 async function exportShareSnapshot(){
   if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length){
@@ -1077,17 +1084,26 @@ async function exportShareSnapshot(){
     weeklyLineSort,
     weeklyLeadingCollapsed,
     weeklyLaggingCollapsed,
+    weeklyAdvancedOpen,
+    weeklyOffenderView,
+    weeklyLinkedShowAll,
+    weeklyScorecardAll,
     poWarehouseFilter,
     poVendorFilter,
     poTileFilter,
     poLineSort,
+    poLinkedShowAll,
+    poWarehouseAll,
+    tableMore,
+    dataCheckOpen,
     supplyWarehouseFilter,
     shipScenarioStartDate,
     shipScenarioTargetDate,
     shipScenarioDateBasis,
     originalDeliveryMonthFilter,
     buildRiskSnapshot,
-    reportAsOfDate:reportAsOfDate?displayDate(reportAsOfDate):'',
+    reportAsOfDate:displayDate(reportToday()),
+    reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
     excludedQuarantineRows,
     createdAt:new Date().toISOString()
@@ -1188,10 +1204,18 @@ async function loadEmbeddedSnapshot(){
     weeklyLineSort=data.weeklyLineSort||'default';
     weeklyLeadingCollapsed=!!data.weeklyLeadingCollapsed;
     weeklyLaggingCollapsed=!!data.weeklyLaggingCollapsed;
+    weeklyAdvancedOpen=!!data.weeklyAdvancedOpen;
+    weeklyOffenderView=String(data.weeklyOffenderView||'customers');
+    weeklyLinkedShowAll=!!data.weeklyLinkedShowAll;
+    weeklyScorecardAll=!!data.weeklyScorecardAll;
     poWarehouseFilter=data.poWarehouseFilter||['ALL'];
     poVendorFilter=data.poVendorFilter||['ALL'];
     poTileFilter=data.poTileFilter||'';
     poLineSort=data.poLineSort||'default';
+    poLinkedShowAll=!!data.poLinkedShowAll;
+    poWarehouseAll=!!data.poWarehouseAll;
+    tableMore=data.tableMore&&typeof data.tableMore==='object'&&!Array.isArray(data.tableMore)?data.tableMore:{};
+    dataCheckOpen=!!data.dataCheckOpen;
     supplyWarehouseFilter=data.supplyWarehouseFilter||['ALL'];
     shipScenarioStartDate=data.shipScenarioStartDate||'';
     shipScenarioTargetDate=data.shipScenarioTargetDate||'';
@@ -1202,6 +1226,7 @@ async function loadEmbeddedSnapshot(){
     dataQualityIssues=Array.isArray(data.dataQualityIssues)?data.dataQualityIssues:[];
     excludedQuarantineRows=Number(data.excludedQuarantineRows)||0;
     snapshotCreatedAt=String(data.createdAt||'');
+    snapshotAsOfSaveDay=!!data.reportAsOfSaveDay&&!!reportAsOfDate;
     allLoadedRows.forEach(applyRowOverride);
     // Deleted lines follow the snapshot's overrides, so the scope is applied after them.
     applyInventoryScope();
@@ -2264,14 +2289,16 @@ function warehouseLabel(v){
 }
 
 // --- File import and column mapping ---
+// Rows (and duplicate-check signatures) of each file already read, so Add file does not read the loaded files again.
+const fileReadCache=new WeakMap();
 async function handleFiles(files,{adding=false}={}){
   const valid=files.filter(f=>f&&f.name.match(/\.(xlsx|xls|csv|txt|tsv)$/i));
   const skipped=files.filter(f=>f&&!valid.includes(f)).map(f=>f.name);
   document.getElementById('file-input').value='';
   // Adding a file to a report on screen must never lose that report: on failure the previous state comes back.
   const hadReport=adding&&document.getElementById('results-screen').style.display==='block';
-  // A report can also be on hand when New file opened the upload screen; a failed replacement keeps it.
-  const keepPrevious=hadReport||hasLoadedData();
+  // Any failed load puts the previous state back: the report on hand (also when New file opened the upload
+  // screen), or nothing on a first load, so a file that failed is never listed as loaded.
   const previous={reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles};
   const fail=message=>{
     if(hadReport){showResults();alert(message);}
@@ -2281,59 +2308,86 @@ async function handleFiles(files,{adding=false}={}){
   if(!valid.length){fail(skippedText||'Please upload .xlsx, .xls, .csv, or .txt exports.');return;}
   showLoading(valid.length>1?`Reading ${valid.length} KPI exports…`:'Reading KPI export…');
   try{
+    // Each file is read and classified once by its header row (every row of a sheet has the same columns).
+    const entries=[];
+    const noRows=[];
+    exportHeaders=new Set();
+    for(const file of valid){
+      let read=fileReadCache.get(file);
+      if(!read){
+        try{read={rows:await readExportFile(file)};}
+        catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
+        fileReadCache.set(file,read);
+      }
+      const rows=read.rows;
+      if(!rows.length){noRows.push(file.name);continue;}
+      const headers=new Set(Object.keys(rows[0]).map(normalizeHeader));
+      headers.forEach(h=>exportHeaders.add(h));
+      entries.push({file,read,rows,kind:isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':isKpiExportHeaderSet(headers)?'kpi':''});
+    }
+    const olderNotes=[
+      ...leaveOutOlderExports(entries,'kpi',rows=>normalizeRows(rows).map(rowKey)),
+      ...leaveOutOlderExports(entries,'sd',rows=>normalizeSupplyDemandRows(rows).map(r=>`${r.itemCode}|${r.warehouseCode||r.warehouseName}|${r.yearMonth}`))
+    ];
     const allRaw=[];
     const allBuildRaw=[];
     const allSupplyDemandRaw=[];
     const unrecognized=[];
+    // Files that gave rows; an empty or unrecognized file is reported in Data check, not listed as loaded.
+    const used=[];
     // A row that already came in with an earlier file (same file twice, or a combined export plus a
     // separate one) is dropped so totals are not doubled. Duplicates inside one file are kept.
     const seenRows=new Set();
     let duplicateRows=0;
-    exportHeaders=new Set();
-    for(const [fileIndex,file] of valid.entries()){
-      let fileRows;
-      try{fileRows=await readExportFile(file);}
-      catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
-      // Every row of a sheet carries the same columns, so each file is classified once by its header row.
-      const headers=new Set();
-      fileRows.forEach(r=>Object.keys(r).forEach(k=>headers.add(normalizeHeader(k))));
-      headers.forEach(h=>exportHeaders.add(h));
-      const sample=fileRows[0]||{};
+    let newKpiRows=false;
+    // Signatures start with the header list, so only a kind loaded more than once can hold duplicates.
+    const kinds=entries.filter(e=>!e.leftOut).map(e=>e.kind);
+    for(const {file,read,rows,kind,leftOut} of entries){
+      if(leftOut)continue;
+      if(!kind){unrecognized.push(file.name);continue;}
+      used.push(file);
       // Clear To Build rows carry the CM only on a CM's first row, so identical continuation rows are real rows:
       // normalizeBuildRiskRows finds repeats per sheet, using the file each row came from.
-      if(isBuildRiskRow(sample)){fileRows.forEach(r=>r.__ctbFile=fileIndex);allBuildRaw.push(...fileRows);continue;}
-      const signatures=rowSignatures(fileRows);
-      const raw=fileRows.filter((r,i)=>!seenRows.has(signatures[i]));
-      duplicateRows+=fileRows.length-raw.length;
-      signatures.forEach(sig=>seenRows.add(sig));
-      if(isSupplyDemandRow(sample))allSupplyDemandRaw.push(...raw);
-      else if(isKpiExportHeaderSet(headers))allRaw.push(...raw);
-      else if(raw.length)unrecognized.push(file.name);
+      if(kind==='ctb'){const fileIndex=valid.indexOf(file);rows.forEach(r=>r.__ctbFile=fileIndex);allBuildRaw.push(...rows);continue;}
+      let raw=rows;
+      if(kinds.indexOf(kind)!==kinds.lastIndexOf(kind)){
+        const signatures=read.signatures||(read.signatures=rowSignatures(rows));
+        raw=rows.filter((r,i)=>!seenRows.has(signatures[i]));
+        duplicateRows+=rows.length-raw.length;
+        signatures.forEach(sig=>seenRows.add(sig));
+      }
+      (kind==='sd'?allSupplyDemandRaw:allRaw).push(...raw);
+      if(kind==='kpi'&&raw.length&&!previous.loadedFiles.includes(file))newKpiRows=true;
     }
     if(unrecognized.length&&!allRaw.length&&!allBuildRaw.length&&!allSupplyDemandRaw.length){
       throw new Error(`${unrecognized.join(', ')} does not look like a KPI export (no document number, source type, or due date columns).`);
     }
     reportAsOfDate=detectExportDate(allRaw.length?allRaw:allSupplyDemandRaw);
-    loadedFiles=valid;
-    allLoadedRows=normalizeRows(allRaw);
+    // Add file that brings no new KPI rows keeps the lines already normalized (with their notes and deletions).
+    if(adding&&!newKpiRows&&+reportAsOfDate===+previous.reportAsOfDate){
+      allLoadedRows=previous.allLoadedRows;
+      dataQualityIssues=previous.dataQualityIssues.filter(i=>i.kind!=='file');
+      excludedQuarantineRows=previous.excludedQuarantineRows;
+    }else allLoadedRows=normalizeRows(allRaw);
     applyInventoryScope();
     const ctb=normalizeBuildRiskRows(allBuildRaw);
     buildRiskRows=ctb.rows;duplicateRows+=ctb.duplicateRows;
     supplyDemandRows=normalizeSupplyDemandRows(allSupplyDemandRaw);
     if(!allLoadedRows.length&&!buildRiskRows.length&&!supplyDemandRows.length)throw new Error('No rows found in these exports.');
+    loadedFiles=used;
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
     if(!adding){resetViewState();applyInventoryScope();}
     if(isSnapshotView){isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
+    olderNotes.forEach(message=>dataQualityIssues.unshift({kind:'file',message}));
     if(duplicateRows)dataQualityIssues.unshift({kind:'file',message:`Ignored ${fmtNum(duplicateRows)} rows that were already in another uploaded file.`});
+    if(noRows.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${noRows.join(', ')}: no rows in the file.`});
     if(unrecognized.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${unrecognized.join(', ')}: not a recognized KPI, supply/demand, or Clear To Build export.`});
     if(skippedText)dataQualityIssues.unshift({kind:'file',message:`Skipped ${skippedText}`});
     document.getElementById('upload-error').style.display='none';
     showResults();
   }catch(err){
-    if(keepPrevious){
-      ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
-      invalidateMetrics();
-    }
+    ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
+    invalidateMetrics();
     fail(err&&err.message||'Could not read this file.');
   }
 }
@@ -2344,6 +2398,29 @@ function rowSignatures(rows){
   const columns=Object.keys(rows[0]).map(k=>[k,normalizeHeader(k)]).filter(([,n])=>n!=='').sort((a,b)=>a[1].localeCompare(b[1]));
   const prefix=columns.map(([,n])=>n).join('|');
   return rows.map(r=>prefix+''+columns.map(([k])=>String(r[k]??'').trim()).join(''));
+}
+// Exports of one kind with different ExportDates that share lines are days of the same report, so only the newest
+// is used. Same-day or undated exports (e.g. separate SO and PO files) are all kept. Returns Data check notes.
+// ponytail: lineKeys normalizes each dated file again; that only runs when exports of one kind have different dates.
+function leaveOutOlderExports(entries,kind,lineKeys){
+  const ofKind=entries.filter(e=>e.kind===kind);
+  if(ofKind.length<2)return [];
+  const dated=ofKind.map(e=>({e,date:detectExportDate(e.rows)})).filter(x=>x.date);
+  const dates=[...new Set(dated.map(x=>+x.date))].sort((a,b)=>b-a);
+  if(dates.length<2)return [];
+  const newest=`${dated.filter(x=>+x.date===dates[0]).map(x=>x.e.file.name).join(', ')} (exported ${displayDate(new Date(dates[0]))})`;
+  const newerKeys=new Set();
+  const notes=[];
+  dates.forEach(d=>{
+    const group=dated.filter(x=>+x.date===d).map(x=>({...x,keys:x.e.read.lineKeys||(x.e.read.lineKeys=lineKeys(x.e.rows))}));
+    group.forEach(x=>{
+      if(!x.keys.some(k=>newerKeys.has(k)))return;
+      x.e.leftOut=true;
+      notes.push(`Left out ${x.e.file.name} (exported ${displayDate(x.date)}): ${newest} is a newer export of the same lines, so they are not counted twice.`);
+    });
+    group.forEach(x=>{if(!x.e.leftOut)x.keys.forEach(k=>newerKeys.add(k));});
+  });
+  return notes;
 }
 function addFiles(files){
   if(files.length&&!isSnapshotView)handleFiles([...loadedFiles,...files],{adding:true});
@@ -2690,9 +2767,13 @@ function formatSheetDatesIso(ws,date1904){
 }
 
 function normalizeRows(raw){
+  // Rows of one file share their columns, so the [column, normalized name] pairs are rebuilt only when they change.
+  let keys=[],pairs=[];
   const rows=raw.map(r=>{
+    const rowKeys=Object.keys(r);
+    if(rowKeys.length!==keys.length||rowKeys.some((k,i)=>k!==keys[i])){keys=rowKeys;pairs=keys.map(k=>[k,normalizeHeader(k)]);}
     const mapped={};
-    Object.keys(r).forEach(k=>mapped[normalizeHeader(k)]=r[k]);
+    for(const [k,n] of pairs)mapped[n]=r[k];
     const row={
       exportDate:pick(mapped,['exportdate']),
       sourceType:sourceFromDocType(pick(mapped,['sourcetype','doctype'])),
@@ -3569,7 +3650,7 @@ const AI_SCOPES=['at_risk','no_commit','rescheduled','due_this_week','open','po_
 const AI_GROUPS=['warehouse','customer','owner','vendor','due_month','status'];
 const aiR=v=>Math.round(num(v)*100)/100;
 const aiLimit=(v,fallback)=>Math.max(1,Math.min(100,Math.round(Number(v))||fallback));
-const aiAsOf=()=>({as_of:displayDate(reportToday()),as_of_basis:reportAsOfDate?'export date':'viewer today (the export has no ExportDate column)'});
+const aiAsOf=()=>({as_of:displayDate(reportToday()),as_of_basis:reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?'the day the snapshot was saved (the export has no ExportDate column)':'export date'):'viewer today (the export has no ExportDate column)'});
 const aiNoRows=()=>parsedRows.length?null:{loaded:false,hint:hasLoadedData()?'The loaded files have no sales or purchase order lines. Load the SAP KPI export to answer this.':'No export is loaded. Load the SAP KPI export on the upload screen first.'};
 const aiTile=rows=>({orders:rowDocCount(rows),lines:rows.length,open_value:aiR(rowOpenAmount(rows))});
 const aiPoTile=rows=>({lines:rows.length,open_value:aiR(rowOpenAmount(rows)),open_qty:aiR(rowOpenQty(rows))});
@@ -4686,7 +4767,7 @@ let lastRenderedRows=null;
 function renderResults(){
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
-  const asOfText=(reportAsOfDate?`As of export date ${displayDate(reportAsOfDate)}`:`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
+  const asOfText=(reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?`As of ${displayDate(reportAsOfDate)}, the day the snapshot was saved (no ExportDate column)`:`As of export date ${displayDate(reportAsOfDate)}`):`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
 
   renderSidebar();
   const openSoCount=m.rows.filter(r=>r.isOpen).length;

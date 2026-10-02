@@ -160,12 +160,12 @@ test('load_exports switches files; a bad path changes nothing', async () => {
   assert.deepEqual(atRisk((await server.call('get_overview')).data.order_health.at_risk), expected);
   assert.deepEqual((await server.call('search_lines', { scope: 'at_risk' })).data.rows.map((r) => r.customer), ['Bayliner']);
 
-  // Files the page cannot use are named in loaded_files instead of failing the load.
+  // Files the page cannot use are named in loaded_files (data check) instead of failing the load; only files that gave rows are listed.
   fs.writeFileSync(path.join(dir, 'notes.pdf'), 'x');
   fs.writeFileSync(path.join(dir, 'junk.csv'), 'a,b\n1,2\n');
   const mixed = await server.call('load_exports', { paths: [FILE_B, path.join(dir, 'notes.pdf'), path.join(dir, 'junk.csv')] });
   assert.equal(mixed.isError, false);
-  assert.deepEqual(mixed.data.files.map((f) => [f.name, f.kind]), [['kpi export b.xls', 'SAP KPI export'], ['junk.csv', 'not recognized (skipped)']]);
+  assert.deepEqual(mixed.data.files.map((f) => [f.name, f.kind]), [['kpi export b.xls', 'SAP KPI export']]);
   assert.match(mixed.data.data_check.examples.join(' '), /Skipped notes\.pdf[\s\S]*Skipped junk\.csv|Skipped junk\.csv[\s\S]*Skipped notes\.pdf/);
 });
 
