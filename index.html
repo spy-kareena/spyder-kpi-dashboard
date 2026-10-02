@@ -188,7 +188,7 @@ button{font-family:inherit}
 #upload-screen,#loading-screen,#results-screen{min-width:0}
 /* Card grids size to the card, never to their longest label */
 .chart-card,.list-card,.rate-card,.month-card,.card.kpi,.need-main,.need-preview,.stack{grid-template-columns:minmax(0,1fr)}
-.col-labels>span,.col-chart .col-val{overflow:hidden;text-overflow:clip}
+.col-chart .col-val{overflow:hidden;text-overflow:clip}
 
 /* Sidebar */
 .sidebar{padding:0 14px 24px}
@@ -389,7 +389,8 @@ button.rank-item.selected .rank-name{color:var(--accent-strong)}
 .col-chart .col-bar{width:100%;border-radius:5px 5px 0 0;transition:filter .15s}
 .col-chart .col-bar:hover{filter:brightness(.88)}
 .col-labels{display:flex;gap:8px}
-.col-labels>span{flex:1;text-align:center;font-size:12px;color:var(--gray-500);min-width:0;white-space:nowrap}
+/* Axis labels wrap at their space ("Sep" over "13", "Aug" over "'26") in narrow columns instead of being cut mid-word */
+.col-labels>span{flex:1;text-align:center;font-size:12px;line-height:1.3;color:var(--gray-500);min-width:0}
 .col-chart.tall{height:150px;gap:12px;border-bottom:1px solid var(--gray-200)}
 .col-chart.tall .col{gap:5px}
 .col-chart.tall .col-val{color:var(--gray-600)}
@@ -520,7 +521,7 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .pair-col.current{background:var(--accent-tint)}
 .pair-col>i{flex:1;max-width:22px;border-radius:4px 4px 0 0}
 .pair-labels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px;padding:0 4px;margin-top:-8px}
-.pair-labels>span{text-align:center;font-size:12px;color:var(--gray-500);white-space:nowrap}
+.pair-labels>span{text-align:center;font-size:12px;line-height:1.3;color:var(--gray-500)}
 .pair-labels>span.current{color:var(--accent-strong);font-weight:600}
 details.about{background:#fff;border:1px solid var(--gray-200);border-radius:14px;padding:14px 18px;font-size:12.5px;color:var(--gray-600);line-height:1.55}
 details.about>summary{cursor:pointer;font-weight:500;color:var(--gray-700)}
@@ -733,7 +734,6 @@ details.about p{margin:0}
   .pair-chart,.pair-labels{gap:4px}
   .need-card{padding:22px;gap:24px}
   .card{padding:16px 18px}
-  .pair-labels>span{font-size:12px;overflow:hidden;text-overflow:clip}
 }
 
 /* Print: sidebar and controls hidden, cards flattened */

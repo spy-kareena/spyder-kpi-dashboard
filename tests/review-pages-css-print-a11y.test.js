@@ -199,6 +199,16 @@ test('ranked lists give names the larger column (own line on phones) and the ful
   assert.match(html(page), /<div class="rank-row" title="Spyder - Lacombe Long Name · \d+ on-track of 6 open lines"><span class="rank-name">Spyder - Lacombe Long Name<\/span>/);
 });
 
+test('chart axis labels wrap at their space instead of being clipped mid-word', () => {
+  // Headless Chrome: Metrics at 1024px and Order Health / Monthly at 375px now show "Aug" over "'26", "Sep" over "13", no clipping.
+  const rules = (sel) => [...CSS.matchAll(new RegExp(`(?:^|\\}|,)\\s*${sel.replace(/[.*+?^${}()|[\]\\>]/g, '\\$&')}(?:,[^{]*)?\\{([^}]*)\\}`, 'gm'))].map((m) => m[1]).join(';');
+  for (const sel of ['.col-labels>span', '.pair-labels>span']) {
+    const r = rules(sel);
+    assert.ok(r.length, sel);
+    assert.ok(!/white-space:nowrap|text-overflow:clip|overflow:hidden/.test(r), `${sel}: ${r}`);
+  }
+});
+
 test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));
