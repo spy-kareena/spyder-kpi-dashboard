@@ -121,6 +121,10 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   // The Lacombe block is shown but matched to no sales order lines (it covers only a few firm orders).
   const lac = page.run('currentMetrics().buildRisk.snapshots[0].matched.find(r=>r.cm==="Lacombe").matchedRows.map(r=>r.documentNumber)');
   assert.deepEqual(lac, []);
+  // ... and "About these numbers" says so.
+  const h = html(page);
+  assert.match(h, /Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines/);
+  assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
 });
 
 test('the blank notes header is read as Notes; notes keep their line breaks and are escaped', async () => {
