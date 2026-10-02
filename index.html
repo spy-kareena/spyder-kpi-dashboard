@@ -4385,7 +4385,9 @@ function renderDataQualityNote(){
   const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
   const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';
   const dateHelp=issues.some(i=>i.kind==='date')?'<p>Dates outside 1990–2099 (e.g. year 0202 or 2626) are treated as missing, so those rows are not counted as late or on time until the date is fixed in SAP.</p>':'';
-  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
+  // The open popover covers the filters below it, so it closes on Esc and when focus leaves it (the popover itself
+  // takes focus on click, so clicking its text keeps it open).
+  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open" onkeydown="if(event.key==='Escape'&amp;&amp;this.open){this.open=false;this.querySelector('summary').focus();}" onfocusout="if(this.open&amp;&amp;!this.contains(event.relatedTarget))this.open=false"><summary data-focus-key="data-check">⚠ Data check</summary><div class="data-check-pop" tabindex="-1"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}<p class="dc-foot">Rows with unreadable dates are left out of late / on-time counts until fixed in SAP.</p></div></details>`;
 }
 
 // The KPI query's AmountLocal is already the OPEN amount on order-line rows (RDR1/POR1.OpenSum, local currency)

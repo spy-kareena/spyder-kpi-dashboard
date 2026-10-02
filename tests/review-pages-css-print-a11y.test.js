@@ -113,4 +113,25 @@ test('Data check popover hangs from the title row (left edge of the page), not f
   assert.match(CSS, /\.data-check-pop\{position:absolute;top:100%;left:0;[^}]*width:400px;max-width:calc\(100vw - 32px\)/);
 });
 
+test('Data check popover closes on Esc (focus back on the pill) and when focus leaves it', async () => {
+  const page = await loaded([sapRow({ DocumentNumber: '1', DueDate: '07/16/0202', LineDueDate: '07/16/0202' })]);
+  page.run('setTab("weekly")');
+  const tag = html(page).match(/<details class="data-check[^>]*>/)[0].replace(/&amp;/g, '&');
+  const handler = (name) => tag.match(new RegExp(`${name}="([^"]*)"`))[1];
+  const run = (code, el, event) => new Function('event', code).call(el, event);
+  const summary = { focused: false, focus() { this.focused = true; } };
+  const inside = {};
+  const details = { open: true, querySelector: () => summary, contains: (n) => n === inside };
+  run(handler('onfocusout'), details, { relatedTarget: inside });
+  assert.equal(details.open, true, 'focus moving within the popover keeps it open');
+  run(handler('onfocusout'), details, { relatedTarget: null });
+  assert.equal(details.open, false, 'focus leaving closes it');
+  details.open = true;
+  run(handler('onkeydown'), details, { key: 'Tab' });
+  assert.equal(details.open, true);
+  run(handler('onkeydown'), details, { key: 'Escape' });
+  assert.deepEqual([details.open, summary.focused], [false, true]);
+  assert.match(html(page), /<div class="data-check-pop" tabindex="-1">/);
+});
+
 run();
