@@ -1414,10 +1414,10 @@ function toggleLinkedRow(key,on){
   if(on)linkedSelection.add(String(key));else linkedSelection.delete(String(key));
   renderResults();
 }
-// Clear, Delete and Apply can remove the button that had focus; keep keyboard users in the table.
+// Clear, Delete and Apply can remove the button that had focus; keep keyboard users in the table, or on the
+// card that picks this list when the list is now empty.
 function keepLinkedFocus(){
-  const a=document.activeElement,box=document.getElementById('linked-select-all');
-  if((!a||a===document.body)&&box&&box.focus)box.focus({preventScroll:true});
+  refocus(document.getElementById('linked-select-all'),linkedListAnchor());
 }
 function selectAllLinked(on){
   linkedSelection=new Set(on?linkedListKeys:[]);
@@ -1438,7 +1438,13 @@ function deleteLinkedSelection(){
   keepLinkedFocus();
 }
 function restoreDeletedLines(key){
+  const buttons=()=>[...document.querySelectorAll('button.dc-restore')];
+  const at=buttons().findIndex(b=>b.dataset.key===key);
   setRowOverrides(key?[String(key)]:allLoadedRows.filter(r=>r.isDeleted).map(rowKey),'deleted',undefined);
+  // The pressed Restore button is gone: focus the next one, else Restore all, else the Data check summary, else
+  // this page's sidebar item (Data check goes away when nothing is left to report).
+  const now=buttons();
+  refocus(now[at]||now[now.length-1],document.querySelector('[data-focus-key="restore-deleted"]'),document.querySelector('summary[data-focus-key="data-check"]'),document.querySelector(`[data-focus-key="nav-${activeTab}"]`));
 }
 // Column headers sort as 'col:<column>:<asc|desc>'. Qty, value and lead start high to low; the rest A to Z / oldest first.
 function sortLinkedColumn(col){

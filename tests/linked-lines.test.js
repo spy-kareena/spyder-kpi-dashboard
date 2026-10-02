@@ -218,6 +218,46 @@ test('override select: stepping the closed select waits for Enter or blur, a pic
   assert.equal(focused[focused.length - 1], 'tile-late');
 });
 
+test('emptying the list focuses its KPI card; Restore focuses the next Restore button, else Data check or the page nav', async () => {
+  const page = await atRiskPage(pastDue(3));
+  const focused = [];
+  const doc = page.ctx.document;
+  const pageHtml = () => html(page) + page.els['app-sidebar'].innerHTML;
+  // Controls exist only while the last render drew them; focus() records which one got focus.
+  const getById = doc.getElementById;
+  doc.getElementById = (id) => (id === 'linked-select-all' ? (pageHtml().includes('id="linked-select-all"') ? { focus() { focused.push(id); } } : null) : getById(id));
+  doc.querySelector = (s) => {
+    const fk = /data-focus-key="([^"]+)"/.exec(s);
+    return fk && pageHtml().includes(`data-focus-key="${fk[1]}"`) ? { focus() { focused.push(fk[1]); } } : null;
+  };
+  doc.querySelectorAll = (s) => (s === 'button.dc-restore' ? fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, focused) : []);
+  doc.activeElement = doc.body;
+  // Select all, Delete: the list is empty and has no controls left, so focus goes to the At Risk card.
+  page.run('selectAllLinked(true)');
+  assert.deepEqual(focused.splice(0), ['linked-select-all']);
+  page.run('deleteLinkedSelection()');
+  assert.match(html(page), /No linked lines for this card/);
+  assert.deepEqual(focused.splice(0), ['tile-late']);
+  // Restore one line: focus the Restore button that took its place.
+  const keys = fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, []).map((b) => b.dataset.key);
+  assert.equal(keys.length, 3);
+  page.run(`restoreDeletedLines(${JSON.stringify(keys[1])})`);
+  assert.deepEqual(focused.splice(0), [keys[2]]);
+  page.run(`restoreDeletedLines(${JSON.stringify(keys[2])})`);
+  assert.deepEqual(focused.splice(0), [keys[0]]);
+  // Restore all removes every Restore button; with nothing else to report Data check goes too, so the page's nav item.
+  page.run('restoreDeletedLines()');
+  assert.equal(atRiskCount(page), 3);
+  assert.doesNotMatch(html(page), /data-focus-key="data-check"/);
+  assert.deepEqual(focused.splice(0), ['nav-weekly']);
+  // Apply Not At Risk to every line also empties the list.
+  page.run('selectAllLinked(true)');
+  focused.splice(0);
+  page.run("linkedBulkStatus='Not At Risk';applyLinkedOverride()");
+  assert.equal(atRiskCount(page), 0);
+  assert.deepEqual(focused, ['tile-late']);
+});
+
 test('every column header sorts the list ascending and descending on the values shown', async () => {
   const page = await atRiskPage(SORT_ROWS);
   // Ascending order for each column; blanks and the no-commit / no-reschedule badges stay after the dated lines.
