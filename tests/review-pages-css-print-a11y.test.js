@@ -188,6 +188,17 @@ test('Metrics: "Rescheduled, commit ahead" counts the same lines as the timeline
   assert.equal(strip, 1);
 });
 
+test('ranked lists give names the larger column (own line on phones) and the full name on hover', async () => {
+  // Headless Chrome with the real files: names cut at 375px 14 -> 0 (Build Risk), at 1024px 8 -> 4 of 16 (Warehouse Timeline, all with titles).
+  assert.match(CSS, /\.rank-row\{display:grid;grid-template-columns:minmax\(0,2fr\) minmax\(48px,1fr\) 84px;/);
+  assert.match(CSS, /\.rank-row\.wide\{grid-template-columns:minmax\(0,2fr\) minmax\(48px,1fr\) 96px\}/);
+  assert.ok(CSS.includes('@media (max-width:640px){.rank-row{grid-template-columns:minmax(0,1fr) 84px;row-gap:6px}.rank-row.wide{grid-template-columns:minmax(0,1fr) 96px}.rank-row .rank-name{grid-column:1/-1}}'));
+  const page = await loaded(Array.from({ length: 6 }, (_, i) => sapRow({ DocumentNumber: String(10 + i), Warehouse: 'Spyder - Lacombe Long Name' })));
+  assert.match(page.run("renderRankRows([{label:'CM - Augusta',sub:'3 lines',value:1,text:'1'},{label:'<b>',value:2,text:'2'}])"), /title="CM - Augusta · 3 lines"[\s\S]*title="&lt;b&gt;"/);
+  page.run('setTab("warehouses")');
+  assert.match(html(page), /<div class="rank-row" title="Spyder - Lacombe Long Name · \d+ on-track of 6 open lines"><span class="rank-name">Spyder - Lacombe Long Name<\/span>/);
+});
+
 test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));

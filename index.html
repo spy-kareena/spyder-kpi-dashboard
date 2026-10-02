@@ -532,7 +532,7 @@ details.about p{margin:0}
 
 /* Warehouse timeline */
 .rank-rows{display:grid;gap:12px}
-.rank-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.6fr) 84px;gap:14px;align-items:center;font-size:13px}
+.rank-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(48px,1fr) 84px;gap:14px;align-items:center;font-size:13px}
 .rank-row .rank-name{font-weight:500}
 .rank-row .rv{text-align:right;font-weight:600}
 .hbar{position:relative;height:8px;border-radius:99px;background:var(--gray-100)}
@@ -782,7 +782,9 @@ button.trow.po-wh-cols{font-size:13px}
 .grid-5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
 .mini-strip.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .kpi.static:hover{transform:none;box-shadow:var(--sh-rest)}
-.rank-row.wide{grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 96px}
+/* Names get the larger share, and their own line on phones (the bar column left them about 85px); rows carry the full name as a title */
+.rank-row.wide{grid-template-columns:minmax(0,2fr) minmax(48px,1fr) 96px}
+@media (max-width:640px){.rank-row{grid-template-columns:minmax(0,1fr) 84px;row-gap:6px}.rank-row.wide{grid-template-columns:minmax(0,1fr) 96px}.rank-row .rank-name{grid-column:1/-1}}
 .rank-row .rank-name{min-width:0}
 .rank-sub{display:block;font-size:12px;font-weight:400;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:1180px){.grid-5{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -4082,7 +4084,7 @@ function copyConnectSnippet(btn){
 function renderRankRows(items,{empty='Nothing to show.'}={}){
   if(!items.length)return `<div class="empty-note">${esc(empty)}</div>`;
   const max=Math.max(1,...items.map(i=>Math.abs(i.value)));
-  return `<div class="rank-rows">${items.map((i,n)=>`<div class="rank-row wide" title="${esc(i.sub||'')}"><span class="rank-name">${esc(i.label)}<span class="rank-sub">${esc(i.sub||'')}</span></span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(Math.abs(i.value)/max*100).toFixed(1)}%;background:${i.color||'var(--accent)'};animation-delay:${Math.min(n,12)*40}ms"></i></div></div><span class="rv${i.tone?` ${i.tone}-text`:''}">${i.text}</span></div>`).join('')}</div>`;
+  return `<div class="rank-rows">${items.map((i,n)=>`<div class="rank-row wide" title="${esc(i.sub?`${i.label} · ${i.sub}`:i.label)}"><span class="rank-name">${esc(i.label)}<span class="rank-sub">${esc(i.sub||'')}</span></span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(Math.abs(i.value)/max*100).toFixed(1)}%;background:${i.color||'var(--accent)'};animation-delay:${Math.min(n,12)*40}ms"></i></div></div><span class="rv${i.tone?` ${i.tone}-text`:''}">${i.text}</span></div>`).join('')}</div>`;
 }
 function renderStatCard(label,value,sub,tone='',dot=''){
   return `<div class="card kpi static"><span class="kpi-label">${dot?`<span class="dot ${dot}"></span>`:''}${esc(label)}</span><span class="kpi-value${tone?` ${tone}`:''}">${esc(value)}</span><span class="kpi-sub">${sub}</span></div>`;
@@ -5754,7 +5756,7 @@ function renderResults(){
       </div>
       <div class="card list-card roomy">
         <div class="list-head"><h2>On-track rate by warehouse</h2><span class="section-sub">lowest first · target 90% · 5+ open lines</span></div>
-        <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
+        <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${g.key} · ${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
       </div>
     </section>
     <section class="table rise rise-2">
