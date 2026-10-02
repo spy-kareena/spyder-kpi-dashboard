@@ -4716,7 +4716,9 @@ function renderResults(){
     // ---------- How we performed (lagging indicators) ----------
     const series=cachedByFilter(m,`${ohKey}|series`,()=>monthlyRateSeries(shipRowsAll,reschedulePerf.closed,reschedulePerf.met));
     const otdTone=otd3Mo.scored.length?toneFor(otd3Mo.rate,90,75):'neutral';
-    const fillTone=toneFor(fillRate,90,70);
+    // No ordered qty in view (e.g. only a Clear To Build or supply file loaded): nothing to score, so "—" not a red 0%.
+    const hasFill=fillLineRows.some(r=>(num(r.quantity)||0)>0);
+    const fillTone=hasFill?toneFor(fillRate,90,70):'neutral';
     const hitTone=reschedulePerf.closed.length?toneFor(reschedulePerf.rate,90,75):'neutral';
     const {weeks,weekMax}=cachedByFilter(m,`${ohKey}|weeks`,()=>{
       const weeks=weekWindows(thisWeekStart,12,-1).reverse();
@@ -4742,7 +4744,7 @@ function renderResults(){
         </button>
         <button type="button" class="card kpi lag${selected('fillrate')}" ${tileAttrs('fillrate')}>
           <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="kpi-tag">target 90%</span></div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${fmtNum(fillRate)}%</span><span class="kpi-unit">of ordered qty</span></div>
+          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${hasFill?`${fmtNum(fillRate)}%`:'—'}</span><span class="kpi-unit">of ordered qty</span></div>
           <div class="bullet-wrap">${renderBullet(fillRate,fillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
           <span class="kpi-sub">Delivered or closed qty of ordered qty · ${fmtNum(fillOpenRows.length)} lines still open</span>
         </button>
@@ -5682,7 +5684,7 @@ function renderResults(){
     <section class="section rise rise-1">
       <div class="section-head"><h2 class="section-title">Order quality rates</h2><span class="section-sub">open and closed sales order lines</span></div>
       <div class="grid-4">
-        ${rateCard('On-track rate',`${onTrackRate}%`,onTrackRate,toneFor(onTrackRate,90,75),90,'target 90%',`${fmtNum(m.onTrackRows.length)} not late/no-commit rows`)}
+        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} not late/no-commit rows`)}
         ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time, never rescheduled`)}
         ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in the last 12 months missed its original date (late or still open)`)}
         ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} open lines have shipped part of their qty`)}

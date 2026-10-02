@@ -161,6 +161,21 @@ test('empty text fields have a 3:1 border (search, Ask AI key and question, note
   for (const bg of ['white', 'gray-50']) assert.ok(ratio('gray-500', bg) >= 3, bg);
 });
 
+test('Fill rate and On-track rate show a neutral dash when no sales-order lines are loaded', async () => {
+  const kpi = (m, label) => m.split(`>${label}</span>`)[1].match(/<span class="kpi-value ([\w ]+)"[^>]*>([^<]*)</).slice(1);
+  const page = await loaded([PO({ DocumentNumber: '700' })]);
+  page.run('setTab("weekly")');
+  assert.deepEqual(kpi(html(page), 'Fill rate'), ['neutral', '—']);
+  page.run('setTab("metrics")');
+  assert.deepEqual(kpi(html(page), 'On-track rate'), ['neutral', '—']);
+  // With lines loaded the cards still score them.
+  const so = await loaded([sapRow({ DocumentNumber: '1' })]);
+  so.run('setTab("weekly")');
+  assert.deepEqual(kpi(html(so), 'Fill rate'), ['crit', '0%']);
+  so.run('setTab("metrics")');
+  assert.deepEqual(kpi(html(so), 'On-track rate'), ['crit', '0%']);
+});
+
 test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));
