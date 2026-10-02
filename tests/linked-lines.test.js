@@ -2,7 +2,7 @@
 // Run with `node tests/linked-lines.test.js`. Fixtures are synthetic (no SAP data).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 // Export date is 09/03/2026, so every line due in August is past due and lands on the At Risk card.
@@ -30,6 +30,10 @@ const shownDocs = (page) => [...html(page).matchAll(/<td class="c-doc">([^<]*)<\
 const atRiskCount = (page) => page.run('orderHealthData(currentMetrics()).lateTileRows.length');
 const keyOf = (page, doc) => page.run(`rowKey(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
 const saved = (page) => JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}');
+// The DOM stub has no live elements: fake the rendered controls a selector finds (data-key and focus() only).
+function fakeControls(page, pattern, focused) {
+  return [...html(page).matchAll(pattern)].map((m) => ({ dataset: { key: m[1].replace(/&amp;/g, '&') }, focus() { focused.push(this.dataset.key); } }));
+}
 
 test('select all covers every row of the list, not just the 20 shown; partial selection is indeterminate', async () => {
   const page = await atRiskPage(pastDue(25));
@@ -156,6 +160,104 @@ test('in a shared snapshot, delete is for this tab only and says so; focus stays
   assert.match(html(snap), /aria-label="Restore 1000 SPY-100"/);
 });
 
+test('override select: stepping the closed select waits for Enter or blur, a pick from the list saves at once, a line leaving the list keeps focus nearby', async () => {
+  const page = await atRiskPage(pastDue(3));
+  const k0 = keyOf(page, '1000');
+  page.run(`toggleRowNote(${JSON.stringify(k0)})`);
+  const select = html(page).match(/<select class="row-override"[^>]*>/)[0];
+  for (const ev of ['keydown', 'keyup', 'change', 'blur']) assert.match(select, new RegExp(`on${ev}="overrideSelectEvent\\(this,event\\)"`));
+  // Windows fires change on every arrow key of a closed select: nothing is saved and the line stays, even past Not At Risk.
+  page.run(`var sel={dataset:{key:${JSON.stringify(k0)}},value:''};var prevented=0;var key=(key,more)=>overrideSelectEvent(sel,{type:'keydown',key,preventDefault(){prevented++},...more});var arrow=v=>{key('ArrowDown');sel.value=v;overrideSelectEvent(sel,{type:'change'});}`);
+  for (const v of ['Urgent', 'Close Short', 'Short Ship', 'Hold', 'Not At Risk', 'Shipping Delay']) {
+    page.run(`arrow(${JSON.stringify(v)})`);
+    assert.equal(saved(page)[k0], undefined, v);
+    assert.equal(atRiskCount(page), 3, v);
+  }
+  // Enter saves the held change (and does not also open the list).
+  page.run("key('Enter')");
+  assert.deepEqual(saved(page)[k0], { status: 'Shipping Delay' });
+  assert.equal(page.run('prevented'), 1);
+  // With nothing held, Enter opens the list as usual; Enter, Space, F4 and Alt+Down open it and do not count as stepping.
+  page.run("overrideSelectEvent(sel,{type:'keyup'});key('Enter');key(' ');key('F4');key('ArrowDown',{altKey:true})");
+  assert.equal(page.run('prevented'), 1);
+  // A pick from the open list (mouse, or arrows + Enter inside the list, which send no keydown to the select) saves at once.
+  page.run("sel.value='Urgent';overrideSelectEvent(sel,{type:'change'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Urgent' });
+  // Type-ahead letters step the closed select too.
+  page.run("key('S');sel.value='Short Ship';overrideSelectEvent(sel,{type:'change'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Urgent' });
+  page.run("overrideSelectEvent(sel,{type:'keyup'});key('Enter')");
+  assert.deepEqual(saved(page)[k0], { status: 'Short Ship' });
+  // Leaving the select saves a held change once the focus move has settled; a blur with nothing held saves nothing.
+  page.run("arrow('Hold');overrideSelectEvent(sel,{type:'blur'})");
+  assert.deepEqual(saved(page)[k0], { status: 'Short Ship' });
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(saved(page)[k0], { status: 'Hold' });
+  page.run("sel.value='';overrideSelectEvent(sel,{type:'blur'})");
+  await new Promise((r) => setTimeout(r, 5));
+  assert.deepEqual(saved(page)[k0], { status: 'Hold' });
+
+  // A committed Not At Risk takes the line off At Risk: focus goes to the line that took its place, and it is announced.
+  const focused = [];
+  const doc = page.ctx.document;
+  doc.querySelectorAll = (s) => (s === 'button.note-btn' ? fakeControls(page, /<button type="button" class="note-btn[^"]*" data-key="([^"]*)"/g, focused) : []);
+  doc.querySelector = (s) => (s === '[data-focus-key="tile-late"]' ? { focus() { focused.push('tile-late'); } } : null);
+  doc.activeElement = doc.body;
+  const before = doc.querySelectorAll('button.note-btn').map((b) => b.dataset.key);
+  const at = before.indexOf(k0);
+  page.run("overrideSelectEvent(sel,{type:'keyup'});sel.value='Not At Risk';overrideSelectEvent(sel,{type:'change'})");
+  assert.equal(atRiskCount(page), 2);
+  assert.deepEqual(focused, [before[at + 1]]);
+  assert.equal(page.els['page-announce'].textContent, '1000 SPY-100 set to Not At Risk and left this list.');
+  // A status that keeps the line in the list leaves focus to the redraw.
+  page.run(`updateRowOverride(${JSON.stringify(before[at + 1])},'status','Urgent')`);
+  assert.equal(focused.length, 1);
+  // The last line leaving the list: focus the At Risk card.
+  for (const k of before.filter((k) => k !== k0)) page.run(`updateRowOverride(${JSON.stringify(k)},'status','Not At Risk')`);
+  assert.equal(atRiskCount(page), 0);
+  assert.equal(focused[focused.length - 1], 'tile-late');
+});
+
+test('emptying the list focuses its KPI card; Restore focuses the next Restore button, else Data check or the page nav', async () => {
+  const page = await atRiskPage(pastDue(3));
+  const focused = [];
+  const doc = page.ctx.document;
+  const pageHtml = () => html(page) + page.els['app-sidebar'].innerHTML;
+  // Controls exist only while the last render drew them; focus() records which one got focus.
+  const getById = doc.getElementById;
+  doc.getElementById = (id) => (id === 'linked-select-all' ? (pageHtml().includes('id="linked-select-all"') ? { focus() { focused.push(id); } } : null) : getById(id));
+  doc.querySelector = (s) => {
+    const fk = /data-focus-key="([^"]+)"/.exec(s);
+    return fk && pageHtml().includes(`data-focus-key="${fk[1]}"`) ? { focus() { focused.push(fk[1]); } } : null;
+  };
+  doc.querySelectorAll = (s) => (s === 'button.dc-restore' ? fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, focused) : []);
+  doc.activeElement = doc.body;
+  // Select all, Delete: the list is empty and has no controls left, so focus goes to the At Risk card.
+  page.run('selectAllLinked(true)');
+  assert.deepEqual(focused.splice(0), ['linked-select-all']);
+  page.run('deleteLinkedSelection()');
+  assert.match(html(page), /No linked lines for this card/);
+  assert.deepEqual(focused.splice(0), ['tile-late']);
+  // Restore one line: focus the Restore button that took its place.
+  const keys = fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, []).map((b) => b.dataset.key);
+  assert.equal(keys.length, 3);
+  page.run(`restoreDeletedLines(${JSON.stringify(keys[1])})`);
+  assert.deepEqual(focused.splice(0), [keys[2]]);
+  page.run(`restoreDeletedLines(${JSON.stringify(keys[2])})`);
+  assert.deepEqual(focused.splice(0), [keys[0]]);
+  // Restore all removes every Restore button; with nothing else to report Data check goes too, so the page's nav item.
+  page.run('restoreDeletedLines()');
+  assert.equal(atRiskCount(page), 3);
+  assert.doesNotMatch(html(page), /data-focus-key="data-check"/);
+  assert.deepEqual(focused.splice(0), ['nav-weekly']);
+  // Apply Not At Risk to every line also empties the list.
+  page.run('selectAllLinked(true)');
+  focused.splice(0);
+  page.run("linkedBulkStatus='Not At Risk';applyLinkedOverride()");
+  assert.equal(atRiskCount(page), 0);
+  assert.deepEqual(focused, ['tile-late']);
+});
+
 test('every column header sorts the list ascending and descending on the values shown', async () => {
   const page = await atRiskPage(SORT_ROWS);
   // Ascending order for each column; blanks and the no-commit / no-reschedule badges stay after the dated lines.
@@ -190,6 +292,57 @@ test('every column header sorts the list ascending and descending on the values 
   // The Sort rows select still switches back to its own choices.
   page.run("setWeeklyLineSort('default')");
   assert.doesNotMatch(html(page), /Column: |aria-sort/);
+});
+
+test('Order Health and PO linked lines leave Item / Description about 200px at the table minimum width', async () => {
+  // Screen min-width of the table: the last plain (not print !important) rule that names it.
+  const css = HTML.replace(/\/\*[\s\S]*?\*\//g, '');
+  const cssMin = (cls) => Number([...css.matchAll(/([^{}]+)\{min-width:(\d+)px\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(`.lines-table.${cls}`)).pop()[2]);
+  const fixedCols = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">\\s*<colgroup>([\\s\\S]*?)</colgroup>`))[1].matchAll(/width:(\d+)px/g)].reduce((t, m) => t + Number(m[1]), 0);
+  const page = await atRiskPage([...pastDue(2), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorName: 'Acme Parts' })]);
+  const so = cssMin('so') - fixedCols(html(page), 'so');
+  page.run("setTab('purchaseorders')");
+  const po = cssMin('po') - fixedCols(html(page), 'po');
+  assert.ok(so >= 190 && po >= 190, `Item / Description gets ${so}px (SO) and ${po}px (PO)`);
+});
+
+test('an override redraws Order Health without building other pages\' aggregates; delivery date math is worked out once', async () => {
+  const delivery = (doc, closed) => sapRow({ DocumentNumber: doc, 'Internal Number': doc, LineDueDate: '08/10/2026', DueDate: '08/10/2026', HeaderDueDate: '08/10/2026', OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', ClosedDate: closed, CloseDateSource: 'Delivery', DeliveryDocNumber: `D${doc}`, OpenQuantity: '0' });
+  // Early, on time, 1 and 2 days late (tolerance), 5 days late.
+  const page = await atRiskPage([...pastDue(3), delivery('801', '08/08/2026'), delivery('802', '08/10/2026'), delivery('803', '08/11/2026'), delivery('804', '08/12/2026'), delivery('805', '08/15/2026')]);
+  const otd = "(()=>{const s=otdStats(parsedRows.filter(isShipmentRow));return [s.scored,s.early,s.onTime,s.tolerance,s.late].map(x=>x.map(r=>r.documentNumber))})()";
+  assert.deepEqual(page.run(otd), [['801', '802', '803', '804', '805'], ['801'], ['802'], ['803', '804'], ['805']]);
+  page.run('var parses=0;var realParse=parseDate;parseDate=function(){parses++;return realParse.apply(this,arguments)}');
+  assert.deepEqual(page.run(otd), [['801', '802', '803', '804', '805'], ['801'], ['802'], ['803', '804'], ['805']]);
+  assert.equal(page.run('parses'), 0);
+  page.run('parseDate=realParse');
+
+  const pages = { groupByMonth: 'monthly', groupByOriginalHeaderMonth: 'monthly', buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
+  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
+  page.run(`updateRowOverride(${JSON.stringify(keyOf(page, '1000'))},'status','Urgent')`);
+  page.run('selectAllLinked(true);linkedBulkStatus="Hold";applyLinkedOverride()');
+  assert.deepEqual(page.run('built'), {});
+  // Each page builds what it shows on first view, once per metrics object, with the same numbers as before.
+  for (const [fn, tab] of Object.entries(pages)) {
+    page.run(`setTab('${tab}');renderResults()`);
+    assert.equal(page.run(`built.${fn}`), 1, fn);
+  }
+  assert.equal(page.run('currentMetrics().perfectOrderRate'), page.run('perfectOrderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).rate'));
+  assert.equal(page.run('currentMetrics().backorderQty'), page.run('backorderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).backorderQty'));
+});
+
+test('the guides promise row selection and header sort only on Order Health linked lines, where they exist', async () => {
+  const page = await atRiskPage([...pastDue(1), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700' })]);
+  assert.match(html(page), /class="row-check"[\s\S]*class="th-sort"/);
+  page.run("setTab('purchaseorders')");
+  const po = html(page).match(/<section[^>]*id="po-linked-lines"[\s\S]*?<\/section>/)[0];
+  assert.match(po, /<td class="c-doc">700<\/td>/);
+  assert.doesNotMatch(po, /row-check|th-sort/);
+  for (const file of ['README.md', 'docs/USER_QUICK_START.md']) {
+    const claim = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', file), 'utf8').split('\n').find((l) => /tick rows/.test(l));
+    assert.match(claim, /Order Health/, file);
+    assert.doesNotMatch(claim, /any linked-lines list/i, file);
+  }
 });
 
 run();

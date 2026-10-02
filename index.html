@@ -434,8 +434,6 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .table-tools label{display:flex;align-items:center;gap:8px;font-weight:600}
 .table-tools .hint{color:var(--gray-400)}
 .table-scroll{overflow-x:auto}
-.lines-table.po{min-width:980px}
-.lines-table.so{min-width:1060px}
 
 /* Linked lines: row selection, bulk actions, header sort, deleted lines in Data check */
 .lines-table .c-check{padding-right:6px}
@@ -450,8 +448,9 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .btn-danger{color:var(--crit-text);border-color:var(--crit-border)}
 .btn-danger:hover{background:var(--crit-tint);border-color:var(--crit)}
 .lines-table .c-notes{padding-left:12px}
-/* Room for the checkbox and Notes columns without squeezing Item / Description; the note editor lines up with Customer */
-.lines-table.so,.lines-table.po{min-width:1100px}
+/* The fixed columns take about 1000px; the rest (about 200px) keeps item codes on one line in Item / Description.
+   Narrower screens scroll the table sideways. The note editor lines up with Customer. */
+.lines-table.so,.lines-table.po{min-width:1200px}
 .lines-table.so .note-editor{padding-left:104px}
 .data-check-pop ul.dc-deleted{list-style:none;padding-left:0}
 .dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
@@ -866,6 +865,7 @@ button.trow.po-wh-cols{font-size:13px}
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
   <p class="ai-sr" id="search-announce" role="status"></p>
+  <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
     <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
@@ -1354,11 +1354,37 @@ function uniqueRows(rows){
 function updateRowOverride(key,field,value){
   const cleanKey=String(key||'');
   if(!cleanKey)return;
-  writeRowOverride(cleanKey,allLoadedRows.filter(r=>rowKey(r)===cleanKey),field,value);
+  const matches=allLoadedRows.filter(r=>rowKey(r)===cleanKey);
+  writeRowOverride(cleanKey,matches,field,value);
   saveRowOverrides();
-  if(field==='status')invalidateMetrics();
   // Status overrides move rows between KPI tiles (e.g. Urgent, Not At Risk), so redraw; notes need no redraw.
-  if(field==='status')renderResults();
+  if(field!=='status')return;
+  const noteButtons=()=>[...document.querySelectorAll('button.note-btn')];
+  const at=noteButtons().findIndex(b=>b.dataset.key===cleanKey);
+  invalidateMetrics();
+  renderResults();
+  // The line left this list (e.g. Not At Risk on At Risk): focus the line that took its place and say so.
+  const now=noteButtons();
+  if(at<0||now.some(b=>b.dataset.key===cleanKey))return;
+  refocus(now[at]||now[now.length-1],linkedListAnchor());
+  const r=matches[0]||{};
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${value||'No override'} and left this list.`);
+}
+// A redraw can remove the control that had focus. If focus fell to the page body, move it to the first of
+// these that is on the page.
+function refocus(...targets){
+  const a=document.activeElement;
+  if(a&&a!==document.body)return;
+  const el=targets.find(t=>t&&t.focus);
+  if(el)el.focus({preventScroll:true});
+}
+// The KPI card that picks the open linked-lines list (Order Health or Purchase Orders).
+function linkedListAnchor(){
+  return document.querySelector(activeTab==='purchaseorders'?`[data-focus-key="potile-${poTileFilter||'late'}"]`:`[data-focus-key="tile-${weeklyTileFilter}"]`);
+}
+function announce(text){
+  const el=document.getElementById('page-announce');
+  if(el)el.textContent=text;
 }
 // Sets one field of a line's saved override (undefined removes it). An older legacy-key entry moves to the
 // current key so editing one field keeps the others. Callers save and redraw.
@@ -1390,10 +1416,10 @@ function toggleLinkedRow(key,on){
   if(on)linkedSelection.add(String(key));else linkedSelection.delete(String(key));
   renderResults();
 }
-// Clear, Delete and Apply can remove the button that had focus; keep keyboard users in the table.
+// Clear, Delete and Apply can remove the button that had focus; keep keyboard users in the table, or on the
+// card that picks this list when the list is now empty.
 function keepLinkedFocus(){
-  const a=document.activeElement,box=document.getElementById('linked-select-all');
-  if((!a||a===document.body)&&box&&box.focus)box.focus({preventScroll:true});
+  refocus(document.getElementById('linked-select-all'),linkedListAnchor());
 }
 function selectAllLinked(on){
   linkedSelection=new Set(on?linkedListKeys:[]);
@@ -1414,7 +1440,13 @@ function deleteLinkedSelection(){
   keepLinkedFocus();
 }
 function restoreDeletedLines(key){
+  const buttons=()=>[...document.querySelectorAll('button.dc-restore')];
+  const at=buttons().findIndex(b=>b.dataset.key===key);
   setRowOverrides(key?[String(key)]:allLoadedRows.filter(r=>r.isDeleted).map(rowKey),'deleted',undefined);
+  // The pressed Restore button is gone: focus the next one, else Restore all, else the Data check summary, else
+  // this page's sidebar item (Data check goes away when nothing is left to report).
+  const now=buttons();
+  refocus(now[at]||now[now.length-1],document.querySelector('[data-focus-key="restore-deleted"]'),document.querySelector('summary[data-focus-key="data-check"]'),document.querySelector(`[data-focus-key="nav-${activeTab}"]`));
 }
 // Column headers sort as 'col:<column>:<asc|desc>'. Qty, value and lead start high to low; the rest A to Z / oldest first.
 function sortLinkedColumn(col){
@@ -1444,10 +1476,39 @@ function toggleRowNote(key){
     if(button)button.focus();
   }
 }
+// Windows fires change on every arrow key of a closed select. Saving each one redraws the page and can take the
+// line off the list mid-way (at Not At Risk), so a change made by stepping the closed select is held until Enter or
+// until focus leaves the select. A pick from the open list (mouse, or Enter / Alt+Down then Enter) saves at once.
+function overrideSelectEvent(sel,e){
+  const d=sel.dataset;
+  if(e.type==='keydown'){
+    // Keys that step a closed select; Enter, Space, Alt+Down and F4 open the list instead.
+    if(!e.altKey&&(/^(Arrow|Page|Home|End)/.test(e.key)||(e.key.length===1&&e.key!==' ')))d.stepping='1';
+    if(e.key==='Enter'&&d.held){e.preventDefault();commitOverrideSelect(sel);}
+  }
+  else if(e.type==='keyup')delete d.stepping;
+  else if(e.type==='change'){if(d.stepping)d.held='1';else commitOverrideSelect(sel);}
+  else if(e.type==='blur'&&d.held){
+    // Save once focus has moved. A mouse press that took focus away is still down then, and a redraw under it
+    // would swallow its click, so wait for the release.
+    const commit=()=>{if(d.held)commitOverrideSelect(sel);};
+    setTimeout(()=>{
+      const root=document.documentElement;
+      if(root.matches&&root.matches(':active'))addEventListener('pointerup',()=>setTimeout(commit),{once:true});
+      else commit();
+    });
+  }
+}
+function commitOverrideSelect(sel){
+  const d=sel.dataset;
+  delete d.held;
+  const row=allLoadedRows.find(r=>rowKey(r)===d.key);
+  if(row&&String(row.overrideStatus||'')!==sel.value)updateRowOverride(d.key,'status',sel.value);
+}
 function renderOverrideSelect(r){
   const key=esc(rowKey(r));
   const current=String(r.overrideStatus||'');
-  return `<select class="row-override" data-key="${key}" onchange="updateRowOverride(this.dataset.key,'status',this.value)" aria-label="Override status for ${esc(r.documentNumber)}">
+  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}">
     ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt||'No override')}</option>`).join('')}
   </select>`;
 }
@@ -2140,12 +2201,24 @@ function rescheduleStats(rows){
     rate:closed.length?Math.round((met.length/closed.length)*100):0
   };
 }
+// A delivery's timing against its original date: days from that date to the close date, and days late (for the
+// 2-day tolerance). Row dates never change after loading, so each row is worked out once; redraws reuse it.
+const otdTimingCache=new WeakMap();
+function otdTiming(r){
+  let t=otdTimingCache.get(r);
+  if(t===undefined){
+    const due=hasRealDate(r.closeDate)?originalHeaderDate(r):null;
+    t=due?{days:daysBetweenDates(due,r.closeDate),late:deliveryLateDays(r)}:null;
+    otdTimingCache.set(r,t);
+  }
+  return t;
+}
 function otdStats(rows){
-  const scored=rows.filter(r=>hasRealDate(r.closeDate)&&originalHeaderDate(r));
-  const early=scored.filter(r=>daysBetweenDates(originalHeaderDate(r),r.closeDate)<0);
-  const onTime=scored.filter(r=>daysBetweenDates(originalHeaderDate(r),r.closeDate)===0);
-  const tolerance=scored.filter(isToleranceDelivery);
-  const late=scored.filter(r=>deliveryLateDays(r)>2);
+  const scored=rows.filter(otdTiming);
+  const early=scored.filter(r=>otdTiming(r).days<0);
+  const onTime=scored.filter(r=>otdTiming(r).days===0);
+  const tolerance=scored.filter(r=>otdTiming(r).late>=1&&otdTiming(r).late<=2);
+  const late=scored.filter(r=>otdTiming(r).late>2);
   return {scored,early,onTime,tolerance,late,rate:scored.length?Math.round(((early.length+onTime.length)/scored.length)*100):0};
 }
 const realDateCache=new Map();
@@ -3068,20 +3141,16 @@ function getMetrics(){
   const onTrackRows=rows.filter(r=>!r.isLate&&!r.isPastDue&&!r.isAtRisk);
   const unconfirmedRows=rows.filter(r=>r.isUnconfirmed);
   const missingPriceRows=rows.filter(r=>r.isMissingPrice);
-  const shipmentsByLine=indexShipmentsByLine(allRows);
-  const perfect=perfectOrderStats(allRows,shipmentsByLine);
-  const perfectEligibleRows=perfect.eligible;
-  const perfectRows=perfect.perfect;
-  const notPerfectRows=perfect.notPerfect;
-  const perfectOrderRate=perfect.rate;
+  // Aggregates that only some pages (and Ask AI / MCP tools) read are built on first read, so the redraw after an
+  // override, delete or restore on Order Health or Purchase Orders does not rebuild them.
+  const once=build=>{let done=false,value;return ()=>{if(!done){value=build();done=true;}return value;};};
+  const shipmentsByLine=once(()=>indexShipmentsByLine(allRows));
+  const perfect=once(()=>perfectOrderStats(allRows,shipmentsByLine()));
+  const backorder=once(()=>backorderStats(allRows,shipmentsByLine()));
   const filledRows=rows.filter(r=>r.quantity>0&&r.openQuantity<r.quantity);
   const onTimeRows=onTrackRows;
-  const backorder=backorderStats(allRows,shipmentsByLine);
-  const backorderRows=backorder.backorder;
   const partialShipRows=rows.filter(r=>r.quantity>0&&r.openQuantity>0&&r.openQuantity<r.quantity);
-  const backorderRate=backorder.rate;
   const partialShipRate=rows.length?Math.round((partialShipRows.length/rows.length)*100):0;
-  const warehouseKpis=buildWarehouseKpis(allRows,shipmentsByLine);
   const docCount=new Set(rows.map(r=>`${r.sourceType}-${r.documentNumber}`)).size;
   const today=reportToday();
   const lastMonthKey=monthKey(addMonths(today,-1));
@@ -3094,10 +3163,6 @@ function getMetrics(){
   const closedThisMonthRows=deliveredClosedRows.filter(r=>closeKey(r)===thisMonthKey);
   const openThisMonthRows=rows.filter(r=>r.isOpen&&dueKey(r)===thisMonthKey);
   const openNextMonthRows=rows.filter(r=>r.isOpen&&dueKey(r)===nextMonthKey);
-  const byMonth=groupByMonth(allRows,shipmentsByLine);
-  const byOriginalHeaderMonth=groupByOriginalHeaderMonth(allRows,shipmentsByLine);
-  const warehouseTimeline=buildWarehouseTimeline(rows);
-  const metricTimeline=buildMetricTimeline(rows);
   const statusOrder={'Open':1,'Past Due':2,'Late':3,'Open Next Month':4,'No Commit':5,'Rescheduled':6,'Closed':7};
   const byStatus=groupBy(rows,r=>r.statusBucket).sort((a,b)=>(statusOrder[a.key]||99)-(statusOrder[b.key]||99));
   // ── Weekly window helpers ──
@@ -3145,11 +3210,22 @@ function getMetrics(){
   const noCommitPastDue=noCommitRows.filter(r=>r.originalDaysPastDue!==null&&r.originalDaysPastDue>0).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
   const actionRequiredRows=uniqueRows([...urgentOverrideRows,...pastDueNoReschedule,...missedRescheduleRows,...noCommitPastDue]).sort((a,b)=>((b.originalDaysPastDue||b.effectiveDaysPastDue||0)-(a.originalDaysPastDue||a.effectiveDaysPastDue||0)));
   const dueThisWeekRows=uniqueRows([...actionRequiredRows,...dueThisWeekDateRows]);
-  const buildRisk=buildRiskSummary(rows);
-  const supplyDemand=buildSupplyDemandSummary();
+  const byMonth=once(()=>groupByMonth(allRows,shipmentsByLine()));
+  const byOriginalHeaderMonth=once(()=>groupByOriginalHeaderMonth(allRows,shipmentsByLine()));
+  const warehouseTimeline=once(()=>buildWarehouseTimeline(rows));
+  const metricTimeline=once(()=>buildMetricTimeline(rows));
+  const warehouseKpis=once(()=>buildWarehouseKpis(allRows,shipmentsByLine()));
+  const buildRisk=once(()=>buildRiskSummary(rows));
+  const supplyDemand=once(()=>buildSupplyDemandSummary());
   return {
-    backorderQty:backorder.backorderQty,backorderDueQty:backorder.orderedQty,
-    rows,allRows,totalAmount,openAmount,totalQty,openQty,filledQty,lateRows,pastDueRows,atRiskRows,rescheduledRows,attentionRows,openRows,onTrackRows,closedRows,closedLastMonthRows,closedThisMonthRows,openThisMonthRows,openNextMonthRows,byMonth,byOriginalHeaderMonth,warehouseTimeline,metricTimeline,unconfirmedRows,missingPriceRows,perfectEligibleRows,perfectRows,notPerfectRows,perfectOrderRate,filledRows,onTimeRows,backorderRows,partialShipRows,backorderRate,partialShipRate,warehouseKpis,docCount,buildRisk,supplyDemand,
+    get backorderQty(){return backorder().backorderQty;},get backorderDueQty(){return backorder().orderedQty;},
+    get backorderRows(){return backorder().backorder;},get backorderRate(){return backorder().rate;},
+    get perfectEligibleRows(){return perfect().eligible;},get perfectRows(){return perfect().perfect;},
+    get notPerfectRows(){return perfect().notPerfect;},get perfectOrderRate(){return perfect().rate;},
+    get byMonth(){return byMonth();},get byOriginalHeaderMonth(){return byOriginalHeaderMonth();},
+    get warehouseTimeline(){return warehouseTimeline();},get metricTimeline(){return metricTimeline();},
+    get warehouseKpis(){return warehouseKpis();},get buildRisk(){return buildRisk();},get supplyDemand(){return supplyDemand();},
+    rows,allRows,totalAmount,openAmount,totalQty,openQty,filledQty,lateRows,pastDueRows,atRiskRows,rescheduledRows,attentionRows,openRows,onTrackRows,closedRows,closedLastMonthRows,closedThisMonthRows,openThisMonthRows,openNextMonthRows,unconfirmedRows,missingPriceRows,filledRows,onTimeRows,partialShipRows,partialShipRate,docCount,
     closedLastWeekRows,closedThisWeekRows,otdLast3MonthRows,dueThisWeekRows,dueNextWeekRows,activeRescheduleRows,rescheduledThisWeekRows,genericRescheduleRows,missingLineRescheduleData,pastDueNoReschedule,pastDueWithReschedule,missedRescheduleRows,noCommitRows,noCommitPastDue,actionRequiredRows,notShippedThisMonthRows,monthName,
     bySource:groupBy(rows,r=>r.sourceType),
     byArea:groupBy(rows,r=>r.kpiArea),
