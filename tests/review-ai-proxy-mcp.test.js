@@ -168,4 +168,44 @@ test('get_overview with part of a name covers every match, like search_lines', a
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL'], 'the page filters are left alone');
 });
 
+// --- Ask AI drawer keyboard -------------------------------------------------------------------------------
+// A fake focusable control; hidden ones have no client rects, like display:none in a browser.
+function control(doc, name, { hidden = false, disabled = false, attrs = {} } = {}) {
+  return { name, disabled, dataset: {}, attrs, getClientRects: () => (hidden ? [] : [{}]), focus() { doc.activeElement = this; },
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k]; } };
+}
+const key = (k, shiftKey = false) => ({ key: k, shiftKey, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } });
+
+test('below 1600px Tab and Shift+Tab stay inside the open drawer; Esc closes it from anywhere', async () => {
+  const page = await kpiPage();
+  const doc = page.ctx.document;
+  const [first, hiddenOne, last] = [control(doc, 'first'), control(doc, 'hidden', { hidden: true }), control(doc, 'last')];
+  doc.getElementById('ai-panel').querySelectorAll = () => [first, hiddenOne, last];
+  let wide = false;
+  page.ctx.matchMedia = (q) => ({ matches: wide && /min-width:1600px/.test(q) });
+  page.run('aiToggle(true)');
+  assert.equal(page.els['ai-panel'].hidden, false);
+
+  first.focus();
+  const back = key('Tab', true);
+  page.ctx.aiPanelKey(back);
+  assert.deepEqual([doc.activeElement.name, back.defaultPrevented], ['last', true], 'Shift+Tab on the first control wraps to the last');
+  const fwd = key('Tab');
+  page.ctx.aiPanelKey(fwd);
+  assert.deepEqual([doc.activeElement.name, fwd.defaultPrevented], ['first', true], 'Tab on the last visible control wraps to the first');
+  wide = true; // page space is kept for the drawer, so focus may leave it
+  const free = key('Tab', true);
+  page.ctx.aiPanelKey(free);
+  assert.deepEqual([doc.activeElement.name, free.defaultPrevented], ['first', false]);
+
+  // Esc with focus on the page (outside the drawer) still closes it; Esc already used by the search box does not.
+  const used = key('Escape');
+  used.preventDefault();
+  page.ctx.aiDocKey(used);
+  assert.equal(page.els['ai-panel'].hidden, false);
+  page.ctx.aiDocKey(key('Escape'));
+  assert.equal(page.els['ai-panel'].hidden, true);
+  assert.match(require('./harness').HTML, /document\.addEventListener\('keydown',aiDocKey\)/);
+});
+
 run();

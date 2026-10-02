@@ -3690,6 +3690,7 @@ function aiToggle(force){
   aiState.open=force===undefined?!aiState.open:!!force;
   const panel=aiEl('ai-panel');
   if(panel)panel.hidden=!aiState.open;
+  if(panel&&panel.setAttribute)panel.setAttribute('aria-modal',String(aiState.open&&aiCoversPage()));
   if(document.body&&document.body.classList)document.body.classList.toggle('ai-open',aiState.open);
   // Before any export is loaded the page head has no Ask AI button; the help page's Open Ask AI takes its place.
   const button=document.querySelector('[data-focus-key="ask-ai"],[data-focus-key="connect-ask-ai"]');
@@ -3700,9 +3701,20 @@ function aiToggle(force){
   aiShowSettings(!aiConsented());
   aiPrepare();
 }
+// Below 1600px no page space is kept for the drawer (see .ai-open .main), so it covers page controls: Tab and
+// Shift+Tab cycle inside it instead of moving focus onto a control hidden underneath.
+const aiCoversPage=()=>!(typeof matchMedia==='function'&&matchMedia('(min-width:1600px)').matches);
 function aiPanelKey(e){
-  if(e.key==='Escape'){e.preventDefault();aiToggle(false);}
+  if(e.key!=='Tab'||!aiCoversPage())return;
+  const items=[...aiEl('ai-panel').querySelectorAll('a[href],button,input,select,textarea')].filter(el=>!el.disabled&&el.getClientRects().length);
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(!first)return;
+  if(e.shiftKey?active===first:active===last){e.preventDefault();aiFocus(e.shiftKey?last:first);}
 }
+// Esc closes the drawer wherever focus is (a click on the page may have moved it out); Esc in the search box
+// clears the search instead (it calls preventDefault).
+function aiDocKey(e){if(e.key==='Escape'&&aiState.open&&!e.defaultPrevented){e.preventDefault();aiToggle(false);}}
+document.addEventListener('keydown',aiDocKey);
 function aiInputKey(e){
   if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();aiSend();}
 }
