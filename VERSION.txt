@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 1v4
+Version: 1v5
 Package date: 2026-10-01
 
 Main file: index.html
@@ -16,3 +16,7 @@ announced to screen readers; Ctrl/Cmd+K only (no bare "/"); keyboard, contrast, 
 
 1v4: the last loaded report reopens on the next visit (files kept in the browser's IndexedDB) until a new
 report replaces it; icons on Ask AI, Share snapshot and Export PDF.
+
+1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
+the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
+hosts without it keep the report in each browser. Sidebar shows where the report is saved.

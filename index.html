@@ -845,7 +845,7 @@ button.trow.po-wh-cols{font-size:13px}
     </div>
     <div class="upload-intro rise rise-1">
       <p>Load SAP exports for sales orders, deliveries, purchase orders, and Clear To Build risk reports into one offline summary.</p>
-      <span class="privacy-pill" title="Files are read in this browser; nothing is uploaded to a server">Offline file processing</span>
+      <span class="privacy-pill" title="Files are read in this browser. On the hosted site a copy of the last report is also kept on the server for everyone who signs in, until a new report replaces it.">Read in your browser</span>
     </div>
     <div class="upload-shell rise rise-2">
       <label id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Add KPI export files" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click();}" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
@@ -2313,8 +2313,10 @@ function warehouseLabel(v){
 // --- File import and column mapping ---
 // Rows (and duplicate-check signatures) of each file already read, so Add file does not read the loaded files again.
 const fileReadCache=new WeakMap();
-// The files of the last report stay in this browser (IndexedDB) and reopen on the next visit, until a new
-// report loads in their place. Notes and overrides are kept separately (localStorage). Snapshots never use it.
+// The files of the last report are kept so the dashboard reopens on them, until a new report loads in their
+// place: on the server for everyone who signs in (Cloudflare Pages with a REPORT_STORE KV binding, see
+// functions/api/report.js), and in this browser (IndexedDB) for hosts without it. Notes and overrides are
+// kept separately (localStorage). Snapshots never read or write either copy.
 function reportStore(mode,use){
   return new Promise((resolve,reject)=>{
     if(typeof indexedDB==='undefined'){resolve(null);return;}
@@ -2331,11 +2333,76 @@ function reportStore(mode,use){
 function saveReportFiles(files){
   return reportStore('readwrite',store=>store.put(files,'last')).catch(err=>console.warn('Report not saved for the next visit:',err));
 }
+// Where the loaded report is kept, shown in the sidebar: '' (nothing yet), saving, shared, local, failed.
+let sharedReport={state:'',savedAt:'',message:''};
+let shareQueue=Promise.resolve();
+const canShareReports=()=>typeof fetch!=='undefined'&&typeof CompressionStream!=='undefined'&&typeof DecompressionStream!=='undefined'&&location.protocol!=='file:';
+async function streamBytes(blob,transform){return new Uint8Array(await new Response(blob.stream().pipeThrough(transform)).arrayBuffer());}
+// Bundle layout (checked again by functions/api/report.js): 4-byte header length, JSON header, gzip file bytes.
+async function packReport(files){
+  const parts=[];
+  for(const f of files)parts.push(await streamBytes(f,new CompressionStream('gzip')));
+  const head=new TextEncoder().encode(JSON.stringify({v:1,files:files.map((f,i)=>({name:f.name,type:f.type||'',lastModified:f.lastModified||0,length:parts[i].length}))}));
+  const out=new Uint8Array(4+head.length+parts.reduce((s,p)=>s+p.length,0));
+  new DataView(out.buffer).setUint32(0,head.length);
+  out.set(head,4);
+  let at=4+head.length;
+  for(const p of parts){out.set(p,at);at+=p.length;}
+  return out;
+}
+async function unpackReport(buffer){
+  const bytes=new Uint8Array(buffer),size=new DataView(bytes.buffer).getUint32(0);
+  const head=JSON.parse(new TextDecoder().decode(bytes.subarray(4,4+size)));
+  const files=[];
+  let at=4+size;
+  for(const f of head.files){
+    const raw=await streamBytes(new Blob([bytes.subarray(at,at+f.length)]),new DecompressionStream('gzip'));
+    at+=f.length;
+    files.push(new File([raw],f.name,{type:f.type,lastModified:f.lastModified}));
+  }
+  return {savedAt:head.savedAt||'',files};
+}
+function shareReportFiles(files){
+  if(!canShareReports()){sharedReport={state:'local',savedAt:'',message:''};return shareQueue;}
+  sharedReport={state:'saving',savedAt:'',message:''};
+  renderSidebar();
+  // Uploads go one at a time, so a quick New file + Add file still leaves the last report on the server.
+  shareQueue=shareQueue.then(async()=>{
+    try{
+      const res=await fetch('/api/report',{method:'PUT',headers:{'content-type':'application/octet-stream'},body:await packReport(files)});
+      const data=await res.json().catch(()=>({}));
+      if(res.ok)sharedReport={state:'shared',savedAt:data.savedAt||'',message:''};
+      // A static host (IIS, a file share) has no /api/report; the report is then kept in this browser only.
+      else if([404,405,503].includes(res.status))sharedReport={state:'local',savedAt:'',message:''};
+      else sharedReport={state:'failed',savedAt:'',message:res.status===401?'sign-in expired, reload and sign in again':String(data.error||`server error ${res.status}`)};
+    }catch(err){sharedReport={state:'local',savedAt:'',message:''};}
+    if(files===loadedFiles)renderSidebar();
+  });
+  return shareQueue;
+}
+// undefined: no server storage here; null: storage works but nothing is saved yet; else {savedAt, files}.
+async function fetchSharedReport(){
+  if(!canShareReports())return undefined;
+  try{
+    const res=await fetch('/api/report',{cache:'no-store'});
+    if(res.status===204)return null;
+    if(!res.ok||!/octet-stream/.test(res.headers.get('content-type')||''))return undefined;
+    return await unpackReport(await res.arrayBuffer());
+  }catch(err){console.warn('Shared report not read:',err);return undefined;}
+}
 async function restoreSavedReport(){
   if(isSnapshotView||hasLoadedData())return;
-  let files=null;
-  try{files=await reportStore('readonly',store=>store.get('last'));}catch(err){console.warn('Saved report not read:',err);}
-  if(Array.isArray(files)&&files.length&&!hasLoadedData())await handleFiles(files,{restoring:true});
+  const shared=await fetchSharedReport();
+  let files=shared&&shared.files;
+  if(!files){
+    try{files=await reportStore('readonly',store=>store.get('last'));}catch(err){console.warn('Saved report not read:',err);}
+  }
+  if(!Array.isArray(files)||!files.length||hasLoadedData()||isSnapshotView)return;
+  await handleFiles(files,{restoring:true});
+  if(!hasLoadedData())return;
+  if(shared){sharedReport={state:'shared',savedAt:shared.savedAt,message:''};saveReportFiles(loadedFiles);}
+  else sharedReport={state:shared===null?'local':'',savedAt:'',message:''};
+  renderSidebar();
 }
 async function handleFiles(files,{adding=false,restoring=false}={}){
   const valid=files.filter(f=>f&&f.name.match(/\.(xlsx|xls|csv|txt|tsv)$/i));
@@ -2431,7 +2498,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     if(skippedText)dataQualityIssues.unshift({kind:'file',message:`Skipped ${skippedText}`});
     document.getElementById('upload-error').style.display='none';
     showResults();
-    if(!restoring)saveReportFiles(loadedFiles);
+    if(!restoring){saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}
   }catch(err){
     ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
     invalidateMetrics();
@@ -4588,8 +4655,10 @@ function renderSidebar(){
     buildRiskRows.length?'CTB':''
   ].filter(Boolean).join(' + ');
   const rowCount=allLoadedRows.length+supplyDemandRows.length+buildRiskRows.length;
+  const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+  const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
   const meta=loaded
-    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}`
+    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
   const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
