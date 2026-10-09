@@ -10,7 +10,9 @@
 
 On the Order Health linked-lines list, tick rows (or the header box for the whole list) to set an override on many lines at once or delete them. Deleted lines are hidden on every page in your browser; restore them from **Data check**. Click a column header to sort. On Purchase Orders, sort with **Sort rows** and use **Add note** on each line.
 
-Use the search box under the logo (or press Ctrl+K, Cmd+K on a Mac) to find any order line by number, customer, vendor, item or warehouse.
+Use the search box under the logo (or press Ctrl+K, Cmd+K on a Mac) to find any order line by number, customer, vendor, item, warehouse or FedEx tracking number.
+
+**Shipping** (sidebar, Sales) shows where recent FedEx shipments are: a strip from label created to delivered for each tracking number, what is late against the promised date, exceptions, and what is held at customs (Cross-border). Click a shipment to see its order lines and scans; click a card to list only those shipments. Tracking numbers come from SAP deliveries (fill **Tracking No.** on the delivery and use the updated KPI query); type others in **Add tracking #** with the sales order number. FedEx is checked every 4 hours; **Refresh now** checks right away (once every 10 minutes). Live status works on the hosted site only. Setup: docs/SHIPPING.md.
 
 **Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". It sends your question and the data needed to answer it to Google Gemini, so only use it for data your company has approved for sharing. Setup and privacy: docs/AI_ASSISTANT.md.
 

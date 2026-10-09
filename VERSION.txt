@@ -20,3 +20,10 @@ report replaces it; icons on Ask AI, Share snapshot and Export PDF.
 1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
 the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
 hosts without it keep the report in each browser. Sidebar shows where the report is saved.
+
+2v1: live shipping (FedEx parcel and FedEx Freight LTL). The KPI query adds TrackingNumber, ShipMethod, ShipToCountry
+and ShipDate to delivery rows (re-run it in SAP once). New Shipping page (Sales): updated / next check, cards (in transit,
+out for delivery, delivered this week, exceptions, in customs), a 6-step progress strip per shipment that opens its order
+lines, ETA against the promised date, cross-border section (clearance delay, days in customs), Add tracking # and search
+by tracking number. FedEx Track API code in shared/fedex.mjs, used by functions/api/shipping.js (results, tracking list,
+Refresh now) and the scheduled Worker workers/shipping-poller (every 4 hours). See docs/SHIPPING.md.
