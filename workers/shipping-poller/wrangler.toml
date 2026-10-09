@@ -18,7 +18,7 @@ crons = ["0 */4 * * *"]
 # placeholder still in place fails on purpose.
 [[kv_namespaces]]
 binding = "REPORT_STORE"
-id = "REPLACE_WITH_REPORT_STORE_NAMESPACE_ID"
+id = "41f70fd7289e461b87cdf81d45350c74"
 
 # Secrets (never put them in this file):
 #   npx wrangler secret put FEDEX_CLIENT_ID

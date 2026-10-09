@@ -16,6 +16,6 @@ compatibility_date = "2026-10-01"
 #      front of the three lines. Put the same id in workers/shipping-poller/wrangler.toml.
 #   3. Commit and push (Git builds read this file), or run npx wrangler pages deploy . --project-name spyder-kpi-dashboard
 # Until then the site still works; sharing falls back to each browser.
-# [[kv_namespaces]]
-# binding = "REPORT_STORE"
-# id = "REPLACE_WITH_REPORT_STORE_NAMESPACE_ID"
+[[kv_namespaces]]
+binding = "REPORT_STORE"
+id = "41f70fd7289e461b87cdf81d45350c74"
