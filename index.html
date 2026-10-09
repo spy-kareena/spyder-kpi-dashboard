@@ -846,7 +846,7 @@ button.trow.po-wh-cols{font-size:13px}
 .oh-tab:hover{color:var(--gray-900)}
 .oh-tab[aria-selected="true"]{background:#fff;color:var(--gray-900);box-shadow:0 1px 3px rgba(16,24,40,.12)}
 .oh-tab-title{font-size:13.5px;font-weight:600}
-.oh-tab-sub{font-size:12px;color:var(--gray-500)}
+.oh-tab-sub{font-size:12px;color:var(--gray-600)}
 .oh-drill{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .oh-drill-label{font-size:12px;color:var(--gray-600)}
 .oh-chip{display:inline-flex;align-items:center;gap:6px}
@@ -5240,7 +5240,7 @@ function renderResults(){
         <section class="card list-card">
           <div class="list-head"><h2>Top offenders</h2><span class="section-sub">${offView==='vendors'?`Late PO value by vendor, ${poWarehouseFilter.includes('ALL')?'all warehouses':'PO tab filters'}`:'At-risk open value in this view'}</span></div>
           <div class="segmented full" role="group" aria-label="Rank by">${[['customers','Customers'],['warehouses','Warehouses'],['owners','Owners'],['vendors','Vendors']].map(([id,label])=>`<button type="button" class="${offView===id?'active':''}" data-focus-key="off-${id}" onclick="setWeeklyOffenderView('${id}')" aria-pressed="${offView===id?'true':'false'}">${label}</button>`).join('')}</div>
-          ${ohRenderWaffle(offView,offenders,offSource.key,r=>(ohLeadingData(m).info.get(r)||{cause:lineCause(r)}).cause)}
+          ${ohRenderWaffle(m,offView,offenders,offSource.key)}
         </section>
         <section class="card list-card">
           <div class="list-head"><h2>How late is the past-due work?</h2><span class="section-sub">${agingTotal?`1 block ≈ ${moneyShort(agingTotal/BLOCKS)}`:'nothing past due'}</span></div>
@@ -6401,10 +6401,11 @@ function ohManualCause(r,entries=ohSavedEntries(r)){
   }
   return '';
 }
-function ohOverrideStatus(r,entries=ohSavedEntries(r)){
+// The line's override status; a delivery with none of its own uses its order line's.
+function ohOverrideStatus(r,entries){
   const own=String(r.overrideStatus||'').trim();
   if(own||!String(r.deliveryDocNumber||'').trim())return own;
-  const e=entries.find(x=>String(x.status||'').trim());
+  const e=(entries||ohSavedEntries(r)).find(x=>String(x.status||'').trim());
   return e?String(e.status).trim():'';
 }
 // Supply shortage: the supply / demand snapshot shows a cumulative shortage of the line's item (same warehouse when the
@@ -6505,7 +6506,7 @@ function ohCauseRule(r){
 }
 // The cause of a line that has something to explain (a reason, an override or a picked cause); '' for a plain line.
 function ohCauseFor(r){
-  if(!lineReasons(r).length&&!ohManualCause(r)&&!ohOverrideStatus(r))return '';
+  if(!lineReasons(r).length&&!ohOverrideStatus(r)&&!ohManualCause(r))return '';
   return lineCause(r);
 }
 // Same rule as the At Risk card (orderHealthData's lateTileRows) for one line.
@@ -6894,7 +6895,7 @@ function ohTileRows(m){
 }
 // The Status column text for the new cards' lines ('' leaves it to the existing rules).
 function ohLinkedStatus(r){
-  if(weeklyTileFilter.startsWith('st-')){const s=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);return s?s[2]:'';}
+  if(String(weeklyTileFilter).startsWith('st-')){const s=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);return s?s[2]:'';}
   if(weeklyTileFilter==='perfect'){
     const ids=lineSapReasonIds(r);
     return ids.includes('missed')?'Missed commit':rowRealRescheduleDate(r)?'Rescheduled':ids.includes('nocommit')?'No commit date':'Not perfect';
@@ -6967,8 +6968,11 @@ function setWeeklyOffenderFilter(view,key){
   else return;
   renderResults();
 }
-function ohRenderWaffle(view,offenders,keyOf,causeOf=lineCause){
+function ohRenderWaffle(m,view,offenders,keyOf){
   const vendors=view==='vendors';
+  // At-risk lines already have their cause worked out (ohLeadingData); vendors' late PO lines are not split.
+  const info=vendors?null:ohLeadingData(m).info;
+  const causeOf=r=>{const x=info&&info.get(r);return x?x.cause:lineCause(r);};
   if(!offenders.length)return `<div class="empty-note">${vendors?'No late purchase-order lines.':'Nothing at risk in this view.'}</div>`;
   const current={customers:weeklyCustomerFilter,warehouses:weeklyWarehouseFilter,owners:weeklyOwnerFilter,vendors:poVendorFilter}[view]||['ALL'];
   const noun={customers:'customer',warehouses:'warehouse',owners:'owner',vendors:'vendor'}[view]||'name';
