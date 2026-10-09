@@ -793,4 +793,231 @@ test('Shipping page helpers: manual tracking numbers are saved here and shared l
   assert.equal(JSON.parse(b.storage.spyderKpiShipmentsV1)['m-900'].deleted, true);
 });
 
+test('search finds a line by a tracking number someone else added by hand as soon as it arrives with the shared notes', async () => {
+  const site = fakeSite();
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  const b = await openHosted(site, { storage: { spyderKpiEditor: 'QQ' } });
+  b.run("onGlobalSearchInput('770012345678');applyGlobalSearch()");
+  const found = () => b.run('globalSearchResults(currentMetrics()).rows.map(x=>x.r.documentNumber)');
+  assert.deepEqual(found(), []);
+  const metrics = b.run('(globalThis.__m=currentMetrics(),1)');
+  assert.equal(metrics, 1);
+  clock(a, '2026-10-08T15:00:00Z');
+  a.run("sharedNotesPatchShipments({'770012345678':{order:'900',number:'770012345678',carrier:'FedEx'}})");
+  await sendNow(a);
+  // B reads the notes again (the page comes back into view): the number comes in, the metrics stay as they were.
+  b.run('sharedNotes.syncedAt=0');
+  await b.ctx.syncSharedNotes();
+  assert.equal(b.run('currentMetrics()===globalThis.__m'), true, 'no metrics rebuild for a tracking number');
+  assert.deepEqual(found(), ['900']);
+  assert.match(html(b), /Tracking <mark>770012345678<\/mark>/);
+});
+
+test('only a reply that clearly says "no notes API" stops sharing; a platform 503 / 500 error page is retried and keeps cleared-line markers', async () => {
+  // noNotesApi: the function's own 503 {configured:false}, or a 404 / 405 that is not JSON (IIS, a static copy).
+  const page = loadPage();
+  page.ctx.Response = Response;
+  const check = (status, type, body) => page.run(`(()=>{const r=new Response(${JSON.stringify(body)},{status:${status},headers:{'content-type':${JSON.stringify(type)}}});let d=null;try{d=JSON.parse(${JSON.stringify(body)});}catch(e){}return noNotesApi(r,d);})()`);
+  assert.equal(check(503, 'application/json', '{"configured":false,"error":"not set up"}'), true);
+  assert.equal(check(503, 'text/html', '<html>Service unavailable</html>'), false, 'a platform 503 page');
+  assert.equal(check(503, 'application/json', '{"error":"busy"}'), false);
+  assert.equal(check(404, 'text/html', '<title>Not found</title>'), true);
+  assert.equal(check(405, '', ''), true);
+  assert.equal(check(404, 'application/json', '{"error":"no route"}'), false, 'a JSON 404 from a proxy');
+  assert.equal(check(500, 'text/html', '<html>error</html>'), false);
+
+  const site = fakeSite();
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  clock(a, '2026-10-08T15:00:00Z');
+  edit(a, '900', 'notes', 'Ship short, customer OK');
+  await sendNow(a);
+  const k = keyOf(a, '900');
+  // The note is cleared; the one PATCH carrying the marker gets the platform's 503 error page (HTML).
+  await tick(1200);
+  site.failPatches = 1; site.failKind = 503;
+  clock(a, '2026-10-08T16:00:00Z');
+  edit(a, '900', 'notes', '');
+  await tick(900);
+  assert.equal(a.run('sharedNotes.state'), 'shared', 'still shared');
+  assert.ok(JSON.parse(a.storage.spyderKpiNotesClearedV1)[k], 'the cleared-line marker is kept');
+  assert.equal(a.run(`notesReady.has(${JSON.stringify('rows|' + k)})`), true, 'queued again');
+  assert.match(sidebar(a), /trying again in a moment/);
+  assert.doesNotMatch(sidebar(a), /in this browser only/);
+  // The page is reloaded before the retry: the marker goes out with the merge and the note stays cleared.
+  a.run('clearTimeout(notesRetryTimer);notesRetryTimer=null;clearTimeout(notesPatchGate);notesPatchGate=null;notesReady.clear()');
+  const again = await openHosted(site, { storage: a.storage });
+  assert.deepEqual((await site.doc()).rows[k], { by: 'KK', at: '2026-10-08T16:00:00.000Z' });
+  assert.equal(line(again, '900').notes, '');
+
+  // Reading the notes: a 503 error page is "not reachable now" (tried again when the page comes back into view).
+  let failGets = 1;
+  const flaky = { ...site, fetch: (url, init = {}) => (url === '/api/notes' && !init.method && failGets-- > 0
+    ? Promise.resolve(new Response('<html>Service unavailable</html>', { status: 503, headers: { 'content-type': 'text/html' } }))
+    : site.fetch(url, init)) };
+  const b = await openBrowser(flaky, { storage: { spyderKpiEditor: 'QQ' } });
+  await upload(b);
+  await b.ctx.syncSharedNotes();
+  assert.equal(b.run('sharedNotes.state'), 'offline');
+  assert.match(sidebar(b), /server not reachable/);
+  b.run('sharedNotes.syncedAt=0');
+  b.ctx.refreshSharedNotes();
+  await tick(30);
+  await settle(b);
+  assert.equal(b.run('sharedNotes.state'), 'shared');
+  // A 500 while re-reading leaves a shared page shared (it used to stop sharing for the rest of the visit).
+  failGets = 1;
+  const flaky500 = flaky.fetch;
+  flaky.fetch = (url, init = {}) => (url === '/api/notes' && !init.method && failGets-- > 0 ? Promise.resolve(new Response('oops', { status: 500 })) : flaky500(url, init));
+  b.ctx.fetch = flaky.fetch;
+  b.run('sharedNotes.syncedAt=0');
+  await b.ctx.syncSharedNotes();
+  assert.equal(b.run('sharedNotes.state'), 'shared');
+
+  // The function's own "not set up" answer, and a 405 page for the PATCH, do mean "this browser only".
+  const bare = fakeSite();
+  delete bare.env.REPORT_STORE;
+  const c = await openBrowser(bare);
+  await upload(c);
+  await c.ctx.syncSharedNotes();
+  assert.equal(c.run('sharedNotes.state'), 'local');
+  const site2 = fakeSite();
+  const d = await openBrowser(site2, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(d);
+  await d.ctx.syncSharedNotes();
+  site2.failPatches = 1; site2.failKind = 405;
+  edit(d, '901', 'status', 'Hold');
+  await tick(900);
+  await tick(20);
+  assert.equal(d.run('sharedNotes.state'), 'local');
+  assert.match(sidebar(d), /Notes saved in this browser only/);
+});
+
+test('a save the server refuses (sign-in expired) stays listed after a later save works, and the next read sends it', async () => {
+  const site = fakeSite();
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  await settle(a);
+  const k900 = keyOf(a, '900'), k901 = keyOf(a, '901');
+  clock(a, '2026-10-08T15:00:00Z');
+  site.failPatches = 1; site.failKind = 401;
+  edit(a, '900', 'status', 'Hold');
+  await tick(900);
+  await settle(a);
+  assert.equal(a.run('notesUnsent.size'), 1);
+  assert.equal(a.run('!!notesRetryTimer'), false, 'a refusal is not retried by itself');
+  assert.match(sidebar(a), /Notes not shared: 1 change was not saved \(sign-in expired, reload and sign in again\)/);
+  // Another line saves fine: the warning stays, since 900 is still not on the server.
+  await tick(1200);
+  edit(a, '901', 'status', 'QC Delay');
+  await tick(900);
+  await settle(a);
+  let doc = await site.doc();
+  assert.equal(doc.rows[k901].status, 'QC Delay');
+  assert.equal(doc.rows[k900], undefined);
+  assert.match(sidebar(a), /Notes not shared: 1 change was not saved/);
+  // The next read of the notes (the page comes back into view, or the re-read after a save) sends it.
+  a.run('sharedNotes.syncedAt=0');
+  await a.ctx.syncSharedNotes();
+  await settle(a);
+  doc = await site.doc();
+  assert.equal(doc.rows[k900].status, 'Hold');
+  assert.equal(a.run('notesUnsent.size'), 0);
+  assert.doesNotMatch(sidebar(a), /Notes not shared/);
+  // Editing the refused line again also clears it from the list once that save works.
+  await tick(1200);
+  site.failPatches = 1; site.failKind = 413;
+  clock(a, '2026-10-08T15:05:00Z');
+  edit(a, '902', 'notes', 'refused once');
+  await tick(900);
+  await settle(a);
+  assert.match(sidebar(a), /1 change was not saved \(server error 413\)/);
+  await tick(1200);
+  clock(a, '2026-10-08T15:06:00Z');
+  edit(a, '902', 'notes', 'saved the second time');
+  await tick(900);
+  await settle(a);
+  assert.equal((await site.doc()).rows[keyOf(a, '902')].notes, 'saved the second time');
+  assert.doesNotMatch(sidebar(a), /Notes not shared/);
+});
+
+test('two different edits with the same time end up the same everywhere: the server keeps the first, every browser takes it', async () => {
+  const site = fakeSite();
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const k = keyOf(a, '900');
+  const T = '2026-10-08T15:00:00Z';
+  clock(a, T); clock(b, T);
+  edit(a, '900', 'status', 'Hold');
+  edit(b, '900', 'status', 'QC Delay');
+  await sendNow(a);
+  await sendNow(b);
+  assert.equal((await site.doc()).rows[k].status, 'Hold', 'the server keeps the entry it stored first');
+  assert.equal(line(b, '900').status, 'Hold', 'B takes the server copy from the reply');
+  assert.equal(saved(b)[k].status, 'Hold');
+  assert.equal(saved(b)[k].by, 'AJ');
+  // Through a read: C holds its own copy with the same time (and a hand-added tracking number), the server's wins.
+  a.run("sharedNotesPatchShipments({'m-900':{order:'900',number:'770012345678',carrier:'FedEx'}})");
+  await sendNow(a);
+  const storage = {
+    spyderKpiEditor: 'CC',
+    spyderKpiRowOverridesV1: JSON.stringify({ [k]: { status: 'Customer hold', by: 'CC', at: '2026-10-08T15:00:00.000Z' } }),
+    spyderKpiShipmentsV1: JSON.stringify({ 'm-900': { order: '900', number: '770099999999', carrier: 'FedEx', by: 'CC', at: '2026-10-08T15:00:00.000Z' } }),
+  };
+  const before = site.patches();
+  const c = await openHosted(site, { storage });
+  assert.equal(line(c, '900').status, 'Hold');
+  assert.equal(c.run("getSharedShipments()['m-900'].number"), '770012345678');
+  assert.equal(site.patches(), before, 'nothing pushed back');
+  // The same content with the same time is the same edit: nothing changes, nothing is sent.
+  const d = await openHosted(site, { storage: { spyderKpiRowOverridesV1: JSON.stringify({ [k]: (await site.doc()).rows[k] }) } });
+  assert.equal(line(d, '900').status, 'Hold');
+  assert.equal(site.patches(), before);
+});
+
+test('a save sent while the page is hidden or closed (keepalive) stays under the browsers\' 64 KiB limit; the rest goes after', async () => {
+  const site = fakeSite();
+  const sends = [];
+  const browser = { ...site, fetch: async (url, init = {}) => {
+    const bytes = init.body ? Buffer.byteLength(init.body) : 0;
+    if (init.method === 'PATCH') sends.push({ keepalive: !!init.keepalive, bytes, lines: Object.keys(JSON.parse(init.body).rows).length });
+    // Chromium refuses keepalive bodies over 64 KiB ("Failed to fetch"); the server never sees them.
+    if (init.keepalive && bytes > 65536) throw new TypeError('Failed to fetch');
+    return site.fetch(url, init);
+  } };
+  const a = await openBrowser(browser, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  await settle(a);
+  // A bulk action on 450 lines (non-ASCII notes count 2 to 3 bytes a character), then the tab is hidden within the
+  // 800 ms wait.
+  a.run(`for(let i=0;i<450;i++){const k='T|'+(10000+i)+'|1';rowOverrides[k]={status:'Hold',notes:'Délai fournisseur – 供应商延迟 – en attente de pièces '+i,by:'KK',at:'2026-10-08T15:00:00.000Z'};queueSharedNote('rows',k);}`);
+  await a.run('flushSharedNotes({all:true,keepalive:true})');
+  assert.equal(sends.length, 1);
+  assert.equal(sends[0].keepalive, true);
+  assert.ok(sends[0].bytes <= 60 * 1024, `keepalive body ${sends[0].bytes} bytes`);
+  assert.ok(sends[0].lines > 100 && sends[0].lines < 450, `${sends[0].lines} lines in the first batch`);
+  assert.equal(a.run('notesReady.size'), 450 - sends[0].lines, 'the rest waits for the next save');
+  assert.doesNotMatch(sidebar(a), /not reachable/);
+  await settle(a);
+  assert.equal(sends[1].keepalive, false, 'the rest goes in a normal save while the page is still open');
+  const doc = await site.doc();
+  assert.equal(Object.keys(doc.rows).filter((k) => k.startsWith('T|')).length, 450);
+  // A batch the browser refuses anyway (or no network) goes back in the queue instead of being lost.
+  a.run(`for(let i=0;i<3;i++){const k='T|'+(10000+i)+'|1';rowOverrides[k]={...rowOverrides[k],notes:'x'.repeat(4000),at:'2026-10-08T16:00:00.000Z'};}`);
+  site.failPatches = 1; site.failKind = 'down';
+  await tick(1200);
+  a.run(`for(let i=0;i<3;i++)queueSharedNote('rows','T|'+(10000+i)+'|1')`);
+  await a.run('flushSharedNotes({all:true,keepalive:true})');
+  assert.equal(a.run('notesReady.size'), 3);
+  await settle(a);
+  assert.equal((await site.doc()).rows['T|10000|1'].notes.length, 4000);
+});
+
 run();

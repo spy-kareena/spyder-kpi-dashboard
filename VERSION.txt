@@ -105,3 +105,13 @@ takes keyboard focus so it can be scrolled sideways on a phone; Top offenders "T
 set" blocks have a grey edge (3:1 on white), and the four Customers / Warehouses / Owners / Vendors buttons fit a
 360 px phone; the override, note and initials boxes, About toggles and Connect links have tooltips; an ⓘ popover low
 on a phone stays on screen; a failed Refresh now is told only in the page note, not in the green-tick toast.
+2v1 review fixes (page, batch 3): a printed Big picture keeps its title with the first chart and leaves out the
+hover / click hints; a passing server error (a busy 503 or 500 page) no longer switches notes to "this browser only"
+or forgets lines you cleared (only the notes function's own "not set up" reply, or a 404 / 405 page, does), and
+the page tries again; a save the server refuses (sign-in expired, storage full) stays listed in the sidebar after
+later saves work, until it is sent; two edits with exactly the same time end the same in every browser (the
+server's copy); a save sent while the tab is hidden or closed stays under the browsers' 64 KB keep-alive limit and
+the rest goes after; with the Big picture open, redraws that change no data or filter reuse its flows, and its
+reasons and causes come from the Order Health per-line memo; search finds a tracking number someone else added as
+soon as it arrives; Ask AI keeps every request under about 800 KB (bytes as sent): a long question's results are
+cut further and the model answers with what it has instead of failing at the site's 1 MB limit.

@@ -79,7 +79,7 @@ Safeguards in the proxy:
 
 - Only the dashboard page itself may call `/api/ai/chat` (same-origin check), and only when signed in.
 - Paid providers are capped per site per day and per browser per minute (see **What it costs**). Everyone who knows the shared password can sign in, and a sign-in lasts 14 days; to shut out a browser (for example a leaked password), change `DASHBOARD_PASSWORD` or `SESSION_SECRET`, which signs everyone out.
-- Each request is limited to 1 MB. Free providers get smaller tool results and a shorter chat history, to stay inside their limits.
+- Each request is limited to 1 MB. Every model turn sends the whole chat again, so the page keeps each request under about 800 KB (sizes are counted in bytes as sent, so accented and Chinese text count fully): when a question's lookups would pass that, their results are cut down further and the model answers with what it already has. Free providers get smaller tool results and a shorter chat history, to stay inside their limits.
 - Questions and tool results must be plain text: the proxy refuses images, files or links, so nobody can make a provider fetch something on the company's account.
 - Each provider has a model allowlist. Claude: the three models above only. ChatGPT and Groq: the listed models plus newer ones in the same families, read from the provider's model list once an hour (no "pro" or dated models). OpenRouter: free (`:free`, price 0) models that support tools only.
 - Replies are never cached. Calls to a provider time out after 95 seconds.
@@ -111,6 +111,7 @@ Ask AI answers from these tools: overview tiles (with the Order Health Leading /
 | Daily Ask AI limit reached for this site | The site's own cap on a paid provider (300 requests a day by default) is used up. Try again tomorrow, pick a free provider, or IT raises `AI_DAILY_REQUESTS`. |
 | Too many Ask AI requests from this browser in the last minute | Wait a minute. |
 | The question and its data were too large | Click **Clear chat** and ask a narrower question. |
+| This question and the chat before it are too large to send | Click **Clear chat** and ask a narrower question. |
 | … could not use that model | Pick another model in Settings. "No tool support" means the model cannot look up dashboard data; "privacy settings" means the OpenRouter privacy setting under Setup. |
 | … declined to answer this one | Rephrase the question, or pick another model. |
 | …'s answer was cut off | Ask a narrower question. Free providers allow shorter answers, so a paid provider may help. |

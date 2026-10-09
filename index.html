@@ -1037,6 +1037,9 @@ details.about>summary:hover{color:var(--gray-900)}
   .sk-bar,.sk-toggle,.sk-detail{display:none!important}
   .sk-card{break-inside:auto!important;page-break-inside:auto!important}
   .sk-flow{break-inside:avoid;page-break-inside:avoid}
+  /* Keep the card title with its first chart (no "Big picture" heading stranded at the foot of a page) */
+  .sk-head{break-after:avoid;page-break-after:avoid}
+  .sk-head+.sk-flow{break-before:avoid;page-break-before:avoid}
   .sk-scroll{overflow:visible}
   .sk-svg{width:100%!important;height:auto!important}
   .sk-svg.sk-hl .sk-link{fill-opacity:.3}.sk-svg.sk-hl .sk-node:not(.sk-on){opacity:1}
@@ -1703,6 +1706,12 @@ async function loadEmbeddedSnapshot(){
 // --- Formatting and row helpers ---
 function esc(v){
   return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+// Size of a text as sent (UTF-8 bytes; an accented letter is 2, a CJK character 3), for request size limits.
+function utf8Bytes(s){
+  s=String(s??'');
+  // Plain ASCII (the usual case) is one byte a character; skip the encoder.
+  return /^[\x00-\x7f]*$/.test(s)?s.length:new TextEncoder().encode(s).length;
 }
 function num(v){
   if(v===null||v===undefined||v==='')return 0;
@@ -4495,9 +4504,14 @@ const AI_PROVIDER_INFO={
   groq:{id:'groq',short:'Groq',name:'Groq',tier:'free',dialect:'openai',secret:'GROQ_API_KEY'},
   openrouter:{id:'openrouter',short:'OpenRouter',name:'OpenRouter (free models)',tier:'free',dialect:'openai',secret:'OPENROUTER_API_KEY'}
 };
-// Characters of JSON per conversation and per tool result (about 4 characters a token): free tiers allow only a few
-// thousand tokens per minute, so they get shorter tool results and a shorter history.
+// Size of the JSON per conversation and per tool result, in UTF-8 bytes as sent (about 4 a token; an accented letter
+// or a CJK character counts 2 or 3): free tiers allow only a few thousand tokens per minute, so they get shorter tool
+// results and a shorter history.
 const AI_HISTORY_CHARS={paid:300000,free:24000},AI_RESULT_CHARS={paid:30000,free:8000};
+// The site's AI service takes at most 1 MB a request (functions/api/ai MAX_BODY_BYTES), and every model turn sends the
+// whole chat again. Each request is kept under this (also well inside a 200k-token context): when a question's
+// lookups would pass it, their results are cut down further and the model answers with what it has (aiFitBody).
+const AI_BODY_BUDGET=800*1024;
 const aiState={open:false,opener:'',view:'chat',status:null,statusError:'',statusCheck:null,provider:'',model:'',chatKey:'',system:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#_]/g,'');};
@@ -4726,9 +4740,9 @@ Answer only from tool results: call the tools for every number and never guess o
 const aiToolDefs=()=>KPI_TOOLS.map(({name,description,parameters})=>({name,description,parameters}));
 // Free tiers count tokens per minute, so long tool results are cut (largest list first) and marked truncated.
 function aiFitResult(out,limit){
-  if(!out||typeof out!=='object'||JSON.stringify(out).length<=limit)return out;
+  if(!out||typeof out!=='object'||utf8Bytes(JSON.stringify(out))<=limit)return out;
   const res=JSON.parse(JSON.stringify(out));
-  for(let guard=0;guard<200&&JSON.stringify(res).length>limit;guard++){
+  for(let guard=0;guard<200&&utf8Bytes(JSON.stringify(res))>limit;guard++){
     const key=Object.keys(res).filter(k=>Array.isArray(res[k])&&res[k].length>1).sort((a,b)=>JSON.stringify(res[b]).length-JSON.stringify(res[a]).length)[0];
     if(!key)break;
     res[key]=res[key].slice(0,Math.max(1,Math.floor(res[key].length*0.75)));
@@ -4737,6 +4751,29 @@ function aiFitResult(out,limit){
   }
   return res;
 }
+// Keeps one request under AI_BODY_BUDGET: this question's tool results (history from `start`) are cut to a quarter,
+// then a sixteenth, of the usual size, newest first (so the turns already sent stay as they were when that is enough);
+// a result that cannot be cut that far is replaced by a note. Returns 'fits' (nothing changed), 'cut', or 'too large'
+// (earlier questions alone fill the request).
+function aiFitBody(body,start,limit){
+  const size=()=>utf8Bytes(JSON.stringify(body));
+  if(size()<=AI_BODY_BUDGET)return 'fits';
+  const h=body.messages;
+  const refit=(text,max)=>{
+    let out;
+    try{out=JSON.parse(text);}catch(err){return text;}
+    const s=JSON.stringify(aiFitResult(out,max));
+    return utf8Bytes(s)<=max?s:JSON.stringify({error:'This result was too large to send with the rest of the question and was left out. Answer from the other results, and say when a narrower question is needed.'});
+  };
+  for(const max of [Math.floor(limit/4),Math.floor(limit/16)]){
+    for(let i=h.length-1;i>=start&&size()>AI_BODY_BUDGET;i--){
+      const m=h[i];
+      if(m&&m.role==='tool'&&typeof m.content==='string')h[i]={...m,content:refit(m.content,max)};
+      else if(m&&m.role==='user'&&Array.isArray(m.content))h[i]={...m,content:m.content.map(b=>b&&b.type==='tool_result'&&typeof b.content==='string'?{...b,content:refit(b.content,max)}:b)};
+    }
+  }
+  return size()<=AI_BODY_BUDGET?'cut':'too large';
+}
 // One question: ask the model, run its tool calls here, send the results back, up to AI_MAX_ROUNDS turns.
 // Each assistant turn is kept exactly as the site returned it (Claude's thinking blocks included).
 async function aiAsk(p,question,signal){
@@ -4744,8 +4781,13 @@ async function aiAsk(p,question,signal){
   history.push({role:'user',content:question});
   try{
     for(let round=1;;round++){
-      const last=round>=AI_MAX_ROUNDS;
-      const data=await aiPost({provider:p.id,model:aiState.model,system:aiState.system,messages:history,tools:aiToolDefs(),final:last},signal);
+      let last=round>=AI_MAX_ROUNDS;
+      const body={provider:p.id,model:aiState.model,system:aiState.system,messages:history,tools:aiToolDefs(),final:last};
+      // Near the site's 1 MB limit: the results are cut down and this becomes the last round (answer, no more lookups).
+      const fit=aiFitBody(body,start,limit);
+      if(fit==='too large')throw aiFail('This question and the chat before it are too large to send. Clear the chat and ask a narrower question.');
+      if(fit==='cut')body.final=last=true;
+      const data=await aiPost(body,signal);
       const calls=Array.isArray(data.toolCalls)?data.toolCalls.filter(c=>c&&typeof c.name==='string'):[];
       const text=typeof data.text==='string'?data.text.trim():'';
       if(data.stop==='refusal')throw aiFail(`${p.short} declined to answer this one${text?`: ${text.slice(0,200)}`:''}. Try rephrasing the question, or pick another model in Settings.`);
@@ -4777,7 +4819,7 @@ async function aiAsk(p,question,signal){
 function aiTrimHistory(p){
   const h=aiState.history,max=AI_HISTORY_CHARS[p.tier==='free'?'free':'paid'];
   let cut=false;
-  while(h.length&&JSON.stringify(h).length>max){
+  while(h.length&&utf8Bytes(JSON.stringify(h))>max){
     const next=h.findIndex((m,i)=>i>0&&m.role==='user'&&typeof m.content==='string');
     h.splice(0,next>0?next:h.length);
     cut=true;
@@ -7688,6 +7730,9 @@ const NOTES_PATCH_DELAY=800;
 const NOTES_PATCH_GAP=1100; // ms between PATCHes: Workers KV takes one write per second to the notes key
 const NOTES_MAX_RETRIES=6; // a failed batch is sent again after 2, 4, 8, 16, 32 and 60 seconds
 const NOTES_BATCH_BYTES=512*1024;
+// A save sent while the page is being hidden or closed uses fetch keepalive, and browsers refuse keepalive bodies over
+// 64 KiB (all keepalive requests in flight together): that batch is kept under this, the rest goes after.
+const NOTES_KEEPALIVE_BYTES=60*1024;
 // Another Cloudflare location can read a copy of the notes up to 60 s old, so the notes are read again this long
 // after the last save that changed something (see recheckSharedNotes).
 const NOTES_RECHECK_MS=65000;
@@ -7715,6 +7760,11 @@ let notesInFlight=false;
 let notesFlushAgain=false;
 let notesClearedDirty=false;
 let notesSyncing=false;
+// Lines the server refused to save (an expired sign-in, storage full, a change it would not take) that are not sent
+// again by themselves: the sidebar keeps saying so, even after later saves work, until they are saved (edited again,
+// or sent by the merge when the page opens or reads the notes again). The reason is shown with the count.
+const notesUnsent=new Set();
+let notesUnsentReason='';
 let editorDialogOpen=false;
 let editorAsked=false;
 let linkedBulkCause='';
@@ -7849,23 +7899,40 @@ function retrySharedNotesLater(sent,retryAfter){
   notesRetryTimer=setTimeout(()=>{notesRetryTimer=null;flushSharedNotes();},wait);
   return true;
 }
-// Sends the ready changes in one PATCH (more batches follow when they pass 512 KB or 500 lines). all: also the ones
-// still waiting (page closing). Changes stay in this browser whatever happens; an unsent one goes on the next open.
+// A reply that clearly comes from a host without the notes API: the function's own "not set up" answer (503 with
+// configured:false), or a 404 / 405 page that is not JSON (IIS, a file share, a static copy). Anything else (a
+// platform 503 error page, a 500, a JSON 404 from a proxy) is a passing failure, not a reason to stop sharing.
+function noNotesApi(res,data){
+  if(!res)return false;
+  const type=res.headers&&typeof res.headers.get==='function'?res.headers.get('content-type')||'':'';
+  if(res.status===503)return !!data&&typeof data==='object'&&data.configured===false;
+  return (res.status===404||res.status===405)&&!/json/i.test(type);
+}
+// The sidebar message while lines the server refused are still unsaved (see notesUnsent).
+function notesUnsentMessage(){
+  const n=notesUnsent.size;
+  if(!n)return '';
+  return `${fmtNum(n)} ${n===1?'change was':'changes were'} not saved (${notesUnsentReason}). ${n===1?'It is':'They are'} kept in this browser and sent again when the page opens`;
+}
+// Sends the ready changes in one PATCH (more batches follow when they pass 512 KB or 500 lines; 60 KB with keepalive,
+// the rest then goes on the next flush or the next open). all: also the ones still waiting (page closing). Changes stay
+// in this browser whatever happens; an unsent one goes on the next open.
 async function flushSharedNotes({all=false,keepalive=false}={}){
   if(sharedNotes.state!=='shared'||(editorDialogOpen&&!keepalive))return;
   if(all){notesTimers.forEach((t,id)=>{clearTimeout(t);notesReady.add(id);});notesTimers.clear();}
   if(notesInFlight){notesFlushAgain=true;return;}
   const body={rows:{},shipments:{}};
   const sent=[];
-  let bytes=0,count=0;
+  const cap=keepalive?NOTES_KEEPALIVE_BYTES:NOTES_BATCH_BYTES;
+  let bytes=30,count=0;
   for(const id of [...notesReady]){
     const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);
     const local=kind==='rows'?rowOverrides[key]||notesCleared[key]:sharedShipments[key];
     if(!local||!(kind==='rows'?NOTE_KEY_RE:SHIPMENT_ID_RE).test(key)){notesReady.delete(id);continue;}
     const entry=kind==='rows'?sharedRowEntry(local):sharedShipmentEntry(local);
-    const size=key.length+JSON.stringify(entry).length+8;
+    const size=utf8Bytes(JSON.stringify(key))+utf8Bytes(JSON.stringify(entry))+2;
     // 500 lines at most: the server takes at most 500 lines it does not have yet per request.
-    if(count&&(bytes+size>NOTES_BATCH_BYTES||count>=500))break;
+    if(count&&(bytes+size>cap||count>=500))break;
     body[kind][key]=entry;bytes+=size;count++;
     notesReady.delete(id);sent.push(id);
   }
@@ -7878,20 +7945,32 @@ async function flushSharedNotes({all=false,keepalive=false}={}){
   try{
     const res=await fetch('/api/notes',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(body),keepalive});
     noteClockFrom(res);
-    const data=await res.json().catch(()=>({}));
+    const data=await res.json().catch(()=>null)||{};
+    const why=()=>typeof data.error==='string'&&data.error?data.error:`server error ${res.status}`;
     if(res.ok){
-      sharedNotes.message='';notesRetries=0;adoptSharedReply(data,body);
+      notesRetries=0;
+      sent.forEach(id=>notesUnsent.delete(id));
+      sharedNotes.message=notesUnsentMessage();
+      adoptSharedReply(data,body);
       if(data&&data.applied)scheduleNotesRecheck();
       // Lines the server left for another request (over its limit of new lines) go in the next batch.
       if(data&&data.skipped)sent.forEach(id=>{const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);const got=data[kind];if(!got||typeof got!=='object'||!notesHasOwn(got,key))notesReady.add(id);});
     }
-    else if([404,405,503].includes(res.status))setNotesLocal();
+    else if(noNotesApi(res,data))setNotesLocal();
     else if(res.status===429||res.status>=500){
+      // Busy, a server error or a platform error page (a 503 that is not the function's own): the lines go back in
+      // the queue and are sent again shortly; nothing kept here is dropped.
       failed=true;
       retrying=retrySharedNotesLater(sent,res.headers&&typeof res.headers.get==='function'?res.headers.get('retry-after'):0);
-      sharedNotes.message=retrying?'the server is busy, trying again in a moment':String(data.error||`server error ${res.status}`)+'. Changes are kept in this browser and sent with the next change';
+      sharedNotes.message=retrying?'the server is busy, trying again in a moment':`${why()}. Changes are kept in this browser and sent with the next change`;
     }
-    else sharedNotes.message=res.status===401?'sign-in expired, reload and sign in again':String(data.error||`server error ${res.status}`);
+    else{
+      // Refused (sign-in expired, storage full, a change it would not take): sending again would only be refused
+      // again, so these lines wait (kept here) and the sidebar says so until they are saved.
+      sent.forEach(id=>notesUnsent.add(id));
+      notesUnsentReason=res.status===401?'sign-in expired, reload and sign in again':why();
+      sharedNotes.message=notesUnsentMessage();
+    }
   }catch(err){
     failed=true;
     retrying=retrySharedNotesLater(sent);
@@ -7922,6 +8001,15 @@ function recheckSharedNotes(){
 // An older time than the one sent is taken as well while this browser's copy is still the one sent (no edit since):
 // it can only be this browser's own edit, stamped ahead of the server's clock and clamped by it to its own time.
 // Keeping the future time here would make every later merge push this edit again over newer ones from others.
+// Two different edits with the same time: the server keeps the one it stored first, so the server's copy wins here too
+// (else this browser would keep its own for good and never send it, as it is not newer).
+function sameNoteContent(kind,a,b){
+  const body=e=>{const out=kind==='rows'?sharedRowEntry(e):sharedShipmentEntry(e);delete out.at;return JSON.stringify(out);};
+  return body(a)===body(b);
+}
+function serverWinsTie(kind,local,srv){
+  return !!local&&noteTime(srv)>0&&noteTime(srv)===noteTime(local)&&!sameNoteContent(kind,local,srv);
+}
 function adoptSharedReply(data,sentBody={}){
   let changed=false,shipChanged=false,structural=false;
   const changedKeys=new Set();
@@ -7931,15 +8019,15 @@ function adoptSharedReply(data,sentBody={}){
     const srv=rows[k];
     if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
     if(notesCleared[k]&&noteTime(srv)>=noteTime(notesCleared[k])){delete notesCleared[k];persistClearedSoon();}
-    const mine=noteTime(rowOverrides[k]||notesCleared[k]);
-    if(noteTime(srv)>mine||(noteTime(srv)!==mine&&unchanged('rows',k,mine))){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;}
+    const local=rowOverrides[k]||notesCleared[k],mine=noteTime(local);
+    if(noteTime(srv)>mine||serverWinsTie('rows',local,srv)||(noteTime(srv)!==mine&&unchanged('rows',k,mine))){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;}
   });
   const ships=data&&data.shipments&&typeof data.shipments==='object'?data.shipments:{};
   Object.keys(ships).forEach(k=>{
     const srv=ships[k];
     if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
     const mine=noteTime(sharedShipments[k]);
-    if(noteTime(srv)>mine||(noteTime(srv)!==mine&&unchanged('shipments',k,mine))){sharedShipments[k]=sharedShipmentEntry(srv);shipChanged=true;}
+    if(noteTime(srv)>mine||serverWinsTie('shipments',sharedShipments[k],srv)||(noteTime(srv)!==mine&&unchanged('shipments',k,mine))){sharedShipments[k]=sharedShipmentEntry(srv);shipChanged=true;}
   });
   if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged,structural,keys:changedKeys});
 }
@@ -7954,14 +8042,20 @@ function sharedNotesChanged({rows=true,shipments=false,structural=true,keys=null
     (keys?allLoadedRows.filter(r=>rowKeyCandidates(r).some(k=>keys.has(k))):allLoadedRows).forEach(applyRowOverride);
     if(structural)applyInventoryScope();
   }
+  // Search matches order lines on the tracking numbers added by hand to their order: someone else's new number drops
+  // the cached search (only that, not the metrics) and the number index, so it is found on this redraw.
+  if(shipments){shippingSearchIndex=null;if(metricsCache)searchCache.delete(metricsCache);}
   if(document.getElementById('results-screen').style.display==='block')renderResults();
   else renderSidebar();
 }
+// Only for a reply that clearly says this site has no notes API (noNotesApi, or a static page instead of JSON).
 function setNotesLocal(){
   sharedNotes={...sharedNotes,state:'local',message:''};
   notesTimers.forEach(t=>clearTimeout(t));notesTimers.clear();notesReady.clear();
-  // No shared storage here: nothing will ever need the cleared-line markers.
-  if(Object.keys(notesCleared).length){notesCleared={};persistClearedSoon();}
+  notesUnsent.clear();notesUnsentReason='';
+  clearTimeout(notesRetryTimer);notesRetryTimer=null;
+  // Cleared-line markers are kept: no new ones are made without shared storage, and dropping them on a misread reply
+  // would bring back notes cleared here the next time the page reaches the server.
 }
 // Reads the shared notes (page open, and again when the page comes back into view) and merges them with this
 // browser's copy; sends back what is newer here.
@@ -7976,14 +8070,20 @@ async function syncSharedNotes(){
     try{res=await fetch('/api/notes',{cache:'no-store'});}
     catch(err){if(!refresh)sharedNotes={...sharedNotes,state:'offline',message:''};return;}
     if(isSnapshotView)return;
-    // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON.
-    if([404,405,503].includes(res.status)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();return;}
+    // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON. Only a reply that
+    // clearly says so stops sharing for this visit: a platform error page (a 503 or 500 while Cloudflare is busy) is
+    // "not reachable now" and is tried again when the page comes back into view.
+    const data=res.ok?null:await res.clone().json().catch(()=>null);
+    if(noNotesApi(res,data)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();return;}
+    if(res.status===429||res.status>=500){if(!refresh)sharedNotes={...sharedNotes,state:'offline',message:''};return;}
     if(!res.ok){sharedNotes={...sharedNotes,state:'failed',message:res.status===401?'sign-in expired, reload and sign in again':`server error ${res.status}`};return;}
     noteClockFrom(res);
     let doc=null;
     try{doc=await res.json();}catch(err){doc=null;}
     if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){if(!refresh)sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};return;}
     const push=mergeSharedNotes(doc);
+    // Lines refused earlier are pushed again by the merge when the server still lacks them.
+    notesUnsent.clear();notesUnsentReason='';
     sharedNotes={...sharedNotes,state:'shared',message:''};
     if(notesGaveUp())notesRetries=0;
     push.forEach(id=>notesReady.add(id));
@@ -8011,7 +8111,8 @@ function mergeSharedNotes(doc){
     if(!isSafeNoteKey(k))return;
     const srv=notesHasOwn(srvRows,k)&&srvRows[k]&&typeof srvRows[k]==='object'?srvRows[k]:null;
     const local=rowOverrides[k]||notesCleared[k]||null;
-    if(srv&&noteTime(srv)>noteTime(local)){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;return;}
+    // Newer on the server, or a different edit with the same time (the server keeps the one it stored first): take it.
+    if(srv&&(noteTime(srv)>noteTime(local)||serverWinsTie('rows',local,srv))){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;return;}
     if(!local)return;
     if(srv&&noteTime(local)===noteTime(srv)){if(notesCleared[k]){delete notesCleared[k];persistClearedSoon();}return;}
     // Notes saved before shared notes existed have no time: they are stamped now and shared.
@@ -8023,7 +8124,7 @@ function mergeSharedNotes(doc){
     if(!isSafeNoteKey(id))return;
     const srv=notesHasOwn(srvShips,id)&&srvShips[id]&&typeof srvShips[id]==='object'?srvShips[id]:null;
     const local=sharedShipments[id]||null;
-    if(srv&&noteTime(srv)>noteTime(local)){sharedShipments[id]=sharedShipmentEntry(srv);shipChanged=true;return;}
+    if(srv&&(noteTime(srv)>noteTime(local)||serverWinsTie('shipments',local,srv))){sharedShipments[id]=sharedShipmentEntry(srv);shipChanged=true;return;}
     if(local&&noteTime(local)>noteTime(srv)&&SHIPMENT_ID_RE.test(id))push.push(`shipments|${id}`);
   });
   if(stamped&&!changed)saveRowOverrides();
@@ -8053,7 +8154,7 @@ function sharedNotesSidebarLine(){
     tip=`Notes, overrides, Us / Them causes and deleted lines are saved on the server, so everyone who signs in sees the same ones.${last?` Last edit${s.last.by?` by ${s.last.by}`:''} on ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}.`:''}`;
   }else if(s.state==='offline'){
     text='Notes saved in this browser only (server not reachable)';
-    tip='The server could not be reached when the page opened. Notes are kept in this browser and shared the next time the page opens.';
+    tip='The server could not be reached, or answered with an error, when the page opened. Notes are kept in this browser and shared once it answers: the page tries again when you come back to it (at most once a minute) and the next time it opens.';
   }else if(s.state==='failed'){
     text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
     tip='Notes are kept in this browser. Reload the page to try again.';
@@ -8419,9 +8520,11 @@ const SANKEY_CAUSES={
 // Used only when the Order Health cause engine (lineCause) is not on the page: manual Us / Them first, then the
 // override status, then the SAP signal (past due with no reschedule or no commit date = us).
 const SANKEY_CAUSE_FALLBACK={us:['waiting on production','qc delay','supply chain','supplier late','waiting on po','partial coverage','r&d hold','no commit'],them:['hold','urgent','close short','short ship','shipping delay']};
+// Both read the Order Health per-line memo (ohRowInfo; the caller runs ohRowMemoFresh() first), so the cause rules and
+// the reason list are worked out once per line for every chart and filter on the page.
 function sankeyLineCause(r){
   let c='';
-  if(typeof lineCause==='function'){try{c=String(lineCause(r)||'').toLowerCase();}catch(e){c='';}}
+  if(typeof lineCause==='function'){try{c=String((typeof ohRowInfo==='function'?ohRowInfo(r).cause:lineCause(r))||'').toLowerCase();}catch(e){c='';}}
   else{
     const saved=rowKeyCandidates(r).map(k=>rowOverrides[k]).find(Boolean);
     const manual=String(saved&&saved.cause||'').toLowerCase();
@@ -8440,7 +8543,7 @@ function sankeyLineCause(r){
 function sankeyLineReason(r){
   if(typeof lineReasons==='function'){
     try{
-      const list=lineReasons(r);
+      const list=typeof ohRowInfo==='function'?ohRowInfo(r).reasons:lineReasons(r);
       const first=Array.isArray(list)?list.find(Boolean):list;
       const text=first&&typeof first==='object'?(first.label||first.reason||first.text||first.name):first;
       if(text)return String(text);
@@ -8455,7 +8558,44 @@ const SANKEY_REASON_TILE={'No commit date':'nocommit','Past due, no reschedule':
 const sankeySameSet=(current,values)=>!current.includes('ALL')&&current.length===values.length&&values.every(v=>current.includes(v));
 const sankeyMonthOrder=k=>{const n=Number(String(k).replace(/[^0-9]/g,''));return n?n:Infinity;};
 const sankeyPct=(v,total)=>total?`${fmtNum(Math.round(v/total*1000)/10)}%`:'0%';
+// Order Health flows. The boxes and bands are built once per data, filter set and picked causes (the same key as the
+// page's other filtered data, plus ohStamp() for causes), so a redraw that changes none of them (ticking a linked
+// line, sorting, a note, a box click finding its node) reuses them. The tips, which say whether a box's filter is on,
+// are written on every call onto copies of the nodes.
 function sankeyWeeklyFlows(m){
+  const {d,open,risk}=cachedByFilter(m,`sk|weekly|${weeklyFilterKey()}|${ohStamp()}`,()=>sankeyWeeklyBuild(m));
+  const lines=n=>`${fmtNum(n.docs)} ${n.docs===1?'order':'orders'}, ${fmtNum(n.count)} ${n.count===1?'line':'lines'}`;
+  const openNodes=open.nodes.map(n=>{
+    const share=`${sankeyPct(n.value,open.total)} of ${money(open.total)}`;
+    const what=n.level===0?(n.other?`${n.label}: ${n.members.join(', ')}`:n.label):n.label;
+    const click=n.level===0?(sankeyNodeSelected(n)?'Click to show every warehouse again.':`Click to show only ${n.other?'these warehouses':'this warehouse'} on Order Health.`)
+      :n.level===1?(n.action?'Click to list these lines under Linked lines.':'Click to highlight where this value goes.')
+      :(sankeyNodeSelected(n)?'Click to show every customer segment again.':'Click to show only this customer segment.');
+    return {...n,tip:`${what}: ${money(n.value)} open sales-order value, ${lines(n)} (${share}). ${click}`};
+  });
+  const riskNodes=risk.nodes.map(n=>{
+    const share=`${sankeyPct(n.value,risk.total)} of ${money(risk.total)} at risk`;
+    const what=n.level===2&&!n.other?`${n.label}${n.key!==n.label?` (${n.key})`:''}`:n.label;
+    const click=n.level===2?(sankeyNodeSelected(n)?'Click to show every customer again.':`Click to show only ${n.other?'these customers':'this customer'} on Order Health.`)
+      :n.action?(n.action.type==='tile'?'Click to list these lines under Linked lines.':n.action.type==='reason'?(sankeyNodeSelected(n)?'Click to show every reason again.':'Click to filter Order Health to these lines (each at-risk line counts under its first reason).'):'Click to filter Order Health to it.')
+      :'Click to highlight where this value goes.';
+    return {...n,tip:`${what}: ${money(n.value)} at risk, ${lines(n)} (${share}).${n.level===1?` ${SANKEY_CAUSES[n.key].tip}`:''} ${click}`};
+  });
+  // Credit lines (negative open value) cannot be drawn as bands; the sub-title says how much was left out.
+  const notDrawn=(all,drawn)=>Math.abs(all-drawn)>=0.5?` · ${money(drawn-all)} of credit lines not drawn`:'';
+  return [
+    {id:'open',title:'Open order value',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,nodes:openNodes,
+      colTips:['Warehouse or contract manufacturer the open lines ship from (the 8 largest; the rest are grouped).','Each open line counted once: no commit date, past due with no reschedule, rescheduled, marked urgent, or not at risk.','Customer segment from the customer code or business-partner group.'],
+      sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view${notDrawn(d.allOrdersAmt,open.total)}`,empty:'No open order value in this view.',
+      legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
+    {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,nodes:riskNodes,
+      colTips:['The first reason the line is at risk, as Order Health lists them: the SAP signals first, then an override reason someone picked. Each line counts once.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
+      sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
+      legend:[['us','Us'],['them','Them'],['neutral','Neutral'],['unknown','Not set']]}
+  ];
+}
+function sankeyWeeklyBuild(m){
+  if(typeof ohRowMemoFresh==='function')ohRowMemoFresh();
   const d=orderHealthData(m);
   const late=new Set(d.lateTileRows),nc=new Set(d.noCommitRows),pd=new Set(d.pastDueNoReschedule),rs=new Set(d.activeRescheduleRows);
   // One status per open line, in the same order as the At Risk card's split: no commit, past due, rescheduled, urgent.
@@ -8476,35 +8616,7 @@ function sankeyWeeklyFlows(m){
     {key:causeOf,label:k=>SANKEY_CAUSES[k].label,order:k=>SANKEY_CAUSES[k].order,tone:k=>SANKEY_CAUSES[k].tone,action:ms=>typeof setWeeklyCauseFilter==='function'?{type:'cause',value:ms[0]}:null},
     {key:rowCustomer,label:k=>names.get(k)||k,top:8,other:'Other customers',action:ms=>({type:'customer',values:ms})}
   ]});
-  const lines=n=>`${fmtNum(n.docs)} ${n.docs===1?'order':'orders'}, ${fmtNum(n.count)} ${n.count===1?'line':'lines'}`;
-  open.nodes.forEach(n=>{
-    const share=`${sankeyPct(n.value,open.total)} of ${money(open.total)}`;
-    const what=n.level===0?(n.other?`${n.label}: ${n.members.join(', ')}`:n.label):n.label;
-    const click=n.level===0?(sankeyNodeSelected(n)?'Click to show every warehouse again.':`Click to show only ${n.other?'these warehouses':'this warehouse'} on Order Health.`)
-      :n.level===1?(n.action?'Click to list these lines under Linked lines.':'Click to highlight where this value goes.')
-      :(sankeyNodeSelected(n)?'Click to show every customer segment again.':'Click to show only this customer segment.');
-    n.tip=`${what}: ${money(n.value)} open sales-order value, ${lines(n)} (${share}). ${click}`;
-  });
-  risk.nodes.forEach(n=>{
-    const share=`${sankeyPct(n.value,risk.total)} of ${money(risk.total)} at risk`;
-    const what=n.level===2&&!n.other?`${n.label}${n.key!==n.label?` (${n.key})`:''}`:n.label;
-    const click=n.level===2?(sankeyNodeSelected(n)?'Click to show every customer again.':`Click to show only ${n.other?'these customers':'this customer'} on Order Health.`)
-      :n.action?(n.action.type==='tile'?'Click to list these lines under Linked lines.':n.action.type==='reason'?(sankeyNodeSelected(n)?'Click to show every reason again.':'Click to filter Order Health to these lines (each at-risk line counts under its first reason).'):'Click to filter Order Health to it.')
-      :'Click to highlight where this value goes.';
-    n.tip=`${what}: ${money(n.value)} at risk, ${lines(n)} (${share}).${n.level===1?` ${SANKEY_CAUSES[n.key].tip}`:''} ${click}`;
-  });
-  // Credit lines (negative open value) cannot be drawn as bands; the sub-title says how much was left out.
-  const notDrawn=(all,drawn)=>Math.abs(all-drawn)>=0.5?` · ${money(drawn-all)} of credit lines not drawn`:'';
-  return [
-    {id:'open',title:'Open order value',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,
-      colTips:['Warehouse or contract manufacturer the open lines ship from (the 8 largest; the rest are grouped).','Each open line counted once: no commit date, past due with no reschedule, rescheduled, marked urgent, or not at risk.','Customer segment from the customer code or business-partner group.'],
-      sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view${notDrawn(d.allOrdersAmt,open.total)}`,empty:'No open order value in this view.',
-      legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
-    {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,
-      colTips:['The first reason the line is at risk, as Order Health lists them: the SAP signals first, then an override reason someone picked. Each line counts once.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
-      sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
-      legend:[['us','Us'],['them','Them'],['neutral','Neutral'],['unknown','Not set']]}
-  ];
+  return {d,open,risk};
 }
 // Build Risk: CM id as the CTB % by CM trend groups it.
 function ctbCmId(r){return r.cmKey||String(r.cm||'').toLowerCase();}
@@ -8766,7 +8878,7 @@ function renderBigPicture(tab,m){
   }
   const about=tab==='weekly'?`<details class="about sk-about">${aboutSummary('About this chart','Show how this chart is built: what each column and band counts, how boxes are grouped and what clicking does.')}<div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
   return `${note}<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
-    <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value. Hover a box, or Tab to the chart and use the arrow keys, for its numbers; click a box to filter the page.</span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
+    <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value.<span class="print-hide"> Hover a box, or Tab to the chart and use the arrow keys, for its numbers; click a box to filter the page.</span></span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
     ${flows.map(f=>renderSankeyFlow(tab,f)).join('')||'<p class="empty-note">Nothing to draw for this page yet.</p>'}
     ${about}
   </section>`;

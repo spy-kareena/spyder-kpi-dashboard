@@ -360,6 +360,41 @@ test('the step cap: the last round asks for an answer without tools; too many lo
   assert.equal(page.run('aiState.history.length'), 0, 'a failed question leaves no half turns behind');
 });
 
+test('a long question stays under the site\'s 1 MB limit: results are cut further and the model answers with what it has', async () => {
+  const page = await loaded({ storage: consent('anthropic') });
+  // Big lookups with non-ASCII text (2 to 3 bytes a character), and turns with long thinking, as a real long question.
+  page.run("aiRunTool=(name,input)=>({total_matches:3000,returned:3000,rows:Array.from({length:3000},(_,i)=>({doc:'SO '+i,customer:'Client Québec – 供应商延迟供应商延迟',value:i}))})");
+  let n = 0;
+  const lookups = () => claudeTurn([{ type: 'thinking', thinking: 't'.repeat(100000), signature: 'sig' }, ...[0, 1, 2].map((k) => ({ type: 'tool_use', id: `toolu_${n}_${k}`, name: 'search_lines', input: {} }))]);
+  const answer = (url, init) => {
+    const body = JSON.parse(init.body);
+    n++;
+    const turn = body.final ? claudeTurn([{ type: 'text', text: 'Answer from the lookups so far.' }]) : lookups();
+    return { ok: true, status: 200, json: async () => turn };
+  };
+  const calls = site(page, { answers: [() => ({ ok: true, status: 200, json: async () => claudeTurn([{ type: 'text', text: 'Warm' }]) }), ...Array.from({ length: 8 }, () => answer)] });
+  await page.run("aiSend('warm up')");
+  // An earlier exchange that nearly fills the history budget (300,000 bytes) before the question starts.
+  page.run("aiState.history[1]={role:'assistant',content:[{type:'text',text:'w'.repeat(250000)}]}");
+  const earlier = page.run('JSON.stringify(aiState.history.slice(0,2))');
+  await page.run("aiSend('Everything about every customer, week by week')");
+  const sent = chats(calls).slice(1);
+  const bytes = sent.map((c) => Buffer.byteLength(c.init.body));
+  assert.ok(bytes.every((b) => b <= 800 * 1024), `every request under the budget: ${bytes.join(', ')}`);
+  const finals = sent.map((c) => c.body.final);
+  assert.ok(finals.length < 8 && finals.at(-1) === true && finals.slice(0, -1).every((f) => f === false), `the cut request is the last round: ${finals}`);
+  assert.match(page.els['ai-log'].innerHTML, /Answer from the lookups so far\./);
+  assert.doesNotMatch(page.els['ai-log'].innerHTML, /too many lookups|too large/);
+  // Results are sized in bytes as sent; the cut ones are a quarter of that or less and say they were cut.
+  const results = (c) => c.body.messages.filter((m) => m.role === 'user' && Array.isArray(m.content)).flatMap((m) => m.content.map((b) => b.content));
+  assert.ok(results(sent[1]).every((t) => Buffer.byteLength(t) <= 30000), 'a full result is at most 30,000 bytes');
+  const last = results(sent.at(-1));
+  assert.ok(last.some((t) => Buffer.byteLength(t) <= 7500 && JSON.parse(t).truncated === true), 'the newest results were cut further');
+  // The earlier exchange is sent as it was, and the question with its answer stays in the chat.
+  assert.equal(JSON.stringify(sent.at(-1).body.messages.slice(0, 2)), earlier);
+  assert.equal(page.run('aiState.history.at(-1).content[0].text'), 'Answer from the lookups so far.');
+});
+
 test('errors: refusal, cut-off answer, proxy messages, expired sign-in, unreachable site', async () => {
   const page = await loaded({ storage: consent('anthropic') });
   site(page, { answers: [

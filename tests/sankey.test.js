@@ -252,6 +252,13 @@ test('markup: the toggle and every box carry plain-English tips with full number
   // The chart keeps readable 12px text on phones by scrolling inside the card; print scales it to the page.
   assert.match(HTML, /\.sk-scroll\{overflow-x:auto;overflow-y:hidden;max-width:100%/);
   assert.match(HTML, /@media print\{\n  \.sk-bar,\.sk-toggle,\.sk-detail\{display:none!important\}[\s\S]*?\.sk-svg\{width:100%!important;height:auto!important\}/);
+  // Print keeps the card title with its first chart (not stranded at the foot of a page) and drops the screen-only
+  // "hover / Tab / click" instructions from the subtitle (.print-hide), as it does .sk-detail.
+  const skPrint = HTML.slice(HTML.indexOf('@media print{\n  .sk-bar,.sk-toggle,.sk-detail'), HTML.indexOf('--- Stream E: Shipping page'));
+  assert.match(skPrint, /\.sk-head\{break-after:avoid;page-break-after:avoid\}/);
+  assert.match(skPrint, /\.sk-head\+\.sk-flow\{break-before:avoid;page-break-before:avoid\}/);
+  assert.match(h, /<div class="section-head sk-head"><h2 [^>]*>Big picture<\/h2><span class="section-sub">Band thickness is value\.<span class="print-hide"> Hover a box[^<]*click a box to filter the page\.<\/span><\/span>/);
+  assert.match(HTML, /@media print\{[\s\S]*?,\.print-hide,[^{}]*\{display:none!important\}/, 'the existing .print-hide rule hides the instructions');
   assert.match(HTML, /\.sk-node:focus-visible \.sk-hit\{stroke:var\(--accent\)\}/);
   assert.match(h, /viewBox="0 0 960 \d+(\.\d)?" width="960"/, 'a fixed 960px chart when the window width is unknown (tests, print)');
 });
@@ -287,12 +294,48 @@ test('Us / Them and reasons come from the Order Health cause engine (Stream D) a
   const neutral = page.run('ohLeadingData(currentMetrics()).cause.neutral.value');
   assert.equal(neutral, 4000);
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 1721806, Us: 2500, Neutral: 4000 });
-  // With the cause engine and reason list on the page (Order Health v2), the chart uses them and its filters.
-  page.run("var causeCalls=[];function lineCause(r){return r.documentNumber==='3'?'US':'them'}function lineReasons(r){return [{label:'Reason '+r.documentNumber}]}function setWeeklyCauseFilter(v){causeCalls.push(v)}function setWeeklyReasonFilter(v){causeCalls.push('reason:'+v)}function setWeeklyMainReasonFilter(v){causeCalls.push('main:'+v)}");
+  // With the cause engine and reason list on the page (Order Health v2), the chart uses them and its filters. It reads
+  // them through the engine's per-line memo (ohRowInfo), so the stand-ins replace the engine's rule and the page data
+  // is rebuilt (as any real change to them does: a new report, an override status, a picked cause).
+  page.run("var causeCalls=[];function lineCause(r){return r.documentNumber==='3'?'US':'them'}function ohCauseRule(r){return {cause:lineCause(r),rule:'stand-in'}}function lineReasons(r){return [{label:'Reason '+r.documentNumber}]}function setWeeklyCauseFilter(v){causeCalls.push(v)}function setWeeklyReasonFilter(v){causeCalls.push('reason:'+v)}function setWeeklyMainReasonFilter(v){causeCalls.push('main:'+v)}invalidateMetrics()");
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 2500 + 1721806, Us: 4000 });
   assert.deepEqual(Object.keys(byLevel(risk(), 0)).sort(), ['Reason 1', 'Reason 2', 'Reason 3', 'Reason 4']);
   page.run("sankeyNodeClick('weekly','risk','1:us');sankeyNodeClick('weekly','risk','0:Reason 3')");
   assert.deepEqual(page.run('causeCalls'), ['us', 'main:Reason 3']);
+});
+
+test('with the Big picture open, a redraw that changes no data or filter reuses the flows; reasons and causes come from the per-line memo', async () => {
+  const page = await orderHealth();
+  page.run("toggleSankey('weekly')");
+  assert.match(html(page), /id="sankey-weekly"/);
+  page.run("var skCalls={reason:0,cause:0,lineReasons:0,ohCauseRule:0};var _slr=sankeyLineReason,_slc=sankeyLineCause,_lr=lineReasons,_ocr=ohCauseRule;sankeyLineReason=r=>{skCalls.reason++;return _slr(r)};sankeyLineCause=r=>{skCalls.cause++;return _slc(r)};lineReasons=r=>{skCalls.lineReasons++;return _lr(r)};ohCauseRule=(r,e)=>{skCalls.ohCauseRule++;return _ocr(r,e)}");
+  const calls = () => page.run('skCalls');
+  const reset = () => page.run('skCalls={reason:0,cause:0,lineReasons:0,ohCauseRule:0}');
+  // A plain redraw, ticking a linked line, and a click on a box with no filter (it pins a highlight): no rebuild.
+  page.run('renderResults()');
+  const k = page.run("rowKey(orderHealthData(currentMetrics()).lateTileRows[0])");
+  page.run(`toggleLinkedRow(${JSON.stringify(k)},true)`);
+  page.run("sankeyNodeClick('weekly','open','1:ok')");
+  assert.match(html(page), /data-pinned="1:ok"/);
+  assert.deepEqual([calls().reason, calls().cause], [0, 0], 'the flows are reused');
+  // A filter change rebuilds them, and the pressed box and its tip follow (the tips are written on every call).
+  page.run("sankeyNodeClick('weekly','risk','2:APP1')");
+  assert.ok(calls().reason > 0 && calls().cause > 0, 'rebuilt for the new filter');
+  const app = () => page.run("sankeyFlows('weekly')[1].nodes.find(n=>n.id==='2:APP1')");
+  assert.match(app().tip, /Click to show every customer again\.$/);
+  assert.match(html(page), /class="sk-node sk-[a-z]+ sk-sel"[^>]*aria-pressed="true"[^>]*data-sk-node="2:APP1"/);
+  page.run("sankeyNodeClick('weekly','risk','2:APP1')");
+  assert.match(app().tip, /Click to show only this customer on Order Health\.$/);
+  // Rebuilding the flows (same data and causes) reads each line's reasons and cause from the memo, not the rules.
+  page.run("ohRowMemoFresh();orderHealthData(currentMetrics()).lateTileRows.forEach(ohRowInfo);filterCache.entries.forEach((v,key)=>{if(key.startsWith('sk|'))filterCache.entries.delete(key)})");
+  reset();
+  page.run("sankeyFlows('weekly')");
+  assert.ok(calls().reason > 0, 'the flows were built again');
+  assert.deepEqual([calls().lineReasons, calls().ohCauseRule], [0, 0], 'no per-line rule ran again');
+  // A picked cause is part of the key: the bands move at once.
+  page.run(`updateRowOverride(rowKey(allLoadedRows.find(r=>r.documentNumber==='3')),'cause','us')`);
+  const us = page.run("sankeyFlows('weekly')[1].nodes.find(n=>n.id==='1:us').value");
+  assert.equal(us, 1000 + 2500 + 4000, 'past due and no commit date were ours; the rescheduled line joins them');
 });
 
 // --- Build Risk -------------------------------------------------------------------------------------------------
