@@ -12,6 +12,8 @@ On the Order Health linked-lines list, tick rows (or the header box for the whol
 
 Use the search box under the logo (or press Ctrl+K, Cmd+K on a Mac) to find any order line by number, customer, vendor, item or warehouse.
 
+**Big picture** (a button on Order Health, Build Risk and Supply Mix) opens a flow chart of the page. Thick bands are where most of the value goes. On Order Health it shows open order value from warehouse to status to customer segment, and at-risk value from reason to Us / Them to customer. On Build Risk it shows each CM's orders split into clear to build, at risk and late, by month. On Supply Mix it shows open demand by warehouse, item group and month; red bands are short of open purchase orders. Point at a box (or Tab to it) to see its full numbers. Click a box to filter the page to it, for example one warehouse, one customer or one CM; click it again to show everything. On a phone, swipe sideways inside the chart. Click **Hide big picture** to close it.
+
 **Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". It sends your question and the data needed to answer it to Google Gemini, so only use it for data your company has approved for sharing. Setup and privacy: docs/AI_ASSISTANT.md.
 
 **Help > Connect an AI** in the sidebar shows how to use the same data from Claude Desktop, Claude Code or another MCP app. The page opens before an export is loaded.

@@ -20,3 +20,11 @@ report replaces it; icons on Ask AI, Share snapshot and Export PDF.
 1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
 the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
 hosts without it keep the report in each browser. Sidebar shows where the report is saved.
+
+2v0: Big picture (Sankey) charts. A "Big picture" button on Order Health (open order value: warehouse to status to
+customer segment; at-risk value: reason to Us / Them to customer), Build Risk (CM to clear to build / at risk / late
+to month, for the picked report week) and Supply Mix (open demand value: warehouse to item group to demand month,
+coloured by open PO coverage). Columns add up to the page's cards. Clicking a box applies the page's filter
+(warehouse, segment, customer, linked-lines card, Build Risk CM, supply warehouse); boxes are keyboard buttons with
+full-value tips. Pure sankeyLayout (no chart library), Web Animations on open with reduced-motion and print guards;
+open charts and the Build Risk CM travel in share snapshots.
