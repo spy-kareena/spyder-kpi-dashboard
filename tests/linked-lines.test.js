@@ -29,7 +29,8 @@ const html = (page) => page.els['results-screen'].innerHTML;
 const shownDocs = (page) => [...html(page).matchAll(/<td class="c-doc">([^<]*)<\/td>/g)].map((m) => m[1]);
 const atRiskCount = (page) => page.run('orderHealthData(currentMetrics()).lateTileRows.length');
 const keyOf = (page, doc) => page.run(`rowKey(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
-const saved = (page) => JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}');
+// Saved entries without the who / when stamp (by, at) every change carries since 1v7 (tests/shared-notes.test.js).
+const saved = (page) => Object.fromEntries(Object.entries(JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}')).map(([k, { by, at, ...e }]) => [k, e]));
 // The DOM stub has no live elements: fake the rendered controls a selector finds (data-key and focus() only).
 function fakeControls(page, pattern, focused) {
   return [...html(page).matchAll(pattern)].map((m) => ({ dataset: { key: m[1].replace(/&amp;/g, '&') }, focus() { focused.push(this.dataset.key); } }));

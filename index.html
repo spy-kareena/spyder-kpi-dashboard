@@ -833,6 +833,22 @@ button.trow.po-wh-cols{font-size:13px}
 #results-screen:not(.entering) .rise,#results-screen:not(.entering) .grow-w,#results-screen:not(.entering) .grow-h,#results-screen:not(.entering) .pop,#results-screen:not(.entering) .fade-row,#results-screen:not(.entering) .draw{animation:none}
 #results-screen:not(.entering) .draw{stroke-dashoffset:0}
 @media print{.draw{stroke-dashoffset:0!important}.lines-table{table-layout:auto}.print-only{display:block!important;font-size:9pt;color:var(--gray-600)}}
+/* --- Stream B: shared notes (Us / Them cause controls, sidebar notes line, editor initials dialog) --- */
+.note-picks{display:grid;gap:8px;align-content:start}
+.editable-rows .row-cause{font:inherit;font-size:12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);padding:5px 8px;width:100%;margin-top:6px;cursor:pointer}
+@media screen{.editable-rows .row-cause{min-width:140px}}
+.notes-editor-btn{font-size:12px;font-weight:500;text-align:left}
+.editor-dialog{border:1px solid var(--gray-200);border-radius:12px;padding:20px 22px;width:min(380px,calc(100vw - 32px));max-width:calc(100vw - 32px);box-sizing:border-box;color:var(--gray-900);background:#fff;box-shadow:0 16px 40px rgba(16,24,40,.18)}
+.editor-dialog::backdrop{background:rgba(16,24,40,.4)}
+.editor-form{display:grid;gap:10px}
+.editor-form h2{margin:0;font-size:16px;font-weight:600;color:var(--gray-900)}
+.editor-form p{margin:0;font-size:13px;line-height:1.5;color:var(--gray-600)}
+.editor-form label{font-size:12px;font-weight:500;color:var(--gray-700)}
+.editor-form input{font:inherit;font-size:16px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--gray-500);border-radius:var(--r-ctl);padding:8px 10px;width:100%;box-sizing:border-box;color:var(--gray-900);background:#fff}
+.editor-form .editor-error{color:var(--crit-text);font-weight:500}
+.editor-form .editor-error:empty{margin-top:-10px}
+.editor-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+@media print{.editable-rows .row-cause,.editor-dialog{display:none!important}}
 </style>
 </head>
 <body>
@@ -978,7 +994,8 @@ let activeSnapshotBlob = null;
 let activeSnapshotFileName = '';
 let expandedNoteRows = new Set();
 let collapsedNoteRows = new Set();
-// Notes and override statuses persist in this browser only.
+// Notes, override statuses and Us / Them causes persist in this browser and, on the hosted site, on the server for
+// everyone who signs in (see "Stream B: shared notes" near the end of this script).
 const ROW_OVERRIDE_KEY = 'spyderKpiRowOverridesV1';
 const OVERRIDE_OPTIONS = ['', 'Urgent', 'Close Short', 'Short Ship', 'Hold', 'Not At Risk', 'Shipping Delay', 'QC Delay', 'Supply Chain', 'R&D Hold', 'Waiting on PO', 'Waiting on Production', 'Supplier Late', 'No Commit', 'Partial Coverage', 'Covered'];
 // CardCode and BP group lookups used to bucket customers on Order Health.
@@ -1080,6 +1097,8 @@ async function exportShareSnapshot(){
     buildRiskRows,
     supplyDemandRows,
     rowOverrides:sharedOverrides,
+    // When each line was first at risk (from the shared at-risk history), for the lines in this export.
+    firstFlagged:Object.fromEntries(Object.entries(firstFlagged).filter(([k])=>rowKeys.has(k))),
     // A snapshot saved from Search opens on the page the search started from; one saved from the help page on Order Health.
     activeTab:activeTab==='search'?searchPrevTab:activeTab==='connect'?'weekly':activeTab,
     weeklyWarehouseFilter,
@@ -1201,6 +1220,7 @@ async function loadEmbeddedSnapshot(){
     buildRiskRows=data.buildRiskRows||[];
     supplyDemandRows=data.supplyDemandRows||[];
     rowOverrides=data.rowOverrides||{};
+    firstFlagged=data.firstFlagged&&typeof data.firstFlagged==='object'&&!Array.isArray(data.firstFlagged)?data.firstFlagged:{};
     activeTab=data.activeTab||'weekly';
     weeklyWarehouseFilter=data.weeklyWarehouseFilter||['ALL'];
     weeklyCustomerFilter=data.weeklyCustomerFilter||['ALL'];
@@ -1350,6 +1370,8 @@ function applyRowOverride(r){
   const saved=rowKeyCandidates(r).map(k=>rowOverrides[k]).find(Boolean)||null;
   r.overrideStatus=saved&&saved.status!==undefined?saved.status:r.fileOverrideStatus;
   r.overrideNotes=saved&&saved.notes!==undefined?saved.notes:r.fileOverrideNotes;
+  // Manual Us / Them cause ('' = worked out from the status and SAP flags).
+  r.overrideCause=saved&&(saved.cause==='us'||saved.cause==='them')?saved.cause:'';
   r.hasOverride=!!(r.overrideStatus||r.overrideNotes);
   r.isDeleted=!!(saved&&saved.deleted);
   applyRiskOverride(r);
@@ -1393,8 +1415,9 @@ function updateRowOverride(key,field,value){
   const matches=allLoadedRows.filter(r=>rowKey(r)===cleanKey);
   writeRowOverride(cleanKey,matches,field,value);
   saveRowOverrides();
-  // Status overrides move rows between KPI tiles (e.g. Urgent, Not At Risk), so redraw; notes need no redraw.
-  if(field!=='status')return;
+  // Status overrides move rows between KPI tiles (e.g. Urgent, Not At Risk) and causes change the Us / Them
+  // split, so redraw; notes need no redraw.
+  if(field!=='status'&&field!=='cause')return;
   const noteButtons=()=>[...document.querySelectorAll('button.note-btn')];
   const at=noteButtons().findIndex(b=>b.dataset.key===cleanKey);
   invalidateMetrics();
@@ -1404,7 +1427,7 @@ function updateRowOverride(key,field,value){
   if(at<0||now.some(b=>b.dataset.key===cleanKey))return;
   refocus(now[at]||now[now.length-1],linkedListAnchor());
   const r=matches[0]||{};
-  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${value||'No override'} and left this list.`);
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${field==='cause'?`cause ${causeLabel(value)}`:value||'No override'} and left this list.`);
 }
 // A redraw can remove the control that had focus. If focus fell to the page body, move it to the first of
 // these that is on the page.
@@ -1423,15 +1446,17 @@ function announce(text){
   if(el)el.textContent=text;
 }
 // Sets one field of a line's saved override (undefined removes it). An older legacy-key entry moves to the
-// current key so editing one field keeps the others. Callers save and redraw.
+// current key so editing one field keeps the others. Every change is stamped with the editor's initials (by) and
+// the time (at), and queued for the shared copy on the server (sharedNoteChanged). Callers save and redraw.
 function writeRowOverride(cleanKey,matches,field,value){
   const legacyKeys=[...new Set(matches.flatMap(rowKeyCandidates))].filter(k=>k!==cleanKey&&rowOverrides[k]);
   const current={...(legacyKeys.length?rowOverrides[legacyKeys[0]]:{}),...(rowOverrides[cleanKey]||{})};
   if(value===undefined)delete current[field];else current[field]=value;
-  legacyKeys.forEach(k=>delete rowOverrides[k]);
+  const stamp=noteStamp();
+  legacyKeys.forEach(k=>{delete rowOverrides[k];sharedNoteChanged(k,null,stamp);});
   // A deleted line keeps its entry with no note, so it stays hidden here and in shared snapshots.
-  if(!current.status&&!current.notes&&!current.deleted)delete rowOverrides[cleanKey];
-  else rowOverrides[cleanKey]=current;
+  if(!current.status&&!current.notes&&!current.cause&&!current.deleted){delete rowOverrides[cleanKey];sharedNoteChanged(cleanKey,null,stamp);}
+  else{Object.assign(current,stamp);rowOverrides[cleanKey]=current;sharedNoteChanged(cleanKey,current,stamp);}
   matches.forEach(applyRowOverride);
 }
 // One field on many lines (bulk override, delete, restore): one save, one metrics reset, one redraw.
@@ -1468,7 +1493,7 @@ function applyLinkedOverride(){
 }
 function deleteLinkedSelection(){
   const n=linkedSelection.size;
-  const where=isSnapshotView?'in this tab until it is closed (changes in a shared snapshot are not saved)':'in this browser and in snapshots you share';
+  const where=isSnapshotView?'in this tab until it is closed (changes in a shared snapshot are not saved)':sharedNotes.state==='shared'?'for everyone who signs in and in snapshots you share':'in this browser and in snapshots you share';
   if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI ${where}. Restore them from Data check.`))return;
   const keys=[...linkedSelection];
   linkedSelection.clear();
@@ -1507,6 +1532,8 @@ function toggleRowNote(key){
   if(!visible){
     const note=[...document.querySelectorAll('textarea.row-note')].find(t=>t.dataset.key===cleanKey);
     if(note)note.focus();
+    // Shared notes: ask once for the editor's initials before the first edit (focus comes back to the note).
+    askEditorInitials();
   }else{
     const button=[...document.querySelectorAll('button.note-btn')].find(b=>b.dataset.key===cleanKey);
     if(button)button.focus();
@@ -1535,11 +1562,13 @@ function overrideSelectEvent(sel,e){
     });
   }
 }
+// The override select saves the status; the cause select (data-field="cause") uses the same key handling.
 function commitOverrideSelect(sel){
   const d=sel.dataset;
   delete d.held;
+  const field=d.field==='cause'?'cause':'status';
   const row=allLoadedRows.find(r=>rowKey(r)===d.key);
-  if(row&&String(row.overrideStatus||'')!==sel.value)updateRowOverride(d.key,'status',sel.value);
+  if(row&&String((field==='cause'?row.overrideCause:row.overrideStatus)||'')!==sel.value)updateRowOverride(d.key,field,sel.value);
 }
 function renderOverrideSelect(r){
   const key=esc(rowKey(r));
@@ -1551,7 +1580,7 @@ function renderOverrideSelect(r){
 function renderOverrideNote(r){
   const key=esc(rowKey(r));
   const placeholder=/purchase order/i.test(String(r.sourceType||''))?'Vendor update, expected date, owner…':'Why is this line late? What is the plan?';
-  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" placeholder="${placeholder}">${esc(r.overrideNotes||'')}</textarea>`;
+  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" maxlength="${NOTE_MAX_LENGTH}" placeholder="${placeholder}">${esc(r.overrideNotes||'')}</textarea>`;
 }
 function isNoteEditorVisible(r){
   const key=rowKey(r);
@@ -1560,7 +1589,7 @@ function isNoteEditorVisible(r){
 }
 function renderNoteButton(r){
   const key=esc(rowKey(r));
-  const hasNote=!!(r.overrideStatus||r.overrideNotes);
+  const hasNote=!!(r.overrideStatus||r.overrideNotes||r.overrideCause);
   const visible=isNoteEditorVisible(r);
   return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${hasNote&&r.overrideStatus?` title="${esc(r.overrideStatus)}"`:''}>${hasNote?'Edit note':'Add note'}</button>`;
 }
@@ -1568,7 +1597,7 @@ function renderNoteEditorRow(r,colspan){
   if(!isNoteEditorVisible(r))return '';
   return `<tr class="note-editor-row print-hide"><td colspan="${colspan}">
     <div class="note-editor">
-      <label>Override${renderOverrideSelect(r)}</label>
+      <div class="note-picks"><label>Override${renderOverrideSelect(r)}</label><label>Cause${renderCauseSelect(r)}</label></div>
       <label>Note${renderOverrideNote(r)}</label>
       <button type="button" class="btn btn-primary btn-sm note-done" data-key="${esc(rowKey(r))}" onclick="toggleRowNote(this.dataset.key)">Done</button>
     </div>
@@ -1577,10 +1606,12 @@ function renderNoteEditorRow(r,colspan){
 function renderPrintNoteRow(r,colspan){
   const status=String(r.overrideStatus||'').trim();
   const notes=String(r.overrideNotes||'').trim();
-  if(!status&&!notes)return '';
+  const cause=r.overrideCause?`Cause: ${causeLabel(r.overrideCause)}`:'';
+  if(!status&&!notes&&!cause)return '';
   return `<tr class="print-note-row has-print-note"><td colspan="${colspan}">
     <div class="print-note-card">
       ${status?`<span class="print-note-status">${esc(status)}</span>`:''}
+      ${cause?`<span class="print-note-status">${esc(cause)}</span>`:''}
       ${notes?`<strong>Note:</strong> ${esc(notes)}`:''}
     </div>
   </td></tr>`;
@@ -2339,10 +2370,11 @@ let shareQueue=Promise.resolve();
 const canShareReports=()=>typeof fetch!=='undefined'&&typeof CompressionStream!=='undefined'&&typeof DecompressionStream!=='undefined'&&location.protocol!=='file:';
 async function streamBytes(blob,transform){return new Uint8Array(await new Response(blob.stream().pipeThrough(transform)).arrayBuffer());}
 // Bundle layout (checked again by functions/api/report.js): 4-byte header length, JSON header, gzip file bytes.
-async function packReport(files){
+// The header may also carry atRisk {asOf, keys}: the server adds it to the at-risk history, not to the report.
+async function packReport(files,atRisk){
   const parts=[];
   for(const f of files)parts.push(await streamBytes(f,new CompressionStream('gzip')));
-  const head=new TextEncoder().encode(JSON.stringify({v:1,files:files.map((f,i)=>({name:f.name,type:f.type||'',lastModified:f.lastModified||0,length:parts[i].length}))}));
+  const head=new TextEncoder().encode(JSON.stringify({v:1,files:files.map((f,i)=>({name:f.name,type:f.type||'',lastModified:f.lastModified||0,length:parts[i].length})),...(atRisk?{atRisk}:{})}));
   const out=new Uint8Array(4+head.length+parts.reduce((s,p)=>s+p.length,0));
   new DataView(out.buffer).setUint32(0,head.length);
   out.set(head,4);
@@ -2366,12 +2398,14 @@ function shareReportFiles(files){
   if(!canShareReports()){sharedReport={state:'local',savedAt:'',message:''};return shareQueue;}
   sharedReport={state:'saving',savedAt:'',message:''};
   renderSidebar();
+  // The lines on the At Risk card now (all filters off), for the at-risk history; worked out before the wait below.
+  const atRisk=reportAtRiskWeek();
   // Uploads go one at a time, so a quick New file + Add file still leaves the last report on the server.
   shareQueue=shareQueue.then(async()=>{
     try{
-      const res=await fetch('/api/report',{method:'PUT',headers:{'content-type':'application/octet-stream'},body:await packReport(files)});
+      const res=await fetch('/api/report',{method:'PUT',headers:{'content-type':'application/octet-stream'},body:await packReport(files,atRisk)});
       const data=await res.json().catch(()=>({}));
-      if(res.ok)sharedReport={state:'shared',savedAt:data.savedAt||'',message:''};
+      if(res.ok){sharedReport={state:'shared',savedAt:data.savedAt||'',message:''};if(atRisk&&data.history&&data.history.weeks)addAtRiskWeek({...atRisk,savedAt:data.savedAt||''});}
       // A static host (IIS, a file share) has no /api/report; the report is then kept in this browser only.
       else if([404,405,503].includes(res.status))sharedReport={state:'local',savedAt:'',message:''};
       else sharedReport={state:'failed',savedAt:'',message:res.status===401?'sign-in expired, reload and sign in again':String(data.error||`server error ${res.status}`)};
@@ -3753,7 +3787,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
       <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
       <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes)?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
-      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}<span class="print-only">${esc(r.overrideStatus||'')}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
+      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([r.overrideStatus,r.overrideCause?`Cause: ${causeLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
       <td class="soft${/^\d{4}-/.test(resched)?' date':''}">${esc(resched)}</td>
       ${editable?`<td class="soft">${esc(r.deliveryDocNumber||'—')}</td><td class="soft">${esc(r.closeDateSource||'—')}</td>`:''}
       <td class="num strong">${money(r.amountLocal)}</td>
@@ -4658,7 +4692,7 @@ function renderSidebar(){
   const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
   const meta=loaded
-    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}`
+    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}${sharedNotesSidebarLine()}`
     : 'Add a SAP export to begin';
   const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
@@ -4688,7 +4722,7 @@ function renderDataQualityNote(){
   const deleted=allLoadedRows.filter(r=>r.isDeleted);
   if(deleted.length)parts.push(`${fmtNum(deleted.length)} ${deleted.length===1?'line you deleted is':'lines you deleted are'} hidden`);
   if(!parts.length)return '';
-  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI in this browser.<br><button type="button" class="btn" data-focus-key="restore-deleted" onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}" onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
+  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.<br><button type="button" class="btn" data-focus-key="restore-deleted" onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}" onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
   const scopeHelp=nonInventory?`<p>Non-inventory items (e.g. PPV, tariff, NRE charges) are closed by invoice, not shipped, so they are left out of late, OTD, and fill KPIs by default.<br><button type="button" class="btn" data-focus-key="toggle-noninventory" onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button></p>`:'';
   const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
   const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';
@@ -5345,6 +5379,7 @@ function renderResults(){
           <span class="bulk-count">${fmtNum(selectedCount)} selected</span>
           <label>Override <select id="linked-bulk-status" class="select" onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt||'No override')}</option>`).join('')}</select></label>
           <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply" onclick="applyLinkedOverride()">Apply</button>
+          ${renderBulkCauseControls()}
           <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete" onclick="deleteLinkedSelection()">Delete</button>
           <button type="button" class="link-btn" id="linked-bulk-clear" onclick="selectAllLinked(false)">Clear selection</button>
         </div>`:'<span class="hint">Click any KPI card above to change this list.</span>';
@@ -6225,9 +6260,457 @@ function focusSelector(node){
   return '';
 }
 
+// --- Stream B: shared notes, Us / Them cause, at-risk history ---
+// Notes, override statuses, Us / Them causes and deleted-line flags (rowOverrides) are kept in this browser
+// (localStorage) and, on the hosted site, on the server for everyone who signs in (functions/api/notes.js, Workers KV
+// key 'overrides'). When the page opens, the server copy is read once and merged with this browser's copy line by
+// line: the newer edit (its `at` time) wins, and whatever is newer here (or only here, such as notes saved before
+// this version) is sent back. After that every change is sent 800 ms after the last change to that line, in one
+// batch. Hosts without the API (IIS, a file share, a page opened from disk) keep notes in this browser only, as
+// before. Shared snapshots never read or write either copy; they carry the notes of their rows.
+// Entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}; by = the editor's initials (asked once, kept in
+// localStorage spyderKpiEditor), at = ISO time of the edit. A cleared line is sent as {by, at} only, so other
+// browsers drop their copy; until the server has that marker it is kept in localStorage (spyderKpiNotesClearedV1).
+// The same store keeps tracking numbers typed in by hand on the Shipping page (shipments, see
+// sharedNotesPatchShipments / getSharedShipments below).
+const NOTE_MAX_LENGTH=4000;
+const NOTES_EDITOR_KEY='spyderKpiEditor';
+const NOTES_CLEARED_KEY='spyderKpiNotesClearedV1';
+const NOTES_SHIPMENTS_KEY='spyderKpiShipmentsV1';
+const NOTES_PATCH_DELAY=800;
+const NOTES_BATCH_BYTES=512*1024;
+// Same limits as functions/api/notes.js: keys it would refuse stay in this browser only.
+const NOTE_KEY_RE=/^[^\u0000-\u001f\u007f]{1,300}$/;
+const SHIPMENT_ID_RE=/^[A-Za-z0-9._:-]{1,100}$/;
+const NOTE_CTRL_RE=/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
+const CAUSE_OPTIONS=[['','Auto'],['us','Us'],['them','Them']];
+const CAUSE_TIP='Who the delay is on. Us: Spyder (production, supply, QC, a late PO). Them: the customer (hold, reschedule, short ship). Auto: worked out from the override status and the SAP flags.';
+// state: '' not checked (or this page cannot reach a server), 'checking', 'shared', 'local' (no shared storage on
+// this site), 'offline' (server not reachable), 'failed' (the server refused; message says why).
+let sharedNotes={state:'',message:'',saving:false,last:null};
+let notesCleared=readLocalJson(NOTES_CLEARED_KEY);
+let sharedShipments=readLocalJson(NOTES_SHIPMENTS_KEY);
+// Changes waiting to be sent, as 'rows|<rowKey>' or 'shipments|<id>': a timer per line while edits keep coming,
+// then ready to send.
+const notesTimers=new Map();
+const notesReady=new Set();
+let notesFlushTimer=null;
+let notesInFlight=false;
+let notesFlushAgain=false;
+let notesClearedDirty=false;
+let editorDialogOpen=false;
+let editorAsked=false;
+let linkedBulkCause='';
+// rowKey -> 'YYYY-MM-DD' export date of the earliest uploaded report in which the line was on the At Risk card,
+// from the shared at-risk history (GET /api/history). Lines not in it are new this week. A var, so it is also
+// window.firstFlagged.
+var firstFlagged={};
+let atRiskWeeks=[];
+
+function readLocalJson(key){
+  try{const v=JSON.parse(localStorage.getItem(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
+  catch(err){return {};}
+}
+function writeLocalJson(key,value){
+  if(isSnapshotView)return;
+  try{localStorage.setItem(key,JSON.stringify(value));}catch(err){/* saveRowOverrides already warns when storage is full */}
+}
+function persistClearedSoon(){
+  if(notesClearedDirty)return;
+  notesClearedDirty=true;
+  Promise.resolve().then(()=>{notesClearedDirty=false;writeLocalJson(NOTES_CLEARED_KEY,notesCleared);});
+}
+const isSafeNoteKey=k=>k!=='__proto__'&&k!=='constructor'&&k!=='prototype';
+const hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+// Editor initials: null = never asked, '' = skipped, else the initials.
+function readEditor(){
+  try{return localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
+}
+function noteStamp(){
+  return {by:readEditor()||'',at:new Date(Date.now()).toISOString()};
+}
+function noteTime(e){
+  const t=e?Date.parse(e.at):NaN;
+  return Number.isFinite(t)?t:0;
+}
+function causeLabel(v){
+  return v==='us'?'Us':v==='them'?'Them':'Auto';
+}
+const canShareNotes=()=>typeof fetch!=='undefined'&&location.protocol!=='file:'&&!isSnapshotView;
+const notesSharing=()=>canShareNotes()&&sharedNotes.state!=='local';
+function cleanNoteText(v,max){
+  return String(v??'').replace(NOTE_CTRL_RE,'').slice(0,max);
+}
+// What is sent to the server: only the contract fields, within its limits.
+function sharedRowEntry(e){
+  const out={};
+  if(e.status!==undefined)out.status=cleanNoteText(e.status,80);
+  if(e.notes!==undefined)out.notes=cleanNoteText(e.notes,NOTE_MAX_LENGTH);
+  if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
+  if(e.deleted)out.deleted=true;
+  out.by=cleanNoteText(e.by,16);
+  out.at=noteTime(e)?e.at:new Date(Date.now()).toISOString();
+  return out;
+}
+function sharedShipmentEntry(e){
+  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanNoteText(e.by,16),at:noteTime(e)?e.at:new Date(Date.now()).toISOString()};
+}
+// An entry that came from the server, as this page keeps it.
+function localRowEntry(e){
+  const out={};
+  if(typeof e.status==='string')out.status=e.status;
+  if(typeof e.notes==='string')out.notes=e.notes;
+  if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
+  if(e.deleted===true)out.deleted=true;
+  out.by=typeof e.by==='string'?e.by:'';
+  out.at=typeof e.at==='string'?e.at:'';
+  return out;
+}
+function isClearedNote(e){
+  return !e.status&&!e.notes&&!e.cause&&!e.deleted;
+}
+function adoptRowEntry(k,srv){
+  const e=localRowEntry(srv);
+  if(isClearedNote(e))delete rowOverrides[k];else rowOverrides[k]=e;
+  if(notesCleared[k]){delete notesCleared[k];persistClearedSoon();}
+}
+
+// Called by writeRowOverride for every changed line (entry null = the line's entry was removed).
+function sharedNoteChanged(key,entry,stamp){
+  if(isSnapshotView)return;
+  noteLastEdit(stamp);
+  const sharing=notesSharing();
+  if(entry){if(notesCleared[key]){delete notesCleared[key];persistClearedSoon();}}
+  else if(sharing){notesCleared[key]={by:stamp.by,at:stamp.at};persistClearedSoon();}
+  if(!sharing)return;
+  queueSharedNote('rows',key);
+  askEditorInitials();
+}
+function queueSharedNote(kind,key,delay=NOTES_PATCH_DELAY){
+  const id=`${kind}|${key}`;
+  clearTimeout(notesTimers.get(id));
+  notesTimers.set(id,setTimeout(()=>{notesTimers.delete(id);notesReady.add(id);flushSharedNotesSoon();},delay));
+}
+function flushSharedNotesSoon(){
+  if(!notesFlushTimer)notesFlushTimer=setTimeout(()=>{notesFlushTimer=null;flushSharedNotes();},0);
+}
+// Sends the ready changes in one PATCH (more batches follow when they pass 512 KB). all: also the ones still
+// waiting (page closing). Changes stay in this browser whatever happens; an unsent one goes on the next open.
+async function flushSharedNotes({all=false,keepalive=false}={}){
+  if(sharedNotes.state!=='shared'||(editorDialogOpen&&!keepalive))return;
+  if(all){notesTimers.forEach((t,id)=>{clearTimeout(t);notesReady.add(id);});notesTimers.clear();}
+  if(notesInFlight){notesFlushAgain=true;return;}
+  const body={rows:{},shipments:{}};
+  let bytes=0,count=0;
+  for(const id of [...notesReady]){
+    const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);
+    const local=kind==='rows'?rowOverrides[key]||notesCleared[key]:sharedShipments[key];
+    if(!local||!(kind==='rows'?NOTE_KEY_RE:SHIPMENT_ID_RE).test(key)){notesReady.delete(id);continue;}
+    const entry=kind==='rows'?sharedRowEntry(local):sharedShipmentEntry(local);
+    const size=key.length+JSON.stringify(entry).length+8;
+    if(count&&(bytes+size>NOTES_BATCH_BYTES||count>=1000))break;
+    body[kind][key]=entry;bytes+=size;count++;
+    notesReady.delete(id);
+  }
+  if(!count)return;
+  notesInFlight=true;sharedNotes.saving=true;
+  renderSidebar();
+  try{
+    const res=await fetch('/api/notes',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(body),keepalive});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok){sharedNotes.message='';adoptSharedReply(data);}
+    else if([404,405,503].includes(res.status))setNotesLocal();
+    else sharedNotes.message=res.status===401?'sign-in expired, reload and sign in again':String(data.error||`server error ${res.status}`);
+  }catch(err){sharedNotes.message='server not reachable. Changes are kept in this browser and shared the next time the page opens';}
+  finally{
+    notesInFlight=false;sharedNotes.saving=false;
+    if(notesReady.size||notesFlushAgain){notesFlushAgain=false;flushSharedNotesSoon();}
+    renderSidebar();
+  }
+}
+// The server answers with what it now holds for each key sent; a newer edit from another computer wins here too.
+function adoptSharedReply(data){
+  let changed=false,shipChanged=false;
+  const rows=data&&data.rows&&typeof data.rows==='object'?data.rows:{};
+  Object.keys(rows).forEach(k=>{
+    const srv=rows[k];
+    if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
+    if(notesCleared[k]&&noteTime(srv)>=noteTime(notesCleared[k])){delete notesCleared[k];persistClearedSoon();}
+    if(noteTime(srv)>noteTime(rowOverrides[k]||notesCleared[k])){adoptRowEntry(k,srv);changed=true;}
+  });
+  const ships=data&&data.shipments&&typeof data.shipments==='object'?data.shipments:{};
+  Object.keys(ships).forEach(k=>{
+    const srv=ships[k];
+    if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
+    if(noteTime(srv)>noteTime(sharedShipments[k])){sharedShipments[k]=sharedShipmentEntry(srv);shipChanged=true;}
+  });
+  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged});
+}
+// After notes came in from the server: save them here, put them on the loaded lines and redraw.
+function sharedNotesChanged({rows=true,shipments=false}={}){
+  if(rows)saveRowOverrides();
+  if(shipments)writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+  recomputeLastEdit();
+  if(rows&&allLoadedRows.length){allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
+  if(document.getElementById('results-screen').style.display==='block')renderResults();
+  else renderSidebar();
+}
+function setNotesLocal(){
+  sharedNotes={...sharedNotes,state:'local',message:''};
+  notesTimers.forEach(t=>clearTimeout(t));notesTimers.clear();notesReady.clear();
+  // No shared storage here: nothing will ever need the cleared-line markers.
+  if(Object.keys(notesCleared).length){notesCleared={};persistClearedSoon();}
+}
+// Reads the shared notes once (page open) and merges them with this browser's copy; sends back what is newer here.
+async function syncSharedNotes(){
+  if(!canShareNotes()||sharedNotes.state==='checking'||sharedNotes.state==='shared')return;
+  sharedNotes={...sharedNotes,state:'checking',message:''};
+  let res;
+  try{res=await fetch('/api/notes',{cache:'no-store'});}
+  catch(err){sharedNotes={...sharedNotes,state:'offline',message:''};renderSidebar();return;}
+  if(isSnapshotView)return;
+  // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON.
+  if([404,405,503].includes(res.status)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();renderSidebar();return;}
+  if(!res.ok){sharedNotes={...sharedNotes,state:'failed',message:res.status===401?'sign-in expired, reload and sign in again':`server error ${res.status}`};renderSidebar();return;}
+  let doc=null;
+  try{doc=await res.json();}catch(err){doc=null;}
+  if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};renderSidebar();return;}
+  const push=mergeSharedNotes(doc);
+  sharedNotes={...sharedNotes,state:'shared',message:''};
+  push.forEach(id=>notesReady.add(id));
+  if(notesReady.size)flushSharedNotesSoon();
+  renderSidebar();
+}
+// Line by line, the newer edit wins. Returns the ids to send (newer here, or not on the server yet).
+function mergeSharedNotes(doc){
+  const push=[];
+  let changed=false,stamped=false,shipChanged=false;
+  const stamp=noteStamp();
+  const srvRows=doc.rows;
+  const keys=new Set([...Object.keys(rowOverrides),...Object.keys(notesCleared),...Object.keys(srvRows)]);
+  keys.forEach(k=>{
+    if(!isSafeNoteKey(k))return;
+    const srv=hasOwn(srvRows,k)&&srvRows[k]&&typeof srvRows[k]==='object'?srvRows[k]:null;
+    const local=rowOverrides[k]||notesCleared[k]||null;
+    if(srv&&noteTime(srv)>noteTime(local)){adoptRowEntry(k,srv);changed=true;return;}
+    if(!local)return;
+    if(srv&&noteTime(local)===noteTime(srv)){if(notesCleared[k]){delete notesCleared[k];persistClearedSoon();}return;}
+    // Notes saved before shared notes existed have no time: they are stamped now and shared.
+    if(!noteTime(local)){local.by=local.by||stamp.by;local.at=stamp.at;stamped=true;}
+    if(NOTE_KEY_RE.test(k))push.push(`rows|${k}`);
+  });
+  const srvShips=doc.shipments&&typeof doc.shipments==='object'?doc.shipments:{};
+  new Set([...Object.keys(sharedShipments),...Object.keys(srvShips)]).forEach(id=>{
+    if(!isSafeNoteKey(id))return;
+    const srv=hasOwn(srvShips,id)&&srvShips[id]&&typeof srvShips[id]==='object'?srvShips[id]:null;
+    const local=sharedShipments[id]||null;
+    if(srv&&noteTime(srv)>noteTime(local)){sharedShipments[id]=sharedShipmentEntry(srv);shipChanged=true;return;}
+    if(local&&noteTime(local)>noteTime(srv)&&SHIPMENT_ID_RE.test(id))push.push(`shipments|${id}`);
+  });
+  if(stamped&&!changed)saveRowOverrides();
+  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged});
+  else recomputeLastEdit();
+  return push;
+}
+function noteLastEdit(stamp){
+  if(!sharedNotes.last||noteTime(stamp)>=noteTime(sharedNotes.last))sharedNotes.last={by:stamp.by||'',at:stamp.at};
+}
+function recomputeLastEdit(){
+  let last=null;
+  [...Object.values(rowOverrides),...Object.values(sharedShipments)].forEach(e=>{if(e&&noteTime(e)&&(!last||noteTime(e)>noteTime(last)))last=e;});
+  sharedNotes.last=last?{by:String(last.by||''),at:last.at}:null;
+}
+// Sidebar line under the report status: "Notes shared · last edit KK Oct 8".
+function sharedNotesSidebarLine(){
+  if(isSnapshotView)return '';
+  const s=sharedNotes;
+  let text='',tip='';
+  if(s.state==='shared'){
+    const last=s.last&&noteTime(s.last)?new Date(noteTime(s.last)):null;
+    const lastBy=last&&s.last.by?`${s.last.by} `:'';
+    if(s.saving)text='Notes shared · saving…';
+    else if(s.message)text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
+    else text=last?`Notes shared · last edit ${esc(lastBy)}${esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric'}))}`:'Notes shared';
+    tip=`Notes, overrides, Us / Them causes and deleted lines are saved on the server, so everyone who signs in sees the same ones.${last?` Last edit${s.last.by?` by ${s.last.by}`:''} on ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}.`:''}`;
+  }else if(s.state==='offline'){
+    text='Notes saved in this browser only (server not reachable)';
+    tip='The server could not be reached when the page opened. Notes are kept in this browser and shared the next time the page opens.';
+  }else if(s.state==='failed'){
+    text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
+    tip='Notes are kept in this browser. Reload the page to try again.';
+  }else if(s.state==='local'||(!s.state&&!canShareNotes())){
+    text='Notes saved in this browser only';
+    tip='This site has no shared storage, so notes, overrides and causes stay in this browser. Share snapshot carries them to others.';
+  }else return '';
+  const editor=readEditor();
+  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorInitials(true)" data-tip="Your initials are kept in this browser and saved with every note, override and cause you change, so others see who made the last edit. Click to change them.">${editor?`Your initials: ${esc(editor)}`:'Add your initials'}</button>`:'';
+  return `<br><span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
+}
+
+// --- Editor initials: asked once, in a small dialog, the first time notes are shared from this browser ---
+function normalizeInitials(v){
+  const s=String(v||'').normalize('NFC').replace(/[\s._-]/g,'').toUpperCase();
+  return /^[\p{L}\p{N}]{1,4}$/u.test(s)?s:'';
+}
+function askEditorInitials(force=false){
+  if(editorDialogOpen||isSnapshotView)return;
+  if(!force&&(editorAsked||sharedNotes.state!=='shared'||readEditor()!==null))return;
+  editorAsked=true;
+  // Opened after the current click or redraw, so focus goes back to the control in use when it closes.
+  setTimeout(openEditorDialog,0);
+}
+function openEditorDialog(){
+  if(editorDialogOpen||isSnapshotView)return;
+  const d=document.createElement('dialog');
+  // Older browsers (and the test page) have no modal dialog: edits are then saved without initials.
+  if(!d||typeof d.showModal!=='function')return;
+  d.id='editor-dialog';
+  d.className='editor-dialog';
+  d.setAttribute('aria-labelledby','editor-dialog-title');
+  d.setAttribute('aria-describedby','editor-dialog-desc');
+  d.innerHTML=`<form method="dialog" class="editor-form" novalidate>
+    <h2 id="editor-dialog-title">Your initials</h2>
+    <p id="editor-dialog-desc">Notes, overrides and Us / Them causes are shared with everyone who signs in. Your initials are shown with your edits, for example “last edit KK Oct 8”. They are kept in this browser.</p>
+    <label for="editor-initials">Initials (1 to 4 letters)</label>
+    <input id="editor-initials" name="initials" maxlength="4" autocomplete="off" spellcheck="false" autocapitalize="characters" value="${esc(readEditor()||'')}" aria-describedby="editor-error">
+    <p class="editor-error" id="editor-error" role="alert"></p>
+    <div class="editor-actions">
+      <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save your initials in this browser. They are saved with every note, override and cause you change.">Save</button>
+      <button type="submit" value="skip" class="btn btn-sm" data-tip="Edit without initials. Your edits are shared without a name; add initials later from the sidebar.">Not now</button>
+    </div>
+  </form>`;
+  const form=d.querySelector('form'),input=d.querySelector('#editor-initials'),error=d.querySelector('#editor-error');
+  form.addEventListener('submit',e=>{
+    if(e.submitter&&e.submitter.value!=='save')return;
+    const v=normalizeInitials(input.value);
+    if(!v){e.preventDefault();error.textContent='Type 1 to 4 letters or numbers, for example KK.';input.focus();return;}
+    input.value=v;
+    // Enter in the box submits without a submitter; close with the Save result.
+    if(!e.submitter){e.preventDefault();d.close('save');}
+  });
+  d.addEventListener('close',()=>{
+    finishEditorDialog(d.returnValue==='save'?normalizeInitials(input.value):'');
+    d.remove();
+  });
+  document.body.appendChild(d);
+  editorDialogOpen=true;
+  d.showModal();
+}
+function finishEditorDialog(initials){
+  editorDialogOpen=false;
+  try{
+    if(initials)localStorage.setItem(NOTES_EDITOR_KEY,initials);
+    else if(readEditor()===null)localStorage.setItem(NOTES_EDITOR_KEY,'');
+  }catch(err){/* initials are a convenience; edits are saved without them */}
+  if(initials){
+    // Edits made just before (or while) the question was open carry the initials too.
+    let rows=false,ships=false;
+    [...notesReady,...notesTimers.keys()].forEach(id=>{
+      const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);
+      const e=kind==='rows'?rowOverrides[key]||notesCleared[key]:sharedShipments[key];
+      if(e&&!e.by){e.by=initials;if(kind==='rows')rows=true;else ships=true;}
+    });
+    if(rows){saveRowOverrides();persistClearedSoon();}
+    if(ships)writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+    if(sharedNotes.last&&!sharedNotes.last.by)recomputeLastEdit();
+  }
+  renderSidebar();
+  flushSharedNotesSoon();
+}
+
+// --- Us / Them cause controls (note editor, Build Risk rows, linked-lines bulk bar) ---
+function renderCauseSelect(r){
+  const current=r.overrideCause||'';
+  return `<select class="row-cause" data-key="${esc(rowKey(r))}" data-field="cause" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Cause, us or them, for ${esc(r.documentNumber)}" data-tip="${esc(CAUSE_TIP)}">
+    ${CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===current?' selected':''}>${l}</option>`).join('')}
+  </select>`;
+}
+function renderBulkCauseControls(){
+  return `<label>Cause <select id="linked-bulk-cause" class="select" onchange="linkedBulkCause=this.value" data-tip="${esc(CAUSE_TIP)}">${CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===linkedBulkCause?' selected':''}>${l}</option>`).join('')}</select></label>
+          <button type="button" class="btn btn-sm" id="linked-bulk-cause-apply" onclick="applyLinkedCause()" data-tip="Set this cause on every selected line. Auto clears the cause set by hand. Override statuses and notes are kept.">Set cause</button>`;
+}
+function applyLinkedCause(){
+  if(linkedSelection.size)setRowOverrides(linkedSelection,'cause',linkedBulkCause);
+  keepLinkedFocus();
+}
+
+// --- Shipping page helpers (tracking numbers typed in by hand, shared like notes) ---
+// getSharedShipments() -> {[id]:{order, number, carrier?, by, at}} (add {includeDeleted:true} for removed ones).
+function getSharedShipments({includeDeleted=false}={}){
+  const out={};
+  Object.keys(sharedShipments).forEach(id=>{const e=sharedShipments[id];if(e&&(includeDeleted||!e.deleted))out[id]={...e};});
+  return out;
+}
+// sharedNotesPatchShipments({[id]:{order, number, carrier?, deleted?}}): saves here, stamps by / at, and sends them
+// like notes. id: letters, digits and . _ : - (up to 100). Returns how many were saved (0 in a shared snapshot).
+function sharedNotesPatchShipments(map){
+  if(isSnapshotView||!map||typeof map!=='object')return 0;
+  const stamp=noteStamp();
+  let n=0;
+  Object.keys(map).forEach(id=>{
+    const e=map[id];
+    if(!isSafeNoteKey(id)||!SHIPMENT_ID_RE.test(id)||!e||typeof e!=='object')return;
+    sharedShipments[id]=sharedShipmentEntry({...e,...stamp});
+    n++;
+    if(notesSharing())queueSharedNote('shipments',id);
+  });
+  if(!n)return 0;
+  writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+  noteLastEdit(stamp);
+  if(notesSharing())askEditorInitials();
+  return n;
+}
+
+// --- At-risk history: when each line was first on the At Risk card ---
+// The lines on the At Risk card with every filter off, sent with the shared report (functions/api/report.js).
+function reportAtRiskWeek(){
+  try{
+    if(!parsedRows.length)return null;
+    const late=()=>orderHealthData(currentMetrics()).lateTileRows;
+    const rows=typeof aiWithFilters==='function'?aiWithFilters({},late):late();
+    return {asOf:displayDate(reportToday()),keys:[...new Set(rows.map(rowKey))].filter(k=>NOTE_KEY_RE.test(k)).slice(0,5000)};
+  }catch(err){console.warn('At-risk lines not worked out:',err);return null;}
+}
+function cleanAtRiskWeeks(list){
+  return (Array.isArray(list)?list:[]).filter(w=>w&&typeof w.asOf==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(w.asOf)&&Array.isArray(w.keys))
+    .map(w=>({asOf:w.asOf,savedAt:String(w.savedAt||''),keys:w.keys.filter(k=>typeof k==='string')}));
+}
+// Same rule as the server: one week per export date (the newer save wins), the newest 52 kept.
+function mergeAtRiskWeeks(...lists){
+  const byDay=new Map();
+  lists.flat().forEach(w=>{const had=byDay.get(w.asOf);if(!had||w.savedAt>=had.savedAt)byDay.set(w.asOf,w);});
+  return [...byDay.values()].sort((a,b)=>a.asOf<b.asOf?-1:a.asOf>b.asOf?1:0).slice(-52);
+}
+function refreshFirstFlagged(){
+  const out={};
+  atRiskWeeks.forEach(w=>w.keys.forEach(k=>{if(isSafeNoteKey(k)&&!hasOwn(out,k))out[k]=w.asOf;}));
+  firstFlagged=out;
+}
+// A report the server just saved adds its week here too, without reading the history again.
+function addAtRiskWeek(week){
+  atRiskWeeks=mergeAtRiskWeeks(atRiskWeeks,cleanAtRiskWeeks([week]));
+  refreshFirstFlagged();
+}
+async function loadAtRiskHistory(){
+  if(!canShareNotes())return;
+  try{
+    const res=await fetch('/api/history',{cache:'no-store'});
+    if(!res.ok||!/json/i.test(res.headers.get('content-type')||''))return;
+    const data=await res.json();
+    if(isSnapshotView)return;
+    atRiskWeeks=mergeAtRiskWeeks(cleanAtRiskWeeks(data&&data.weeks),atRiskWeeks);
+  }catch(err){console.warn('At-risk history not read:',err);return;}
+  refreshFirstFlagged();
+  if(atRiskWeeks.length&&document.getElementById('results-screen').style.display==='block')renderResults();
+}
+// Changes still waiting go out when the page is closed or hidden (keepalive lets the request finish).
+addEventListener('pagehide',()=>flushSharedNotes({all:true,keepalive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSharedNotes({all:true,keepalive:true});});
+
 renderSidebar();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
-function startApp(){loadEmbeddedSnapshot();restoreSavedReport();}
+// Shared notes and the at-risk history load next to the report (see Stream B: shared notes).
+function startApp(){loadEmbeddedSnapshot();restoreSavedReport();syncSharedNotes();loadAtRiskHistory();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startApp);
 else startApp();
 </script>
