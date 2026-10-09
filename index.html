@@ -2994,7 +2994,8 @@ function normalizeRows(raw){
       deliveryDocNumber:pick(mapped,['deliverydocnumber','deliverydocnum','delnumber','deliverynum']),
       // Delivery rows of the 2v1 query: FedEx tracking number(s) (ODLN.TrackNo), shipping type, ship-to country and
       // delivery date, for the Shipping page. Optional: older exports have none of these and load as before.
-      trackingNumber:String(pick(mapped,['trackingnumber','trackno','tracknumber','trackingno'])??'').trim(),
+      // Tracking numbers are kept cleaned ("7700 1234 5678" -> 770012345678), several separated by ", ".
+      trackingNumber:shipSplit(pick(mapped,['trackingnumber','trackno','tracknumber','trackingno'])).join(', '),
       shipMethod:String(pick(mapped,['shipmethod','shippingmethod','shippingtype','trnspname'])??'').trim(),
       shipToCountry:String(pick(mapped,['shiptocountry','shiptocountrycode','countrys'])??'').trim().toUpperCase(),
       shipDate:pick(mapped,['shipdate','shippeddate']),
@@ -6461,10 +6462,10 @@ function shippingRemoveManual(number){
   shippingQueueSync();
   if(typeof showToast==='function')showToast(`Stopped tracking ${n}.`);
 }
-// Search: a row's own tracking number plus numbers added by hand to its sales order.
+// Search: a row's own tracking number, plus the numbers added by hand to its sales order (on its order lines).
 function shippingTrackingFor(r){
   const own=String(r&&r.trackingNumber||'');
-  if(!r||!shipIsSales(r))return own;
+  if(!r||!shipIsSales(r)||!isOrderLineRow(r))return own;
   if(!shippingSearchIndex||Date.now()-shippingSearchIndex.at>1000){
     const map=new Map();
     for(const e of shippingManualEntries())if(e.order)map.set(e.order,`${map.get(e.order)||''} ${e.number}`.trim());
