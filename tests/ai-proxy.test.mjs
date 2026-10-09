@@ -171,6 +171,11 @@ test('malformed conversations are 400 with a plain message', async () => {
     { ...base, messages: QUESTION, tools: [{ name: 'bad name!', description: 'd' }] },
     { ...base, messages: QUESTION, system: 42 },
     { provider: 'anthropic', model: 'claude-opus-5-5', messages: [{ role: 'tool', content: 'x' }] },
+    // No images, files or links for the provider to fetch: the page only sends text and tool results.
+    { provider: 'anthropic', model: 'claude-opus-5-5', messages: [{ role: 'user', content: [{ type: 'document', source: { type: 'url', url: 'https://example.test/a.pdf' } }] }] },
+    { provider: 'anthropic', model: 'claude-opus-5-5', messages: [{ role: 'user', content: [{ type: 'tool_result', tool_use_id: 't', content: [{ type: 'image', source: { type: 'url', url: 'https://example.test/x.png' } }] }] }] },
+    { ...base, messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'https://example.test/x.png' } }] }] },
+    { ...base, messages: [...QUESTION, { role: 'tool', tool_call_id: 'c', content: [{ type: 'text', text: 'x' }] }] },
   ];
   for (const c of cases) {
     const res = await chat(c);
@@ -194,7 +199,7 @@ test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schem
   assert.equal(up.init.method, 'POST');
   assert.equal(up.headers.get('x-api-key'), KEYS.ANTHROPIC_API_KEY);
   assert.equal(up.headers.get('anthropic-version'), '2023-06-01');
-  assert.equal(up.headers.get('anthropic-beta'), 'server-side-fallback-2026-07-01');
+  assert.equal(up.headers.get('anthropic-beta'), 'server-side-fallback-2026-07-01,thinking-binding-controls-2026-08-01');
   assert.equal(up.headers.get('authorization'), null);
   assert.ok(!up.url.includes(KEYS.ANTHROPIC_API_KEY));
   assert.deepEqual(up.body.messages, history, 'the history is sent unchanged');
@@ -204,7 +209,8 @@ test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schem
   assert.equal(up.body.fallbacks, 'default');
   assert.deepEqual(up.body.output_config, { effort: 'medium' });
   assert.deepEqual(up.body.cache_control, { type: 'ephemeral' });
-  assert.equal(up.body.thinking, undefined, 'adaptive thinking is the default; it is never disabled');
+  assert.deepEqual(up.body.thinking, { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } }, 'adaptive thinking, never disabled; old thinking is dropped rather than refused');
+  for (const k of ['temperature', 'top_p', 'top_k', 'budget_tokens']) assert.equal(k in up.body, false, `${k} is not sent (these models reject it)`);
   assert.equal(up.body.tool_choice, undefined);
   assert.deepEqual(up.body.tools, [
     { name: 'get_overview', description: 'Headline numbers', input_schema: { type: 'object', properties: { warehouse: { type: 'string' } } } },
@@ -220,12 +226,12 @@ test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schem
   const last = await body(await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: QUESTION, tools: TOOLS, final: true }));
   assert.deepEqual(calls[0].body.tool_choice, { type: 'none' });
   assert.equal(calls[0].body.fallbacks, undefined);
-  assert.equal(calls[0].headers.get('anthropic-beta'), null);
+  assert.equal(calls[0].headers.get('anthropic-beta'), 'thinking-binding-controls-2026-08-01');
   assert.equal(calls[0].body.system, undefined);
   assert.deepEqual([last.stop, last.text, last.toolCalls], ['end', 'Done.', []]);
 });
 
-test('Claude: an account without the fallback beta gets the same request again without it; refusal and max_tokens map', async () => {
+test('Claude: an account without the betas gets the plain request once; refusal and max_tokens map', async () => {
   reset(({}, init) => (new Headers(init.headers).get('anthropic-beta')
     ? { status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'Unexpected value(s) `server-side-fallback-2026-07-01` for the `anthropic-beta` header.' } } }
     : { body: { model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Fine.' }], stop_reason: 'end_turn' } }));
@@ -234,11 +240,36 @@ test('Claude: an account without the fallback beta gets the same request again w
   assert.equal(calls.length, 2);
   assert.equal(calls[1].headers.get('anthropic-beta'), null);
   assert.equal(calls[1].body.fallbacks, undefined);
+  assert.equal(calls[1].body.thinking, undefined, 'block_binding is only valid with its beta');
+  assert.deepEqual(calls[1].body.messages, calls[0].body.messages);
   assert.equal((await body(res)).text, 'Fine.');
+  // Any other 400 is not retried.
+  reset(() => ({ status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'messages.0: bad content' } } }));
+  assert.equal((await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION })).status, 400);
+  assert.equal(calls.length, 1);
+  // A beta that keeps failing is tried once more without betas, then reported.
+  reset(() => ({ status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'block_binding: Extra inputs are not permitted' } } }));
+  assert.equal((await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: QUESTION })).status, 400);
+  assert.equal(calls.length, 2);
   reset(() => ({ body: { content: [], stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'cyber' } } }));
   assert.equal((await body(await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION }))).stop, 'refusal');
   reset(() => ({ body: { content: [{ type: 'text', text: 'Partial' }], stop_reason: 'max_tokens' } }));
   assert.equal((await body(await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION }))).stop, 'max_tokens');
+});
+
+test('Claude: after a server-side fallback only text is kept from before the marker; tool calls come from after it', async () => {
+  const content = [
+    { type: 'thinking', thinking: '', signature: 'declined' }, { type: 'text', text: 'Looking ' }, { type: 'tool_use', id: 'toolu_old', name: 'get_overview', input: {} },
+    { type: 'fallback', from: { model: 'claude-opus-5-5' }, to: { model: 'claude-opus-5' } },
+    { type: 'thinking', thinking: '', signature: 'kept' }, { type: 'text', text: 'it up.' }, { type: 'tool_use', id: 'toolu_new', name: 'search_lines', input: { scope: 'at_risk' } },
+  ];
+  reset(() => ({ body: { model: 'claude-opus-5', content, stop_reason: 'tool_use' } }));
+  const out = await body(await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION, tools: TOOLS }));
+  assert.deepEqual(out.message.content.map((b) => b.type), ['text', 'fallback', 'thinking', 'text', 'tool_use']);
+  assert.equal(out.message.content[2].signature, 'kept');
+  assert.deepEqual(out.toolCalls.map((c) => c.id), ['toolu_new'], 'the declined model\'s tool call is not run');
+  assert.equal(out.text, 'Looking it up.');
+  assert.equal(out.model, 'claude-opus-5', 'the model that answered is reported');
 });
 
 test('ChatGPT, Groq and OpenRouter: Chat Completions shape with Bearer auth; tool calls parsed; extras stripped', async () => {
@@ -247,10 +278,11 @@ test('ChatGPT, Groq and OpenRouter: Chat Completions shape with Bearer auth; too
     { id: 'call_B', type: 'function', function: { name: 'get_overview', arguments: '{oops' } },
   ] } }], usage: { prompt_tokens: 12, completion_tokens: 3 } };
   const history = [...QUESTION, { role: 'assistant', content: null, tool_calls: [{ id: 'call_0', type: 'function', function: { name: 'get_overview', arguments: '{}' } }] }, { role: 'tool', tool_call_id: 'call_0', content: '{"ok":true}' }];
-  const where = { openai: ['https://api.openai.com/v1/chat/completions', 'gpt-5-mini', 'max_completion_tokens', KEYS.OPENAI_API_KEY],
-    groq: ['https://api.groq.com/openai/v1/chat/completions', 'openai/gpt-oss-120b', 'max_completion_tokens', KEYS.GROQ_API_KEY],
-    openrouter: ['https://openrouter.ai/api/v1/chat/completions', 'meta-llama/llama-3.3-70b-instruct:free', 'max_tokens', KEYS.OPENROUTER_API_KEY] };
-  for (const [provider, [url, model, tokens, key]] of Object.entries(where)) {
+  // Free tiers get less room per answer: Groq counts it against a few thousand tokens per minute.
+  const where = { openai: ['https://api.openai.com/v1/chat/completions', 'gpt-5-mini', 'max_completion_tokens', KEYS.OPENAI_API_KEY, 16000],
+    groq: ['https://api.groq.com/openai/v1/chat/completions', 'openai/gpt-oss-120b', 'max_completion_tokens', KEYS.GROQ_API_KEY, 2048],
+    openrouter: ['https://openrouter.ai/api/v1/chat/completions', 'meta-llama/llama-3.3-70b-instruct:free', 'max_tokens', KEYS.OPENROUTER_API_KEY, 4096] };
+  for (const [provider, [url, model, tokens, key, max]] of Object.entries(where)) {
     reset((u) => (/\/models$/.test(u) ? { status: 500, body: {} } : { body: reply }));
     const out = await body(await chat({ provider, model, system: 'Sys', messages: history, tools: TOOLS }));
     const up = calls.find((c) => c.url.endsWith('/chat/completions'));
@@ -258,7 +290,8 @@ test('ChatGPT, Groq and OpenRouter: Chat Completions shape with Bearer auth; too
     assert.equal(up.headers.get('authorization'), `Bearer ${key}`);
     assert.equal(up.headers.get('x-api-key'), null);
     assert.deepEqual(up.body.messages, [{ role: 'system', content: 'Sys' }, ...history]);
-    assert.equal(up.body[tokens], 16000, `${provider} uses ${tokens}`);
+    assert.equal(up.body[tokens], max, `${provider} uses ${tokens}`);
+    for (const k of ['temperature', 'max_tokens', 'max_completion_tokens'].filter((k) => k !== tokens)) assert.equal(k in up.body, false, `${provider} sends no ${k}`);
     assert.equal(up.body.tool_choice, 'auto');
     assert.deepEqual(up.body.tools[0], { type: 'function', function: { name: 'get_overview', description: 'Headline numbers', parameters: { type: 'object', properties: { warehouse: { type: 'string' } } } } });
     assert.deepEqual([out.dialect, out.stop], ['openai', 'tool_use']);

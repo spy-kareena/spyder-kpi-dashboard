@@ -15,7 +15,8 @@
  * The page runs the tools itself (KPI_TOOLS in index.html) and sends the results back in the next request.
  * `messages` are in the provider's own dialect: Anthropic content blocks (tool_use / tool_result) for Claude,
  * OpenAI chat messages (tool_calls / role "tool") for ChatGPT, Groq and OpenRouter. `message` in the reply is
- * the assistant turn to append to that history unchanged (Claude's thinking blocks must be sent back as-is).
+ * the assistant turn to append to that history unchanged (Claude's thinking blocks must be sent back as-is, and
+ * the system prompt and tools must stay the same for the whole chat: Claude checks earlier turns are unchanged).
  * Errors are {error:{code, message}} with a plain-English message; upstream auth errors and keys are never echoed.
  * Docs: docs/AI_ASSISTANT.md.
  */
@@ -25,11 +26,17 @@ const MODELS_TIMEOUT_MS = 4000;
 const MODELS_TTL_MS = 60 * 60 * 1000;
 const MAX_MESSAGES = 400;
 const MAX_TOOLS = 16;
+// Longest answer per model turn, in tokens (thinking / reasoning included). Free tiers count this against a few
+// thousand tokens per minute, so they get less room; a short data answer fits easily.
 const MAX_OUTPUT_TOKENS = 16000;
 const ANTHROPIC_VERSION = '2023-06-01';
 // Claude Opus / Sonnet: if a safety classifier declines a question, Anthropic re-runs it on its recommended
-// fallback model in the same call. If the account rejects the beta, the request is sent again without it.
+// fallback model in the same call.
 const ANTHROPIC_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
+// Claude's thinking blocks are tied to the conversation before them. The page only ever appends to a chat, but if
+// an earlier turn ever differs, Claude drops the old thinking for that request instead of refusing it.
+// If the account rejects either beta, the request is sent again once without both.
+const ANTHROPIC_BINDING_BETA = 'thinking-binding-controls-2026-08-01';
 
 // Per provider: where to call, which secret holds the key, which models may be used, and what the data terms
 // mean in plain English (shown in the panel next to the consent tick).
@@ -56,7 +63,7 @@ const PROVIDERS = [
   },
   {
     id: 'groq', name: 'Groq', short: 'Groq', tier: 'free', dialect: 'openai', secret: 'GROQ_API_KEY',
-    base: 'https://api.groq.com/openai/v1', maxTokensField: 'max_completion_tokens',
+    base: 'https://api.groq.com/openai/v1', maxTokensField: 'max_completion_tokens', maxOutput: 2048,
     models: ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'],
     family: /^(openai\/gpt-oss-\d+b|llama-3\.3-70b-versatile|llama-3\.1-8b-instant|meta-llama\/llama-4-[\w.-]+|moonshotai\/kimi-k2[\w.-]*|qwen\/qwen3-[\w.-]+)$/,
     exclude: /guard|whisper|tts|playai|safeguard/i,
@@ -65,7 +72,7 @@ const PROVIDERS = [
   },
   {
     id: 'openrouter', name: 'OpenRouter (free models)', short: 'OpenRouter', tier: 'free', dialect: 'openai', secret: 'OPENROUTER_API_KEY',
-    base: 'https://openrouter.ai/api/v1', maxTokensField: 'max_tokens', freeOnly: true,
+    base: 'https://openrouter.ai/api/v1', maxTokensField: 'max_tokens', maxOutput: 4096, freeOnly: true,
     models: ['meta-llama/llama-3.3-70b-instruct:free', 'openai/gpt-oss-20b:free', 'deepseek/deepseek-chat-v3.1:free', 'qwen/qwen3-coder:free', 'mistralai/mistral-small-3.2-24b-instruct:free'],
     termsUrl: 'https://openrouter.ai/privacy',
     dataNotice: 'Free models only (nothing is billed). OpenRouter passes your question and the dashboard data needed to answer it (order lines, customers, vendors, values, notes) to an outside company that hosts the model. Many free hosts keep prompts and may use them to train models or publish them. Treat anything you send as public: use it only for data your company is happy to share.',
@@ -125,9 +132,11 @@ async function chat(request, env) {
   const final = body.final === true;
 
   if (p.dialect === 'anthropic') {
+    // Plain Messages API request: thinking is adaptive by default on these models (it cannot be turned off and
+    // never takes a temperature); medium effort suits short data questions; forced tool use is not allowed, so
+    // the last round uses tool_choice "none" instead.
     const req = {
       model, max_tokens: MAX_OUTPUT_TOKENS, messages,
-      // Adaptive thinking is on by default for these models; medium effort suits short data questions.
       output_config: { effort: 'medium' },
       // Caches the stable prefix (tools, system prompt, earlier turns) so the tool loop re-reads it cheaply.
       cache_control: { type: 'ephemeral' },
@@ -138,14 +147,16 @@ async function chat(request, env) {
       if (final) req.tool_choice = { type: 'none' };
     }
     const fallback = p.fallbackModels.includes(model);
-    let up = await callAnthropic(p, key, fallback ? { ...req, fallbacks: 'default' } : req, fallback);
-    // An account without the fallback beta answers 400 naming it: send the same request without the beta.
-    if (fallback && up.status === 400 && /anthropic-beta|fallback/i.test(up.message)) up = await callAnthropic(p, key, req, false);
+    const betas = [...(fallback ? [ANTHROPIC_FALLBACK_BETA] : []), ANTHROPIC_BINDING_BETA];
+    const withBetas = { ...req, thinking: { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } }, ...(fallback ? { fallbacks: 'default' } : {}) };
+    let up = await callAnthropic(p, key, withBetas, betas);
+    // An account that does not accept a beta answers 400 naming it: send the plain request once.
+    if (up.status === 400 && /anthropic-beta|beta|fallbacks|block_binding/i.test(up.message)) up = await callAnthropic(p, key, req, []);
     if (up.error) return up.error;
     return json(200, normalizeAnthropic(p, model, up.data));
   }
 
-  const req = { model, messages: [...(system ? [{ role: 'system', content: system }] : []), ...messages], [p.maxTokensField]: MAX_OUTPUT_TOKENS };
+  const req = { model, messages: [...(system ? [{ role: 'system', content: system }] : []), ...messages], [p.maxTokensField]: p.maxOutput || MAX_OUTPUT_TOKENS };
   if (tools.length) {
     req.tools = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: schemaOf(t) } }));
     req.tool_choice = final ? 'none' : 'auto';
@@ -167,6 +178,9 @@ function checkConversation(p, body) {
   for (const m of messages) {
     if (!m || typeof m !== 'object' || !roles.includes(m.role)) return { error: `Each message needs a role of ${roles.join(', ')}.` };
     if (p.dialect === 'anthropic' && !(typeof m.content === 'string' || Array.isArray(m.content))) return { error: 'Each Claude message needs text or content blocks.' };
+    // The page's own turns are plain text and tool results; no images, files or links for the provider to fetch.
+    // (Assistant turns are passed back as the provider sent them.)
+    if (m.role !== 'assistant' && !userContentOk(p, m.content)) return { error: 'Questions and tool results must be plain text.' };
   }
   if (messages[0].role !== 'user') return { error: 'The conversation must start with a question.' };
   const tools = body.tools === undefined ? [] : body.tools;
@@ -176,6 +190,13 @@ function checkConversation(p, body) {
     if (t.parameters !== undefined && (!t.parameters || typeof t.parameters !== 'object' || Array.isArray(t.parameters))) return { error: `Tool ${t.name} has bad parameters.` };
   }
   return { system, messages, tools };
+}
+
+function userContentOk(p, content) {
+  if (typeof content === 'string') return true;
+  if (p.dialect !== 'anthropic' || !Array.isArray(content)) return false;
+  const textOnly = (c) => typeof c === 'string' || (Array.isArray(c) && c.every((b) => b && b.type === 'text' && typeof b.text === 'string'));
+  return content.every((b) => b && ((b.type === 'text' && typeof b.text === 'string') || (b.type === 'tool_result' && typeof b.tool_use_id === 'string' && (b.content === undefined || textOnly(b.content)))));
 }
 
 // A JSON schema for the tool's arguments; an empty "required" list is left out (some hosts reject it).
@@ -229,9 +250,9 @@ async function modelAllowed(p, env, model) {
 function keyOf(p, env) { return String((env && env[p.secret]) || '').trim(); }
 
 // --- Upstream calls -------------------------------------------------------------------------------------
-function callAnthropic(p, key, req, beta) {
+function callAnthropic(p, key, req, betas) {
   const headers = { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': ANTHROPIC_VERSION };
-  if (beta) headers['anthropic-beta'] = ANTHROPIC_FALLBACK_BETA;
+  if (betas.length) headers['anthropic-beta'] = betas.join(',');
   return upstream(p, key, `${p.base}/messages`, { method: 'POST', headers, body: JSON.stringify(req) });
 }
 
@@ -280,7 +301,11 @@ function clean(text, key) {
 
 // --- Responses ------------------------------------------------------------------------------------------
 function normalizeAnthropic(p, model, data) {
-  const content = Array.isArray(data.content) ? data.content : [];
+  let content = Array.isArray(data.content) ? data.content.filter((b) => b && typeof b === 'object') : [];
+  // After a server-side fallback, only text may be kept from before the last "fallback" marker: the declined
+  // model's thinking and tool calls must not be sent back (and its tool calls are not run).
+  const cut = content.map((b) => b.type).lastIndexOf('fallback');
+  if (cut > 0) content = [...content.slice(0, cut).filter((b) => b.type === 'text'), ...content.slice(cut)];
   const text = content.filter((b) => b && b.type === 'text' && typeof b.text === 'string').map((b) => b.text).join('').trim();
   const toolCalls = content.filter((b) => b && b.type === 'tool_use').map((b) => ({ id: String(b.id || ''), name: String(b.name || ''), input: b.input && typeof b.input === 'object' ? b.input : {} }));
   const r = data.stop_reason;
