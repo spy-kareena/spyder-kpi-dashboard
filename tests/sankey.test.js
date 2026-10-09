@@ -151,8 +151,14 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   click('open', '2:Marine');
   assert.deepEqual(page.run('weeklySegmentFilter'), ['Marine']);
   page.run('resetWeeklyFilters()');
+  // "Past due" feeds the whole At Risk card: it picks that card and never unpicks it, and does not show pressed.
+  assert.equal(page.run('weeklyTileFilter'), 'late');
+  click('open', '1:pastdue');
+  assert.equal(page.run('weeklyTileFilter'), 'late');
+  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="0" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open sales-order value, 1 order, 1 line \([\d.]+% of \$[\d,]+\)\. Click to list these lines under Linked lines\."/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
+  assert.match(html(page), /<g class="sk-node sk-crit sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="No commit date: /);
   assert.match(html(page), /Linked lines — No Commit Date/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit', 'a second click keeps the list open');
@@ -401,10 +407,12 @@ test('opening animates with the Web Animations API only when motion is allowed, 
   assert.deepEqual(calls, []);
 });
 
-test('hover / focus light up the bands through a box both ways; arrow keys move between boxes', async () => {
+test('hover / focus light up the bands touching a box (both ways, not further on); arrow keys move between boxes', async () => {
   const page = loadPage();
-  const conn = page.run("(()=>{const c=sankeyConnected([{source:'a',target:'x'},{source:'b',target:'x'},{source:'x',target:'m'},{source:'b',target:'y'},{source:'y',target:'n'}],'x');return {links:[...c.links].sort(),nodes:[...c.nodes].sort()};})()");
-  assert.deepEqual(conn, { links: [0, 1, 2], nodes: ['a', 'b', 'm', 'x'] });
+  const conn = (id) => page.run(`(()=>{const c=sankeyConnected([{source:'a',target:'x'},{source:'b',target:'x'},{source:'x',target:'m'},{source:'b',target:'y'},{source:'y',target:'n'}],${JSON.stringify(id)});return {links:[...c.links].sort(),nodes:[...c.nodes].sort()};})()`);
+  assert.deepEqual(conn('x'), { links: [0, 1, 2], nodes: ['a', 'b', 'm', 'x'] });
+  // x → m also carries b's value, so it is not lit for a.
+  assert.deepEqual(conn('a'), { links: [0], nodes: ['a', 'x'] });
   // A tiny fake SVG: classList.toggle records what would be lit up.
   const cls = () => { const on = new Set(); return { on, toggle: (c, v) => (v ? on.add(c) : on.delete(c)) }; };
   const paths = [['a', 'x'], ['x', 'm'], ['b', 'y']].map(([s, t]) => ({ dataset: { s, t }, classList: cls() }));

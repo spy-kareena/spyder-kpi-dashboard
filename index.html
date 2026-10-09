@@ -870,6 +870,8 @@ button.trow.po-wh-cols{font-size:13px}
 .sk-sw-crit{background:var(--crit)}.sk-sw-warn{background:var(--warn-fill)}.sk-sw-good{background:var(--good)}.sk-sw-calm{background:var(--accent)}.sk-sw-muted{background:var(--gray-500)}
 .sk-filter{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--gray-700);background:var(--accent-tint);border:1px solid var(--accent-border);border-radius:var(--r-ctl);padding:8px 12px}
 .sk-about{margin-top:-4px}
+.sk-swipe{display:none;font-size:12px;color:var(--gray-500)}
+@media (max-width:980px){.sk-swipe{display:block}}
 @media (max-width:640px){.sk-detail{text-align:left}}
 @media (prefers-reduced-motion:reduce){.sk-link,.sk-node{transition:none}}
 /* Print: the open chart prints as drawn (no hover dimming), scaled to the page; the button bar and hints are hidden */
@@ -6384,17 +6386,11 @@ function sankeyLayout(nodes,links,opts){
   });
   return {width,height:layoutHeight,ky,nodeWidth,nodePadding:pad,columns:columns.map(c=>c.map(n=>n.id)),nodes:outNodes,links:L};
 }
-// Links and boxes connected to one box, following the flow both ways (used by hover, focus and a pinned box).
+// Bands touching one box and the boxes at their other ends (hover, focus and a pinned box light these up). Only
+// direct bands: a band further on also carries other boxes' value, so lighting it would overstate this box's share.
 function sankeyConnected(links,id){
   const on=new Set(),nodes=new Set([id]);
-  [['source','target'],['target','source']].forEach(([from,to])=>{
-    const seen=new Set([id]);let frontier=[id];
-    while(frontier.length){
-      const next=[];
-      links.forEach((l,i)=>{if(frontier.includes(l[from])){on.add(i);nodes.add(l[to]);if(!seen.has(l[to])){seen.add(l[to]);next.push(l[to]);}}});
-      frontier=next;
-    }
-  });
+  links.forEach((l,i)=>{if(l.source===id||l.target===id){on.add(i);nodes.add(l.source===id?l.target:l.source);}});
   return {links:on,nodes};
 }
 // Three-column flow from items (order lines, CTB rows, supply rows): each item names its box in every column and
@@ -6535,7 +6531,7 @@ function sankeyWeeklyFlows(m){
   return [
     {id:'open',title:'Open order value',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,
       sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view`,empty:'No open order value in this view.',
-      legend:[['crit','At risk'],['warn','Rescheduled'],['calm','Not at risk']]},
+      legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
     {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,
       sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card`,empty:'Nothing at risk in this view.',
       legend:[['crit','Us'],['warn','Them'],['muted','Not set']]}
@@ -6633,7 +6629,8 @@ function sankeyNodeSelected(n){
   if(a.type==='warehouse')return sankeySameSet(weeklyWarehouseFilter,a.values);
   if(a.type==='segment')return sankeySameSet(weeklySegmentFilter,a.values);
   if(a.type==='customer')return sankeySameSet(weeklyCustomerFilter,a.values);
-  if(a.type==='tile')return weeklyTileFilter===a.value;
+  // "late" is the whole At Risk card (several boxes feed it), so only the no-commit and rescheduled boxes show pressed.
+  if(a.type==='tile')return a.value!=='late'&&weeklyTileFilter===a.value;
   if(a.type==='reason')return typeof weeklyReasonFilter!=='undefined'&&matches(weeklyReasonFilter,a.value);
   if(a.type==='cause')return typeof weeklyCauseFilter!=='undefined'&&matches(weeklyCauseFilter,a.value);
   if(a.type==='cm')return buildRiskCmFilter===a.value;
@@ -6655,7 +6652,8 @@ function sankeyNodeClick(tab,flowId,nodeId){
     if(a.type==='warehouse'){toast(on?'Showing every warehouse':`Showing ${node.label}`);setWeeklyWarehouseFilter(pick);return;}
     if(a.type==='segment'){toast(on?'Showing every customer segment':`Showing the ${node.label} segment`);setWeeklySegmentFilter(pick);return;}
     if(a.type==='customer'){toast(on?'Showing every customer':`Showing ${node.label}`);setWeeklyCustomerFilter(pick);return;}
-    if(a.type==='tile'){if(!on)setWeeklyTileFilter(a.value);else renderResults();toast(`Linked lines list ${node.label.toLowerCase()} lines`);return;}
+    // A card pick is not a toggle here: a second click keeps its lines listed.
+    if(a.type==='tile'){toast(`Linked lines below list the ${a.value==='late'?'At Risk':node.label} lines`);if(weeklyTileFilter!==a.value)setWeeklyTileFilter(a.value);else renderResults();return;}
     if(a.type==='reason'&&typeof setWeeklyReasonFilter==='function'){setWeeklyReasonFilter(a.value);return;}
     if(a.type==='cause'&&typeof setWeeklyCauseFilter==='function'){setWeeklyCauseFilter(a.value);return;}
     if(a.type==='cm'){toast(on?'Showing every CM':`Showing CM ${node.label} only`);setBuildRiskCm(a.value);return;}
@@ -6684,7 +6682,7 @@ function sankeyNodeKey(e,el){
     :inCol.find(n=>Number(n.dataset.row)===Number(el.dataset.row)+move[1]);
   if(target&&target.focus)target.focus();
 }
-// Hover or focus on a box lights up the bands through it (and the boxes they reach); leaving it goes back to the
+// Hover or focus on a box lights up the bands touching it (and the boxes they reach); leaving it goes back to the
 // pinned box, if any. The line under the chart repeats the box's numbers.
 function sankeyHover(el,leaving){
   const svg=el&&el.closest&&el.closest('svg');
@@ -6727,11 +6725,14 @@ function renderSankeyFlow(tab,flow){
   const svgH=r(layout.height+TOP+6);
   const ids=`sankey-${tab}-${flow.id}`;
   const colX=layout.columns.map(c=>c.length?nodeById.get(c[0]):null);
+  // Label room: the side margins for the first and last columns, the gap to the next column for the middle ones.
+  const step=layout.columns.length>1?(W-LEFT-RIGHT-layout.nodeWidth)/(layout.columns.length-1):0;
+  const room=n=>n.column===0?LEFT-12:n.column===layout.columns.length-1?RIGHT-12:step-layout.nodeWidth-22;
   const heads=flow.cols.map((c,i)=>{const n=colX[i];if(!n)return '';const end=n.anchor==='end';return `<text x="${r(end?n.x1:n.x0)}" y="14" text-anchor="${end?'end':'start'}">${esc(c)}</text>`;}).join('');
   const links=layout.links.map((l,i)=>`<path class="sk-link sk-${esc(l.tone||'calm')}${conn&&conn.links.has(i)?' sk-on':''}" d="${l.path}" data-s="${esc(l.source)}" data-t="${esc(l.target)}"><title>${esc(`${nodeById.get(l.source).label} → ${nodeById.get(l.target).label}: ${sankeyFormat(flow.unit,l.value)}${flow.unit==='money'?` (${fmtNum(l.count)} ${l.count===1?'line':'lines'})`:''}`)}</title></path>`).join('');
   const nodes=layout.nodes.map(n=>{
     const sel=sankeyNodeSelected(n)||pinned===n.id;
-    const label=sankeyClip(n.label,n.column===0?22:20);
+    const label=sankeyClip(n.label,Math.max(6,Math.min(48,Math.floor(room(n)/6.6)-n.valueLabel.length-1)));
     const tw=(label.length+n.valueLabel.length+1)*6.6;
     const hx=n.anchor==='end'?n.labelX-tw-4:n.x0-3;
     const hw=n.anchor==='end'?n.x1+3-hx:n.labelX+tw+4-hx;
@@ -6740,7 +6741,7 @@ function renderSankeyFlow(tab,flow){
   }).join('');
   return `<div class="sk-flow">${head}
     <div class="sk-scroll"><svg class="sk-svg${conn?' sk-hl':''}" role="group" aria-labelledby="${ids}-title" aria-describedby="${ids}-desc" viewBox="0 0 ${W} ${svgH}" width="${W}" height="${svgH}"${pinned?` data-pinned="${esc(pinned)}"`:''}><title id="${ids}-title">${esc(`${flow.title}: ${flow.cols.join(' to ')}`)}</title><desc id="${ids}-desc">${esc(`${sankeyFormat(flow.unit,flow.total)} in all. Each box is a button with its numbers; Enter or Space applies it, arrow keys move between boxes.`)}</desc><g class="sk-heads" aria-hidden="true">${heads}</g><g transform="translate(0,${TOP})"><g class="sk-links" aria-hidden="true">${links}</g><g class="sk-nodes">${nodes}</g></g></svg></div>
-    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><p class="sk-detail print-hide" aria-hidden="true">Hover or Tab to a box for its numbers. Click a box to filter the page.</p></div>
+    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><span class="sk-swipe print-hide" aria-hidden="true">Swipe sideways to see the whole chart.</span><p class="sk-detail print-hide" aria-hidden="true">Hover or Tab to a box for its numbers. Click a box to filter the page.</p></div>
   </div>`;
 }
 const SANKEY_INTRO={
