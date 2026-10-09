@@ -3972,11 +3972,12 @@ const KPI_TOOLS=[
       const err=aiNoRows()||aiScopeError(a);if(err)return err;
       if(a.cause!==undefined&&!['us','them','neutral','not_set'].includes(a.cause))return {error:'cause must be one of us, them, neutral, not_set'};
       const wantCause=a.cause==='not_set'?'unknown':a.cause;
+      if(wantCause)ohRowMemoFresh();
       const words=String(a.query||'').toLowerCase().split(/\s+/).filter(Boolean);
       const has=(text,q)=>!q||String(text).toLowerCase().includes(String(q).trim().toLowerCase());
       const rows=aiScopeRows(a.scope).filter(r=>{
         if(!has(rowWarehouse(r),a.warehouse)||!has(rowCustomerLabel(r),a.customer)||!has(poVendorLabel(r),a.vendor))return false;
-        if(wantCause&&!(ohIsSalesRow(r)&&ohCauseFor(r)===wantCause))return false;
+        if(wantCause&&!(ohIsSalesRow(r)&&ohRowInfo(r).causeFor===wantCause))return false;
         const text=[r.documentNumber,r.itemCode,r.itemDescription,r.name,r.code,rowWarehouse(r),r.customerPONumber,r.deliveryDocNumber,r.overrideStatus,r.overrideNotes].join(' ').toLowerCase();
         return words.every(w=>text.includes(w));
       });
@@ -6491,8 +6492,7 @@ function lineReasons(r){
 function lineCause(r){
   return ohCauseRule(r).cause;
 }
-function ohCauseRule(r){
-  const entries=ohSavedEntries(r);
+function ohCauseRule(r,entries=ohSavedEntries(r)){
   const manual=ohManualCause(r,entries);
   if(manual)return {cause:manual,rule:'picked on the line'};
   const status=ohOverrideStatus(r,entries);
@@ -6508,6 +6508,25 @@ function ohCauseRule(r){
 function ohCauseFor(r){
   if(!lineReasons(r).length&&!ohOverrideStatus(r)&&!ohManualCause(r))return '';
   return lineCause(r);
+}
+// Reasons and cause per line for the bulk passes (chart filters, Leading charts, Lagging splits, Search, search_lines),
+// kept until the data, a status override, a picked cause or the flag history changes. Each pass calls
+// ohRowMemoFresh() before reading ohRowInfo(). causeFor is '' for a line with nothing to explain (see ohCauseFor).
+let ohRowMemo={m:null,stamp:null,map:new WeakMap()};
+function ohRowMemoFresh(){
+  const m=metricsCache,stamp=ohStamp();
+  if(ohRowMemo.m!==m||ohRowMemo.stamp!==stamp)ohRowMemo={m,stamp,map:new WeakMap()};
+}
+function ohRowInfo(r){
+  let x=ohRowMemo.map.get(r);
+  if(!x){
+    const reasons=lineReasons(r),entries=ohSavedEntries(r);
+    const {cause,rule}=ohCauseRule(r,entries);
+    const explained=reasons.length>0||!!ohOverrideStatus(r,entries)||!!ohManualCause(r,entries);
+    x={reasons,cause,rule,causeFor:explained?cause:''};
+    ohRowMemo.map.set(r,x);
+  }
+  return x;
 }
 // Same rule as the At Risk card (orderHealthData's lateTileRows) for one line.
 function ohIsAtRisk(r){
@@ -6548,31 +6567,34 @@ function ohAgeBucket(r){
 // --- Drill filters (reason, cause, when flagged): they narrow the open order lines Order Health works from ---
 function ohDrillActive(){return !!(weeklyReasonFilter||weeklyCauseFilter||weeklyAgeFilter);}
 // A short fingerprint of the picked causes and the flag history, so cached page data is rebuilt when either changes.
-let ohFlagsSeen=null,ohFlagsGen=0;
+// The causes are joined into one string and compared with the last one (a fast string compare); a change bumps a counter.
+let ohCausesSeen={text:null,gen:0},ohFlagsSeen=null,ohFlagsGen=0;
 function ohStamp(){
-  let h=2166136261,n=0;
+  let text='';
   for(const k in rowOverrides){
     const e=rowOverrides[k],c=e&&e.cause;
-    if(!c)continue;
-    n++;
-    const s=`${k}\u0001${c}`;
-    for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}
+    if(c)text+=`${k}\u0001${c}\u0002`;
   }
+  if(text!==ohCausesSeen.text)ohCausesSeen={text,gen:ohCausesSeen.gen+1};
   const ff=ohFirstFlagged();
   if(ff!==ohFlagsSeen){ohFlagsSeen=ff;ohFlagsGen++;}
-  return `${n}.${(h>>>0).toString(36)}|${ff?`${ohFlagsGen}.${Object.keys(ff).length}`:'0'}`;
+  return `${ohCausesSeen.gen}|${ff?`${ohFlagsGen}.${Object.keys(ff).length}`:'0'}`;
 }
 // Part of weeklyFilterKey(): empty unless a drill filter is on.
 function ohDrillKey(){return ohDrillActive()?[weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter,ohStamp()]:'';}
 function ohDrillMatch(r){
   if(weeklyAgeFilter&&!(ohIsAtRisk(r)&&ohAgeBucket(r)===weeklyAgeFilter))return false;
-  if(weeklyReasonFilter&&!lineReasons(r).includes(weeklyReasonFilter))return false;
-  if(weeklyCauseFilter&&ohCauseFor(r)!==weeklyCauseFilter)return false;
+  if(weeklyReasonFilter&&!ohRowInfo(r).reasons.includes(weeklyReasonFilter))return false;
+  if(weeklyCauseFilter&&ohRowInfo(r).causeFor!==weeklyCauseFilter)return false;
   return true;
 }
 // Used by orderHealthData for its open lines (every Leading card, Top offenders, aging, What's due next and the linked
 // lines follow). Lagging rates score closed lines and deliveries, so these filters leave them alone.
-function ohDrillRows(rows){return ohDrillActive()?rows.filter(ohDrillMatch):rows;}
+function ohDrillRows(rows){
+  if(!ohDrillActive())return rows;
+  ohRowMemoFresh();
+  return rows.filter(ohDrillMatch);
+}
 function ohDrillChanged(){
   weeklyLinkedShowAll=false;
   linkedSelection.clear();
@@ -6652,13 +6674,14 @@ function ohRenderDrillChips(){
 function ohLeadingData(m,oh=orderHealthData(m)){
   return cachedByFilter(m,`ohv2|${weeklyFilterKey()}|${ohStamp()}`,()=>{
     const risk=oh.lateTileRows;
-    const info=new Map(risk.map(r=>[r,{reasons:lineReasons(r),cause:lineCause(r),age:ohAgeBucket(r)}]));
+    ohRowMemoFresh();
+    const info=new Map(risk.map(r=>{const x=ohRowInfo(r);return [r,{reasons:x.reasons,cause:x.cause,age:ohAgeBucket(r)}];}));
     const byReason=new Map();
     risk.forEach(r=>info.get(r).reasons.forEach(label=>{if(!byReason.has(label))byReason.set(label,[]);byReason.get(label).push(r);}));
-    const reasons=[...byReason].map(([label,rows])=>({label,rows,value:rowOpenAmount(rows),cause:causeOfLabel(label)||'unknown'}))
+    const reasons=[...byReason].map(([label,rows])=>({label,rows,orders:rowDocCount(rows),value:rowOpenAmount(rows),cause:causeOfLabel(label)||'unknown'}))
       .sort((a,b)=>b.value-a.value||b.rows.length-a.rows.length||a.label.localeCompare(b.label));
     const cause=ohCauseTotals(risk,openLineValue,r=>info.get(r).cause);
-    const ages=OH_AGE_BUCKETS.map(([id,label])=>{const rows=risk.filter(r=>info.get(r).age===id);return {id,label,rows,value:rowOpenAmount(rows)};});
+    const ages=OH_AGE_BUCKETS.map(([id,label])=>{const rows=risk.filter(r=>info.get(r).age===id);return {id,label,rows,orders:rowDocCount(rows),value:rowOpenAmount(rows)};});
     const groups=new Map(OH_STATES.map(([id])=>[id,[]]));
     oh.allOrderRows.forEach(r=>{
       const bucket=weeklyRiskBucket(r);
@@ -6666,8 +6689,10 @@ function ohLeadingData(m,oh=orderHealthData(m)){
       const id=bucket==='nocommit'?'nocommit':bucket==='late'||bucket==='missed'?'pastdue':bucket==='future'?'rescheduled':r.isOpen&&due&&due>=oh.thisWeekStart&&due<=oh.thisWeekEnd?'duethisweek':'ontrack';
       groups.get(id).push(r);
     });
-    const states=OH_STATES.map(([id,key,label,color,help])=>{const rows=groups.get(id);return {id,key,label,color,help,rows,value:rowOpenAmount(rows)};});
-    return {risk,info,reasons,topReasons:reasons.slice(0,6),cause,ages,states,historyLoaded:!!ohFirstFlagged()};
+    const states=OH_STATES.map(([id,key,label,color,help])=>{const rows=groups.get(id);return {id,key,label,color,help,rows,orders:rowDocCount(rows),value:rowOpenAmount(rows)};});
+    OH_CAUSE_IDS.forEach(c=>{cause[c].orders=rowDocCount(cause[c].rows);});
+    const open={orders:rowDocCount(oh.allOrderRows),lines:oh.allOrderRows.length,value:rowOpenAmount(oh.allOrderRows)};
+    return {risk,info,reasons,topReasons:reasons.slice(0,6),cause,ages,states,open,historyLoaded:!!ohFirstFlagged()};
   });
 }
 function ohCauseBar(t,by='value',cls=''){
@@ -6690,20 +6715,20 @@ function ohRenderLeading(m){
   const stateBar=`<span class="split-bar oh-states-bar" aria-hidden="true">${lines?d.states.filter(s=>s.rows.length).map(s=>`<i style="width:${(s.rows.length/lines*100).toFixed(2)}%;background:${s.color}"></i>`).join(''):''}</span>`;
   const stateCells=d.states.map(s=>{
     const id=`st-${s.id}`,on=weeklyTileFilter===id;
-    const tip=`${s.label}: ${ohN(rowDocCount(s.rows),'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open value (${pct(s.rows.length,lines)}% of open lines). ${s.help} Click to list them.`;
-    return `<button type="button" class="${on?'selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}"><div class="ms-text"><span class="ms-label"><i class="sw lg" style="background:${s.color}"></i>${esc(s.label)}</span><span class="ms-sub">${ohN(s.rows.length,'line')} · ${pct(s.rows.length,lines)}%</span></div><div class="ms-num"><span class="ms-big">${ohN(rowDocCount(s.rows),'order')}</span><span class="ms-amt">${money(s.value)}</span></div></button>`;
+    const tip=`${s.label}: ${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open value (${pct(s.rows.length,lines)}% of open lines). ${s.help} Click to list them.`;
+    return `<button type="button" class="${on?'selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}"><div class="ms-text"><span class="ms-label"><i class="sw lg" style="background:${s.color}"></i>${esc(s.label)}</span><span class="ms-sub">${ohN(s.rows.length,'line')} · ${pct(s.rows.length,lines)}%</span></div><div class="ms-num"><span class="ms-big">${ohN(s.orders,'order')}</span><span class="ms-amt">${money(s.value)}</span></div></button>`;
   }).join('');
   // Top 6 at-risk reasons by open value; the bar colour is the cause the reason usually means.
   const maxReason=Math.max(1,...d.topReasons.map(x=>x.value));
   const reasonRows=d.topReasons.map((x,i)=>{
     const on=weeklyReasonFilter===x.label;
-    const tip=`${x.label}: ${money(x.value)} open value on ${fmtNum(x.rows.length)} at-risk lines (${ohN(rowDocCount(x.rows),'order')}). Usually ${x.cause==='unknown'?'not set by a rule (pick Us or Them on the line)':`caused by ${OH_CAUSE_LABEL[x.cause].toLowerCase()}`}. ${on?'Click to show every reason again.':'Click to show only lines with this reason.'}`;
+    const tip=`${x.label}: ${money(x.value)} open value on ${fmtNum(x.rows.length)} at-risk lines (${ohN(x.orders,'order')}). Usually ${x.cause==='unknown'?'not set by a rule (pick Us or Them on the line)':`caused by ${OH_CAUSE_LABEL[x.cause].toLowerCase()}`}. ${on?'Click to show every reason again.':'Click to show only lines with this reason.'}`;
     return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-reason-${esc(x.label)}" data-reason="${esc(x.label)}" onclick="setWeeklyReasonFilter(this.dataset.reason)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(x.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w cause-${x.cause}" style="width:${(x.value/maxReason*100).toFixed(1)}%;animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(x.value)}</span></button>`;
   }).join('');
   const causeLegend=`<div class="legend oh-legend">${OH_CAUSES.filter(([c])=>c!=='neutral').map(([c,label])=>`<span><i class="sw lg cause-${c}"></i>${label}</span>`).join('')}</div>`;
   const openCard=`<section class="card list-card oh-card" aria-labelledby="oh-open-title">
-      <div class="list-head"><h2 id="oh-open-title" data-tip="${esc(`Open orders: ${ohN(rowDocCount(oh.allOrderRows),'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(oh.allOrderRows))} open value in this view. The bars rank the reasons behind the at-risk lines by open value.`)}">Open orders</h2><span class="section-sub">top 6 at-risk reasons</span></div>
-      <div class="kpi-row"><span class="kpi-value oh-num">${fmtNum(rowDocCount(oh.allOrderRows))}</span><span class="kpi-unit">${rowDocCount(oh.allOrderRows)===1?'order':'orders'} · ${ohN(lines,'line')} · ${money(rowOpenAmount(oh.allOrderRows))}</span></div>
+      <div class="list-head"><h2 id="oh-open-title" data-tip="${esc(`Open orders: ${ohN(d.open.orders,'order')}, ${ohN(lines,'line')}, ${money(d.open.value)} open value in this view. The bars rank the reasons behind the at-risk lines by open value.`)}">Open orders</h2><span class="section-sub">top 6 at-risk reasons</span></div>
+      <div class="kpi-row"><span class="kpi-value oh-num">${fmtNum(d.open.orders)}</span><span class="kpi-unit">${d.open.orders===1?'order':'orders'} · ${ohN(lines,'line')} · ${money(d.open.value)}</span></div>
       <div class="oh-bars" role="group" aria-label="Top at-risk reasons by open value">${reasonRows||'<div class="empty-note">Nothing at risk in this view.</div>'}</div>
       ${reasonRows?causeLegend:''}
       <span class="oh-note">A line can have more than one reason, so the bars can add up to more than At risk.</span>
@@ -6713,7 +6738,7 @@ function ohRenderLeading(m){
   const maxAge=Math.max(1,...d.ages.map(a=>a.value));
   const ageRows=d.ages.map((a,i)=>{
     const on=weeklyAgeFilter===a.id;
-    const tip=`${a.label}: ${money(a.value)} open value on ${fmtNum(a.rows.length)} at-risk lines (${ohN(rowDocCount(a.rows),'order')})${a.id==='new'?' first at risk in this week’s upload, or with no earlier history':' first at risk that many weeks before this export'}. ${on?'Click to show every age again.':'Click to show only these lines.'}`;
+    const tip=`${a.label}: ${money(a.value)} open value on ${fmtNum(a.rows.length)} at-risk lines (${ohN(a.orders,'order')})${a.id==='new'?' first at risk in this week’s upload, or with no earlier history':' first at risk that many weeks before this export'}. ${on?'Click to show every age again.':'Click to show only these lines.'}`;
     return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-age-${a.id}" data-age="${a.id}" onclick="setWeeklyAgeFilter(this.dataset.age)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(a.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w" style="width:${(a.value/maxAge*100).toFixed(1)}%;background:${flagColors[i]};animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(a.value)}</span></button>`;
   }).join('');
   const whenCard=`<section class="card list-card oh-card" aria-labelledby="oh-when-title">
@@ -6726,8 +6751,8 @@ function ohRenderLeading(m){
   const totalRisk=OH_CAUSE_IDS.reduce((s,c)=>s+t[c].value,0);
   const causeButtons=OH_CAUSES.filter(([c])=>c!=='neutral'||t.neutral.lines||weeklyCauseFilter==='neutral').map(([c,label,who])=>{
     const on=weeklyCauseFilter===c;
-    const tip=`${label}: ${money(t[c].value)} at-risk open value on ${ohN(t[c].lines,'line')} (${ohN(rowDocCount(t[c].rows),'order')}), ${pct(t[c].value,totalRisk)}% of at-risk value. ${label} = ${who}. ${on?'Click to show every cause again.':'Click to show only these lines.'}`;
-    return `<button type="button" class="oh-cause-btn${on?' selected':''}" data-focus-key="oh-cause-${c}" data-cause="${c}" onclick="setWeeklyCauseFilter(this.dataset.cause)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-cause-name"><i class="sw lg cause-${c}"></i>${label}</span><strong>${money(t[c].value)}</strong><span class="muted">${ohN(t[c].lines,'line')} · ${ohN(rowDocCount(t[c].rows),'order')}</span></button>`;
+    const tip=`${label}: ${money(t[c].value)} at-risk open value on ${ohN(t[c].lines,'line')} (${ohN(t[c].orders,'order')}), ${pct(t[c].value,totalRisk)}% of at-risk value. ${label} = ${who}. ${on?'Click to show every cause again.':'Click to show only these lines.'}`;
+    return `<button type="button" class="oh-cause-btn${on?' selected':''}" data-focus-key="oh-cause-${c}" data-cause="${c}" onclick="setWeeklyCauseFilter(this.dataset.cause)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-cause-name"><i class="sw lg cause-${c}"></i>${label}</span><strong>${money(t[c].value)}</strong><span class="muted">${ohN(t[c].lines,'line')} · ${ohN(t[c].orders,'order')}</span></button>`;
   }).join('');
   const causeCard=`<section class="card list-card oh-card" aria-labelledby="oh-cause-title">
       <div class="list-head"><h2 id="oh-cause-title" data-tip="Us vs Them: who the at-risk open value is waiting on. Us = Spyder (production, quality, supply, planning); Them = the customer or the carrier.">Us vs Them</h2><span class="section-sub">who at-risk value waits on</span></div>
@@ -6750,6 +6775,7 @@ function ohMonthIndex(){
 }
 function ohLagSplits(m,oh=orderHealthData(m)){
   return cachedByFilter(m,`ohls|${weeklyFilterKey()}|${ohStamp()}`,()=>{
+    ohRowMemoFresh();
     const late=r=>{const d=deliveryLateDays(r);return d!==null&&d>=1;};
     const value=r=>r.isOpen?openLineValue(r):r.amountLocal;
     const misses={
@@ -6761,7 +6787,7 @@ function ohLagSplits(m,oh=orderHealthData(m)){
       reschedhit:uniqueRows([...oh.reschedulePerf.tolerance,...oh.reschedulePerf.missed,...oh.reschedulePerf.stillOpenPast])
     };
     const out={};
-    Object.entries(misses).forEach(([id,rows])=>{out[id]={rows,totals:ohCauseTotals(rows,value)};});
+    Object.entries(misses).forEach(([id,rows])=>{out[id]={rows,totals:ohCauseTotals(rows,value,r=>ohRowInfo(r).cause)};});
     // Fill rate by original due month (same formula as the card, for the lines due in each month).
     const {months,at}=ohMonthIndex();
     const groups=months.map(()=>[]);
@@ -6788,6 +6814,8 @@ function ohFillSpark(m,tone){
 // Metrics page's work, so Order Health on its default tab does not pay for it.
 function ohLaggingExtras(m,oh=orderHealthData(m)){
   return cachedByFilter(m,`ohlx|${weeklyFilterKey()}|${ohStamp()}`,()=>{
+    ohRowMemoFresh();
+    const causeOf=r=>ohRowInfo(r).cause;
     const {months,at}=ohMonthIndex();
     const start=new Date(months[0]);start.setHours(0,0,0,0);
     const today=reportToday();today.setHours(23,59,59,999);
@@ -6826,14 +6854,14 @@ function ohLaggingExtras(m,oh=orderHealthData(m)){
       perfect:{scored,perfect,notPerfect,notPerfectDeliveries,rate:scored.length?Math.round(perfect.length/scored.length*100):0,
         series:perMonth.map((x,i)=>({label:shortMonth(months[i]),perfect:x.n?Math.round(x.ok/x.n*100):null})),
         totals:ohCauseTotals(notPerfect,r=>rowShippedAmount(shipments.get(orderLineKey(r))||[]),r=>{
-          const own=lineCause(r);
+          const own=causeOf(r);
           if(own!=='unknown')return own;
-          for(const d of shipments.get(orderLineKey(r))||[]){const c=lineCause(d);if(c!=='unknown')return c;}
+          for(const d of shipments.get(orderLineKey(r))||[]){const c=causeOf(d);if(c!=='unknown')return c;}
           return 'unknown';
         })},
       daysLate:{scored:scoredDeliveries,late:lateDeliveries,avg:Math.round(avg*10)/10,
         series:dayMonths.map((x,i)=>({label:shortMonth(months[i]),avg:x.n?(x.late?Math.round(x.days/x.late*10)/10:0):null})),
-        totals:ohCauseTotals(lateDeliveries,r=>r.amountLocal)}
+        totals:ohCauseTotals(lateDeliveries,r=>r.amountLocal,causeOf)}
     };
   });
 }
@@ -6917,6 +6945,7 @@ let ohSearchMemo={m:null,stamp:'',map:new WeakMap(),vocab:''};
 function ohSearchPrepare(m){
   const stamp=ohStamp();
   if(ohSearchMemo.m!==m||ohSearchMemo.stamp!==stamp)ohSearchMemo={m,stamp,map:new WeakMap(),vocab:''};
+  ohRowMemoFresh();
   return stamp;
 }
 // Reasons are worked out only when a search word could be part of one (most searches are numbers and names).
@@ -6932,8 +6961,8 @@ function ohSearchWanted(terms){
 function ohSearchText(r){
   let text=ohSearchMemo.map.get(r);
   if(text===undefined){
-    const c=ohIsSalesRow(r)?ohCauseFor(r):'';
-    text=c?`${lineReasons(r).join(' ')} ${c==='us'||c==='them'?`caused by ${c}`:`cause ${OH_CAUSE_LABEL[c].toLowerCase()}`}`:'';
+    const x=ohIsSalesRow(r)?ohRowInfo(r):null,c=x?x.causeFor:'';
+    text=c?`${x.reasons.join(' ')} ${c==='us'||c==='them'?`caused by ${c}`:`cause ${OH_CAUSE_LABEL[c].toLowerCase()}`}`:'';
     ohSearchMemo.map.set(r,text);
   }
   return text;
