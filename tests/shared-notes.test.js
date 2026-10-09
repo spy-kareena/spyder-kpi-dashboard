@@ -354,7 +354,10 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
 
   const before = site.calls.length;
   const snap = loadPage();
-  snap.ctx.fetch = site.fetch;
+  // Count only this page's requests: the first browser may still send its own (e.g. the Shipping page's queued
+  // tracking-list sync, Stream E) while the snapshot is open.
+  const snapCalls = [];
+  snap.ctx.fetch = (url, opts) => { snapCalls.push(`${(opts && opts.method) || 'GET'} ${url}`); return site.fetch(url, opts); };
   snap.ctx.location = { href: ORIGIN + '/', protocol: 'https:' };
   snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
   snap.els['embedded-snapshot-data'].textContent = payload;
@@ -363,7 +366,8 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
   await snap.ctx.loadAtRiskHistory();
   snap.run(`updateRowOverride(${JSON.stringify(k)},'notes','edited in the snapshot')`);
   await tick(900);
-  assert.equal(site.calls.length, before, 'no requests from a snapshot');
+  assert.deepEqual(snapCalls, [], 'no requests from a snapshot');
+  assert.ok(site.calls.slice(before).every((c) => !/\/api\/(notes|history)/.test(c)), 'no shared-notes or history requests while the snapshot is open');
   assert.deepEqual(snap.storage, {});
   assert.equal(snap.run('firstFlagged')[k], '2026-09-03');
   assert.equal(snap.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideCause`), 'us');

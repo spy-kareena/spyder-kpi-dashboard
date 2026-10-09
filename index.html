@@ -1026,6 +1026,99 @@ details.about>summary:hover{color:var(--gray-900)}
   .sk-svg.sk-hl .sk-link{fill-opacity:.3}.sk-svg.sk-hl .sk-node:not(.sk-on){opacity:1}
   .sk-filter{background:#fff}
 }
+/* --- Stream E: Shipping page (live FedEx tracking) --- */
+.ship-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-bar);padding:12px 16px;box-shadow:var(--sh-rest)}
+.ship-updated{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-700)}
+.ship-tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.ship-bar .btn.is-disabled{opacity:.55;cursor:not-allowed}
+.ship-bar .btn.is-disabled:hover{transform:none;border-color:var(--gray-300)}
+.ship-note{margin:0;padding:10px 14px;border-radius:var(--r-bar);background:var(--accent-tint);border:1px solid var(--accent-border);color:var(--gray-700);font-size:12.5px;line-height:1.5}
+.ship-note.warn{background:var(--warn-tint);border-color:var(--warn-border);color:var(--warn-text)}
+button.ship-kpi{width:100%}
+.ship-add{gap:12px;align-items:flex-end}
+.ship-add label{display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--gray-600)}
+.ship-add input{font:inherit;font-size:13px;padding:7px 9px;width:190px;max-width:100%;border:1px solid var(--gray-500);border-radius:var(--r-ctl);background:#fff;color:var(--gray-900)}
+.ship-add input::placeholder{color:var(--gray-500)}
+.ship-add .btn-primary{box-shadow:none}
+.ship-add .filter-note{margin-left:0;flex-basis:100%}
+.ship-add .filter-note:empty{display:none}
+/* No overflow clipping on the list, so row tooltips are never cut off at its edges */
+.ship-list{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);box-shadow:var(--sh-rest)}
+.ship-row{border-bottom:1px solid var(--gray-100)}
+.ship-row:last-child{border-bottom:0}
+.ship-head{font:inherit;width:100%;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,2.2fr) minmax(0,1fr);gap:18px;align-items:center;padding:14px 20px 14px 18px;border:0;border-left:2px solid transparent;background:transparent;color:var(--gray-900);text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+.ship-head:hover{background:var(--gray-50)}
+.ship-row:first-child .ship-head{border-top-left-radius:var(--r-card);border-top-right-radius:var(--r-card)}
+.ship-row:last-child:not(.open) .ship-head{border-bottom-left-radius:var(--r-card);border-bottom-right-radius:var(--r-card)}
+.ship-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ship-row.open .ship-head{background:var(--gray-50);border-left-color:var(--accent)}
+.ship-row.has-exception .ship-head{border-left-color:var(--crit)}
+.ship-id{display:grid;gap:3px;min-width:0}
+.ship-num{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.ship-sub{font-size:12px;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ship-state{display:grid;gap:4px;justify-items:end;text-align:right;min-width:0}
+.ship-eta{font-size:12px;color:var(--gray-500)}
+.ship-eta.crit-text{color:var(--crit-text)}.ship-eta.good-text{color:var(--good-text)}
+/* The process strip: six steps joined by a line, filled up to the newest FedEx scan */
+.ship-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));align-items:start;min-width:0}
+.ship-step{position:relative;display:grid;justify-items:center;gap:6px;min-width:0}
+.ship-step::before{content:"";position:absolute;top:6px;left:-50%;right:50%;height:2px;background:var(--gray-200)}
+.ship-step:first-child::before{display:none}
+.ship-step>i{position:relative;z-index:1;display:grid;place-items:center;width:14px;height:14px;border-radius:99px;background:#fff;border:2px solid var(--gray-300);box-sizing:border-box}
+.ship-step>em{font-style:normal;font-size:12px;line-height:1.25;text-align:center;color:var(--gray-500);overflow-wrap:anywhere}
+.ship-step.done::before,.ship-step.current::before{background:var(--accent)}
+.ship-step.done>i{background:var(--accent);border-color:var(--accent)}
+.ship-step.current>i{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+.ship-step.current>em{color:var(--gray-900);font-weight:600}
+.ship-step.skip>i{border-style:dashed;background:var(--gray-50)}
+.ship-step.skip.done>i{background:var(--gray-200);border-color:var(--gray-300);border-style:solid}
+.ship-step.exception>i{background:var(--crit);border-color:var(--crit);box-shadow:0 0 0 3px var(--crit-tint)}
+.ship-step.exception>i::after{content:"!";color:#fff;font-size:10px;font-weight:700;line-height:1}
+.ship-step.exception>em{color:var(--crit-text)}
+.ship-strip.unknown .ship-step>i{border-color:var(--gray-300);background:#fff;box-shadow:none}
+.ship-strip.unknown .ship-step::before{background:var(--gray-200)}
+.ship-strip.unknown .ship-step>em{color:var(--gray-500);font-weight:400}
+.ship-legend{display:none;font-size:12px;color:var(--gray-500)}
+.ship-detail{display:grid;gap:14px;padding:6px 20px 18px 20px;background:var(--gray-50);border-top:1px solid var(--gray-100)}
+.ship-row:last-child .ship-detail{border-bottom-left-radius:var(--r-card);border-bottom-right-radius:var(--r-card)}
+.ship-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 20px;padding-top:10px}
+.ship-fact{display:grid;gap:2px;font-size:12.5px;min-width:0}
+.ship-fact>span{font-size:12px;color:var(--gray-500)}
+.ship-fact>strong{font-weight:500;color:var(--gray-900);overflow-wrap:anywhere}
+.ship-alert{margin:0;padding:10px 12px;border-radius:10px;background:var(--crit-tint);border:1px solid var(--crit-border);color:var(--crit-text);font-size:12.5px;line-height:1.5}
+.ship-customs-log{display:grid;gap:4px;font-size:12.5px;color:var(--gray-700)}
+.ship-customs{margin:0;padding-left:20px;display:grid;gap:3px}
+.ship-detail .table-scroll{background:#fff;border:1px solid var(--gray-200);border-radius:10px}
+.ship-detail .table-scroll>.data-table{min-width:640px}
+.ship-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ship-actions a.btn{text-decoration:none}
+.ship-empty{padding:16px 20px}
+.ship-foot{border-radius:0 0 var(--r-card) var(--r-card)}
+.ship-cross .link-btn{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12.5px}
+.ship-cross .sub{display:block;margin:0}
+@media (max-width:980px){
+  .ship-head{grid-template-columns:minmax(0,1fr) auto;row-gap:12px}
+  .ship-strip{grid-column:1/-1;grid-row:2}
+}
+@media (max-width:640px){
+  .ship-head{padding:12px 14px}
+  .ship-step>em{display:none}
+  .ship-legend{display:block}
+  .ship-add label{flex:1 1 140px}
+  .ship-add input{width:100%;font-size:16px}
+  .ship-tools{margin-left:0}
+  .ship-detail{padding:6px 14px 14px}
+  /* Five small cards: two per row on phones instead of five full-width rows */
+  .ship-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media print{
+  .ship-head{break-inside:avoid;padding:6px 8px!important}
+  .ship-row{break-inside:avoid}
+  .ship-list,.ship-bar{border:1px solid var(--gray-300)!important;box-shadow:none!important}
+  .ship-detail{background:#fff}
+  .ship-step>em{font-size:7pt}
+  .ship-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
 </style>
 </head>
 <body>
@@ -1321,6 +1414,8 @@ async function exportShareSnapshot(){
     reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
     excludedQuarantineRows,
+    // Shipping page: the FedEx statuses and hand-added tracking numbers on screen, as of the last check.
+    shipping:shippingSnapshotData(),
     createdAt:new Date().toISOString()
   };
   const payload=await encodeSnapshotPayload(JSON.stringify(snapshot));
@@ -1442,6 +1537,7 @@ async function loadEmbeddedSnapshot(){
     reportAsOfDate=parseDate(data.reportAsOfDate)||parseDate(parsedRows[0]&&parsedRows[0].exportDate)||null;
     dataQualityIssues=Array.isArray(data.dataQualityIssues)?data.dataQualityIssues:[];
     excludedQuarantineRows=Number(data.excludedQuarantineRows)||0;
+    shippingFromSnapshot(data.shipping);
     snapshotCreatedAt=String(data.createdAt||'');
     snapshotAsOfSaveDay=!!data.reportAsOfSaveDay&&!!reportAsOfDate;
     allLoadedRows.forEach(applyRowOverride);
@@ -3126,6 +3222,13 @@ function normalizeRows(raw){
       closeDate:pick(mapped,['closeddate','deliveryclosedate','actualclosedate','completiondate']),
       closeDateSource:pick(mapped,['closedatesource','closeddatesource','closedsource']),
       deliveryDocNumber:pick(mapped,['deliverydocnumber','deliverydocnum','delnumber','deliverynum']),
+      // Delivery rows of the 2v1 query: FedEx tracking number(s) (ODLN.TrackNo), shipping type, ship-to country and
+      // delivery date, for the Shipping page. Optional: older exports have none of these and load as before.
+      // Tracking numbers are kept cleaned ("7700 1234 5678" -> 770012345678), several separated by ", ".
+      trackingNumber:shipSplit(pick(mapped,['trackingnumber','trackno','tracknumber','trackingno'])).join(', '),
+      shipMethod:String(pick(mapped,['shipmethod','shippingmethod','shippingtype','trnspname'])??'').trim(),
+      shipToCountry:String(pick(mapped,['shiptocountry','shiptocountrycode','countrys'])??'').trim().toUpperCase(),
+      shipDate:pick(mapped,['shipdate','shippeddate']),
       dueDate:pick(mapped,['duedate','soduedate','polinedate']),
       headerDueDate:pick(mapped,['headerduedate','soduedate','duedate']),
       lineDueDate:pick(mapped,['lineduedate','deliverydate','deldate','shipdate','polinedate']),
@@ -4748,7 +4851,7 @@ function globalSearchResults(m){
   const hit=fields=>{const s=fields.join(' ').toLowerCase();return terms.length>0&&terms.every(t=>s.includes(t));};
   const byDoc=new Intl.Collator(undefined,{numeric:true}).compare;
   const rows=parsedRows
-    .filter(r=>hit([r.documentNumber,r.lineNumber,r.deliveryDocNumber,r.customerPONumber,r.code,r.name,r.itemCode,r.itemDescription,r.warehouseName,r.warehouse,r.owner,r.project]))
+    .filter(r=>hit([r.documentNumber,r.lineNumber,r.deliveryDocNumber,r.customerPONumber,r.code,r.name,r.itemCode,r.itemDescription,r.warehouseName,r.warehouse,r.owner,r.project,shippingTrackingFor(r)]))
     .map(r=>{const open=r.statusBucket!=='Closed';const d=parseDate(searchRowDate(r,open));return {r,open,t:d?d.getTime():null};})
     .sort((a,b)=>a.open!==b.open?(a.open?-1:1)
       :(a.t===null)!==(b.t===null)?(a.t===null?1:-1)
@@ -4795,8 +4898,8 @@ function renderGlobalSearchPage(m){
     const po=/purchase/i.test(String(r.sourceType||''));
     const status=open?r.statusBucket:type==='Delivery'?'Shipped':type==='Receipt'?'Received':'Closed';
     const refs=[has(r.lineNumber)?`Line ${hl(r.lineNumber)}`:'',has(r.deliveryDocNumber)?`${po?'Receipt':'Delivery'} ${hl(r.deliveryDocNumber)}`:'',has(r.customerPONumber)?`${po?'Vendor ref':'Cust PO'} ${hl(r.customerPONumber)}`:''].filter(Boolean).join(' · ');
-    // Owner and project have no column; show them only when they are why the row matched.
-    const extra=[matched(r.owner)?`Owner ${hl(r.owner)}`:'',matched(r.project)?`Project ${hl(r.project)}`:''].filter(Boolean).join(' · ');
+    // Owner, project and FedEx tracking number have no column; show them only when they are why the row matched.
+    const extra=[matched(r.owner)?`Owner ${hl(r.owner)}`:'',matched(r.project)?`Project ${hl(r.project)}`:'',matched(shippingTrackingFor(r))?`Tracking ${hl(shippingTrackingFor(r))}`:''].filter(Boolean).join(' · ');
     const wh=rowWarehouse(r);
     return `<tr class="line-row${isNoteEditorVisible(r)?' editing':''}">
       <td class="c-type">${esc(type)}</td>
@@ -4870,11 +4973,13 @@ function renderSidebar(){
     poLate=po?po.poLateRows.length:0;
   }
   const badges={weekly:atRisk,purchaseorders:poLate};
-  const item=([id,label])=>{
+  // Each page's tooltip / load-screen description is PAGE_TIPS[id] (Stream A); a third entry in a NAV_GROUPS item is
+  // used only when PAGE_TIPS has none.
+  const item=([id,label,tipText])=>{
     const active=onResults&&activeTab===id;
     const badge=badges[id]?`<span class="nav-badge"${tipAttr(id==='weekly'?`${fmtNum(badges[id])} orders at risk (same count as the At risk card)`:`${fmtNum(badges[id])} late purchase-order lines`)}>${fmtNum(badges[id])}</span>`:'';
     // The load screen shows each page's one-line description under its name; elsewhere it is the tooltip.
-    const about=PAGE_TIPS[id]||'';
+    const about=PAGE_TIPS[id]||tipText||'';
     const text=!onResults&&about?`<span class="nav-label-text">${esc(label)}</span><span class="nav-desc">${esc(about)}</span>`:esc(label);
     return `<button type="button" class="nav-item${active?' active':''}${!onResults&&about?' has-desc':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}${onResults?tipAttr(about):''}><span class="nav-text">${text}</span>${badge}</button>`;
   };
@@ -5131,6 +5236,7 @@ function renderResults(){
   const loaded=hasLoadedData();
   const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
     : activeTab==='search'?globalSearchMeta(m)
+    : activeTab==='shipping'?shippingHeadMeta()
     : activeTab==='purchaseorders'
     ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
     : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
@@ -5935,6 +6041,9 @@ function renderResults(){
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
   if(activeTab==='connect')html+=renderConnectPage();
+  // A new report sends its tracking numbers to the server (Shipping page, hosted site only).
+  shippingWatchRows();
+  if(activeTab==='shipping')html+=renderShippingPage(m);
   // Supply / Demand detail: shortages and risk rows by warehouse.
   if(activeTab==='supplyweekly'){
     const sd=m.supplyDemand;
@@ -6866,6 +6975,7 @@ const PAGE_TIPS={
   supplyweekly:'Open sales-order demand against open PO supply by warehouse and month: shortages and risky supply.',
   supplydemand:'The big picture of demand against usable supply: net quantity by month, demand by warehouse, risk by item group.',
   buildrisk:'The Clear To Build report matched to open sales orders by CM and month.',
+  shipping:'Live FedEx tracking for recent deliveries: where each shipment is, which ones are late, and what is held at customs.',
   connect:'How to ask an AI about this export: Ask AI here, or Claude Desktop and Claude Code through the MCP connector.'
 };
 
@@ -8185,6 +8295,623 @@ if(typeof addEventListener==='function')addEventListener('resize',()=>{
 // Share snapshots keep only known pages switched on.
 function sankeyOpenState(v){
   return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>v[t]===true).map(t=>[t,true])):{};
+}
+// --- Stream E: Shipping (live FedEx tracking) ---
+// The Shipping page lists the deliveries in the export that carry a FedEx tracking number (TrackingNumber = SAP
+// ODLN.TrackNo, added to the KPI query in 2v1) plus numbers added by hand, with the FedEx status the server keeps:
+// functions/api/shipping.js answers this page, the scheduled Worker workers/shipping-poller asks FedEx every 4 hours,
+// and both use shared/fedex.mjs. Without that server (a file, IIS, a shared snapshot) the page still lists the
+// export's tracking numbers, without live status. Setup and rules: docs/SHIPPING.md.
+(NAV_GROUPS.find(g=>g[0]==='Sales')||NAV_GROUPS[0])[1].push(['shipping','Shipping',PAGE_TIPS.shipping]);
+PAGE_TITLES.shipping='Shipping';
+const SHIP_STAGES=[['label','Label created'],['pickedUp','Picked up'],['inTransit','In transit'],['customs','Customs'],['outForDelivery','Out for delivery'],['delivered','Delivered']];
+const SHIP_STAGE_KEYS=SHIP_STAGES.map(s=>s[0]);
+const SHIP_STAGE_TEXT={label:'Label created',pickedUp:'Picked up',inTransit:'In transit',customs:'In customs',outForDelivery:'Out for delivery',delivered:'Delivered',exception:'Exception'};
+const SHIP_WINDOW_DAYS=30;    // deliveries shipped this many days before the export date are tracked...
+const SHIP_DELIVERED_DAYS=7;  // ...until FedEx says they were delivered more than this many days ago
+const SHIP_MANUAL_DAYS=45;    // numbers added by hand are tracked this long
+const SHIP_HOME_COUNTRY='CA'; // shipments leave Canada unless FedEx says where they left from
+const SHIP_CHECK_HOURS=4;     // workers/shipping-poller/wrangler.toml: crons = ["0 */4 * * *"] (UTC)
+const SHIP_LIST_LIMIT=40;
+const SHIP_DAY=24*60*60*1000;
+const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // hand-added numbers when the shared notes store is not there
+// state: idle | loading | ready (server answered) | static (no server here) | nostore (no KV) | error | snapshot
+let shippingState={state:'idle',statuses:{},polledAt:'',fedex:null,lastError:null,errors:[],wanted:null,refreshAfter:'',notice:'',busy:false,loading:null,loadedAt:0,rowsRef:null,syncTimer:null,snapshotManual:null,manualTouched:false};
+let shippingFilter='';
+let shippingExpanded=new Set();
+let shippingExportCache={rows:null,list:[],byOrder:new Map()};
+let shippingSearchIndex=null;
+
+// Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/fedex.mjs.
+function shipClean(v){
+  const s=String(v??'').replace(/[\s-]+/g,'').toUpperCase();
+  return /^[A-Z0-9]{6,40}$/.test(s)?s:'';
+}
+function shipSplit(v){
+  return [...new Set(String(v??'').split(/[,;/|\n\r]+/).map(shipClean).filter(Boolean))];
+}
+function shippingApiPossible(){
+  try{return typeof fetch==='function'&&!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));}catch(e){return false;}
+}
+const shipIsSales=r=>!/purchase/i.test(String(r&&r.sourceType||''));
+function shipDateLabel(v){const d=parseDate(v);return d?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';}
+function shipTimeLabel(v){
+  const t=Date.parse(v||'');
+  return isFinite(t)?new Date(t).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):shipDateLabel(v);
+}
+function shipClock(d){return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function shipAgo(ms){
+  const min=Math.max(0,Math.round(ms/60000));
+  if(min<1)return 'just now';
+  if(min<60)return `${min} min ago`;
+  const h=Math.round(min/60);
+  return h<48?`${h} h ago`:`${Math.round(h/24)} days ago`;
+}
+// The poller runs on the hour every 4 hours (UTC); the next run in this browser's time.
+function shippingNextCheck(now=Date.now()){
+  const d=new Date(now);
+  d.setUTCMinutes(0,0,0);
+  d.setUTCHours(Math.floor(d.getUTCHours()/SHIP_CHECK_HOURS)*SHIP_CHECK_HOURS+SHIP_CHECK_HOURS);
+  return d;
+}
+function shipCountryName(code){
+  const c=String(code||'').toUpperCase();
+  if(!c)return '';
+  try{const n=new Intl.DisplayNames(['en'],{type:'region'}).of(c);return n&&n!==c?`${n} (${c})`:c;}catch(e){return c;}
+}
+const shipPlural=(n,one,many)=>`${fmtNum(n)} ${n===1?one:many}`;
+
+// --- Hand-added tracking numbers: the shared notes store when it is there (Stream B), else this browser ---
+function shippingEditor(){try{return String(localStorage.getItem('spyderKpiEditor')||'').trim().slice(0,12);}catch(e){return '';}}
+function shippingManualRaw(){
+  if(isSnapshotView)return shippingState.snapshotManual||{};
+  if(typeof getSharedShipments==='function'){
+    try{const v=getSharedShipments();if(v&&typeof v==='object')return v;}catch(e){console.warn('Shared tracking numbers not read:',e);}
+  }
+  try{return JSON.parse(localStorage.getItem(SHIPPING_LOCAL_KEY)||'{}')||{};}catch(e){return {};}
+}
+// {number, order, by, at} for each live (not removed) entry, newest first; the newest entry per number wins.
+function shippingManualEntries(){
+  const raw=shippingManualRaw();
+  const list=Array.isArray(raw)?raw:Object.entries(raw).map(([k,e])=>({number:k,...(e&&typeof e==='object'?e:{})}));
+  const seen=new Map();
+  for(const e of list){
+    const number=shipClean(e&&e.number);
+    if(!number)continue;
+    const entry={number,order:String(e.order||'').trim().slice(0,40),by:String(e.by||'').slice(0,40),at:String(e.at||''),deleted:!!e.deleted};
+    const prev=seen.get(number);
+    if(!prev||entry.at>prev.at)seen.set(number,entry);
+  }
+  return [...seen.values()].filter(e=>!e.deleted).sort((a,b)=>b.at.localeCompare(a.at));
+}
+// True when hand-added numbers reach everyone who signs in: Stream B's store (/api/notes, key 'overrides', map
+// shipments:{[number]:{number,order,deleted?,by,at}}) is on the page and this site shares notes. Without the server
+// (IIS, a file) B's store still keeps them in this browser (localStorage spyderKpiShipmentsV1) and sends them later.
+function shippingSharedStore(){
+  if(typeof sharedNotesPatchShipments!=='function')return false;
+  try{return typeof notesSharing!=='function'||!!notesSharing();}catch(e){return false;}
+}
+function shippingSaveManual(patch){
+  if(isSnapshotView)return false;
+  shippingSearchIndex=null;
+  shippingState.manualTouched=true;
+  if(typeof sharedNotesPatchShipments==='function'){
+    try{return sharedNotesPatchShipments(patch)!==0;}catch(e){console.warn('Shared tracking numbers not saved:',e);}
+  }
+  try{
+    const map=JSON.parse(localStorage.getItem(SHIPPING_LOCAL_KEY)||'{}')||{};
+    localStorage.setItem(SHIPPING_LOCAL_KEY,JSON.stringify({...map,...patch}));
+    return true;
+  }catch(e){
+    alert('The tracking number could not be saved in this browser (storage is blocked or full).');
+    return false;
+  }
+}
+function shippingAddManual(ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  const orderEl=document.getElementById('ship-add-order'),numEl=document.getElementById('ship-add-number');
+  const say=t=>{const el=document.getElementById('ship-add-status');if(el)el.textContent=t;};
+  const number=shipClean(numEl&&numEl.value);
+  const order=String(orderEl&&orderEl.value||'').trim().replace(/^(SO|#)\s*#?\s*/i,'');
+  if(!number){say('Type a FedEx tracking number: 6 to 40 letters or digits (spaces and dashes are fine).');if(numEl&&numEl.focus)numEl.focus();return false;}
+  if(order&&!/^[A-Za-z0-9-]{1,20}$/.test(order)){say('Type the sales order number (for example 12345), or leave it blank.');if(orderEl&&orderEl.focus)orderEl.focus();return false;}
+  if(!shippingSaveManual({[number]:{number,order,by:shippingEditor(),at:new Date().toISOString(),deleted:false}}))return false;
+  if(numEl)numEl.value='';
+  if(orderEl)orderEl.value='';
+  invalidateMetrics();
+  renderResults();
+  shippingQueueSync();
+  const msg=`Tracking # ${number} added${order?` to order ${order}`:''}. Its FedEx status shows after the next check${shippingState.fedex?' (or click Refresh now)':''}.`;
+  // One announcement: the toast when the page has one, else the status line under the form.
+  if(typeof showToast==='function'){say('');showToast(msg);}else say(msg);
+  return false;
+}
+function shippingRemoveManual(number){
+  const n=shipClean(number);
+  if(!n||!confirm(`Stop tracking ${n}? Only the number added by hand is removed; tracking numbers from SAP deliveries stay.`))return;
+  if(!shippingSaveManual({[n]:{number:n,order:'',by:shippingEditor(),at:new Date().toISOString(),deleted:true}}))return;
+  shippingExpanded.delete(n);
+  invalidateMetrics();
+  renderResults();
+  shippingQueueSync();
+  if(typeof showToast==='function')showToast(`Stopped tracking ${n}.`);
+}
+// Search: a row's own tracking number, plus the numbers added by hand to its sales order (on its order lines).
+function shippingTrackingFor(r){
+  const own=String(r&&r.trackingNumber||'');
+  if(!r||!shipIsSales(r)||!isOrderLineRow(r))return own;
+  if(!shippingSearchIndex||Date.now()-shippingSearchIndex.at>1000){
+    const map=new Map();
+    for(const e of shippingManualEntries())if(e.order)map.set(e.order,`${map.get(e.order)||''} ${e.number}`.trim());
+    shippingSearchIndex={map,at:Date.now()};
+  }
+  const extra=shippingSearchIndex.map.get(String(r.documentNumber||'').trim());
+  return extra?`${own} ${extra}`.trim():own;
+}
+
+// --- Shipments: export deliveries with a tracking number, plus hand-added numbers ---
+function shippingExportData(){
+  if(shippingExportCache.rows===parsedRows&&shippingExportCache.all===allLoadedRows)return shippingExportCache;
+  const map=new Map(),byOrder=new Map();
+  for(const r of allLoadedRows){
+    if(!r||r.isDeleted||!shipIsSales(r))continue;
+    const doc=String(r.documentNumber||'').trim();
+    if(doc){if(!byOrder.has(doc))byOrder.set(doc,[]);byOrder.get(doc).push(r);}
+    if(!r.trackingNumber||!isShipmentRow(r))continue;
+    for(const n of shipSplit(r.trackingNumber)){
+      let s=map.get(n);
+      if(!s){s={number:n,source:'export',rows:[],orders:new Set(),deliveries:new Set(),names:new Set(),shipMethod:'',country:'',shipDate:null,value:0};map.set(n,s);}
+      s.rows.push(r);
+      if(doc)s.orders.add(doc);
+      if(String(r.deliveryDocNumber||'').trim())s.deliveries.add(String(r.deliveryDocNumber).trim());
+      if(r.name)s.names.add(String(r.name));
+      if(!s.shipMethod&&r.shipMethod)s.shipMethod=r.shipMethod;
+      if(!s.country&&r.shipToCountry)s.country=r.shipToCountry;
+      // The delivery's own date: ShipDate, else ClosedDate (DocumentDate on delivery rows is the order's date).
+      const d=parseDate(r.shipDate)||parseDate(r.closeDate)||parseDate(r.documentDate);
+      if(d&&(!s.shipDate||d>s.shipDate))s.shipDate=d;
+      s.value+=num(r.amountLocal);
+    }
+  }
+  shippingExportCache={rows:parsedRows,all:allLoadedRows,list:[...map.values()],byOrder};
+  return shippingExportCache;
+}
+function shippingHasTrackingColumn(){
+  return ['trackingnumber','trackno','tracknumber','trackingno'].some(h=>exportHeaders.has(h))||allLoadedRows.some(r=>r&&r.trackingNumber);
+}
+// Adds the FedEx status and what the page shows: progress position, exception marker, cross-border, ETA vs promised.
+function shippingDecorate(s,st,now){
+  const stage=st?st.stage:'';
+  const idx=k=>SHIP_STAGE_KEYS.indexOf(k);
+  const pos=!st?0:stage==='exception'?Math.max(0,idx(st.reached)):Math.max(0,idx(stage),idx(st.reached));
+  const delay=!!st&&st.customsState==='delay'&&stage!=='delivered';
+  const dest=String(s.country||(st&&st.destCountry)||'').toUpperCase();
+  const origin=String(st&&st.originCountry||'').toUpperCase();
+  const crossBorder=!!(st&&((st.customs&&st.customs.length)||st.customsState))||(!!dest&&dest!==(origin||SHIP_HOME_COUNTRY));
+  // Promised: the earliest working date of the lines on the delivery (reschedule date, else line delivery date).
+  const promisedTimes=s.rows.map(r=>parseDate(r.effectiveDueDate)||parseDate(r.lineDueDate)||parseDate(r.dueDate)).filter(Boolean).map(d=>d.getTime());
+  const promised=promisedTimes.length?new Date(Math.min(...promisedTimes)):null;
+  const deliveredDate=stage==='delivered'?parseDate(st.deliveredAt):null;
+  const arrive=stage==='delivered'?deliveredDate:st?parseDate(st.eta):null;
+  const lateDays=promised&&arrive?daysBetweenDates(promised,arrive):null;
+  const deliveredLong=!!deliveredDate&&now-deliveredDate.getTime()>SHIP_DELIVERED_DAYS*SHIP_DAY;
+  return {...s,status:st,stage,pos,marker:!!st&&(stage==='exception'||delay),delay,crossBorder,dest,promised,arrive,lateDays,deliveredDate,deliveredLong,customer:[...s.names][0]||''};
+}
+function shippingModel(){
+  const now=Date.now();
+  const today=reportToday();
+  const since=new Date(today);since.setDate(since.getDate()-SHIP_WINDOW_DAYS);
+  const {list:fromExport,byOrder}=shippingExportData();
+  const all=new Map();
+  for(const s of fromExport)if(!s.shipDate||s.shipDate>=since)all.set(s.number,{...s,manual:null});
+  for(const e of shippingManualEntries()){
+    const at=Date.parse(e.at);
+    if(isFinite(at)&&now-at>SHIP_MANUAL_DAYS*SHIP_DAY)continue;
+    const have=all.get(e.number);
+    if(have){have.manual=e;continue;}
+    const rows=byOrder.get(e.order)||[];
+    all.set(e.number,{number:e.number,source:'manual',manual:e,rows:rows.filter(isOrderLineRow),orders:new Set(e.order?[e.order]:[]),deliveries:new Set(),names:new Set(rows.map(r=>r.name).filter(Boolean)),shipMethod:'',country:String((rows.find(r=>r.shipToCountry)||{}).shipToCountry||''),shipDate:null,value:0});
+  }
+  const statuses=shippingState.statuses||{};
+  const list=[...all.values()].map(s=>shippingDecorate(s,statuses[s.number]||null,now));
+  const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
+  const weekEnd=new Date(weekStart);weekEnd.setDate(weekEnd.getDate()+7);
+  const groups={
+    transit:list.filter(s=>s.stage==='pickedUp'||s.stage==='inTransit'),
+    out:list.filter(s=>s.stage==='outForDelivery'),
+    delivered:list.filter(s=>s.stage==='delivered'&&s.deliveredDate&&s.deliveredDate>=weekStart&&s.deliveredDate<weekEnd),
+    exception:list.filter(s=>s.stage==='exception'),
+    customs:list.filter(s=>s.stage==='customs'),
+  };
+  return {list,groups,since,today,weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length};
+}
+// What the server should track: the listed deliveries (newest first) and hand-added numbers, without those
+// FedEx delivered more than 7 days ago.
+function shippingWantedLists(model){
+  const keep=model.list.filter(s=>!s.deliveredLong);
+  return {
+    export:keep.filter(s=>s.source==='export').sort((a,b)=>(b.shipDate?b.shipDate.getTime():0)-(a.shipDate?a.shipDate.getTime():0)).map(s=>s.number).slice(0,500),
+    manual:keep.filter(s=>s.manual).map(s=>s.number).slice(0,200),
+  };
+}
+
+// --- Talking to the server (functions/api/shipping.js) ---
+async function shippingLoad(){
+  if(!shippingApiPossible()){shippingState.state=isSnapshotView?'snapshot':'static';return;}
+  if(shippingState.loading)return shippingState.loading;
+  if(shippingState.state!=='ready')shippingState.state='loading';
+  shippingState.loading=(async()=>{
+    try{
+      const res=await fetch('/api/shipping',{cache:'no-store'});
+      const type=res.headers&&typeof res.headers.get==='function'?String(res.headers.get('content-type')||''):'';
+      const data=/json/.test(type)?await res.json().catch(()=>null):null;
+      if(res.ok&&data&&data.configured){
+        Object.assign(shippingState,{state:'ready',statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),fedex:!!data.fedex,lastError:data.lastError||null,errors:Array.isArray(data.errors)?data.errors:[],wanted:data.wanted||null,refreshAfter:String(data.refreshAfter||'')});
+        // Statuses change which deliveries are still tracked (delivered more than 7 days ago drops out).
+        if(allLoadedRows.length)shippingQueueSync();
+      }else if(res.status===503&&data&&data.configured===false)shippingState.state='nostore';
+      else if(res.status===401)Object.assign(shippingState,{state:'error',notice:'Your sign-in to this site has expired. Reload the page and sign in again.'});
+      // A static host (IIS, a file share) answers /api/shipping with its own 404 page.
+      else if(!data||res.status===404||res.status===405)shippingState.state='static';
+      else Object.assign(shippingState,{state:'error',notice:String(data.error||`The server answered ${res.status}.`)});
+    }catch(err){Object.assign(shippingState,{state:'error',notice:'The server could not be reached for FedEx statuses.'});}
+    shippingState.loadedAt=Date.now();
+    shippingState.loading=null;
+    const screen=document.getElementById('results-screen');
+    if(activeTab==='shipping'&&screen&&screen.style.display==='block')renderResults();
+  })();
+  return shippingState.loading;
+}
+const shipSameList=(a,b)=>{const x=[...(a||[])].sort(),y=[...(b||[])].sort();return x.length===y.length&&x.every((v,i)=>v===y[i]);};
+// Sends the tracking list when it differs from the server's. An export without a TrackingNumber column (or older
+// than the one the server has) only updates the hand-added numbers.
+async function shippingSync(){
+  if(!shippingApiPossible()||!allLoadedRows.length)return false;
+  if(shippingState.state!=='ready'){await shippingLoad();if(shippingState.state!=='ready')return false;}
+  const lists=shippingWantedLists(shippingModel());
+  const w=shippingState.wanted||{};
+  let asOf=displayDate(reportToday()),exp=lists.export;
+  if(!shippingHasTrackingColumn()){asOf=w.exportAsOf||asOf;exp=w.exportAsOf?(w.export||[]):[];}
+  // Hand-added numbers may not have arrived from the shared notes yet: an empty list only replaces the server's
+  // when someone added or removed one in this browser.
+  const manual=lists.manual.length||shippingState.manualTouched?lists.manual:(w.manual||[]);
+  const exportSame=(!!w.exportAsOf&&asOf<w.exportAsOf)||(asOf===w.exportAsOf&&shipSameList(exp,w.export));
+  if(exportSame&&shipSameList(manual,w.manual))return false;
+  if(!w.exportAsOf&&!exp.length&&!manual.length&&!(w.manual||[]).length)return false;
+  try{
+    const res=await fetch('/api/shipping',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({asOf,export:exp,manual})});
+    if(!res.ok)return false;
+    const data=await res.json().catch(()=>({}));
+    shippingState.wanted=data.keptNewerExport?{...w,manual}:{...w,exportAsOf:asOf,export:exp,manual};
+    return true;
+  }catch(err){return false;}
+}
+function shippingQueueSync(delay=400){
+  if(!shippingApiPossible())return;
+  clearTimeout(shippingState.syncTimer);
+  shippingState.syncTimer=setTimeout(()=>{shippingState.syncTimer=null;shippingSync();},delay);
+}
+// Called on every redraw: a newly loaded report resets this page's view and sends its tracking list.
+function shippingWatchRows(){
+  if(shippingState.rowsRef===allLoadedRows)return;
+  shippingState.rowsRef=allLoadedRows;
+  shippingExpanded=new Set();
+  shippingFilter='';
+  if(allLoadedRows.length&&!isSnapshotView)shippingQueueSync();
+}
+async function shippingRefresh(){
+  const st=shippingState;
+  const wait=Date.parse(st.refreshAfter||'');
+  if(st.busy||!shippingApiPossible()||st.state!=='ready')return;
+  if(!st.fedex){st.notice='Refresh now needs the FedEx keys on this site (FEDEX_CLIENT_ID and FEDEX_CLIENT_SECRET, see docs/SHIPPING.md). The checks every 4 hours run on their own once the poller is set up.';renderResults();return;}
+  if(isFinite(wait)&&wait>Date.now()){st.notice=`FedEx was checked a few minutes ago. Refresh works again at ${shipClock(new Date(wait))}.`;renderResults();return;}
+  st.busy=true;st.notice='';
+  renderResults();
+  try{
+    await shippingSync();
+    const res=await fetch('/api/shipping',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok){
+      Object.assign(st,{statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),errors:Array.isArray(data.errors)?data.errors:[],lastError:null,refreshAfter:String(data.refreshAfter||'')});
+      st.notice=`FedEx checked just now: ${shipPlural(Number(data.count)||0,'tracking number','tracking numbers')} up to date.`;
+    }else if(res.status===429){st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||'FedEx was checked a few minutes ago. Try again later.');}
+    else if(res.status===401)st.notice='Your sign-in to this site has expired. Reload the page and sign in again.';
+    else{if(res.status===503&&data.fedex===false)st.fedex=false;st.notice=String(data.error||`The server answered ${res.status}.`);}
+  }catch(err){st.notice='The server could not be reached.';}
+  st.busy=false;
+  if(st.notice&&typeof showToast==='function')showToast(st.notice);
+  if(activeTab==='shipping')renderResults();
+}
+function setShippingFilter(id){
+  shippingFilter=shippingFilter===id?'':String(id||'');
+  renderResults();
+}
+function toggleShipment(number){
+  const n=shipClean(number);
+  if(!n)return;
+  if(shippingExpanded.has(n))shippingExpanded.delete(n);else shippingExpanded.add(n);
+  renderResults();
+}
+// From the cross-border table: open the shipment in the list above and put focus on it.
+function openShipment(number){
+  const n=shipClean(number);
+  if(!n)return;
+  shippingFilter='';
+  shippingExpanded.add(n);
+  const i=shippingSortedList(shippingModel().list).findIndex(s=>s.number===n);
+  if(i>=SHIP_LIST_LIMIT)tableMore={...tableMore,'ship-list':true};
+  renderResults();
+  const head=document.querySelector(`[data-focus-key="ship-${n}"]`);
+  if(head&&head.focus)head.focus();
+  if(head&&head.scrollIntoView)head.scrollIntoView({block:'center'});
+}
+
+// --- Snapshots: the statuses on screen travel with a shared snapshot ---
+function shippingSnapshotData(){
+  try{
+    const statuses={};
+    shippingModel().list.forEach(s=>{if(s.status)statuses[s.number]=s.status;});
+    return {polledAt:shippingState.polledAt||'',statuses,manual:Object.fromEntries(shippingManualEntries().map(e=>[e.number,e]))};
+  }catch(err){console.warn('Shipping statuses left out of the snapshot:',err);return null;}
+}
+function shippingFromSnapshot(d){
+  const x=d&&typeof d==='object'?d:{};
+  Object.assign(shippingState,{state:'snapshot',statuses:x.statuses&&typeof x.statuses==='object'?x.statuses:{},polledAt:String(x.polledAt||''),snapshotManual:x.manual&&typeof x.manual==='object'?x.manual:{},fedex:false,lastError:null,errors:[],wanted:null,notice:'',refreshAfter:''});
+  shippingSearchIndex=null;
+}
+
+// --- Rendering ---
+function shippingHeadMeta(){
+  const model=shippingModel();
+  return `as of ${displayDate(reportToday())} · ${shipPlural(model.list.length,'shipment','shipments')} with a FedEx tracking number`;
+}
+function shipStateLabel(s){
+  const st=s.status;
+  if(!st)return shippingState.state==='ready'?'Not checked yet':'No live status';
+  if(st.notFound)return 'Not found at FedEx';
+  if(s.delay)return 'Clearance delay';
+  return SHIP_STAGE_TEXT[st.stage]||'In transit';
+}
+function shipStateTone(s){
+  const st=s.status;
+  if(!st)return '';
+  if(st.stage==='exception'||s.delay)return 'bad';
+  if(st.notFound||st.stage==='customs')return 'warn';
+  return st.stage==='delivered'?'good':'';
+}
+function shipLateText(days){
+  if(days===null||days===undefined)return '';
+  return days>0?`${shipPlural(days,'day','days')} late`:days<0?`${shipPlural(-days,'day','days')} early`:'on time';
+}
+function shipEta(s){
+  const late=shipLateText(s.lateDays);
+  const tone=s.lateDays>0?'crit-text':s.lateDays!==null?'good-text':'';
+  if(!s.status)return {text:'',tone:''};
+  if(s.stage==='delivered'&&s.deliveredDate)return {text:`Delivered ${shipDateLabel(s.deliveredDate)}${late?` · ${late}`:''}`,tone};
+  if(s.arrive)return {text:`ETA ${shipDateLabel(s.arrive)}${late?` · ${late}`:''}`,tone};
+  return {text:s.stage==='exception'?'No ETA while the exception is open':'No ETA yet',tone:''};
+}
+// Exceptions and customs first, then the furthest along, delivered last (newest first).
+function shippingSortedList(list){
+  const rank=s=>s.stage==='exception'?0:s.delay?1:s.stage==='customs'?2:s.stage==='delivered'?9:!s.status?8:7-s.pos;
+  return [...list].sort((a,b)=>rank(a)-rank(b)||((b.deliveredDate||b.shipDate||0)-(a.deliveredDate||a.shipDate||0))||a.number.localeCompare(b.number));
+}
+function renderShipStrip(s){
+  const steps=SHIP_STAGES.map(([key,label],i)=>{
+    let cls=!s.status?(i===0?'current':'todo'):i<s.pos?'done':i===s.pos?'current':'todo';
+    if(key==='customs'&&!s.crossBorder)cls+=' skip';
+    if(i===s.pos&&s.marker)cls+=' exception';
+    return `<span class="ship-step ${cls}"><i></i><em>${esc(label)}</em></span>`;
+  }).join('');
+  return `<span class="ship-strip${s.status?'':' unknown'}" aria-hidden="true">${steps}</span>`;
+}
+function shipCarrier(s){
+  return s.status&&s.status.carrier?s.status.carrier:/freight|ltl/i.test(s.shipMethod)?'FedEx Freight':s.shipMethod||'FedEx';
+}
+function renderShipRow(s){
+  const n=s.number,open=shippingExpanded.has(n),st=s.status;
+  const eta=shipEta(s);
+  const docs=[s.orders.size?`SO ${[...s.orders].slice(0,3).join(', ')}${s.orders.size>3?'…':''}`:'',s.deliveries.size?`Delivery ${[...s.deliveries].slice(0,3).join(', ')}${s.deliveries.size>3?'…':''}`:'',s.manual?'added by hand':''].filter(Boolean);
+  const sub=[shipCarrier(s),s.customer,...docs].filter(Boolean).join(' · ');
+  const last=st&&st.lastEvent;
+  const stepText=st?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STAGES[s.pos][1]}${s.marker?', with a problem':''}.`:'No FedEx status yet.';
+  const tipText=[`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}.`,
+    st&&st.status&&st.status!==shipStateLabel(s)?`FedEx says “${st.status}”.`:'',
+    last&&last.desc?`Last scan: ${last.desc}${last.city?` in ${last.city}`:''}${last.at?`, ${shipTimeLabel(last.at)}`:''}.`:'',
+    eta.text?`${eta.text}${s.promised?` (promised ${shipDateLabel(s.promised)})`:''}.`:'',
+    `Click to ${open?'hide':'show'} the order lines${st?' and scans':''}.`].filter(Boolean).join(' ');
+  return `<div class="ship-row${open?' open':''}${s.marker?' has-exception':''}">
+    <button type="button" class="ship-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
+      <span class="ship-id"><span class="ship-num">${esc(n)}</span><span class="ship-sub">${esc(sub)}</span></span>
+      ${renderShipStrip(s)}
+      <span class="ship-state"><span class="status-chip ${shipStateTone(s)}">${esc(shipStateLabel(s))}</span>${eta.text?`<span class="ship-eta ${eta.tone}">${esc(eta.text)}</span>`:''}</span>
+      <span class="sr-only">${esc(stepText)}</span>
+    </button>
+    ${open?renderShipDetail(s):''}
+  </div>`;
+}
+// The order lines a shipment covers: the delivery's lines (by delivery document number) or, for a number added by
+// hand, the lines of its sales order.
+function shippingLinkedRows(s){
+  if(!s.deliveries.size)return s.rows;
+  const docs=s.deliveries;
+  return allLoadedRows.filter(r=>r&&!r.isDeleted&&shipIsSales(r)&&isShipmentRow(r)&&docs.has(String(r.deliveryDocNumber||'').trim()));
+}
+function renderShipDetail(s){
+  const st=s.status,n=s.number;
+  const fact=(label,value,tipText)=>value?`<div class="ship-fact" data-tip="${esc(tipText)}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`:'';
+  const last=st&&st.lastEvent;
+  const facts=[
+    fact('Last scan',last?[last.desc,last.city,shipTimeLabel(last.at)].filter(Boolean).join(' · '):'','The newest scan FedEx has for this shipment, in your time zone.'),
+    fact(s.stage==='delivered'?'Delivered':'FedEx ETA',s.arrive?`${shipDateLabel(s.arrive)}${shipLateText(s.lateDays)?` · ${shipLateText(s.lateDays)}`:''}`:'',s.stage==='delivered'?'When FedEx delivered it, against the promised date.':'The delivery date FedEx expects, against the promised date.'),
+    fact('Promised',s.promised?shipDateLabel(s.promised):'','The earliest promised date of the order lines on this shipment: the reschedule date when there is one, otherwise the line delivery date in SAP.'),
+    fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','The delivery date in SAP (ShipDate, or ClosedDate in older exports).'),
+    fact('Ship method (SAP)',s.shipMethod,'The shipping type on the SAP delivery (OSHP).'),
+    fact('Ship to',shipCountryName(s.dest),'The ship-to country of the SAP delivery, or FedEx’s destination for numbers added by hand.'),
+    fact('FedEx service',st&&st.service||'','The FedEx service on the label, for example FedEx Ground or FedEx Freight Economy.'),
+    fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added this tracking number and when.'),
+  ].join('');
+  const alertText=st&&st.exception?`${st.exception.desc||st.status}${st.exception.action?` — ${st.exception.action}`:''}`:'';
+  const customs=st&&st.customs&&st.customs.length?`<div class="ship-customs-log"><strong>Customs scans</strong><ol class="ship-customs">${st.customs.map(e=>`<li>${esc(e.desc)} <span class="muted">${esc(shipTimeLabel(e.at))}</span></li>`).join('')}</ol></div>`:'';
+  const rows=shippingLinkedRows(s).slice(0,60);
+  const lineRow=r=>{
+    const shipped=isShipmentRow(r)?shipDateLabel(r.shipDate||r.closeDate):'';
+    return `<tr><td class="strong">${esc(r.documentNumber||'—')}</td><td class="soft">${esc(r.lineNumber||'')}</td><td><span class="m">${esc(r.itemCode||'—')}</span><span class="item-desc">${esc(String(r.itemDescription||'').slice(0,120))}</span></td><td class="num">${fmtNum(r.quantity)}</td><td class="num">${money(r.amountLocal)}</td><td class="date soft">${esc(shipDateLabel(r.effectiveDueDate||r.lineDueDate||r.dueDate)||'—')}</td><td class="date soft">${esc(shipped||'—')}</td></tr>`;
+  };
+  const table=rows.length?`<div class="table-scroll"><table class="data-table ship-lines"><thead><tr>
+      <th scope="col" data-tip="Sales order number in SAP.">SO #</th>
+      <th scope="col" data-tip="Line number on the sales order.">Line</th>
+      <th scope="col" data-tip="Item number and description.">Item / description</th>
+      <th scope="col" class="num" data-tip="${s.deliveries.size?'Quantity shipped on this delivery.':'Quantity ordered on the line.'}">Qty</th>
+      <th scope="col" class="num" data-tip="${s.deliveries.size?'Shipped value of the line (local currency, from SAP).':'Open value of the line (local currency, from SAP).'}">Value</th>
+      <th scope="col" data-tip="The promised date of the line: its reschedule date when there is one, otherwise the line delivery date.">Promised</th>
+      <th scope="col" data-tip="The delivery date in SAP; blank while the line has not shipped.">Shipped</th>
+    </tr></thead><tbody>${rows.map(lineRow).join('')}</tbody></table></div>`
+    :`<p class="empty-note">${s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked to this tracking number. Add the sales order number when you add a tracking number by hand.'}</p>`;
+  const actions=`<div class="ship-actions print-hide"><a class="btn" href="https://www.fedex.com/fedextrack/?trknbr=${encodeURIComponent(n)}" target="_blank" rel="noopener noreferrer" data-tip="Opens FedEx’s own tracking page for ${esc(n)} in a new tab.">Open on fedex.com</a>${s.manual&&!isSnapshotView?`<button type="button" class="btn btn-danger" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')" data-tip="Stop tracking this number. Only numbers added by hand can be removed; numbers from SAP deliveries come from the export.">Remove tracking #</button>`:''}</div>`;
+  return `<div class="ship-detail" id="ship-detail-${esc(n)}">
+    ${facts?`<div class="ship-facts">${facts}</div>`:''}
+    ${alertText?`<p class="ship-alert">${esc(alertText)}</p>`:''}
+    ${customs}
+    ${table}
+    ${actions}
+  </div>`;
+}
+const shipCardWhy=why=>/hosted/.test(why)?'needs the hosted dashboard':/snapshot/.test(why)?'not saved with this snapshot':'not checked yet';
+function renderShipCard(id,label,group,dot,tipLead,live,why){
+  const count=group.length;
+  const value=group.reduce((sum,s)=>sum+s.value,0);
+  const selected=shippingFilter===id;
+  const tone=!live||!count?'neutral':id==='exception'?'crit':id==='customs'?'warn':'neutral';
+  const tipText=live
+    ?`${label}: ${shipPlural(count,'shipment','shipments')} ${tipLead}${value?`, worth ${money(value)} on their SAP deliveries`:''}. ${selected?'Click again to show every shipment.':'Click to list only these.'}`
+    :`${label}: shipments ${tipLead}. ${why}`;
+  return `<button type="button" class="card kpi ship-kpi${selected?' selected':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
+    <span class="kpi-label"><span class="dot ${dot}"></span>${esc(label)}</span>
+    <span class="kpi-value ${tone}">${live?fmtNum(count):'—'}</span>
+    <span class="kpi-sub">${live?(value?`${money(value)} shipped value`:count?'tracking numbers added by hand':'none right now'):shipCardWhy(why)}</span>
+  </button>`;
+}
+function renderShippingPage(m){
+  const st=shippingState;
+  if(isSnapshotView){if(st.state!=='snapshot')shippingFromSnapshot(null);}
+  else{
+    if(st.state==='snapshot')Object.assign(st,{state:'idle',statuses:{},polledAt:'',snapshotManual:null});
+    if(!shippingApiPossible()){if(!st.loading)st.state='static';}
+    else if(!st.loading&&(st.state==='idle'||(st.state==='static'&&!st.loadedAt)||((st.state==='ready'||st.state==='error')&&Date.now()-st.loadedAt>5*60*1000)))shippingLoad();
+  }
+  const model=shippingModel();
+  const live=(st.state==='ready'||st.state==='snapshot')&&!!st.polledAt;
+  const now=Date.now();
+  const polledT=Date.parse(st.polledAt||'');
+  const asOf=displayDate(model.today);
+
+  // Status bar: when FedEx was last checked, the next scheduled check, Refresh now.
+  const next=shippingNextCheck(now);
+  const barText=st.state==='ready'?`${isFinite(polledT)?`Updated ${shipAgo(now-polledT)}`:'Not checked yet'} · next check ${shipClock(next)}`
+    :st.state==='snapshot'?(isFinite(polledT)?`FedEx statuses as of ${shipTimeLabel(st.polledAt)} (shared snapshot)`:'Shared snapshot: no FedEx statuses were saved with it')
+    :st.state==='loading'?'Getting FedEx statuses…'
+    :'Live FedEx status needs the hosted dashboard';
+  const barTip=st.state==='ready'?`FedEx is checked every ${SHIP_CHECK_HOURS} hours on the server${isFinite(polledT)?`; the last check was ${shipTimeLabel(st.polledAt)}`:''}. The next scheduled check is ${shipTimeLabel(next.toISOString())}.`
+    :'Shows when FedEx was last asked about these shipments.';
+  const wait=Date.parse(st.refreshAfter||'');
+  const waiting=isFinite(wait)&&wait>now;
+  const canRefresh=st.state==='ready'&&!!st.fedex&&!st.busy&&!waiting;
+  const refreshTip=!st.fedex?'Refresh now needs the FedEx keys on this site (see docs/SHIPPING.md). The checks every 4 hours run on their own once the poller is set up.'
+    :waiting?`FedEx was checked a few minutes ago. Refresh works again at ${shipClock(new Date(wait))} (once every 10 minutes for everyone).`
+    :'Ask FedEx now for the latest status of every shipment listed (once every 10 minutes for everyone). FedEx is also checked every 4 hours on its own.';
+  const bar=`<div class="ship-bar rise">
+      <span class="ship-updated" data-tip="${esc(barTip)}"><span class="live-dot${live&&st.state==='ready'?'':' off'}"></span>${esc(barText)}</span>
+      ${st.state==='ready'?`<div class="ship-tools print-hide"><button type="button" class="btn${canRefresh?'':' is-disabled'}" data-focus-key="ship-refresh" onclick="shippingRefresh()"${canRefresh?'':' aria-disabled="true"'} data-tip="${esc(refreshTip)}">${st.busy?'Checking FedEx…':'Refresh now'}</button></div>`:''}
+    </div>`;
+
+  // Notes: what this copy of the page can and cannot do.
+  const notes=[];
+  if(st.notice)notes.push(['',st.notice]);
+  if(st.state==='static')notes.push(['','Live FedEx tracking needs the hosted dashboard (Cloudflare, set up as in docs/SHIPPING.md). Opened from a file or another web server, this page lists the tracking numbers from the export, without FedEx status.']);
+  if(st.state==='nostore')notes.push(['warn','This site has no shared storage (the REPORT_STORE KV binding), so FedEx statuses cannot be kept. IT can add it as in docs/IT_HOSTING_README.md.']);
+  if(st.state==='snapshot')notes.push(['','This is a shared snapshot: FedEx statuses are as they were when it was saved. Open the hosted dashboard for live tracking.']);
+  if(st.state==='ready'&&!st.fedex&&!st.polledAt)notes.push(['','FedEx tracking is not set up yet: it needs a FedEx developer project and its keys on the server (docs/SHIPPING.md). The tracking numbers from the export are listed below.']);
+  const lastErrT=st.lastError?Date.parse(st.lastError.at||''):NaN;
+  if(st.state==='ready'&&isFinite(lastErrT)&&!(lastErrT<polledT))notes.push(['warn',`The last FedEx check (${shipTimeLabel(st.lastError.at)}) failed: ${st.lastError.message||'no reason given'}${isFinite(polledT)?` Showing the results from ${shipTimeLabel(st.polledAt)}.`:''}`]);
+  if(st.state==='ready'&&st.errors&&st.errors.length)notes.push(['warn',`Part of the last check failed (${shipPlural(st.errors.reduce((s,e)=>s+(Number(e.numbers)||0),0),'tracking number','tracking numbers')}): ${st.errors[0].message}`]);
+  if(!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column. Run the updated KPI query in SAP (queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql) to bring in the delivery tracking numbers; until then add them by hand below.']);
+  const notesHtml=notes.map(([tone,text])=>`<p class="ship-note${tone?` ${tone}`:''}"${text===st.notice&&typeof showToast!=='function'?' role="status"':''}>${esc(text)}</p>`).join('');
+
+  // KPI cards (click filters the list).
+  const g=model.groups;
+  const why=st.state==='snapshot'?'No FedEx statuses were saved with this shared snapshot.'
+    :st.state==='ready'||st.state==='loading'?'FedEx has not been checked yet; the count shows after the first check.'
+    :'Live FedEx status needs the hosted dashboard, so this stays blank here.';
+  const cards=`<section class="grid-5 rise rise-1 ship-kpis">
+      ${renderShipCard('transit','In transit',g.transit,'accent','that FedEx has picked up and that are moving toward the customer (not yet out for delivery)',live,why)}
+      ${renderShipCard('out','Out for delivery',g.out,'good','on a FedEx vehicle for delivery today',live,why)}
+      ${renderShipCard('delivered','Delivered this week',g.delivered,'good',`that FedEx delivered since Monday ${shipDateLabel(model.weekStart)}`,live,why)}
+      ${renderShipCard('exception','Exceptions',g.exception,'crit','with a delivery or shipment exception, delay, hold, return or cancellation (customs holds are under In customs)',live,why)}
+      ${renderShipCard('customs','In customs',g.customs,'warn','waiting for customs clearance, including clearance delays',live,why)}
+    </section>`;
+
+  // Add a tracking number by hand.
+  const addForm=isSnapshotView?'':`<form class="filter-bar ship-add rise rise-2" onsubmit="return shippingAddManual(event)">
+      <span class="filter-label" data-tip="Track a shipment that is not on an SAP delivery yet, or whose delivery has no tracking number in SAP. It is tracked for ${SHIP_MANUAL_DAYS} days${shippingSharedStore()?' and everyone who signs in sees it':' and saved in this browser'}.">Add tracking #</span>
+      <label>Sales order # <input id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345" data-tip="The sales order this shipment belongs to, so its order lines show under the tracking number (optional)."></label>
+      <label>FedEx tracking # <input id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678" data-tip="The FedEx tracking number, or the PRO number for FedEx Freight. Spaces and dashes are fine."></label>
+      <button type="submit" class="btn btn-primary" data-focus-key="ship-add" data-tip="Save this tracking number. Its FedEx status shows after the next check.">Add</button>
+      <span id="ship-add-status" class="filter-note" role="status"></span>
+    </form>`;
+
+  // Shipment list with the progress strip.
+  const match={transit:g.transit,out:g.out,delivered:g.delivered,exception:g.exception,customs:g.customs}[shippingFilter];
+  const shown=shippingSortedList(match||model.list);
+  const more=!!tableMore['ship-list']||printMode;
+  const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
+  const filterName={transit:'in transit',out:'out for delivery',delivered:'delivered this week',exception:'with an exception',customs:'in customs'}[shippingFilter];
+  const listSub=filterName?`only shipments ${filterName}`:`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
+  const empty=filterName?`No shipments ${filterName} right now.`:`No FedEx tracking numbers on deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${isSnapshotView?'':', and none added by hand'}.`;
+  const list=`<section class="section rise rise-3">
+      <div class="section-head"><h2 class="section-title">Shipments</h2><span class="count-badge" data-tip="${esc(`${shipPlural(shown.length,'shipment','shipments')} listed`)}">${fmtNum(shown.length)}</span><span class="section-sub">${esc(listSub)}</span>${filterName?`<div class="section-tools"><button type="button" class="link-btn" data-focus-key="ship-filter-clear" onclick="setShippingFilter('')" data-tip="Show every shipment again.">Show all shipments</button></div>`:''}</div>
+      <div class="ship-legend" aria-hidden="true">${SHIP_STAGES.map(([,label])=>esc(label)).join(' → ')}</div>
+      <div class="ship-list">${visible.map(renderShipRow).join('')||`<p class="empty-note ship-empty">${esc(empty)}</p>`}</div>
+      ${shown.length>SHIP_LIST_LIMIT?`<div class="tfoot ship-foot"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="link-btn" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)" data-tip="${more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`}">${more?'Show fewer':'Show all'}</button></div>`:''}
+    </section>`;
+
+  // Cross-border: leaving Canada, or with customs scans.
+  const crossState={clearance:['In clearance','warn'],delay:['Clearance delay','bad'],released:['Released','good']};
+  const crossRank=s=>s.delay?0:s.status&&s.status.customsState==='clearance'?1:!s.status||!s.status.customsState?2:3;
+  const crossDays=s=>{
+    const a=Date.parse(s.status&&s.status.customsStart||'');
+    if(!isFinite(a))return null;
+    const b=Date.parse(s.status.customsEnd||'');
+    return Math.max(0,((isFinite(b)?b:now)-a)/SHIP_DAY);
+  };
+  const crossRows=[...model.cross].sort((a,b)=>crossRank(a)-crossRank(b)||(crossDays(b)||0)-(crossDays(a)||0)).map(s=>{
+    const cs=s.status&&crossState[s.status.customsState];
+    const label=cs?cs[0]:s.status?(s.stage==='delivered'?'No customs scans':'Not at customs yet'):'No live status';
+    const days=crossDays(s);
+    const lastCustoms=s.status&&s.status.customs&&s.status.customs.length?s.status.customs[s.status.customs.length-1]:null;
+    return `<tr><td class="m"><button type="button" class="link-btn ship-link" data-focus-key="ship-x-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')" data-tip="Show ${esc(s.number)} with its progress and order lines in the list above.">${esc(s.number)}</button></td><td>${esc(s.customer||'—')}</td><td class="soft">${esc(shipCountryName(s.dest)||'—')}</td><td><span class="status-chip ${cs?cs[1]:''}">${esc(label)}</span></td><td class="num">${days===null?'—':days<1?'under 1 day':esc(shipPlural(Math.round(days),'day','days'))}</td><td class="soft">${lastCustoms?`${esc(lastCustoms.desc)}<span class="sub">${esc(shipTimeLabel(lastCustoms.at))}</span>`:'—'}</td></tr>`;
+  });
+  const cross=`<section class="section rise rise-4">
+      <div class="section-head"><h2 class="section-title">Cross-border</h2><span class="count-badge${model.cross.some(s=>s.delay)?' bad':''}" data-tip="${esc(`${shipPlural(model.cross.length,'shipment','shipments')} crossing a border${model.cross.some(s=>s.delay)?`, ${fmtNum(model.cross.filter(s=>s.delay).length)} held by a clearance delay`:''}`)}">${fmtNum(model.cross.length)}</span><span class="section-sub">shipments to an address outside Canada, or with customs scans</span></div>
+      <div class="table"><div class="table-scroll"><table class="data-table ship-cross"><thead><tr>
+        <th scope="col" data-tip="FedEx tracking number. Click one to open it in the list above.">Tracking #</th>
+        <th scope="col" data-tip="Customer on the SAP delivery or sales order.">Customer</th>
+        <th scope="col" data-tip="Ship-to country from SAP, or FedEx’s destination.">Ship to</th>
+        <th scope="col" data-tip="In clearance: customs is processing it. Clearance delay: customs is holding it (often paperwork). Released: customs let it go.">Customs</th>
+        <th scope="col" class="num" data-tip="From the first customs scan to the release, or to now while customs still has it.">Days in customs</th>
+        <th scope="col" data-tip="The newest customs scan from FedEx.">Last customs scan</th>
+      </tr></thead><tbody>${crossRows.join('')||`<tr><td colspan="6" class="soft">No cross-border shipments in this list.</td></tr>`}</tbody></table></div></div>
+    </section>`;
+
+  const about=`<details class="about rise rise-5"><summary>About these numbers</summary><div class="about-body">
+      <p>Tracking numbers come from the TrackingNumber column of the KPI export (the delivery’s tracking number in SAP, ODLN.TrackNo) and from numbers added by hand with Add tracking #. A delivery is tracked when it shipped in the ${SHIP_WINDOW_DAYS} days before the export date (${esc(asOf)}); it stops being checked ${SHIP_DELIVERED_DAYS} days after FedEx delivered it. Numbers added by hand are tracked for ${SHIP_MANUAL_DAYS} days.</p>
+      <p>The server asks FedEx every ${SHIP_CHECK_HOURS} hours, and when someone clicks Refresh now (at most once every 10 minutes). The strip shows the steps Label created, Picked up, In transit, Customs (only for shipments that cross a border), Out for delivery and Delivered, filled up to the newest FedEx scan; a red mark means an exception or a customs hold at that step. FedEx Freight (LTL) shipments are tracked the same way with their PRO number.</p>
+      <p>Exceptions are delivery or shipment exceptions, delays, holds at a FedEx location, returns and cancellations. In customs counts shipments waiting for clearance, including clearance delays. Delivered this week counts deliveries from Monday to today.</p>
+      <p>ETA vs promised compares FedEx’s estimated delivery date (or the actual delivery date) with the earliest promised date of the order lines on the delivery: the reschedule date when there is one, otherwise the line delivery date. Cross-border shipments go to an address outside Canada (SAP ship-to country, or FedEx’s destination), or have customs scans; days in customs run from the first customs scan to the release.</p>
+    </div></details>`;
+  // First-visit hint (Stream A's renderHint, localStorage spyderKpiHints); not in a shared snapshot.
+  const hint=isSnapshotView?'':renderHint('shipping','<strong>How this page works.</strong> Each row is a delivery with a FedEx tracking number, checked every '+SHIP_CHECK_HOURS+' hours. Click a row for its order lines and FedEx scans, click a card to list only those shipments, and use <strong>Add tracking #</strong> for a number that is not in SAP. Rest the pointer on a card, a column heading or a shipment (Tab to it, or press and hold on a phone) for what it shows.');
+  return bar+hint+notesHtml+cards+addForm+list+cross+about;
 }
 
 renderSidebar();

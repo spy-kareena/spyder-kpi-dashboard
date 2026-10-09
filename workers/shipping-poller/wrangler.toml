@@ -1,0 +1,26 @@
+# Spyder shipping poller: checks FedEx every 4 hours for the dashboard's Shipping page.
+# Deploy from this folder: npx wrangler deploy   (see README.md here and docs/SHIPPING.md)
+name = "spyder-shipping-poller"
+main = "index.mjs"
+compatibility_date = "2026-10-01"
+# No public URL: the Worker only runs on its schedule.
+workers_dev = false
+
+[triggers]
+# Every 4 hours on the hour, UTC (00:00, 04:00, 08:00, 12:00, 16:00, 20:00). The page's
+# "next check" time and functions/api/shipping.js assume this schedule.
+crons = ["0 */4 * * *"]
+
+# The SAME KV namespace the Pages project binds as REPORT_STORE (shared report, notes, tracking).
+# Replace the placeholder with its id: npx wrangler kv namespace list  (or Cloudflare dashboard >
+# Storage & Databases > KV), e.g. the id used in the repo's root wrangler.toml.
+[[kv_namespaces]]
+binding = "REPORT_STORE"
+id = "REPLACE_WITH_REPORT_STORE_NAMESPACE_ID"
+
+# Secrets (never put them in this file):
+#   npx wrangler secret put FEDEX_CLIENT_ID
+#   npx wrangler secret put FEDEX_CLIENT_SECRET
+# Optional, only with FedEx sandbox (test) keys: uncomment the two lines below.
+# [vars]
+# FEDEX_API_BASE = "https://apis-sandbox.fedex.com"
