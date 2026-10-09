@@ -261,6 +261,9 @@ test('Us / Them and reasons come from the Order Health cause engine (Stream D) a
   // The same totals as the Us vs Them card on the Leading tab (neutral has no value here, so no box).
   const card = page.run('Object.fromEntries(Object.entries(ohLeadingData(currentMetrics()).cause).map(([k,v])=>[k,v.value]))');
   assert.deepEqual(card, { us: 2500, them: 1000 + 1721806, neutral: 0, unknown: 4000 });
+  // Drawn in the Order Health cause colours (D's --cause-* tokens), like the Us vs Them card and the waffle.
+  assert.deepEqual(Object.fromEntries(risk().nodes.filter((n) => n.level === 1).map((n) => [n.label, n.tone])), { Them: 'them', Us: 'us', 'Not set': 'unknown' });
+  assert.match(HTML, /\.sk-link\.sk-us,\.sk-node\.sk-us \.sk-rect\{fill:var\(--cause-us\)\}/);
   // Each line's first reason from lineReasons (SAP signal first, then the override).
   assert.deepEqual(byLevel(risk(), 0), { 'Past due · no reschedule': 1000, 'No commit date': 2500, 'Rescheduled later': 4000, Urgent: 1721806 });
   const actions = Object.fromEntries(risk().nodes.filter((n) => n.level === 0).map((n) => [n.label, n.action]));

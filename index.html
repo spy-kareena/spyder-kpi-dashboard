@@ -994,6 +994,11 @@ details.about>summary:hover{color:var(--gray-900)}
 .sk-link.sk-good,.sk-node.sk-good .sk-rect{fill:var(--good)}
 .sk-link.sk-calm,.sk-node.sk-calm .sk-rect{fill:var(--accent)}
 .sk-link.sk-muted,.sk-node.sk-muted .sk-rect{fill:var(--gray-500)}
+/* Us / Them / Neutral / Not set use the Order Health cause colours (Stream D tokens), so the at-risk chart matches its cards */
+.sk-link.sk-us,.sk-node.sk-us .sk-rect{fill:var(--cause-us)}
+.sk-link.sk-them,.sk-node.sk-them .sk-rect{fill:var(--cause-them)}
+.sk-link.sk-neutral,.sk-node.sk-neutral .sk-rect{fill:var(--cause-neutral)}
+.sk-link.sk-unknown,.sk-node.sk-unknown .sk-rect{fill:var(--cause-unknown)}
 .sk-rect{fill:var(--gray-700);transform-box:fill-box;transform-origin:50% 50%}
 .sk-node{cursor:pointer;outline:none;transition:opacity .15s}
 .sk-hit{fill:transparent;stroke:transparent;stroke-width:2}
@@ -1008,7 +1013,7 @@ details.about>summary:hover{color:var(--gray-900)}
 .sk-svg.sk-hl .sk-node:not(.sk-on){opacity:.45}
 .sk-foot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
 .sk-detail{margin:0;min-height:1.5em;font-size:12px;color:var(--gray-600);flex:1 1 320px;text-align:right}
-.sk-sw-crit{background:var(--crit)}.sk-sw-warn{background:var(--warn-fill)}.sk-sw-good{background:var(--good)}.sk-sw-calm{background:var(--accent)}.sk-sw-muted{background:var(--gray-500)}
+.sk-sw-crit{background:var(--crit)}.sk-sw-warn{background:var(--warn-fill)}.sk-sw-good{background:var(--good)}.sk-sw-calm{background:var(--accent)}.sk-sw-muted{background:var(--gray-500)}.sk-sw-us{background:var(--cause-us)}.sk-sw-them{background:var(--cause-them)}.sk-sw-neutral{background:var(--cause-neutral)}.sk-sw-unknown{background:var(--cause-unknown)}
 .sk-filter{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--gray-700);background:var(--accent-tint);border:1px solid var(--accent-border);border-radius:var(--r-ctl);padding:8px 12px}
 .sk-about{margin-top:-4px}
 .sk-swipe{display:none;font-size:12px;color:var(--gray-500)}
@@ -8123,10 +8128,10 @@ const SANKEY_STATUS={
   ok:{label:'Not at risk',tone:'calm',tile:'',order:4}
 };
 const SANKEY_CAUSES={
-  us:{label:'Us',tone:'crit',order:0,tip:'Us = the delay is on our side (production, supply, purchasing, no commit date, past due).'},
-  them:{label:'Them',tone:'warn',order:1,tip:'Them = the customer or carrier side (hold, short ship, close short, shipping delay, urgent request).'},
-  neutral:{label:'Neutral',tone:'calm',order:2,tip:'Neutral = covered, or an override that puts the delay on neither side (the Order Health cause rules).'},
-  unknown:{label:'Not set',tone:'muted',order:3,tip:'Not set = no cause recorded yet and the SAP signal does not say whose side it is (for example a rescheduled line).'}
+  us:{label:'Us',tone:'us',order:0,tip:'Us = the delay is on our side (production, supply, purchasing, no commit date, past due).'},
+  them:{label:'Them',tone:'them',order:1,tip:'Them = the customer or carrier side (hold, short ship, close short, shipping delay, urgent request).'},
+  neutral:{label:'Neutral',tone:'neutral',order:2,tip:'Neutral = covered, or an override that puts the delay on neither side (the Order Health cause rules).'},
+  unknown:{label:'Not set',tone:'unknown',order:3,tip:'Not set = no cause recorded yet and the SAP signal does not say whose side it is (for example a rescheduled line).'}
 };
 // Used only when the Order Health cause engine (lineCause) is not on the page: manual Us / Them first, then the
 // override status, then the SAP signal (past due with no reschedule or no commit date = us).
@@ -8214,7 +8219,7 @@ function sankeyWeeklyFlows(m){
     {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,
       colTips:['Main reason the line is at risk: an override reason someone picked, otherwise the SAP signal.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
       sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
-      legend:[['crit','Us'],['warn','Them'],['muted','Not set']]}
+      legend:[['us','Us'],['them','Them'],['neutral','Neutral'],['unknown','Not set']]}
   ];
 }
 // Build Risk: CM id as the CTB % by CM trend groups it.
