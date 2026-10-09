@@ -5002,7 +5002,7 @@ function renderConnectPage(){
     ${code('connect-desktop','Copy the Claude Desktop config')}
     <p>If the file already has settings, keep them: put the "spyder-kpi" entry inside its "mcpServers" section, or add the "mcpServers" part after the last setting, separated by a comma. After a new export, ask Claude to load it (for example “Load C:\\Exports\\kpi_export.xls”), or change the path and restart Claude.</p>`)}
   ${section(3,'Option 3: Claude Code','one command in a terminal',`<p>Run this once with your two paths, in the folder where you use Claude Code (to use it in every folder, add <strong>--scope user</strong> after <strong>add</strong>). Then start <strong>claude</strong> there and type <strong>/mcp</strong> to check that spyder-kpi is connected.</p>${code('connect-code','Copy the Claude Code command')}`)}
-  ${section(4,'Option 4: Any other MCP app','Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers',`<table class="data-table connect-table"><thead><tr><th scope="col">Setting</th><th scope="col">Value</th></tr></thead><tbody>
+  ${section(4,'Option 4: Any other MCP app','Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers',`<table class="data-table connect-table"><thead><tr><th scope="col"${tipAttr('What to fill in, in your AI app’s settings for a local MCP server.')}>Setting</th><th scope="col"${tipAttr('What to type there. Use the full paths of node, the connector and your export files on this computer.')}>Value</th></tr></thead><tbody>
       <tr><td class="m">Transport</td><td>stdio (a local command)</td></tr>
       <tr><td class="m">Command</td><td><code>node</code></td></tr>
       <tr><td class="m">Arguments</td><td>The full path of <code>mcp\\spyder-kpi-mcp.mjs</code>, then the full path of each export file</td></tr>
@@ -5253,7 +5253,7 @@ function renderGlobalSearchPage(m){
       <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Order lines found"><table class="lines-table search">
         <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
-        <thead><tr><th>Type</th><th>Doc #</th><th>Customer / vendor</th><th>Warehouse</th><th>Item / description</th><th${tipAttr('Due date for open lines, close date for shipped and closed lines.')}>Date</th><th class="num">Qty</th><th class="num">Value</th><th>Status</th><th class="print-hide">Notes</th></tr></thead>
+        <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
       ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
@@ -5657,7 +5657,7 @@ function renderResults(){
       <button type="button" class="link-btn" data-focus-key="filters-reset" onclick="resetWeeklyFilters()"${tipAttr('Clear every filter on this page.')}>Reset</button>
     </div>
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
-    html+=renderHint('weekly-cards','<strong>How this page works.</strong> Each card counts open sales-order lines for the filters above. Click a card to list its lines at the bottom of the page; click it again to clear. Rest the pointer on a card (Tab to it, or press and hold on a phone) for exactly what it counts, and use the ⓘ next to a section title for where its numbers come from.');
+    html+=renderHint('weekly-cards','<strong>How this page works.</strong> Two tabs: <strong>Leading</strong> shows what needs action now (at-risk lines, why, since when, Us or Them) and <strong>Lagging</strong> shows how we performed (on-time delivery, fill rate, perfect orders, days late). Each card counts open sales-order lines for the filters above. Click a card to list its lines at the bottom of the page; click it again to clear. Rest the pointer on a card (Tab to it, or press and hold on a phone) for exactly what it counts, and use the ⓘ next to a section title for where its numbers come from.');
     html+=ohRenderTabs()+ohPanelOpen('leading');
 
     // ---------- Needs attention (leading indicators) ----------
@@ -6062,7 +6062,7 @@ function renderResults(){
         <div class="table-tools linked-tools"><label>Sort rows <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines. Clicking a column heading sorts too.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so">
           <colgroup><col class="col-check" style="width:42px"><col style="width:64px"><col style="width:112px"><col style="width:100px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:146px"><col style="width:124px"><col style="width:62px"><col class="col-notes" style="width:110px"></colgroup>
-          <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines of this list (not only the rows shown) to set an override on them or delete them.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide">Notes</th></tr></thead>
+          <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines of this list (not only the rows shown) to set an override on them or delete them.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
             const rowValue=cellValue(r);
             const rowQty=cellQty(r);
@@ -6275,7 +6275,7 @@ function renderResults(){
           <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
           <div class="table-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="lines-table po">
             <colgroup><col style="width:64px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col style="width:124px"><col class="col-notes" style="width:110px"></colgroup>
-            <thead><tr><th>PO #</th><th>Vendor</th><th>Warehouse</th><th>Item / Description</th><th${tipAttr('The reschedule date when there is one, otherwise the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive (AmountLocal).')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with timing against the date.')}>Status</th><th${tipAttr('The vendor’s reschedule date, or why there is none.')}>Reschedule</th><th class="print-hide"${tipAttr('Add note sets an override status or a note on the line.')}>Notes</th></tr></thead>
+            <thead><tr>${['PO #','Vendor','Warehouse','Item / Description'].map(label=>`<th${tipAttr(columnTip('po',label))}>${label}</th>`).join('')}<th${tipAttr('The reschedule date when there is one, otherwise the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive (AmountLocal).')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with timing against the date.')}>Status</th><th${tipAttr('The vendor’s reschedule date, or why there is none.')}>Reschedule</th><th class="print-hide"${tipAttr('Add note sets an override status or a note on the line.')}>Notes</th></tr></thead>
             <tbody>${shown.map((r,i)=>{
               const reschedule=realPoReschedule(r);
               const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
@@ -7674,7 +7674,34 @@ const COLUMN_TIPS={
   'Still open past commit':'Open lines whose reschedule date has passed.',
   'Closed reschedules':'Rescheduled deliveries in the last 12 months.',
   'Fill rate':'Delivered or closed quantity as a share of ordered quantity.',
-  'Filled qty':'Quantity delivered or closed.'
+  'Filled qty':'Quantity delivered or closed.',
+  // Identity columns (2v1 final pass: every column heading explains itself, with its SAP field).
+  'Doc #':'SAP document number (DocumentNumber): the sales or purchase order.',
+  'SO #':'Sales order number in SAP (DocumentNumber).',
+  'PO #':'Purchase order number in SAP (DocumentNumber).',
+  'Customer':'Customer name in SAP (CustomerVendorName).',
+  'Vendor':'Vendor name in SAP (CustomerVendorName).',
+  'Customer / vendor':'Customer on sales orders, vendor on purchase orders (CustomerVendorName).',
+  'Warehouse':'Warehouse the line ships from or is received into (SAP Warehouse).',
+  'Warehouse / CM':'Warehouse the delivery shipped from; CM warehouses are the contract manufacturers.',
+  'Item':'SAP item number (Item No.) and its description.',
+  'Item / description':'SAP item number (Item No.) and its description.',
+  'Item / Description':'SAP item number (Item No.) and its description.',
+  'Item group':'SAP item group of the items (ItemGroupName).',
+  'Month':'The month the row is for: the demand month (YearMonth) on supply / demand rows, the due month on order lines.',
+  'monthly-summary|Month':'Delivery month: shipped value counts in the month it shipped, open work in the month it is due.',
+  'monthly-original|Month':'The order line’s original delivery month (HeaderDueDate / LineDueDate).',
+  'monthly-notshipped|Month':'The open line’s original delivery month (HeaderDueDate / LineDueDate).',
+  'metrics-timeline|Month':'Effective due month: the reschedule date when the line has one, otherwise its due date.',
+  'br-ctb|Month':'The build month of the Clear To Build report row.',
+  'search-ctb|Month':'The build month of the Clear To Build report row.',
+  'Type':'Sales order, purchase order, delivery or goods receipt.',
+  'search|Date':'Due date for open lines, close date for shipped and closed lines.',
+  'search|Qty':'Open quantity for open lines, ordered or shipped quantity for closed lines and deliveries.',
+  'search|Value':'Open value for open lines, line value (AmountLocal) for closed lines and deliveries.',
+  'search|Status':'Open lines: Late, Past Due, No Commit, Rescheduled or Open, with timing and why. Closed lines: Shipped, Received or Closed.',
+  'search|Notes':'Add note sets an override status, an Us / Them cause or a note on the line.',
+  'linked|Notes':'Add note sets an override status, an Us / Them cause or a note on the line.'
 };
 function columnTip(tableKey,label){
   return COLUMN_TIPS[`${tableKey}|${label}`]||COLUMN_TIPS[label]||'';
@@ -9575,7 +9602,7 @@ function renderShippingPage(m){
       <p>ETA vs promised compares FedEx’s estimated delivery date (or the actual delivery date) with the earliest promised date of the order lines on the delivery: the reschedule date when there is one, otherwise the line delivery date. Cross-border shipments go to an address outside Canada (SAP ship-to country, or FedEx’s destination), or have customs scans; days in customs run from the first customs scan to the release.</p>
     </div></details>`;
   // First-visit hint (Stream A's renderHint, localStorage spyderKpiHints); not in a shared snapshot.
-  const hint=isSnapshotView?'':renderHint('shipping','<strong>How this page works.</strong> Each row is a delivery with a FedEx tracking number, checked every '+SHIP_CHECK_HOURS+' hours. Click a row for its order lines and FedEx scans, click a card to list only those shipments, and use <strong>Add tracking #</strong> for a number that is not in SAP. Rest the pointer on a card, a column heading or a shipment (Tab to it, or press and hold on a phone) for what it shows.');
+  const hint=isSnapshotView?'':renderHint('shipping','<strong>How this page works.</strong> Each row is a delivery with a FedEx tracking number, taken from the delivery in SAP (its tracking number field) and checked every '+SHIP_CHECK_HOURS+' hours. Click a row for its order lines and FedEx scans, click a card to list only those shipments, and use <strong>Add tracking #</strong> for a number that is not in SAP. Rest the pointer on a card, a column heading or a shipment (Tab to it, or press and hold on a phone) for what it shows.');
   return bar+hint+notesHtml+cards+addForm+list+cross+about;
 }
 

@@ -429,6 +429,43 @@ test('first-visit hints stay dismissed (localStorage spyderKpiHints) until Show 
   page.run("dismissHint('x')");
 });
 
+test('every column heading on every page explains itself (its own tip or a tipped sort button); report-week columns stay plain', async () => {
+  const page = await loadedAll();
+  let checked = 0;
+  const seen = new Set();
+  eachView(page, (html, view) => {
+    const bare = [];
+    for (const [, tag, inner] of html.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)) {
+      const text = inner.replace(/<[^>]*>/g, '').replace(/&[a-z#0-9]+;/gi, ' ').trim();
+      if (!text) continue;
+      checked++;
+      seen.add(text);
+      if (hasTip(tag) || /\sdata-tip="[^"]+"/.test(inner)) continue;
+      // Clear To Build report weeks ("Sep 24") are dates, not columns that need explaining.
+      if (/^[A-Z][a-z]{2} \d{1,2}$/.test(text)) continue;
+      bare.push(text);
+    }
+    assert.deepEqual(bare, [], `${view}: column headings without a tooltip`);
+  });
+  assert.ok(checked > 150, `checked ${checked} headings`);
+  for (const h of ['Doc #', 'SO #', 'PO #', 'Customer / vendor', 'Warehouse', 'Item / description', 'Month', 'Type']) assert.ok(seen.has(h), `${h} was drawn and checked`);
+  // Headings that mean something else in one table use that table's text.
+  assert.equal(page.run("columnTip('metrics-timeline','Month')"), 'Effective due month: the reschedule date when the line has one, otherwise its due date.');
+  assert.match(page.run("columnTip('br-ctb','Month')"), /Clear To Build report row/);
+  assert.match(page.run("columnTip('anything','Month')"), /demand month \(YearMonth\)/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('first-visit hints say what the Order Health tabs are and where Shipping gets its tracking numbers', async () => {
+  const page = await loadedAll();
+  page.run("setTab('weekly')");
+  const hint = (html, id) => (html.match(new RegExp(`data-hint="${id}">([\\s\\S]*?)</div>`)) || [])[1] || '';
+  assert.match(hint(results(page), 'weekly-cards'), /<strong>Leading<\/strong> shows what needs action now[\s\S]*<strong>Lagging<\/strong> shows how we performed/);
+  page.run("setTab('shipping')");
+  assert.match(hint(results(page), 'shipping'), /taken from the delivery in SAP \(its tracking number field\)/);
+  assert.deepEqual(page.errors, []);
+});
+
 test('page descriptions: under each page name on the load screen, as the tooltip once a report is open', async () => {
   const page = loadPage();
   page.run('renderSidebar()');

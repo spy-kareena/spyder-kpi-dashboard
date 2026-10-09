@@ -115,3 +115,7 @@ the rest goes after; with the Big picture open, redraws that change no data or f
 reasons and causes come from the Order Health per-line memo; search finds a tracking number someone else added as
 soon as it arrives; Ask AI keeps every request under about 800 KB (bytes as sent): a long question's results are
 cut further and the model answers with what it has instead of failing at the site's 1 MB limit.
+2v1 final check: every column heading on every page has a tooltip (SAP field for SO # / PO # / Doc #, customer,
+vendor, warehouse, item, item group, month, type; Search, Purchase Orders and Connect an AI tables too), the Order
+Health hint says what the Leading and Lagging tabs show, and the Shipping hint says the tracking numbers come from
+the SAP delivery.
