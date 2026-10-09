@@ -221,7 +221,7 @@ test('Connect an AI opens before any export is loaded, with working setup snippe
   assert.equal(unescape(html.match(/<pre id="connect-code">([^<]*)<\/pre>/)[1]),
     'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"');
   // Copy buttons read the snippet id from data-copy and are left out of print.
-  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)" onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
+  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
   assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config', 'Copy the Claude Code command'], 'each Copy button has its own accessible name');
 });
 
