@@ -837,8 +837,8 @@ button.trow.po-wh-cols{font-size:13px}
 .ship-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-bar);padding:12px 16px;box-shadow:var(--sh-rest)}
 .ship-updated{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-700)}
 .ship-tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-.btn.is-disabled{opacity:.55;cursor:not-allowed}
-.btn.is-disabled:hover{transform:none;border-color:var(--gray-300)}
+.ship-bar .btn.is-disabled{opacity:.55;cursor:not-allowed}
+.ship-bar .btn.is-disabled:hover{transform:none;border-color:var(--gray-300)}
 .ship-note{margin:0;padding:10px 14px;border-radius:var(--r-bar);background:var(--accent-tint);border:1px solid var(--accent-border);color:var(--gray-700);font-size:12.5px;line-height:1.5}
 .ship-note.warn{background:var(--warn-tint);border-color:var(--warn-border);color:var(--warn-text)}
 button.ship-kpi{width:100%}
@@ -5783,9 +5783,9 @@ function renderResults(){
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
   if(activeTab==='connect')html+=renderConnectPage();
-  if(activeTab==='shipping')html+=renderShippingPage(m);
   // A new report sends its tracking numbers to the server (Shipping page, hosted site only).
   shippingWatchRows();
+  if(activeTab==='shipping')html+=renderShippingPage(m);
   // Supply / Demand detail: shortages and risk rows by warehouse.
   if(activeTab==='supplyweekly'){
     const sd=m.supplyDemand;
@@ -6353,7 +6353,7 @@ const SHIP_LIST_LIMIT=40;
 const SHIP_DAY=24*60*60*1000;
 const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // hand-added numbers when the shared notes store is not there
 // state: idle | loading | ready (server answered) | static (no server here) | nostore (no KV) | error | snapshot
-let shippingState={state:'idle',statuses:{},polledAt:'',fedex:null,lastError:null,errors:[],wanted:null,refreshAfter:'',notice:'',busy:false,loading:null,loadedAt:0,rowsRef:null,syncTimer:null,snapshotManual:null};
+let shippingState={state:'idle',statuses:{},polledAt:'',fedex:null,lastError:null,errors:[],wanted:null,refreshAfter:'',notice:'',busy:false,loading:null,loadedAt:0,rowsRef:null,syncTimer:null,snapshotManual:null,manualTouched:false};
 let shippingFilter='';
 let shippingExpanded=new Set();
 let shippingExportCache={rows:null,list:[],byOrder:new Map()};
@@ -6424,6 +6424,7 @@ function shippingManualEntries(){
 function shippingSaveManual(patch){
   if(isSnapshotView)return false;
   shippingSearchIndex=null;
+  shippingState.manualTouched=true;
   if(typeof sharedNotesPatchShipments==='function'){
     try{sharedNotesPatchShipments(patch);return true;}catch(e){console.warn('Shared tracking numbers not saved:',e);}
   }
@@ -6451,8 +6452,8 @@ function shippingAddManual(ev){
   renderResults();
   shippingQueueSync();
   const msg=`Tracking # ${number} added${order?` to order ${order}`:''}. Its FedEx status shows after the next check${shippingState.fedex?' (or click Refresh now)':''}.`;
-  say(msg);
-  if(typeof showToast==='function')showToast(msg);
+  // One announcement: the toast when the page has one, else the status line under the form.
+  if(typeof showToast==='function')showToast(msg);else say(msg);
   return false;
 }
 function shippingRemoveManual(number){
@@ -6576,6 +6577,8 @@ async function shippingLoad(){
       const data=/json/.test(type)?await res.json().catch(()=>null):null;
       if(res.ok&&data&&data.configured){
         Object.assign(shippingState,{state:'ready',statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),fedex:!!data.fedex,lastError:data.lastError||null,errors:Array.isArray(data.errors)?data.errors:[],wanted:data.wanted||null,refreshAfter:String(data.refreshAfter||'')});
+        // Statuses change which deliveries are still tracked (delivered more than 7 days ago drops out).
+        if(allLoadedRows.length)shippingQueueSync();
       }else if(res.status===503&&data&&data.configured===false)shippingState.state='nostore';
       else if(res.status===401)Object.assign(shippingState,{state:'error',notice:'Your sign-in to this site has expired. Reload the page and sign in again.'});
       // A static host (IIS, a file share) answers /api/shipping with its own 404 page.
@@ -6599,14 +6602,17 @@ async function shippingSync(){
   const w=shippingState.wanted||{};
   let asOf=displayDate(reportToday()),exp=lists.export;
   if(!shippingHasTrackingColumn()){asOf=w.exportAsOf||asOf;exp=w.exportAsOf?(w.export||[]):[];}
+  // Hand-added numbers may not have arrived from the shared notes yet: an empty list only replaces the server's
+  // when someone added or removed one in this browser.
+  const manual=lists.manual.length||shippingState.manualTouched?lists.manual:(w.manual||[]);
   const exportSame=(!!w.exportAsOf&&asOf<w.exportAsOf)||(asOf===w.exportAsOf&&shipSameList(exp,w.export));
-  if(exportSame&&shipSameList(lists.manual,w.manual))return false;
-  if(!w.exportAsOf&&!exp.length&&!lists.manual.length&&!(w.manual||[]).length)return false;
+  if(exportSame&&shipSameList(manual,w.manual))return false;
+  if(!w.exportAsOf&&!exp.length&&!manual.length&&!(w.manual||[]).length)return false;
   try{
-    const res=await fetch('/api/shipping',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({asOf,export:exp,manual:lists.manual})});
+    const res=await fetch('/api/shipping',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({asOf,export:exp,manual})});
     if(!res.ok)return false;
     const data=await res.json().catch(()=>({}));
-    shippingState.wanted=data.keptNewerExport?{...w,manual:lists.manual}:{...w,exportAsOf:asOf,export:exp,manual:lists.manual};
+    shippingState.wanted=data.keptNewerExport?{...w,manual}:{...w,exportAsOf:asOf,export:exp,manual};
     return true;
   }catch(err){return false;}
 }
@@ -6638,12 +6644,12 @@ async function shippingRefresh(){
     if(res.ok){
       Object.assign(st,{statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),errors:Array.isArray(data.errors)?data.errors:[],lastError:null,refreshAfter:String(data.refreshAfter||'')});
       st.notice=`FedEx checked just now: ${shipPlural(Number(data.count)||0,'tracking number','tracking numbers')} up to date.`;
-      if(typeof showToast==='function')showToast(st.notice);
     }else if(res.status===429){st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||'FedEx was checked a few minutes ago. Try again later.');}
     else if(res.status===401)st.notice='Your sign-in to this site has expired. Reload the page and sign in again.';
     else{if(res.status===503&&data.fedex===false)st.fedex=false;st.notice=String(data.error||`The server answered ${res.status}.`);}
   }catch(err){st.notice='The server could not be reached.';}
   st.busy=false;
+  if(st.notice&&typeof showToast==='function')showToast(st.notice);
   if(activeTab==='shipping')renderResults();
 }
 function setShippingFilter(id){
@@ -6860,7 +6866,7 @@ function renderShippingPage(m){
   if(st.state==='ready'&&isFinite(lastErrT)&&!(lastErrT<polledT))notes.push(['warn',`The last FedEx check (${shipTimeLabel(st.lastError.at)}) failed: ${st.lastError.message||'no reason given'}${isFinite(polledT)?` Showing the results from ${shipTimeLabel(st.polledAt)}.`:''}`]);
   if(st.state==='ready'&&st.errors&&st.errors.length)notes.push(['warn',`Part of the last check failed (${shipPlural(st.errors.reduce((s,e)=>s+(Number(e.numbers)||0),0),'tracking number','tracking numbers')}): ${st.errors[0].message}`]);
   if(!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column. Run the updated KPI query in SAP (queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql) to bring in the delivery tracking numbers; until then add them by hand below.']);
-  const notesHtml=notes.map(([tone,text])=>`<p class="ship-note${tone?` ${tone}`:''}"${text===st.notice?' role="status"':''}>${esc(text)}</p>`).join('');
+  const notesHtml=notes.map(([tone,text])=>`<p class="ship-note${tone?` ${tone}`:''}"${text===st.notice&&typeof showToast!=='function'?' role="status"':''}>${esc(text)}</p>`).join('');
 
   // KPI cards (click filters the list).
   const g=model.groups;

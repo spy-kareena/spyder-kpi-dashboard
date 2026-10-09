@@ -245,6 +245,18 @@ test('the tracking list sent to the server: recent deliveries not delivered more
   assert.deepEqual(site.kv.json(WANTED_KEY).manual, ['770022223333']);
 });
 
+test('hand-added numbers on the server are not wiped by a browser whose shared notes have not arrived yet', async () => {
+  const site = await hostedSite();
+  const { WANTED_KEY } = await modules();
+  await site.kv.put(WANTED_KEY, JSON.stringify({ v: 1, exportAsOf: '2026-10-01', export: [N.old], manual: ['1234567891'] }));
+  const page = await hostedPage(site);
+  await page.run('shippingSync()');
+  const wanted = site.kv.json(WANTED_KEY);
+  assert.deepEqual(wanted.manual, ['1234567891']);
+  assert.equal(wanted.exportAsOf, '2026-10-08', 'the newer export replaces the older export list');
+  assert.equal(wanted.export.length, 5);
+});
+
 test('Add tracking #: saved in this browser without the shared notes store, linked to its order, searchable, removable', async () => {
   const page = loadPage({ today: TODAY });
   await upload(page, [exportFile()]);
@@ -275,13 +287,16 @@ test('Add tracking #: saved in this browser without the shared notes store, link
 test('Add tracking # uses the shared notes store when it is there (everyone who signs in sees it)', async () => {
   const page = loadPage({ today: TODAY });
   await upload(page, [exportFile()]);
-  page.run("var __shared={};function getSharedShipments(){return __shared;}function sharedNotesPatchShipments(p){Object.assign(__shared,p);}");
+  page.run("var __shared={};function getSharedShipments(){return __shared;}function sharedNotesPatchShipments(p){Object.assign(__shared,p);}var __toasts=[];function showToast(m){__toasts.push(m);}");
   page.run("setTab('shipping')");
   assert.match(html(page), /everyone who signs in sees it/);
   field(page, 'ship-add-number').value = '1234567891';
   field(page, 'ship-add-order').value = '';
   page.run('shippingAddManual()');
   assert.deepEqual(page.run('Object.keys(__shared)'), ['1234567891']);
+  // Announced once, by the page's toast (not also by the status line).
+  assert.deepEqual(page.run('__toasts'), ['Tracking # 1234567891 added. Its FedEx status shows after the next check.']);
+  assert.equal(field(page, 'ship-add-status').textContent, '');
   assert.equal(page.storage.spyderKpiShipmentsV1, undefined, 'nothing kept separately in this browser');
   assert.ok(listed(page).includes('1234567891'));
   assert.match(html(page), /No order lines are linked to this tracking number|class="ship-num">1234567891</);
