@@ -915,6 +915,8 @@ button.ship-kpi{width:100%}
   .ship-add input{width:100%;font-size:16px}
   .ship-tools{margin-left:0}
   .ship-detail{padding:6px 14px 14px}
+  /* Five small cards: two per row on phones instead of five full-width rows */
+  .ship-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media print{
   .ship-head{break-inside:avoid;padding:6px 8px!important}
@@ -922,6 +924,7 @@ button.ship-kpi{width:100%}
   .ship-list,.ship-bar{border:1px solid var(--gray-300)!important;box-shadow:none!important}
   .ship-detail{background:#fff}
   .ship-step>em{font-size:7pt}
+  .ship-kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
 </style>
 </head>
