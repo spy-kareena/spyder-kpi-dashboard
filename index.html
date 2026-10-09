@@ -867,6 +867,7 @@ button.trow.po-wh-cols{font-size:13px}
 .info-btn{display:inline-grid;place-items:center;width:22px;height:22px;padding:0;margin:0 -2px;border:0;border-radius:6px;background:transparent;color:var(--gray-500);cursor:pointer;flex:none;align-self:center;transition:background-color var(--dur),color var(--dur)}
 .info-btn:hover,.info-btn[aria-expanded="true"]{background:var(--gray-100);color:var(--gray-900)}
 .title-row{display:flex;align-items:center;gap:6px;min-width:0}
+.list-head{flex-wrap:wrap;row-gap:4px}
 .info-pop{position:fixed;left:0;top:0;z-index:65;width:340px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);box-shadow:var(--sh-pop);padding:14px 16px 16px;font-size:12.5px;line-height:1.55;color:var(--gray-700)}
 .info-pop[hidden]{display:none}
 .info-pop:focus{outline:none}
@@ -901,6 +902,7 @@ details.about>summary:hover{color:var(--gray-900)}
 /* Sidebar: page descriptions under each page name on the load screen; "Show hints again" */
 .nav-item.has-desc{align-items:flex-start;white-space:normal}
 .nav-item.has-desc::before{margin-top:6px}
+.nav-item::before{flex:none}
 .nav-item.has-desc:disabled{opacity:1}
 .nav-item.has-desc:disabled .nav-label-text{color:var(--gray-500)}
 .nav-label-text{display:block}
@@ -935,6 +937,9 @@ details.about>summary:hover{color:var(--gray-900)}
   .card-head,.card-head.lg{padding:16px 18px 12px}
   .chart-card.tight{padding:16px 18px}
   .toast{left:16px;right:16px;bottom:16px;max-width:none}
+  /* The header buttons wrap instead of pushing the page sideways at 375px */
+  .page-head .actions{flex-wrap:wrap;flex-shrink:1;min-width:0}
+  .page-head .actions .btn{padding:7px 11px;font-size:12.5px}
 }
 /* Print keeps the compact spacing of earlier versions; no tooltips, popovers, hints or toasts on paper */
 @media print{
@@ -5120,7 +5125,7 @@ function renderResults(){
       <button type="button" class="link-btn" data-focus-key="filters-reset" onclick="resetWeeklyFilters()"${tipAttr('Clear every filter on this page.')}>Reset</button>
     </div>
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
-    html+=renderHint('weekly-cards','<strong>How this page works.</strong> Each card counts open sales-order lines for the filters above. Click a card to list its lines at the bottom of the page; click it again to clear. Rest the pointer on (or Tab to) a card for exactly what it counts, and use the ⓘ next to a section title for where its numbers come from.');
+    html+=renderHint('weekly-cards','<strong>How this page works.</strong> Each card counts open sales-order lines for the filters above. Click a card to list its lines at the bottom of the page; click it again to clear. Rest the pointer on a card (Tab to it, or press and hold on a phone) for exactly what it counts, and use the ⓘ next to a section title for where its numbers come from.');
 
     // ---------- Needs attention (leading indicators) ----------
     const newPastDue=pastDueNoReschedule.filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1&&d<=7;});
@@ -6581,7 +6586,11 @@ if(document.addEventListener){
     e.preventDefault();e.stopPropagation();
   },true);
   document.addEventListener('contextmenu',e=>{if(tipState.swallowClick||tipState.press)e.preventDefault();},true);
-  document.addEventListener('scroll',()=>{if(tipState.el)hideTip();queuePlaceInfo();},true);
+  document.addEventListener('scroll',()=>{
+    // A bubble already showing would be left behind; one still waiting is placed when it shows.
+    if(tipState.el){const pending=tipState.timer;tipState.timer=0;hideTip();tipState.timer=pending;}
+    queuePlaceInfo();
+  },true);
 }
 if(typeof window.addEventListener==='function')window.addEventListener('resize',()=>{hideTip();queuePlaceInfo();});
 
@@ -6712,7 +6721,7 @@ function hintsResetButton(){
 }
 function renderUploadHint(){
   const box=document.getElementById('upload-hint');
-  if(box)box.innerHTML=renderHint('upload','<strong>Start here.</strong> Run the KPI query in SAP, export the result to Excel and drop the <strong>.xls</strong> file in the box below (or click it). Add the supply / demand snapshot or the Clear To Build workbook later with <strong>Add file</strong> in the sidebar. Rest the pointer on (or Tab to) any card, button or column heading for a short explanation.');
+  if(box)box.innerHTML=renderHint('upload','<strong>Start here.</strong> Run the KPI query in SAP, export the result to Excel and drop the <strong>.xls</strong> file in the box below (or click it). Add the supply / demand snapshot or the Clear To Build workbook later with <strong>Add file</strong> in the sidebar. For a short explanation of any card, button or column heading, rest the pointer on it, Tab to it, or press and hold it on a phone.');
 }
 
 // Toast: a short confirmation in the corner after bulk Apply, Delete, Restore and note saves; read out by screen
