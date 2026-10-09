@@ -1,0 +1,19 @@
+# Cloudflare Pages settings for the Spyder KPI Dashboard (Pages project "spyder-kpi-dashboard").
+# Pages reads this file on every Git build, so bindings live here instead of in the dashboard.
+# Secrets (DASHBOARD_PASSWORD, SESSION_SECRET, AI keys, FedEx keys) are NOT kept here: set them with
+#   npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard
+# Note: once this file is used, plain-text variables typed into the Cloudflare dashboard are replaced by the
+# [vars] below (there are none), so keep DASHBOARD_PASSWORD and SESSION_SECRET as encrypted secrets.
+name = "spyder-kpi-dashboard"
+pages_build_output_dir = "."
+compatibility_date = "2026-10-01"
+
+# Shared storage for the last report, shared notes / causes / typed-in tracking numbers, the at-risk
+# history and live FedEx statuses (keys: report, overrides, history, tracking:*).
+# One-time setup (see docs/IT_HOSTING_README.md):
+#   1. npx wrangler kv namespace create spyder-kpi-report
+#   2. Paste the id it prints below and remove the "# " in front of the three lines.
+# Until then the site still works; sharing falls back to each browser.
+# [[kv_namespaces]]
+# binding = "REPORT_STORE"
+# id = "PASTE_THE_NAMESPACE_ID_HERE"

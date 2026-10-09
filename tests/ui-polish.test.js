@@ -321,7 +321,8 @@ test('shadcn look: zinc tokens, 12/8/8 radii, one focus ring, Inter with a fallb
   assert.match(CSS, /\.card\{[^}]*padding:24px 26px/);
   assert.ok(!/\.(btn|kpi|drill):hover\{[^}]*transform:(?!none)/.test(CSS), 'no movement on hover');
   assert.match(CSS, /@media \(prefers-reduced-motion:reduce\)\{\s*\*,\*::before,\*::after\{animation-duration:\.01ms!important;[^}]*transition-duration:\.01ms!important\}/);
-  const print = CSS.slice(CSS.lastIndexOf('@media print{'));
+  // Stream A's print block (other blocks may follow it in the stylesheet)
+  const print = CSS.slice(CSS.lastIndexOf('@media print{', CSS.indexOf('#tip-layer,#info-pop,#toast')));
   assert.match(print, /#tip-layer,#info-pop,#toast,#tip-descs,\.info-btn,\.hint-card,\.nav-desc\{display:none!important\}/);
   assert.match(print, /\.grid-lead,\.grid-4,\.grid-5,\.grid-2,\.grid-split,\.month-spot,\.drill-grid,\.grid-split>\.stack\{gap:\.1in\}/);
   assert.match(HTML, /<div id="tip-layer" class="tip-layer" aria-hidden="true" hidden><span class="tip-text"><\/span><span class="tip-arrow"><\/span><\/div>/);

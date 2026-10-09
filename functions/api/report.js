@@ -3,16 +3,26 @@
  * upload replaces them. Needs a Workers KV namespace bound to this Pages project as REPORT_STORE (see
  * docs/IT_HOSTING_README.md). The password gate in functions/_middleware.js runs first.
  *   GET /api/report -> 200 report bundle (application/octet-stream), 204 when nothing is saved yet
- *   PUT /api/report -> saves a bundle and returns {savedAt, files}
+ *   PUT /api/report -> saves a bundle and returns {savedAt, files, history}
  * Bundle: 4-byte big-endian header length, a UTF-8 JSON header {v:1, savedAt, files:[{name, type,
- * lastModified, length}]}, then each file's gzip bytes in header order. The server never reads the files.
+ * lastModified, length}], atRisk?}, then each file's gzip bytes in header order. The server never reads the files.
+ * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...]} lists the lines on the report's At Risk card. It is not
+ * stored with the report; it is added to the at-risk history (KV key 'history', read by GET /api/history in
+ * functions/api/history.js): one entry per export date, a new upload with the same date replaces it, 52 kept.
+ * A bad atRisk never stops the report from saving ({history:{error}} says why it was left out).
  */
 const KEY = 'report';
+const HISTORY_KEY = 'history';
 // One Workers KV value holds at most 25 MiB; the gzip copy of a year of SO/PO lines is about 1.3 MB.
 const MAX_BYTES = 24 * 1024 * 1024;
 const MAX_FILES = 12;
-const MAX_HEADER = 64 * 1024;
+// The header carries the at-risk line keys (at most 5,000 of up to 300 characters).
+const MAX_HEADER = 2 * 1024 * 1024;
 const NAME_RE = /^[^\\/\u0000-\u001f]{1,200}\.(xlsx|xls|csv|txt|tsv)$/i;
+const MAX_AT_RISK_KEYS = 5000;
+const AT_RISK_KEY_RE = /^[^\u0000-\u001f\u007f]{1,300}$/;
+const HISTORY_WEEKS = 52;
+const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -48,7 +58,46 @@ export async function onRequest(context) {
   out.set(header, 4);
   out.set(parsed.data, 4 + header.length);
   await store.put(KEY, out);
-  return json(200, { savedAt, files: parsed.files.map((f) => f.name) });
+  const saved = { savedAt, files: parsed.files.map((f) => f.name) };
+  if (parsed.atRisk === undefined) return json(200, saved);
+  if (parsed.atRisk.error) return json(200, { ...saved, history: { error: parsed.atRisk.error } });
+  try {
+    return json(200, { ...saved, history: { weeks: await addHistoryWeek(store, parsed.atRisk, savedAt) } });
+  } catch (err) {
+    return json(200, { ...saved, history: { error: 'The at-risk history could not be updated.' } });
+  }
+}
+
+// The at-risk lines of one report: {asOf, keys} with unique keys, or {error}. Left out (undefined) when not sent.
+function readAtRisk(raw) {
+  if (raw === undefined) return undefined;
+  if (!raw || typeof raw !== 'object') return { error: 'atRisk must be {asOf, keys}.' };
+  const asOf = String(raw.asOf || '');
+  const day = /^\d{4}-\d{2}-\d{2}$/.test(asOf) ? Date.parse(`${asOf}T00:00:00Z`) : NaN;
+  // A real calendar day from 2000 up to two days ahead (export dates are capped at the day of the upload).
+  if (!Number.isFinite(day) || new Date(day).toISOString().slice(0, 10) !== asOf || day < Date.UTC(2000, 0, 1) || day > Date.now() + 2 * 864e5) {
+    return { error: 'atRisk.asOf must be a date (YYYY-MM-DD).' };
+  }
+  if (!Array.isArray(raw.keys) || raw.keys.length > MAX_AT_RISK_KEYS) return { error: `atRisk.keys must be a list of at most ${MAX_AT_RISK_KEYS} line keys.` };
+  if (!raw.keys.every((k) => typeof k === 'string' && AT_RISK_KEY_RE.test(k))) return { error: 'atRisk.keys holds a bad line key.' };
+  return { asOf, keys: [...new Set(raw.keys)] };
+}
+
+// Adds (or replaces) the week for this export date, keeps the newest 52 by date; returns how many are kept.
+async function addHistoryWeek(store, { asOf, keys }, savedAt) {
+  let saved = null;
+  try { saved = await store.get(HISTORY_KEY, { type: 'json' }); } catch (err) { saved = null; }
+  const weeks = (saved && Array.isArray(saved.weeks) ? saved.weeks : [])
+    .filter((w) => w && typeof w.asOf === 'string' && Array.isArray(w.keys) && w.asOf !== asOf);
+  weeks.push({ asOf, savedAt, keys });
+  weeks.sort((a, b) => (a.asOf < b.asOf ? -1 : a.asOf > b.asOf ? 1 : 0));
+  while (weeks.length > HISTORY_WEEKS) weeks.shift();
+  // UTF-8 needs at most 3 bytes per UTF-16 unit, so a short history is measured without encoding it.
+  const tooBig = (text) => text.length * 3 > MAX_HISTORY_BYTES && new TextEncoder().encode(text).length > MAX_HISTORY_BYTES;
+  let text = JSON.stringify({ v: 1, weeks });
+  while (weeks.length > 1 && tooBig(text)) { weeks.shift(); text = JSON.stringify({ v: 1, weeks }); }
+  await store.put(HISTORY_KEY, text);
+  return weeks.length;
 }
 
 // Checks the header against the bytes that follow it; returns clean file entries and the file bytes.
@@ -71,7 +120,7 @@ function readBundle(body) {
     files.push({ name, type: String(f.type || '').slice(0, 100), lastModified: Number(f.lastModified) || 0, length });
   }
   if (4 + size + total !== body.length) return { error: 'File lengths do not match the report.' };
-  return { files, data: body.subarray(4 + size) };
+  return { files, data: body.subarray(4 + size), atRisk: readAtRisk(header.atRisk) };
 }
 
 function tooLarge() {
