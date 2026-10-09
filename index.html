@@ -856,7 +856,7 @@ button.trow.po-wh-cols{font-size:13px}
 .split-bar.oh-states-bar,.split-bar.oh-cause-bar{gap:2px}
 .mini-strip.oh-states>button{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:6px}
 .mini-strip.oh-states .ms-num{text-align:left}
-.oh-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.oh-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
 .oh-num{font-size:24px}
 .oh-bars{display:grid;gap:2px}
 .oh-bar-row{font:inherit;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(40px,1fr) 58px;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:6px 8px;cursor:pointer;color:var(--gray-900);font-size:12.5px;transition:background .15s}
@@ -898,6 +898,7 @@ button.trow.po-wh-cols{font-size:13px}
 @media (max-width:640px){
   .oh-tabs{display:flex;width:100%}.oh-tab{flex:1;padding:7px 10px}
   .mini-strip.oh-states{grid-template-columns:minmax(0,1fr)}
+  .mini-strip.oh-states>button{flex-direction:row;align-items:center;justify-content:space-between}.mini-strip.oh-states .ms-num{text-align:right}
   .oh-cause-grid{grid-template-columns:minmax(0,1fr)}
   .oh-bar-row{grid-template-columns:minmax(0,1fr) 58px;row-gap:4px}.oh-bar-row .oh-bar-name{grid-column:1/-1}
   .waffle{margin-left:0}
@@ -5153,8 +5154,9 @@ function renderResults(){
           <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="kpi-tag">target 90%</span></div>
           <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${hasFill?`${fmtNum(fillRate)}%`:'—'}</span><span class="kpi-unit">of ordered qty</span></div>
           <div class="bullet-wrap">${renderBullet(fillRate,fillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
+          ${ohFillSpark(m,fillTone)}
           <span class="kpi-sub">Delivered or closed qty of ordered qty · ${fmtNum(fillOpenRows.length)} lines still open</span>
-          ${ohLagSplit(m,'fillrate',fillTone)}
+          ${ohLagSplit(m,'fillrate')}
         </button>
         <button type="button" class="card kpi lag${selected('reschedhit')}" ${tileAttrs('reschedhit')}>
           <div class="kpi-top"><span class="kpi-label">Reschedule hit · 12 mo</span>${renderDeltaPill(series,'hit')}</div>
@@ -6378,6 +6380,8 @@ const OH_STATES=[
 const OH_TILE_TITLES={'st-ontrack':'On Track','st-duethisweek':'Due This Week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past Due','st-nocommit':'No Commit','perfect':'Perfect Order · deliveries of lines that were not perfect','dayslate':'Late Deliveries · last 3 months'};
 
 // --- Cause engine ---
+// "1 line", "3 lines": a count with its noun.
+function ohN(n,word){return `${fmtNum(n)} ${word}${n===1?'':'s'}`;}
 function ohOriginalDue(r){return hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;}
 function ohIsSalesRow(r){return !/purchase/i.test(String(r&&r.sourceType||''));}
 // Saved entries for a line, newest key first. A delivery row also reads its order line's entry: the cause picked
@@ -6684,20 +6688,20 @@ function ohRenderLeading(m){
   const stateBar=`<span class="split-bar oh-states-bar" aria-hidden="true">${lines?d.states.filter(s=>s.rows.length).map(s=>`<i style="width:${(s.rows.length/lines*100).toFixed(2)}%;background:${s.color}"></i>`).join(''):''}</span>`;
   const stateCells=d.states.map(s=>{
     const id=`st-${s.id}`,on=weeklyTileFilter===id;
-    const tip=`${s.label}: ${fmtNum(rowDocCount(s.rows))} orders, ${fmtNum(s.rows.length)} lines, ${money(s.value)} open value (${pct(s.rows.length,lines)}% of open lines). ${s.help} Click to list them.`;
-    return `<button type="button" class="${on?'selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}"><div class="ms-text"><span class="ms-label"><i class="sw lg" style="background:${s.color}"></i>${esc(s.label)}</span><span class="ms-sub">${fmtNum(s.rows.length)} lines · ${pct(s.rows.length,lines)}%</span></div><div class="ms-num"><span class="ms-big">${fmtNum(rowDocCount(s.rows))} orders</span><span class="ms-amt">${money(s.value)}</span></div></button>`;
+    const tip=`${s.label}: ${ohN(rowDocCount(s.rows),'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open value (${pct(s.rows.length,lines)}% of open lines). ${s.help} Click to list them.`;
+    return `<button type="button" class="${on?'selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}"><div class="ms-text"><span class="ms-label"><i class="sw lg" style="background:${s.color}"></i>${esc(s.label)}</span><span class="ms-sub">${ohN(s.rows.length,'line')} · ${pct(s.rows.length,lines)}%</span></div><div class="ms-num"><span class="ms-big">${ohN(rowDocCount(s.rows),'order')}</span><span class="ms-amt">${money(s.value)}</span></div></button>`;
   }).join('');
   // Top 6 at-risk reasons by open value; the bar colour is the cause the reason usually means.
   const maxReason=Math.max(1,...d.topReasons.map(x=>x.value));
   const reasonRows=d.topReasons.map((x,i)=>{
     const on=weeklyReasonFilter===x.label;
-    const tip=`${x.label}: ${money(x.value)} open value on ${fmtNum(x.rows.length)} at-risk lines (${fmtNum(rowDocCount(x.rows))} orders). Usually ${x.cause==='unknown'?'not set by a rule (pick Us or Them on the line)':`caused by ${OH_CAUSE_LABEL[x.cause].toLowerCase()}`}. ${on?'Click to show every reason again.':'Click to show only lines with this reason.'}`;
+    const tip=`${x.label}: ${money(x.value)} open value on ${fmtNum(x.rows.length)} at-risk lines (${ohN(rowDocCount(x.rows),'order')}). Usually ${x.cause==='unknown'?'not set by a rule (pick Us or Them on the line)':`caused by ${OH_CAUSE_LABEL[x.cause].toLowerCase()}`}. ${on?'Click to show every reason again.':'Click to show only lines with this reason.'}`;
     return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-reason-${esc(x.label)}" data-reason="${esc(x.label)}" onclick="setWeeklyReasonFilter(this.dataset.reason)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(x.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w cause-${x.cause}" style="width:${(x.value/maxReason*100).toFixed(1)}%;animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(x.value)}</span></button>`;
   }).join('');
   const causeLegend=`<div class="legend oh-legend">${OH_CAUSES.filter(([c])=>c!=='neutral').map(([c,label])=>`<span><i class="sw lg cause-${c}"></i>${label}</span>`).join('')}</div>`;
   const openCard=`<section class="card list-card oh-card" aria-labelledby="oh-open-title">
-      <div class="list-head"><h2 id="oh-open-title" data-tip="${esc(`Open orders: ${fmtNum(rowDocCount(oh.allOrderRows))} orders, ${fmtNum(lines)} lines, ${money(rowOpenAmount(oh.allOrderRows))} open value in this view. The bars rank the reasons behind the at-risk lines by open value.`)}">Open orders</h2><span class="section-sub">top 6 at-risk reasons</span></div>
-      <div class="kpi-row"><span class="kpi-value oh-num">${fmtNum(rowDocCount(oh.allOrderRows))}</span><span class="kpi-unit">orders · ${fmtNum(lines)} lines · ${money(rowOpenAmount(oh.allOrderRows))}</span></div>
+      <div class="list-head"><h2 id="oh-open-title" data-tip="${esc(`Open orders: ${ohN(rowDocCount(oh.allOrderRows),'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(oh.allOrderRows))} open value in this view. The bars rank the reasons behind the at-risk lines by open value.`)}">Open orders</h2><span class="section-sub">top 6 at-risk reasons</span></div>
+      <div class="kpi-row"><span class="kpi-value oh-num">${fmtNum(rowDocCount(oh.allOrderRows))}</span><span class="kpi-unit">${rowDocCount(oh.allOrderRows)===1?'order':'orders'} · ${ohN(lines,'line')} · ${money(rowOpenAmount(oh.allOrderRows))}</span></div>
       <div class="oh-bars" role="group" aria-label="Top at-risk reasons by open value">${reasonRows||'<div class="empty-note">Nothing at risk in this view.</div>'}</div>
       ${reasonRows?causeLegend:''}
       <span class="oh-note">A line can have more than one reason, so the bars can add up to more than At risk.</span>
@@ -6707,7 +6711,7 @@ function ohRenderLeading(m){
   const maxAge=Math.max(1,...d.ages.map(a=>a.value));
   const ageRows=d.ages.map((a,i)=>{
     const on=weeklyAgeFilter===a.id;
-    const tip=`${a.label}: ${money(a.value)} open value on ${fmtNum(a.rows.length)} at-risk lines (${fmtNum(rowDocCount(a.rows))} orders)${a.id==='new'?' first at risk in this week’s upload, or with no earlier history':' first at risk that many weeks before this export'}. ${on?'Click to show every age again.':'Click to show only these lines.'}`;
+    const tip=`${a.label}: ${money(a.value)} open value on ${fmtNum(a.rows.length)} at-risk lines (${ohN(rowDocCount(a.rows),'order')})${a.id==='new'?' first at risk in this week’s upload, or with no earlier history':' first at risk that many weeks before this export'}. ${on?'Click to show every age again.':'Click to show only these lines.'}`;
     return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-age-${a.id}" data-age="${a.id}" onclick="setWeeklyAgeFilter(this.dataset.age)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(a.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w" style="width:${(a.value/maxAge*100).toFixed(1)}%;background:${flagColors[i]};animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(a.value)}</span></button>`;
   }).join('');
   const whenCard=`<section class="card list-card oh-card" aria-labelledby="oh-when-title">
@@ -6720,8 +6724,8 @@ function ohRenderLeading(m){
   const totalRisk=OH_CAUSE_IDS.reduce((s,c)=>s+t[c].value,0);
   const causeButtons=OH_CAUSES.filter(([c])=>c!=='neutral'||t.neutral.lines||weeklyCauseFilter==='neutral').map(([c,label,who])=>{
     const on=weeklyCauseFilter===c;
-    const tip=`${label}: ${money(t[c].value)} at-risk open value on ${fmtNum(t[c].lines)} lines (${fmtNum(rowDocCount(t[c].rows))} orders), ${pct(t[c].value,totalRisk)}% of at-risk value. ${label} = ${who}. ${on?'Click to show every cause again.':'Click to show only these lines.'}`;
-    return `<button type="button" class="oh-cause-btn${on?' selected':''}" data-focus-key="oh-cause-${c}" data-cause="${c}" onclick="setWeeklyCauseFilter(this.dataset.cause)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-cause-name"><i class="sw lg cause-${c}"></i>${label}</span><strong>${money(t[c].value)}</strong><span class="muted">${fmtNum(t[c].lines)} lines · ${fmtNum(rowDocCount(t[c].rows))} orders</span></button>`;
+    const tip=`${label}: ${money(t[c].value)} at-risk open value on ${ohN(t[c].lines,'line')} (${ohN(rowDocCount(t[c].rows),'order')}), ${pct(t[c].value,totalRisk)}% of at-risk value. ${label} = ${who}. ${on?'Click to show every cause again.':'Click to show only these lines.'}`;
+    return `<button type="button" class="oh-cause-btn${on?' selected':''}" data-focus-key="oh-cause-${c}" data-cause="${c}" onclick="setWeeklyCauseFilter(this.dataset.cause)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-cause-name"><i class="sw lg cause-${c}"></i>${label}</span><strong>${money(t[c].value)}</strong><span class="muted">${ohN(t[c].lines,'line')} · ${ohN(rowDocCount(t[c].rows),'order')}</span></button>`;
   }).join('');
   const causeCard=`<section class="card list-card oh-card" aria-labelledby="oh-cause-title">
       <div class="list-head"><h2 id="oh-cause-title" data-tip="Us vs Them: who the at-risk open value is waiting on. Us = Spyder (production, quality, supply, planning); Them = the customer or the carrier.">Us vs Them</h2><span class="section-sub">who at-risk value waits on</span></div>
@@ -6764,17 +6768,19 @@ function ohLagSplits(m,oh=orderHealthData(m)){
     return out;
   });
 }
-const OH_LAG_MISS_LABEL={otd3mo:'1+ days late',shippedweek:'Shipped late',fillrate:'Past due, open',reschedhit:'Missed commit',perfect:'Not perfect',dayslate:'Late'};
+const OH_LAG_MISS_LABEL={otd3mo:'1+ days late',shippedweek:'Shipped late',fillrate:'Past due, open',reschedhit:'Missed or past commit',perfect:'Not perfect',dayslate:'Late'};
 function ohSplitText(label,t){
   const parts=OH_CAUSES.filter(([c])=>t[c].lines);
   if(!parts.length)return `<span class="oh-cause-mini"><span class="oh-cause-text">${esc(label)}: none</span></span>`;
   return `<span class="oh-cause-mini">${ohCauseBar(t,'lines')}<span class="oh-cause-text">${esc(label)}: ${parts.map(([c,name])=>`<b class="cause-text-${c}">${name} ${fmtNum(t[c].lines)}</b>`).join(' · ')}</span></span>`;
 }
-// One line added inside each existing Lagging card: the Us / Them split of its misses (and the fill rate by month).
-function ohLagSplit(m,id,tone='neutral'){
-  const s=ohLagSplits(m);
-  const spark=id==='fillrate'?`<span class="oh-spark-wrap">${renderSparkline(s.fillSeries.map(x=>x.rate),tone,40)}</span>`:'';
-  return spark+ohSplitText(OH_LAG_MISS_LABEL[id],s[id].totals);
+// One line added inside each existing Lagging card: the Us / Them split of its misses.
+function ohLagSplit(m,id){
+  return ohSplitText(OH_LAG_MISS_LABEL[id],ohLagSplits(m)[id].totals);
+}
+// Fill rate card: the same rate for the lines due in each of the last 12 months.
+function ohFillSpark(m,tone){
+  return `<span class="oh-spark-wrap">${renderSparkline(ohLagSplits(m).fillSeries.map(x=>x.rate),tone,40)}</span>`;
 }
 // Perfect order and average days late. Built when the Lagging tab is shown (or printed): perfect-order scoring is the
 // Metrics page's work, so Order Health on its default tab does not pay for it.
@@ -6817,7 +6823,12 @@ function ohLaggingExtras(m,oh=orderHealthData(m)){
     return {
       perfect:{scored,perfect,notPerfect,notPerfectDeliveries,rate:scored.length?Math.round(perfect.length/scored.length*100):0,
         series:perMonth.map((x,i)=>({label:shortMonth(months[i]),perfect:x.n?Math.round(x.ok/x.n*100):null})),
-        totals:ohCauseTotals(notPerfect,r=>r.amountLocal)},
+        totals:ohCauseTotals(notPerfect,r=>rowShippedAmount(shipments.get(orderLineKey(r))||[]),r=>{
+          const own=lineCause(r);
+          if(own!=='unknown')return own;
+          for(const d of shipments.get(orderLineKey(r))||[]){const c=lineCause(d);if(c!=='unknown')return c;}
+          return 'unknown';
+        })},
       daysLate:{scored:scoredDeliveries,late:lateDeliveries,avg:Math.round(avg*10)/10,
         series:dayMonths.map((x,i)=>({label:shortMonth(months[i]),avg:x.n?(x.late?Math.round(x.days/x.late*10)/10:0):null})),
         totals:ohCauseTotals(lateDeliveries,r=>r.amountLocal)}
@@ -6862,7 +6873,7 @@ function ohRenderLagging(m){
     renderSparkline(p.series.map(s=>s.perfect),pTone,40),
     p.scored.length?`${fmtNum(p.perfect.length)} of ${fmtNum(p.scored.length)} completed lines shipped complete, on time to commit, never rescheduled`:'No completed lines with deliveries in the last 12 months',
     ohSplitText(OH_LAG_MISS_LABEL.perfect,p.totals),
-    `Perfect order · 12 months: ${fmtNum(p.perfect.length)} of ${fmtNum(p.scored.length)} completed sales order lines (${fmtNum(p.rate)}%) shipped complete, were never rescheduled and every delivery met its commit date. Each line counts in the month of its last delivery. By month: ${ohSeriesText(p.series,'perfect',v=>`${v}%`)}. Click to list the deliveries of the ${fmtNum(p.notPerfect.length)} lines that were not perfect.`);
+    `Perfect order · 12 months: ${fmtNum(p.perfect.length)} of ${fmtNum(p.scored.length)} completed sales order lines (${fmtNum(p.rate)}%) shipped complete, were never rescheduled and every delivery met its commit date. Each line counts in the month of its last delivery. By month: ${ohSeriesText(p.series,'perfect',v=>`${v}%`)}. Click to list the deliveries of the ${ohN(p.notPerfect.length,'line')} that were not perfect.`);
   const daysCard=card('dayslate','Avg days late · 3 mo','<span class="kpi-tag">lower is better</span>',dl.scored.length?`${fmtNum(dl.avg)} d`:'—',dTone,'per late delivery',
     ohSparkline(dl.series.map(s=>s.avg),dTone),
     dl.scored.length?`${fmtNum(dl.late.length)} of ${fmtNum(dl.scored.length)} deliveries shipped after the original date · ${money(rowShippedAmount(dl.late))}`:'No deliveries in the last 3 months for this filter',
@@ -6963,7 +6974,7 @@ function ohRenderWaffle(view,offenders,keyOf,causeOf=lineCause){
     const on=current.length===1&&current[0]===key;
     const kinds=vendors?Array(b.blocks).fill('po'):[...Array(b.us).fill('us'),...Array(b.them).fill('them'),...Array(b.rest).fill('rest')];
     const split=t?` ${OH_CAUSES.filter(([c])=>t[c].value>0).map(([c,label])=>`${label} ${money(t[c].value)}`).join(' · ')}.`:'';
-    const tip=`${o.name}: ${money(o.value)} ${vendors?'late purchase-order value':'at-risk open value'} on ${fmtNum(o.rows.length)} lines.${split} ${b.half?'Under $10,000, so it shows as a half block. ':''}${b.capped?`Over ${money(BLOCK_VALUE*OH_WAFFLE_MAX)}: the first ${OH_WAFFLE_MAX} blocks are shown. `:''}${vendors?'Click to open Purchase Orders for this vendor.':on?`Click to show every ${noun} again.`:`Click to show only this ${noun} on Order Health.`}`;
+    const tip=`${o.name}: ${money(o.value)} ${vendors?'late purchase-order value':'at-risk open value'} on ${ohN(o.rows.length,'line')}.${split} ${b.half?'Under $10,000, so it shows as a half block. ':''}${b.capped?`Over ${money(BLOCK_VALUE*OH_WAFFLE_MAX)}: the first ${OH_WAFFLE_MAX} blocks are shown. `:''}${vendors?'Click to open Purchase Orders for this vendor.':on?`Click to show every ${noun} again.`:`Click to show only this ${noun} on Order Health.`}`;
     return `<button type="button" class="waffle-row${on?' selected':''}" data-focus-key="offrow-${esc(key)}" data-view="${view}" data-off="${esc(key)}" onclick="setWeeklyOffenderFilter(this.dataset.view,this.dataset.off)" aria-pressed="${on}" data-tip="${esc(tip)}">
         <span class="rank-top"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(o.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(o.rows.length)} · </span><strong>${money(o.value)}</strong></span></span>
         <span class="waffle" aria-hidden="true">${kinds.map((c,k)=>`<i class="pop wb-${c}${b.half?' half':''}" style="animation-delay:${Math.min(i*60+k*8,600)}ms"></i>`).join('')}${b.capped?'<span class="waffle-more">+</span>':''}</span>
