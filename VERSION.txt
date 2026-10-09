@@ -24,5 +24,6 @@ hosts without it keep the report in each browser. Sidebar shows where the report
 1v9: Ask AI rebuilt for four providers with the keys kept on the server (functions/api/ai/, Pages secrets
 ANTHROPIC_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY): Claude and ChatGPT (paid), Groq and
 OpenRouter free models (free). Provider and model picker grouped Paid / Free, a data-use notice and consent tick
-per provider, tool loop in both the Anthropic and OpenAI formats, plain-English "not set up" help. The Gemini
-panel, its proxy and personal browser keys are removed (an old saved Gemini key is deleted from the browser).
+per provider, tool loop in both the Anthropic and OpenAI formats, plain-English "not set up" help (also shown in
+shared snapshots and file copies). The Gemini panel, its proxy and personal browser keys are removed (an old saved
+Gemini key is deleted from the browser).

@@ -151,7 +151,7 @@ async function chat(request, env) {
     const withBetas = { ...req, thinking: { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } }, ...(fallback ? { fallbacks: 'default' } : {}) };
     let up = await callAnthropic(p, key, withBetas, betas);
     // An account that does not accept a beta answers 400 naming it: send the plain request once.
-    if (up.status === 400 && /anthropic-beta|beta|fallbacks|block_binding/i.test(up.message)) up = await callAnthropic(p, key, req, []);
+    if (up.status === 400 && /anthropic-beta|\bbetas?\b|\bfallbacks\b|block_binding/i.test(up.message)) up = await callAnthropic(p, key, req, []);
     if (up.error) return up.error;
     return json(200, normalizeAnthropic(p, model, up.data));
   }
