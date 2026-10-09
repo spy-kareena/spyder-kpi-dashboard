@@ -33,7 +33,7 @@ const ANTHROPIC_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
 // Per provider: where to call, which secret holds the key, which models may be used, and what the data terms
 // mean in plain English (shown in the panel next to the consent tick).
-export const PROVIDERS = [
+const PROVIDERS = [
   {
     id: 'anthropic', name: 'Claude (Anthropic)', short: 'Claude', tier: 'paid', dialect: 'anthropic', secret: 'ANTHROPIC_API_KEY',
     base: 'https://api.anthropic.com/v1',

@@ -311,7 +311,7 @@ test('Claude dialect: tool_use round, tool_result back, thinking kept, answer re
 
 test('OpenAI dialect (Groq): tool_calls answered with role "tool" messages; bad arguments and long results handled', async () => {
   const page = loadPage({ storage: { ...consent('groq'), spyderKpiAiChoiceV2: JSON.stringify({ provider: 'groq', model: 'llama-3.3-70b-versatile' }) } });
-  // 120 open lines, so a full search result is far over the free tier's 12,000-character cap.
+  // 120 open lines, so a full search result is far over the free tier's 8,000-character cap.
   const many = Array.from({ length: 120 }, (_, i) => sapRow({ DocumentNumber: String(8000 + i), LineDueDate: '08/01/2026', DueDate: '08/01/2026', ItemDescription: `Wire harness assembly ${i}` }));
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(many) }]);
   const calls = site(page, { answers: [
@@ -324,7 +324,7 @@ test('OpenAI dialect (Groq): tool_calls answered with role "tool" messages; bad 
   assert.equal(c2.body.messages[1].tool_calls.length, 2);
   const [t1, t2] = c2.body.messages.slice(2);
   assert.deepEqual([t1.role, t1.tool_call_id, t2.role, t2.tool_call_id], ['tool', 'call_1', 'tool', 'call_2']);
-  assert.ok(t1.content.length <= 12000, `free tier results are cut to fit (${t1.content.length})`);
+  assert.ok(t1.content.length <= 8000, `free tier results are cut to fit (${t1.content.length})`);
   const r1 = JSON.parse(t1.content);
   assert.equal(r1.truncated, true);
   assert.equal(r1.total_matches, 120, 'the total still counts every match');
@@ -418,6 +418,9 @@ test('a different provider or model starts a new conversation; long histories ar
   page.run("aiSetModel('claude-sonnet-5-5')");
   assert.equal(page.run('aiState.history.length'), 0);
   assert.match(page.els['ai-log'].innerHTML, /<div class="ai-msg note">Now asking Claude Sonnet 5\.5 \(faster, about half the cost\)\. Earlier questions are not sent to it\.<\/div>/);
+  page.run("aiSetModel('claude-haiku-5-5')");
+  page.run("aiSetModel('claude-sonnet-5-5')");
+  assert.equal(page.run("aiState.messages.filter(m=>m.role==='note').length"), 1, 'stepping through models leaves one note');
   const calls = site(page, { answers: [claudeTurn([{ type: 'text', text: 'Two' }])] });
   await page.run("aiSend('second')");
   assert.deepEqual(chats(calls)[0].body.messages, [{ role: 'user', content: 'second' }]);
@@ -430,7 +433,7 @@ test('a different provider or model starts a new conversation; long histories ar
   page.run("aiTrimHistory({tier:'paid',dialect:'anthropic'})");
   assert.deepEqual(page.run('aiState.history'), [{ role: 'user', content: 'newer' }, { role: 'assistant', content: [{ type: 'text', text: 'y' }] }]);
   // Free tiers keep a much smaller history.
-  page.run(`aiState.history.length=0;aiState.history.push({role:'user',content:'a'},{role:'assistant',content:'z'.repeat(45000)},{role:'user',content:'b'},{role:'assistant',content:'ok'})`);
+  page.run(`aiState.history.length=0;aiState.history.push({role:'user',content:'a'},{role:'assistant',content:'z'.repeat(30000)},{role:'user',content:'b'},{role:'assistant',content:'ok'})`);
   page.run("aiTrimHistory({tier:'free',dialect:'openai'})");
   assert.equal(page.run('aiState.history.length'), 2);
 });

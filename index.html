@@ -3994,8 +3994,9 @@ const AI_PROVIDER_INFO={
   groq:{id:'groq',short:'Groq',name:'Groq',tier:'free',dialect:'openai',secret:'GROQ_API_KEY'},
   openrouter:{id:'openrouter',short:'OpenRouter',name:'OpenRouter (free models)',tier:'free',dialect:'openai',secret:'OPENROUTER_API_KEY'}
 };
-// Characters of JSON per conversation and per tool result: free tiers allow far fewer tokens per minute.
-const AI_HISTORY_CHARS={paid:300000,free:40000},AI_RESULT_CHARS={paid:30000,free:12000};
+// Characters of JSON per conversation and per tool result (about 4 characters a token): free tiers allow only a few
+// thousand tokens per minute, so they get shorter tool results and a shorter history.
+const AI_HISTORY_CHARS={paid:300000,free:24000},AI_RESULT_CHARS={paid:30000,free:8000};
 const aiState={open:false,opener:'',view:'chat',status:null,statusError:'',statusCheck:null,provider:'',model:'',chatKey:'',system:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#_]/g,'');};
@@ -4052,7 +4053,9 @@ function aiCheckStatus(){
 function aiNewConversation(note){
   aiStop();
   aiState.history=[];aiState.system='';aiState.chatKey='';
-  if(note&&aiState.messages.length)aiState.messages.push({role:'note',text:note});
+  // Arrowing through the pickers replaces the last note instead of stacking one per step.
+  const log=aiState.messages,last=log[log.length-1];
+  if(note&&log.length){if(last&&last.role==='note')last.text=note;else log.push({role:'note',text:note});}
   aiRenderLog();
 }
 function aiSaveChoice(){aiSet(AI_CHOICE_STORE,aiState.provider?JSON.stringify({provider:aiState.provider,model:aiState.model}):'');}
@@ -4142,12 +4145,14 @@ function aiBackToChat(){
 }
 // Asks the site which providers are set up (again after an error), then moves to the view that is needed.
 async function aiPrepare(){
+  // On the first open the view is a guess made before the site answered; once it has, focus moves to the right control.
+  const guessed=!aiState.status&&!aiState.statusError;
   await aiCheckStatus();
   aiSyncSettings();
   if(aiState.statusError)aiSettingsStatus(aiState.statusError,'bad');
   if(!aiState.open)return;
   const need=aiNeededView();
-  if(need&&need!==aiState.view)aiShowView(need);
+  if(need&&(need!==aiState.view||guessed))aiShowView(need);
   else if(!need&&aiState.view==='setup')aiShowView('chat');
 }
 function aiSettingsStatus(text,tone){
