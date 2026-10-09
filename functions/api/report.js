@@ -8,8 +8,9 @@
  * lastModified, length}], atRisk?}, then each file's gzip bytes in header order. The server never reads the files.
  * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...]} lists the lines on the report's At Risk card. It is not
  * stored with the report; it is added to the at-risk history (KV key 'history', read by GET /api/history in
- * functions/api/history.js): one entry per export date, a new upload with the same date replaces it, 52 kept.
- * A bad atRisk never stops the report from saving ({history:{error}} says why it was left out).
+ * functions/api/history.js): one entry per week (Monday to Sunday), a second upload in the same week is merged
+ * into it, 52 weeks kept. A bad atRisk, or a history that cannot be read, never stops the report from saving
+ * ({history:{error}} says why it was left out; the stored history is then left as it was).
  */
 const KEY = 'report';
 const HISTORY_KEY = 'history';
@@ -83,13 +84,37 @@ function readAtRisk(raw) {
   return { asOf, keys: [...new Set(raw.keys)] };
 }
 
-// Adds (or replaces) the week for this export date, keeps the newest 52 by date; returns how many are kept.
+// The Monday (UTC) of the week a YYYY-MM-DD date falls in.
+function weekOf(asOf) {
+  const d = new Date(`${asOf}T00:00:00Z`);
+  if (!Number.isFinite(d.getTime())) return asOf; // not a date: its own entry
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+}
+
+// Files this upload's at-risk lines under its week (Monday to Sunday): one entry per week, so 52 entries are a
+// year however often reports are loaded. A second upload in the same week is merged into that week's entry: the
+// earlier export date, the newer savedAt, and every line on either list (a line at risk on Monday keeps Monday as
+// its first-flagged date). Keeps the newest 52 weeks; returns how many are kept. A failed KV read throws, so the
+// caller leaves the stored history as it is rather than replacing it with this one week; a stored value that is
+// not JSON (it could never be read) is replaced.
 async function addHistoryWeek(store, { asOf, keys }, savedAt) {
+  const raw = await store.get(HISTORY_KEY, { type: 'text' });
   let saved = null;
-  try { saved = await store.get(HISTORY_KEY, { type: 'json' }); } catch (err) { saved = null; }
-  const weeks = (saved && Array.isArray(saved.weeks) ? saved.weeks : [])
-    .filter((w) => w && typeof w.asOf === 'string' && Array.isArray(w.keys) && w.asOf !== asOf);
-  weeks.push({ asOf, savedAt, keys });
+  try { saved = raw ? JSON.parse(raw) : null; } catch (err) { saved = null; }
+  const byWeek = new Map();
+  const list = (saved && Array.isArray(saved.weeks) ? saved.weeks : [])
+    .filter((w) => w && typeof w.asOf === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(w.asOf) && Array.isArray(w.keys));
+  for (const w of [...list, { asOf, savedAt, keys }]) {
+    const id = weekOf(w.asOf);
+    const had = byWeek.get(id);
+    byWeek.set(id, !had ? { asOf: w.asOf, savedAt: String(w.savedAt || ''), keys: w.keys } : {
+      asOf: had.asOf < w.asOf ? had.asOf : w.asOf,
+      savedAt: had.savedAt > String(w.savedAt || '') ? had.savedAt : String(w.savedAt || ''),
+      keys: [...new Set([...had.keys, ...w.keys])],
+    });
+  }
+  const weeks = [...byWeek.values()];
   weeks.sort((a, b) => (a.asOf < b.asOf ? -1 : a.asOf > b.asOf ? 1 : 0));
   while (weeks.length > HISTORY_WEEKS) weeks.shift();
   // UTF-8 needs at most 3 bytes per UTF-16 unit, so a short history is measured without encoding it.

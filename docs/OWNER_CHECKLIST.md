@@ -39,7 +39,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    npx wrangler pages secret put OPENROUTER_API_KEY --project-name spyder-kpi-dashboard
    ```
 
-   - Set a monthly spend limit on the paid accounts: Claude Console > Limits, and OpenAI > Limits.
+   - Set a monthly spend limit on the paid accounts: Claude Console > Limits, and OpenAI > Limits. The site also caps the paid providers at 300 requests a day each (`AI_DAILY_REQUESTS` changes it; see AI_ASSISTANT.md).
    - OpenRouter: decide on Settings > Privacy. Free models only work if the account allows providers that may train on or publish prompts; if you leave that off, OpenRouter models say they "could not be used with this account's privacy settings". Treat anything sent to OpenRouter as public.
    - Redeploy (push, or Deployments > latest > Retry deployment) so new secrets take effect. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
 

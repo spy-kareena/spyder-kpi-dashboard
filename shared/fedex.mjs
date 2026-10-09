@@ -13,9 +13,12 @@
  *
  * Workers KV keys (the namespace bound as REPORT_STORE, next to the shared report):
  *   tracking:wanted   {v, updatedAt, exportAsOf, export:[numbers], manual:[numbers]}  what to track (sent by the page)
- *   tracking:index    {v, polledAt, source, count, polled, statuses:{[number]: status}, errors, lastError}
+ *   tracking:index    {v, polledAt, source, count, polled, waiting, statuses:{[number]: status}, errors, lastError}
  *   tracking:token    {token, expiresAt, base, key}  the FedEx sign-in token (expires on its own)
- *   tracking:refresh  time of the last "Refresh now" (expires after 10 minutes; the rate limit)
+ *   tracking:refresh  time of the last "Refresh now" (expires after 10 minutes, or 1 minute after a failed one;
+ *                     the rate limit)
+ * Each check asks FedEx about at most MAX_PER_RUN numbers (stalest first), so it fits the Workers Free plan's
+ * 10 ms of CPU per run; a longer list is worked through over several checks.
  *
  * A status (one per tracking number, see normalizeTrackResult):
  *   {number, carrier:'FedEx'|'FedEx Freight', service, status, code,
@@ -35,7 +38,11 @@ export const REFRESH_KEY = 'tracking:refresh';
 export const REFRESH_SECONDS = 10 * 60; // "Refresh now" at most once per 10 minutes
 export const MAX_EXPORT = 500; // numbers from the export, newest first
 export const MAX_MANUAL = 200; // numbers added by hand
-export const MAX_TRACKED = 600; // per check: 20 FedEx calls, well under the 50 subrequests a Worker may make
+export const MAX_TRACKED = 600; // numbers on the list (export + hand-added)
+// Numbers asked per check, stalest first (never checked, then the oldest checkedAt): 2 FedEx calls. Parsing FedEx's
+// detailed answers costs about 1 ms of CPU per 10 numbers, and the Workers Free plan allows 10 ms per run, so a
+// long list is worked through over several checks. On Workers Paid (30 s of CPU) set FEDEX_MAX_PER_RUN, up to 600.
+export const MAX_PER_RUN = 60;
 export const INDEX_KEEP_DAYS = 45; // delivered statuses stay this long after delivery, even when no longer tracked
 export const STAGES = ['label', 'pickedUp', 'inTransit', 'customs', 'outForDelivery', 'delivered'];
 export const STAGE_LABELS = {
@@ -54,9 +61,16 @@ export function cleanTrackingNumber(v) {
   const s = String(v ?? '').replace(/[\s-]+/g, '').toUpperCase();
   return /^[A-Z0-9]{6,40}$/.test(s) ? s : '';
 }
-// One SAP TrackNo field can hold more than one number ("7700 1234 5678, 7700 1234 5679").
+// One SAP TrackNo field can hold more than one number: "7700 1234 5678, 7700 1234 5679", "770012345678 &
+// 770012345679", "... and ...", or two whole numbers with only a space between them. A piece whose space-separated
+// parts each have 10 or more letters and digits is several numbers; otherwise the parts are one grouped number.
+// Same rule as shipSplit in index.html.
 export function splitTrackingNumbers(v) {
-  return [...new Set(String(v ?? '').split(/[,;/|\n\r]+/).map(cleanTrackingNumber).filter(Boolean))];
+  const pieces = String(v ?? '').split(/[,;/|&+\n\r]+|\band\b/i).flatMap((piece) => {
+    const parts = piece.trim().split(/\s+/).filter(Boolean);
+    return parts.length > 1 && parts.every((t) => t.replace(/-/g, '').length >= 10) ? parts : [piece];
+  });
+  return [...new Set(pieces.map(cleanTrackingNumber).filter(Boolean))];
 }
 
 export function fedexConfigured(env) {
@@ -70,6 +84,13 @@ export function fedexBase(env) {
 
 async function readJson(kv, key) {
   try { return await kv.get(key, { type: 'json' }); } catch (err) { return null; }
+}
+// For read-modify-write: a failed KV read throws, so the caller stops instead of writing a fresh document over
+// the stored one. A value that is not JSON (it cannot be read now or later) counts as nothing saved.
+export async function readJsonStrict(kv, key) {
+  const text = await kv.get(key, { type: 'text' });
+  if (text === null || text === undefined) return null;
+  try { return JSON.parse(text); } catch (err) { return null; }
 }
 const iso = (t) => new Date(t).toISOString();
 const signal = () => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(TIMEOUT_MS) : undefined);
@@ -117,6 +138,8 @@ export async function getFedexToken(env, { fetch: fetchImpl = globalThis.fetch, 
 
 // Tracks any number of tracking numbers, 30 per FedEx call. A refused token is replaced once and the call retried.
 // Returns {statuses:{[number]: status}, errors:[{numbers, status, message}]}; a failed batch does not stop the others.
+// When FedEx cannot be used at all (sign-in refused), it throws if nothing came back yet; after a batch has come
+// back it stops there and returns what it has, with an error entry for the numbers left.
 export async function trackNumbers(numbers, env, opts = {}) {
   const fetchImpl = opts.fetch || globalThis.fetch;
   const now = opts.now ?? Date.now();
@@ -132,6 +155,7 @@ export async function trackNumbers(numbers, env, opts = {}) {
     body: JSON.stringify({ includeDetailedScans: true, trackingInfo: batch.map((n) => ({ trackingNumberInfo: { trackingNumber: n } })) }),
     signal: signal(),
   });
+  let answered = 0;
   for (let i = 0; i < list.length; i += TRACK_BATCH) {
     const batch = list.slice(i, i + TRACK_BATCH);
     let res;
@@ -142,7 +166,11 @@ export async function trackNumbers(numbers, env, opts = {}) {
         res = await call(batch);
       }
     } catch (err) {
-      if (err instanceof FedexError) throw err;
+      if (err instanceof FedexError) {
+        if (!answered) throw err;
+        errors.push({ numbers: list.length - i, status: err.status || 502, message: err.message });
+        break;
+      }
       errors.push({ numbers: batch.length, status: 0, message: 'FedEx could not be reached.' });
       continue;
     }
@@ -153,6 +181,7 @@ export async function trackNumbers(numbers, env, opts = {}) {
     }
     const data = await res.json().catch(() => null);
     const out = normalizeTrackResponse(data, now);
+    answered++;
     for (const n of batch) if (out.statuses[n]) statuses[n] = out.statuses[n];
   }
   return { statuses, errors };
@@ -328,20 +357,38 @@ function scrub(message, env) {
   return m.slice(0, 300);
 }
 
-// One check: tracks every wanted number that is not delivered yet and saves the results (tracking:index).
-// Delivered numbers are final, so they are not asked again. When FedEx cannot be used at all, the previous results
-// stay and lastError says why; the error is thrown for the caller (the Refresh button or the Worker log).
+// Numbers one check asks FedEx about: MAX_PER_RUN, or FEDEX_MAX_PER_RUN (1 to MAX_TRACKED) where the Worker has
+// more CPU time (Workers Paid).
+export function maxPerRun(env) {
+  const n = Math.floor(Number(env && env.FEDEX_MAX_PER_RUN));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, MAX_TRACKED) : MAX_PER_RUN;
+}
+
+// One check: asks FedEx about up to maxPerRun(env) wanted numbers that are not delivered yet, stalest first (never
+// checked, then the oldest check), and saves the results (tracking:index). The other numbers keep their last
+// status and come up in the next checks. Delivered numbers are final, so they are not asked again. When FedEx
+// cannot be used at all, the previous results stay and lastError says why; the error is thrown for the caller (the
+// Refresh button or the Worker log). If the stored list or results cannot be read, nothing is written.
 export async function pollTracking(env, opts = {}) {
   const kv = env && env.REPORT_STORE;
   if (!kv) throw new FedexError('Shared storage is not set up on this site (REPORT_STORE).', 503);
   if (!fedexConfigured(env)) throw new FedexError('FedEx tracking is not set up on this site (FEDEX_CLIENT_ID and FEDEX_CLIENT_SECRET).', 503);
   const now = opts.now ?? Date.now();
   const source = opts.source || 'cron';
-  const wanted = await readJson(kv, WANTED_KEY);
-  const prev = (await readJson(kv, INDEX_KEY)) || {};
+  let wanted, prev;
+  try {
+    wanted = await readJsonStrict(kv, WANTED_KEY);
+    prev = (await readJsonStrict(kv, INDEX_KEY)) || {};
+  } catch (err) {
+    throw new FedexError('The shared storage (REPORT_STORE) could not be read, so FedEx was not checked. Try again in a minute.', 503);
+  }
   const prevStatuses = prev.statuses && typeof prev.statuses === 'object' ? prev.statuses : {};
   const numbers = wantedNumbers(wanted);
-  const toPoll = numbers.filter((n) => !(prevStatuses[n] && prevStatuses[n].stage === 'delivered'));
+  const pending = numbers.filter((n) => !(prevStatuses[n] && prevStatuses[n].stage === 'delivered'));
+  const lastChecked = (n) => (prevStatuses[n] && time(prevStatuses[n].checkedAt)) ?? -Infinity;
+  const toPoll = pending.map((n, i) => ({ n, i, t: lastChecked(n) }))
+    .sort((a, b) => (a.t === b.t ? a.i - b.i : a.t - b.t))
+    .slice(0, maxPerRun(env)).map((x) => x.n);
   const fail = async (err) => {
     const message = scrub(err && err.message, env);
     await kv.put(INDEX_KEY, JSON.stringify({ ...prev, v: 1, statuses: prevStatuses, lastError: { at: iso(now), message } }));
@@ -361,8 +408,9 @@ export async function pollTracking(env, opts = {}) {
     if (result.statuses[n]) statuses[n] = result.statuses[n];
     else if (prevStatuses[n]) statuses[n] = prevStatuses[n];
   }
+  // polled: asked FedEx in this check; waiting: still moving, left for the next checks (stalest first).
   const doc = {
-    v: 1, polledAt: iso(now), source, count: numbers.length, polled: toPoll.length, statuses,
+    v: 1, polledAt: iso(now), source, count: numbers.length, polled: toPoll.length, waiting: pending.length - toPoll.length, statuses,
     errors: result.errors.slice(0, 20).map((e) => ({ ...e, message: scrub(e.message, env) })),
   };
   await kv.put(INDEX_KEY, JSON.stringify(doc));

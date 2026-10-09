@@ -321,6 +321,7 @@ test('upstream errors become plain-English errors; auth errors and keys never pa
     ['groq', 413, { error: { message: 'Request too large for model on tokens per minute (TPM): Limit 6000' } }, 413, 'too_large', /narrower question, or pick a paid provider/],
     ['anthropic', 400, { error: { type: 'invalid_request_error', message: 'prompt is too long: 1200000 tokens > 1000000 maximum' } }, 413, 'too_large', /too large for Claude/],
     ['openrouter', 404, { error: { message: 'No endpoints found matching your data policy (Free model publication)' } }, 404, 'model_unavailable', /privacy settings/],
+    ['openrouter', 404, { error: { message: 'No endpoints found that support tool use. To learn more about provider routing, visit: https://openrouter.ai/docs/provider-routing' } }, 404, 'model_unavailable', /^OpenRouter could not use that model because that model cannot look up dashboard data \(no tool support\)\. Pick another model/],
     ['openai', 402, { error: { message: 'billing' } }, 402, 'billing', /out of credit/],
     ['anthropic', 529, { error: { type: 'overloaded_error', message: 'Overloaded' } }, 502, 'provider_down', /busy or unavailable/],
     ['openai', 400, { error: { message: `Invalid value for messages, see key sk-proj-ABCDEFGH1234 and ${KEYS.OPENAI_API_KEY}` } }, 400, 'provider_error', /\[key\]/],
@@ -348,6 +349,51 @@ test('upstream errors become plain-English errors; auth errors and keys never pa
   reset(() => ({ body: { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' } }));
   await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION });
   assert.ok(calls[0].init.signal, 'a timeout signal is set');
+});
+
+test('paid providers are capped per session per minute and per site per day (KV counters); free ones are not', async () => {
+  const map = new Map();
+  const store = {
+    async get(k, opts) { if (!map.has(k)) return null; const v = map.get(k); return opts && opts.type === 'json' ? JSON.parse(v) : v; },
+    async put(k, v, opts) { map.set(k, v); store.ttl[k] = opts && opts.expirationTtl; },
+    ttl: {},
+  };
+  const env = { ...KEYS, REPORT_STORE: store };
+  const answer = () => ({ body: { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn', choices: [{ message: { content: 'ok' }, finish_reason: 'stop' }] } });
+  reset((u) => (/\/models$/.test(u) ? { status: 500, body: {} } : answer()));
+  // The per-minute count starts again each calendar minute: start well inside one.
+  if (new Date().getSeconds() > 50) await new Promise((r) => setTimeout(r, (61 - new Date().getSeconds()) * 1000));
+  const ask = (provider, cookie, model, extra = {}) => chat({ provider, model, messages: QUESTION }, { env: { ...env, ...extra }, headers: { Cookie: `__Host-spyder_kpi_session=${cookie}` } });
+  for (let i = 0; i < 15; i++) assert.equal((await ask('anthropic', 'v1.1.aaa.sig', 'claude-haiku-5-5')).status, 200, `request ${i + 1}`);
+  const before = calls.length;
+  const busy = await ask('anthropic', 'v1.1.aaa.sig', 'claude-haiku-5-5');
+  assert.equal(busy.status, 429);
+  assert.equal(busy.headers.get('retry-after'), '60');
+  const busyBody = await body(busy);
+  assert.equal(busyBody.error.code, 'rate_limited');
+  assert.match(busyBody.error.message, /in the last minute/);
+  assert.equal(calls.length, before, 'nothing was sent upstream');
+  // Another session is not held back by the first one's minute.
+  assert.equal((await ask('anthropic', 'v1.1.bbb.sig', 'claude-haiku-5-5')).status, 200);
+  const day = new Date().toISOString().slice(0, 10);
+  assert.equal(JSON.parse(map.get(`ai:day:anthropic:${day}`)).n, 16);
+  assert.equal(store.ttl[`ai:day:anthropic:${day}`], 2 * 86400);
+  // The daily cap for the site (AI_DAILY_REQUESTS), per provider.
+  const capped = await ask('anthropic', 'v1.1.ccc.sig', 'claude-haiku-5-5', { AI_DAILY_REQUESTS: '16' });
+  assert.equal(capped.status, 429);
+  assert.match((await body(capped)).error.message, /^Daily Ask AI limit reached for this site; try again tomorrow or use a free provider\.$/);
+  assert.equal((await ask('openai', 'v1.1.ccc.sig', 'gpt-5', { AI_DAILY_REQUESTS: '16' })).status, 200, 'ChatGPT has its own count');
+  // Free providers are not counted (their own free limits apply).
+  for (let i = 0; i < 20; i++) assert.equal((await ask('groq', 'v1.1.aaa.sig', 'llama-3.3-70b-versatile', { AI_DAILY_REQUESTS: '0' })).status, 200);
+  assert.ok(![...map.keys()].some((k) => k.includes('groq')));
+  // A bad request is refused before it is counted; no KV binding means no counting at all.
+  const n = JSON.parse(map.get(`ai:day:anthropic:${day}`)).n;
+  assert.equal((await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: [] }, { env })).status, 400);
+  assert.equal(JSON.parse(map.get(`ai:day:anthropic:${day}`)).n, n);
+  assert.equal((await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: QUESTION }, { env: { ...KEYS, AI_DAILY_REQUESTS: '0' } })).status, 200);
+  // KV failing never blocks a question.
+  const broken = { get: async () => { throw new Error('KV GET failed: 503'); }, put: async () => { throw new Error('KV PUT failed: 429'); } };
+  assert.equal((await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: QUESTION }, { env: { ...KEYS, REPORT_STORE: broken } })).status, 200);
 });
 
 let failed = 0;

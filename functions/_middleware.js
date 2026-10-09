@@ -10,11 +10,12 @@ const LEGACY_COOKIE_NAME = 'spyder_kpi_auth';
 const SESSION_DAYS = 14;
 const SESSION_SECONDS = SESSION_DAYS * 24 * 60 * 60;
 const FAILED_LOGIN_DELAY_MS = 1000;
-// Files in the assets/ folder (the logo on the sign-in page) are public: the sign-in page needs them before anyone
-// has signed in, and they hold nothing private. Only a plain file name directly under /assets/ passes, so path
-// tricks (/assets/../index.html, encoded slashes or dots) can never reach the rest of the site without a session.
-const PUBLIC_ASSET = /^\/assets\/[A-Za-z0-9][A-Za-z0-9_-]*(\.[A-Za-z0-9]+)*$/;
+// The only file served without a session: the logo on the sign-in page (it holds nothing private). The path must
+// match exactly. A pattern such as "any file under /assets/" is not safe: Cloudflare Pages answers a path with no
+// file behind it with index.html (its single-page-app fallback), so /assets/anything would hand out the whole app.
+// If another public file is ever needed, add its exact path here.
 const LOGO_PATH = '/assets/spyder-logo.jpg';
+const PUBLIC_PATHS = new Set([LOGO_PATH]);
 const encoder = new TextEncoder();
 
 export async function onRequest(context) {
@@ -33,7 +34,7 @@ export async function onRequest(context) {
   // Both values key the session signature, so changing the password also signs everyone out.
   const secret = `${sessionSecret}\u0000${password}`;
 
-  if ((request.method === 'GET' || request.method === 'HEAD') && PUBLIC_ASSET.test(url.pathname)) {
+  if ((request.method === 'GET' || request.method === 'HEAD') && PUBLIC_PATHS.has(url.pathname)) {
     return withSecurityHeaders(await next());
   }
 

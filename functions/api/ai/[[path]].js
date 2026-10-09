@@ -18,6 +18,7 @@
  * the assistant turn to append to that history unchanged (Claude's thinking blocks must be sent back as-is, and
  * the system prompt and tools must stay the same for the whole chat: Claude checks earlier turns are unchanged).
  * Errors are {error:{code, message}} with a plain-English message; upstream auth errors and keys are never echoed.
+ * Paid providers are capped per session per minute and per site per day (spendingCap; 429 rate_limited).
  * Docs: docs/AI_ASSISTANT.md.
  */
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -37,6 +38,12 @@ const ANTHROPIC_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 // an earlier turn ever differs, Claude drops the old thinking for that request instead of refusing it.
 // If the account rejects either beta, the request is sent again once without both.
 const ANTHROPIC_BINDING_BETA = 'thinking-binding-controls-2026-08-01';
+// Spending cap for the paid providers (Claude, ChatGPT), counted in Workers KV (REPORT_STORE) before each call:
+// at most AI_PER_MINUTE requests a minute per signed-in session, and AI_DAILY_REQUESTS (a Pages variable or
+// secret, default 300) a day per provider for the whole site. A question is one request per model turn (up to 8).
+const AI_PER_MINUTE = 15;
+const AI_DAILY_DEFAULT = 300;
+const SESSION_COOKIE = '__Host-spyder_kpi_session'; // set by functions/_middleware.js
 
 // Per provider: where to call, which secret holds the key, which models may be used, and what the data terms
 // mean in plain English (shown in the panel next to the consent tick).
@@ -130,6 +137,8 @@ async function chat(request, env) {
   if (checked.error) return bad(checked.error);
   const { system, messages, tools } = checked;
   const final = body.final === true;
+  const capped = await spendingCap(request, env, p);
+  if (capped) return capped;
 
   if (p.dialect === 'anthropic') {
     // Plain Messages API request: thinking is adaptive by default on these models (it cannot be turned off and
@@ -190,6 +199,47 @@ function checkConversation(p, body) {
     if (t.parameters !== undefined && (!t.parameters || typeof t.parameters !== 'object' || Array.isArray(t.parameters))) return { error: `Tool ${t.name} has bad parameters.` };
   }
   return { system, messages, tools };
+}
+
+// Counts this request against the paid providers' caps; returns a 429 Response when a cap is reached, else null.
+// One KV key per provider and day, 'ai:day:<provider>:<yyyy-mm-dd>' = {n: requests today, m: current minute,
+// s: {session: requests this minute}}, holds both counts, so a request costs one KV read and one write. KV is not
+// atomic, so this is a soft cap (the provider console's spend limit stays the backstop); if KV cannot be read or
+// written the question goes through. Without REPORT_STORE nothing is counted.
+async function spendingCap(request, env, p) {
+  const store = env && env.REPORT_STORE;
+  if (p.tier !== 'paid' || !store) return null;
+  const now = new Date();
+  const stamp = now.toISOString();
+  const key = `ai:day:${p.id}:${stamp.slice(0, 10)}`;
+  const minute = stamp.slice(0, 16);
+  let doc = null;
+  try { doc = await store.get(key, { type: 'json' }); } catch (err) { doc = null; }
+  const today = Number(doc && doc.n) || 0;
+  const sessions = doc && doc.m === minute && doc.s && typeof doc.s === 'object' && !Array.isArray(doc.s) ? doc.s : {};
+  const who = await sessionId(request);
+  const mine = Number(sessions[who]) || 0;
+  const set = String(env.AI_DAILY_REQUESTS ?? '').trim();
+  const daily = set === '' ? NaN : Math.floor(Number(set));
+  if (today >= (Number.isFinite(daily) && daily >= 0 ? daily : AI_DAILY_DEFAULT)) {
+    const tomorrow = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+    return json(429, { error: { code: 'rate_limited', message: `Daily Ask AI limit reached for this site; try again tomorrow or use a free provider.` } }, { 'Retry-After': String(Math.max(60, Math.ceil((tomorrow - now.getTime()) / 1000))) });
+  }
+  if (mine >= AI_PER_MINUTE) return json(429, { error: { code: 'rate_limited', message: `Too many Ask AI requests from this browser in the last minute (at most ${AI_PER_MINUTE}). Wait a minute and try again.` } }, { 'Retry-After': '60' });
+  try { await store.put(key, JSON.stringify({ n: today + 1, m: minute, s: { ...sessions, [who]: mine + 1 } }), { expirationTtl: 2 * 86400 }); } catch (err) { /* soft cap */ }
+  return null;
+}
+
+// A short, one-way id of the sign-in session (from its cookie), so the per-minute count is per browser session.
+async function sessionId(request) {
+  let cookie = '';
+  for (const part of String(request.headers.get('Cookie') || '').split(';')) {
+    const [k, ...rest] = part.trim().split('=');
+    if (k === SESSION_COOKIE) cookie = rest.join('=');
+  }
+  const basis = cookie || `ip:${request.headers.get('CF-Connecting-IP') || ''}`;
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(basis)));
+  return [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 function userContentOk(p, content) {
@@ -275,7 +325,11 @@ async function upstream(p, key, url, init) {
   if (s === 402) return fail(402, 'billing', `The ${p.short} account behind this site is out of credit or has a billing problem. Ask whoever runs this site to check it.`, s);
   if (s === 429) return fail(429, 'rate_limited', p.tier === 'free' ? `${p.short}'s free limit was reached (requests or tokens per minute or per day). Wait a minute and try again, or ask a narrower question.` : `${p.short} is getting too many requests right now. Wait a minute and try again.`, s);
   if (s === 413 || /too large|too long|context length|context window|maximum context|tokens per minute/i.test(detail)) return fail(413, 'too_large', `The question and its data were too large for ${p.short}${p.tier === 'free' ? '\'s free tier' : ''}. Clear the chat and ask a narrower question${p.tier === 'free' ? ', or pick a paid provider' : ''}.`, s);
-  if (s === 404) return fail(404, 'model_unavailable', `${p.short} could not use that model${/data policy|privacy|endpoints/i.test(detail) ? ' with this account\'s privacy settings' : ''}. Pick another model in Settings.${detail ? ` (${detail})` : ''}`, s);
+  // OpenRouter answers 404 both for a model whose free hosts cannot use tools and for one the account's data policy
+  // (privacy settings) rules out; they need different fixes.
+  const why = /support tool|tools? (are |is )?not supported|tool use/i.test(detail) ? ' because that model cannot look up dashboard data (no tool support)'
+    : /data policy|privacy/i.test(detail) ? ' with this account\'s privacy settings' : '';
+  if (s === 404) return fail(404, 'model_unavailable', `${p.short} could not use that model${why}. Pick another model in Settings.${detail ? ` (${detail})` : ''}`, s);
   if (s >= 500 || !res.ok && s < 400) return fail(502, 'provider_down', `${p.short} is busy or unavailable right now (error ${s}). Try again in a moment.`, s);
   if (res.ok) return fail(502, 'bad_reply', `${p.short} sent an answer this page could not read. Try again.`, s);
   return fail(s === 400 || s === 422 ? 400 : 502, 'provider_error', `${p.short} could not answer (error ${s}${detail ? `: ${detail}` : ''}).`, s, detail);

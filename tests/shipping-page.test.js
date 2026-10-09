@@ -245,6 +245,34 @@ test('the tracking list sent to the server: recent deliveries not delivered more
   assert.deepEqual(site.kv.json(WANTED_KEY).manual, ['770022223333']);
 });
 
+test('a future export date stored on the server (never a real export) does not stop this export from being sent', async () => {
+  const site = await hostedSite();
+  const { WANTED_KEY } = await modules();
+  await site.kv.put(WANTED_KEY, JSON.stringify({ v: 1, exportAsOf: '9999-12-31', export: [], manual: [] }));
+  const page = await hostedPage(site);
+  await page.run('shippingSync()');
+  const wanted = site.kv.json(WANTED_KEY);
+  assert.equal(wanted.exportAsOf, '2026-10-08');
+  assert.equal(wanted.export.length, 5);
+});
+
+test('one TrackNo field with several numbers: commas, &, + or "and", or two whole numbers with a space between', async () => {
+  const page = loadPage({ today: TODAY });
+  const split = (v) => page.run(`shipSplit(${JSON.stringify(v)})`);
+  assert.deepEqual(split('770012345678 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(split('770012345678 & 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(split('770012345678 and 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(split('7700 1234 5678, 7700-1234-5679 + 1234567890'), ['770012345678', '770012345679', '1234567890']);
+  assert.deepEqual(split('7700 1234 5678'), ['770012345678'], 'grouped digits are one number');
+  // Same rule as the server (shared/fedex.mjs splitTrackingNumbers).
+  const { splitTrackingNumbers } = await modules();
+  for (const v of ['770012345678 770012345679', '7700 1234 5678 and 7700 1234 5679', 'a & b', '1234567890 + 7700-1234-5678', ' SANDBOX123 ']) assert.deepEqual(split(v), splitTrackingNumbers(v), v);
+  // A delivery row keeps both numbers, so both are tracked.
+  const two = loadPage({ today: TODAY });
+  await upload(two, [exportFile([delivery({ DocumentNumber: '700', DeliveryDocNumber: '9700', ShipDate: '10/06/2026', TrackingNumber: '770012345678 770012345679', ...due('10/10/2026') })])]);
+  assert.deepEqual(listed(two).sort(), ['770012345678', '770012345679']);
+});
+
 test('hand-added numbers on the server are not wiped by a browser whose shared notes have not arrived yet', async () => {
   const site = await hostedSite();
   const { WANTED_KEY } = await modules();
@@ -389,7 +417,7 @@ test('Refresh now asks the server, shows the new statuses, and explains the 10-m
     assert.match(html(page), /FedEx checked just now: 6 tracking numbers up to date\./);
     assert.ok(page.run('shippingState.refreshAfter'), 'the server says when Refresh works again');
     page.run("shippingState.refreshAfter=new Date(Date.now()+5*60000).toISOString();renderResults()");
-    assert.match(html(page), /data-focus-key="ship-refresh"[^>]*aria-disabled="true"[^>]*data-tip="FedEx was checked a few minutes ago/);
+    assert.match(html(page), /data-focus-key="ship-refresh"[^>]*aria-disabled="true"[^>]*data-tip="Refresh now was used recently/);
     page.run('shippingRefresh()');
     assert.match(html(page), /Refresh works again at/);
     // Once allowed again the server still limits it to one check per 10 minutes for everyone.
@@ -397,6 +425,31 @@ test('Refresh now asks the server, shows the new statuses, and explains the 10-m
     await page.run('shippingRefresh()');
     assert.match(html(page), /less than 10 minutes ago/);
     assert.ok(!page.run('JSON.stringify([shippingState.statuses,shippingState.notice,shippingState.wanted,document.getElementById("results-screen").innerHTML])').includes('super-secret-key'));
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('a server error page is an error to retry, not "needs the hosted dashboard"; a failed Refresh says when it works again', async () => {
+  const page = loadPage({ today: TODAY });
+  Object.assign(page.ctx, { fetch: async () => new Response('<!doctype html><title>Error 1101</title>', { status: 500, headers: { 'content-type': 'text/html' } }), location: { href: ORIGIN + '/', protocol: 'https:' } });
+  await upload(page, [exportFile()]);
+  page.run("setTab('shipping')");
+  await settle(page);
+  assert.equal(page.run('shippingState.state'), 'error');
+  assert.doesNotMatch(html(page), /Live FedEx tracking needs the hosted dashboard/);
+  assert.match(page.run('shippingState.notice'), /The server answered 500/);
+
+  const { fakeFedex } = await modules();
+  const site = await hostedSite({ fedexKeys: true });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = fakeFedex({ tokenStatus: 401 }).fetch; // the FedEx keys are wrong
+  try {
+    const hosted = await hostedPage(site);
+    await hosted.run('shippingRefresh()');
+    assert.match(hosted.run('shippingState.notice'), /refused the API key/);
+    const after = Date.parse(hosted.run('shippingState.refreshAfter'));
+    assert.ok(after > Date.now() + 50000 && after < Date.now() + 70000, 'Refresh works again in about a minute');
+    hosted.run(`Date.now=()=>${Date.now()};renderResults()`); // the page's clock is pinned to the export day; use the server's
+    assert.match(html(hosted), /data-focus-key="ship-refresh"[^>]*aria-disabled="true"[^>]*data-tip="Refresh now was used recently\. Refresh works again at [^"]*1 minute after a try that failed/);
   } finally { globalThis.fetch = realFetch; }
 });
 

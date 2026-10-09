@@ -69,3 +69,12 @@ Also in 2v1: the built-in spreadsheet reader is updated from SheetJS 0.18.5 to S
 (same .xls / .csv / .xlsx / Clear To Build support). wrangler.toml (Pages) and the poller's wrangler.toml share one
 REPORT_STORE placeholder and compatibility date; web.config maps .jpg / .png / .svg; the MCP connector, tests and
 wrangler need Node.js 20 or newer. Owner deploy steps: docs/OWNER_CHECKLIST.md.
+2v1 review fixes (server): each FedEx check asks about at most 60 shipments still moving, stalest first, and saves
+what came back even if FedEx fails part-way (fits the Workers Free plan's 10 ms of CPU; FEDEX_MAX_PER_RUN on Workers
+Paid); a failed Refresh now can be tried again after 1 minute; tracking numbers separated by a space, "&", "+" or
+"and" are read as separate numbers; the export date sent to /api/shipping must be real. Only the sign-in logo is
+public (not every /assets/ path). A failed KV read never overwrites the shared notes, the at-risk history or the
+tracking list; notes saves are spaced 1.1 s apart, retried when the server is busy, stamped no later than the
+server's time, at most 500 new lines per save, and a full store drops the oldest entries instead of refusing edits.
+The at-risk history keeps one entry per week (52 weeks). Ask AI caps the paid providers per site per day
+(AI_DAILY_REQUESTS, default 300) and per browser per minute; OpenRouter models without tool support say so.

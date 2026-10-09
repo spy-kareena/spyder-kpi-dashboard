@@ -3,7 +3,8 @@
  * long a line has been at risk ("first flagged"). Written by PUT /api/report (functions/api/report.js) when a new
  * report is saved; stored in Workers KV (binding REPORT_STORE, key 'history'). The password gate in
  * functions/_middleware.js runs first.
- *   GET /api/history -> {v:1, weeks:[{asOf:'YYYY-MM-DD', savedAt, keys:[rowKey, ...]}]}, oldest first, up to 52.
+ *   GET /api/history -> {v:1, weeks:[{asOf:'YYYY-MM-DD', savedAt, keys:[rowKey, ...]}]}, oldest first, one per week
+ *                       (asOf is the earliest export date loaded that week), up to 52.
  */
 const KEY = 'history';
 

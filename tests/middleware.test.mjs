@@ -139,7 +139,7 @@ test('the sign-in logo under /assets/ is served without a session (GET and HEAD)
   }
 });
 
-test('only plain file names directly under /assets/ skip the sign-in (no traversal, no other methods)', async () => {
+test('only the exact logo path skips the sign-in (no traversal, no other methods)', async () => {
   const paths = ['/assets/', '/assets', '/assets/../index.html', '/assets/%2e%2e/index.html', '/assets/..%2Findex.html', '/assets/%2E%2E%2Findex.html',
     '/assets/sub/logo.jpg', '/assets/.hidden', '/assets/a..jpg', '/assets/logo.jpg/', '/assetsx/logo.jpg', '/ASSETS/spyder-logo.jpg', '/index.html?f=/assets/spyder-logo.jpg', '/api/report?x=/assets/a.jpg'];
   for (const path of paths) {
@@ -149,6 +149,19 @@ test('only plain file names directly under /assets/ skip the sign-in (no travers
   }
   for (const method of ['POST', 'PUT', 'DELETE']) {
     assert.ok(await refused(await call('/assets/spyder-logo.jpg', { method })), method);
+  }
+});
+
+test('any other name under /assets/ needs a session: the static server is never asked (Pages would answer index.html)', async () => {
+  for (const path of ['/assets/does-not-exist', '/assets/x.html', '/assets/index', '/assets/spyder-logo.jpeg', '/assets/spyder-logo.jpg.html', '/assets/Spyder-logo.jpg']) {
+    for (const method of ['GET', 'HEAD']) {
+      let nextCalled = false;
+      const res = await onRequest({ request: new Request(ORIGIN + path, { method }), env: ENV, next: async () => { nextCalled = true; return new Response(STATIC_BODY); } });
+      assert.equal(nextCalled, false, `${method} ${path} must not reach the static files`);
+      assert.equal(res.status, 200, `${method} ${path}`);
+      assert.match(res.headers.get('content-type'), /^text\/html/);
+      if (method === 'GET') assert.match(await res.text(), /Sign in/);
+    }
   }
 });
 

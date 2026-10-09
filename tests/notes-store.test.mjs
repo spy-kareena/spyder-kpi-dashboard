@@ -178,14 +178,89 @@ test('size limits: 1 MB per change, 5 MB stored (old cleared-line markers are pr
   assert.equal(Object.keys(doc.rows).filter((k) => k.startsWith('gone-0')).length, 0, 'old markers pruned');
   assert.ok(doc.rows['gone-recent'], 'recent markers kept');
   assert.ok(doc.rows['note-new']);
-  // Nothing left to prune: the next large note is refused and nothing changes.
-  let full = null;
-  for (let i = 0; i < 40 && !full; i++) {
+  // Nothing old left to prune: new notes still save, and the entries edited longest ago make room.
+  const oldest = Object.keys(doc.rows).filter((k) => k.startsWith('note-') && k !== 'note-new');
+  for (let i = 0; i < 40; i++) {
     const res = await call({ method: 'PATCH', env, body: { rows: { [`more-${i}`]: { notes: 'n'.repeat(4000), at: T(3) } } } });
-    if (res.status === 413) full = res;
+    assert.equal(res.status, 200, `more-${i}`);
   }
-  assert.ok(full, 'a full store refuses new notes');
-  assert.match((await full.json()).error, /full/);
+  const after = await stored(env);
+  assert.ok(env.REPORT_STORE.map.get('overrides').length <= MAX, 'the stored document stays within 5 MB');
+  for (let i = 0; i < 40; i++) assert.ok(after.rows[`more-${i}`], `more-${i} kept`);
+  assert.ok(after.rows['note-new'], 'newer entries kept');
+  const dropped = oldest.filter((k) => !after.rows[k]);
+  assert.ok(dropped.length >= 30 && dropped.length < 60, `only what was needed was dropped (${dropped.length})`);
+});
+
+test('storage filled with made-up lines: real edits still save; at most 500 new lines per request', async () => {
+  const env = { REPORT_STORE: kv() };
+  await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'real note', by: 'KK', at: T(1) } } } });
+  // Five 240-line batches of 4,000-character junk, then more, fill the 5 MB document.
+  let pruned = 0;
+  for (let b = 0; b < 7; b++) {
+    const rows = Object.fromEntries(Array.from({ length: 240 }, (_, i) => [`junk|${b}|${i}`, { notes: 'j'.repeat(4000), by: 'AB', at: new Date().toISOString() }]));
+    const res = await call({ method: 'PATCH', env, body: { rows } });
+    assert.equal(res.status, 200);
+    pruned += (await res.json()).pruned || 0;
+  }
+  assert.ok(pruned > 0, 'the oldest entries made room');
+  for (let i = 0; i < 3; i++) {
+    const res = await call({ method: 'PATCH', env, body: { rows: { [`${KEY_B}|${i}`]: { notes: 'real edit '.repeat(400), by: 'KK', at: new Date().toISOString() } } } });
+    assert.equal(res.status, 200, 'not 413 "storage is full"');
+    assert.ok((await stored(env)).rows[`${KEY_B}|${i}`]);
+  }
+  assert.ok(env.REPORT_STORE.map.get('overrides').length <= 5 * 1024 * 1024);
+
+  // New keys are capped per request; edits to stored keys are not.
+  const env2 = { REPORT_STORE: kv() };
+  const many = Object.fromEntries(Array.from({ length: 600 }, (_, i) => [`line-${i}`, { notes: 'x', at: T(1) }]));
+  const first = await (await call({ method: 'PATCH', env: env2, body: { rows: many } })).json();
+  assert.equal(first.applied, 500);
+  assert.equal(first.skipped, 100);
+  assert.equal(Object.keys(first.rows).length, 500, 'skipped lines are left out of the reply, for the page to send again');
+  const again = Object.fromEntries(Array.from({ length: 600 }, (_, i) => [`line-${i}`, { notes: 'y', at: T(2) }]));
+  const second = await (await call({ method: 'PATCH', env: env2, body: { rows: again } })).json();
+  assert.equal(second.applied, 600, '500 edits to stored lines plus the 100 new ones');
+  assert.equal(second.skipped, undefined);
+});
+
+test('a failed KV read never replaces the stored notes (500, nothing written); GET still answers', async () => {
+  const env = { REPORT_STORE: kv() };
+  const rows = Object.fromEntries(Array.from({ length: 300 }, (_, i) => [`line-${i}`, { notes: `note ${i}`, at: T(1) }]));
+  await call({ method: 'PATCH', env, body: { rows } });
+  const before = env.REPORT_STORE.map.get('overrides');
+  const realGet = env.REPORT_STORE.get;
+  env.REPORT_STORE.get = async () => { throw new Error('KV GET failed: 503'); };
+  const writes = env.REPORT_STORE.puts;
+  const res = await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'one change', at: T(2) } } } });
+  assert.equal(res.status, 500, 'not 503: the page reads 503 as "no shared storage"');
+  assert.match((await res.json()).error, /could not be read; your changes are kept in this browser/);
+  assert.equal(env.REPORT_STORE.puts, writes);
+  assert.equal((await call({ env })).status, 200, 'reading for the page still gives a document');
+  env.REPORT_STORE.get = realGet;
+  assert.equal(env.REPORT_STORE.map.get('overrides'), before);
+  assert.equal(Object.keys((await stored(env)).rows).length, 300);
+  // An unreadable stored value is not taken for an empty one before a write either.
+  env.REPORT_STORE.map.set('overrides', new TextEncoder().encode('{broken'));
+  assert.equal((await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'x', at: T(3) } } } })).status, 500);
+  assert.equal(new TextDecoder().decode(env.REPORT_STORE.map.get('overrides')), '{broken');
+});
+
+test('Workers KV busy (one write per second): one retry after 1.1 s, then 429 with Retry-After', async () => {
+  const env = { REPORT_STORE: kv() };
+  const realPut = env.REPORT_STORE.put;
+  let fails = 1;
+  env.REPORT_STORE.put = async (k, v) => { if (fails-- > 0) throw new Error('KV PUT failed: 429 Too Many Requests'); return realPut(k, v); };
+  const started = Date.now();
+  const ok = await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'saved on the retry', at: T(1) } } } });
+  assert.equal(ok.status, 200);
+  assert.ok(Date.now() - started >= 1000, 'waited a second before trying again');
+  assert.equal((await stored(env)).rows[KEY_A].notes, 'saved on the retry');
+  fails = 2;
+  const busy = await call({ method: 'PATCH', env, body: { rows: { [KEY_B]: { notes: 'not yet', at: T(2) } } } });
+  assert.equal(busy.status, 429, 'not 500 or 503: the page sends the batch again');
+  assert.equal(busy.headers.get('retry-after'), '2');
+  assert.equal((await stored(env)).rows[KEY_B], undefined);
 });
 
 test('an edit stamped in the future (a computer clock set ahead) is stored with the server time', async () => {
@@ -194,7 +269,12 @@ test('an edit stamped in the future (a computer clock set ahead) is stored with 
   await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'from the future', at: '2099-01-01T00:00:00.000Z' } } } });
   const at = Date.parse((await stored(env)).rows[KEY_A].at);
   assert.ok(at >= before && at <= Date.now() + 1000);
+  // Even a minute ahead is not kept, so it cannot beat edits made in that minute.
+  await new Promise((r) => setTimeout(r, 5));
+  await call({ method: 'PATCH', env, body: { rows: { [KEY_B]: { notes: 'a minute ahead', at: new Date(Date.now() + 60000).toISOString() } } } });
+  assert.ok(Date.parse((await stored(env)).rows[KEY_B].at) <= Date.now());
   // So a later real edit can still replace it.
+  await new Promise((r) => setTimeout(r, 5));
   await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'now', at: new Date(Date.now() + 2000).toISOString() } } } });
   assert.equal((await stored(env)).rows[KEY_A].notes, 'now');
 });

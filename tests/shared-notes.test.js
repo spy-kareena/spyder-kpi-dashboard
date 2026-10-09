@@ -40,12 +40,18 @@ function kvStore() {
 // like a lost network.
 function fakeSite() {
   const env = { REPORT_STORE: kvStore() };
-  const site = { env, calls: [], bodies: [], mode: 'up' };
+  // failPatches: how many of the next PATCHes fail, with failKind 'down' (no network) or a status (an error page).
+  const site = { env, calls: [], bodies: [], patchTimes: [], mode: 'up', failPatches: 0, failKind: 500 };
   site.fetch = async (url, init = {}) => {
     const method = init.method || 'GET';
     site.calls.push(`${method} ${url}`);
-    if (method === 'PATCH') site.bodies.push(JSON.parse(init.body));
+    if (method === 'PATCH') { site.bodies.push(JSON.parse(init.body)); site.patchTimes.push(Date.now()); }
     if (site.mode === 'down') throw new TypeError('Failed to fetch');
+    if (method === 'PATCH' && site.failPatches > 0) {
+      site.failPatches--;
+      if (site.failKind === 'down') throw new TypeError('Failed to fetch');
+      return new Response('<!doctype html><title>Error</title>', { status: site.failKind, headers: { 'content-type': 'text/html' } });
+    }
     if (site.mode === 'static') return new Response('<!doctype html><title>Not found</title>', { status: 404, headers: { 'content-type': 'text/html' } });
     const name = { '/api/report': 'report', '/api/notes': 'notes', '/api/history': 'history' }[url];
     const fn = await handler(name);
@@ -82,9 +88,9 @@ async function openHosted(site, opts) {
   await settle(page);
   return page;
 }
-// Waits until every queued change has been sent.
+// Waits until every queued change has been sent (PATCHes go out at least 1.1 s apart, so allow a few seconds).
 async function settle(page) {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 400; i++) {
     await tick(10);
     if (page.run('!notesInFlight&&!notesFlushTimer&&notesReady.size===0')) return;
   }
@@ -170,6 +176,66 @@ test('changes go out 800 ms after the last change to a line, many lines in one r
   assert.equal(Object.keys(site.bodies[2].rows).length, a.run('linkedListKeys.length'));
   // While the request is out the sidebar says so; afterwards it names the last edit.
   assert.match(sidebar(a), /Notes shared · last edit KK/);
+});
+
+test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a busy or failed save is sent again', async () => {
+  const site = fakeSite();
+  // Workers KV refuses a second write to the same key within a second.
+  const kvStore = site.env.REPORT_STORE;
+  const realPut = kvStore.put.bind(kvStore);
+  const lastPut = {};
+  kvStore.put = async (k, v) => {
+    if (lastPut[k] && Date.now() - lastPut[k] < 1000) throw new Error('KV PUT failed: 429 Too Many Requests');
+    lastPut[k] = Date.now();
+    return realPut(k, v);
+  };
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  await settle(a);
+  // Two lines set half a second apart (a normal triage pace): each has its own 800 ms timer.
+  edit(a, '900', 'status', 'Hold');
+  await tick(500);
+  edit(a, '901', 'status', 'Urgent');
+  await tick(900);
+  assert.equal(site.patches(), 1, 'the second line waits for the gap');
+  await settle(a);
+  assert.equal(site.patches(), 2);
+  assert.ok(site.patchTimes[1] - site.patchTimes[0] >= 1050, `PATCHes ${site.patchTimes[1] - site.patchTimes[0]} ms apart`);
+  let doc = await site.doc();
+  assert.equal(doc.rows[keyOf(a, '900')].status, 'Hold');
+  assert.equal(doc.rows[keyOf(a, '901')].status, 'Urgent');
+
+  // The server answers with an error page once: the batch goes back in the queue and is sent again 2 s later.
+  await tick(1200); // past the gap after the last PATCH
+  site.failPatches = 1; site.failKind = 500;
+  edit(a, '902', 'notes', 'after a server error');
+  await tick(900);
+  assert.equal(site.patches(), 3);
+  assert.ok(a.run('notesReady.size') === 1 && a.run('!!notesRetryTimer'), 'queued again with a retry timer');
+  assert.match(sidebar(a), /trying again in a moment/);
+  await settle(a);
+  assert.equal(site.patches(), 4);
+  assert.equal((await site.doc()).rows[keyOf(a, '902')].notes, 'after a server error');
+  assert.doesNotMatch(sidebar(a), /Notes not shared/);
+  // Same for a lost connection, and for the server's "busy" 429.
+  for (const [i, kind] of ['down', 429].entries()) {
+    await tick(1200);
+    site.failPatches = 1; site.failKind = kind;
+    clock(a, `2026-10-08T16:0${i}:00Z`); // a newer edit than the stored one
+    edit(a, '900', 'notes', `retried after ${kind}`);
+    await tick(900);
+    await settle(a);
+    assert.equal((await site.doc()).rows[keyOf(a, '900')].notes, `retried after ${kind}`, String(kind));
+  }
+  assert.equal(a.run('notesRetries'), 0);
+  // A refusal that will not change (400) is not retried.
+  await tick(1200);
+  site.failPatches = 1; site.failKind = 400;
+  edit(a, '901', 'notes', 'refused');
+  await tick(900);
+  await settle(a);
+  assert.equal(a.run('!!notesRetryTimer'), false);
 });
 
 test('the newer edit wins when two people change the same line', async () => {
@@ -542,6 +608,19 @@ test('at-risk history: each upload records its At Risk lines (all filters off) a
   const b = await openHosted(site);
   assert.deepEqual(b.run('firstFlagged'), { [k900]: '2026-09-03', [k901]: '2026-09-03', [k903]: '2026-09-10' });
   assert.ok(site.calls.includes('GET /api/history'));
+});
+
+test('at-risk history in the page follows the server: one entry per week, uploads in a week merged', async () => {
+  const page = loadPage();
+  const merged = page.run(`mergeAtRiskWeeks([{asOf:'2026-09-09',savedAt:'a',keys:['x','y']}],[{asOf:'2026-09-11',savedAt:'b',keys:['y','z']},{asOf:'2026-09-14',savedAt:'c',keys:['w']}])`);
+  assert.deepEqual(merged, [{ asOf: '2026-09-09', savedAt: 'b', keys: ['x', 'y', 'z'] }, { asOf: '2026-09-14', savedAt: 'c', keys: ['w'] }]);
+  // A week just saved here and the server's merged entry for that week stay one entry; 52 weeks kept.
+  const weeks = Array.from({ length: 60 }, (_, i) => ({ asOf: new Date(Date.UTC(2025, 0, 6) + i * 7 * 864e5).toISOString().slice(0, 10), savedAt: '', keys: [] }));
+  const kept = page.run(`mergeAtRiskWeeks(${JSON.stringify(weeks)},[{asOf:${JSON.stringify(weeks[59].asOf)},savedAt:'z',keys:['n']}])`);
+  assert.equal(kept.length, 52);
+  assert.deepEqual(kept[51], { asOf: weeks[59].asOf, savedAt: 'z', keys: ['n'] });
+  page.run(`atRiskWeeks=mergeAtRiskWeeks([{asOf:'2026-09-09',savedAt:'a',keys:['x']},{asOf:'2026-09-11',savedAt:'b',keys:['z']}]);refreshFirstFlagged()`);
+  assert.deepEqual(page.run('firstFlagged'), { x: '2026-09-09', z: '2026-09-09' });
 });
 
 test('without shared storage there is no history: firstFlagged stays empty (every line counts as new this week)', async () => {

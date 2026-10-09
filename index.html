@@ -7512,6 +7512,8 @@ const NOTES_EDITOR_KEY='spyderKpiEditor';
 const NOTES_CLEARED_KEY='spyderKpiNotesClearedV1';
 const NOTES_SHIPMENTS_KEY='spyderKpiShipmentsV1';
 const NOTES_PATCH_DELAY=800;
+const NOTES_PATCH_GAP=1100; // ms between PATCHes: Workers KV takes one write per second to the notes key
+const NOTES_MAX_RETRIES=6; // a failed batch is sent again after 2, 4, 8, 16, 32 and 60 seconds
 const NOTES_BATCH_BYTES=512*1024;
 // Same limits as functions/api/notes.js: keys it would refuse stay in this browser only.
 const NOTE_KEY_RE=/^[^\u0000-\u001f\u007f]{1,300}$/;
@@ -7529,6 +7531,9 @@ let sharedShipments=notesReadLocal(NOTES_SHIPMENTS_KEY);
 const notesTimers=new Map();
 const notesReady=new Set();
 let notesFlushTimer=null;
+let notesPatchGate=null;
+let notesRetryTimer=null;
+let notesRetries=0;
 let notesInFlight=false;
 let notesFlushAgain=false;
 let notesClearedDirty=false;
@@ -7536,8 +7541,9 @@ let notesSyncing=false;
 let editorDialogOpen=false;
 let editorAsked=false;
 let linkedBulkCause='';
-// rowKey -> 'YYYY-MM-DD' export date of the earliest uploaded report in which the line was on the At Risk card,
-// from the shared at-risk history (GET /api/history). Lines not in it are new this week. A var, so it is also
+// rowKey -> 'YYYY-MM-DD' export date of the earliest uploaded report in which the line was on the At Risk card (the
+// first export date of that week: the history keeps one entry per week), from the shared at-risk history
+// (GET /api/history). Lines not in it are new this week. A var, so it is also
 // window.firstFlagged.
 var firstFlagged={};
 let atRiskWeeks=[];
@@ -7624,18 +7630,40 @@ function sharedNoteChanged(key,entry,stamp){
 function queueSharedNote(kind,key,delay=NOTES_PATCH_DELAY){
   const id=`${kind}|${key}`;
   clearTimeout(notesTimers.get(id));
-  notesTimers.set(id,setTimeout(()=>{notesTimers.delete(id);notesReady.add(id);flushSharedNotesSoon();},delay));
+  // A new edit after the retries ran out starts them again.
+  notesTimers.set(id,setTimeout(()=>{notesTimers.delete(id);notesReady.add(id);if(notesGaveUp())notesRetries=0;flushSharedNotesSoon();},delay));
 }
+const notesGaveUp=()=>notesRetries>NOTES_MAX_RETRIES;
+// Workers KV takes one write per second to the notes key, so PATCHes go out at least NOTES_PATCH_GAP apart: lines
+// that become ready meanwhile wait and go together in the next one (which also saves KV writes).
 function flushSharedNotesSoon(){
-  if(!notesFlushTimer)notesFlushTimer=setTimeout(()=>{notesFlushTimer=null;flushSharedNotes();},0);
+  if(notesFlushTimer||notesPatchGate)return;
+  notesFlushTimer=setTimeout(()=>{notesFlushTimer=null;flushSharedNotes();},0);
 }
-// Sends the ready changes in one PATCH (more batches follow when they pass 512 KB). all: also the ones still
-// waiting (page closing). Changes stay in this browser whatever happens; an unsent one goes on the next open.
+function startNotesPatchGate(){
+  clearTimeout(notesPatchGate);
+  notesPatchGate=setTimeout(()=>{notesPatchGate=null;if(notesReady.size&&!notesRetryTimer&&!notesGaveUp())flushSharedNotesSoon();},NOTES_PATCH_GAP);
+}
+// A batch the server could not take (busy, a server error, no network): its lines go back in the queue and are sent
+// again after 2, 4, 8 ... seconds (at most a minute apart, NOTES_MAX_RETRIES times; after that with the next edit
+// or when the page is hidden or opened again).
+function retrySharedNotesLater(sent,retryAfter){
+  sent.forEach(id=>notesReady.add(id));
+  notesRetries++;
+  if(notesGaveUp())return false;
+  const wait=Math.max((Number(retryAfter)||0)*1000,Math.min(60000,2000*2**(notesRetries-1)));
+  clearTimeout(notesRetryTimer);
+  notesRetryTimer=setTimeout(()=>{notesRetryTimer=null;flushSharedNotes();},wait);
+  return true;
+}
+// Sends the ready changes in one PATCH (more batches follow when they pass 512 KB or 500 lines). all: also the ones
+// still waiting (page closing). Changes stay in this browser whatever happens; an unsent one goes on the next open.
 async function flushSharedNotes({all=false,keepalive=false}={}){
   if(sharedNotes.state!=='shared'||(editorDialogOpen&&!keepalive))return;
   if(all){notesTimers.forEach((t,id)=>{clearTimeout(t);notesReady.add(id);});notesTimers.clear();}
   if(notesInFlight){notesFlushAgain=true;return;}
   const body={rows:{},shipments:{}};
+  const sent=[];
   let bytes=0,count=0;
   for(const id of [...notesReady]){
     const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);
@@ -7643,23 +7671,43 @@ async function flushSharedNotes({all=false,keepalive=false}={}){
     if(!local||!(kind==='rows'?NOTE_KEY_RE:SHIPMENT_ID_RE).test(key)){notesReady.delete(id);continue;}
     const entry=kind==='rows'?sharedRowEntry(local):sharedShipmentEntry(local);
     const size=key.length+JSON.stringify(entry).length+8;
-    if(count&&(bytes+size>NOTES_BATCH_BYTES||count>=1000))break;
+    // 500 lines at most: the server takes at most 500 lines it does not have yet per request.
+    if(count&&(bytes+size>NOTES_BATCH_BYTES||count>=500))break;
     body[kind][key]=entry;bytes+=size;count++;
-    notesReady.delete(id);
+    notesReady.delete(id);sent.push(id);
   }
   if(!count)return;
   notesInFlight=true;sharedNotes.saving=true;
+  clearTimeout(notesRetryTimer);notesRetryTimer=null;
+  startNotesPatchGate();
   renderSidebar();
+  let retrying=false,failed=false;
   try{
     const res=await fetch('/api/notes',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(body),keepalive});
     const data=await res.json().catch(()=>({}));
-    if(res.ok){sharedNotes.message='';adoptSharedReply(data);}
+    if(res.ok){
+      sharedNotes.message='';notesRetries=0;adoptSharedReply(data);
+      // Lines the server left for another request (over its limit of new lines) go in the next batch.
+      if(data&&data.skipped)sent.forEach(id=>{const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);const got=data[kind];if(!got||typeof got!=='object'||!notesHasOwn(got,key))notesReady.add(id);});
+    }
     else if([404,405,503].includes(res.status))setNotesLocal();
+    else if(res.status===429||res.status>=500){
+      failed=true;
+      retrying=retrySharedNotesLater(sent,res.headers&&typeof res.headers.get==='function'?res.headers.get('retry-after'):0);
+      sharedNotes.message=retrying?'the server is busy, trying again in a moment':String(data.error||`server error ${res.status}`)+'. Changes are kept in this browser and sent with the next change';
+    }
     else sharedNotes.message=res.status===401?'sign-in expired, reload and sign in again':String(data.error||`server error ${res.status}`);
-  }catch(err){sharedNotes.message='server not reachable. Changes are kept in this browser and shared the next time the page opens';}
+  }catch(err){
+    failed=true;
+    retrying=retrySharedNotesLater(sent);
+    sharedNotes.message=retrying?'server not reachable, trying again in a moment':'server not reachable. Changes are kept in this browser and shared the next time the page opens';
+  }
   finally{
     notesInFlight=false;sharedNotes.saving=false;
-    if(notesReady.size||notesFlushAgain){notesFlushAgain=false;flushSharedNotesSoon();}
+    // A batch that failed waits for its retry (edits made meanwhile go with it), or for the next edit once the
+    // retries ran out.
+    if(failed)notesFlushAgain=false;
+    else if(notesReady.size||notesFlushAgain){notesFlushAgain=false;flushSharedNotesSoon();}
     renderSidebar();
   }
 }
@@ -7717,6 +7765,7 @@ async function syncSharedNotes(){
     if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){if(!refresh)sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};return;}
     const push=mergeSharedNotes(doc);
     sharedNotes={...sharedNotes,state:'shared',message:''};
+    if(notesGaveUp())notesRetries=0;
     push.forEach(id=>notesReady.add(id));
     if(notesReady.size)flushSharedNotesSoon();
   }finally{
@@ -7927,11 +7976,22 @@ function cleanAtRiskWeeks(list){
   return (Array.isArray(list)?list:[]).filter(w=>w&&typeof w.asOf==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(w.asOf)&&Array.isArray(w.keys))
     .map(w=>({asOf:w.asOf,savedAt:String(w.savedAt||''),keys:w.keys.filter(k=>typeof k==='string')}));
 }
-// Same rule as the server: one week per export date (the newer save wins), the newest 52 kept.
+// The Monday (UTC) of the week a YYYY-MM-DD export date falls in.
+function atRiskWeekOf(asOf){
+  const d=new Date(`${asOf}T00:00:00Z`);
+  if(!Number.isFinite(d.getTime()))return asOf; // not a date: its own entry
+  d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));
+  return d.toISOString().slice(0,10);
+}
+// Same rule as the server (addHistoryWeek in functions/api/report.js): one entry per week, uploads in the same week
+// merged (the earlier export date, the newer savedAt, the lines of both), the newest 52 weeks kept.
 function mergeAtRiskWeeks(...lists){
-  const byDay=new Map();
-  lists.flat().forEach(w=>{const had=byDay.get(w.asOf);if(!had||w.savedAt>=had.savedAt)byDay.set(w.asOf,w);});
-  return [...byDay.values()].sort((a,b)=>a.asOf<b.asOf?-1:a.asOf>b.asOf?1:0).slice(-52);
+  const byWeek=new Map();
+  lists.flat().forEach(w=>{
+    const id=atRiskWeekOf(w.asOf),had=byWeek.get(id);
+    byWeek.set(id,!had?w:{asOf:had.asOf<w.asOf?had.asOf:w.asOf,savedAt:had.savedAt>w.savedAt?had.savedAt:w.savedAt,keys:[...new Set([...had.keys,...w.keys])]});
+  });
+  return [...byWeek.values()].sort((a,b)=>a.asOf<b.asOf?-1:a.asOf>b.asOf?1:0).slice(-52);
 }
 function refreshFirstFlagged(){
   const out={};
@@ -8550,8 +8610,14 @@ function shipClean(v){
   const s=String(v??'').replace(/[\s-]+/g,'').toUpperCase();
   return /^[A-Z0-9]{6,40}$/.test(s)?s:'';
 }
+// Separators: , ; / | & + newlines and the word "and"; two whole numbers (10+ letters/digits each) with only a space
+// between them are two numbers, while grouped digits ("7700 1234 5678") stay one.
 function shipSplit(v){
-  return [...new Set(String(v??'').split(/[,;/|\n\r]+/).map(shipClean).filter(Boolean))];
+  const pieces=String(v??'').split(/[,;/|&+\n\r]+|\band\b/i).flatMap(piece=>{
+    const parts=piece.trim().split(/\s+/).filter(Boolean);
+    return parts.length>1&&parts.every(t=>t.replace(/-/g,'').length>=10)?parts:[piece];
+  });
+  return [...new Set(pieces.map(shipClean).filter(Boolean))];
 }
 function shippingApiPossible(){
   try{return typeof fetch==='function'&&!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));}catch(e){return false;}
@@ -8774,9 +8840,10 @@ async function shippingLoad(){
         if(allLoadedRows.length)shippingQueueSync();
       }else if(res.status===503&&data&&data.configured===false)shippingState.state='nostore';
       else if(res.status===401)Object.assign(shippingState,{state:'error',notice:'Your sign-in to this site has expired. Reload the page and sign in again.'});
-      // A static host (IIS, a file share) answers /api/shipping with its own 404 page.
-      else if(!data||res.status===404||res.status===405)shippingState.state='static';
-      else Object.assign(shippingState,{state:'error',notice:String(data.error||`The server answered ${res.status}.`)});
+      // A static host (IIS, a file share) answers /api/shipping with its own 404 page, or a page instead of JSON.
+      // Any other failure (a 5xx error page included) is an error, tried again after 5 minutes.
+      else if(res.status===404||res.status===405||(res.ok&&!data))shippingState.state='static';
+      else Object.assign(shippingState,{state:'error',notice:String((data&&data.error)||`The server answered ${res.status}.`)});
     }catch(err){Object.assign(shippingState,{state:'error',notice:'The server could not be reached for FedEx statuses.'});}
     shippingState.loadedAt=Date.now();
     shippingState.loading=null;
@@ -8792,7 +8859,10 @@ async function shippingSync(){
   if(!shippingApiPossible()||!allLoadedRows.length)return false;
   if(shippingState.state!=='ready'){await shippingLoad();if(shippingState.state!=='ready')return false;}
   const lists=shippingWantedLists(shippingModel());
-  const w=shippingState.wanted||{};
+  const w0=shippingState.wanted||{};
+  // A stored export date in the future (never a real export) is ignored, as the server does, so it cannot stop
+  // this export from being sent.
+  const w=w0.exportAsOf&&Date.parse(`${w0.exportAsOf}T00:00:00Z`)>Date.now()+2*864e5?{...w0,exportAsOf:'',export:[]}:w0;
   let asOf=displayDate(reportToday()),exp=lists.export;
   if(!shippingHasTrackingColumn()){asOf=w.exportAsOf||asOf;exp=w.exportAsOf?(w.export||[]):[];}
   // Hand-added numbers may not have arrived from the shared notes yet: an empty list only replaces the server's
@@ -8827,7 +8897,7 @@ async function shippingRefresh(){
   const wait=Date.parse(st.refreshAfter||'');
   if(st.busy||!shippingApiPossible()||st.state!=='ready')return;
   if(!st.fedex){st.notice='Refresh now needs the FedEx keys on this site (FEDEX_CLIENT_ID and FEDEX_CLIENT_SECRET, see docs/SHIPPING.md). The checks every 4 hours run on their own once the poller is set up.';renderResults();return;}
-  if(isFinite(wait)&&wait>Date.now()){st.notice=`FedEx was checked a few minutes ago. Refresh works again at ${shipClock(new Date(wait))}.`;renderResults();return;}
+  if(isFinite(wait)&&wait>Date.now()){st.notice=`Refresh now was used recently. Refresh works again at ${shipClock(new Date(wait))}.`;renderResults();return;}
   st.busy=true;st.notice='';
   renderResults();
   try{
@@ -8836,10 +8906,14 @@ async function shippingRefresh(){
     const data=await res.json().catch(()=>({}));
     if(res.ok){
       Object.assign(st,{statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),errors:Array.isArray(data.errors)?data.errors:[],lastError:null,refreshAfter:String(data.refreshAfter||'')});
-      st.notice=`FedEx checked just now: ${shipPlural(Number(data.count)||0,'tracking number','tracking numbers')} up to date.`;
-    }else if(res.status===429){st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||'FedEx was checked a few minutes ago. Try again later.');}
+      // Each check asks FedEx about up to 60 shipments still moving (stalest first); the rest wait for the next.
+      const waiting=Number(data.waiting)||0;
+      st.notice=waiting
+        ?`FedEx checked just now: ${shipPlural(Number(data.polled)||0,'tracking number','tracking numbers')} updated; ${shipPlural(waiting,'more is','more are')} checked in the next runs.`
+        :`FedEx checked just now: ${shipPlural(Number(data.count)||0,'tracking number','tracking numbers')} up to date.`;
+    }else if(res.status===429){st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||'Refresh now was used recently. Try again later.');}
     else if(res.status===401)st.notice='Your sign-in to this site has expired. Reload the page and sign in again.';
-    else{if(res.status===503&&data.fedex===false)st.fedex=false;st.notice=String(data.error||`The server answered ${res.status}.`);}
+    else{if(res.status===503&&data.fedex===false)st.fedex=false;st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||`The server answered ${res.status}.`);}
   }catch(err){st.notice='The server could not be reached.';}
   st.busy=false;
   if(st.notice&&typeof showToast==='function')showToast(st.notice);
@@ -9041,8 +9115,8 @@ function renderShippingPage(m){
   const waiting=isFinite(wait)&&wait>now;
   const canRefresh=st.state==='ready'&&!!st.fedex&&!st.busy&&!waiting;
   const refreshTip=!st.fedex?'Refresh now needs the FedEx keys on this site (see docs/SHIPPING.md). The checks every 4 hours run on their own once the poller is set up.'
-    :waiting?`FedEx was checked a few minutes ago. Refresh works again at ${shipClock(new Date(wait))} (once every 10 minutes for everyone).`
-    :'Ask FedEx now for the latest status of every shipment listed (once every 10 minutes for everyone). FedEx is also checked every 4 hours on its own.';
+    :waiting?`Refresh now was used recently. Refresh works again at ${shipClock(new Date(wait))} (once every 10 minutes for everyone, 1 minute after a try that failed).`
+    :'Ask FedEx now for the latest status of the shipments listed: up to 60 still moving per check, stalest first (once every 10 minutes for everyone). FedEx is also checked every 4 hours on its own.';
   const bar=`<div class="ship-bar rise">
       <span class="ship-updated" data-tip="${esc(barTip)}"><span class="live-dot${live&&st.state==='ready'?'':' off'}"></span>${esc(barText)}</span>
       ${st.state==='ready'?`<div class="ship-tools print-hide"><button type="button" class="btn${canRefresh?'':' is-disabled'}" data-focus-key="ship-refresh" onclick="shippingRefresh()"${canRefresh?'':' aria-disabled="true"'} data-tip="${esc(refreshTip)}">${st.busy?'Checking FedEx…':'Refresh now'}</button></div>`:''}
@@ -9128,7 +9202,7 @@ function renderShippingPage(m){
 
   const about=`<details class="about rise rise-5"><summary>About these numbers</summary><div class="about-body">
       <p>Tracking numbers come from the TrackingNumber column of the KPI export (the delivery’s tracking number in SAP, ODLN.TrackNo) and from numbers added by hand with Add tracking #. A delivery is tracked when it shipped in the ${SHIP_WINDOW_DAYS} days before the export date (${esc(asOf)}); it stops being checked ${SHIP_DELIVERED_DAYS} days after FedEx delivered it. Numbers added by hand are tracked for ${SHIP_MANUAL_DAYS} days.</p>
-      <p>The server asks FedEx every ${SHIP_CHECK_HOURS} hours, and when someone clicks Refresh now (at most once every 10 minutes). The strip shows the steps Label created, Picked up, In transit, Customs (only for shipments that cross a border), Out for delivery and Delivered, filled up to the newest FedEx scan; a red mark means an exception or a customs hold at that step. FedEx Freight (LTL) shipments are tracked the same way with their PRO number.</p>
+      <p>The server asks FedEx every ${SHIP_CHECK_HOURS} hours, and when someone clicks Refresh now (at most once every 10 minutes). Each check asks about up to 60 shipments still moving, those never checked or checked longest ago first, so with more than that some rows wait a check or two for a newer status. The strip shows the steps Label created, Picked up, In transit, Customs (only for shipments that cross a border), Out for delivery and Delivered, filled up to the newest FedEx scan; a red mark means an exception or a customs hold at that step. FedEx Freight (LTL) shipments are tracked the same way with their PRO number.</p>
       <p>Exceptions are delivery or shipment exceptions, delays, holds at a FedEx location, returns and cancellations. In customs counts shipments waiting for clearance, including clearance delays. Delivered this week counts deliveries from Monday to today.</p>
       <p>ETA vs promised compares FedEx’s estimated delivery date (or the actual delivery date) with the earliest promised date of the order lines on the delivery: the reschedule date when there is one, otherwise the line delivery date. Cross-border shipments go to an address outside Canada (SAP ship-to country, or FedEx’s destination), or have customs scans; days in customs run from the first customs scan to the release.</p>
     </div></details>`;
@@ -9743,7 +9817,7 @@ function ohLineWhy(r){
   const reasons=lineReasons(r);
   if(!reasons.length&&!ohManualCause(r))return '';
   const {cause,rule}=ohCauseRule(r);
-  const tip=`Cause: ${OH_CAUSE_LABEL[cause]} (${rule}). ${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${ohFlaggedSince(r)?` First at risk in the ${ohFlaggedSince(r)} upload.`:''}`;
+  const tip=`Cause: ${OH_CAUSE_LABEL[cause]} (${rule}). ${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${ohFlaggedSince(r)?` First at risk in the week of the ${ohFlaggedSince(r)} upload.`:''}`;
   return `<span class="oh-why cause-text-${cause}" data-tip="${esc(tip)}">${esc(OH_CAUSE_LABEL[cause])}${reasons.length?` · ${esc(reasons[0])}${reasons.length>1?` +${reasons.length-1}`:''}`:''}</span>`;
 }
 // Words Search can match: the reasons and "caused by us / them" (or "cause not set"). Worked out once per row until

@@ -151,6 +151,74 @@ test('a refused FedEx key: 502 with the reason, and the last results stay', asyn
   assert.match(got.lastError.message, /refused the API key/);
 });
 
+test('a failed Refresh now holds the slot for 1 minute only and says when it works again', async () => {
+  const e = fedexEnv();
+  await put(e, { asOf: '2026-10-08', export: [NUMBERS.parcel], manual: [] });
+  const before = Date.now();
+  const res = await withFedex(fakeFedex({ tokenStatus: 401 }), () => call(e, { method: 'POST' }));
+  assert.equal(res.status, 502);
+  const body = await res.json();
+  const after = Date.parse(body.refreshAfter);
+  assert.ok(after >= before + 59000 && after <= Date.now() + 61000, 'refreshAfter is about a minute away');
+  assert.equal(e.REPORT_STORE.ttl[REFRESH_KEY], 60, 'the hold expires on its own after a minute');
+  // IT fixes the key; within the minute the reply is honest about why it waits, and GET agrees.
+  const soon = await withFedex(fakeFedex(), () => call(e, { method: 'POST' }));
+  assert.equal(soon.status, 429);
+  const soonBody = await soon.json();
+  assert.match(soonBody.error, /Refresh now was used less than 10 minutes ago\. Try again in 1 min\./);
+  assert.ok(Number(soon.headers.get('retry-after')) <= 60);
+  assert.equal((await (await call(e)).json()).refreshAfter, body.refreshAfter);
+  // A minute later (the key has expired) it checks FedEx and takes the full 10 minutes.
+  await e.REPORT_STORE.delete(REFRESH_KEY);
+  const ok = await withFedex(fakeFedex(), () => call(e, { method: 'POST' }));
+  assert.equal(ok.status, 200);
+  assert.equal(e.REPORT_STORE.ttl[REFRESH_KEY], 600);
+  assert.ok(Date.parse((await ok.json()).refreshAfter) > Date.now() + 9 * 60000);
+});
+
+test('Refresh now checks up to 60 numbers and says how many are left for the next checks', async () => {
+  const e = fedexEnv();
+  const many = Array.from({ length: 75 }, (_, i) => String(880000000000 + i));
+  await put(e, { asOf: '2026-10-08', export: many, manual: [] });
+  const fx = fakeFedex();
+  const data = await (await withFedex(fx, () => call(e, { method: 'POST' }))).json();
+  assert.deepEqual([data.count, data.polled, data.waiting], [75, 60, 15]);
+  assert.equal(fx.calls.filter((c) => c.kind === 'track').length, 2);
+});
+
+test('the export date must be a real date at most two days ahead; a future date already stored cannot freeze the list', async () => {
+  const e = env();
+  for (const asOf of ['9999-12-31', '2026-02-30', '1999-12-31', new Date(Date.now() + 5 * 864e5).toISOString().slice(0, 10)]) {
+    const res = await put(e, { asOf, export: [NUMBERS.parcel], manual: [] });
+    assert.equal(res.status, 400, asOf);
+  }
+  assert.equal(e.REPORT_STORE.map.size, 0);
+  // A bad value stored before this check (or by hand) is ignored: a real upload replaces it.
+  await e.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ v: 1, exportAsOf: '9999-12-31', export: [], manual: [] }));
+  const res = await put(e, { asOf: '2026-10-08', export: [NUMBERS.parcel, NUMBERS.freight], manual: [] });
+  assert.deepEqual(await res.json(), { saved: true, keptNewerExport: false, exportAsOf: '2026-10-08', export: 2, manual: 0 });
+  assert.deepEqual(e.REPORT_STORE.json(WANTED_KEY).export, [NUMBERS.parcel, NUMBERS.freight]);
+});
+
+test('KV read failures: GET still answers (no Refresh limit), a list change is refused without writing', async () => {
+  const e = fedexEnv();
+  await put(e, { asOf: '2026-10-08', export: [NUMBERS.parcel], manual: [] });
+  const stored = e.REPORT_STORE.map.get(WANTED_KEY);
+  const realGet = e.REPORT_STORE.get;
+  e.REPORT_STORE.get = async () => { throw new Error('KV GET failed: 503'); };
+  const got = await call(e);
+  assert.equal(got.status, 200);
+  const data = await got.json();
+  assert.deepEqual([data.configured, data.refreshAfter, data.statuses], [true, '', {}]);
+  const writes = e.REPORT_STORE.puts.length;
+  const res = await put(e, { asOf: '2026-10-09', export: [], manual: [] });
+  assert.equal(res.status, 500);
+  assert.match((await res.json()).error, /could not be read/);
+  assert.equal(e.REPORT_STORE.puts.length, writes);
+  assert.equal(e.REPORT_STORE.map.get(WANTED_KEY), stored);
+  e.REPORT_STORE.get = realGet;
+});
+
 let failed = 0;
 for (const t of tests) {
   try { await t.fn(); console.log(`ok   ${t.name}`); }

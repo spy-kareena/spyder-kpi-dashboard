@@ -36,7 +36,10 @@ Using FedEx **sandbox** (test) keys? Uncomment the `[vars]` lines in `wrangler.t
 ## Good to know
 
 - Delivered shipments are final, so they are not asked again; each check asks FedEx only about shipments still moving.
-- A check asks about at most 600 numbers (20 FedEx calls of 30), well inside the Worker's limits.
+- A check asks about at most 60 of the shipments still moving (2 FedEx calls of 30): first those never checked, then
+  those checked longest ago, so it fits the Workers Free plan's 10 ms of CPU per run. A longer list goes round over
+  several checks; the log line says how many are left for the next ones. On Workers Paid, uncomment `[vars]` with
+  `FEDEX_MAX_PER_RUN = "600"` and the `[limits]` lines in `wrangler.toml` to ask about the whole list every time.
 - If FedEx refuses the keys or cannot be reached, the last results stay on the page with a note saying why, and the
   run shows as failed in the Worker's logs.
 - To pause the checks, remove the cron in **Settings → Trigger events** (or delete the Worker). The dashboard keeps

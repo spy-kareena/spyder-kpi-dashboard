@@ -6,14 +6,17 @@
  *                         wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule}
  *   PUT  /api/shipping -> body {asOf:'YYYY-MM-DD', export:[numbers], manual:[numbers]}: the tracking numbers the page
  *                         picked from the export (deliveries of the last 30 days that are not long delivered) and the
- *                         ones added by hand. An older export never replaces a newer export's numbers.
- *   POST /api/shipping -> checks FedEx now ("Refresh now"), at most once per 10 minutes for the whole site.
+ *                         ones added by hand. An older export never replaces a newer export's numbers. asOf must
+ *                         be a real date, at most two days ahead.
+ *   POST /api/shipping -> checks FedEx now ("Refresh now"), at most once per 10 minutes for the whole site (a try
+ *                         that failed can be repeated after 1 minute). Like each 4-hourly check it asks FedEx about
+ *                         up to 60 numbers that are still moving, stalest first (MAX_PER_RUN in shared/fedex.mjs).
  * The 4-hourly checks run in the scheduled Worker workers/shipping-poller. FedEx keys (FEDEX_CLIENT_ID,
  * FEDEX_CLIENT_SECRET, optional FEDEX_API_BASE) are only needed here for "Refresh now"; without them it answers 503.
  * Nothing here ever returns the keys or the FedEx sign-in token.
  */
 import {
-  pollTracking, fedexConfigured, cleanTrackingNumber, INDEX_KEY, WANTED_KEY, REFRESH_KEY, REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL,
+  pollTracking, fedexConfigured, cleanTrackingNumber, readJsonStrict, INDEX_KEY, WANTED_KEY, REFRESH_KEY, REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL,
 } from '../../shared/fedex.mjs';
 
 const MAX_BODY = 64 * 1024;
@@ -32,12 +35,16 @@ export async function onRequest(context) {
   return refreshNow(store, env);
 }
 
+// Reads for showing: a failed KV read counts as nothing saved (no results yet, no Refresh now limit).
 async function readJson(store, key) {
   try { return await store.get(key, { type: 'json' }); } catch (err) { return null; }
 }
+async function readText(store, key) {
+  try { return await store.get(key); } catch (err) { return null; }
+}
 
 async function readStatuses(store, env) {
-  const [index, wanted, last] = await Promise.all([readJson(store, INDEX_KEY), readJson(store, WANTED_KEY), store.get(REFRESH_KEY)]);
+  const [index, wanted, last] = await Promise.all([readJson(store, INDEX_KEY), readJson(store, WANTED_KEY), readText(store, REFRESH_KEY)]);
   const i = index || {};
   const w = wanted || {};
   return json(200, {
@@ -61,6 +68,12 @@ function refreshAfter(last, now = Date.now()) {
 }
 
 const cleanList = (list, max) => [...new Set(list.map(cleanTrackingNumber).filter(Boolean))].slice(0, max);
+// An export date: a real calendar day from 2000 up to two days ahead (same rule as atRisk.asOf in report.js).
+function exportDate(v) {
+  const s = typeof v === 'string' ? v : '';
+  const t = /^\d{4}-\d{2}-\d{2}$/.test(s) ? Date.parse(`${s}T00:00:00Z`) : NaN;
+  return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === s && s >= '2000-01-01' && t <= Date.now() + 2 * 864e5;
+}
 const sameList = (a, b) => {
   const x = [...(a || [])].sort(), y = [...(b || [])].sort();
   return x.length === y.length && x.every((v, i) => v === y[i]);
@@ -73,14 +86,19 @@ async function saveWanted(request, store) {
   let body;
   try { body = JSON.parse(text); } catch (err) { return json(400, { error: 'Send the tracking list as JSON.' }); }
   const asOf = String(body && body.asOf || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf) || !isFinite(Date.parse(asOf))) return json(400, { error: 'asOf must be the export date (YYYY-MM-DD).' });
+  if (!exportDate(asOf)) return json(400, { error: 'asOf must be the export date (YYYY-MM-DD).' });
   if (!Array.isArray(body.export) || !Array.isArray(body.manual)) return json(400, { error: 'export and manual must be lists of tracking numbers.' });
   if (body.export.length > MAX_LIST || body.manual.length > MAX_LIST) return json(413, { error: 'Too many tracking numbers.' });
   const exp = cleanList(body.export, MAX_EXPORT);
   const manual = cleanList(body.manual, MAX_MANUAL);
-  const prev = (await readJson(store, WANTED_KEY)) || {};
-  // A browser that still has an older export open must not replace the numbers of a newer one.
-  const older = !!prev.exportAsOf && asOf < prev.exportAsOf;
+  let prev;
+  // A failed read must not lead to a fresh list being written over the stored one.
+  try { prev = (await readJsonStrict(store, WANTED_KEY)) || {}; } catch (err) {
+    return json(500, { error: 'The stored tracking list could not be read. Nothing was changed; try again in a minute.' });
+  }
+  // A browser that still has an older export open must not replace the numbers of a newer one. A stored date that
+  // is not a real export date (in the future) is ignored, so it can never freeze the list.
+  const older = exportDate(prev.exportAsOf) && asOf < prev.exportAsOf;
   const next = {
     v: 1,
     exportAsOf: older ? prev.exportAsOf : asOf,
@@ -98,18 +116,22 @@ async function refreshNow(store, env) {
     return json(503, { configured: true, fedex: false, error: 'FedEx keys are not set up on this site yet (FEDEX_CLIENT_ID and FEDEX_CLIENT_SECRET), so it cannot check now. The checks every 4 hours run if the shipping poller Worker has its keys.' });
   }
   const now = Date.now();
-  const after = refreshAfter(await store.get(REFRESH_KEY), now);
+  const after = refreshAfter(await readText(store, REFRESH_KEY), now);
   if (after) {
     const wait = Math.max(1, Math.ceil((Date.parse(after) - now) / 1000));
-    return json(429, { error: `FedEx was checked less than 10 minutes ago. Try again in ${Math.ceil(wait / 60)} min.`, retryAfter: wait, refreshAfter: after }, { 'Retry-After': String(wait) });
+    return json(429, { error: `Refresh now was used less than 10 minutes ago. Try again in ${Math.ceil(wait / 60)} min.`, retryAfter: wait, refreshAfter: after }, { 'Retry-After': String(wait) });
   }
-  // Taken before the check, so two quick clicks (or two people) never make two rounds of FedEx calls.
-  await store.put(REFRESH_KEY, new Date(now).toISOString(), { expirationTtl: REFRESH_SECONDS });
+  // Taken before the check, so two quick clicks (or two people) never make two rounds of FedEx calls. It holds for
+  // 1 minute only (KV's shortest expiry) until the check has worked, so a check that fails, or that Cloudflare stops
+  // part-way, never blocks the next try for 10 minutes. The stored time is set back so refreshAfter() gives retryAt.
+  const retryAt = now + 60 * 1000;
+  try { await store.put(REFRESH_KEY, new Date(retryAt - REFRESH_SECONDS * 1000).toISOString(), { expirationTtl: 60 }); } catch (err) { /* checked anyway */ }
   try {
     const doc = await pollTracking(env, { now, source: 'refresh' });
-    return json(200, { polledAt: doc.polledAt, statuses: doc.statuses, errors: doc.errors, count: doc.count, polled: doc.polled, refreshAfter: refreshAfter(new Date(now).toISOString(), now) });
+    try { await store.put(REFRESH_KEY, new Date(now).toISOString(), { expirationTtl: REFRESH_SECONDS }); } catch (err) { /* the 1-minute hold stays */ }
+    return json(200, { polledAt: doc.polledAt, statuses: doc.statuses, errors: doc.errors, count: doc.count, polled: doc.polled, waiting: doc.waiting, refreshAfter: refreshAfter(new Date(now).toISOString(), now) });
   } catch (err) {
-    return json(err && err.status === 503 ? 503 : 502, { error: String(err && err.message || 'FedEx tracking failed.') });
+    return json(err && err.status === 503 ? 503 : 502, { error: String(err && err.message || 'FedEx tracking failed.'), refreshAfter: new Date(retryAt).toISOString() });
   }
 }
 

@@ -23,6 +23,13 @@ id = "REPLACE_WITH_REPORT_STORE_NAMESPACE_ID"
 # Secrets (never put them in this file):
 #   npx wrangler secret put FEDEX_CLIENT_ID
 #   npx wrangler secret put FEDEX_CLIENT_SECRET
-# Optional, only with FedEx sandbox (test) keys: uncomment the two lines below.
+# Optional settings: uncomment [vars] and the lines you need.
+#   FEDEX_API_BASE: only with FedEx sandbox (test) keys.
+#   FEDEX_MAX_PER_RUN: numbers asked per check (default 60, stalest first, so it fits the Workers Free plan's
+#   10 ms of CPU per run). On Workers Paid, raise it (up to 600) and uncomment [limits] so a check of the whole
+#   list in one run has the CPU time it needs.
 # [vars]
 # FEDEX_API_BASE = "https://apis-sandbox.fedex.com"
+# FEDEX_MAX_PER_RUN = "600"
+# [limits]
+# cpu_ms = 1000

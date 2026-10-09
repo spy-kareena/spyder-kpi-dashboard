@@ -142,14 +142,26 @@ when you switch to production keys, so the default `https://apis.fedex.com` is u
 
 ## Limits and costs
 
-- **FedEx:** up to 30 tracking numbers per Track API call. A check asks about at most 600 numbers (20 calls), 6 times a
-  day, plus Refresh now (at most 6 times an hour). Delivered shipments are not asked again. This is far below FedEx's
-  per-project limits; see **Rate limits** in the FedEx developer portal if the volume grows a lot.
-- **Cloudflare free plan:** the Worker runs 6 times a day (the free plan allows 100,000 requests a day and 50 outgoing
-  calls per run, which is why a check stops at 600 numbers). Workers KV allows 1,000 writes a day: each check writes
-  the results and a FedEx sign-in token (about 12 writes a day), a changed tracking list is one write, and each Refresh
-  now is three.
+- **How many per check:** up to 600 numbers are tracked (500 from the export, 200 added by hand), but each check (the
+  4-hourly run and each Refresh now) asks FedEx about **at most 60** of the ones still moving: first those never
+  checked, then those checked longest ago. The others keep their last status until their turn, so a long list takes
+  several checks to go round (300 shipments still moving: 5 checks, about 20 hours). Delivered shipments are not
+  asked again.
+- **Why 60:** the Cloudflare **Workers Free** plan allows 10 ms of CPU per run, and reading FedEx's detailed answers
+  takes about 1 ms per 10 numbers. **Workers Paid** ($5 a month, up to 30 seconds of CPU per run) removes that limit:
+  in `workers/shipping-poller/wrangler.toml` uncomment `[vars]` with `FEDEX_MAX_PER_RUN = "600"` and the `[limits]`
+  lines, then `npx wrangler deploy`, so every check asks about the whole list. For Refresh now on the site, add the
+  same `FEDEX_MAX_PER_RUN` to the Pages project (`npx wrangler pages secret put FEDEX_MAX_PER_RUN --project-name
+  spyder-kpi-dashboard`).
+- **FedEx:** up to 30 tracking numbers per Track API call, so a check is 2 calls (20 with `FEDEX_MAX_PER_RUN = "600"`),
+  6 times a day, plus Refresh now (at most 6 times an hour). This is far below FedEx's per-project limits; see **Rate
+  limits** in the FedEx developer portal if the volume grows a lot.
+- **Cloudflare free plan:** the Worker runs 6 times a day (the free plan allows 100,000 requests a day). Workers KV
+  allows 1,000 writes a day: each check writes the results and a FedEx sign-in token (about 12 writes a day), a changed
+  tracking list is one write, and each Refresh now is up to four.
 - Statuses of delivered shipments are kept for 45 days after delivery, then dropped.
+- If a check is stopped part-way (FedEx refuses a new sign-in after the first call), the statuses that came back are
+  still saved. If the shared storage cannot be read, nothing is written and the next check tries again.
 
 ## Troubleshooting
 
@@ -161,7 +173,8 @@ when you switch to production keys, so the default `https://apis.fedex.com` is u
 | "Not checked yet" for hours | The Worker is not deployed, has no keys, or has the wrong KV id. Check its Logs. |
 | "The last FedEx check … failed: FedEx refused the API key…" | Wrong keys, test keys used against production (or the reverse), or the project lacks the Track API. Fix the secrets (step 3) and wait for the next check. |
 | A row says "Not found at FedEx" | FedEx does not know that number yet (label not scanned) or it has a typo. Check it on fedex.com. |
-| Refresh now is greyed out | It works once every 10 minutes for everyone, or the Pages project has no FedEx keys (step 4). |
+| Refresh now is greyed out | It works once every 10 minutes for everyone (1 minute after a try that failed), or the Pages project has no FedEx keys (step 4). |
+| Some rows show older statuses than others | Each check asks FedEx about 60 shipments at most, stalest first (see **Limits and costs**). They catch up over the next checks. |
 
 ## For IT: the API
 
@@ -171,10 +184,14 @@ the FedEx keys and sign-in token are never returned.
 - `GET /api/shipping` → `{configured, fedex, polledAt, statuses, errors, lastError, wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule}`.
   `503 {configured:false}` without the `REPORT_STORE` binding.
 - `PUT /api/shipping` with `{asOf:"YYYY-MM-DD", export:[numbers], manual:[numbers]}` (same-origin only, 64 KB) → saves the
-  list when it changed. A list from an older export keeps the newer export's numbers.
-- `POST /api/shipping` (same-origin only) → asks FedEx now. `429` with `Retry-After` within 10 minutes of the last
-  refresh, `503` without the FedEx secrets, `502` when FedEx refuses or cannot be reached (the last results stay).
+  list when it changed. A list from an older export keeps the newer export's numbers. `asOf` must be a real date at
+  most two days ahead (`400` otherwise); `500` when the stored list cannot be read (nothing is changed).
+- `POST /api/shipping` (same-origin only) → asks FedEx now about up to 60 shipments still moving, stalest first, and
+  returns `{polledAt, statuses, errors, count, polled, waiting, refreshAfter}` (`waiting`: left for the next checks).
+  `429` with `Retry-After` within 10 minutes of the last refresh, `503` without the FedEx secrets or when the shared
+  storage cannot be read, `502` when FedEx refuses or cannot be reached (the last results stay). After a failed try
+  the reply's `refreshAfter` is 1 minute later, not 10.
 
 KV keys in `REPORT_STORE`: `tracking:wanted`, `tracking:index`, `tracking:token` (expires on its own) and
-`tracking:refresh` (the 10-minute limit, expires on its own). To start over:
+`tracking:refresh` (the 10-minute limit, 1 minute while a check runs or after one failed; expires on its own). To start over:
 `npx wrangler kv key delete tracking:index --namespace-id <id> --remote`.

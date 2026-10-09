@@ -18,7 +18,8 @@ export async function runCheck(env, opts = {}) {
     return 'skipped: no FedEx keys';
   }
   const doc = await pollTracking(env, { ...opts, source: 'cron' });
-  const summary = `checked ${doc.count} tracking numbers (${doc.polled} asked FedEx)${doc.errors.length ? `, ${doc.errors.length} failed batches` : ''}`;
+  // Each check asks FedEx about at most 60 numbers (FEDEX_MAX_PER_RUN), stalest first; the rest wait for the next.
+  const summary = `checked ${doc.count} tracking numbers (${doc.polled} asked FedEx${doc.waiting ? `, ${doc.waiting} left for the next checks` : ''})${doc.errors.length ? `, ${doc.errors.length} failed batches` : ''}`;
   console.log(`spyder-shipping-poller: ${summary}`);
   return summary;
 }

@@ -63,7 +63,7 @@ test('a saved report adds its at-risk lines to the history; the stored report do
   assert.deepEqual(Object.keys(JSON.parse(Buffer.from(back.subarray(4, 4 + size)).toString())).sort(), ['files', 'savedAt', 'v']);
 });
 
-test('a report with the same export date replaces that week; an older export date is filed in date order', async () => {
+test('a report with the same export date goes into that week; an older export date is filed in date order', async () => {
   const env = { REPORT_STORE: kv() };
   await put(env, { asOf: '2026-09-10', keys: [key(1)] });
   await put(env, { asOf: '2026-09-10', keys: [key(1), key(3)] });
@@ -86,6 +86,51 @@ test('the newest 52 export dates are kept', async () => {
   // An upload older than all 52 does not push a newer week out.
   await put(env, { asOf: day(0), keys: [key(0)] });
   assert.equal((await weeks(env))[0].asOf, day(1));
+});
+
+test('one entry per week: daily uploads keep the earliest export date and every line, so 52 entries are a year', async () => {
+  const env = { REPORT_STORE: kv() };
+  // Wednesday 2026-09-09 then Friday 2026-09-11 (same week); Monday 2026-09-14 starts the next one.
+  await put(env, { asOf: '2026-09-11', keys: [key(2), key(3)] });
+  await put(env, { asOf: '2026-09-09', keys: [key(1), key(2)] });
+  await put(env, { asOf: '2026-09-14', keys: [key(1)] });
+  const list = await weeks(env);
+  assert.deepEqual(list.map((w) => w.asOf), ['2026-09-09', '2026-09-14']);
+  assert.deepEqual([...list[0].keys].sort(), [key(1), key(2), key(3)].sort(), 'every line at risk that week');
+  // 129 weekday uploads from Monday 2026-04-13: a line at risk the whole time keeps April as its first week.
+  const env2 = { REPORT_STORE: kv() };
+  let n = 0;
+  for (let t = Date.UTC(2026, 3, 13); n < 129; t += 864e5) {
+    const d = new Date(t);
+    if (d.getUTCDay() === 0 || d.getUTCDay() === 6) continue;
+    await put(env2, { asOf: d.toISOString().slice(0, 10), keys: [key(7)] });
+    n++;
+  }
+  const year = await weeks(env2);
+  assert.equal(year.length, 26, '129 weekdays are 26 weeks (25 full weeks and 4 days)');
+  assert.equal(year[0].asOf, '2026-04-13');
+  assert.ok(year.every((w, i) => i === 0 || Date.parse(w.asOf) - Date.parse(year[i - 1].asOf) === 7 * 864e5), 'one Monday a week');
+  // Entries saved before this rule (several in one week) are merged on the next save.
+  const env3 = { REPORT_STORE: kv() };
+  await env3.REPORT_STORE.put('history', JSON.stringify({ v: 1, weeks: [{ asOf: '2026-09-01', savedAt: 'a', keys: [key(1)] }, { asOf: '2026-09-02', savedAt: 'b', keys: [key(2)] }] }));
+  await put(env3, { asOf: '2026-09-21', keys: [] });
+  assert.deepEqual((await weeks(env3)).map((w) => [w.asOf, w.keys.length]), [['2026-09-01', 2], ['2026-09-21', 0]]);
+});
+
+test('a failed history read never replaces the stored history; the report is still saved', async () => {
+  const env = { REPORT_STORE: kv() };
+  for (let i = 0; i < 10; i++) await put(env, { asOf: day(40 + i), keys: [key(i)] });
+  const before = env.REPORT_STORE.map.get('history');
+  const realGet = env.REPORT_STORE.get;
+  env.REPORT_STORE.get = async (k, o) => { if (k === 'history') throw new Error('KV GET failed: 503'); return realGet(k, o); };
+  const res = await put(env, { asOf: day(50), keys: [key(50)] }, [{ name: 'today.xls', data: 'T' }]);
+  assert.equal(res.status, 200);
+  const out = await res.json();
+  assert.deepEqual(out.files, ['today.xls']);
+  assert.match(out.history.error, /could not be updated/);
+  env.REPORT_STORE.get = realGet;
+  assert.equal(env.REPORT_STORE.map.get('history'), before);
+  assert.equal((await weeks(env)).length, 10);
 });
 
 test('5,000 at-risk lines fit in the bundle header (over the old 64 KB header limit)', async () => {

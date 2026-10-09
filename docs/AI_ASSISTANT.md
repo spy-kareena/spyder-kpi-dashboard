@@ -59,6 +59,7 @@ Use a key made only for this dashboard, so it can be limited or replaced without
 - **Claude** is billed per token (about 4 characters each). Current prices per million tokens, input / output: Opus 5.5 $4 / $20, Sonnet 5.5 $2 / $10, Haiku 5.5 $0.10 / $0.50. A typical question reads 20,000 to 40,000 tokens (the question, the tool results and the earlier chat) and writes 2,000 to 4,000 (Claude's hidden reasoning counts as written tokens). That is roughly **10 to 20 cents with Opus, 5 to 10 cents with Sonnet, and under 1 cent with Haiku**. Repeated parts of a chat are cached (re-read at a small fraction of the input price), which lowers follow-ups. Opus 5.5 is the default because it answers best; pick Sonnet or Haiku in Settings to spend less. Prices: [Claude API pricing](https://platform.claude.com/docs/en/about-claude/pricing).
 - **ChatGPT** is billed per token too; the GPT-5 mini and nano models cost a few cents or less per question. Prices: [openai.com/api/pricing](https://openai.com/api/pricing/).
 - **Groq** and **OpenRouter free models** cost nothing. Both limit how much you can ask per minute and per day; the panel says when a limit is reached. One key is shared by everyone who signs in, so the limits are shared too.
+- **Cap on the paid providers:** the site itself allows at most **300 requests a day** per paid provider (Claude, ChatGPT) for everyone together, and 15 a minute from one signed-in browser. A question is one request per model turn, usually 2 to 4 (at most 8). To change the daily number, add `AI_DAILY_REQUESTS` to the Pages project (`npx wrangler pages secret put AI_DAILY_REQUESTS --project-name spyder-kpi-dashboard`, then redeploy); `0` turns the paid providers off. The cap is counted in the `REPORT_STORE` KV namespace (one write per request, key `ai:day:<provider>:<date>`, gone after two days), so it needs that binding; it is a soft cap, and the monthly spend limit in each provider's console stays the real backstop.
 
 ## How it works (for IT)
 
@@ -77,6 +78,7 @@ Use a key made only for this dashboard, so it can be limited or replaced without
 Safeguards in the proxy:
 
 - Only the dashboard page itself may call `/api/ai/chat` (same-origin check), and only when signed in.
+- Paid providers are capped per site per day and per browser per minute (see **What it costs**). Everyone who knows the shared password can sign in, and a sign-in lasts 14 days; to shut out a browser (for example a leaked password), change `DASHBOARD_PASSWORD` or `SESSION_SECRET`, which signs everyone out.
 - Each request is limited to 1 MB. Free providers get smaller tool results and a shorter chat history, to stay inside their limits.
 - Questions and tool results must be plain text: the proxy refuses images, files or links, so nobody can make a provider fetch something on the company's account.
 - Each provider has a model allowlist. Claude: the three models above only. ChatGPT and Groq: the listed models plus newer ones in the same families, read from the provider's model list once an hour (no "pro" or dated models). OpenRouter: free (`:free`, price 0) models that support tools only.
@@ -106,8 +108,10 @@ Ask AI answers from these tools: overview tiles (with the Order Health Leading /
 | The site's … key was rejected | IT checks the secret named in the message (it may be wrong, revoked or out of credit). |
 | … is out of credit or has a billing problem | IT adds credit or raises the limit in the provider's console. |
 | …'s free limit was reached | Wait a minute (per-minute limit) or until tomorrow (daily limit), ask a narrower question, or pick a paid provider. |
+| Daily Ask AI limit reached for this site | The site's own cap on a paid provider (300 requests a day by default) is used up. Try again tomorrow, pick a free provider, or IT raises `AI_DAILY_REQUESTS`. |
+| Too many Ask AI requests from this browser in the last minute | Wait a minute. |
 | The question and its data were too large | Click **Clear chat** and ask a narrower question. |
-| … could not use that model | Pick another model in Settings. For OpenRouter, see the privacy setting under Setup. |
+| … could not use that model | Pick another model in Settings. "No tool support" means the model cannot look up dashboard data; "privacy settings" means the OpenRouter privacy setting under Setup. |
 | … declined to answer this one | Rephrase the question, or pick another model. |
 | …'s answer was cut off | Ask a narrower question. Free providers allow shorter answers, so a paid provider may help. |
 | This question needed too many lookups | Ask about one thing at a time (one customer, warehouse or week). |

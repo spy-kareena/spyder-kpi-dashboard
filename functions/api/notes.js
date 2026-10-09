@@ -7,20 +7,26 @@
  *   PATCH /api/notes    body {rows?:{[rowKey]:entry}, shipments?:{[id]:entry}}
  *         Each key is merged on its own: the entry with the newer `at` wins, a tie keeps the stored one. Returns
  *         {savedAt, applied, rows, shipments} with the stored entry for every key sent, so the page can take a
- *         newer edit made on another computer.
+ *         newer edit made on another computer. At most 500 keys new to the server are taken per PATCH; the rest
+ *         are left out of the reply and counted in `skipped`, for the page to send again.
+ *         500 when the stored notes cannot be read (nothing is written); 429 with Retry-After when Workers KV is
+ *         busy (one write per second to the key), so the page sends the batch again.
  * Row entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}. `by` is the editor's initials, `at` the
- * time of the edit (ISO). An entry with no status, note, cause or deleted flag records that the line was cleared;
- * it is kept so other browsers drop their copy, and pruned after 180 days only when storage runs full.
+ * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause or deleted flag
+ * records that the line was cleared; it is kept so other browsers drop their copy. When storage runs full (5 MB),
+ * cleared markers older than 180 days go first, then the entries edited longest ago (`pruned` in the reply).
  * Shipment entry: {order, number, carrier?, deleted?, by, at}.
- * One KV read per page open and one KV write per batch of edits (the page waits 800 ms after the last change).
+ * One KV read per page open and one KV write per batch of edits (the page waits 800 ms after the last change to a
+ * line, and at least 1.1 s between PATCHes).
  */
 const KEY = 'overrides';
 const MAX_BODY = 1024 * 1024; // one PATCH
 const MAX_DOC = 5 * 1024 * 1024; // everything stored (a KV value may hold 25 MiB)
 const MAX_ENTRIES = 5000; // keys in one PATCH
+const MAX_NEW_KEYS = 500; // keys in one PATCH that are not stored yet (the page sends at most 500 per PATCH)
 const MAX_NOTE = 4000;
 const PRUNE_AFTER_MS = 180 * 24 * 60 * 60 * 1000;
-const FUTURE_SLACK_MS = 5 * 60 * 1000;
+const PUT_RETRY_MS = 1100; // Workers KV: one write per second to the same key
 // Row keys are built from SAP fields joined with "|"; they never hold control characters.
 const ROW_KEY_RE = /^[^\u0000-\u001f\u007f]{1,300}$/;
 const SHIPMENT_ID_RE = /^[A-Za-z0-9._:-]{1,100}$/;
@@ -47,33 +53,56 @@ export async function onRequest(context) {
   if (incoming.error) return json(400, { error: incoming.error });
 
   const now = Date.now();
-  const doc = await readDoc(store);
+  let doc;
+  // A failed read must never be taken for "nothing saved": the merged document would replace everyone's notes.
+  // (Not 503: the page reads 503 as "no shared storage on this site" and stops sharing.)
+  try { doc = await readDoc(store, { strict: true }); } catch (err) {
+    return json(500, { error: 'Shared notes storage could not be read; your changes are kept in this browser, try again.' });
+  }
   let applied = 0;
+  let added = 0;
+  let skipped = 0;
   const out = { rows: {}, shipments: {} };
+  const sent = new Set(); // kept when storage is full and old entries make room
   for (const kind of ['rows', 'shipments']) {
     for (const [key, entry] of incoming[kind]) {
-      if (entry.at > now + FUTURE_SLACK_MS) entry.at = now; // a computer clock set ahead cannot win every merge
+      // Stamped no later than now: a computer clock set ahead (or a made-up time) cannot win later merges.
+      if (entry.at > now) entry.at = now;
       const current = Object.prototype.hasOwnProperty.call(doc[kind], key) ? doc[kind][key] : null;
+      // Lines new to the server are capped per request (edits to stored lines are not), so one request cannot
+      // fill the storage with made-up keys. The page sends at most this many per request.
+      if (!current && ++added > MAX_NEW_KEYS) { skipped++; continue; }
       if (!current || entry.at > time(current.at)) { doc[kind][key] = { ...entry, at: new Date(entry.at).toISOString() }; applied++; }
       out[kind][key] = doc[kind][key];
+      sent.add(`${kind}|${key}`);
     }
   }
   const savedAt = new Date(now).toISOString();
+  let pruned = 0;
   if (applied) {
     doc.savedAt = savedAt;
     let stored = JSON.stringify(doc);
-    if (!fits(stored)) { prune(doc, now); stored = JSON.stringify(doc); }
+    if (!fits(stored)) { pruned = prune(doc, now, sent); stored = JSON.stringify(doc); }
     if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (5 MB). Ask IT to clear old notes.' });
-    await store.put(KEY, stored);
+    try { await store.put(KEY, stored); } catch (err) {
+      // Workers KV takes one write per second to the same key; another save may have just gone in. Try once more.
+      await new Promise((r) => setTimeout(r, PUT_RETRY_MS));
+      try { await store.put(KEY, stored); } catch (err2) {
+        return json(429, { error: 'Busy saving, retrying.' }, { 'Retry-After': '2' });
+      }
+    }
   }
-  return json(200, { savedAt: applied ? savedAt : doc.savedAt || '', applied, ...out });
+  return json(200, { savedAt: applied ? savedAt : doc.savedAt || '', applied, ...(skipped ? { skipped } : {}), ...(pruned ? { pruned } : {}), ...out });
 }
 
-// The stored document, or an empty one (nothing saved yet, or an unreadable value).
-async function readDoc(store) {
+// The stored document, or an empty one when nothing is saved yet. Reading for the page (GET), a failed read or an
+// unreadable value also gives the empty document. strict (before a write): those throw instead.
+async function readDoc(store, { strict = false } = {}) {
   let saved = null;
-  try { saved = await store.get(KEY, { type: 'json' }); } catch (err) { saved = null; }
+  if (strict) saved = await store.get(KEY, { type: 'json' });
+  else try { saved = await store.get(KEY, { type: 'json' }); } catch (err) { saved = null; }
   const doc = { v: 1, rows: {}, shipments: {}, savedAt: '' };
+  if (strict && saved !== null && (typeof saved !== 'object' || Array.isArray(saved))) throw new Error('The stored notes are not a notes document.');
   if (!saved || typeof saved !== 'object') return doc;
   for (const kind of ['rows', 'shipments']) {
     const map = saved[kind];
@@ -153,9 +182,33 @@ function isCleared(e) {
   return !e.status && !e.notes && !e.cause && !e.deleted;
 }
 
-// Storage full: drop cleared-line markers older than 180 days (their lines have long left the report).
-function prune(doc, now) {
-  for (const [k, e] of Object.entries(doc.rows)) if (isCleared(e) && now - time(e.at) > PRUNE_AFTER_MS) delete doc.rows[k];
+// Storage full. First drop cleared-line markers older than 180 days (their lines have long left the report). If it
+// is still full, drop the entries edited longest ago (notes, cleared markers and hand-added numbers alike), never
+// the ones this request sent, until the document fits again: old notes give way rather than every new edit
+// being refused. A browser that still has a dropped note sends it back the next time it opens.
+// Returns how many entries were dropped.
+function prune(doc, now, keep = new Set()) {
+  let dropped = 0;
+  for (const [k, e] of Object.entries(doc.rows)) if (isCleared(e) && now - time(e.at) > PRUNE_AFTER_MS) { delete doc.rows[k]; dropped++; }
+  if (fits(JSON.stringify(doc))) return dropped;
+  const bytes = (s) => new TextEncoder().encode(s).length;
+  const old = [];
+  for (const kind of ['rows', 'shipments']) {
+    for (const [k, e] of Object.entries(doc[kind])) {
+      if (keep.has(`${kind}|${k}`)) continue;
+      old.push({ kind, k, e, at: time(e.at) });
+    }
+  }
+  old.sort((a, b) => a.at - b.at);
+  // Each entry takes "key":{...}, in the stored JSON.
+  let over = bytes(JSON.stringify(doc)) - MAX_DOC;
+  for (const o of old) {
+    if (over <= 0) break;
+    delete doc[o.kind][o.k];
+    over -= bytes(JSON.stringify(o.k)) + bytes(JSON.stringify(o.e)) + 2;
+    dropped++;
+  }
+  return dropped;
 }
 
 // UTF-8 needs at most 3 bytes per UTF-16 unit, so short documents are measured without encoding them.

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { memoryKv, fakeFedex, trackResponse, RESULTS, NUMBERS } from './fedex-fixtures.mjs';
 import {
   normalizeTrackResponse, normalizeTrackResult, trackNumbers, getFedexToken, pollTracking, wantedNumbers, cleanTrackingNumber,
-  splitTrackingNumbers, fedexBase, FedexError, TRACK_BATCH, INDEX_KEY, WANTED_KEY, TOKEN_KEY,
+  splitTrackingNumbers, fedexBase, FedexError, TRACK_BATCH, INDEX_KEY, WANTED_KEY, TOKEN_KEY, MAX_PER_RUN, maxPerRun,
 } from '../shared/fedex.mjs';
 
 const NOW = Date.parse('2026-10-09T16:00:00Z');
@@ -92,6 +92,15 @@ test('tracking numbers are cleaned; one SAP field can hold several', () => {
   assert.equal(cleanTrackingNumber('<script>'), '');
   assert.deepEqual(splitTrackingNumbers('7700 1234 5678, 7700-1234-5679; 7700 1234 5678'), ['770012345678', '770012345679']);
   assert.deepEqual(splitTrackingNumbers(''), []);
+  // Two whole numbers with only a space (or &, +, "and") between them are two numbers; grouped digits stay one.
+  assert.deepEqual(splitTrackingNumbers('770012345678 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(splitTrackingNumbers('770012345678 & 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(splitTrackingNumbers('770012345678 and 770012345679'), ['770012345678', '770012345679']);
+  assert.deepEqual(splitTrackingNumbers('770012345678 AND 7700-1234-5679 + 1234567890'), ['770012345678', '770012345679', '1234567890']);
+  assert.deepEqual(splitTrackingNumbers('7700 1234 5678'), ['770012345678']);
+  assert.deepEqual(splitTrackingNumbers('7700 1234 5678 and 7700 1234 5679'), ['770012345678', '770012345679']);
+  assert.deepEqual(splitTrackingNumbers('7700-1234-5678 7700-1234-5679'), ['770012345678', '770012345679']);
+  assert.deepEqual(splitTrackingNumbers('SANDBOX123'), ['SANDBOX123'], '"and" inside a number is not a separator');
   assert.deepEqual(wantedNumbers({ export: ['770012345678', 'bad', '770012345678'], manual: ['1234567890'] }), ['770012345678', '1234567890']);
 });
 
@@ -181,6 +190,81 @@ test('when FedEx cannot be used the previous results stay, lastError says why, a
   assert.ok(!JSON.stringify(after).includes('rotated-secret'));
   await assert.rejects(pollTracking({ REPORT_STORE: memoryKv() }, {}), (err) => err.status === 503);
   await assert.rejects(pollTracking({}, {}), (err) => err.status === 503);
+});
+
+test('a FedEx sign-in failure after a batch came back keeps that batch and reports the rest', async () => {
+  const fx = fakeFedex();
+  let tracks = 0;
+  let broken = false;
+  // The first batch works; then the token is revoked and FedEx refuses a new sign-in.
+  const fetch = async (url, init) => {
+    if (broken && url.endsWith('/oauth/token')) return Response.json({ errors: [{ message: 'no' }] }, { status: 401 });
+    const res = await fx.fetch(url, init);
+    if (url.endsWith('/track/v1/trackingnumbers') && ++tracks === 1) { fx.revoke(); broken = true; }
+    return res;
+  };
+  const numbers = Array.from({ length: 50 }, (_, i) => String(880000000000 + i));
+  const out = await trackNumbers(numbers, env(), { fetch, now: NOW });
+  assert.equal(Object.keys(out.statuses).length, 30);
+  assert.equal(out.errors.length, 1);
+  assert.equal(out.errors[0].numbers, 20);
+  assert.match(out.errors[0].message, /refused the API key/);
+
+  // pollTracking saves what came back.
+  const e = env();
+  await e.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ export: numbers }));
+  tracks = 0; broken = false;
+  const doc = await pollTracking(e, { fetch, now: NOW });
+  assert.equal(Object.keys(e.REPORT_STORE.json(INDEX_KEY).statuses).length, 30);
+  assert.equal(doc.errors.length, 1);
+  // Nothing back at all still throws, as before.
+  await assert.rejects(trackNumbers(numbers, env(), { fetch: fakeFedex({ tokenStatus: 401 }).fetch, now: NOW }), FedexError);
+});
+
+test('a check asks FedEx about at most 60 numbers, never-checked first, then the oldest check', async () => {
+  const e = env();
+  const fx = fakeFedex();
+  const numbers = Array.from({ length: 130 }, (_, i) => String(880000000000 + i));
+  await e.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ export: numbers }));
+  const asked = () => { const n = fx.calls.filter((c) => c.kind === 'track').flatMap((c) => c.numbers); fx.calls.length = 0; return n; };
+  assert.equal(MAX_PER_RUN, 60);
+  const first = await pollTracking(e, { fetch: fx.fetch, now: NOW });
+  assert.deepEqual(asked(), numbers.slice(0, 60), 'two FedEx calls, the list order');
+  assert.deepEqual([first.count, first.polled, first.waiting], [130, 60, 70]);
+  assert.equal(Object.keys(first.statuses).length, 60, 'what came back is saved');
+  const second = await pollTracking(e, { fetch: fx.fetch, now: NOW + 3600e3 });
+  assert.deepEqual(asked(), numbers.slice(60, 120), 'numbers never checked come next');
+  assert.equal(Object.keys(second.statuses).length, 120);
+  const third = await pollTracking(e, { fetch: fx.fetch, now: NOW + 7200e3 });
+  assert.deepEqual(asked(), [...numbers.slice(120), ...numbers.slice(0, 50)], 'then the ones checked longest ago');
+  assert.equal(Object.keys(third.statuses).length, 130);
+  // More per check where the Worker has the CPU time (Workers Paid); capped at the list size.
+  await pollTracking({ ...e, FEDEX_MAX_PER_RUN: '600' }, { fetch: fx.fetch, now: NOW + 9000e3 });
+  assert.equal(asked().length, 130);
+  assert.equal(maxPerRun({ FEDEX_MAX_PER_RUN: '5000' }), 600);
+  assert.equal(maxPerRun({ FEDEX_MAX_PER_RUN: 'x' }), 60);
+});
+
+test('a failed KV read stops the check before anything is written over the stored list or results', async () => {
+  const e = env();
+  await e.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ export: [NUMBERS.parcel, NUMBERS.freight] }));
+  await pollTracking(e, { fetch: fakeFedex().fetch, now: NOW });
+  const before = e.REPORT_STORE.map.get(INDEX_KEY);
+  const realGet = e.REPORT_STORE.get;
+  for (const failing of [WANTED_KEY, INDEX_KEY]) {
+    e.REPORT_STORE.get = async (key, opts) => { if (key === failing) throw new Error('KV GET failed: 503'); return realGet(key, opts); };
+    const writes = e.REPORT_STORE.puts.length;
+    const fx = fakeFedex();
+    await assert.rejects(pollTracking(e, { fetch: fx.fetch, now: NOW + 1000 }), (err) => err instanceof FedexError && err.status === 503 && /could not be read/.test(err.message));
+    assert.equal(e.REPORT_STORE.puts.length, writes, `${failing}: nothing written`);
+    assert.equal(fx.calls.length, 0, `${failing}: FedEx not asked`);
+  }
+  e.REPORT_STORE.get = realGet;
+  assert.equal(e.REPORT_STORE.map.get(INDEX_KEY), before);
+  // A stored value that is not JSON is treated as nothing saved (it could never be read), not as a failure.
+  e.REPORT_STORE.map.set(INDEX_KEY, '{broken');
+  const doc = await pollTracking(e, { fetch: fakeFedex().fetch, now: NOW + 2000 });
+  assert.equal(Object.keys(doc.statuses).length, 2);
 });
 
 test('an empty list needs no FedEx call', async () => {
