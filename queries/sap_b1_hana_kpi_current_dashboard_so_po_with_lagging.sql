@@ -7,6 +7,9 @@
 -- Order lines: ordered in the last 365 days, plus any line that is still open regardless of age.
 -- Deliveries/receipts: from December 1 of the year before last, so all of last year is covered for YoY/YTD.
 -- InventoryItem (OITM.InvntItem) is N for charge, service, and text lines; the dashboard keeps them out of shipping KPIs.
+-- TrackingNumber, ShipMethod, ShipToCountry and ShipDate (added in 2v1) are filled on delivery rows only: the delivery's
+-- ODLN.TrackNo, its shipping type (OSHP.TrnspName), the ship-to country (CRD1, AdresType S) and the delivery date.
+-- They feed the Shipping page (live FedEx tracking, see docs/SHIPPING.md); older exports without them still load.
 SELECT
     CURRENT_DATE AS "ExportDate",
     'Sales Order' AS "SourceType",
@@ -129,7 +132,11 @@ SELECT
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
     CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'Uncovered' END AS "CoverageType",
-    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem",
+    CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
+    CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
+    CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
+    CAST(NULL AS DATE) AS "ShipDate"
 FROM ORDR T0
 INNER JOIN RDR1 T1 ON T0."DocEntry" = T1."DocEntry"
 LEFT JOIN OCRD C ON T0."CardCode" = C."CardCode"
@@ -255,7 +262,12 @@ SELECT
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
     'Covered' AS "CoverageType",
-    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem",
+    -- Shipping page (2v1): the delivery's tracking number, shipping type, ship-to country and delivery date.
+    CAST(D0."TrackNo" AS NVARCHAR(100)) AS "TrackingNumber",
+    CAST(SHP."TrnspName" AS NVARCHAR(100)) AS "ShipMethod",
+    CAST(A."Country" AS NVARCHAR(3)) AS "ShipToCountry",
+    D0."DocDate" AS "ShipDate"
 FROM ODLN D0
 INNER JOIN DLN1 D1 ON D0."DocEntry" = D1."DocEntry"
 LEFT JOIN RDR1 S1 ON D1."BaseType" = 17 AND D1."BaseEntry" = S1."DocEntry" AND D1."BaseLine" = S1."LineNum"
@@ -267,6 +279,9 @@ LEFT JOIN OHEM E ON S0."OwnerCode" = E."empID"
 LEFT JOIN OUDP DEP ON E."dept" = DEP."Code"
 LEFT JOIN OITM I ON D1."ItemCode" = I."ItemCode"
 LEFT JOIN OITB IG ON I."ItmsGrpCod" = IG."ItmsGrpCod"
+-- Shipping type (OSHP) and the ship-to address on the business partner (CRD1, address type S) the delivery names.
+LEFT JOIN OSHP SHP ON D0."TrnspCode" = SHP."TrnspCode"
+LEFT JOIN CRD1 A ON A."CardCode" = D0."CardCode" AND A."Address" = D0."ShipToCode" AND A."AdresType" = 'S'
 WHERE
     D0."DocDate" >= ADD_MONTHS(ADD_YEARS(ADD_DAYS(CURRENT_DATE, 1 - DAYOFYEAR(CURRENT_DATE)), -1), -1)
     AND D0."CANCELED" = 'N'
@@ -390,7 +405,11 @@ SELECT
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
     CASE WHEN T1."OpenQty" = 0 THEN 'Covered' ELSE 'PO Open' END AS "CoverageType",
-    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem",
+    CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
+    CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
+    CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
+    CAST(NULL AS DATE) AS "ShipDate"
 FROM OPOR T0
 INNER JOIN POR1 T1 ON T0."DocEntry" = T1."DocEntry"
 LEFT JOIN OCRD C ON T0."CardCode" = C."CardCode"
@@ -512,7 +531,11 @@ SELECT
         ELSE 'Not Perfect'
     END AS "PerfectOrder",
     'Covered' AS "CoverageType",
-    COALESCE(I."InvntItem", 'N') AS "InventoryItem"
+    COALESCE(I."InvntItem", 'N') AS "InventoryItem",
+    CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
+    CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
+    CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
+    CAST(NULL AS DATE) AS "ShipDate"
 FROM OPDN R0
 INNER JOIN PDN1 R1 ON R0."DocEntry" = R1."DocEntry"
 LEFT JOIN POR1 P1 ON R1."BaseType" = 22 AND R1."BaseEntry" = P1."DocEntry" AND R1."BaseLine" = P1."LineNum"
