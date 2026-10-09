@@ -6773,11 +6773,11 @@ function sankeyFilterNote(tab){
     const snapshots=ctbSnapshots(buildRiskRows);
     const week=snapshots.find(s=>s.key===buildRiskSnapshot)||snapshots[0];
     const inWeek=!!week&&week.rows.some(r=>!r.isTotal&&r.monthKey&&ctbCmId(r)===buildRiskCmFilter);
-    return `<div class="sk-filter">${inWeek?`Showing CM <strong>${esc(name)}</strong> only, picked in the Big picture.`:`CM <strong>${esc(name)}</strong> is not in this report week, so every CM is shown.`}<button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="Show every CM on Build Risk again." onclick="setBuildRiskCm('')">Show every CM</button></div>`;
+    return `<div class="sk-filter"><span>${inWeek?`Showing CM <strong>${esc(name)}</strong> only, picked in the Big picture.`:`CM <strong>${esc(name)}</strong> is not in this report week, so every CM is shown.`}</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="Show every CM on Build Risk again." onclick="setBuildRiskCm('')">Show every CM</button></div>`;
   }
   if(tab==='supplydemand'&&sankeyOpen.supplydemand&&!supplyWarehouseFilter.includes('ALL')){
     const wh=supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
-    return `<div class="sk-filter">The Big picture shows <strong>${esc(wh)}</strong> only (the same warehouse filter as Supply / Demand).<button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-clear" data-tip="Show every warehouse in the Big picture and on Supply / Demand." onclick="setSupplyWarehouseFilter(['ALL'])">Show every warehouse</button><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-open" data-tip="Open Supply / Demand with this warehouse filter to see the item rows." onclick="setTab('supplyweekly')">Open Supply / Demand</button></div>`;
+    return `<div class="sk-filter"><span>The Big picture shows <strong>${esc(wh)}</strong> only (the same warehouse filter as Supply / Demand).</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-clear" data-tip="Show every warehouse in the Big picture and on Supply / Demand." onclick="setSupplyWarehouseFilter(['ALL'])">Show every warehouse</button><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-open" data-tip="Open Supply / Demand with this warehouse filter to see the item rows." onclick="setTab('supplyweekly')">Open Supply / Demand</button></div>`;
   }
   return '';
 }

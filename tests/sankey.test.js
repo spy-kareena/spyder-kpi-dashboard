@@ -302,7 +302,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   h = html(page);
   assert.equal(stat(h, 'Clear to build'), 13);
   assert.equal(stat(h, 'CTB report rows'), 2);
-  assert.match(h, /<div class="sk-filter">Showing CM <strong>DSM<\/strong> only, picked in the Big picture\.<button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="[^"]+" onclick="setBuildRiskCm\(''\)">Show every CM<\/button><\/div>/);
+  assert.match(h, /<div class="sk-filter"><span>Showing CM <strong>DSM<\/strong> only, picked in the Big picture\.<\/span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="[^"]+" onclick="setBuildRiskCm\(''\)">Show every CM<\/button><\/div>/);
   assert.match(h, /<option value="2026-09-30" selected>Sep 30<\/option>/);
   assert.deepEqual(flows(page, 'buildrisk')[0].nodes.filter((n) => n.level === 0).map((n) => n.label), ['DSM']);
   // A week without that CM shows every CM and says so; the pick comes back on a week that has it.
