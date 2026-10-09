@@ -20,3 +20,11 @@ report replaces it; icons on Ask AI, Share snapshot and Export PDF.
 1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
 the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
 hosts without it keep the report in each browser. Sidebar shows where the report is saved.
+
+1v6: shadcn-style look in plain CSS (zinc neutrals, 12/8/8 px corners, hairline borders, one focus ring, Inter with
+the system font as fallback, roomier spacing; print stays compact). Plain-English tooltips on every card, tile, chart
+bar, column heading, filter, button and page link (hover, keyboard focus, or press and hold on a phone), ⓘ buttons
+that explain each section (and the same texts under "About these numbers" on every page), first-visit hints with
+"Show hints again", and a short confirmation after bulk Apply / Delete / Restore and note saves. Warehouse scorecard
+groups CM SFG and all other warehouses, each with a subtotal. The sign-in page matches the dashboard and shows the logo
+(assets/spyder-logo.jpg, served without signing in).

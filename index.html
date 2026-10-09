@@ -4993,8 +4993,8 @@ function renderShipTargetScenario(sd,today){
   return `<section class="section rise">
     <div class="section-head"><h2 class="section-title">Ship target scenario</h2>${infoButton('mo-scenario')}<span class="section-sub">open lines booked by the end date, by ${esc(sd.scenarioDateLabel)}</span></div>
     <div class="filter-bar inline-controls">
-      <label${tipAttr('First day of the scenario range (the first of this month unless you change it). Type a date and press Enter, or pick one.')}>Start date <input type="date" id="ship-scenario-start" value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label${tipAttr('Last day of the range: open lines booked by this date count (the end of this month unless you change it).')}>End date <input type="date" id="ship-scenario-end" value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>Start date <input type="date" id="ship-scenario-start"${tipAttr('First day of the scenario range (the first of this month unless you change it). Type a date and press Enter, or pick one.')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End date <input type="date" id="ship-scenario-end"${tipAttr('Last day of the range: open lines booked by this date count (the end of this month unless you change it).')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>Calendar basis <select id="ship-scenario-basis" class="select"${tipAttr('Place each line on its working date with reschedules, or on its original line delivery date only.')} onchange="setShipScenarioDateBasis(this.value)">
         <option value="effective"${sd.useEffective?' selected':''}>Include reschedule dates</option>
         <option value="original"${!sd.useEffective?' selected':''}>Original line delivery only</option>
@@ -6976,16 +6976,23 @@ const COLUMN_TIPS={
   'On time':'Shipped on the original delivery date.',
   'Late':'Lines past their date.',
   'monthly-wh|Late':'Shipped after the original delivery date.',
+  'summary|Late':'Deliveries shipped 3 or more days after the original date.',
   'br-ctb|Late':'Orders the Clear To Build report marks late.',
   'br-ctb|At risk':'Orders the Clear To Build report marks at risk.',
   'br-ctb|Notes':'Notes from the Clear To Build report.',
+  'search-ctb|Late':'Orders the Clear To Build report marks late.',
+  'search-ctb|At risk':'Orders the Clear To Build report marks at risk.',
+  'search-ctb|Notes':'Notes from the Clear To Build report.',
+  'monthly-scenario|Status':'Past scenario date: the line’s scenario date is before the start date. On track window: it falls between the start and end dates.',
   'Original date':'The line’s original delivery date, before any reschedule.',
   'Scenario date':'The date the scenario uses for the line: with reschedules, or the original date only (Calendar basis).',
   'Scenario month':'Month of the scenario date.',
   'Open value':'Value still to ship (AmountLocal on open lines).',
-  'Shipped':'Value delivered, by delivery date.',
+  'Shipped':'Value delivered.',
+  'monthly-summary|Shipped':'Value delivered in that month (by delivery date).',
   'YoY':'Shipped this year minus the same month last year (the same days for the current month).',
-  'Open':'Open value due in that month now (reschedules included).',
+  'Open':'Open value still to ship.',
+  'monthly-summary|Open':'Open value due in that month now (reschedules included).',
   '% rows shipped':'Closed rows as a share of all rows due in the month.',
   'Open rows':'Open order lines.',
   'Closed rows':'Closed order lines.',
@@ -7045,7 +7052,8 @@ function initStreamAUi(){
   renderUploadHint();
   if(typeof MutationObserver==='function'&&document.body&&document.body.nodeType===1){
     let queued=false;
-    const own=n=>n&&n.closest&&n.closest('#tip-descs,#tip-layer,#toast,#info-pop');
+    // Its own layers, and the count-up numbers changing frame by frame, need no rewiring.
+    const own=n=>n&&n.closest&&n.closest('#tip-descs,#tip-layer,#toast,#info-pop,[data-count]');
     new MutationObserver(list=>{
       if(queued||list.every(m=>own(m.target)))return;
       queued=true;
