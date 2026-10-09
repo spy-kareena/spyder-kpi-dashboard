@@ -6939,7 +6939,8 @@ function ohSearchText(r){
 
 // --- Top offenders waffle ---
 // Blocks for a value: one per $20,000 (rounded), a half block for anything under $10,000, at most OH_WAFFLE_MAX.
-// Us / Them blocks follow each side's share of the value; the rest are grey (not set or neutral).
+// The blocks are shared out between Us, Them and the rest (grey: not set or neutral) by value, largest remainder
+// first, so they always add up and a single block takes the biggest share's colour.
 function ohWaffleBlocks(value,usValue=0,themValue=0){
   const v=Math.max(0,num(value));
   let full=Math.round(v/BLOCK_VALUE);
@@ -6947,9 +6948,12 @@ function ohWaffleBlocks(value,usValue=0,themValue=0){
   const capped=full>OH_WAFFLE_MAX;
   if(capped)full=OH_WAFFLE_MAX;
   const n=full||(half?1:0);
-  const us=v?Math.min(n,Math.round(n*Math.max(0,usValue)/v)):0;
-  const them=v?Math.min(n-us,Math.round(n*Math.max(0,themValue)/v)):0;
-  return {full,half,capped,blocks:n,us,them,rest:n-us-them};
+  const us=Math.min(v,Math.max(0,num(usValue))),them=Math.min(v-us,Math.max(0,num(themValue)));
+  const quotas=v?[us,them,v-us-them].map(x=>n*x/v):[0,0,0];
+  const counts=quotas.map(Math.floor);
+  let left=n-counts.reduce((a,b)=>a+b,0);
+  quotas.map((q,i)=>[q-counts[i],i]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]).forEach(([,i])=>{if(left>0){counts[i]++;left--;}});
+  return {full,half,capped,blocks:n,us:counts[0],them:counts[1],rest:counts[2]};
 }
 // Clicking an offender filters Order Health to it (again shows all); a vendor opens Purchase Orders for that vendor.
 function setWeeklyOffenderFilter(view,key){
