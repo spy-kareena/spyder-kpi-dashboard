@@ -57,7 +57,7 @@ Opened from a file (`file://`) or from another web server, the page uses Option 
 - "Find SO 12345" or "Find item SPY-100."
 - "Which lines have a note mentioning 'board'?"
 
-Ask AI answers from these tools: overview tiles, line search, group totals, monthly summary, build risk, and supply / demand. It does not see charts. It cannot change notes, filters or data. Questions about history the export doesn't hold, or about stock on hand, get "the data isn't loaded" rather than a guess.
+Ask AI answers from these tools: overview tiles (with the Order Health Leading / Lagging numbers and the Us / Them cause split), line search (each at-risk line's cause and reasons), group totals, monthly summary, build risk, and supply / demand. It does not see charts. It cannot change notes, filters or data. Questions about history the export doesn't hold, or about stock on hand, get "the data isn't loaded" rather than a guess.
 
 ## When something goes wrong
 

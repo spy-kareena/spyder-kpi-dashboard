@@ -63,6 +63,7 @@ Instead of listing files in the arguments, you can set the environment variable 
 ## Example questions
 
 - What is at risk right now, and why?
+- How much of the at-risk value is waiting on us, and what are the top reasons?
 - Which customers have the most past due value?
 - Show the late purchase orders by vendor.
 - Which orders are due next week in the CM warehouses?
@@ -73,8 +74,8 @@ Instead of listing files in the arguments, you can set the environment variable 
 
 | Tool | What it returns |
 | --- | --- |
-| `get_overview` | Every Order Health and Purchase Orders tile, the as-of date and the data check |
-| `search_lines` | Order lines by scope (at risk, no commit, rescheduled, due this week, open, late POs, ...) and words |
+| `get_overview` | Every Order Health and Purchase Orders tile, the as-of date and the data check. `order_health.leading` adds at-risk value by cause (`us` = Spyder, `them` = customer or carrier, `neutral`, `not_set`), the open order states, the top 6 at-risk reasons and when flagged (weeks since first at risk); `order_health.lagging` adds each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo and average days late 3 mo |
+| `search_lines` | Order lines by scope (at risk, no commit, rescheduled, due this week, open, late POs, ...), words and cause (`us`, `them`, `neutral`, `not_set`). Sales order lines with a risk signal carry their cause, reasons and first flagged date |
 | `group_totals` | Lines, orders and open value by warehouse, customer, owner, vendor, due month or status |
 | `get_monthly` | The Monthly page: shipped and open value by month |
 | `get_build_risk` | The Build Risk page (needs a Clear To Build report) |
@@ -82,7 +83,7 @@ Instead of listing files in the arguments, you can set the environment variable 
 | `load_exports` | Loads other export files, replacing what is loaded |
 | `loaded_files` | What is loaded: files, kind, rows and the as-of date |
 
-The tools only read. Nothing is changed in SAP or in the export files. Notes, overrides and causes saved in the dashboard (in a browser, or shared on the hosted site) are not visible to the connector.
+The tools only read. Nothing is changed in SAP or in the export files. Notes, overrides and causes saved in the dashboard (in a browser, or shared on the hosted site) are not visible to the connector, and neither is the at-risk history, so the connector decides each cause from the override status in the file and the SAP dates, and counts every at-risk line as new this week. The cause rules are in the dashboard under Order Health → About these numbers.
 
 ## Update the export
 

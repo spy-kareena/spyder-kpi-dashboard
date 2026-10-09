@@ -250,7 +250,7 @@ test('markup: the toggle and every box carry plain-English tips with full number
   assert.match(h, /viewBox="0 0 960 \d+(\.\d)?" width="960"/, 'a fixed 960px chart when the window width is unknown (tests, print)');
 });
 
-test('Us / Them and reasons: fallback rules, and the Order Health cause engine is used when it is on the page', async () => {
+test('Us / Them and reasons come from the Order Health cause engine (Stream D) and match its Us vs Them card; boxes use its filters', async () => {
   const page = await orderHealth(ATRISK);
   page.run(`rowOverrides[rowKey(allLoadedRows.find(r=>r.documentNumber==='1'))]={cause:'them'}`);
   page.run(`updateRowOverride(rowKey(allLoadedRows.find(r=>r.documentNumber==='2')),'status','Waiting on PO')`);
@@ -258,11 +258,26 @@ test('Us / Them and reasons: fallback rules, and the Order Health cause engine i
   const byLevel = (f, lv) => Object.fromEntries(f.nodes.filter((n) => n.level === lv).map((n) => [n.label, n.value]));
   // Past due line marked Them by hand; Waiting on PO is ours; a reschedule says nothing about whose side; Urgent is theirs.
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 1721806, Us: 2500, 'Not set': 4000 });
-  assert.deepEqual(byLevel(risk(), 0), { 'Past due, no reschedule': 1000, 'Waiting on PO': 2500, 'Rescheduled later': 4000, 'Marked urgent': 1721806 });
-  // Reason boxes from SAP signals open the matching card; a picked override reason only highlights.
+  // The same totals as the Us vs Them card on the Leading tab (neutral has no value here, so no box).
+  const card = page.run('Object.fromEntries(Object.entries(ohLeadingData(currentMetrics()).cause).map(([k,v])=>[k,v.value]))');
+  assert.deepEqual(card, { us: 2500, them: 1000 + 1721806, neutral: 0, unknown: 4000 });
+  // Each line's first reason from lineReasons (SAP signal first, then the override).
+  assert.deepEqual(byLevel(risk(), 0), { 'Past due · no reschedule': 1000, 'No commit date': 2500, 'Rescheduled later': 4000, Urgent: 1721806 });
   const actions = Object.fromEntries(risk().nodes.filter((n) => n.level === 0).map((n) => [n.label, n.action]));
-  assert.deepEqual(actions['Rescheduled later'], { type: 'tile', value: 'active' });
-  assert.equal(actions['Waiting on PO'], null);
+  assert.deepEqual(actions['Rescheduled later'], { type: 'reason', value: 'Rescheduled later' });
+  // Clicking a reason or a cause box applies Order Health's own reason / cause filters (chips under the tabs).
+  page.run("sankeyNodeClick('weekly','risk','0:No commit date')");
+  assert.equal(page.run('weeklyReasonFilter'), 'No commit date');
+  assert.deepEqual(byLevel(risk(), 0), { 'No commit date': 2500 }, 'the chart follows the filter');
+  page.run("clearWeeklyDrill()");
+  page.run("sankeyNodeClick('weekly','risk','1:them')");
+  assert.equal(page.run('weeklyCauseFilter'), 'them');
+  page.run("clearWeeklyDrill()");
+  // A Neutral cause (Stream D) gets its own box instead of being folded into Not set.
+  page.run(`updateRowOverride(rowKey(allLoadedRows.find(r=>r.documentNumber==='3')),'status','Covered')`);
+  const neutral = page.run('ohLeadingData(currentMetrics()).cause.neutral.value');
+  assert.equal(neutral, 4000);
+  assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 1721806, Us: 2500, Neutral: 4000 });
   // With the cause engine and reason list on the page (Order Health v2), the chart uses them and its filters.
   page.run("var causeCalls=[];function lineCause(r){return r.documentNumber==='3'?'US':'them'}function lineReasons(r){return [{label:'Reason '+r.documentNumber}]}function setWeeklyCauseFilter(v){causeCalls.push(v)}function setWeeklyReasonFilter(v){causeCalls.push('reason:'+v)}");
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 2500 + 1721806, Us: 4000 });
