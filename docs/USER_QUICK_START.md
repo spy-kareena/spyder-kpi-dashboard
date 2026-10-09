@@ -8,7 +8,11 @@
 6. Optional: run `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`, export it, and click **Add file** (bottom of the sidebar) to load it next to the KPI export for the Supply / Demand and Supply Mix pages.
 7. Optional: add the "Orders At Risk - Clear to Build" workbook with **Add file** for the Build Risk page. It opens on the newest week; pick another under **Report week**.
 
-On the Order Health linked-lines list, tick rows (or the header box for the whole list) to set an override on many lines at once or delete them. Deleted lines are hidden on every page in your browser; restore them from **Data check**. Click a column header to sort. On Purchase Orders, sort with **Sort rows** and use **Add note** on each line.
+**What does this number mean?** Rest the pointer on any card, chart bar, column heading, filter or button (or press Tab to reach it, or press and hold it on a phone) for a short explanation with the full amounts. Click the **ⓘ** next to a section title to see what the section shows, where its numbers come from in SAP and what clicking does. **About these numbers** at the bottom of each page has the same explanations in one place. The first time you open a page a short hint may appear; close it with ×. **Show hints again** in the sidebar (under Help) brings the hints back.
+
+On Order Health, the **Warehouse scorecard** lists the CM SFG warehouses and all other warehouses as two groups, each with a subtotal row. Click a warehouse row to show only that warehouse on the page; click it again to show all.
+
+On the Order Health linked-lines list, tick rows (or the header box for the whole list) to set an override on many lines at once or delete them. Deleted lines are hidden on every page in your browser; restore them from **Data check**. A short confirmation appears in the bottom corner after Apply, Delete, Restore and when you close a note. Click a column header to sort. On Purchase Orders, sort with **Sort rows** and use **Add note** on each line.
 
 Use the search box under the logo (or press Ctrl+K, Cmd+K on a Mac) to find any order line by number, customer, vendor, item or warehouse.
 
