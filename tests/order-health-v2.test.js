@@ -26,7 +26,8 @@ const ROWS = [
   open('106', { ...due('08/10/2026'), AmountLocal: '5,000.00' }), // past due, override Hold
   open('107', { ...due('10/20/2026'), AmountLocal: '1,500.00' }), // override Urgent
   open('108', { ...due('08/12/2026'), AmountLocal: '700.00' }), // override Not At Risk
-  open('109', { ...due('08/25/2026'), ...resched('09/25/2026', 'Customer Requested Reschedule'), AmountLocal: '2,500.00' }),
+  // Rescheduled later, as the shipped KPI query flags it: SAP does not say who asked, so its cause is Not set.
+  open('109', { ...due('08/25/2026'), ...resched('09/25/2026'), AmountLocal: '2,500.00' }),
   // Closed lines and their deliveries (Lagging): 5 days late, on time, after its commit date, 2 days late.
   closedLine('200', { ...due('08/10/2026'), PerfectOrder: 'Perfect' }), delivery('200', '08/15/2026', { ...due('08/10/2026'), AmountLocal: '900.00', PerfectOrder: 'Not Perfect' }),
   closedLine('201', { ...due('08/12/2026'), PerfectOrder: 'Perfect' }), delivery('201', '08/12/2026', { ...due('08/12/2026'), AmountLocal: '800.00', PerfectOrder: 'Perfect' }),
@@ -63,7 +64,14 @@ async function withOverrides() {
 test('cause precedence: picked cause, then override status, then the first SAP signal, else not set', async () => {
   const page = await withOverrides();
   const causes = Object.fromEntries(['100', '101', '102', '103', '104', '106', '107', '108', '109'].map((d) => [d, cause(page, d, false)]));
-  assert.deepEqual(causes, { 100: 'us', 101: 'us', 102: 'unknown', 103: 'us', 104: 'unknown', 106: 'them', 107: 'them', 108: 'neutral', 109: 'them' });
+  assert.deepEqual(causes, { 100: 'us', 101: 'us', 102: 'unknown', 103: 'us', 104: 'unknown', 106: 'them', 107: 'them', 108: 'neutral', 109: 'unknown' });
+  // Only a custom export whose RescheduleFlag names the customer makes a reschedule Them.
+  page.run(`${row('109')}.rescheduleFlag='Customer Requested Reschedule'`);
+  assert.deepEqual([page.run(`lineReasons(${row('109')})`), cause(page, '109', false)], [['Customer reschedule', 'Rescheduled later'], 'them']);
+  page.run(`${row('109')}.rescheduleFlag='Rescheduled Later Than Original Delivery'`);
+  // The shipped KPI query never sends such a flag.
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'queries', 'sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql'), 'utf8');
+  assert.doesNotMatch(sql, /'[^']*Customer[^']*Reschedul[^']*'/i);
   assert.deepEqual(page.run(`ohCauseRule(${row('100')})`), { cause: 'us', rule: 'SAP: Past due · no reschedule' });
   assert.deepEqual(page.run(`ohCauseRule(${row('106')})`), { cause: 'them', rule: 'override Hold' });
   // A cause picked on the line beats the override and the SAP signal; blank means "use the rules".
@@ -109,7 +117,6 @@ test('reasons: every signal on an at-risk line counts, ranked by open value; top
     ['Hold', 1, 5000, 'them'],
     ['Missed commit', 1, 4000, 'us'],
     ['Unconfirmed', 1, 4000, 'us'],
-    ['Customer reschedule', 1, 2500, 'them'],
   ]);
   assert.equal(d.top, 6);
   const bars = [...html(page).matchAll(/class="oh-bar-row[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
@@ -164,6 +171,9 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   page.ctx.firstFlagged = { [key(page, '103')]: '2026-08-06', [key(page, '100')]: '2026-08-06' };
   const risk = () => docs(page, 'orderHealthData(currentMetrics()).lateTileRows');
   const keyBefore = page.run('weeklyFilterKey()');
+  const scorecard = () => html(page).match(/<section class="table" aria-label="Warehouse scorecard">[\s\S]*?<\/section>/)[0];
+  const fillCard = () => html(page).match(/data-focus-key="tile-fillrate"[\s\S]*?<\/button>/)[0];
+  const undrilled = { fill: page.run('orderHealthData(currentMetrics()).fillOpenRows.length'), scorecard: scorecard(), fillCard: fillCard() };
   page.run("setWeeklyCauseFilter('us')");
   assert.deepEqual(risk(), ['100', '101', '103']);
   assert.notEqual(page.run('weeklyFilterKey()'), keyBefore);
@@ -184,8 +194,15 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   assert.deepEqual(chips, [['cause', 'Cause: Us'], ['age', 'When flagged: 3–4 wk']]);
   page.run("clearWeeklyDrill('age')");
   assert.deepEqual(risk(), ['100', '101', '103']);
-  // Lagging rates are not filtered by them.
+  // Lagging rates are not filtered by them, nor the Fill rate card's open lines and the warehouse scorecard.
   assert.equal(page.run('orderHealthData(currentMetrics()).otd3Mo.scored.length'), 4);
+  assert.equal(page.run('orderHealthData(currentMetrics()).fillOpenRows.length'), undrilled.fill);
+  assert.ok(undrilled.fill > 3);
+  assert.equal(fillCard(), undrilled.fillCard);
+  assert.equal(scorecard(), undrilled.scorecard);
+  page.run("setWeeklyTileFilter('fillrate')");
+  assert.equal([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].length, undrilled.fill);
+  page.run("setWeeklyTileFilter('late')");
   // The AI tools report the page with every filter at All and leave the page's filters alone.
   assert.equal(page.run("aiRunTool('get_overview',{}).order_health.at_risk.lines"), 7);
   assert.equal(page.run('weeklyCauseFilter'), 'us');
@@ -196,18 +213,80 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   assert.doesNotMatch(html(page), /oh-chip/);
 });
 
+test('a Big picture reason box filters to its own lines (first reason only); the Top 6 bar keeps every line with the reason', async () => {
+  const page = await withOverrides();
+  const risk = () => docs(page, 'orderHealthData(currentMetrics()).lateTileRows');
+  const box = page.run("(()=>{const n=sankeyFlows('weekly')[1].nodes.find(n=>n.id==='0:Rescheduled later');return {value:n.value,count:n.count,action:n.action}})()");
+  assert.deepEqual(box, { value: 8500, count: 2, action: { type: 'reason', value: 'Rescheduled later', main: true } });
+  page.run("sankeyNodeClick('weekly','risk','0:Rescheduled later')");
+  // 103 also has "Rescheduled later", but its first reason is "Missed commit", so it sits in another box.
+  assert.deepEqual(risk(), ['102', '109']);
+  assert.equal(page.run('orderHealthData(currentMetrics()).lateAmt'), box.value);
+  assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['Rescheduled later', true]);
+  assert.match(html(page), /class="chip active oh-chip" data-kind="reason"[^>]*>Main reason: Rescheduled later </);
+  assert.doesNotMatch(html(page), /class="oh-bar-row selected"/, 'the Top 6 bar is a different filter');
+  assert.equal(page.run("sankeyNodeSelected(sankeyFlows('weekly')[1].nodes.find(n=>n.id==='0:Rescheduled later'))"), true);
+  assert.deepEqual(page.run('ohSnapshotView()').weeklyReasonMain, true);
+  // The Top 6 bar of the same reason: every at-risk line that has it.
+  page.run("setWeeklyReasonFilter('Rescheduled later')");
+  assert.deepEqual(risk(), ['102', '103', '109']);
+  assert.equal(page.run('weeklyReasonMain'), false);
+  assert.match(html(page), /class="chip active oh-chip" data-kind="reason"[^>]*>Reason: Rescheduled later </);
+  // A second click on the box (main filter on) removes it; chips and Reset clear the mode too.
+  page.run("sankeyNodeClick('weekly','risk','0:Rescheduled later');sankeyNodeClick('weekly','risk','0:Rescheduled later')");
+  assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['', false]);
+  page.run("sankeyNodeClick('weekly','risk','0:Rescheduled later');clearWeeklyDrill('reason')");
+  assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['', false]);
+  page.run("ohRestoreView({weeklyReasonFilter:'Rescheduled later',weeklyReasonMain:true})");
+  assert.deepEqual(risk(), ['102', '109']);
+  page.run('resetWeeklyFilters()');
+  assert.equal(page.run('weeklyReasonMain'), false);
+});
+
 test('a cause picked later (no metrics change) refreshes the cached Us / Them numbers and an active cause filter', async () => {
   const page = await withOverrides();
   const usLines = () => page.run('ohLeadingData(currentMetrics()).cause.us.lines');
   assert.equal(usLines(), 3);
   page.run("setWeeklyCauseFilter('them')");
-  assert.deepEqual(docs(page, 'orderHealthData(currentMetrics()).lateTileRows'), ['106', '107', '109']);
+  assert.deepEqual(docs(page, 'orderHealthData(currentMetrics()).lateTileRows'), ['106', '107']);
   pickCause(page, key(page, '102'), 'them');
   page.run('renderResults()');
-  assert.deepEqual(docs(page, 'orderHealthData(currentMetrics()).lateTileRows'), ['102', '106', '107', '109']);
+  assert.deepEqual(docs(page, 'orderHealthData(currentMetrics()).lateTileRows'), ['102', '106', '107']);
   page.run("clearWeeklyDrill('')");
   pickCause(page, key(page, '102'), 'us');
   assert.equal(usLines(), 4);
+});
+
+test('a cause pick, a bulk cause or a teammate\'s note redraws from the cached metrics; a status still rebuilds them', async () => {
+  const page = await withOverrides();
+  const snap = () => page.run('(()=>{const m=currentMetrics(),d=ohLeadingData(m),s=ohLagSplits(m);return JSON.stringify([Object.fromEntries(Object.entries(d.cause).map(([c,t])=>[c,[t.lines,Math.round(t.value)]])),Object.fromEntries(Object.entries(s).filter(([,v])=>v&&v.totals).map(([k,v])=>[k,Object.fromEntries(Object.entries(v.totals).map(([c,x])=>[c,x.lines]))]))])})()');
+  page.run('window.__m=currentMetrics()');
+  const kept = () => page.run('currentMetrics()===window.__m');
+  for (const view of ['leading', 'lagging']) {
+    page.run(`setWeeklyView('${view}')`);
+    page.run(`updateRowOverride(${JSON.stringify(key(page, '102'))},'cause','${view === 'leading' ? 'them' : 'us'}')`);
+    assert.equal(kept(), true, `${view}: a cause pick keeps the metrics`);
+    const after = snap();
+    page.run('invalidateMetrics()');
+    assert.equal(snap(), after, `${view}: the Us / Them totals and Lagging splits match a full rebuild`);
+    page.run('window.__m=currentMetrics()');
+  }
+  page.run(`setRowOverrides([${JSON.stringify(key(page, '104'))},${JSON.stringify(key(page, '105'))}],'cause','them')`);
+  assert.equal(kept(), true, 'a bulk cause keeps the metrics');
+  assert.equal(cause(page, '105'), 'them');
+  // A teammate's note (no status, no deletion) arrives with a sync: only redrawn.
+  const k = key(page, '100');
+  page.run(`adoptSharedReply({rows:{${JSON.stringify(k)}:{notes:'from a teammate',by:'OK',at:'2027-01-01T00:00:00.000Z'}}})`);
+  assert.equal(kept(), true, 'a note from someone else keeps the metrics');
+  assert.equal(page.run(`${row('100')}.overrideNotes`), 'from a teammate');
+  // A teammate's status change does rebuild them (it moves lines between cards).
+  page.run(`adoptSharedReply({rows:{${JSON.stringify(k)}:{notes:'from a teammate',status:'Not At Risk',by:'OK',at:'2027-01-02T00:00:00.000Z'}}})`);
+  assert.equal(kept(), false);
+  assert.ok(!docs(page, 'orderHealthData(currentMetrics()).lateTileRows').includes('100'));
+  // A status picked here still rebuilds them.
+  page.run('window.__m=currentMetrics()');
+  setStatus(page, '105', 'Urgent');
+  assert.equal(kept(), false);
 });
 
 // --- Tabs -------------------------------------------------------------------------------------------------
@@ -272,6 +351,9 @@ test('tab and chart filters are saved in a shared snapshot (with the flag histor
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(viewer.run(VIEW), ['leading', '', '', '']);
   assert.equal(viewer.run('ohSnapshotFlags'), null);
+  // ...and drops the snapshot's first-flagged dates (the site's own history is read instead when there is one).
+  assert.deepEqual(viewer.run('firstFlagged'), {});
+  assert.equal(viewer.run(`ohFlaggedSince(allLoadedRows.find(r=>r.documentNumber==='106'))`), '');
 });
 
 // --- Lagging ----------------------------------------------------------------------------------------------
@@ -293,7 +375,7 @@ test('Lagging: perfect order and average days late, Us / Them on every rate, bui
   assert.match(m, /3 of 4 deliveries shipped after the original date/);
   // Each lagging card says who caused its misses.
   assert.match(m, /OTD · 3 mo<\/span>[\s\S]*?1\+ days late: <b class="cause-text-us">Us 3<\/b><\/span>/);
-  assert.match(m, /Fill rate<\/span>[\s\S]*?Past due, open: <b class="cause-text-us">Us 3<\/b> · <b class="cause-text-them">Them 2<\/b> · <b class="cause-text-neutral">Neutral 1<\/b> · <b class="cause-text-unknown">Not set 1<\/b><\/span>/);
+  assert.match(m, /Fill rate<\/span>[\s\S]*?Past due, open: <b class="cause-text-us">Us 3<\/b> · <b class="cause-text-them">Them 1<\/b> · <b class="cause-text-neutral">Neutral 1<\/b> · <b class="cause-text-unknown">Not set 2<\/b><\/span>/);
   assert.match(m, /Shipped this week<\/span>[\s\S]*?Shipped late: none/);
   // The new cards list their lines like OTD does.
   page.run("setWeeklyTileFilter('dayslate')");
@@ -346,17 +428,21 @@ test('Search finds lines by reason or cause, and tables show each line\'s cause 
   const page = await withOverrides();
   const found = (q) => page.run(`(searchQuery=${JSON.stringify(q)},globalSearchResults(currentMetrics()).rows.map(x=>x.r.documentNumber).sort())`);
   assert.deepEqual(found('no commit date'), ['101']);
-  assert.deepEqual(found('caused by them'), ['106', '107', '109']);
+  assert.deepEqual(found('caused by them'), ['106', '107']);
   assert.deepEqual(found('supplier late'), []);
   setStatus(page, '105', 'Supplier Late');
   assert.deepEqual(found('supplier late'), ['105']);
   // A picked cause changes the next search without a new export.
   pickCause(page, key(page, '102'), 'them');
-  assert.deepEqual(found('caused by them'), ['102', '106', '107', '109']);
+  assert.deepEqual(found('caused by them'), ['102', '106', '107']);
   page.run("searchQuery='106';setTab('search')");
-  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · no reschedule, Hold\.">Them · Past due · no reschedule \+1<\/span>/);
+  // The other reasons and the first-flagged upload are visible text (a muted second line), not only in the tip.
+  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · no reschedule, Hold\.">Them · Past due · no reschedule<\/span><span class="timing oh-why-more">Hold<\/span>/);
+  page.ctx.firstFlagged = { [key(page, '106')]: '2026-07-02' };
+  page.run('renderResults()');
+  assert.match(html(page), /Them · Past due · no reschedule<\/span><span class="timing oh-why-more">Hold · first at risk in the 2026-07-02 upload<\/span>/);
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
-  assert.match(html(page), /<span class="oh-why cause-text-us"[^>]*>Us · No commit date<\/span>/);
+  assert.match(html(page), /<span class="oh-why cause-text-us"[^>]*>Us · No commit date<\/span>(?!<span class="timing oh-why-more">)/);
 });
 
 test('every new control and chart carries a plain-English tip with full numbers; markup stays balanced', async () => {
@@ -398,7 +484,7 @@ test('an export with no sales order lines still draws Order Health without error
 test('get_overview gains leading / lagging and cause fields that match the page; search_lines filters by cause', async () => {
   const page = await withOverrides();
   const oh = page.run("aiRunTool('get_overview',{}).order_health");
-  assert.deepEqual(oh.at_risk.cause, { us: { lines: 3, orders: 3, value: 22000 }, them: { lines: 3, orders: 3, value: 9000 }, neutral: { lines: 0, orders: 0, value: 0 }, not_set: { lines: 1, orders: 1, value: 6000 } });
+  assert.deepEqual(oh.at_risk.cause, { us: { lines: 3, orders: 3, value: 22000 }, them: { lines: 2, orders: 2, value: 6500 }, neutral: { lines: 0, orders: 0, value: 0 }, not_set: { lines: 2, orders: 2, value: 8500 } });
   assert.equal(Object.values(oh.at_risk.cause).reduce((s, c) => s + c.lines, 0), oh.at_risk.lines);
   assert.deepEqual(oh.leading.at_risk_by_cause, oh.at_risk.cause);
   assert.deepEqual(Object.keys(oh.leading.states), ['on_track', 'due_this_week', 'rescheduled', 'past_due', 'no_commit']);
@@ -411,7 +497,7 @@ test('get_overview gains leading / lagging and cause fields that match the page;
   assert.deepEqual(oh.lagging.otd_3mo.late_by_cause, { us: 3, them: 0, neutral: 0, not_set: 0 });
   assert.equal(oh.lagging.fill_rate.by_original_due_month.length, 12);
   const them = page.run("aiRunTool('search_lines',{scope:'at_risk',cause:'them'})");
-  assert.deepEqual(them.rows.map((r) => r.doc).sort(), ['106', '107', '109']);
+  assert.deepEqual(them.rows.map((r) => r.doc).sort(), ['106', '107']);
   assert.deepEqual(them.rows.find((r) => r.doc === '106').reasons, ['Past due · no reschedule', 'Hold']);
   assert.equal(page.run("aiRunTool('search_lines',{scope:'at_risk',cause:'not_set'})").rows[0].doc, '102');
   assert.match(page.run("aiRunTool('search_lines',{scope:'open',cause:'maybe'})").error, /cause must be one of/);
@@ -430,7 +516,7 @@ test('the MCP server (index.html in a Node vm) returns the new fields', () => {
   const oh = JSON.parse(out.stdout).order_health;
   assert.deepEqual(Object.keys(oh.leading), ['cause_rule', 'at_risk_by_cause', 'open_orders', 'states', 'top_reasons', 'when_flagged']);
   assert.deepEqual(Object.keys(oh.lagging), ['otd_3mo', 'shipped_this_week', 'fill_rate', 'reschedule_hit_12mo', 'perfect_order_12mo', 'avg_days_late_3mo']);
-  assert.equal(oh.at_risk.cause.not_set.lines, 1);
+  assert.equal(oh.at_risk.cause.not_set.lines, 2);
   assert.equal(oh.lagging.perfect_order_12mo.rate_pct, 25);
 });
 

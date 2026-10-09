@@ -62,9 +62,11 @@ export class FedexError extends Error {
 }
 
 // Tracking numbers are letters and digits; spaces and dashes people type ("7700 1234 5678") are dropped.
+// At least one digit: words typed into SAP TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
+// Same rule as shipClean in index.html.
 export function cleanTrackingNumber(v) {
   const s = String(v ?? '').replace(/[\s-]+/g, '').toUpperCase();
-  return /^[A-Z0-9]{6,40}$/.test(s) ? s : '';
+  return /^[A-Z0-9]{6,40}$/.test(s) && /\d/.test(s) ? s : '';
 }
 // One SAP TrackNo field can hold more than one number: "7700 1234 5678, 7700 1234 5679", "770012345678 &
 // 770012345679", "... and ...", or two whole numbers with only a space between them. A piece whose space-separated

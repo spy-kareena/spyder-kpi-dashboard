@@ -83,3 +83,14 @@ from another Cloudflare location dropped (KV copies there can be a minute old); 
 hand back the stored text without parsing it, the history page read is a compact copy (KV key "history:first",
 each line under its first week only), shared notes are capped at 2 MB and old cleared-line markers are dropped on
 every save; FedEx's 600-number cap counts only shipments still moving, hand-added numbers first.
+2v1 review fixes (page): a line's other reasons and its first at-risk upload show as text under its cause in linked
+lines and Search; tipped column headings, static cards, chart titles and bars take keyboard focus (static cards also
+carry the tip as screen-reader text), and the OTD / reschedule-hit cards and nav badges carry their nested figures;
+Top offenders rows truncate a long name instead of widening the page; the shared-notes status and "Your initials"
+stay visible on phones and tablets; a computer clock that is off no longer lets an old note win (server time is
+adopted and used); UPS, Purolator and other carriers' numbers, and TrackNo text with no digit, are not sent to FedEx
+(the page says how many were left off), and two numbers on one delivery share its value; picking a cause or receiving
+a teammate's note no longer rebuilds every metric; a reschedule from the standard KPI query is Not set (SAP does not
+say who asked); the chart filters leave the Fill rate card's open lines and the warehouse scorecard alone; a Big
+picture reason box filters to its own lines (first reason only, "Main reason" chip); a new report opened inside a
+shared snapshot uses the site's at-risk history and shared notes.

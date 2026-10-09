@@ -30,8 +30,14 @@ Every number, card, button and column has a tooltip in plain English.
 1. **The KPI export.** The KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`) now adds four
    columns to every delivery row:
    - `TrackingNumber`: the delivery's tracking number in SAP (`ODLN.TrackNo`, the **Tracking No.** field on the
-     delivery's Logistics tab). One field can hold several numbers separated by commas.
-   - `ShipMethod`: the delivery's shipping type (`OSHP`), for example "FedEx Ground" or "FedEx Freight LTL".
+     delivery's Logistics tab). One field can hold several numbers separated by commas; the delivery's value is then
+     shared between them, so the "worth" totals on the cards count it once. Text with no digit ("Customer Pickup",
+     "Will Call") is not a tracking number and is ignored.
+   - `ShipMethod`: the delivery's shipping type (`OSHP`), for example "FedEx Ground" or "FedEx Freight LTL". A
+     delivery whose shipping type names another carrier (UPS, Purolator, Canpar, DHL, Loomis, Canada Post, Dicom,
+     Day & Ross, Manitoulin), and any UPS "1Z…" number, is left off the page and never sent to FedEx; the page says
+     how many were left off. A blank or other shipping type (for example "Customer pickup - prepaid") is still
+     tracked at FedEx.
    - `ShipToCountry`: the country of the ship-to address on the business partner (`CRD1`, address type S).
    - `ShipDate`: the delivery date.
 

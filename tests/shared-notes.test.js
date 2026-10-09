@@ -261,6 +261,65 @@ test('the newer edit wins when two people change the same line', async () => {
   assert.equal((await site.doc()).rows[k].notes, 'A: newest');
 });
 
+test('a computer clock an hour fast does not keep overwriting newer notes; with a Date header edits use server time', async () => {
+  // The server's clock (functions/api/notes.js reads Date.now); the pages' clocks are set with clock().
+  const realNow = Date.now;
+  let serverNow = Date.parse('2026-10-08T12:00:00Z');
+  Date.now = () => serverNow;
+  try {
+    const site = fakeSite();
+    const fast = await openBrowser(site, { storage: { spyderKpiEditor: 'FF' } });
+    await upload(fast);
+    await fast.ctx.syncSharedNotes();
+    const ok = await openHosted(site, { storage: { spyderKpiEditor: 'OK' } });
+    const k = keyOf(fast, '900');
+    clock(fast, '2026-10-08T13:00:00Z');
+    edit(fast, '900', 'notes', 'old note from the fast-clock PC');
+    await sendNow(fast);
+    // The server clamps the future time to its own; the fast browser takes that time instead of keeping its own.
+    assert.equal((await site.doc()).rows[k].at, '2026-10-08T12:00:00.000Z');
+    assert.equal(saved(fast)[k].at, '2026-10-08T12:00:00.000Z');
+    serverNow = Date.parse('2026-10-08T12:05:00Z');
+    clock(ok, '2026-10-08T12:05:00Z');
+    edit(ok, '900', 'notes', 'NEWER note from OK');
+    await sendNow(ok);
+    // The fast browser reads the notes again (window focus): OK's newer note wins and is not pushed over.
+    serverNow = Date.parse('2026-10-08T12:06:00Z');
+    clock(fast, '2026-10-08T13:06:00Z');
+    const before = site.patches();
+    fast.run('sharedNotes.syncedAt=0');
+    await fast.ctx.syncSharedNotes();
+    await settle(fast);
+    assert.equal(site.patches(), before, 'nothing pushed back');
+    assert.equal((await site.doc()).rows[k].notes, 'NEWER note from OK');
+    assert.equal(line(fast, '900').notes, 'NEWER note from OK');
+    // A line edited again while its save was out keeps the newer local edit (sent next) rather than the reply.
+    fast.run(`adoptSharedReply({rows:{${JSON.stringify(k)}:{notes:'server copy',by:'FF',at:'2026-10-08T12:00:00.000Z'}}},{rows:{}})`);
+    assert.equal(line(fast, '900').notes, 'NEWER note from OK', 'a key that was not in this send is left alone');
+
+    // With the server's Date header, a browser an hour slow stamps its edits in server time, so they win as they should.
+    const dated = { ...site, fetch: async (url, init) => { const res = await site.fetch(url, init); const h = new Headers(res.headers); h.set('date', new Date(serverNow).toUTCString()); return new Response(await res.arrayBuffer(), { status: res.status, headers: h }); } };
+    const slow = await openHosted(dated, { storage: { spyderKpiEditor: 'SL' } });
+    clock(slow, '2026-10-08T11:07:00Z');
+    serverNow = Date.parse('2026-10-08T12:07:00Z');
+    slow.run('sharedNotes.syncedAt=0');
+    await slow.ctx.syncSharedNotes();
+    assert.equal(slow.run('notesClockOffset'), 3600000);
+    edit(slow, '900', 'notes', 'newest, from the slow-clock PC');
+    assert.equal(saved(slow)[k].at, '2026-10-08T12:07:00.000Z');
+    await sendNow(slow);
+    assert.equal((await site.doc()).rows[k].notes, 'newest, from the slow-clock PC');
+    // A clock within two minutes of the server's is left as it is.
+    clock(slow, '2026-10-08T12:08:30Z');
+    serverNow = Date.parse('2026-10-08T12:08:00Z');
+    slow.run('sharedNotes.syncedAt=0');
+    await slow.ctx.syncSharedNotes();
+    assert.equal(slow.run('notesClockOffset'), 0);
+  } finally {
+    Date.now = realNow;
+  }
+});
+
 test('a save at another Cloudflare location that read a stale copy (KV, up to 60 s) is caught by the re-read a minute later', async () => {
   const site = fakeSite();
   const kv = site.env.REPORT_STORE;
@@ -489,6 +548,24 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
   assert.equal(snap.run('firstFlagged')[k], '2026-09-03');
   assert.equal(snap.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideCause`), 'us');
   assert.equal(sidebar(snap).includes('Notes shared'), false);
+
+  // New file inside a snapshot leaves it: the site's at-risk history replaces the snapshot's first-flagged dates
+  // (here made different on purpose) and the shared notes are read, as on a normal start.
+  const old = await (async () => {
+    const p = await openBrowser(site);
+    p.els['embedded-snapshot-data'].dataset.encoding = 'json';
+    p.els['embedded-snapshot-data'].textContent = JSON.stringify({ ...data, firstFlagged: { [k]: '2026-01-01' } });
+    await p.run('loadEmbeddedSnapshot()');
+    return p;
+  })();
+  assert.equal(old.run(`ohFlaggedSince(allLoadedRows.find(r=>r.documentNumber==='900'))`), '2026-01-01');
+  await old.ctx.handleFiles([kpi()]);
+  for (let i = 0; i < 100 && (old.run('notesSyncing') || old.run('firstFlagged')[k] !== '2026-09-03'); i++) await tick(10);
+  assert.equal(old.run('isSnapshotView'), false);
+  assert.deepEqual(old.run('firstFlagged'), { [k]: '2026-09-03', [keyOf(a, '901')]: '2026-09-03' });
+  assert.equal(old.run(`ohFlaggedSince(allLoadedRows.find(r=>r.documentNumber==='900'))`), '2026-09-03');
+  assert.equal(old.run('sharedNotes.state'), 'shared');
+  assert.equal(old.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideNotes`), 'shared note');
 });
 
 test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () => {
@@ -599,6 +676,14 @@ test('editor initials are asked once, in a dialog, and stamped on the edits', as
   await tick(5);
   assert.equal(dialogs.length, 1);
   assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorInitials\(true\)" data-tip="[^"]+">Your initials: KK<\/button>/);
+  // The status and the button have their own row, outside .loaded-meta (hidden at 980px and below), which stays
+  // visible under the file name and buttons in the compact card.
+  assert.match(sidebar(page), /<div class="loaded-meta">(?:(?!<\/div>)[\s\S])*<\/div><div class="loaded-notes"><span class="notes-sync" data-tip="[^"]+">Notes shared[^<]*<\/span><br><button type="button" class="link-btn notes-editor-btn"/);
+  assert.doesNotMatch(sidebar(page).match(/<div class="loaded-meta">[\s\S]*?<\/div>/)[0], /notes-sync|notes-editor/);
+  const compact = HTML.match(/@media \(max-width:980px\)\{\n[\s\S]*?\n\}/)[0];
+  assert.match(compact, /\.loaded-card \.loaded-label,\.loaded-card \.loaded-meta\{display:none\}/);
+  assert.match(compact, /\.loaded-card \.loaded-notes\{grid-row:2;grid-column:1\/-1\}/);
+  assert.doesNotMatch(compact, /loaded-notes\{[^}]*display:none/);
   page.run('askEditorInitials(true)');
   await tick(5);
   assert.equal(dialogs.length, 2);

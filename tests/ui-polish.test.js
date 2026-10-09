@@ -157,6 +157,102 @@ test('tip(el,text) sets data-tip and a hidden description for screen readers; em
   assert.equal(page.run("tipAttr('  ')"), '');
 });
 
+// A tiny element tree with the selector forms wireTip uses (tag, [attr], [attr="v"], :not(...), :scope>).
+function miniDom() {
+  const simple = (el, s) => {
+    const m = s.match(/^([a-z0-9]*)((?:\[[^\]]+\])*)(?::not\((\[[^\]]+\])\))?$/i);
+    if (!m) throw new Error(`selector ${s}`);
+    const attrOk = (a) => { const [, k, v] = a.match(/^\[([\w-]+)(?:="([^"]*)")?\]$/); return v === undefined ? el.hasAttribute(k) : el.getAttribute(k) === v; };
+    return (!m[1] || el.tagName === m[1].toUpperCase()) && (m[2].match(/\[[^\]]+\]/g) || []).every(attrOk) && !(m[3] && attrOk(m[3]));
+  };
+  class El {
+    constructor(tag, attrs = {}, text = '', kids = []) { this.tagName = tag.toUpperCase(); this.namespaceURI = 'http://www.w3.org/1999/xhtml'; this.attrs = { ...attrs }; this.own = text; this.kids = []; this.parentElement = null; kids.forEach((k) => this.appendChild(k)); }
+    get textContent() { return this.own + this.kids.map((k) => k.textContent).join(''); }
+    set textContent(v) { this.own = String(v); this.kids = []; }
+    set className(v) { this.attrs.class = v; }
+    appendChild(k) { k.parentElement = this; this.kids.push(k); return k; }
+    remove() { if (this.parentElement) this.parentElement.kids = this.parentElement.kids.filter((k) => k !== this); this.parentElement = null; }
+    getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; }
+    setAttribute(k, v) { this.attrs[k] = String(v); }
+    removeAttribute(k) { delete this.attrs[k]; }
+    hasAttribute(k) { return k in this.attrs; }
+    matches(sel) { return sel.split(/,(?![^(]*\))/).some((s) => simple(this, s.trim())); }
+    closest(sel) { for (let n = this; n; n = n.parentElement) if (n.matches(sel)) return n; return null; }
+    querySelector(sel) {
+      if (sel.startsWith(':scope>')) return this.kids.find((k) => k.matches(sel.slice(7))) || null;
+      for (const k of this.kids) { if (k.matches(sel)) return k; const f = k.querySelector(sel); if (f) return f; }
+      return null;
+    }
+  }
+  return { El, h: (tag, attrs, text, kids) => new El(tag, attrs, text, kids) };
+}
+
+test('tipped headings, column headings and static cards become tab stops; table cells, charts and nested tips do not', () => {
+  const page = loadPage();
+  const { El, h } = miniDom();
+  page.ctx.document.createElement = (tag) => new El(tag);
+  const th = h('th', { 'data-tip': 'Open sales-order quantity (DemandOpenQty).' }, 'Demand');
+  const thSort = h('th', { 'data-tip': 'Sorts the table.' }, '', [h('button', {}, 'Due')]);
+  const delta = h('span', { class: 'delta up', 'data-tip': 'Aug: 80% against Jul: 70%.' }, '↑ 10 pts');
+  const card = h('div', { class: 'card kpi lag static', 'data-tip': 'On-time receiving, last 3 months: 80%. 4 of 5 receipts.' }, '', [h('span', {}, 'On-time · 3 mo'), delta, h('span', {}, '80%')]);
+  const why = h('span', { class: 'oh-why', 'data-tip': 'Cause: Us (SAP: Past due).' }, 'Us · Past due');
+  const td = h('td', {}, '', [why]);
+  const bar = h('div', { class: 'col-bar', 'data-tip': 'Week of Oct 4: 1 open line · $1,000 due' });
+  const seg = h('i', { class: 'pop age-2', 'data-tip': '8–30d past due: $1,722,806 across 2 lines' });
+  const tracker = h('div', { class: 'tracker', role: 'img', 'aria-label': 'aging' }, '', [seg]);
+  const btn = h('button', { 'data-tip': 'Click to list them.' }, 'At risk');
+  const badge = h('span', { class: 'nav-badge', 'data-tip': '4 orders at risk' }, '4');
+  const navBtn = h('button', { 'data-tip': 'Order Health. 4 orders at risk.' }, 'Order Health', [badge]);
+  const hidden = h('div', { 'aria-hidden': 'true' }, '', [h('div', { class: 'num', 'data-tip': 'Open PO lines.' }, 'Lines')]);
+  h('div', {}, '', [h('table', {}, '', [h('thead', {}, '', [h('tr', {}, '', [th, thSort])]), h('tbody', {}, '', [h('tr', {}, '', [td])])]), card, bar, tracker, btn, navBtn, hidden]);
+  // wireTips walks the page in document order: parents before the tips nested in them.
+  page.ctx.__els = [th, thSort, card, delta, why, bar, seg, btn, navBtn, badge, hidden.kids[0]];
+  page.run('__els.forEach(wireTip)');
+  const tab = (el) => [el.getAttribute('tabindex'), el.hasAttribute('data-tip-tab')];
+  assert.deepEqual(tab(th), ['0', true], 'a column heading');
+  assert.deepEqual(tab(card), ['0', true], 'a static card');
+  assert.deepEqual(tab(bar), ['0', true], "a What's due next bar");
+  for (const el of [thSort, delta, why, seg, btn, navBtn, badge, hidden.kids[0]]) assert.deepEqual(tab(el), [null, false], el.attrs.class || el.tagName);
+  // Screen readers: a column heading is described when focused; a div carries a hidden copy (read in browse mode).
+  assert.match(th.getAttribute('aria-describedby'), /^tipd-\d+$/);
+  const copy = (el) => el.querySelector(':scope>[data-tip-copy]');
+  assert.deepEqual([copy(card).attrs.class, copy(card).textContent], ['sr-only', 'On-time receiving, last 3 months: 80%. 4 of 5 receipts.']);
+  assert.equal(card.getAttribute('aria-describedby'), null, 'not read twice');
+  assert.equal(copy(bar).textContent, 'Week of Oct 4: 1 open line · $1,000 due');
+  assert.equal(copy(th), null);
+  // Wiring again changes nothing; a new text updates the copy; no text removes the tab stop and the copy.
+  page.run('__els.forEach(wireTip)');
+  assert.equal(card.kids.filter((k) => k.hasAttribute('data-tip-copy')).length, 1);
+  page.run("tip(__els[2],'On-time receiving: 90%.');0");
+  assert.equal(copy(card).textContent, 'On-time receiving: 90%.');
+  page.run("tip(__els[2],'');0");
+  assert.deepEqual([...tab(card), copy(card)], [null, false, null]);
+  // A dense chart series (data-tip-notab: the ship calendar's days) keeps a hidden copy but adds no tab stop.
+  const day = h('div', { class: 'day-col', 'data-tip': '2026-10-03: 2 open lines · 40 qty · $1,000' }, '2');
+  h('div', { class: 'day-chart', 'data-tip-notab': '' }, '', [day]);
+  page.ctx.__day = day;
+  page.run('wireTip(__day)');
+  assert.deepEqual([day.getAttribute('tabindex'), copy(day) && copy(day).textContent], [null, '2026-10-03: 2 open lines · 40 qty · $1,000']);
+  assert.match(HTML, /<div class="day-chart" data-tip-notab /);
+  assert.ok(CSS.includes('.sr-only[data-tip-copy]{left:0;top:0}'), 'copies never widen the page');
+  assert.ok(CSS.includes('.thead>div:last-of-type,.trow>div:last-of-type{padding-right:24px}'), 'a row\'s copy does not take the last-cell padding');
+  // An element that sets its own tabindex keeps it.
+  const own = h('h2', { 'data-tip': 'x y z', tabindex: '-1' }, 'Title');
+  page.ctx.__own = own;
+  page.run('wireTip(__own)');
+  assert.equal(own.getAttribute('tabindex'), '-1');
+  assert.equal(own.hasAttribute('data-tip-tab'), false);
+});
+
+test('nested tips reach keyboard users through their control: delta pill text in the card tip', () => {
+  const page = loadPage();
+  const series = JSON.stringify([{ label: 'Jul', otd: 70 }, { label: 'Aug', otd: 80 }, { label: 'Sep', otd: null }]);
+  assert.equal(page.run(`withDeltaText('OTD: 80%. Target 90%. Click for late deliveries.',${series},'otd')`), 'OTD: 80%. Target 90%. Aug: 80% against Jul: 70% (the last full month against the month before). Click for late deliveries.');
+  assert.equal(page.run(`withDeltaText('PO OTD: 80%. Target 90%.',${series},'otd')`), 'PO OTD: 80%. Target 90%. Aug: 80% against Jul: 70% (the last full month against the month before).');
+  assert.equal(page.run(`withDeltaText('No data.',[{label:'Aug',otd:null}],'otd')`), 'No data.');
+  assert.match(page.run(`renderDeltaPill(${series},'otd')`), /data-tip="Aug: 80% against Jul: 70% \(the last full month against the month before\)\. Target 90%\."/);
+});
+
 test('tooltip and popover placement: preferred side, flips when there is no room, stays inside the window', () => {
   const page = loadPage();
   page.ctx.innerWidth = 1000; page.ctx.innerHeight = 700;
@@ -231,8 +327,9 @@ test('page descriptions: under each page name on the load screen, as the tooltip
   }
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
   assert.doesNotMatch(sidebar(page), /nav-desc/);
-  assert.match(sidebar(page), new RegExp(`data-focus-key="nav-weekly" onclick="setTab\\('weekly'\\)" aria-current="page" data-tip="${descs.weekly}"`));
-  assert.match(sidebar(page), /<span class="nav-badge" data-tip="\d+ orders at risk \(same count as the At risk card\)">/);
+  // The badge's meaning is in the button's own tip (keyboard focus shows that one) and hidden text for screen readers.
+  assert.match(sidebar(page), new RegExp(`data-focus-key="nav-weekly" onclick="setTab\\('weekly'\\)" aria-current="page" data-tip="${descs.weekly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+ orders at risk \\(same count as the At risk card\\)\\."`));
+  assert.match(sidebar(page), /<span class="nav-badge" data-tip="\d+ orders at risk \(same count as the At risk card\)">\d+<span class="sr-only"> orders at risk<\/span><\/span>/);
 });
 
 // Warehouse scorecard: two CM SFG and three other warehouses, with open, at-risk, past-due lines and deliveries.

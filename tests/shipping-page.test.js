@@ -273,6 +273,32 @@ test('one TrackNo field with several numbers: commas, &, + or "and", or two whol
   assert.deepEqual(listed(two).sort(), ['770012345678', '770012345679']);
 });
 
+test('other carriers (UPS, Purolator…) and words in TrackNo are not FedEx shipments; two numbers share the delivery value', async () => {
+  const page = loadPage({ today: TODAY });
+  const d = (doc, method, track, o = {}) => delivery({ DocumentNumber: doc, DeliveryDocNumber: `9${doc}`, ShipMethod: method, TrackingNumber: track, ShipDate: '10/06/2026', ...due('10/10/2026'), ...o });
+  await upload(page, [exportFile([
+    d('710', 'UPS Standard', '1Z999AA10123456784'),
+    d('711', 'Purolator Ground', '335123456789'),
+    d('712', 'FedEx Ground', '770033334444'),
+    d('713', '', '770055556666'),
+    d('714', 'Customer pickup - prepaid', 'Customer Pickup'),
+    d('715', 'FedEx Ground', '770012345678, 770012345679', { AmountLocal: '1,000.00' }),
+    d('716', '', '1Z999AA10123456785'), // a UPS number with no ship method
+    d('717', 'Canpar', '335123456790', { ShipDate: '07/01/2026' }), // outside the 30 days: not counted
+  ])]);
+  const want = ['770012345678', '770012345679', '770033334444', '770055556666'];
+  assert.deepEqual(listed(page).sort(), want);
+  assert.deepEqual(page.run('shippingWantedLists(shippingModel()).export').sort(), want, 'never sent to FedEx');
+  assert.equal(page.run('shippingModel().otherCarrier'), 3);
+  page.run("setTab('shipping')");
+  assert.match(html(page), /3 tracking numbers from the last 30 days are not listed: their ship method or number is another carrier’s \(UPS, Purolator, Canpar, DHL and so on\)\. This page tracks FedEx only\./);
+  assert.doesNotMatch(html(page), /1Z999AA|335123456789|CUSTOMERPICKUP/);
+  // The two parcels of delivery 9715 share its $1,000, so a card total counts the delivery once.
+  assert.deepEqual(page.run("shippingModel().list.filter(s=>s.number.startsWith('77001234567')).map(s=>s.value)"), [500, 500]);
+  assert.deepEqual(page.run("['FedEx Express','FDX Ground','UPS Standard','Customer pickup - prepaid',''].map(m=>shipOtherCarrier('770012345678',m))"), [false, false, true, false, false]);
+  assert.equal(page.run("shipClean('Will Call')"), '');
+});
+
 test('hand-added numbers on the server are not wiped by a browser whose shared notes have not arrived yet', async () => {
   const site = await hostedSite();
   const { WANTED_KEY } = await modules();

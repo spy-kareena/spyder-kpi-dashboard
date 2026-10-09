@@ -162,7 +162,7 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .thead>div{padding:10px}
 .trow{display:grid;font-size:12.5px;align-items:start;border-bottom:1px solid var(--gray-100);transition:background-color var(--dur)}
 .trow:hover{background:var(--gray-50)}.trow.selected{background:var(--accent-tint);box-shadow:inset 2px 0 0 var(--accent)}
-.trow>div{padding:12px 10px}.thead>div:first-child,.trow>div:first-child{padding-left:24px}.thead>div:last-child,.trow>div:last-child{padding-right:24px}
+.trow>div{padding:12px 10px}.thead>div:first-child,.trow>div:first-child{padding-left:24px}.thead>div:last-of-type,.trow>div:last-of-type{padding-right:24px}
 .num{text-align:right}
 .tfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;font-size:12px;color:var(--gray-500);background:var(--gray-50)}
 .note-btn{font:inherit;font-size:12px;font-weight:500;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--gray-300);background:#fff;color:var(--gray-700);cursor:pointer}
@@ -195,6 +195,8 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 html{background:var(--white)}
 button{font-family:inherit}
 :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+/* Column headings and chart bars that take focus only to show their tip (wireTip): ring inside the scrolling table */
+th[data-tip-tab]:focus-visible,.col-bar[data-tip-tab]:focus-visible{outline-offset:-2px}
 .muted{color:var(--gray-500)}
 /* Small status text uses the darker tone tokens (4.5:1); the bright tones stay for fills and large KPI values */
 .crit-text{color:var(--crit-text)}.warn-text{color:var(--warn-text)}.good-text{color:var(--good-text)}
@@ -226,7 +228,7 @@ button{font-family:inherit}
 .live-dot{width:7px;height:7px;border-radius:99px;background:#12b76a;box-shadow:0 0 0 3px #d1fadf}
 .live-dot.off{background:var(--gray-300);box-shadow:0 0 0 3px var(--gray-100)}
 .loaded-name{font-size:12px;font-weight:600;word-break:break-all;line-height:1.4}
-.loaded-meta{font-size:12px;color:var(--gray-500);line-height:1.5}
+.loaded-meta,.loaded-notes{font-size:12px;color:var(--gray-500);line-height:1.5}
 .loaded-actions{display:flex;gap:6px;padding-top:2px}
 .loaded-actions .btn{flex:1;font-size:12px;padding:5px 8px;border-radius:7px;box-shadow:none}
 .loaded-actions .btn:hover{transform:none}
@@ -368,7 +370,8 @@ button.trow.selected{background:var(--accent-tint);border-left-color:var(--accen
 .trow .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trow .name.m{font-weight:500}
 .trow .cell-tone{padding:7px 6px}
-.trow .cell-tone:last-child{padding-right:18px}
+/* of-type: a tipped row also holds wireTip's hidden <span> copy after its cells */
+.trow .cell-tone:last-of-type{padding-right:18px}
 .sc-cols{grid-template-columns:minmax(0,2fr) repeat(6,minmax(0,1fr))}
 .po-wh-cols{grid-template-columns:minmax(0,1.7fr) 64px minmax(0,1.5fr) 56px 88px 68px}
 .list-card{padding:22px 26px;display:grid;gap:12px;align-content:start}
@@ -378,7 +381,7 @@ button.trow.selected{background:var(--accent-tint);border-left-color:var(--accen
 .segmented.full button{flex:1;padding:4px 9px;border-radius:6px;font-weight:550}
 .rank-list{display:grid;gap:9px}
 .rank-list.roomy{gap:12px}
-.rank-item{display:grid;gap:4px;min-width:0}
+.rank-item{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;min-width:0}
 button.rank-item{font:inherit;text-align:left;border:0;background:none;padding:0;cursor:pointer;color:var(--gray-900);gap:5px}
 button.rank-item:hover .rank-name{color:var(--accent-strong)}
 button.rank-item.selected .rank-name{color:var(--accent-strong)}
@@ -618,6 +621,8 @@ details.about p{margin:0}
 .ai-compose .link-btn{margin-left:auto}
 .ai-foot{font-size:12px;color:var(--gray-500)}
 .ai-sr,.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* wireTip's hidden tip copies sit inside scrolling charts: pinned to a corner so they never widen the page */
+.sr-only[data-tip-copy]{left:0;top:0}
 /* Very wide screens keep the page beside the open drawer; the page keeps its 4-column width (>=880px) there */
 @media screen and (min-width:1600px){body.ai-open .main{padding-right:456px}}
 @media (max-width:640px){.ai-panel{width:100vw;border-left:0}}
@@ -732,7 +737,9 @@ details.about p{margin:0}
   .nav-item{width:auto;flex-shrink:0}
   .loaded-card{margin-top:0;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:10px 12px}
   .loaded-card .loaded-label,.loaded-card .loaded-meta{display:none}
-  .loaded-card .loaded-actions{padding-top:0}
+  .loaded-card .loaded-actions{padding-top:0;grid-row:1;grid-column:2}
+  /* Notes status and Your initials wrap under the file name and buttons (the only place to change initials) */
+  .loaded-card .loaded-notes{grid-row:2;grid-column:1/-1}
   .main{border-left:0;padding:20px 16px 48px}
   .page-head{flex-wrap:wrap}
   .grid-2,.need-card,.upload-shell{grid-template-columns:minmax(0,1fr)}
@@ -1174,8 +1181,9 @@ button.ship-kpi{width:100%}
 .oh-why{display:block;font-size:11.5px;font-weight:600;line-height:1.3}
 .oh-spark-wrap{display:block}
 .oh-lag-extra{align-items:stretch}
-.waffle-list{display:grid;gap:2px}
-.waffle-row{font:inherit;display:grid;gap:6px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:6px 8px;cursor:pointer;color:var(--gray-900);transition:background .15s}
+/* One shrinkable column: a long customer name truncates (rank-name ellipsis) instead of widening every row */
+.waffle-list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px}
+.waffle-row{font:inherit;display:grid;grid-template-columns:minmax(0,1fr);min-width:0;gap:6px;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:6px 8px;cursor:pointer;color:var(--gray-900);transition:background .15s}
 .waffle-row:hover{background:var(--gray-50)}
 .waffle-row.selected{background:var(--accent-tint);box-shadow:inset 2px 0 0 var(--accent)}
 .waffle-row:hover .rank-name,.waffle-row.selected .rank-name{color:var(--accent-strong)}
@@ -1814,7 +1822,9 @@ function updateRowOverride(key,field,value){
   if(field!=='status'&&field!=='cause')return;
   const noteButtons=()=>[...document.querySelectorAll('button.note-btn')];
   const at=noteButtons().findIndex(b=>b.dataset.key===cleanKey);
-  invalidateMetrics();
+  // A cause needs no metrics rebuild: getMetrics reads no cause, and every cache that does (Us / Them, reasons,
+  // Lagging splits, Search, drill filters) is keyed by ohStamp(), which changes with the picked causes.
+  if(field==='status')invalidateMetrics();
   renderResults();
   // The line left this list (e.g. Not At Risk on At Risk): focus the line that took its place and say so.
   const now=noteButtons();
@@ -1860,7 +1870,8 @@ function setRowOverrides(keys,field,value){
   allLoadedRows.forEach(r=>{const k=rowKey(r);if(wanted.has(k))(byKey.get(k)||byKey.set(k,[]).get(k)).push(r);});
   byKey.forEach((rows,k)=>writeRowOverride(k,rows,field,value));
   saveRowOverrides();
-  applyInventoryScope();
+  // Status and deleted change what the metrics count; a cause does not (see updateRowOverride).
+  if(field!=='cause')applyInventoryScope();
   renderResults();
 }
 // Linked lines ticked for bulk actions (rowKey values) and every key of the list the table last drew.
@@ -2113,7 +2124,7 @@ function resetWeeklyFilters(){
   weeklyOrderTypeFilter=['ALL'];
   weeklyDepartmentFilter=['ALL'];
   weeklyProjectFilter=['ALL'];
-  weeklyReasonFilter='';weeklyCauseFilter='';weeklyAgeFilter='';
+  weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';
   renderResults();
 }
 function setWeeklyWarehousePreset(kind){
@@ -2926,7 +2937,12 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     loadedFiles=used;
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
     if(!adding){resetViewState();applyInventoryScope();}
-    if(isSnapshotView){isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
+    // A new report opened inside a shared snapshot leaves the snapshot: this browser's notes, and this site's at-risk
+    // history and shared notes (start-up skipped both in snapshot mode) instead of the snapshot's first-flagged dates.
+    if(isSnapshotView){
+      isSnapshotView=false;snapshotCreatedAt='';rowOverrides=loadRowOverrides();allLoadedRows.forEach(applyRowOverride);applyInventoryScope();
+      firstFlagged={};atRiskWeeks=[];loadAtRiskHistory();syncSharedNotes();
+    }
     olderNotes.forEach(message=>dataQualityIssues.unshift({kind:'file',message}));
     if(duplicateRows)dataQualityIssues.unshift({kind:'file',message:`Ignored ${fmtNum(duplicateRows)} rows that were already in another uploaded file.`});
     if(noRows.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${noRows.join(', ')}: no rows in the file.`});
@@ -3948,7 +3964,9 @@ function orderHealthData(m){
   const otdLast3MonthRows=filterWeeklyRows(m.otdLast3MonthRows);
   const allSelectedRows=filterWeeklyRows(m.allRows);
   // Reason / cause / when-flagged filters from the Order Health charts narrow the open lines (Stream D: ohDrillRows).
-  const allOrderRows=ohDrillRows(filterWeeklyRows(m.rows));
+  // openRowsAll keeps the open lines without them, for the Lagging fill rate and the warehouse scorecard.
+  const openRowsAll=filterWeeklyRows(m.rows);
+  const allOrderRows=ohDrillRows(openRowsAll);
   const viewToday=reportToday();
   const viewStartOfWeek=d=>{const c=new Date(d);c.setDate(c.getDate()-c.getDay());c.setHours(0,0,0,0);return c;};
   const viewEndOfWeek=d=>{const c=new Date(d);c.setDate(c.getDate()+(6-c.getDay()));c.setHours(23,59,59,999);return c;};
@@ -3958,20 +3976,34 @@ function orderHealthData(m){
   const nextWeekEnd=viewEndOfWeek(nextWeekStart);
   const thisMonthKey=monthKey(viewToday);
   const inRange=(d,s,e)=>{const dt=parseDate(d);return !!dt&&dt>=s&&dt<=e;};
-  const pastDueNoReschedule=allOrderRows.filter(r=>weeklyRiskBucket(r)==='late');
-  const activeRescheduleRows=allOrderRows.filter(r=>r.isOpen&&hasOpenWork(r)&&!isManuallyNonUrgent(r)&&rowRealRescheduleDate(r)).sort((a,b)=>parseDate(rowRealRescheduleDate(a))-parseDate(rowRealRescheduleDate(b)));
-  const noCommitRows=allOrderRows.filter(r=>weeklyRiskBucket(r)==='nocommit');
+  // The At Risk groups of a set of open lines (the drilled view, and the undrilled one for the scorecard).
+  const riskSets=rows=>{
+    const pastDue=rows.filter(r=>weeklyRiskBucket(r)==='late');
+    const resched=rows.filter(r=>r.isOpen&&hasOpenWork(r)&&!isManuallyNonUrgent(r)&&rowRealRescheduleDate(r)).sort((a,b)=>parseDate(rowRealRescheduleDate(a))-parseDate(rowRealRescheduleDate(b)));
+    const noCommit=rows.filter(r=>weeklyRiskBucket(r)==='nocommit');
+    const urgent=rows.filter(r=>r.isOpen&&hasOpenWork(r)&&isManuallyUrgent(r));
+    return {pastDue,resched,noCommit,urgent,risk:uniqueRows([...urgent,...pastDue,...noCommit,...resched])};
+  };
+  const drilled=riskSets(allOrderRows);
+  const pastDueNoReschedule=drilled.pastDue;
+  const activeRescheduleRows=drilled.resched;
+  const noCommitRows=drilled.noCommit;
   const dueThisWeekDateRows=allOrderRows.filter(r=>r.isOpen&&inRange(r.effectiveDueDate||r.dueDate,thisWeekStart,thisWeekEnd));
   const dueNextWeekRows=allOrderRows.filter(r=>r.isOpen&&inRange(r.effectiveDueDate||r.dueDate,nextWeekStart,nextWeekEnd));
   const notShippedThisMonthRows=allOrderRows.filter(r=>r.isOpen&&hasOpenWork(r)&&monthKey(r.effectiveDueDate||r.dueDate||null)===thisMonthKey);
-  const fillOpenRows=allOrderRows.filter(hasOpenWork);
+  // Fill rate scores every line in view (fillLineRows), so its open lines ignore the chart filters too.
+  const fillOpenRows=openRowsAll.filter(hasOpenWork);
   const fillLineRows=allSelectedRows.filter(isOrderLineRow);
   const fillRate=fillRateForRows(fillLineRows);
   const otd3Mo=otdStats(otdLast3MonthRows);
   const reschedulePerf=rescheduleStats(allSelectedRows);
-  const urgentRows=allOrderRows.filter(r=>r.isOpen&&hasOpenWork(r)&&isManuallyUrgent(r));
+  const urgentRows=drilled.urgent;
   // At Risk = everything needing action: past due with no reschedule, no commit date, any reschedule, and Urgent overrides.
-  const lateTileRows=uniqueRows([...urgentRows,...pastDueNoReschedule,...noCommitRows,...activeRescheduleRows]);
+  const lateTileRows=drilled.risk;
+  // The warehouse scorecard (Lagging) mixes open counts with OTD, fill and reschedule rates, which the chart filters
+  // leave alone, so its open, at-risk and past-due counts use the undrilled lines as well.
+  const whole=ohDrillActive()?riskSets(openRowsAll):drilled;
+  const scoreRows={open:openRowsAll,risk:whole.risk,pastDue:uniqueRows([...whole.pastDue,...whole.noCommit])};
   const dueThisWeekRows=uniqueRows([...lateTileRows,...dueThisWeekDateRows]);
   const lateBreakdownText=[
     `${fmtNum(pastDueNoReschedule.length)} past due, no reschedule`,
@@ -3996,7 +4028,7 @@ function orderHealthData(m){
   const allOrdersAmt=rowOpenAmount(allOrderRows);
   const otd3MoAmt=rowShippedAmount(otdLast3MonthRows);
   const reschedulePerfAmt=reschedulePerf.rescheduled.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0);
-  const data={weeklyFilterRows,weeklyWarehouseOptions,weeklyCustomerOptionMap,weeklyCustomerOptions,weeklySegmentOptions,weeklyOwnerOptions,weeklyOrderTypeOptions,weeklyDepartmentOptions,weeklyProjectOptions,closedThisWeekRows,closedLastWeekRows,otdLast3MonthRows,allSelectedRows,allOrderRows,viewToday,viewStartOfWeek,viewEndOfWeek,thisWeekStart,thisWeekEnd,nextWeekStart,nextWeekEnd,thisMonthKey,inRange,pastDueNoReschedule,activeRescheduleRows,noCommitRows,dueThisWeekDateRows,dueNextWeekRows,notShippedThisMonthRows,fillOpenRows,fillLineRows,fillRate,otd3Mo,reschedulePerf,urgentRows,lateTileRows,dueThisWeekRows,lateBreakdownText,lateCount,lateAmt,activeReschedCount,activeReschedAmt,ncCount,ncAmt,dueThisAmt,dueNextWeekAmt,closedWkAmt,notShippedAmt,allOrdersAmt,otd3MoAmt,reschedulePerfAmt};
+  const data={weeklyFilterRows,weeklyWarehouseOptions,weeklyCustomerOptionMap,weeklyCustomerOptions,weeklySegmentOptions,weeklyOwnerOptions,weeklyOrderTypeOptions,weeklyDepartmentOptions,weeklyProjectOptions,closedThisWeekRows,closedLastWeekRows,otdLast3MonthRows,allSelectedRows,allOrderRows,viewToday,viewStartOfWeek,viewEndOfWeek,thisWeekStart,thisWeekEnd,nextWeekStart,nextWeekEnd,thisMonthKey,inRange,pastDueNoReschedule,activeRescheduleRows,noCommitRows,dueThisWeekDateRows,dueNextWeekRows,notShippedThisMonthRows,fillOpenRows,fillLineRows,fillRate,otd3Mo,reschedulePerf,urgentRows,lateTileRows,dueThisWeekRows,lateBreakdownText,lateCount,lateAmt,activeReschedCount,activeReschedAmt,ncCount,ncAmt,dueThisAmt,dueNextWeekAmt,closedWkAmt,notShippedAmt,allOrdersAmt,otd3MoAmt,reschedulePerfAmt,scoreRows};
   // Filled after normalizing the filters above, so the key matches the next lookup.
   return cachedByFilter(m,`ohd|${weeklyFilterKey()}`,()=>data);
 }
@@ -4119,7 +4151,21 @@ function renderDeltaPill(series,key){
   const a=series[series.length-2],b=series[series.length-3];
   if(!a||!b||a[key]===null||b[key]===null)return `<span class="delta flat"${tipAttr('Target 90%. The change from month to month shows once two full months have data.')}>target 90%</span>`;
   const x=a[key]-b[key];
-  return `<span class="delta ${x>=0?'up':'down'}"${tipAttr(`${a.label}: ${a[key]}% against ${b.label}: ${b[key]}% (the last full month against the month before). Target 90%.`)}>${x>=0?'↑':'↓'} ${fmtNum(Math.abs(x))} pts vs ${esc(b.label)}</span>`;
+  return `<span class="delta ${x>=0?'up':'down'}"${tipAttr(`${deltaPillText(series,key)} Target 90%.`)}>${x>=0?'↑':'↓'} ${fmtNum(Math.abs(x))} pts vs ${esc(b.label)}</span>`;
+}
+// The month-against-month comparison behind a delta pill, for the card's own tip ('' while there is none): the pill
+// sits inside the card, so keyboard focus only ever shows the card's tip.
+function deltaPillText(series,key){
+  const a=series[series.length-2],b=series[series.length-3];
+  if(!a||!b||a[key]===null||b[key]===null)return '';
+  return `${a.label}: ${a[key]}% against ${b.label}: ${b[key]}% (the last full month against the month before).`;
+}
+// A card tip with the delta pill's comparison added before its "Click …" sentence.
+function withDeltaText(tipText,series,key){
+  const d=deltaPillText(series,key);
+  if(!d)return tipText;
+  const at=tipText.indexOf(' Click ');
+  return at<0?`${tipText} ${d}`:`${tipText.slice(0,at)} ${d}${tipText.slice(at)}`;
 }
 const TONE_COLOR={good:'var(--good)',warning:'var(--warn)',critical:'var(--crit)',neutral:'var(--gray-500)'};
 // 12-month sparkline with a dashed 90% target line. Gaps (months with nothing scored) break the line.
@@ -4219,14 +4265,14 @@ const aiTile=rows=>({orders:rowDocCount(rows),lines:rows.length,open_value:aiR(r
 const aiPoTile=rows=>({lines:rows.length,open_value:aiR(rowOpenAmount(rows)),open_qty:aiR(rowOpenQty(rows))});
 const aiDaysLate=r=>hasOpenWork(r)?(r.originalDaysPastDue??daysFromToday(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate)):null;
 function aiWithFilters(f,fn){
-  const saved=[weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache,weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter];
+  const saved=[weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache,weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter,weeklyReasonMain];
   try{
     weeklyWarehouseFilter=f.warehouse||['ALL'];weeklyCustomerFilter=f.customer||['ALL'];weeklySegmentFilter=f.segment||['ALL'];weeklyOwnerFilter=f.owner||['ALL'];
-    weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyReasonFilter='';weeklyCauseFilter='';weeklyAgeFilter='';
+    weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';
     poWarehouseFilter=f.poWarehouse||['ALL'];poVendorFilter=f.vendor||['ALL'];
     return fn();
   }finally{
-    [weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache,weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter]=saved;
+    [weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,poWarehouseFilter,poVendorFilter,poDataCache,weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter,weeklyReasonMain]=saved;
   }
 }
 // A name the model typed, matched to filter options: the exact code or label alone, else every label that contains it
@@ -5187,11 +5233,14 @@ function renderSidebar(){
   // used only when PAGE_TIPS has none.
   const item=([id,label,tipText])=>{
     const active=onResults&&activeTab===id;
-    const badge=badges[id]?`<span class="nav-badge"${tipAttr(id==='weekly'?`${fmtNum(badges[id])} orders at risk (same count as the At risk card)`:`${fmtNum(badges[id])} late purchase-order lines`)}>${fmtNum(badges[id])}</span>`:'';
+    // The badge sits inside the nav button, so its meaning is also hidden text in the badge (screen readers) and part
+    // of the button's own tip (keyboard focus shows the button's tip, never the badge's).
+    const badgeText=badges[id]?(id==='weekly'?`${fmtNum(badges[id])} orders at risk (same count as the At risk card)`:`${fmtNum(badges[id])} late purchase-order lines`):'';
+    const badge=badges[id]?`<span class="nav-badge"${tipAttr(badgeText)}>${fmtNum(badges[id])}<span class="sr-only"> ${esc(id==='weekly'?'orders at risk':'late purchase-order lines')}</span></span>`:'';
     // The load screen shows each page's one-line description under its name; elsewhere it is the tooltip.
     const about=PAGE_TIPS[id]||tipText||'';
     const text=!onResults&&about?`<span class="nav-label-text">${esc(label)}</span><span class="nav-desc">${esc(about)}</span>`:esc(label);
-    return `<button type="button" class="nav-item${active?' active':''}${!onResults&&about?' has-desc':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}${onResults?tipAttr(about):''}><span class="nav-text">${text}</span>${badge}</button>`;
+    return `<button type="button" class="nav-item${active?' active':''}${!onResults&&about?' has-desc':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}${onResults?tipAttr(about&&badgeText?`${about} ${badgeText}.`:about||badgeText):''}><span class="nav-text">${text}</span>${badge}</button>`;
   };
   const fileName=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'No export loaded');
   const kinds=[
@@ -5204,13 +5253,16 @@ function renderSidebar(){
   const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
   const meta=loaded
-    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}${sharedNotesSidebarLine()}`
+    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
+  // The shared-notes status and the initials button have their own row, which stays visible in the compact card
+  // (980px and below hides the meta lines).
+  const notesLine=loaded?sharedNotesSidebarLine():'';
   const focus=captureFocus(el);
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
     <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}${group==='Help'?hintsResetButton():''}</div>`).join('')}</nav>
-    <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand snapshot or Clear To Build workbook) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Open the load screen to replace this report with a new export. The current report stays until the new file is read.')}>New file</button></div>`:''}</div>`;
+    <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${notesLine?`<div class="loaded-notes">${notesLine}</div>`:''}${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand snapshot or Clear To Build workbook) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Open the load screen to replace this report with a new export. The current report stays until the new file is read.')}>New file</button></div>`:''}</div>`;
   restoreFocus(el,focus);
 }
 function setTab(t){
@@ -5417,7 +5469,7 @@ function renderShipTargetScenario(sd,today){
     </div>
     ${sd.forward?`<div class="card chart-card tight">
       <div class="chart-head"><div class="title-row"><h2>Open ship calendar</h2>${infoButton('mo-calendar')}</div><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''} · open lines by day</span></div>
-      <div class="table-scroll"><div class="day-chart" style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
+      <div class="table-scroll"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
         ${sd.days.map(d=>{
           const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
           const isToday=displayDate(d.date)===displayDate(reportToday());
@@ -5594,7 +5646,7 @@ function renderResults(){
     <section class="section rise rise-3">
       <div class="section-head"><h2 class="section-title">How we performed</h2>${infoButton('oh-performed')}<span class="section-sub">lagging indicators · last 12 months</span><div class="section-tools"><button type="button" class="link-btn" data-focus-key="toggle-lagging" onclick="toggleLaggingIndicators()" aria-expanded="${weeklyLaggingCollapsed?'false':'true'}"${tipAttr(weeklyLaggingCollapsed?'Show the How we performed cards again.':'Hide the How we performed cards (a list picked from them hides too).')}>${weeklyLaggingCollapsed?'Show':'Hide'}</button></div></div>
       ${weeklyLaggingCollapsed?'':`<div class="grid-4">
-        <button type="button" class="card kpi lag${selected('otd3mo')}" ${tileAttrs('otd3mo')}${tipAttr(otd3Mo.scored.length?`On-time delivery, last 3 months: ${fmtNum(otd3Mo.rate)}%. ${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries (${money(otd3MoAmt)} shipped) went out on or before the line’s original delivery date. Target 90%. Click for early, on-time and late deliveries.`:'On-time delivery, last 3 months: no deliveries to score in this view. Click to list the lines.')}>
+        <button type="button" class="card kpi lag${selected('otd3mo')}" ${tileAttrs('otd3mo')}${tipAttr(withDeltaText(otd3Mo.scored.length?`On-time delivery, last 3 months: ${fmtNum(otd3Mo.rate)}%. ${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries (${money(otd3MoAmt)} shipped) went out on or before the line’s original delivery date. Target 90%. Click for early, on-time and late deliveries.`:'On-time delivery, last 3 months: no deliveries to score in this view. Click to list the lines.',series,'otd'))}>
           <div class="kpi-top"><span class="kpi-label">OTD · 3 mo</span>${renderDeltaPill(series,'otd')}</div>
           <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[otdTone]}" data-count="${otd3Mo.rate}" data-fmt="pct">${otd3Mo.scored.length?`${fmtNum(otd3Mo.rate)}%`:'—'}</span><span class="kpi-unit sm">target 90%</span></div>
           ${renderSparkline(series.map(s=>s.otd),otdTone)}
@@ -5616,7 +5668,7 @@ function renderResults(){
           <span class="kpi-sub">Delivered or closed qty of ordered qty · ${fmtNum(fillOpenRows.length)} lines still open</span>
           ${ohLagSplit(m,'fillrate')}
         </button>
-        <button type="button" class="card kpi lag${selected('reschedhit')}" ${tileAttrs('reschedhit')}${tipAttr(reschedulePerf.closed.length?`Reschedule hit rate, last 12 months: ${fmtNum(reschedulePerf.rate)}%. ${fmtNum(reschedulePerf.met.length)} of ${fmtNum(reschedulePerf.closed.length)} rescheduled deliveries shipped on or before their reschedule date. Target 90%. Click for met, missed and still-open reschedules.`:'Reschedule hit rate: no rescheduled deliveries in the last 12 months for this view.')}>
+        <button type="button" class="card kpi lag${selected('reschedhit')}" ${tileAttrs('reschedhit')}${tipAttr(withDeltaText(reschedulePerf.closed.length?`Reschedule hit rate, last 12 months: ${fmtNum(reschedulePerf.rate)}%. ${fmtNum(reschedulePerf.met.length)} of ${fmtNum(reschedulePerf.closed.length)} rescheduled deliveries shipped on or before their reschedule date. Target 90%. Click for met, missed and still-open reschedules.`:'Reschedule hit rate: no rescheduled deliveries in the last 12 months for this view.',series,'hit'))}>
           <div class="kpi-top"><span class="kpi-label">Reschedule hit · 12 mo</span>${renderDeltaPill(series,'hit')}</div>
           <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[hitTone]}" data-count="${reschedulePerf.rate}" data-fmt="pct">${reschedulePerf.closed.length?`${fmtNum(reschedulePerf.rate)}%`:'—'}</span><span class="kpi-unit sm">target 90%</span></div>
           ${renderSparkline(series.map(s=>s.hit),hitTone)}
@@ -5631,9 +5683,11 @@ function renderResults(){
     const scorecard=cachedByFilter(m,`${ohKey}|scorecard`,()=>{
     const byWarehouse=new Map();
     const whGroup=name=>{if(!byWarehouse.has(name))byWarehouse.set(name,{name,open:[],risk:[],pastDue:0,otd:[],fill:[],all:[]});return byWarehouse.get(name);};
-    allOrderRows.forEach(r=>whGroup(rowWarehouse(r)).open.push(r));
-    lateTileRows.forEach(r=>whGroup(rowWarehouse(r)).risk.push(r));
-    uniqueRows([...pastDueNoReschedule,...noCommitRows]).filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1;}).forEach(r=>whGroup(rowWarehouse(r)).pastDue++);
+    // Open, at risk and past due without the reason / cause / when-flagged filters, like the rates beside them.
+    const sc=orderHealthData(m).scoreRows;
+    sc.open.forEach(r=>whGroup(rowWarehouse(r)).open.push(r));
+    sc.risk.forEach(r=>whGroup(rowWarehouse(r)).risk.push(r));
+    sc.pastDue.filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1;}).forEach(r=>whGroup(rowWarehouse(r)).pastDue++);
     otdLast3MonthRows.forEach(r=>whGroup(rowWarehouse(r)).otd.push(r));
     fillLineRows.forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).fill.push(r);});
     allSelectedRows.forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).all.push(r);});
@@ -6207,7 +6261,7 @@ function renderResults(){
       <section class="section rise rise-3">
         <div class="section-head"><h2 class="section-title">Receiving performance</h2>${infoButton('po-receiving')}<span class="section-sub">lagging indicators · target 90%</span></div>
         <div class="grid-4">
-          <div class="card kpi lag static"${tipAttr(poOtd3Mo.scored.length?`On-time receiving, last 3 months: ${fmtNum(poOtd3Mo.rate)}%. ${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts (${money(poOtdAmt)}) arrived on or before the PO line’s original date. Target 90%.`:`On-time receiving, last 3 months: no receipts to score in this view (receipts worth ${money(poOtdAmt)}).`)}>
+          <div class="card kpi lag static"${tipAttr(withDeltaText(poOtd3Mo.scored.length?`On-time receiving, last 3 months: ${fmtNum(poOtd3Mo.rate)}%. ${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts (${money(poOtdAmt)}) arrived on or before the PO line’s original date. Target 90%.`:`On-time receiving, last 3 months: no receipts to score in this view (receipts worth ${money(poOtdAmt)}).`,poSeries,'otd'))}>
             <div class="kpi-top"><span class="kpi-label">On-time · 3 mo</span>${renderDeltaPill(poSeries,'otd')}</div>
             <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[poOtdTone]}" data-count="${poOtd3Mo.rate}" data-fmt="pct">${poOtd3Mo.scored.length?`${fmtNum(poOtd3Mo.rate)}%`:'—'}</span><span class="kpi-unit">received on time</span></div>
             ${renderSparkline(poSeries.map(s=>s.otd),poOtdTone,40)}
@@ -6225,7 +6279,7 @@ function renderResults(){
             <div class="bullet-wrap sm">${renderBullet(poFillRate,poFillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
             <span class="kpi-sub">PO lines received or closed · ${fmtNum(filteredPoOpen.length)} still open</span>
           </button>
-          <div class="card kpi lag static"${tipAttr(poReschedulePerf.closed.length?`PO reschedule hit rate, last 12 months: ${fmtNum(poReschedulePerf.rate)}%. ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(poReschedulePerf.closed.length)} rescheduled receipts arrived by their reschedule date. Rescheduled PO lines and receipts: ${money(poReschedulePerfAmt)}. Target 90%.`:`PO reschedule hit rate: no rescheduled receipts in the last 12 months for this view (rescheduled lines: ${money(poReschedulePerfAmt)}).`)}>
+          <div class="card kpi lag static"${tipAttr(withDeltaText(poReschedulePerf.closed.length?`PO reschedule hit rate, last 12 months: ${fmtNum(poReschedulePerf.rate)}%. ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(poReschedulePerf.closed.length)} rescheduled receipts arrived by their reschedule date. Rescheduled PO lines and receipts: ${money(poReschedulePerfAmt)}. Target 90%.`:`PO reschedule hit rate: no rescheduled receipts in the last 12 months for this view (rescheduled lines: ${money(poReschedulePerfAmt)}).`,poSeries,'hit'))}>
             <div class="kpi-top"><span class="kpi-label">Reschedule hit · 12 mo</span>${renderDeltaPill(poSeries,'hit')}</div>
             <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[poHitTone]}" data-count="${poReschedulePerf.rate}" data-fmt="pct">${poReschedulePerf.closed.length?`${fmtNum(poReschedulePerf.rate)}%`:'—'}</span><span class="kpi-unit">met commit</span></div>
             ${renderSparkline(poSeries.map(s=>s.hit),poHitTone,40)}
@@ -6829,7 +6883,8 @@ function focusSelector(node){
 // with a CSS ::after because the scrolling tables, the sidebar and the filter bar clip anything that sticks out of
 // them. Optional data-tip-pos="top|bottom|left|right" picks the preferred side; the bubble flips and stays inside
 // the window when there is no room. Screen readers get the same text as a description: tip(el,text) and an
-// automatic pass after every redraw point aria-describedby at a hidden copy of the text in #tip-descs.
+// automatic pass after every redraw point aria-describedby at a hidden copy of the text in #tip-descs. The same pass
+// makes tipped headings, column headings and static cards keyboard-focusable (tipNeedsTabStop below).
 const TIP_DELAY=200;
 const TIP_LONG_PRESS=500;
 const tipState={el:null,timer:0,hideTimer:0,press:null,swallowClick:false};
@@ -6854,13 +6909,52 @@ function tipDescId(text){
   tipDescIds.set(text,id);
   return id;
 }
+// Tipped elements a keyboard cannot reach on their own (column headings, static cards, chart titles and bars, badges,
+// shipment facts) get tabindex="0" (marked data-tip-tab) so Tab shows their tip like a button's. Left alone: anything
+// inside a control (that control's own tip carries the facts), inside a table body cell (hundreds of tab stops; the
+// cell shows its facts as text), inside a role="img" chart or aria-hidden part (labelled as a whole), and <i> marks.
+// A div also gets a visually hidden copy of the tip (data-tip-copy): screen readers reading the page rather than
+// tabbing skip aria-describedby on static elements.
+const TIP_CONTROL='a[href],button,input,select,textarea,summary,[contenteditable="true"],[tabindex]:not([tabindex="-1"])';
+function tipNeedsTabStop(el){
+  if(!el.matches||!el.closest||!el.tagName)return false;
+  if(el.namespaceURI&&el.namespaceURI!=='http://www.w3.org/1999/xhtml')return false;
+  if(el.tagName==='I'||el.matches('a[href],button,input,select,textarea,summary,[contenteditable="true"]'))return false;
+  if(el.hasAttribute&&el.hasAttribute('tabindex')&&!el.hasAttribute('data-tip-tab'))return false;
+  const up=el.parentElement;
+  if(up&&up.closest(`${TIP_CONTROL},td,[role="img"],[aria-hidden="true"]`))return false;
+  return !(el.querySelector&&el.querySelector(TIP_CONTROL));
+}
+// A dense chart series (data-tip-notab on the chart, e.g. the 30-plus days of the Open ship calendar) keeps its
+// hidden copies for screen readers but adds no tab stops; its visible labels carry the main figure.
+function tipTabStop(el,text){
+  const eligible=!!text&&tipNeedsTabStop(el);
+  const want=eligible&&!el.closest('[data-tip-notab]');
+  const copy=el.querySelector?el.querySelector(':scope>[data-tip-copy]'):null;
+  if(want){
+    if(!el.hasAttribute('data-tip-tab')){el.setAttribute('tabindex','0');el.setAttribute('data-tip-tab','');}
+  }else if(el.hasAttribute&&el.hasAttribute('data-tip-tab')){
+    el.removeAttribute('tabindex');el.removeAttribute('data-tip-tab');
+  }
+  const own=String(el.textContent||'').replace(copy?copy.textContent:'','');
+  const needCopy=eligible&&el.tagName==='DIV'&&!own.includes(text);
+  if(!needCopy){if(copy)copy.remove();return;}
+  if(copy){if(copy.textContent!==text)copy.textContent=text;return;}
+  const node=document.createElement('span');
+  node.className='sr-only';
+  node.setAttribute('data-tip-copy','');
+  node.textContent=text;
+  el.appendChild(node);
+}
 // Points the element's aria-describedby at its tip text (other describedby ids it has are kept).
 function wireTip(el){
   if(!el||!el.setAttribute)return;
   const text=String(tipGet(el,'data-tip')||'').trim();
+  if(el.matches)tipTabStop(el,text);
   const current=String(tipGet(el,'aria-describedby')||'');
   const ids=current.split(/\s+/).filter(id=>id&&!id.startsWith('tipd-'));
-  // Text the element already shows or is named by (a heat-map cell's own breakdown) is not read twice.
+  // Text the element already shows or is named by (a heat-map cell's own breakdown) is not read twice; a div's
+  // hidden copy counts as shown.
   const shown=!text||String(el.textContent||'').includes(text)||tipGet(el,'aria-label')===text;
   const id=shown?'':tipDescId(text);
   if(id)ids.push(id);
@@ -7571,8 +7665,19 @@ const notesHasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 function readEditor(){
   try{return localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
 }
+// This computer's clock against the server's (the Date header of a notes reply), used only when it is more than two
+// minutes off: edits are then stamped in server time, so a clock set ahead does not keep winning merges (the server
+// clamps future times to its own) and one set behind does not lose to older edits.
+let notesClockOffset=0;
+function noteClockFrom(res){
+  const d=res&&res.headers&&typeof res.headers.get==='function'?Date.parse(res.headers.get('date')||''):NaN;
+  if(!Number.isFinite(d))return;
+  const off=d-Date.now();
+  notesClockOffset=Math.abs(off)>120000?off:0;
+}
+const noteNowIso=()=>new Date(Date.now()+notesClockOffset).toISOString();
 function noteStamp(){
-  return {by:readEditor()||'',at:new Date(Date.now()).toISOString()};
+  return {by:readEditor()||'',at:noteNowIso()};
 }
 function noteTime(e){
   const t=e?Date.parse(e.at):NaN;
@@ -7594,11 +7699,11 @@ function sharedRowEntry(e){
   if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
   if(e.deleted)out.deleted=true;
   out.by=cleanNoteText(e.by,16);
-  out.at=noteTime(e)?e.at:new Date(Date.now()).toISOString();
+  out.at=noteTime(e)?e.at:noteNowIso();
   return out;
 }
 function sharedShipmentEntry(e){
-  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanNoteText(e.by,16),at:noteTime(e)?e.at:new Date(Date.now()).toISOString()};
+  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanNoteText(e.by,16),at:noteTime(e)?e.at:noteNowIso()};
 }
 // An entry that came from the server, as this page keeps it.
 function localRowEntry(e){
@@ -7614,10 +7719,15 @@ function localRowEntry(e){
 function isClearedNote(e){
   return !e.status&&!e.notes&&!e.cause&&!e.deleted;
 }
+// Returns true when the line's status or deleted flag changed (the metrics then need a rebuild; a note or a cause
+// does not: causes are part of ohStamp(), which keys every cache that reads them).
 function adoptRowEntry(k,srv){
+  const old=rowOverrides[k]||null;
   const e=localRowEntry(srv);
   if(isClearedNote(e))delete rowOverrides[k];else rowOverrides[k]=e;
   if(notesCleared[k]){delete notesCleared[k];persistClearedSoon();}
+  const now=rowOverrides[k]||null;
+  return (old?old.status:undefined)!==(now?now.status:undefined)||!!(old&&old.deleted)!==!!(now&&now.deleted);
 }
 
 // Called by writeRowOverride for every changed line (entry null = the line's entry was removed).
@@ -7688,9 +7798,10 @@ async function flushSharedNotes({all=false,keepalive=false}={}){
   let retrying=false,failed=false;
   try{
     const res=await fetch('/api/notes',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify(body),keepalive});
+    noteClockFrom(res);
     const data=await res.json().catch(()=>({}));
     if(res.ok){
-      sharedNotes.message='';notesRetries=0;adoptSharedReply(data);
+      sharedNotes.message='';notesRetries=0;adoptSharedReply(data,body);
       if(data&&data.applied)scheduleNotesRecheck();
       // Lines the server left for another request (over its limit of new lines) go in the next batch.
       if(data&&data.skipped)sent.forEach(id=>{const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);const got=data[kind];if(!got||typeof got!=='object'||!notesHasOwn(got,key))notesReady.add(id);});
@@ -7729,29 +7840,41 @@ function recheckSharedNotes(){
   if(sharedNotes.state==='shared')return syncSharedNotes();
 }
 // The server answers with what it now holds for each key sent; a newer edit from another computer wins here too.
-function adoptSharedReply(data){
-  let changed=false,shipChanged=false;
+// An older time than the one sent is taken as well while this browser's copy is still the one sent (no edit since):
+// it can only be this browser's own edit, stamped ahead of the server's clock and clamped by it to its own time.
+// Keeping the future time here would make every later merge push this edit again over newer ones from others.
+function adoptSharedReply(data,sentBody={}){
+  let changed=false,shipChanged=false,structural=false;
+  const changedKeys=new Set();
+  const unchanged=(kind,k,mine)=>{const e=sentBody[kind]&&sentBody[kind][k];return !!e&&noteTime(e)===mine&&!notesTimers.has(`${kind}|${k}`)&&!notesReady.has(`${kind}|${k}`);};
   const rows=data&&data.rows&&typeof data.rows==='object'?data.rows:{};
   Object.keys(rows).forEach(k=>{
     const srv=rows[k];
     if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
     if(notesCleared[k]&&noteTime(srv)>=noteTime(notesCleared[k])){delete notesCleared[k];persistClearedSoon();}
-    if(noteTime(srv)>noteTime(rowOverrides[k]||notesCleared[k])){adoptRowEntry(k,srv);changed=true;}
+    const mine=noteTime(rowOverrides[k]||notesCleared[k]);
+    if(noteTime(srv)>mine||(noteTime(srv)!==mine&&unchanged('rows',k,mine))){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;}
   });
   const ships=data&&data.shipments&&typeof data.shipments==='object'?data.shipments:{};
   Object.keys(ships).forEach(k=>{
     const srv=ships[k];
     if(!isSafeNoteKey(k)||!srv||typeof srv!=='object')return;
-    if(noteTime(srv)>noteTime(sharedShipments[k])){sharedShipments[k]=sharedShipmentEntry(srv);shipChanged=true;}
+    const mine=noteTime(sharedShipments[k]);
+    if(noteTime(srv)>mine||(noteTime(srv)!==mine&&unchanged('shipments',k,mine))){sharedShipments[k]=sharedShipmentEntry(srv);shipChanged=true;}
   });
-  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged});
+  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged,structural,keys:changedKeys});
 }
-// After notes came in from the server: save them here, put them on the loaded lines and redraw.
-function sharedNotesChanged({rows=true,shipments=false}={}){
+// After notes came in from the server: save them here, put them on the loaded lines and redraw. keys: the row keys
+// that changed (only their lines are re-applied); structural: a status or deleted flag changed, so the metrics are
+// rebuilt. A note or a cause from someone else redraws from the cached metrics.
+function sharedNotesChanged({rows=true,shipments=false,structural=true,keys=null}={}){
   if(rows)saveRowOverrides();
   if(shipments)notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
   recomputeLastEdit();
-  if(rows&&allLoadedRows.length){allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
+  if(rows&&allLoadedRows.length){
+    (keys?allLoadedRows.filter(r=>rowKeyCandidates(r).some(k=>keys.has(k))):allLoadedRows).forEach(applyRowOverride);
+    if(structural)applyInventoryScope();
+  }
   if(document.getElementById('results-screen').style.display==='block')renderResults();
   else renderSidebar();
 }
@@ -7777,6 +7900,7 @@ async function syncSharedNotes(){
     // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON.
     if([404,405,503].includes(res.status)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();return;}
     if(!res.ok){sharedNotes={...sharedNotes,state:'failed',message:res.status===401?'sign-in expired, reload and sign in again':`server error ${res.status}`};return;}
+    noteClockFrom(res);
     let doc=null;
     try{doc=await res.json();}catch(err){doc=null;}
     if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){if(!refresh)sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};return;}
@@ -7799,7 +7923,8 @@ function refreshSharedNotes(){
 // Line by line, the newer edit wins. Returns the ids to send (newer here, or not on the server yet).
 function mergeSharedNotes(doc){
   const push=[];
-  let changed=false,stamped=false,shipChanged=false;
+  let changed=false,stamped=false,shipChanged=false,structural=false;
+  const changedKeys=new Set();
   const stamp=noteStamp();
   const srvRows=doc.rows;
   const keys=new Set([...Object.keys(rowOverrides),...Object.keys(notesCleared),...Object.keys(srvRows)]);
@@ -7807,7 +7932,7 @@ function mergeSharedNotes(doc){
     if(!isSafeNoteKey(k))return;
     const srv=notesHasOwn(srvRows,k)&&srvRows[k]&&typeof srvRows[k]==='object'?srvRows[k]:null;
     const local=rowOverrides[k]||notesCleared[k]||null;
-    if(srv&&noteTime(srv)>noteTime(local)){adoptRowEntry(k,srv);changed=true;return;}
+    if(srv&&noteTime(srv)>noteTime(local)){if(adoptRowEntry(k,srv))structural=true;changedKeys.add(k);changed=true;return;}
     if(!local)return;
     if(srv&&noteTime(local)===noteTime(srv)){if(notesCleared[k]){delete notesCleared[k];persistClearedSoon();}return;}
     // Notes saved before shared notes existed have no time: they are stamped now and shared.
@@ -7823,7 +7948,7 @@ function mergeSharedNotes(doc){
     if(local&&noteTime(local)>noteTime(srv)&&SHIPMENT_ID_RE.test(id))push.push(`shipments|${id}`);
   });
   if(stamped&&!changed)saveRowOverrides();
-  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged});
+  if(changed||shipChanged)sharedNotesChanged({rows:changed,shipments:shipChanged,structural,keys:changedKeys});
   else recomputeLastEdit();
   return push;
 }
@@ -7835,7 +7960,7 @@ function recomputeLastEdit(){
   [...Object.values(rowOverrides),...Object.values(sharedShipments)].forEach(e=>{if(e&&noteTime(e)&&(!last||noteTime(e)>noteTime(last)))last=e;});
   sharedNotes.last=last?{by:String(last.by||''),at:last.at}:null;
 }
-// Sidebar line under the report status: "Notes shared · last edit KK Oct 8".
+// Sidebar line under the report status (its own .loaded-notes row): "Notes shared · last edit KK Oct 8".
 function sharedNotesSidebarLine(){
   if(isSnapshotView)return '';
   const s=sharedNotes;
@@ -7859,7 +7984,7 @@ function sharedNotesSidebarLine(){
   }else return '';
   const editor=readEditor();
   const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorInitials(true)" data-tip="Your initials are kept in this browser and saved with every note, override and cause you change, so others see who made the last edit. Click to change them.">${editor?`Your initials: ${esc(editor)}`:'Add your initials'}</button>`:'';
-  return `<br><span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
+  return `<span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
 }
 
 // --- Editor initials: asked once, in a small dialog, the first time notes are shared from this browser ---
@@ -8227,8 +8352,9 @@ function sankeyLineCause(r){
   // 'neutral' comes only from the Order Health cause engine (Stream D), so the bands match its Us vs Them card.
   return c==='us'||c==='them'||c==='neutral'?c:'unknown';
 }
-// The main reason a line is at risk: the first of lineReasons (Order Health cause engine) when it is on the page,
-// else the override status a person picked, else the SAP signal.
+// The main reason a line is at risk: the first of lineReasons (Order Health: SAP signals, then the override reason)
+// when it is on the page, else the override status a person picked, else the SAP signal. A reason box's click keeps
+// exactly these lines (setWeeklyMainReasonFilter / ohMainReason).
 function sankeyLineReason(r){
   if(typeof lineReasons==='function'){
     try{
@@ -8264,7 +8390,7 @@ function sankeyWeeklyFlows(m){
   const causes=new Map(d.lateTileRows.map(r=>[r,sankeyLineCause(r)]));
   const causeOf=r=>causes.get(r)||'unknown';
   const risk=sankeyBuild(d.lateTileRows,{value:openLineValue,doc,tone:r=>SANKEY_CAUSES[causeOf(r)].tone,cols:[
-    {key:sankeyLineReason,top:6,other:'Other reasons',action:(ms,other)=>other?null:reasonFilter?{type:'reason',value:ms[0]}:SANKEY_REASON_TILE[ms[0]]?{type:'tile',value:SANKEY_REASON_TILE[ms[0]]}:null},
+    {key:sankeyLineReason,top:6,other:'Other reasons',action:(ms,other)=>other?null:reasonFilter?{type:'reason',value:ms[0],main:true}:SANKEY_REASON_TILE[ms[0]]?{type:'tile',value:SANKEY_REASON_TILE[ms[0]]}:null},
     {key:causeOf,label:k=>SANKEY_CAUSES[k].label,order:k=>SANKEY_CAUSES[k].order,tone:k=>SANKEY_CAUSES[k].tone,action:ms=>typeof setWeeklyCauseFilter==='function'?{type:'cause',value:ms[0]}:null},
     {key:rowCustomer,label:k=>names.get(k)||k,top:8,other:'Other customers',action:ms=>({type:'customer',values:ms})}
   ]});
@@ -8281,7 +8407,7 @@ function sankeyWeeklyFlows(m){
     const share=`${sankeyPct(n.value,risk.total)} of ${money(risk.total)} at risk`;
     const what=n.level===2&&!n.other?`${n.label}${n.key!==n.label?` (${n.key})`:''}`:n.label;
     const click=n.level===2?(sankeyNodeSelected(n)?'Click to show every customer again.':`Click to show only ${n.other?'these customers':'this customer'} on Order Health.`)
-      :n.action?(n.action.type==='tile'?'Click to list these lines under Linked lines.':'Click to filter Order Health to it.')
+      :n.action?(n.action.type==='tile'?'Click to list these lines under Linked lines.':n.action.type==='reason'?(sankeyNodeSelected(n)?'Click to show every reason again.':'Click to filter Order Health to these lines (each at-risk line counts under its first reason).'):'Click to filter Order Health to it.')
       :'Click to highlight where this value goes.';
     n.tip=`${what}: ${money(n.value)} at risk, ${lines(n)} (${share}).${n.level===1?` ${SANKEY_CAUSES[n.key].tip}`:''} ${click}`;
   });
@@ -8293,7 +8419,7 @@ function sankeyWeeklyFlows(m){
       sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view${notDrawn(d.allOrdersAmt,open.total)}`,empty:'No open order value in this view.',
       legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
     {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,
-      colTips:['Main reason the line is at risk: an override reason someone picked, otherwise the SAP signal.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
+      colTips:['The first reason the line is at risk, as Order Health lists them: the SAP signals first, then an override reason someone picked. Each line counts once.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
       sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
       legend:[['us','Us'],['them','Them'],['neutral','Neutral'],['unknown','Not set']]}
   ];
@@ -8394,7 +8520,7 @@ function sankeyNodeSelected(n){
   if(a.type==='customer')return sankeySameSet(weeklyCustomerFilter,a.values);
   // "late" is the whole At Risk card (several boxes feed it), so only the no-commit and rescheduled boxes show pressed.
   if(a.type==='tile')return a.value!=='late'&&weeklyTileFilter===a.value;
-  if(a.type==='reason')return typeof weeklyReasonFilter!=='undefined'&&matches(weeklyReasonFilter,a.value);
+  if(a.type==='reason')return typeof weeklyReasonFilter!=='undefined'&&matches(weeklyReasonFilter,a.value)&&(typeof weeklyReasonMain==='undefined'||!!weeklyReasonMain===!!a.main);
   if(a.type==='cause')return typeof weeklyCauseFilter!=='undefined'&&matches(weeklyCauseFilter,a.value);
   if(a.type==='cm')return buildRiskCmFilter===a.value;
   if(a.type==='supplywh')return sankeySameSet(supplyWarehouseFilter,a.values);
@@ -8422,6 +8548,7 @@ function sankeyNodeClick(tab,flowId,nodeId){
       if(weeklyTileFilter!==a.value)setWeeklyTileFilter(a.value);else renderResults();
       return;
     }
+    if(a.type==='reason'&&a.main&&typeof setWeeklyMainReasonFilter==='function'){setWeeklyMainReasonFilter(a.value);return;}
     if(a.type==='reason'&&typeof setWeeklyReasonFilter==='function'){setWeeklyReasonFilter(a.value);return;}
     if(a.type==='cause'&&typeof setWeeklyCauseFilter==='function'){setWeeklyCauseFilter(a.value);return;}
     if(a.type==='cm'){toast(on?'Showing every CM':`Showing CM ${node.label} only`);setBuildRiskCm(a.value);return;}
@@ -8557,8 +8684,8 @@ function renderBigPicture(tab,m){
 function sankeyAbout(tab){
   const p=t=>`<p>${t}</p>`;
   if(tab==='weekly')return p('Big picture, open order value: every open sales-order line in this view flows from its warehouse to one status and on to its customer segment. Values are open line value, the same as the cards, so the at-risk statuses add up to the At Risk card and all boxes in a column add up to All open orders (credit lines with a negative value cannot be drawn as bands; the chart’s sub-title says when some are left out). A line with more than one risk counts once, in this order: no commit date, past due with no reschedule, rescheduled, marked urgent. The 8 largest warehouses are shown; the rest are grouped as Other warehouses.')
-    +p('At-risk value: the At Risk card’s lines by main reason (an override reason someone picked, otherwise the SAP signal), then Us or Them (a cause set on the line, else the override reason, else the SAP signal: past due or no commit date is us; anything else is Not set), then customer (top 8, the rest grouped as Other customers).')
-    +p('Clicking a warehouse, segment or customer box filters Order Health to it (click it again to show all); a status or reason box picks the matching card so its lines are listed under Linked lines. Other boxes stay highlighted until clicked again.');
+    +p('At-risk value: the At Risk card’s lines by their first reason from Order Health (the SAP signals, then an override reason), then Us or Them (a cause set on the line, else the override reason, else the SAP signal: past due or no commit date is us; anything else is Not set), then customer (top 8, the rest grouped as Other customers).')
+    +p('Clicking a warehouse, segment or customer box filters Order Health to it (click it again to show all); a status box picks the matching card so its lines are listed under Linked lines; a reason or Us / Them box filters Order Health to exactly the lines in that box (a reason box by each line’s first reason; the chips under the tabs remove it). Other boxes stay highlighted until clicked again.');
   if(tab==='buildrisk')return p('Big picture: the picked report week as a flow chart. Each CM’s orders flow into Clear to build, At risk and Late, then into the month they are due; band thickness is the number of orders, so the three middle boxes match the cards above. Click a CM box to show only that CM on this page; click it again, or Show every CM, to undo.');
   if(tab==='supplydemand')return p('Big picture: open demand value flows from warehouse to item group to demand month (open quantity when the snapshot has no demand value). Red bands are demand in months short of open PO supply, amber is covered only by supply at risk (unconfirmed, no commit, rescheduled or late) and blue is covered. Click a warehouse box to narrow the chart; Supply / Demand uses the same warehouse filter.');
   return '';
@@ -8619,13 +8746,21 @@ const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // hand-added numbers when the 
 let shippingState={state:'idle',statuses:{},polledAt:'',fedex:null,lastError:null,errors:[],wanted:null,refreshAfter:'',notice:'',busy:false,loading:null,loadedAt:0,rowsRef:null,syncTimer:null,snapshotManual:null,manualTouched:false};
 let shippingFilter='';
 let shippingExpanded=new Set();
-let shippingExportCache={rows:null,list:[],byOrder:new Map()};
+let shippingExportCache={rows:null,list:[],byOrder:new Map(),skipped:new Map()};
 let shippingSearchIndex=null;
 
 // Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/fedex.mjs.
+// At least one digit: words typed into TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
 function shipClean(v){
   const s=String(v??'').replace(/[\s-]+/g,'').toUpperCase();
-  return /^[A-Z0-9]{6,40}$/.test(s)?s:'';
+  return /^[A-Z0-9]{6,40}$/.test(s)&&/\d/.test(s)?s:'';
+}
+// Numbers that clearly belong to another carrier (by the delivery's ship method, or a UPS 1Z number) are not sent to
+// FedEx. A deny-list, so a blank or unusual ship method ("Customer pickup - prepaid", a custom OSHP name) still is.
+const SHIP_OTHER_CARRIER_RE=/\b(ups|purolator|canpar|dhl|loomis|canada post|dicom|day\s*&?\s*ross|manitoulin)\b/i;
+function shipOtherCarrier(number,method){
+  const m=String(method||'');
+  return (!!m&&!/fed\s*ex|fdx|fxf/i.test(m)&&SHIP_OTHER_CARRIER_RE.test(m))||/^1Z[0-9A-Z]{16}$/.test(number);
 }
 // Separators: , ; / | & + newlines and the word "and"; two whole numbers (10+ letters/digits each) with only a space
 // between them are two numbers, while grouped digits ("7700 1234 5678") stay one.
@@ -8758,13 +8893,21 @@ function shippingTrackingFor(r){
 // --- Shipments: export deliveries with a tracking number, plus hand-added numbers ---
 function shippingExportData(){
   if(shippingExportCache.rows===parsedRows&&shippingExportCache.all===allLoadedRows)return shippingExportCache;
-  const map=new Map(),byOrder=new Map();
+  const map=new Map(),byOrder=new Map(),skipped=new Map();
   for(const r of allLoadedRows){
     if(!r||r.isDeleted||!shipIsSales(r))continue;
     const doc=String(r.documentNumber||'').trim();
     if(doc){if(!byOrder.has(doc))byOrder.set(doc,[]);byOrder.get(doc).push(r);}
     if(!r.trackingNumber||!isShipmentRow(r))continue;
-    for(const n of shipSplit(r.trackingNumber)){
+    const d=parseDate(r.shipDate)||parseDate(r.closeDate)||parseDate(r.documentDate);
+    const nums=shipSplit(r.trackingNumber).filter(n=>{
+      if(!shipOtherCarrier(n,r.shipMethod))return true;
+      if(!skipped.has(n)||(d&&(!skipped.get(n)||d>skipped.get(n))))skipped.set(n,d);
+      return false;
+    });
+    // A delivery with two FedEx numbers (two parcels) shares its value between them, so card totals count it once.
+    const share=nums.length?num(r.amountLocal)/nums.length:0;
+    for(const n of nums){
       let s=map.get(n);
       if(!s){s={number:n,source:'export',rows:[],orders:new Set(),deliveries:new Set(),names:new Set(),shipMethod:'',country:'',shipDate:null,value:0};map.set(n,s);}
       s.rows.push(r);
@@ -8774,12 +8917,12 @@ function shippingExportData(){
       if(!s.shipMethod&&r.shipMethod)s.shipMethod=r.shipMethod;
       if(!s.country&&r.shipToCountry)s.country=r.shipToCountry;
       // The delivery's own date: ShipDate, else ClosedDate (DocumentDate on delivery rows is the order's date).
-      const d=parseDate(r.shipDate)||parseDate(r.closeDate)||parseDate(r.documentDate);
       if(d&&(!s.shipDate||d>s.shipDate))s.shipDate=d;
-      s.value+=num(r.amountLocal);
+      s.value+=share;
     }
   }
-  shippingExportCache={rows:parsedRows,all:allLoadedRows,list:[...map.values()],byOrder};
+  // skipped: other carriers' numbers -> their latest delivery date (counted on the page, never sent to FedEx).
+  shippingExportCache={rows:parsedRows,all:allLoadedRows,list:[...map.values()],byOrder,skipped};
   return shippingExportCache;
 }
 function shippingHasTrackingColumn(){
@@ -8807,7 +8950,8 @@ function shippingModel(){
   const now=Date.now();
   const today=reportToday();
   const since=new Date(today);since.setDate(since.getDate()-SHIP_WINDOW_DAYS);
-  const {list:fromExport,byOrder}=shippingExportData();
+  const {list:fromExport,byOrder,skipped}=shippingExportData();
+  const otherCarrier=[...skipped.values()].filter(d=>!d||d>=since).length;
   const all=new Map();
   for(const s of fromExport)if(!s.shipDate||s.shipDate>=since)all.set(s.number,{...s,manual:null});
   for(const e of shippingManualEntries()){
@@ -8829,7 +8973,7 @@ function shippingModel(){
     exception:list.filter(s=>s.stage==='exception'),
     customs:list.filter(s=>s.stage==='customs'),
   };
-  return {list,groups,since,today,weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length};
+  return {list,groups,since,today,weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length,otherCarrier};
 }
 // What the server should track: the listed deliveries (newest first) and hand-added numbers, without those
 // FedEx delivered more than 7 days ago.
@@ -9149,6 +9293,7 @@ function renderShippingPage(m){
   const lastErrT=st.lastError?Date.parse(st.lastError.at||''):NaN;
   if(st.state==='ready'&&isFinite(lastErrT)&&!(lastErrT<polledT))notes.push(['warn',`The last FedEx check (${shipTimeLabel(st.lastError.at)}) failed: ${st.lastError.message||'no reason given'}${isFinite(polledT)?` Showing the results from ${shipTimeLabel(st.polledAt)}.`:''}`]);
   if(st.state==='ready'&&st.errors&&st.errors.length)notes.push(['warn',`Part of the last check failed (${shipPlural(st.errors.reduce((s,e)=>s+(Number(e.numbers)||0),0),'tracking number','tracking numbers')}): ${st.errors[0].message}`]);
+  if(model.otherCarrier)notes.push(['',`${shipPlural(model.otherCarrier,'tracking number','tracking numbers')} from the last ${SHIP_WINDOW_DAYS} days ${model.otherCarrier===1?'is':'are'} not listed: ${model.otherCarrier===1?'its ship method or number is':'their ship method or number is'} another carrier’s (UPS, Purolator, Canpar, DHL and so on). This page tracks FedEx only.`]);
   if(!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column. Run the updated KPI query in SAP (queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql) to bring in the delivery tracking numbers; until then add them by hand below.']);
   const notesHtml=notes.map(([tone,text])=>`<p class="ship-note${tone?` ${tone}`:''}"${text===st.notice&&typeof showToast!=='function'?' role="status"':''}>${esc(text)}</p>`).join('');
 
@@ -9238,6 +9383,10 @@ function renderShippingPage(m){
 // Which tab Order Health shows, and the three filters set from its charts ('' = off).
 let weeklyView='leading';
 let weeklyReasonFilter='';
+// true when the reason filter came from a Big picture reason box: it then keeps only the at-risk lines whose FIRST
+// reason is that one (the box counts each line under its first reason, so its flows add up), not every line that
+// has the reason somewhere (the Top 6 reasons bars).
+let weeklyReasonMain=false;
 let weeklyCauseFilter='';
 let weeklyAgeFilter='';
 // "When flagged" dates carried inside a shared snapshot (a snapshot file cannot reach the server history).
@@ -9347,6 +9496,9 @@ function lineSapReasonIds(r){
   const resched=rowRealRescheduleDate(r);
   const reschedDate=resched&&parseDate(resched),originalDate=parseDate(ohOriginalDue(r));
   const later=!!(reschedDate&&originalDate&&reschedDate>originalDate);
+  // Only an export whose RescheduleFlag names the customer (a custom query) has this signal: the shipped KPI query's
+  // flags are No Reschedule, No Commit Date and Rescheduled (Later / Earlier Than Original Delivery), so a reschedule
+  // from it stays Not set until someone picks Us or Them on the line.
   const customer=!!resched&&/customer/i.test(String(r.rescheduleFlag||''));
   if(r.statusBucket!=='Closed'){
     if(!r.isOpen||!hasOpenWork(r)||isManuallyNonUrgent(r))return ids;
@@ -9479,15 +9631,18 @@ function ohStamp(){
   return `${ohCausesSeen.gen}|${ff?`${ohFlagsGen}.${Object.keys(ff).length}`:'0'}`;
 }
 // Part of weeklyFilterKey(): empty unless a drill filter is on.
-function ohDrillKey(){return ohDrillActive()?[weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter,ohStamp()]:'';}
+function ohDrillKey(){return ohDrillActive()?[weeklyReasonFilter,weeklyReasonMain,weeklyCauseFilter,weeklyAgeFilter,ohStamp()]:'';}
+// The reason a Big picture box counts the line under (sankeyLineReason): its first reason.
+function ohMainReason(r){const rs=ohRowInfo(r).reasons;return rs.length?rs[0]:sankeyLineReason(r);}
 function ohDrillMatch(r){
   if(weeklyAgeFilter&&!(ohIsAtRisk(r)&&ohAgeBucket(r)===weeklyAgeFilter))return false;
-  if(weeklyReasonFilter&&!ohRowInfo(r).reasons.includes(weeklyReasonFilter))return false;
+  if(weeklyReasonFilter&&(weeklyReasonMain?!(ohIsAtRisk(r)&&ohMainReason(r)===weeklyReasonFilter):!ohRowInfo(r).reasons.includes(weeklyReasonFilter)))return false;
   if(weeklyCauseFilter&&ohRowInfo(r).causeFor!==weeklyCauseFilter)return false;
   return true;
 }
 // Used by orderHealthData for its open lines (every Leading card, Top offenders, aging, What's due next and the linked
-// lines follow). Lagging rates score closed lines and deliveries, so these filters leave them alone.
+// lines follow). Lagging rates score closed lines and deliveries, so these filters leave them alone; so do the Fill
+// rate card's open lines and the warehouse scorecard (orderHealthData keeps an undrilled copy for them).
 function ohDrillRows(rows){
   if(!ohDrillActive())return rows;
   ohRowMemoFresh();
@@ -9500,12 +9655,14 @@ function ohDrillChanged(){
   if(ohDrillActive()&&(!weeklyTileFilter||OH_LAGGING_TILES.has(weeklyTileFilter)))weeklyTileFilter='late';
   renderResults();
 }
-function setWeeklyReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s?'':s;ohDrillChanged();}
+function setWeeklyReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&!weeklyReasonMain?'':s;weeklyReasonMain=false;ohDrillChanged();}
+// From a Big picture reason box: only the at-risk lines whose first reason is this one (the box's own lines).
+function setWeeklyMainReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&weeklyReasonMain?'':s;weeklyReasonMain=!!weeklyReasonFilter;ohDrillChanged();}
 function setWeeklyCauseFilter(v){const s=OH_CAUSE_IDS.includes(v)?v:'';weeklyCauseFilter=weeklyCauseFilter===s?'':s;ohDrillChanged();}
 function setWeeklyAgeFilter(v){const s=OH_AGE_IDS.includes(v)?v:'';weeklyAgeFilter=weeklyAgeFilter===s?'':s;ohDrillChanged();}
 // A chip's x (or Clear all) removes its filter; focus moves to the next chip, else to the active tab.
 function clearWeeklyDrill(kind){
-  if(!kind||kind==='reason')weeklyReasonFilter='';
+  if(!kind||kind==='reason'){weeklyReasonFilter='';weeklyReasonMain=false;}
   if(!kind||kind==='cause')weeklyCauseFilter='';
   if(!kind||kind==='age')weeklyAgeFilter='';
   ohDrillChanged();
@@ -9560,7 +9717,7 @@ function ohRenderDrillChips(){
   const age=OH_AGE_BUCKETS.find(a=>a[0]===weeklyAgeFilter);
   return `<div class="oh-drill" role="group" aria-label="Order Health chart filters">
     <span class="oh-drill-label">Filtered by</span>
-    ${weeklyReasonFilter?chip('reason','Reason',weeklyReasonFilter):''}
+    ${weeklyReasonFilter?chip('reason',weeklyReasonMain?'Main reason':'Reason',weeklyReasonFilter):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
     ${age?chip('age','When flagged',age[1]):''}
     <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove the reason, cause and when-flagged filters. The warehouse, segment and other filters stay.">Clear all</button>
@@ -9619,7 +9776,7 @@ function ohRenderLeading(m){
   // Top 6 at-risk reasons by open value; the bar colour is the cause the reason usually means.
   const maxReason=Math.max(1,...d.topReasons.map(x=>x.value));
   const reasonRows=d.topReasons.map((x,i)=>{
-    const on=weeklyReasonFilter===x.label;
+    const on=weeklyReasonFilter===x.label&&!weeklyReasonMain;
     const tip=`${x.label}: ${money(x.value)} open value on ${fmtNum(x.rows.length)} at-risk lines (${ohN(x.orders,'order')}). Usually ${x.cause==='unknown'?'not set by a rule (pick Us or Them on the line)':`caused by ${OH_CAUSE_LABEL[x.cause].toLowerCase()}`}. ${on?'Click to show every reason again.':'Click to show only lines with this reason.'}`;
     return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-reason-${esc(x.label)}" data-reason="${esc(x.label)}" onclick="setWeeklyReasonFilter(this.dataset.reason)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(x.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w cause-${x.cause}" style="width:${(x.value/maxReason*100).toFixed(1)}%;animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(x.value)}</span></button>`;
   }).join('');
@@ -9828,14 +9985,18 @@ function ohLinkedStatus(r){
   }
   return '';
 }
-// "Us · No commit date": the line's cause and first reason under its status (linked lines and Search).
+// "Us · No commit date": the line's cause and first reason under its status (linked lines and Search). The other
+// reasons and the upload that first flagged the line follow as a muted second line, so keyboard and screen-reader
+// users get them too (table cells are not tab stops; the tip only adds the rule behind the cause).
 function ohLineWhy(r){
   if(!ohIsSalesRow(r))return '';
   const reasons=lineReasons(r);
   if(!reasons.length&&!ohManualCause(r))return '';
   const {cause,rule}=ohCauseRule(r);
-  const tip=`Cause: ${OH_CAUSE_LABEL[cause]} (${rule}). ${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${ohFlaggedSince(r)?` First at risk in the week of the ${ohFlaggedSince(r)} upload.`:''}`;
-  return `<span class="oh-why cause-text-${cause}" data-tip="${esc(tip)}">${esc(OH_CAUSE_LABEL[cause])}${reasons.length?` · ${esc(reasons[0])}${reasons.length>1?` +${reasons.length-1}`:''}`:''}</span>`;
+  const since=ohFlaggedSince(r),sinceText=since?`first at risk in the ${displayDate(since)||since} upload`:'';
+  const tip=`Cause: ${OH_CAUSE_LABEL[cause]} (${rule}). ${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${since?` First at risk in the week of the ${displayDate(since)||since} upload.`:''}`;
+  const extra=[reasons.slice(1).join(', '),sinceText].filter(Boolean).join(' · ');
+  return `<span class="oh-why cause-text-${cause}" data-tip="${esc(tip)}">${esc(OH_CAUSE_LABEL[cause])}${reasons.length?` · ${esc(reasons[0])}`:''}</span>${extra?`<span class="timing oh-why-more">${esc(extra)}</span>`:''}`;
 }
 // Words Search can match: the reasons and "caused by us / them" (or "cause not set"). Worked out once per row until
 // the data, a picked cause or the flag history changes; globalSearchResults calls ohSearchPrepare first.
@@ -9924,28 +10085,29 @@ function ohRenderWaffle(m,view,offenders,keyOf){
 // firstFlagged itself travels in the snapshot through Stream B (exportShareSnapshot / loadEmbeddedSnapshot set the
 // global); ohSnapshotFlags below only covers a snapshot that has firstFlagged but no global to load it into.
 function ohSnapshotView(rowKeys){
-  return {weeklyView,weeklyReasonFilter,weeklyCauseFilter,weeklyAgeFilter};
+  return {weeklyView,weeklyReasonFilter,weeklyReasonMain,weeklyCauseFilter,weeklyAgeFilter};
 }
 function ohRestoreView(data){
   weeklyView=OH_VIEWS.includes(data.weeklyView)?data.weeklyView:'leading';
   weeklyReasonFilter=typeof data.weeklyReasonFilter==='string'?data.weeklyReasonFilter:'';
+  weeklyReasonMain=!!weeklyReasonFilter&&data.weeklyReasonMain===true;
   weeklyCauseFilter=OH_CAUSE_IDS.includes(data.weeklyCauseFilter)?data.weeklyCauseFilter:'';
   weeklyAgeFilter=OH_AGE_IDS.includes(data.weeklyAgeFilter)?data.weeklyAgeFilter:'';
   const flags=data.firstFlagged;
   ohSnapshotFlags=flags&&typeof flags==='object'&&!Array.isArray(flags)?Object.fromEntries(Object.entries(flags).filter(([,v])=>typeof v==='string')):null;
 }
-function ohResetView(){weeklyView='leading';weeklyReasonFilter='';weeklyCauseFilter='';weeklyAgeFilter='';ohSnapshotFlags=null;}
+function ohResetView(){weeklyView='leading';weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';ohSnapshotFlags=null;}
 // sections: Stream A's per-section texts (aboutSections), shown after the Order Health v2 rules.
 function ohAboutHtml(sections=''){
   const p=(title,text)=>`<p><strong>${title}</strong> ${text}</p>`;
   return `<details class="about rise"><summary>About these numbers</summary><div class="about-body">
     ${p('Leading and Lagging.','Leading shows open sales order lines that need action now. Lagging scores what already shipped. The filters at the top and the linked lines below apply to both tabs.')}
     ${p('At risk','= open lines past their original date with no reschedule, lines with no commit date (SAP 1111-11-11), lines with a reschedule (commit) date, and lines marked Urgent. A Not At Risk override takes a line off every risk count.')}
-    ${p('Us vs Them.','Us = Spyder (production, quality, supply, planning). Them = the customer or the carrier. The cause is the one picked on the line; else its override (Us: Waiting on Production, QC Delay, Supply Chain, Supplier Late, Waiting on PO, Partial Coverage, R&D Hold, No Commit. Them: Hold, Urgent, Close Short, Short Ship, Shipping Delay. Neutral: Not At Risk, Covered); else the first SAP signal in this order: no commit date, past due with no reschedule (both Us), customer reschedule (Them), missed commit date, unconfirmed order (Confirmed = N), supply shortage (all Us). Anything else, such as a plain reschedule, is Not set until someone picks Us or Them on the line.')}
+    ${p('Us vs Them.','Us = Spyder (production, quality, supply, planning). Them = the customer or the carrier. The cause is the one picked on the line; else its override (Us: Waiting on Production, QC Delay, Supply Chain, Supplier Late, Waiting on PO, Partial Coverage, R&D Hold, No Commit. Them: Hold, Urgent, Close Short, Short Ship, Shipping Delay. Neutral: Not At Risk, Covered); else the first SAP signal in this order: no commit date, past due with no reschedule, missed commit date, unconfirmed order (Confirmed = N), supply shortage (all Us). Anything else, such as a reschedule, is Not set until someone picks Us or Them on the line: the SAP export does not say who asked for a reschedule.')}
     ${p('Reasons.','Every signal on an at-risk line counts: no commit date, past due with no reschedule, missed commit (the reschedule date has passed), rescheduled later, unconfirmed, supply shortage (the supply / demand snapshot shows a cumulative shortage of the item in or before the due month), plus the override status. The chart ranks the top 6 by open value; a line with two reasons is in both bars.')}
     ${p('Open order states','split every open line into one state: No commit, Past due (original date passed with no reschedule, or commit date passed), Rescheduled (commit date today or later), Due this week (Sunday to Saturday, no risk signal), and On track (everything else). They add up to All open orders. Urgent overrides count in At risk but keep the state of their dates.')}
     ${p('When flagged','counts whole weeks since the line was first at risk in an uploaded report (the at-risk history kept on the hosted site). Lines with no earlier history count as new this week.')}
-    ${p('Filters from the charts.','Clicking a reason, a cause or a when-flagged bar keeps only the open lines that match (the reason is on the line, the cause matches, or the at-risk line was first flagged in that window). They narrow the Leading cards, Top offenders, the aging and due charts and the linked lines; Lagging rates are not filtered by them. Remove them with the chips under the tabs or Reset.')}
+    ${p('Filters from the charts.','Clicking a reason, a cause or a when-flagged bar keeps only the open lines that match (the reason is on the line, the cause matches, or the at-risk line was first flagged in that window). They narrow the Leading cards, Top offenders, the aging and due charts and the linked lines; the Lagging cards (including the open lines under Fill rate) and the warehouse scorecard are not filtered by them. Remove them with the chips under the tabs or Reset.')}
     ${p('OTD · 3 mo','= sales order deliveries in the last 3 months that shipped on or before the line’s original date, out of all deliveries with a date. The Us / Them line splits the deliveries that were 1 or more days late.')}
     ${p('Shipped this week','= deliveries dated Sunday to today (12-week bars). Us / Them splits the ones shipped after the original date.')}
     ${p('Fill rate','= delivered or closed qty out of ordered qty on every sales order line in view. The small chart is the same rate for the lines due in each of the last 12 months. Us / Them splits open lines already past their original date.')}
@@ -9968,7 +10130,7 @@ function ohAiOrderHealth(oh){
   const x=ohLaggingExtras(m,oh);
   return {
     leading:{
-      cause_rule:'cause picked on the line, else its override status, else the first SAP signal (no commit date, past due with no reschedule, missed commit, unconfirmed, supply shortage = us; customer reschedule = them), else not_set. Overrides: Hold, Urgent, Close Short, Short Ship, Shipping Delay = them; Not At Risk, Covered = neutral; the rest = us.',
+      cause_rule:'cause picked on the line, else its override status, else the first SAP signal (no commit date, past due with no reschedule, missed commit, unconfirmed, supply shortage = us), else not_set. A reschedule alone is not_set: the export does not say who asked for it. Overrides: Hold, Urgent, Close Short, Short Ship, Shipping Delay = them; Not At Risk, Covered = neutral; the rest = us.',
       at_risk_by_cause:ohAiCause(lead.cause),
       open_orders:aiTile(oh.allOrderRows),
       states:Object.fromEntries(lead.states.map(st=>[st.key,aiTile(st.rows)])),

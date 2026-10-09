@@ -203,6 +203,15 @@ test('ranked lists give names the larger column (own line on phones) and the ful
   assert.match(html(page), /<div class="rank-row" title="Spyder - Lacombe Long Name · \d+ on-track of 6 open lines"><span class="rank-name">Spyder - Lacombe Long Name<\/span>/);
 });
 
+test('Top offenders waffle rows and rank items stay inside their card with a long name (one shrinkable column)', () => {
+  // Headless Chrome, a 49-character customer name: before, 375px scrolled sideways (471px) and print cut "$10…" at the
+  // paper edge; with one minmax(0,1fr) column the name truncates and every value stays inside the card.
+  assert.ok(CSS.includes('.waffle-list{display:grid;grid-template-columns:minmax(0,1fr);gap:2px}'));
+  assert.match(CSS, /\.waffle-row\{[^}]*display:grid;grid-template-columns:minmax\(0,1fr\);min-width:0;/);
+  assert.match(CSS, /\.rank-item\{display:grid;grid-template-columns:minmax\(0,1fr\);gap:4px;min-width:0\}/);
+  assert.match(CSS, /\.rank-name\{[^}]*white-space:nowrap;overflow:hidden;text-overflow:ellipsis\}/);
+});
+
 test('chart axis labels wrap at their space instead of being clipped mid-word', () => {
   // Headless Chrome: Metrics at 1024px and Order Health / Monthly at 375px now show "Aug" over "'26", "Sep" over "13", no clipping.
   const rules = (sel) => [...CSS.matchAll(new RegExp(`(?:^|\\}|,)\\s*${sel.replace(/[.*+?^${}()|[\]\\>]/g, '\\$&')}(?:,[^{]*)?\\{([^}]*)\\}`, 'gm'))].map((m) => m[1]).join(';');

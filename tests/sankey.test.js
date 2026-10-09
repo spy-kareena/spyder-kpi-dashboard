@@ -267,7 +267,7 @@ test('Us / Them and reasons come from the Order Health cause engine (Stream D) a
   // Each line's first reason from lineReasons (SAP signal first, then the override).
   assert.deepEqual(byLevel(risk(), 0), { 'Past due · no reschedule': 1000, 'No commit date': 2500, 'Rescheduled later': 4000, Urgent: 1721806 });
   const actions = Object.fromEntries(risk().nodes.filter((n) => n.level === 0).map((n) => [n.label, n.action]));
-  assert.deepEqual(actions['Rescheduled later'], { type: 'reason', value: 'Rescheduled later' });
+  assert.deepEqual(actions['Rescheduled later'], { type: 'reason', value: 'Rescheduled later', main: true });
   // Clicking a reason or a cause box applies Order Health's own reason / cause filters (chips under the tabs).
   page.run("sankeyNodeClick('weekly','risk','0:No commit date')");
   assert.equal(page.run('weeklyReasonFilter'), 'No commit date');
@@ -282,11 +282,11 @@ test('Us / Them and reasons come from the Order Health cause engine (Stream D) a
   assert.equal(neutral, 4000);
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 1721806, Us: 2500, Neutral: 4000 });
   // With the cause engine and reason list on the page (Order Health v2), the chart uses them and its filters.
-  page.run("var causeCalls=[];function lineCause(r){return r.documentNumber==='3'?'US':'them'}function lineReasons(r){return [{label:'Reason '+r.documentNumber}]}function setWeeklyCauseFilter(v){causeCalls.push(v)}function setWeeklyReasonFilter(v){causeCalls.push('reason:'+v)}");
+  page.run("var causeCalls=[];function lineCause(r){return r.documentNumber==='3'?'US':'them'}function lineReasons(r){return [{label:'Reason '+r.documentNumber}]}function setWeeklyCauseFilter(v){causeCalls.push(v)}function setWeeklyReasonFilter(v){causeCalls.push('reason:'+v)}function setWeeklyMainReasonFilter(v){causeCalls.push('main:'+v)}");
   assert.deepEqual(byLevel(risk(), 1), { Them: 1000 + 2500 + 1721806, Us: 4000 });
   assert.deepEqual(Object.keys(byLevel(risk(), 0)).sort(), ['Reason 1', 'Reason 2', 'Reason 3', 'Reason 4']);
   page.run("sankeyNodeClick('weekly','risk','1:us');sankeyNodeClick('weekly','risk','0:Reason 3')");
-  assert.deepEqual(page.run('causeCalls'), ['us', 'reason:Reason 3']);
+  assert.deepEqual(page.run('causeCalls'), ['us', 'main:Reason 3']);
 });
 
 // --- Build Risk -------------------------------------------------------------------------------------------------

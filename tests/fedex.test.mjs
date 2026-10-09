@@ -90,6 +90,11 @@ test('tracking numbers are cleaned; one SAP field can hold several', () => {
   assert.equal(cleanTrackingNumber(' 7700 1234 5678 '), '770012345678');
   assert.equal(cleanTrackingNumber('abc'), '');
   assert.equal(cleanTrackingNumber('<script>'), '');
+  // Words typed into TrackNo have no digit, so they are not tracking numbers (and never go to FedEx).
+  assert.equal(cleanTrackingNumber('Customer Pickup'), '');
+  assert.equal(cleanTrackingNumber('Will Call'), '');
+  assert.equal(cleanTrackingNumber('PU 123456'), 'PU123456');
+  assert.deepEqual(splitTrackingNumbers('Customer Pickup, 7700 1234 5678'), ['770012345678']);
   assert.deepEqual(splitTrackingNumbers('7700 1234 5678, 7700-1234-5679; 7700 1234 5678'), ['770012345678', '770012345679']);
   assert.deepEqual(splitTrackingNumbers(''), []);
   // Two whole numbers with only a space (or &, +, "and") between them are two numbers; grouped digits stay one.
