@@ -1,12 +1,12 @@
 Spyder KPI Dashboard
-Version: 1v5
-Package date: 2026-10-01
+Version: 2v1
+Package date: 2026-10-09
 
 Main file: index.html
 Type: Static offline-capable browser dashboard
 
 1v2: linked-lines bulk select (override / delete with restore) and column sort, dashboard-wide search,
-Clear To Build workbook support on Build Risk (weekly snapshots), Ask AI (Google Gemini), MCP connector
+Clear To Build workbook support on Build Risk (weekly snapshots), Ask AI (Google Gemini, replaced in 1v9), MCP connector
 (mcp/spyder-kpi-mcp.mjs) with a Connect an AI help page, compact logo.
 
 1v3: senior frontend review fixes (46 confirmed issues). Ask AI / MCP get_build_risk works with the CTB workbook;
@@ -65,3 +65,5 @@ out for delivery, delivered this week, exceptions, in customs), a 6-step progres
 lines, ETA against the promised date, cross-border section (clearance delay, days in customs), Add tracking # and search
 by tracking number. FedEx Track API code in shared/fedex.mjs, used by functions/api/shipping.js (results, tracking list,
 Refresh now) and the scheduled Worker workers/shipping-poller (every 4 hours). See docs/SHIPPING.md.
+Also in 2v1: the built-in spreadsheet reader is updated from SheetJS 0.18.5 to SheetJS Community Edition 0.20.3
+(same .xls / .csv / .xlsx / Clear To Build support).
