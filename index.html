@@ -860,6 +860,8 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer[data-side="left"] .tip-arrow{right:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-layer[data-side="right"] .tip-arrow{left:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-text{position:relative}
+/* Windows high-contrast mode drops backgrounds: keep the bubble's edge */
+@media (forced-colors:active){.tip-layer,.info-pop,.toast-item{border:1px solid CanvasText}}
 /* A long press shows the tip on touch screens, so it should not also open the phone's link / copy menu */
 [data-tip]{-webkit-touch-callout:none}
 
@@ -6528,7 +6530,7 @@ function placeFloating(box,anchor,want,gap,align='center'){
   box.style.setProperty('--arrow-y',`${Math.round(ay)}px`);
   box.dataset.side=pick;
 }
-function focusVisible(el){try{return !!(el&&el.matches&&el.matches(':focus-visible'));}catch(e){return true;}}
+function tipFocusVisible(el){try{return !!(el&&el.matches&&el.matches(':focus-visible'));}catch(e){return true;}}
 if(document.addEventListener){
   document.addEventListener('pointerover',e=>{
     if(e.pointerType==='touch')return;
@@ -6548,7 +6550,7 @@ if(document.addEventListener){
   });
   document.addEventListener('focusin',e=>{
     const t=tipTarget(e.target);
-    if(t&&focusVisible(e.target))queueTip(t,TIP_DELAY);
+    if(t&&tipFocusVisible(e.target))queueTip(t,TIP_DELAY);
     else if(tipState.el)hideTip();
   });
   document.addEventListener('focusout',e=>{
@@ -6782,19 +6784,19 @@ const WAREHOUSE_PRESET_TIPS={
 
 // Section texts for the ⓘ popovers and the "About these numbers" blocks. Plain English for the people who use the
 // dashboard: what the section shows, which SAP export fields feed it, and what clicking does.
-const SRC_SO='SAP KPI export (sales-order lines and their deliveries)';
+const INFO_SRC_SO='SAP KPI export (sales-order lines and their deliveries)';
 const SECTION_INFO={
   'oh-attention':{title:'Needs attention',
     what:'Leading indicators: open sales-order lines that need action now or soon. At risk counts lines past their original delivery date with no reschedule, lines with no commit date, lines with a reschedule date, and lines you marked Urgent. A line you mark Not At Risk leaves every card.',
-    source:`${SRC_SO}: LineDueDate (original date), LineRescheduleDate and RescheduleDate (11/11/1111 means no commit), OpenQuantity and AmountLocal (open value), plus your override statuses.`,
+    source:`${INFO_SRC_SO}: LineDueDate (original date), LineRescheduleDate and RescheduleDate (11/11/1111 means no commit), OpenQuantity and AmountLocal (open value), plus your override statuses.`,
     click:'Click a card to list its lines under Linked lines; click it again to clear the list.'},
   'oh-performed':{title:'How we performed',
     what:'Lagging indicators from shipped lines. OTD · 3 mo: deliveries in the last 3 months that shipped on or before the line’s original delivery date. Shipped this week: delivery lines dated Sunday to today. Fill rate: delivered or closed quantity as a share of ordered quantity. Reschedule hit · 12 mo: rescheduled deliveries that shipped on or before their reschedule date. The target for each rate is 90%.',
-    source:`${SRC_SO}: delivery rows (DeliveryDocNumber, ClosedDate, AmountLocal) against the order line’s LineDueDate and LineRescheduleDate; Quantity and OpenQuantity for fill.`,
+    source:`${INFO_SRC_SO}: delivery rows (DeliveryDocNumber, ClosedDate, AmountLocal) against the order line’s LineDueDate and LineRescheduleDate; Quantity and OpenQuantity for fill.`,
     click:'Click a card to list its lines; OTD and Reschedule hit also show early / on-time / late breakdown cards and a table by warehouse.'},
   'oh-scorecard':{title:'Warehouse scorecard',
     what:'One row per warehouse in this view, in two groups: CM SFG warehouses and all other warehouses, each with a subtotal. Open = open value. At risk = value of at-risk lines. Past due = lines past their original date with no reschedule or no commit date. OTD 3 mo, Fill and Resched use the same rules as the cards above. Rows are sorted by at-risk value; the top 9 of each group show until you click Show all.',
-    source:`${SRC_SO}; the warehouse is the Warehouse column.`,
+    source:`${INFO_SRC_SO}; the warehouse is the Warehouse column.`,
     click:'Click a row to show only that warehouse on the whole page; click it again to show every warehouse.'},
   'oh-offenders':{title:'Top offenders',
     what:'The six customers, warehouses or document owners with the most at-risk open value in this view, or the six vendors with the most late purchase-order value.',
@@ -6806,11 +6808,11 @@ const SECTION_INFO={
     click:'Rest the pointer on a block for that bucket’s value.'},
   'oh-due':{title:'What’s due next',
     what:'Open value by due week for the next 8 weeks, using the date each line is due now (its reschedule date when it has one). Value already past due is in the subtitle.',
-    source:`${SRC_SO}: open order lines’ current due date and AmountLocal.`,
+    source:`${INFO_SRC_SO}: open order lines’ current due date and AmountLocal.`,
     click:'Rest the pointer on a bar for that week’s lines and value.'},
   'oh-linked':{title:'Linked lines',
     what:'The lines behind the card you picked, with status, timing against the due date, reschedule and lead time.',
-    source:`${SRC_SO}, plus your notes and overrides.`,
+    source:`${INFO_SRC_SO}, plus your notes and overrides.`,
     click:'Click a column heading to sort, again to reverse. Tick lines (or the box in the heading row for the whole list) to set an override on many at once or to delete them; deleted lines come back from Data check. Add note sets an override or a note on one line.'},
   'po-commitments':{title:'Supply commitments',
     what:'Open purchase-order lines that may arrive late. Late / missed commit: past the original date with no reschedule, or past the reschedule date. No commit date: the vendor has given no valid date. Future reschedules: a reschedule date still ahead. This week focus: all of those plus lines due this week.',
@@ -6850,11 +6852,11 @@ const SECTION_INFO={
     click:'Show all lists every row of a warehouse table.'},
   'mo-chart':{title:'Shipped and open value by month',
     what:'Shipped value in the month it was delivered and open value in the month it is due now (reschedules included). Open value in a past month is late work.',
-    source:`${SRC_SO}: delivery rows (ClosedDate, AmountLocal) and open order lines (current due date, open value).`,
+    source:`${INFO_SRC_SO}: delivery rows (ClosedDate, AmountLocal) and open order lines (current due date, open value).`,
     click:'Rest the pointer on a bar for its value.'},
   'mo-summary':{title:'Monthly delivery summary',
     what:'Shipped value by delivery month with the open work still due in each month. When the export holds last year, each month is compared with the same month last year (the current month with the same days).',
-    source:`${SRC_SO}.`,
+    source:`${INFO_SRC_SO}.`,
     click:'Show all lists every month.'},
   'mo-warehouse':{title:'Shipped by warehouse / CM',
     what:'Deliveries in the ship target scenario range (this month by default) by warehouse: sales orders, rows, quantity and value shipped, and how many shipped early, on time or late against the original date.',
@@ -6866,11 +6868,11 @@ const SECTION_INFO={
     click:'Pick a month to narrow this table and Items not shipped yet.'},
   'mo-notshipped':{title:'Items not shipped yet',
     what:'Open lines by original delivery month, oldest first.',
-    source:`${SRC_SO}.`,
+    source:`${INFO_SRC_SO}.`,
     click:'Show all lists every line.'},
   'mo-scenario':{title:'Ship target scenario',
     what:'Open lines booked by the end date, by their scenario date (with reschedules, or the original line delivery date only). Shows how much of the booked value has shipped, what is still open, and what is already past its date.',
-    source:`${SRC_SO}: open order lines and delivery rows.`,
+    source:`${INFO_SRC_SO}: open order lines and delivery rows.`,
     click:'Change Start date, End date or Calendar basis; the shipped-by-warehouse table uses the same range.'},
   'mo-calendar':{title:'Open ship calendar',
     what:'Open lines per day from the start date to the end date (first 62 days), by scenario date.',
@@ -6878,7 +6880,7 @@ const SECTION_INFO={
     click:'Rest the pointer on a day for its rows, quantity and value.'},
   'mt-quality':{title:'Order quality rates',
     what:'On-track rate: open rows not late, past due or without a commit date. Perfect order rate: closed lines shipped complete, on time to commit and never rescheduled. Backorder rate: quantity due in the last 12 months that missed its original date. Partial ship rate: open lines that shipped part of their quantity.',
-    source:`${SRC_SO}: KPIStatus, FillStatus, PerfectOrder, Quantity, OpenQuantity and the delivery rows.`,
+    source:`${INFO_SRC_SO}: KPIStatus, FillStatus, PerfectOrder, Quantity, OpenQuantity and the delivery rows.`,
     click:'These cards are for reading; Order Health lists the lines.'},
   'mt-open-month':{title:'Open value by due month',
     what:'Open sales-order value by the month each line is due now.',
@@ -6890,11 +6892,11 @@ const SECTION_INFO={
     click:'Rest the pointer on a bar for its breakdown.'},
   'mt-timeline':{title:'Metrics timeline',
     what:'Open value, quantity, rows, on-track rate and risk counts for each due month.',
-    source:`${SRC_SO}.`,
+    source:`${INFO_SRC_SO}.`,
     click:'Show all lists every month.'},
   'mt-attention':{title:'Rows needing attention',
     what:'Late, past-due, no-commit, rescheduled and missing-price open lines, most overdue first.',
-    source:`${SRC_SO}.`,
+    source:`${INFO_SRC_SO}.`,
     click:'Add notes and overrides on Order Health.'},
   'wh-open':{title:'Open value by warehouse',
     what:'The eight warehouses with the most open sales-order value.',
@@ -6910,7 +6912,7 @@ const SECTION_INFO={
     click:'Rest the pointer on a cell, or Tab to it, for its breakdown.'},
   'wh-summary':{title:'Warehouse KPI summary',
     what:'Open lines, on-track rate, perfect order rate, backorder and partial ship rates, open quantity and value, and risk counts for every warehouse with open or closed lines.',
-    source:`${SRC_SO}.`,
+    source:`${INFO_SRC_SO}.`,
     click:'Show all lists every warehouse.'},
   'mix-net':{title:'Net qty by month',
     what:'Usable supply minus demand for each month, across the warehouses in the snapshot. Red bars are months short.',
