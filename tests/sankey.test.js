@@ -155,7 +155,7 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.equal(page.run('weeklyTileFilter'), 'late');
   click('open', '1:pastdue');
   assert.equal(page.run('weeklyTileFilter'), 'late');
-  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="0" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open sales-order value, 1 order, 1 line \([\d.]+% of \$[\d,]+\)\. Click to list these lines under Linked lines\."/);
+  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="-1" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open sales-order value, 1 order, 1 line \([\d.]+% of \$[\d,]+\)\. Click to list these lines under Linked lines\."/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
   assert.match(html(page), /<g class="sk-node sk-crit sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="No commit date: /);
@@ -222,8 +222,14 @@ test('markup: the toggle and every box carry plain-English tips with full number
   const h = html(page);
   assert.match(h, /<section class="card sk-card rise" id="sankey-weekly" aria-labelledby="sankey-weekly-title">/);
   assert.match(h, /data-focus-key="sankey-toggle-weekly" aria-expanded="true" aria-controls="sankey-weekly" data-tip="[^"]+"[^>]*>[\s\S]*?Hide big picture</);
-  const boxes = [...h.matchAll(/<g class="sk-node[^"]*" role="button" tabindex="0" aria-pressed="(?:true|false)" aria-label="([^"]+)" data-tip="([^"]+)" data-focus-key="sk-weekly-(?:open|risk)-[0-9a-z]+"/g)];
+  const boxes = [...h.matchAll(/<g class="sk-node[^"]*" role="button" tabindex="(?:0|-1)" aria-pressed="(?:true|false)" aria-label="([^"]+)" data-tip="([^"]+)" data-focus-key="sk-weekly-(?:open|risk)-[0-9a-z]+"/g)];
   assert.equal(boxes.length, (h.match(/class="sk-node /g) || []).length, 'every box is a focusable button with a tip and a focus key');
+  // Each chart is one Tab stop (roving tabindex): the arrow keys move between its boxes, Tab goes on past it.
+  const svgs = h.match(/<svg class="sk-svg[\s\S]*?<\/svg>/g);
+  assert.equal(svgs.length, 2);
+  for (const svg of svgs) assert.equal((svg.match(/class="sk-node[^"]*" role="button" tabindex="0"/g) || []).length, 1, 'one Tab stop per chart');
+  // The column headings' tips (mouse-only in the drawing) are in the chart's description too.
+  assert.match(h, /<desc id="sankey-weekly-open-desc">[^<]* Columns: Warehouse \/ CM – Warehouse or contract manufacturer [^<]*Status – Each open line counted once[^<]*<\/desc>/);
   assert.ok(boxes.length >= 20);
   boxes.forEach((b) => assert.equal(b[1], b[2]));
   assert.ok(boxes.some((b) => /Appliance Inc \(APP1\): \$1,721,806 at risk, 1 order, 1 line/.test(b[1])), 'full dollar values in tips');
@@ -235,7 +241,7 @@ test('markup: the toggle and every box carry plain-English tips with full number
   assert.doesNotMatch(h, /<svg class="sk-svg[^>]*><title/, 'the chart has no root SVG title tooltip');
   assert.match(h, /<svg class="sk-svg[^"]*" role="group" aria-label="[^"]+" aria-describedby="sankey-weekly-[^"]+-desc"/);
   assert.match(h, /<path class="sk-link[^>]*><title>[^<]+ → [^<]+<\/title><\/path>/, 'bands keep a native title');
-  assert.match(h, /<details class="about sk-about"><summary>About this chart<\/summary>/);
+  assert.match(h, /<details class="about sk-about"><summary data-tip="Show how this chart is built: [^"]+">About this chart<\/summary>/);
   assert.match(h, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
   assert.doesNotMatch(h, /<b>Co|undefined|NaN/);
   // Self-closing SVG shapes (<path …/>, <rect …/>) need no closing tag.
@@ -465,7 +471,7 @@ test('hover / focus light up the bands touching a box (both ways, not further on
   // A tiny fake SVG: classList.toggle records what would be lit up.
   const cls = () => { const on = new Set(); return { on, toggle: (c, v) => (v ? on.add(c) : on.delete(c)) }; };
   const paths = [['a', 'x'], ['x', 'm'], ['b', 'y']].map(([s, t]) => ({ dataset: { s, t }, classList: cls() }));
-  const nodes = ['a', 'x', 'm', 'b', 'y'].map((id, i) => ({ dataset: { skNode: id, col: String(['a', 'b'].includes(id) ? 0 : ['x', 'y'].includes(id) ? 1 : 2), row: String(id === 'b' || id === 'y' ? 1 : 0), cy: String(id === 'b' || id === 'y' ? 80 : 20), tip: `${id} tip` }, classList: cls(), focus() { focused.push(id); } }));
+  const nodes = ['a', 'x', 'm', 'b', 'y'].map((id, i) => ({ dataset: { skNode: id, col: String(['a', 'b'].includes(id) ? 0 : ['x', 'y'].includes(id) ? 1 : 2), row: String(id === 'b' || id === 'y' ? 1 : 0), cy: String(id === 'b' || id === 'y' ? 80 : 20), tip: `${id} tip` }, classList: cls(), attrs: { tabindex: i ? '-1' : '0' }, setAttribute(k, v) { this.attrs[k] = v; }, getAttribute(k) { return this.attrs[k]; }, focus() { focused.push(id); } }));
   const focused = [];
   const detail = { textContent: '' };
   const svg = { dataset: { pinned: 'b' }, classList: cls(), querySelectorAll: (s) => (s === '.sk-link' ? paths : nodes), closest: () => ({ querySelector: () => detail }) };
@@ -481,6 +487,10 @@ test('hover / focus light up the bands touching a box (both ways, not further on
   const key = (k, i) => page.run(`sankeyNodeKey({key:${JSON.stringify(k)},preventDefault(){}},__n[${i}])`);
   key('ArrowDown', 0); key('ArrowRight', 3); key('ArrowLeft', 1); key('ArrowUp', 3); key('ArrowUp', 0);
   assert.deepEqual(focused, ['b', 'y', 'a', 'a']);
+  // The Tab stop moves with the arrow keys: only the box moved to last keeps tabindex 0.
+  key('ArrowRight', 0);
+  assert.deepEqual(nodes.map((n) => n.attrs.tabindex), ['-1', '0', '-1', '-1', '-1']);
+  assert.match(HTML, /onfocus="sankeyRove\(this\);sankeyHover\(this\)"/, 'focus by mouse or after a redraw moves the Tab stop too');
 });
 
 run();

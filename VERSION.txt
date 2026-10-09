@@ -94,3 +94,14 @@ a teammate's note no longer rebuilds every metric; a reschedule from the standar
 say who asked); the chart filters leave the Fill rate card's open lines and the warehouse scorecard alone; a Big
 picture reason box filters to its own lines (first reason only, "Main reason" chip); a new report opened inside a
 shared snapshot uses the site's at-risk history and shared notes.
+2v1 review fixes (page, batch 2): a tooltip waiting to show is dropped when focus moves on, so it never pops up
+beside a box or behind the initials dialog, and typing in a box hides its tip; a tip for a control in the initials
+dialog is drawn on top of the dialog, and one Esc closes the dialog; Windows high contrast shows the picked
+Leading / Lagging tab, picked filter choices and rows, how far each shipment has got, and keeps the waffle, bar and
+legend colours (the sign-in button gets an edge and its box a focus outline); screen readers hear each warehouse
+scorecard and PO warehouse row once, with full amounts; each Big picture chart is one Tab stop (arrow keys move
+between boxes) and its column notes are in the chart description; every table's scroll box (and the ship calendar's)
+takes keyboard focus so it can be scrolled sideways on a phone; Top offenders "Them" blocks are dark pink and "Not
+set" blocks have a grey edge (3:1 on white), and the four Customers / Warehouses / Owners / Vendors buttons fit a
+360 px phone; the override, note and initials boxes, About toggles and Connect links have tooltips; an ⓘ popover low
+on a phone stays on screen; a failed Refresh now is told only in the page note, not in the green-tick toast.

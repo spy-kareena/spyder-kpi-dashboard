@@ -457,6 +457,8 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .tfoot .link-btn{font-size:12px}
 .table-tools label{display:flex;align-items:center;gap:8px;font-weight:600}
 .table-tools .hint{color:var(--gray-500)}
+/* Every table's (and the ship calendar's) scroll box is a named region with tabindex="0", so a keyboard can scroll it
+   sideways on a phone (arrow keys once it has focus); the global :focus-visible ring shows where focus is. */
 .table-scroll{overflow-x:auto}
 
 /* Linked lines: row selection, bulk actions, header sort, deleted lines in Data check */
@@ -755,6 +757,10 @@ details.about p{margin:0}
   .pair-chart,.pair-labels{gap:4px}
   .need-card{padding:22px;gap:24px}
   .card{padding:16px 18px}
+  /* Four choices (Top offenders) fit a 360px phone with smaller buttons; a narrower screen scrolls the control
+     sideways inside its card rather than the page. */
+  .segmented.full{max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .segmented.full button{padding:4px 6px;font-size:12px}
 }
 
 /* Print: sidebar and controls hidden, cards flattened */
@@ -1131,7 +1137,9 @@ button.ship-kpi{width:100%}
 }
 /* --- Stream D: Order Health v2 (Leading / Lagging tabs, chart filters, cause colours, reasons, states, when flagged, waffle) --- */
 /* Us / Them are categorical (identity), not status, so they use violet and pink (validated for colour-blind separation);
-   pink is light, so every Us / Them mark sits next to a text label. The when-flagged ramp is one hue, light to dark. */
+   pink is light, so Us / Them marks sit next to a text label, except the Top offenders waffle, whose split is only in
+   the blocks: there Them uses the dark pink (--cause-them-text, 5.9:1 on white) and Not set blocks get a grey edge, so
+   every block kind stands out from the white card (3:1). The when-flagged ramp is one hue, light to dark. */
 :root{--cause-us:#4a3aa7;--cause-them:#e87ba4;--cause-them-text:#b2316b;--cause-unknown:#d0d5dd;--cause-neutral:#98a2b3;
   --flag-0:#fecdca;--flag-1:#fda29b;--flag-2:#f97066;--flag-3:#d92d20;--flag-4:#912018}
 .cause-us{background:var(--cause-us)}.cause-them{background:var(--cause-them)}.cause-unknown{background:var(--cause-unknown)}.cause-neutral{background:var(--cause-neutral)}
@@ -1189,7 +1197,9 @@ button.ship-kpi{width:100%}
 .waffle-row:hover .rank-name,.waffle-row.selected .rank-name{color:var(--accent-strong)}
 .waffle{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin-left:24px}
 .waffle>i{display:block;width:10px;height:10px;border-radius:2px;background:var(--cause-unknown)}
-.waffle>i.wb-us{background:var(--cause-us)}.waffle>i.wb-them{background:var(--cause-them)}.waffle>i.wb-po{background:var(--accent)}
+.waffle>i.wb-us{background:var(--cause-us)}.waffle>i.wb-them{background:var(--cause-them-text)}.waffle>i.wb-po{background:var(--accent)}
+.waffle>i.wb-rest{box-shadow:inset 0 0 0 1px var(--gray-500)}
+.oh-waffle-legend .cause-them{background:var(--cause-them-text)}.oh-waffle-legend .cause-unknown{box-shadow:inset 0 0 0 1px var(--gray-500)}
 .waffle>i.half{width:5px}
 .waffle-more{font-size:11px;font-weight:600;color:var(--gray-600);margin-left:2px}
 .oh-waffle-legend{font-size:12px;gap:10px}
@@ -1228,6 +1238,25 @@ button.ship-kpi{width:100%}
 .ai-setup code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;margin-right:6px;overflow-wrap:anywhere}
 .ai-msg.note{align-self:stretch;max-width:none;padding:0 4px;background:none;border:0;font-size:12px;color:var(--gray-500);text-align:center}
 @media print{.ai-setup{display:none!important}}
+/* --- Windows high contrast (forced colors) for the 2v1 widgets. That mode drops backgrounds and shadows, so a state
+   shown only by them (the picked tab or row, how far a shipment has got) gets a system-colour border or fill, and
+   marks whose colour is the information (waffle blocks, bar segments, legend swatches) keep the page's colours.
+   Last in the sheet so it wins over the rules above; the tooltip, popover and toast borders are with Stream A's CSS. */
+@media (forced-colors:active){
+  .oh-tab,.segmented button,.waffle-row,.oh-bar-row{border:2px solid Canvas}
+  .oh-tab[aria-selected="true"],.segmented button.active,.segmented button.pick,.waffle-row.selected,.oh-bar-row.selected{border-color:Highlight}
+  .oh-cause-btn.selected{border:2px solid Highlight;padding:8px 10px}
+  .ship-step>i,.ship-step::before{forced-color-adjust:none}
+  .ship-step>i,.ship-strip.unknown .ship-step>i{background:Canvas;border-color:GrayText;box-shadow:none;outline:0}
+  .ship-step::before,.ship-strip.unknown .ship-step::before{background:GrayText}
+  .ship-step.done>i{background:Highlight;border-color:Highlight}
+  .ship-step.current>i{background:Canvas;border-color:Highlight;outline:2px solid Highlight;outline-offset:1px}
+  .ship-step.done::before,.ship-step.current::before{background:Highlight}
+  .ship-step.skip.done>i{background:GrayText;border-color:GrayText}
+  .ship-step.exception>i{background:CanvasText;border-color:CanvasText}
+  .ship-step.exception>i::after{color:Canvas}
+  .waffle>i,.split-bar>i,.oh-bar-track>i,.legend .sw{forced-color-adjust:none}
+}
 </style>
 </head>
 <body>
@@ -1985,14 +2014,14 @@ function commitOverrideSelect(sel){
 function renderOverrideSelect(r){
   const key=esc(rowKey(r));
   const current=String(r.overrideStatus||'');
-  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}">
+  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}"${tipAttr('Your status for this line in place of the SAP one (for example Hold, Waiting on PO or Not At Risk). Saved as soon as you pick it; on the hosted site everyone who signs in sees it.')}>
     ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt||'No override')}</option>`).join('')}
   </select>`;
 }
 function renderOverrideNote(r){
   const key=esc(rowKey(r));
   const placeholder=/purchase order/i.test(String(r.sourceType||''))?'Vendor update, expected date, owner…':'Why is this line late? What is the plan?';
-  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" maxlength="${NOTE_MAX_LENGTH}" placeholder="${placeholder}">${esc(r.overrideNotes||'')}</textarea>`;
+  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" maxlength="${NOTE_MAX_LENGTH}" placeholder="${placeholder}"${tipAttr('A short note on why this line is late and what the plan is. Saved as you type; on the hosted site everyone who signs in sees it.')}>${esc(r.overrideNotes||'')}</textarea>`;
 }
 function isNoteEditorVisible(r){
   const key=rowKey(r);
@@ -4195,8 +4224,9 @@ function renderToneCell(rate,good,warn){
   if(rate===null||rate===undefined)return '<div class="tone-cell none">—</div>';
   return `<div class="tone-cell ${toneFor(rate,good,warn)}">${fmtNum(rate)}%</div>`;
 }
-// The scorecard and PO-by-warehouse rows are buttons in a div grid: each is named "column value, ..." so a screen
-// reader hears which number is which, and the visual header row is hidden from assistive tech.
+// The scorecard and PO-by-warehouse rows are buttons in a div grid: each is named by its tip ("open $1,722,806, at
+// risk ..."), so a screen reader hears which number is which, once and in full; the visual header row is hidden from
+// assistive tech.
 function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNum(rate)}%`;}
 // Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
 function showHeatDetail(tip){const el=document.getElementById('wh-heat-detail');if(el)el.textContent=tip;}
@@ -4214,7 +4244,7 @@ function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,m
   rows=all;
   return `<section class="table ${className}">
     <div class="card-head lg">${info?`<div class="title-row"><h2>${title}</h2>${infoButton(info)}</div>`:`<h2>${title}</h2>`}${headExtra||`<span class="section-sub">${note}</span>`}</div>
-    <div class="table-scroll"><table class="data-table" style="min-width:${minWidth}px">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
     </table></div>
@@ -4914,7 +4944,7 @@ function renderConnectPage(){
   const code=(id,label)=>`<div class="connect-code"><pre id="${id}">${esc(CONNECT_SNIPPETS[id])}</pre><div class="connect-copy print-hide"><button type="button" class="btn" data-copy="${id}" data-focus-key="copy-${id}" aria-label="${esc(label)}"${tipAttr(`${label} to the clipboard.`)} onclick="copyConnectSnippet(this)">Copy</button><span class="section-sub" id="${id}-status" role="status"></span></div></div>`;
   const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
   const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
-  return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
+  return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener" data-tip="Open the connector setup guide (docs/MCP.md) in a new tab: setup steps and troubleshooting.">docs/MCP.md</a>.</p>
   ${section(1,'Option 1: Ask AI in this dashboard','Claude, ChatGPT, Groq or OpenRouter · nothing to install',`<p>Click <strong>Ask AI</strong>, pick a provider in <strong>Settings</strong> and tick its consent box. The hosted site keeps the AI keys on its server, so nobody needs a key of their own. Your question and the numbers needed to answer it go from the site to the provider you picked.</p>
     <ul>
       <li><strong>Paid:</strong> Claude (Anthropic) and ChatGPT (OpenAI). Billed to the company's account, usually from under a cent to about 20 cents per question depending on the model; they do not train on what you send.</li>
@@ -4923,7 +4953,7 @@ function renderConnectPage(){
     <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
     <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel on the right. Nothing is sent until you tick the consent box for a provider." onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, setup, costs and data terms.">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
-      ${step(1,'Install Node.js 20 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
+      ${step(1,'Install Node.js 20 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Open nodejs.org in a new tab to download Node.js (version 20 or newer).">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
       ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>. This opens claude_desktop_config.json:<code>Windows: %APPDATA%\\Claude\\claude_desktop_config.json</code><code>macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</code>Add the lines below with your two paths (keep the double backslashes), save, then restart Claude.')}
     </div>
@@ -5179,7 +5209,7 @@ function renderGlobalSearchPage(m){
     <div class="section-head"><h2 class="section-title">Order lines</h2><span class="count-badge">${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span><div class="section-tools">${back}</div></div>
     <div class="table">
       <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
-      <div class="table-scroll"><table class="lines-table search">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Order lines found"><table class="lines-table search">
         <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
         <thead><tr><th>Type</th><th>Doc #</th><th>Customer / vendor</th><th>Warehouse</th><th>Item / description</th><th${tipAttr('Due date for open lines, close date for shipped and closed lines.')}>Date</th><th class="num">Qty</th><th class="num">Value</th><th>Status</th><th class="print-hide">Notes</th></tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
@@ -5469,7 +5499,7 @@ function renderShipTargetScenario(sd,today){
     </div>
     ${sd.forward?`<div class="card chart-card tight">
       <div class="chart-head"><div class="title-row"><h2>Open ship calendar</h2>${infoButton('mo-calendar')}</div><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''} · open lines by day</span></div>
-      <div class="table-scroll"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
         ${sd.days.map(d=>{
           const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
           const isToday=displayDate(d.date)===displayDate(reportToday());
@@ -5705,7 +5735,9 @@ function renderResults(){
     const scGroups=scorecardGroups(scorecard,weeklyScorecardAll);
     const scShown=scGroups.reduce((s,g)=>s+g.shown.length,0);
     const focusedWarehouse=weeklyWarehouseFilter.length===1&&!isWhAll?weeklyWarehouseFilter[0]:'';
-    const scRow=g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}" aria-label="${esc(`${g.name}: open ${moneyShort(g.openAmt)}, at risk ${g.riskAmt?moneyShort(g.riskAmt):'none'}, past due ${g.pastDue?fmtNum(g.pastDue):'none'}, OTD 3 mo ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, resched ${rateLabel(g.hitRate)}`)}"${tipAttr(`${g.name}: open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}, ${fmtNum(g.pastDue)} ${g.pastDue===1?'line':'lines'} past due, OTD 3 mo ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}. ${focusedWarehouse===g.name?'Click to show every warehouse again.':'Click to show only this warehouse on the page.'}`)}>
+    // The tip, with the amounts in full, is also the row's accessible name, so screen readers hear it once.
+    const scRowTip=g=>`${g.name}: open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}, ${fmtNum(g.pastDue)} ${g.pastDue===1?'line':'lines'} past due, OTD 3 mo ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}. ${focusedWarehouse===g.name?'Click to show every warehouse again.':'Click to show only this warehouse on the page.'}`;
+    const scRow=g=>`<button type="button" class="trow sc-cols${focusedWarehouse===g.name?' selected':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focusedWarehouse===g.name?'true':'false'}" aria-label="${esc(scRowTip(g))}"${tipAttr(scRowTip(g))}>
           <div class="name">${esc(g.name)}</div>
           <div class="num soft-cell">${moneyShort(g.openAmt)}</div>
           <div class="num ${g.riskAmt?'risk-cell':'muted'}">${g.riskAmt?moneyShort(g.riskAmt):'—'}</div>
@@ -5796,7 +5828,7 @@ function renderResults(){
     // ---------- Linked lines for the selected card ----------
     const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(`${label}: ${valueText} · ${sub}. ${key==='total'?'Click to list every row of this card below.':'Click to list only these rows below.'}`)}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
     const pctPill=(rate,good,warn)=>`<span class="pill ${rate>=good?'good':rate>=warn?'warn':'bad'}">${fmtNum(rate)}%</span>`;
-    const summaryTable=(head,rows)=>`<div class="card flush"><div class="table-scroll"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
+    const summaryTable=(head,rows)=>`<div class="card flush"><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`${head[1]} by ${String(head[0]).toLowerCase()}`)}"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
     const renderOtdDrillCards=(rows)=>{
       if(weeklyTileFilter!=='otd3mo')return '';
       const stats=otdStats(rows);
@@ -5986,7 +6018,7 @@ function renderResults(){
       };
       return `<div class="table">
         <div class="table-tools linked-tools"><label>Sort rows <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines. Clicking a column heading sorts too.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
-        <div class="table-scroll"><table class="lines-table so">
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so">
           <colgroup><col class="col-check" style="width:42px"><col style="width:64px"><col style="width:112px"><col style="width:100px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:146px"><col style="width:124px"><col style="width:62px"><col class="col-notes" style="width:110px"></colgroup>
           <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines of this list (not only the rows shown) to set an override on them or delete them.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide">Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
@@ -6199,7 +6231,7 @@ function renderResults(){
         const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
         return `<div class="table">
           <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
-          <div class="table-scroll"><table class="lines-table po">
+          <div class="table-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="lines-table po">
             <colgroup><col style="width:64px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col style="width:124px"><col class="col-notes" style="width:110px"></colgroup>
             <thead><tr><th>PO #</th><th>Vendor</th><th>Warehouse</th><th>Item / Description</th><th${tipAttr('The reschedule date when there is one, otherwise the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive (AmountLocal).')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with timing against the date.')}>Status</th><th${tipAttr('The vendor’s reschedule date, or why there is none.')}>Reschedule</th><th class="print-hide"${tipAttr('Add note sets an override status or a note on the line.')}>Notes</th></tr></thead>
             <tbody>${shown.map((r,i)=>{
@@ -6291,14 +6323,14 @@ function renderResults(){
         <section class="table" aria-label="Open PO value by warehouse">
           <div class="card-head lg"><div class="title-row"><h2>Open PO value by warehouse</h2>${infoButton('po-warehouse')}</div><span class="section-sub">${focusedPoWarehouse?'click the row again to show all':'click a row to filter'}</span></div>
           <div class="thead po-wh-cols" aria-hidden="true"><div${tipAttr('Receiving warehouse (the SAP Warehouse column).')}>Warehouse</div><div class="num"${tipAttr('Open PO lines.')}>Lines</div><div${tipAttr('Value still to receive on open PO lines.')}>Open value</div><div class="num"${tipAttr('Lines past the original date with no reschedule, or past the reschedule date.')}>Late</div><div class="num"${tipAttr('Lines with no valid commit date from the vendor.')}>No commit</div><div class="num"${tipAttr('Lines with a reschedule date still ahead.')}>Future</div></div>
-          ${poGroupsShown.map(g=>`<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(`${g.key}: ${fmtNum(g.rows.length)} lines, open value ${moneyShort(g.openValue)}, late ${g.lateRows?fmtNum(g.lateRows):'none'}, no commit ${g.noCommitRows?fmtNum(g.noCommitRows):'none'}, future ${g.futureRows?fmtNum(g.futureRows):'none'}`)}"${tipAttr(`${g.key}: ${money(g.openValue)} open on ${fmtNum(g.rows.length)} PO ${g.rows.length===1?'line':'lines'}; ${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.futureRows)} future reschedules. ${focusedPoWarehouse===g.key?'Click to show every warehouse again.':'Click to show only this warehouse.'}`)}>
+          ${poGroupsShown.map(g=>{const t=`${g.key}: ${money(g.openValue)} open on ${fmtNum(g.rows.length)} PO ${g.rows.length===1?'line':'lines'}; ${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.futureRows)} future reschedules. ${focusedPoWarehouse===g.key?'Click to show every warehouse again.':'Click to show only this warehouse.'}`;return `<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(t)}"${tipAttr(t)}>
             <div class="name m">${esc(g.key)}</div>
             <div class="num soft-cell">${fmtNum(g.rows.length)}</div>
             <div class="bar-cell xs"><div class="track"><i class="grow-w" style="width:${(g.openValue/poGroupMax*100).toFixed(1)}%"></i></div><span class="strong-cell">${moneyShort(g.openValue)}</span></div>
             <div class="num ${g.lateRows?'risk-cell':'muted'}">${g.lateRows?fmtNum(g.lateRows):'—'}</div>
             <div class="num ${g.noCommitRows?'risk-cell':'muted'}">${g.noCommitRows?fmtNum(g.noCommitRows):'—'}</div>
             <div class="num ${g.futureRows?'warn-cell':'muted'}">${g.futureRows?fmtNum(g.futureRows):'—'}</div>
-          </button>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open PO lines in this view.</div>'}
+          </button>`;}).join('')||'<div class="empty-note" style="padding:14px 22px">No open PO lines in this view.</div>'}
           ${poGroups.length>8?`<div class="tfoot"><span>${fmtNum(poGroupsShown.length)} of ${fmtNum(poGroups.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open value.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`:''}
         </section>
         <section class="card list-card roomy">
@@ -6599,7 +6631,7 @@ function renderResults(){
       head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
       items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,empty:'Every line in these months has shipped.'})}</div>
     ${renderShipTargetScenario(scenario,today)}
-    <details class="about rise"><summary>About these numbers</summary><div class="about-body">${notes.map(n=>`<p>${esc(n)}</p>`).join('')}${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}</div></details>`;
+    <details class="about rise">${aboutSummary()}<div class="about-body">${notes.map(n=>`<p>${esc(n)}</p>`).join('')}${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}</div></details>`;
   }
   // Metrics Timeline: on-track, perfect-order, and month-by-month open value.
   if(activeTab==='metrics'){
@@ -6764,7 +6796,7 @@ function renderResults(){
         rows:itemGroupRows,limit:12,minWidth:980})}</div>
       <div class="rise rise-4">${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage rows',note:`first ${fmtNum(Math.min(50,sd.shortageRows.length))} of ${fmtNum(sd.shortageRows.length)}`,empty:'No shortage rows.'})}</div>
       <div class="rise rise-5">${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk rows',note:`first ${fmtNum(Math.min(50,sd.riskRows.length))} of ${fmtNum(sd.riskRows.length)}`,empty:'No supply risk rows.'})}</div>
-      <details class="about"><summary>About these numbers</summary><div class="about-body"><p>This view treats sales orders as demand and open purchase orders as supply. Stock on hand is not included, so a "shortage" is a gap in open PO coverage. Unconfirmed POs and no-commit POs are shown as risk and are not counted as clean usable supply.</p>${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</div></details>`;
+      <details class="about">${aboutSummary()}<div class="about-body"><p>This view treats sales orders as demand and open purchase orders as supply. Stock on hand is not included, so a "shortage" is a gap in open PO coverage. Unconfirmed POs and no-commit POs are shown as risk and are not counted as clean usable supply.</p>${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</div></details>`;
     }
   }
   // Build Risk: Clear To Build report matched to open sales-order demand.
@@ -6816,7 +6848,7 @@ function renderResults(){
       ${weeks.length>1?`<div class="rise rise-4">${renderTableCard({key:'br-trend',info:'br-trend',title:'CTB % by CM',note:`clear to build share of each CM’s orders, last ${fmtNum(weeks.length)} report weeks (oldest to newest)`,
         head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90})}</div>`:''}
       <div class="rise rise-5">${renderRowsTable(riskRows.slice(0,60),{key:'br-risk',info:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} rows (latest-risk buckets first)`:`${fmtNum(riskRows.length)} rows in buckets the report marks at risk or late`,limit:12,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'})}</div>
-      <details class="about"><summary>About these numbers</summary><div class="about-body"><p>This view matches sales orders to the Clear To Build report by CM / warehouse and due month. It is a demand-risk overlay, not exact PO allocation, unless the source report includes PO / item-level detail.</p><p>A Clear To Build workbook holds one sheet per report week. Every number above comes from the week picked at the top; weeks are never added together. The Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines.</p>${aboutSections(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}${sankeyAbout('buildrisk')}</div></details>`;
+      <details class="about">${aboutSummary()}<div class="about-body"><p>This view matches sales orders to the Clear To Build report by CM / warehouse and due month. It is a demand-risk overlay, not exact PO allocation, unless the source report includes PO / item-level detail.</p><p>A Clear To Build workbook holds one sheet per report week. Every number above comes from the week picked at the top; weeks are never added together. The Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines.</p>${aboutSections(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}${sankeyAbout('buildrisk')}</div></details>`;
     }
   }
   // Redraws replace the whole results DOM; put focus and listbox scroll back so keyboard use keeps working.
@@ -6878,7 +6910,7 @@ function focusSelector(node){
 //
 // Tooltips. Any element can carry data-tip="plain-English text" (numbers written in full, e.g. $1,721,806). One
 // shared bubble (#tip-layer) shows that text after 200 ms when the pointer rests on the element, when it gets
-// keyboard focus (:focus-visible), or after a long press on a touch screen; Esc, a click or scrolling hides it, and
+// keyboard focus (:focus-visible), or after a long press on a touch screen; Esc, a click, scrolling or typing in the box hides it, and
 // the pointer can move onto the bubble without it closing. The bubble is placed by this script rather than drawn
 // with a CSS ::after because the scrolling tables, the sidebar and the filter bar clip anything that sticks out of
 // them. Optional data-tip-pos="top|bottom|left|right" picks the preferred side; the bubble flips and stays inside
@@ -6887,7 +6919,7 @@ function focusSelector(node){
 // makes tipped headings, column headings and static cards keyboard-focusable (tipNeedsTabStop below).
 const TIP_DELAY=200;
 const TIP_LONG_PRESS=500;
-const tipState={el:null,timer:0,hideTimer:0,press:null,swallowClick:false};
+const tipState={el:null,pending:null,timer:0,hideTimer:0,press:null,swallowClick:false};
 // ' data-tip="…"' for a template, or '' when there is no text.
 function tipAttr(text){
   const t=String(text??'').trim();
@@ -6914,8 +6946,9 @@ function tipDescId(text){
 // inside a control (that control's own tip carries the facts), inside a table body cell (hundreds of tab stops; the
 // cell shows its facts as text), inside a role="img" chart or aria-hidden part (labelled as a whole), and <i> marks.
 // A div also gets a visually hidden copy of the tip (data-tip-copy): screen readers reading the page rather than
-// tabbing skip aria-describedby on static elements.
-const TIP_CONTROL='a[href],button,input,select,textarea,summary,[contenteditable="true"],[tabindex]:not([tabindex="-1"])';
+// tabbing skip aria-describedby on static elements. A table's focusable scroll box (role="region") is not a control:
+// the column headings inside it still get their own tab stops.
+const TIP_CONTROL='a[href],button,input,select,textarea,summary,[contenteditable="true"],[tabindex="0"]:not([role="region"])';
 function tipNeedsTabStop(el){
   if(!el.matches||!el.closest||!el.tagName)return false;
   if(el.namespaceURI&&el.namespaceURI!=='http://www.w3.org/1999/xhtml')return false;
@@ -6992,14 +7025,23 @@ function wireTips(){
 function tipLayer(){return document.getElementById('tip-layer');}
 function tipTarget(node){return node&&node.closest?node.closest('[data-tip]'):null;}
 function tipVisible(){const layer=tipLayer();return !!(layer&&!layer.hidden&&tipState.el);}
+// A modal <dialog> (the initials question) sits in the browser's top layer, above any z-index. A tip for a control
+// inside it is drawn from inside that dialog, so it shows on top; the layer goes back to <body> when it hides.
+function tipHost(el){return el&&el.closest?el.closest('dialog[open]'):null;}
+function tipGoHome(layer){
+  const up=layer&&layer.parentNode;
+  if(up&&up.tagName==='DIALOG'&&document.body&&document.body.appendChild)document.body.appendChild(layer);
+}
 function hideTip(){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
-  tipState.el=null;
+  tipState.el=null;tipState.pending=null;
   const layer=tipLayer();
   if(layer&&!layer.hidden){layer.hidden=true;if(layer.classList)layer.classList.remove('open');}
+  tipGoHome(layer);
 }
 function showTip(el){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
+  tipState.pending=null;
   const layer=tipLayer();
   const text=String(tipGet(el,'data-tip')||'').trim();
   if(!layer||!text||!el.isConnected||!el.getBoundingClientRect)return;
@@ -7007,24 +7049,37 @@ function showTip(el){
   const textNode=layer.querySelector('.tip-text');
   if(textNode)textNode.textContent=text;
   layer.classList.remove('open');
+  const dialog=tipHost(el);
+  if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}
+  else tipGoHome(layer);
   layer.hidden=false;
   placeFloating(layer,el,tipGet(el,'data-tip-pos')||'top',8);
   // The class change after layout lets the bubble fade in (no motion when the viewer asked for less).
   (window.requestAnimationFrame||setTimeout)(()=>{if(tipState.el===el)layer.classList.add('open');});
+}
+// A queued tip shows only while its element still has the pointer or keyboard focus (a redraw, a dialog or a quick
+// Tab may have moved on in the 200 ms wait).
+function tipStillWanted(el){
+  if(!el||!el.isConnected)return false;
+  try{
+    const a=document.activeElement;
+    return !!((a&&el.contains&&el.contains(a))||(el.matches&&el.matches(':hover')));
+  }catch(err){return true;}
 }
 // The first tooltip waits TIP_DELAY; moving straight on to another tipped element shows it at once.
 function queueTip(el,delay){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
   if(tipState.el===el)return;
   const wait=tipVisible()?0:delay;
-  tipState.timer=setTimeout(()=>showTip(el),wait);
+  tipState.pending=el;
+  tipState.timer=setTimeout(()=>{if(tipState.pending!==el)return;tipState.pending=null;if(tipStillWanted(el))showTip(el);},wait);
 }
 function queueHideTip(ms){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
   tipState.hideTimer=setTimeout(hideTip,ms);
 }
 // Places a fixed-position floating box (tooltip or info popover) next to its anchor: preferred side first, then the
-// opposite side, then whichever has room; clamped inside the window. The arrow keeps pointing at the anchor.
+// opposite side, then whichever has room; clamped inside the window (both ways). The arrow keeps pointing at the anchor.
 function placeFloating(box,anchor,want,gap,align='center'){
   const r=anchor.getBoundingClientRect();
   const vw=document.documentElement&&document.documentElement.clientWidth||window.innerWidth;
@@ -7038,6 +7093,9 @@ function placeFloating(box,anchor,want,gap,align='center'){
     x=align==='start'?r.left:r.left+r.width/2-w/2;
     x=Math.max(edge,Math.min(x,vw-edge-w));
     y=pick==='top'?r.top-gap-h:r.bottom+gap;
+    // No room on either side (a tall popover low on a phone screen): keep it inside the window, even if it then
+    // covers its button (the CSS max-height keeps it no taller than the window).
+    y=Math.max(edge,Math.min(y,vh-edge-h));
   }else{
     y=Math.max(edge,Math.min(r.top+r.height/2-h/2,vh-edge-h));
     x=pick==='left'?r.left-gap-w:r.right+gap;
@@ -7068,17 +7126,32 @@ if(document.addEventListener){
     // A short grace period lets the pointer move onto the bubble to read it.
     queueHideTip(120);
   });
+  // Focus moving anywhere else also drops a tip still waiting to show (hideTip clears the timers), so a tip queued
+  // for a button never pops up later beside a box or a dialog that took the focus.
   document.addEventListener('focusin',e=>{
     const t=tipTarget(e.target);
     if(t&&tipFocusVisible(e.target))queueTip(t,TIP_DELAY);
-    else if(tipState.el)hideTip();
+    else hideTip();
   });
   document.addEventListener('focusout',e=>{
-    if(tipState.el&&!(e.relatedTarget&&tipState.el.contains&&tipState.el.contains(e.relatedTarget)))hideTip();
+    const to=e.relatedTarget;
+    if(tipState.el){if(!(to&&tipState.el.contains&&tipState.el.contains(to)))hideTip();return;}
+    const p=tipState.pending;
+    if(p&&p.contains&&p.contains(e.target)&&!(to&&p.contains(to))){clearTimeout(tipState.timer);tipState.pending=null;}
   });
-  // Capture phase, so Esc closes only the tooltip when one is showing (the Ask AI drawer then stays open).
+  // Typing in a box (or picking from a list) hides its tip, so it does not sit over the label or the controls next
+  // to it while you write.
+  document.addEventListener('input',e=>{
+    const t=tipState.el||tipState.pending;
+    if(t&&t.contains&&t.contains(e.target))hideTip();
+  },true);
+  // Capture phase, so Esc closes only the tooltip when one is showing (the Ask AI drawer then stays open). In a modal
+  // dialog the same Esc also reaches the dialog and closes it, as Esc in a dialog always does.
   document.addEventListener('keydown',e=>{
-    if(e.key==='Escape'&&tipVisible()){hideTip();e.preventDefault();}
+    if(e.key!=='Escape'||!tipVisible())return;
+    const inDialog=!!tipHost(tipState.el);
+    hideTip();
+    if(!inDialog)e.preventDefault();
   },true);
   document.addEventListener('pointerdown',e=>{
     hideTip();
@@ -7110,7 +7183,7 @@ if(document.addEventListener){
   document.addEventListener('contextmenu',e=>{if(tipState.swallowClick||tipState.press)e.preventDefault();},true);
   document.addEventListener('scroll',()=>{
     // A bubble already showing would be left behind; one still waiting is placed when it shows.
-    if(tipState.el){const pending=tipState.timer;tipState.timer=0;hideTip();tipState.timer=pending;}
+    if(tipState.el){const timer=tipState.timer,next=tipState.pending;tipState.timer=0;hideTip();tipState.timer=timer;tipState.pending=next;}
     queuePlaceInfo();
   },true);
 }
@@ -7200,12 +7273,16 @@ if(document.addEventListener){
     closeInfo(false);
   });
 }
+// The "About these numbers" (or "About this chart") toggle, with its tip; every page's About block uses it.
+function aboutSummary(label='About these numbers',tipText='Show what each number on this page counts and where it comes from.'){
+  return `<summary${tipAttr(tipText)}>${esc(label)}</summary>`;
+}
 // "About these numbers" paragraphs built from SECTION_INFO.
 function aboutSections(keys){
   return keys.map(k=>SECTION_INFO[k]).filter(Boolean).map(i=>`<p><strong>${esc(i.title)}.</strong> ${esc(i.what)}${i.source?` <span class="about-src">Source: ${esc(i.source)}</span>`:''}${i.click?` ${esc(i.click)}`:''}</p>`).join('');
 }
 function renderAbout(keys,intro=''){
-  return `<details class="about rise"><summary>About these numbers</summary><div class="about-body">${intro}${aboutSections(keys)}</div></details>`;
+  return `<details class="about rise">${aboutSummary()}<div class="about-body">${intro}${aboutSections(keys)}</div></details>`;
 }
 
 // First-visit hints: short dismissable tips (localStorage spyderKpiHints, per browser). "Show hints again" in the
@@ -7577,8 +7654,10 @@ function initStreamAUi(){
     let queued=false;
     // Its own layers, and the count-up numbers changing frame by frame, need no rewiring.
     const own=n=>n&&n.closest&&n.closest('#tip-descs,#tip-layer,#toast,#info-pop,[data-count]');
+    // The tip layer moving into a dialog and back (showTip / hideTip) is not a redraw either.
+    const layerMove=m=>[...m.addedNodes,...m.removedNodes].every(n=>n.id==='tip-layer');
     new MutationObserver(list=>{
-      if(queued||list.every(m=>own(m.target)))return;
+      if(queued||list.every(m=>own(m.target)||layerMove(m)))return;
       queued=true;
       Promise.resolve().then(()=>{queued=false;wireTips();syncInfoPop();if(tipState.el&&!tipState.el.isConnected)hideTip();});
     }).observe(document.body,{childList:true,subtree:true});
@@ -8012,7 +8091,7 @@ function openEditorDialog(){
     <h2 id="editor-dialog-title">Your initials</h2>
     <p id="editor-dialog-desc">Notes, overrides and Us / Them causes are shared with everyone who signs in. Your initials are shown with your edits, for example “last edit KK Oct 8”. They are kept in this browser.</p>
     <label for="editor-initials">Initials (1 to 4 letters)</label>
-    <input id="editor-initials" name="initials" maxlength="4" autocomplete="off" spellcheck="false" autocapitalize="characters" value="${esc(readEditor()||'')}" aria-describedby="editor-error">
+    <input id="editor-initials" name="initials" maxlength="4" autocomplete="off" spellcheck="false" autocapitalize="characters" value="${esc(readEditor()||'')}" aria-describedby="editor-error"${tipAttr('Your initials are shown next to the notes, overrides and causes you save.')}>
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
       <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save your initials in this browser. They are saved with every note, override and cause you change.">Save</button>
@@ -8029,6 +8108,9 @@ function openEditorDialog(){
   });
   d.querySelector('[data-editor-skip]').addEventListener('click',()=>d.close('skip'));
   d.addEventListener('close',()=>{
+    // A tip shown inside the dialog lives in it until hidden: send it home first, or removing the dialog takes
+    // #tip-layer with it and no tip on the page shows again.
+    hideTip();
     finishEditorDialog(d.returnValue==='save'?normalizeInitials(input.value):'');
     d.remove();
   });
@@ -8559,7 +8641,14 @@ function sankeyNodeClick(tab,flowId,nodeId){
   renderResults();
 }
 // Enter / Space activate a box; arrow keys move between boxes (up / down in a column, left / right to the nearest
-// box in the next column).
+// box in the next column). Each chart is one Tab stop (a roving tabindex): the box last moved to, else the pinned or
+// picked box, else the first one; Tab then goes on past the chart.
+function sankeyRove(el){
+  const svg=el&&el.closest&&el.closest('svg');
+  if(!svg||!svg.querySelectorAll||!el.setAttribute)return;
+  svg.querySelectorAll('.sk-node[tabindex="0"]').forEach(n=>{if(n!==el&&n.setAttribute)n.setAttribute('tabindex','-1');});
+  el.setAttribute('tabindex','0');
+}
 function sankeyNodeKey(e,el){
   if(!e||!el||!el.dataset)return;
   if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){
@@ -8575,7 +8664,7 @@ function sankeyNodeKey(e,el){
   const inCol=[...svg.querySelectorAll('.sk-node')].filter(n=>Number(n.dataset.col)===col);
   const target=move[0]?inCol.reduce((best,n)=>!best||Math.abs(n.dataset.cy-el.dataset.cy)<Math.abs(best.dataset.cy-el.dataset.cy)?n:best,null)
     :inCol.find(n=>Number(n.dataset.row)===Number(el.dataset.row)+move[1]);
-  if(target&&target.focus)target.focus();
+  if(target&&target.focus){sankeyRove(target);target.focus();}
 }
 // Hover or focus on a box lights up the bands touching it (and the boxes they reach); leaving it goes back to the
 // pinned box, if any. The line under the chart repeats the box's numbers.
@@ -8627,6 +8716,8 @@ function renderSankeyFlow(tab,flow){
   const room=n=>n.column===0?LEFT-12:n.column===layout.columns.length-1?RIGHT-12:step-layout.nodeWidth-22;
   const heads=flow.cols.map((c,i)=>{const n=colX[i];if(!n)return '';const end=n.anchor==='end';const tip=(flow.colTips||[])[i]||c;return `<text x="${r(end?n.x1:n.x0)}" y="14" text-anchor="${end?'end':'start'}" data-tip="${esc(tip)}">${esc(c)}</text>`;}).join('');
   const links=layout.links.map((l,i)=>`<path class="sk-link sk-${esc(l.tone||'calm')}${conn&&conn.links.has(i)?' sk-on':''}" d="${l.path}" data-s="${esc(l.source)}" data-t="${esc(l.target)}"><title>${esc(`${nodeById.get(l.source).label} → ${nodeById.get(l.target).label}: ${sankeyFormat(flow.unit,l.value)}${flow.unit==='money'?` (${fmtNum(l.count)} ${l.count===1?'line':'lines'})`:''}`)}</title></path>`).join('');
+  // The chart's one Tab stop (see sankeyRove): the pinned box, else the first picked one, else the first box.
+  const stop=(pinned&&nodeById.get(pinned))||layout.nodes.find(n=>sankeyNodeSelected(n))||layout.nodes[0];
   const nodes=layout.nodes.map(n=>{
     const sel=sankeyNodeSelected(n)||pinned===n.id;
     const label=sankeyClip(n.label,Math.max(6,Math.min(48,Math.floor(room(n)/6.6)-n.valueLabel.length-1)));
@@ -8634,11 +8725,11 @@ function renderSankeyFlow(tab,flow){
     const hx=n.anchor==='end'?n.labelX-tw-4:n.x0-3;
     const hw=n.anchor==='end'?n.x1+3-hx:n.labelX+tw+4-hx;
     const hy=Math.min(n.y0,n.labelY-8)-2,hh=Math.max(n.y1,n.labelY+8)+2-hy;
-    return `<g class="sk-node sk-${esc(n.tone||'plain')}${sel?' sk-sel':''}${conn&&conn.nodes.has(n.id)?' sk-on':''}" role="button" tabindex="0" aria-pressed="${sel?'true':'false'}" aria-label="${esc(n.tip||n.label)}" data-tip="${esc(n.tip||n.label)}" data-focus-key="sk-${tab}-${flow.id}-${sankeyHash(n.id)}" data-sk-tab="${tab}" data-sk-flow="${esc(flow.id)}" data-sk-node="${esc(n.id)}" data-col="${n.column}" data-row="${n.row}" data-cy="${r(n.labelY)}" onclick="sankeyNodeClick(this.dataset.skTab,this.dataset.skFlow,this.dataset.skNode)" onkeydown="sankeyNodeKey(event,this)" onmouseenter="sankeyHover(this)" onmouseleave="sankeyHover(this,true)" onfocus="sankeyHover(this)" onblur="sankeyHover(this,true)"><rect class="sk-hit" x="${r(hx)}" y="${r(hy)}" width="${r(hw)}" height="${r(hh)}" rx="4"/><rect class="sk-rect" x="${r(n.x0)}" y="${r(n.y0)}" width="${r(n.x1-n.x0)}" height="${r(Math.max(1,n.y1-n.y0))}" rx="1.5"/><text class="sk-label" x="${r(n.labelX)}" y="${r(n.labelY)}" dy="0.35em" text-anchor="${n.anchor}">${esc(label)} <tspan class="sk-val">${esc(n.valueLabel)}</tspan></text></g>`;
+    return `<g class="sk-node sk-${esc(n.tone||'plain')}${sel?' sk-sel':''}${conn&&conn.nodes.has(n.id)?' sk-on':''}" role="button" tabindex="${n===stop?'0':'-1'}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(n.tip||n.label)}" data-tip="${esc(n.tip||n.label)}" data-focus-key="sk-${tab}-${flow.id}-${sankeyHash(n.id)}" data-sk-tab="${tab}" data-sk-flow="${esc(flow.id)}" data-sk-node="${esc(n.id)}" data-col="${n.column}" data-row="${n.row}" data-cy="${r(n.labelY)}" onclick="sankeyNodeClick(this.dataset.skTab,this.dataset.skFlow,this.dataset.skNode)" onkeydown="sankeyNodeKey(event,this)" onmouseenter="sankeyHover(this)" onmouseleave="sankeyHover(this,true)" onfocus="sankeyRove(this);sankeyHover(this)" onblur="sankeyHover(this,true)"><rect class="sk-hit" x="${r(hx)}" y="${r(hy)}" width="${r(hw)}" height="${r(hh)}" rx="4"/><rect class="sk-rect" x="${r(n.x0)}" y="${r(n.y0)}" width="${r(n.x1-n.x0)}" height="${r(Math.max(1,n.y1-n.y0))}" rx="1.5"/><text class="sk-label" x="${r(n.labelX)}" y="${r(n.labelY)}" dy="0.35em" text-anchor="${n.anchor}">${esc(label)} <tspan class="sk-val">${esc(n.valueLabel)}</tspan></text></g>`;
   }).join('');
   return `<div class="sk-flow">${head}
-    <div class="sk-scroll"><svg class="sk-svg${conn?' sk-hl':''}" role="group" aria-label="${esc(`${flow.title}: ${flow.cols.join(' to ')}`)}" aria-describedby="${ids}-desc" viewBox="0 0 ${W} ${svgH}" width="${W}" height="${svgH}"${pinned?` data-pinned="${esc(pinned)}"`:''}><desc id="${ids}-desc">${esc(`${sankeyFormat(flow.unit,flow.total)} in all. Each box is a button with its numbers; Enter or Space applies it, arrow keys move between boxes.`)}</desc><g class="sk-heads" aria-hidden="true">${heads}</g><g transform="translate(0,${TOP})"><g class="sk-links" aria-hidden="true">${links}</g><g class="sk-nodes">${nodes}</g></g></svg></div>
-    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><span class="sk-swipe print-hide" aria-hidden="true">Swipe sideways to see the whole chart.</span><p class="sk-detail print-hide" aria-hidden="true">Hover or Tab to a box for its numbers. Click a box to filter the page.</p></div>
+    <div class="sk-scroll"><svg class="sk-svg${conn?' sk-hl':''}" role="group" aria-label="${esc(`${flow.title}: ${flow.cols.join(' to ')}`)}" aria-describedby="${ids}-desc" viewBox="0 0 ${W} ${svgH}" width="${W}" height="${svgH}"${pinned?` data-pinned="${esc(pinned)}"`:''}><desc id="${ids}-desc">${esc(`${sankeyFormat(flow.unit,flow.total)} in all. Each box is a button with its numbers; Enter or Space applies it, arrow keys move between boxes. Columns: ${flow.cols.map((c,i)=>{const t=(flow.colTips||[])[i];return t&&t!==c?`${c} – ${t}`:`${c}.`;}).join(' ')}`)}</desc><g class="sk-heads" aria-hidden="true">${heads}</g><g transform="translate(0,${TOP})"><g class="sk-links" aria-hidden="true">${links}</g><g class="sk-nodes">${nodes}</g></g></svg></div>
+    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><span class="sk-swipe print-hide" aria-hidden="true">Swipe sideways to see the whole chart.</span><p class="sk-detail print-hide" aria-hidden="true">Hover a box, or Tab to the chart and use the arrow keys, for its numbers. Click a box to filter the page.</p></div>
   </div>`;
 }
 const SANKEY_INTRO={
@@ -8673,9 +8764,9 @@ function renderBigPicture(tab,m){
   if(!sankeyOpen[tab]){
     return `${note}<div class="sk-bar print-hide"><button type="button" class="btn sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="false" data-tip="${esc(`Show the big picture chart. ${SANKEY_INTRO[tab]} Click a box in it to filter this page.`)}" onclick="toggleSankey('${tab}')">${SANKEY_ICON}Big picture</button><span class="section-sub">${esc(SANKEY_INTRO[tab])}</span></div>`;
   }
-  const about=tab==='weekly'?`<details class="about sk-about"><summary>About this chart</summary><div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
+  const about=tab==='weekly'?`<details class="about sk-about">${aboutSummary('About this chart','Show how this chart is built: what each column and band counts, how boxes are grouped and what clicking does.')}<div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
   return `${note}<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
-    <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value. Hover or Tab to a box for its numbers; click a box to filter the page.</span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
+    <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value. Hover a box, or Tab to the chart and use the arrow keys, for its numbers; click a box to filter the page.</span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
     ${flows.map(f=>renderSankeyFlow(tab,f)).join('')||'<p class="empty-note">Nothing to draw for this page yet.</p>'}
     ${about}
   </section>`;
@@ -9061,11 +9152,13 @@ async function shippingRefresh(){
   if(isFinite(wait)&&wait>Date.now()){st.notice=`Refresh now was used recently. Refresh works again at ${shipClock(new Date(wait))}.`;renderResults();return;}
   st.busy=true;st.notice='';
   renderResults();
+  let ok=false;
   try{
     await shippingSync();
     const res=await fetch('/api/shipping',{method:'POST',headers:{'content-type':'application/json'},body:'{}'});
     const data=await res.json().catch(()=>({}));
     if(res.ok){
+      ok=true;
       Object.assign(st,{statuses:data.statuses&&typeof data.statuses==='object'?data.statuses:{},polledAt:String(data.polledAt||''),errors:Array.isArray(data.errors)?data.errors:[],lastError:null,refreshAfter:String(data.refreshAfter||'')});
       // Each check asks FedEx about up to 60 shipments still moving (stalest first); the rest wait for the next.
       const waiting=Number(data.waiting)||0;
@@ -9077,7 +9170,8 @@ async function shippingRefresh(){
     else{if(res.status===503&&data.fedex===false)st.fedex=false;st.refreshAfter=String(data.refreshAfter||'');st.notice=String(data.error||`The server answered ${res.status}.`);}
   }catch(err){st.notice='The server could not be reached.';}
   st.busy=false;
-  if(st.notice&&typeof showToast==='function')showToast(st.notice);
+  // Only a check that worked gets the (green tick) toast; a failure is told in the page's own note above the list.
+  if(ok&&st.notice&&typeof showToast==='function')showToast(st.notice);
   if(activeTab==='shipping')renderResults();
 }
 function setShippingFilter(id){
@@ -9216,7 +9310,7 @@ function renderShipDetail(s){
     const shipped=isShipmentRow(r)?shipDateLabel(r.shipDate||r.closeDate):'';
     return `<tr><td class="strong">${esc(r.documentNumber||'—')}</td><td class="soft">${esc(r.lineNumber||'')}</td><td><span class="m">${esc(r.itemCode||'—')}</span><span class="item-desc">${esc(String(r.itemDescription||'').slice(0,120))}</span></td><td class="num">${fmtNum(r.quantity)}</td><td class="num">${money(r.amountLocal)}</td><td class="date soft">${esc(shipDateLabel(r.effectiveDueDate||r.lineDueDate||r.dueDate)||'—')}</td><td class="date soft">${esc(shipped||'—')}</td></tr>`;
   };
-  const table=rows.length?`<div class="table-scroll"><table class="data-table ship-lines"><thead><tr>
+  const table=rows.length?`<div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`Order lines for ${s.number}`)}"><table class="data-table ship-lines"><thead><tr>
       <th scope="col" data-tip="Sales order number in SAP.">SO #</th>
       <th scope="col" data-tip="Line number on the sales order.">Line</th>
       <th scope="col" data-tip="Item number and description.">Item / description</th>
@@ -9352,7 +9446,7 @@ function renderShippingPage(m){
   });
   const cross=`<section class="section rise rise-4">
       <div class="section-head"><h2 class="section-title">Cross-border</h2><span class="count-badge${model.cross.some(s=>s.delay)?' bad':''}" data-tip="${esc(`${shipPlural(model.cross.length,'shipment','shipments')} crossing a border${model.cross.some(s=>s.delay)?`, ${fmtNum(model.cross.filter(s=>s.delay).length)} held by a clearance delay`:''}`)}">${fmtNum(model.cross.length)}</span><span class="section-sub">shipments to an address outside Canada, or with customs scans</span></div>
-      <div class="table"><div class="table-scroll"><table class="data-table ship-cross"><thead><tr>
+      <div class="table"><div class="table-scroll" tabindex="0" role="region" aria-label="Cross-border shipments"><table class="data-table ship-cross"><thead><tr>
         <th scope="col" data-tip="FedEx tracking number. Click one to open it in the list above.">Tracking #</th>
         <th scope="col" data-tip="Customer on the SAP delivery or sales order.">Customer</th>
         <th scope="col" data-tip="Ship-to country from SAP, or FedEx’s destination.">Ship to</th>
@@ -9362,7 +9456,7 @@ function renderShippingPage(m){
       </tr></thead><tbody>${crossRows.join('')||`<tr><td colspan="6" class="soft">No cross-border shipments in this list.</td></tr>`}</tbody></table></div></div>
     </section>`;
 
-  const about=`<details class="about rise rise-5"><summary>About these numbers</summary><div class="about-body">
+  const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body">
       <p>Tracking numbers come from the TrackingNumber column of the KPI export (the delivery’s tracking number in SAP, ODLN.TrackNo) and from numbers added by hand with Add tracking #. A delivery is tracked when it shipped in the ${SHIP_WINDOW_DAYS} days before the export date (${esc(asOf)}); it stops being checked ${SHIP_DELIVERED_DAYS} days after FedEx delivered it. Numbers added by hand are tracked for ${SHIP_MANUAL_DAYS} days.</p>
       <p>The server asks FedEx every ${SHIP_CHECK_HOURS} hours, and when someone clicks Refresh now (at most once every 10 minutes). Each check asks about up to 60 shipments still moving, those never checked or checked longest ago first, so with more than that some rows wait a check or two for a newer status. The strip shows the steps Label created, Picked up, In transit, Customs (only for shipments that cross a border), Out for delivery and Delivered, filled up to the newest FedEx scan; a red mark means an exception or a customs hold at that step. FedEx Freight (LTL) shipments are tracked the same way with their PRO number.</p>
       <p>Exceptions are delivery or shipment exceptions, delays, holds at a FedEx location, returns and cancellations. In customs counts shipments waiting for clearance, including clearance delays. Delivered this week counts deliveries from Monday to today.</p>
@@ -10100,7 +10194,7 @@ function ohResetView(){weeklyView='leading';weeklyReasonFilter='';weeklyReasonMa
 // sections: Stream A's per-section texts (aboutSections), shown after the Order Health v2 rules.
 function ohAboutHtml(sections=''){
   const p=(title,text)=>`<p><strong>${title}</strong> ${text}</p>`;
-  return `<details class="about rise"><summary>About these numbers</summary><div class="about-body">
+  return `<details class="about rise">${aboutSummary()}<div class="about-body">
     ${p('Leading and Lagging.','Leading shows open sales order lines that need action now. Lagging scores what already shipped. The filters at the top and the linked lines below apply to both tabs.')}
     ${p('At risk','= open lines past their original date with no reschedule, lines with no commit date (SAP 1111-11-11), lines with a reschedule (commit) date, and lines marked Urgent. A Not At Risk override takes a line off every risk count.')}
     ${p('Us vs Them.','Us = Spyder (production, quality, supply, planning). Them = the customer or the carrier. The cause is the one picked on the line; else its override (Us: Waiting on Production, QC Delay, Supply Chain, Supplier Late, Waiting on PO, Partial Coverage, R&D Hold, No Commit. Them: Hold, Urgent, Close Short, Short Ship, Shipping Delay. Neutral: Not At Risk, Covered); else the first SAP signal in this order: no commit date, past due with no reschedule, missed commit date, unconfirmed order (Confirmed = N), supply shortage (all Us). Anything else, such as a reschedule, is Not set until someone picks Us or Them on the line: the SAP export does not say who asked for a reschedule.')}

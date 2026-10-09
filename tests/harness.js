@@ -44,10 +44,13 @@ function loadPage({ html = HTML, today = '2026-09-24', storage = {} } = {}) {
     readAsArrayBuffer(f) { setImmediate(() => this.onload({ target: { result: f.bytes.buffer.slice(f.bytes.byteOffset, f.bytes.byteOffset + f.bytes.byteLength) } })); }
     readAsText(f) { setImmediate(() => this.onload({ target: { result: Buffer.from(f.bytes).toString('utf8') } })); }
   }
+  // Listeners the page adds to document are kept (page.listeners) so a test can send it a made-up event.
+  const listeners = [];
   const document = {
     getElementById: (id) => els[id] || (els[id] = stubElement(id)),
     querySelector: () => null, querySelectorAll: () => [], createElement: stubElement,
-    body: stubElement('body'), documentElement: { get outerHTML() { return html; } }, addEventListener() {}, title: '',
+    body: stubElement('body'), documentElement: { get outerHTML() { return html; } }, title: '',
+    addEventListener(type, fn, capture) { listeners.push({ type, fn, capture: !!capture }); },
   };
   const blobs = [];
   const ctx = {
@@ -71,7 +74,13 @@ function loadPage({ html = HTML, today = '2026-09-24', storage = {} } = {}) {
     const v = vm.runInContext(expr, ctx);
     return v && typeof v.then === 'function' ? v.then(plain) : plain(v);
   };
-  return { ctx, els, run, alerts, errors, storage, blobs };
+  // Sends a made-up event to the page's document listeners of that type (capture ones first, as a browser does).
+  const dispatch = (type, event) => {
+    const e = { type, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, stopPropagation() {}, ...event };
+    for (const l of [...listeners.filter((x) => x.type === type && x.capture), ...listeners.filter((x) => x.type === type && !x.capture)]) l.fn(e);
+    return e;
+  };
+  return { ctx, els, run, alerts, errors, storage, blobs, listeners, dispatch };
 }
 
 async function upload(page, files) {

@@ -180,9 +180,12 @@ function loginPage(failed, status) {
     input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(180,35,24,.25)}
     .error{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--crit)}
     .error svg{flex:none;width:16px;height:16px;margin-top:1px}
-    button{margin-top:8px;height:40px;width:100%;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+    button{margin-top:8px;height:40px;width:100%;border:1px solid transparent;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
     button:hover{background:var(--accent-strong)}
     button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    /* Windows high contrast drops backgrounds and shadows: the transparent border draws the button's edge, and the
+       focused box gets an outline in place of its shadow ring. */
+    @media (forced-colors:active){input:focus{outline:2px solid Highlight;outline-offset:1px}}
     .foot{font-size:12px;color:var(--muted)}
     @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>

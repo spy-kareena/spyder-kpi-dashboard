@@ -467,7 +467,7 @@ test('every new control and chart carries a plain-English tip with full numbers;
 
 test('About these numbers defines every new number in plain English', async () => {
   const page = await loaded();
-  const about = html(page).match(/<details class="about rise"><summary>About these numbers<\/summary>[\s\S]*?<\/details>/)[0];
+  const about = html(page).match(/<details class="about rise"><summary data-tip="[^"]+">About these numbers<\/summary>[\s\S]*?<\/details>/)[0];
   for (const term of ['Leading and Lagging', 'Us vs Them', 'Reasons', 'Open order states', 'When flagged', 'OTD · 3 mo', 'Shipped this week', 'Fill rate', 'Reschedule hit · 12 mo', 'Perfect order · 12 mo', 'Avg days late · 3 mo', 'Top offenders', '$20,000']) {
     assert.ok(about.includes(term), term);
   }

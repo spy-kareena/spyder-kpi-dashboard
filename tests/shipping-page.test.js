@@ -441,6 +441,7 @@ test('Refresh now asks the server, shows the new statuses, and explains the 10-m
     assert.ok(site.calls.includes('POST /api/shipping'));
     assert.equal(page.run(`shippingState.statuses['${N.customsDelay}'].customsState`), 'delay');
     assert.match(html(page), /FedEx checked just now: 6 tracking numbers up to date\./);
+    assert.match(page.els.toast.innerHTML, /<span>FedEx checked just now: 6 tracking numbers up to date\.<\/span>/, 'a check that worked is confirmed in a toast');
     assert.ok(page.run('shippingState.refreshAfter'), 'the server says when Refresh works again');
     page.run("shippingState.refreshAfter=new Date(Date.now()+5*60000).toISOString();renderResults()");
     assert.match(html(page), /data-focus-key="ship-refresh"[^>]*aria-disabled="true"[^>]*data-tip="Refresh now was used recently/);
@@ -448,8 +449,10 @@ test('Refresh now asks the server, shows the new statuses, and explains the 10-m
     assert.match(html(page), /Refresh works again at/);
     // Once allowed again the server still limits it to one check per 10 minutes for everyone.
     page.run("shippingState.refreshAfter=''");
+    page.els.toast.innerHTML = '';
     await page.run('shippingRefresh()');
     assert.match(html(page), /less than 10 minutes ago/);
+    assert.equal(page.els.toast.innerHTML, '', 'a refused Refresh is told in the page note, never in the green-tick toast');
     assert.ok(!page.run('JSON.stringify([shippingState.statuses,shippingState.notice,shippingState.wanted,document.getElementById("results-screen").innerHTML])').includes('super-secret-key'));
   } finally { globalThis.fetch = realFetch; }
 });
@@ -470,8 +473,10 @@ test('a server error page is an error to retry, not "needs the hosted dashboard"
   globalThis.fetch = fakeFedex({ tokenStatus: 401 }).fetch; // the FedEx keys are wrong
   try {
     const hosted = await hostedPage(site);
+    hosted.els.toast.innerHTML = '';
     await hosted.run('shippingRefresh()');
     assert.match(hosted.run('shippingState.notice'), /refused the API key/);
+    assert.equal(hosted.els.toast.innerHTML, '', 'no success toast for a failed Refresh');
     const after = Date.parse(hosted.run('shippingState.refreshAfter'));
     assert.ok(after > Date.now() + 50000 && after < Date.now() + 70000, 'Refresh works again in about a minute');
     hosted.run(`Date.now=()=>${Date.now()};renderResults()`); // the page's clock is pinned to the export day; use the server's

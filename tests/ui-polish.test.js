@@ -48,7 +48,7 @@ async function loadedAll(storage = {}) {
 }
 // Every opening tag whose class list holds one of `classes` (whole words).
 function tagsWithClass(html, classes) {
-  return [...html.matchAll(/<(?:button|div|span|a|th|section|label|select|input)\b[^>]*>/g)].map((m) => m[0])
+  return [...html.matchAll(/<(?:button|div|span|a|th|section|label|select|input|textarea)\b[^>]*>/g)].map((m) => m[0])
     .filter((tag) => { const c = (tag.match(/\sclass="([^"]*)"/) || [])[1]; return c && c.split(/\s+/).some((x) => classes.includes(x)); });
 }
 const hasTip = (tag) => /\sdata-tip="[^"]+"/.test(tag) || /\stitle="[^"]+"/.test(tag);
@@ -58,10 +58,13 @@ const VIEWS = [
   ['weekly', "weeklyTileFilter='late';selectAllLinked(true)"],
   ['purchaseorders', ''], ['supplyweekly', ''], ['monthly', ''], ['warehouses', ''], ['metrics', ''], ['supplydemand', ''], ['buildrisk', ''], ['connect', ''],
   ['search', "searchQuery='SPY';applyGlobalSearch()"],
+  // The note editor (override, cause, note), the Lagging tab, the open Big picture and the Shipping page.
+  ['weekly', 'toggleRowNote(rowKey(parsedRows[0]))'],
+  ['weekly', "setWeeklyView('lagging')"], ['weekly', "setWeeklyView('leading');toggleSankey('weekly')"], ['shipping', ''],
 ];
 function eachView(page, fn) {
   for (const [tab, setup] of VIEWS) {
-    page.run(`linkedSelection.clear();weeklyTileFilter='late';setTab(${JSON.stringify(tab)});${setup}`);
+    page.run(`linkedSelection.clear();expandedNoteRows.clear();sankeyOpen.weekly=false;weeklyTileFilter='late';setTab(${JSON.stringify(tab)});${setup}`);
     fn(results(page) + sidebar(page), `${tab} ${setup}`);
   }
 }
@@ -69,8 +72,12 @@ function eachView(page, fn) {
 test('every KPI card, chip, sortable heading and button on every page has a tooltip (data-tip or title)', async () => {
   const page = await loadedAll();
   let checked = 0;
+  const drawn = new Set();
   eachView(page, (html, view) => {
-    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'info-btn', 'select', 'month-card', 'rate-card', 'hint-close']);
+    for (const k of ['class="row-override"', 'class="row-note"', 'class="sk-svg', 'class="ship-', '<summary', '<a href']) if (html.includes(k)) drawn.add(k);
+    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'info-btn', 'select', 'month-card', 'rate-card', 'hint-close', 'row-override', 'row-cause', 'row-note']);
+    // About toggles and links explain themselves too.
+    tags.push(...[...html.matchAll(/<summary\b[^>]*>|<a\b[^>]*\shref="[^"]*"[^>]*>/g)].map((m) => m[0]));
     checked += tags.length;
     const bare = tags.filter((t) => !hasTip(t));
     assert.deepEqual(bare, [], `${view}: controls without a tooltip`);
@@ -79,6 +86,7 @@ test('every KPI card, chip, sortable heading and button on every page has a tool
     assert.deepEqual(buttons.filter((t) => !hasTip(t)), [], `${view}: buttons without a tooltip`);
   });
   assert.ok(checked > 300, `checked ${checked} controls`);
+  assert.equal(drawn.size, 6, `the note editor, Big picture, Shipping, About toggles and links were all checked: ${[...drawn]}`);
   assert.deepEqual(page.errors, []);
 });
 
@@ -204,7 +212,9 @@ test('tipped headings, column headings and static cards become tab stops; table 
   const badge = h('span', { class: 'nav-badge', 'data-tip': '4 orders at risk' }, '4');
   const navBtn = h('button', { 'data-tip': 'Order Health. 4 orders at risk.' }, 'Order Health', [badge]);
   const hidden = h('div', { 'aria-hidden': 'true' }, '', [h('div', { class: 'num', 'data-tip': 'Open PO lines.' }, 'Lines')]);
-  h('div', {}, '', [h('table', {}, '', [h('thead', {}, '', [h('tr', {}, '', [th, thSort])]), h('tbody', {}, '', [h('tr', {}, '', [td])])]), card, bar, tracker, btn, navBtn, hidden]);
+  // All of it inside a table's focusable scroll box (role="region", tabindex 0): that box is not a control, so the
+  // tips inside it still get their own tab stops.
+  h('div', { class: 'table-scroll', tabindex: '0', role: 'region', 'aria-label': 'Lines' }, '', [h('table', {}, '', [h('thead', {}, '', [h('tr', {}, '', [th, thSort])]), h('tbody', {}, '', [h('tr', {}, '', [td])])]), card, bar, tracker, btn, navBtn, hidden]);
   // wireTips walks the page in document order: parents before the tips nested in them.
   page.ctx.__els = [th, thSort, card, delta, why, bar, seg, btn, navBtn, badge, hidden.kids[0]];
   page.run('__els.forEach(wireTip)');
@@ -256,9 +266,9 @@ test('nested tips reach keyboard users through their control: delta pill text in
 test('tooltip and popover placement: preferred side, flips when there is no room, stays inside the window', () => {
   const page = loadPage();
   page.ctx.innerWidth = 1000; page.ctx.innerHeight = 700;
-  const box = () => ({ offsetWidth: 300, offsetHeight: 60, dataset: {}, vars: {}, style: { setProperty(k, v) { this.owner.vars[k] = v; } } });
-  const place = (rect, want, align) => {
-    const b = box(); b.style.owner = b;
+  const box = (h = 60) => ({ offsetWidth: 300, offsetHeight: h, dataset: {}, vars: {}, style: { setProperty(k, v) { this.owner.vars[k] = v; } } });
+  const place = (rect, want, align, h) => {
+    const b = box(h); b.style.owner = b;
     page.ctx.__box = b; page.ctx.__anchor = { getBoundingClientRect: () => ({ ...rect, right: rect.left + rect.width, bottom: rect.top + rect.height }) };
     page.run(`placeFloating(__box,__anchor,${JSON.stringify(want)},8,${JSON.stringify(align || 'center')})`);
     return { side: b.dataset.side, left: parseInt(b.style.left, 10), top: parseInt(b.style.top, 10), arrow: parseInt(b.vars['--arrow-x'], 10) };
@@ -274,6 +284,107 @@ test('tooltip and popover placement: preferred side, flips when there is no room
   // A left preference with no room on the left goes right; the info popover lines up with its button's left edge.
   assert.equal(place({ left: 50, top: 300, width: 40, height: 20 }, 'left').side, 'right');
   assert.equal(place({ left: 120, top: 300, width: 20, height: 20 }, 'bottom', 'start').left, 120);
+  // A tall popover with room on neither side (an ⓘ low on a phone) stays inside the window instead of running off
+  // the bottom, where it could not be scrolled into view.
+  const tall = place({ left: 20, top: 369, width: 20, height: 20 }, 'bottom', 'start', 395);
+  assert.deepEqual([tall.side, tall.top], ['bottom', 700 - 8 - 395]);
+});
+
+// A fake tooltip rig for the document listeners: a body, the #tip-layer, tipped controls (optionally in a dialog).
+function tipRig(page) {
+  const node = (props) => ({ parentNode: null, kids: [], appendChild(k) { if (k.parentNode) k.parentNode.kids = k.parentNode.kids.filter((x) => x !== k); k.parentNode = this; this.kids.push(k); return k; }, ...props });
+  const doc = page.ctx.document;
+  const body = node({ tagName: 'BODY' });
+  doc.body = body;
+  const text = { textContent: '' };
+  const classes = new Set();
+  const layer = node({ id: 'tip-layer', tagName: 'DIV', hidden: true, offsetWidth: 200, offsetHeight: 40, dataset: {}, style: { setProperty() {} }, classList: { add: (c) => classes.add(c), remove: (c) => classes.delete(c) }, querySelector: () => text });
+  body.appendChild(layer);
+  page.els['tip-layer'] = layer;
+  page.ctx.innerWidth = 1200; page.ctx.innerHeight = 800;
+  const control = (tip, dialog = null) => {
+    const el = node({ tagName: 'BUTTON', isConnected: true, attrs: tip ? { 'data-tip': tip } : {} });
+    Object.assign(el, {
+      getAttribute(k) { return k in this.attrs ? this.attrs[k] : null; },
+      closest(sel) { if (sel === '[data-tip]') return tip ? this : null; if (sel === 'dialog[open]') return dialog; return null; },
+      contains(x) { return x === this; },
+      matches: (sel) => sel === ':focus-visible',
+      getBoundingClientRect: () => ({ left: 100, top: 200, right: 180, bottom: 230, width: 80, height: 30 }),
+    });
+    (dialog || body).appendChild(el);
+    return el;
+  };
+  const focus = (from, to) => {
+    doc.activeElement = to;
+    if (from) page.dispatch('focusout', { target: from, relatedTarget: to });
+    if (to) page.dispatch('focusin', { target: to });
+  };
+  return { body, layer, text, control, focus, node, doc };
+}
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('a tip queued on focus is dropped when focus moves on before it shows (no stray bubble, no swallowed Esc)', async () => {
+  const page = loadPage();
+  const rig = tipRig(page);
+  const noteBtn = rig.control('Set an override status or write a note on this line.');
+  const box = rig.control('');
+  const sortBtn = rig.control('Click to sort by Value.');
+  // Add note -> focus goes back to the button (tip queued), then on to the note box within the 200 ms wait.
+  rig.focus(null, noteBtn);
+  rig.focus(noteBtn, box);
+  await wait(300);
+  assert.equal(rig.layer.hidden, true, 'the button\'s tip never pops up beside the note box');
+  // Esc then goes to whatever has focus (the dialog, the drawer): nothing swallows it.
+  assert.equal(page.dispatch('keydown', { key: 'Escape' }).defaultPrevented, false);
+  // Focus that leaves without a new focus target (a redraw, another window) cancels the wait too.
+  rig.focus(null, sortBtn);
+  page.dispatch('focusout', { target: sortBtn, relatedTarget: null });
+  rig.doc.activeElement = rig.body;
+  await wait(300);
+  assert.equal(rig.layer.hidden, true);
+  // A queued tip whose element lost focus without any event (focus moved by script) does not show either.
+  rig.focus(null, sortBtn);
+  rig.doc.activeElement = box;
+  await wait(300);
+  assert.equal(rig.layer.hidden, true);
+  // Staying on the control shows its tip; Esc then hides only the tip.
+  rig.focus(null, sortBtn);
+  await wait(300);
+  assert.deepEqual([rig.layer.hidden, rig.text.textContent, page.run('tipState.el===document.activeElement')], [false, 'Click to sort by Value.', true]);
+  const esc = page.dispatch('keydown', { key: 'Escape' });
+  assert.deepEqual([esc.defaultPrevented, rig.layer.hidden], [true, true]);
+  // Typing in a tipped box hides its tip.
+  rig.focus(null, box);
+  box.attrs['data-tip'] = 'A short note.';
+  box.closest = (sel) => (sel === '[data-tip]' ? box : null);
+  rig.focus(null, box);
+  await wait(300);
+  assert.equal(rig.layer.hidden, false);
+  page.dispatch('input', { target: box });
+  assert.equal(rig.layer.hidden, true);
+});
+
+test('a tip for a control in the modal initials dialog is drawn inside the dialog (top layer); one Esc closes both', async () => {
+  const page = loadPage();
+  const rig = tipRig(page);
+  const dialog = rig.node({ tagName: 'DIALOG' });
+  rig.body.appendChild(dialog);
+  const save = rig.control('Save your initials in this browser.', dialog);
+  rig.focus(null, save);
+  await wait(300);
+  assert.equal(rig.layer.hidden, false);
+  assert.equal(rig.layer.parentNode, dialog, 'the layer joins the dialog in the top layer, so it shows above the backdrop');
+  // Esc hides the tip and still reaches the dialog (no preventDefault), so the dialog closes on the first press.
+  const esc = page.dispatch('keydown', { key: 'Escape' });
+  assert.deepEqual([esc.defaultPrevented, rig.layer.hidden, rig.layer.parentNode === rig.body], [false, true, true]);
+  // A tip outside any dialog goes back to the body as well.
+  const pageBtn = rig.control('Page button.');
+  rig.focus(save, pageBtn);
+  await wait(300);
+  assert.equal(rig.layer.parentNode, rig.body);
+  // Closing the dialog sends the layer home before the dialog is removed (else every later tip is gone with it).
+  assert.match(HTML, /d\.addEventListener\('close',\(\)=>\{[^}]*?hideTip\(\);[\s\S]*?d\.remove\(\);/);
+  assert.match(HTML, /<input id="editor-initials"[^\n]*\$\{tipAttr\('Your initials are shown next to the notes, overrides and causes you save\.'\)\}>/);
 });
 
 test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast status region', async () => {
@@ -403,6 +514,53 @@ test('warehouse scorecard: the top 9 show per group, Show all lists every wareho
   const noSfg = await scorecardPage(SC_ROWS.filter((r) => !/SFG/.test(r.Warehouse)));
   assert.deepEqual([...results(noSfg).matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]), ['other']);
   assert.ok(Array.isArray(scorecardData(noSfg)));
+});
+
+test('wide tables and the ship calendar scroll from the keyboard: every scroll box is a named region with tabindex 0', async () => {
+  const page = await loadedAll();
+  let boxes = 0;
+  eachView(page, (html, view) => {
+    for (const [tag] of html.matchAll(/<div class="table-scroll"[^>]*>/g)) {
+      boxes++;
+      assert.match(tag, /^<div class="table-scroll" tabindex="0" role="region" aria-label="[^"<>]+">$/, `${view}: ${tag}`);
+    }
+  });
+  assert.ok(boxes >= 15, `${boxes} table scroll boxes`);
+  page.run("weeklyTileFilter='late';setTab('weekly');setWeeklyTileFilter('otd3mo')");
+  assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="3 mo OTD by warehouse"><table class="data-table compact">/);
+  page.run("setTab('monthly')");
+  assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="Monthly delivery summary · \d{4}"><table class="data-table"/);
+  // The ship calendar scrolls the same way; its day columns add no tab stops of their own (data-tip-notab).
+  assert.match(HTML, /<div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab /);
+});
+
+test('Windows high contrast: picked tabs and rows, the shipment strip and the waffle keep their meaning', () => {
+  const fc = CSS.slice(CSS.lastIndexOf('@media (forced-colors:active){'));
+  // Last in the sheet, so the system colours win over the page's own rules for the same elements.
+  assert.ok(CSS.indexOf('.ship-step.exception>i{') < CSS.lastIndexOf('@media (forced-colors:active){'));
+  assert.ok(CSS.indexOf('.oh-tab[aria-selected="true"]{') < CSS.lastIndexOf('@media (forced-colors:active){'));
+  assert.match(fc, /\.oh-tab\[aria-selected="true"\],\.segmented button\.active,\.segmented button\.pick,\.waffle-row\.selected,\.oh-bar-row\.selected\{border-color:Highlight\}/);
+  assert.match(fc, /\.oh-cause-btn\.selected\{border:2px solid Highlight;/);
+  assert.match(fc, /\.ship-step>i,\.ship-step::before\{forced-color-adjust:none\}/);
+  assert.match(fc, /\.ship-step\.done>i\{background:Highlight;border-color:Highlight\}/);
+  assert.match(fc, /\.ship-step\.current>i\{background:Canvas;border-color:Highlight;outline:2px solid Highlight;/);
+  assert.match(fc, /\.waffle>i,\.split-bar>i,\.oh-bar-track>i,\.legend \.sw\{forced-color-adjust:none\}/);
+  assert.match(CSS, /@media \(forced-colors:active\)\{\.tip-layer,\.info-pop,\.toast-item\{border:1px solid CanvasText\}\}/);
+});
+
+test('Top offenders: four choices fit a phone card; the waffle blocks stand out from the card (3:1)', () => {
+  const phone = CSS.match(/@media \(max-width:640px\)\{\n  \.grid-lead[\s\S]*?\n\}/)[0];
+  assert.match(phone, /\.segmented\.full\{max-width:100%;overflow-x:auto;scrollbar-width:none\}/);
+  assert.match(phone, /\.segmented\.full button\{padding:4px 6px;font-size:12px\}/);
+  // Them blocks use the dark pink (5.9:1 on white); Not set blocks get a grey edge; the legend matches the blocks.
+  assert.match(CSS, /\.waffle>i\.wb-them\{background:var\(--cause-them-text\)\}/);
+  assert.match(CSS, /\.waffle>i\.wb-rest\{box-shadow:inset 0 0 0 1px var\(--gray-500\)\}/);
+  assert.match(CSS, /\.oh-waffle-legend \.cause-them\{background:var\(--cause-them-text\)\}\.oh-waffle-legend \.cause-unknown\{box-shadow:inset 0 0 0 1px var\(--gray-500\)\}/);
+  const lum = (hex) => { const c = hex.match(/\w\w/g).map((x) => parseInt(x, 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const token = (name) => CSS.match(new RegExp(`${name}:(#[0-9a-f]{6})`))[1];
+  for (const t of ['--cause-us', '--cause-them-text', '--gray-500']) assert.ok(ratio(token(t), '#ffffff') >= 3, `${t} on white`);
+  assert.ok(ratio(token('--cause-them-text'), token('--cause-unknown')) >= 3, 'Them against Not set');
 });
 
 test('shadcn look: zinc tokens, 12/8/8 radii, one focus ring, Inter with a fallback, motion guard, compact print', () => {
