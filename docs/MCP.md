@@ -82,7 +82,7 @@ Instead of listing files in the arguments, you can set the environment variable 
 | `load_exports` | Loads other export files, replacing what is loaded |
 | `loaded_files` | What is loaded: files, kind, rows and the as-of date |
 
-The tools only read. Nothing is changed in SAP or in the export files. Notes saved in the dashboard in a browser are not visible to the connector.
+The tools only read. Nothing is changed in SAP or in the export files. Notes, overrides and causes saved in the dashboard (in a browser, or shared on the hosted site) are not visible to the connector.
 
 ## Update the export
 

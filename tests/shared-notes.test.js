@@ -70,7 +70,7 @@ async function openBrowser(site, { storage = {} } = {}) {
     FileReader: class { readAsArrayBuffer(f) { f.arrayBuffer().then((b) => this.onload({ target: { result: b } })); } readAsText(f) { f.text().then((t) => this.onload({ target: { result: t } })); } },
   });
   // The harness opens every page as an empty shared snapshot; a real page starts from this browser's saved notes.
-  page.run('isSnapshotView=false;rowOverrides=loadRowOverrides();notesCleared=readLocalJson(NOTES_CLEARED_KEY);sharedShipments=readLocalJson(NOTES_SHIPMENTS_KEY)');
+  page.run('isSnapshotView=false;rowOverrides=loadRowOverrides();notesCleared=notesReadLocal(NOTES_CLEARED_KEY);sharedShipments=notesReadLocal(NOTES_SHIPMENTS_KEY)');
   return page;
 }
 // Opens the shared report and the shared notes, as startApp does.
@@ -193,6 +193,34 @@ test('the newer edit wins when two people change the same line', async () => {
   edit(a, '900', 'notes', 'A: newest');
   await sendNow(a);
   assert.equal((await site.doc()).rows[k].notes, 'A: newest');
+});
+
+test('a page left open reads other people\'s edits again when it comes back into view (at most once a minute)', async () => {
+  const site = fakeSite();
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  await upload(a);
+  clock(a, '2026-10-08T15:00:00Z');
+  await a.ctx.syncSharedNotes();
+  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  clock(b, '2026-10-08T15:20:00Z');
+  edit(b, '900', 'notes', 'Board arrives Monday');
+  await sendNow(b);
+  const reads = () => site.calls.filter((c) => c === 'GET /api/notes').length;
+  const before = reads();
+  a.ctx.refreshSharedNotes();
+  await tick(30);
+  assert.equal(reads(), before, 'not again within a minute');
+  clock(a, '2026-10-08T15:30:00Z');
+  a.ctx.refreshSharedNotes();
+  await tick(30);
+  await settle(a);
+  assert.equal(reads(), before + 1);
+  assert.equal(line(a, '900').notes, 'Board arrives Monday');
+  // An edit here now builds on the newer note instead of sending an old copy back.
+  edit(a, '900', 'status', 'Hold');
+  await sendNow(a);
+  const k = keyOf(a, '900');
+  assert.deepEqual((({ status, notes, by }) => ({ status, notes, by }))((await site.doc()).rows[k]), { status: 'Hold', notes: 'Board arrives Monday', by: 'AJ' });
 });
 
 test('clearing a line and restoring deleted lines reach the other browsers too', async () => {

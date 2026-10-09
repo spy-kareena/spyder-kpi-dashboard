@@ -20,3 +20,10 @@ report replaces it; icons on Ask AI, Share snapshot and Export PDF.
 1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
 the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
 hosts without it keep the report in each browser. Sidebar shows where the report is saved.
+
+1v7: shared notes on Cloudflare Pages (functions/api/notes.js, KV key "overrides"): notes, override statuses,
+Us / Them causes and deleted lines are shared with everyone who signs in, merged line by line (the newest edit
+wins), each stamped with the editor's initials (asked once) and time; the sidebar shows "Notes shared · last edit".
+Hosts without it, or an unreachable server, keep notes in the browser as before. New Cause select (Auto / Us / Them)
+in the note editor, Build Risk rows and the linked-lines bulk bar (Set cause). Each upload records its At Risk lines
+in an at-risk history (KV key "history", GET /api/history, last 52 export dates) for "first flagged" ages.

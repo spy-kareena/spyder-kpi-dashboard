@@ -4,7 +4,8 @@
 <!--
   Spyder KPI Dashboard 1v1
   Offline browser app for SAP B1 sales-order, delivery, PO, and supply/demand exports.
-  Spreadsheet parsing and KPI math run in this page. Notes stay in local browser storage.
+  Spreadsheet parsing and KPI math run in this page. Notes stay in browser storage and, on the hosted site,
+  are shared with everyone who signs in (functions/api/notes.js).
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1427,7 +1428,7 @@ function updateRowOverride(key,field,value){
   if(at<0||now.some(b=>b.dataset.key===cleanKey))return;
   refocus(now[at]||now[now.length-1],linkedListAnchor());
   const r=matches[0]||{};
-  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${field==='cause'?`cause ${causeLabel(value)}`:value||'No override'} and left this list.`);
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')} set to ${field==='cause'?`cause ${manualCauseLabel(value)}`:value||'No override'} and left this list.`);
 }
 // A redraw can remove the control that had focus. If focus fell to the page body, move it to the first of
 // these that is on the page.
@@ -1606,7 +1607,7 @@ function renderNoteEditorRow(r,colspan){
 function renderPrintNoteRow(r,colspan){
   const status=String(r.overrideStatus||'').trim();
   const notes=String(r.overrideNotes||'').trim();
-  const cause=r.overrideCause?`Cause: ${causeLabel(r.overrideCause)}`:'';
+  const cause=r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'';
   if(!status&&!notes&&!cause)return '';
   return `<tr class="print-note-row has-print-note"><td colspan="${colspan}">
     <div class="print-note-card">
@@ -3786,8 +3787,8 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
       <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
       <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
-      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes)?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
-      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([r.overrideStatus,r.overrideCause?`Cause: ${causeLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
+      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes||r.overrideCause)?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'',r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
+      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
       <td class="soft${/^\d{4}-/.test(resched)?' date':''}">${esc(resched)}</td>
       ${editable?`<td class="soft">${esc(r.deliveryDocNumber||'—')}</td><td class="soft">${esc(r.closeDateSource||'—')}</td>`:''}
       <td class="num strong">${money(r.amountLocal)}</td>
@@ -6283,13 +6284,13 @@ const NOTES_BATCH_BYTES=512*1024;
 const NOTE_KEY_RE=/^[^\u0000-\u001f\u007f]{1,300}$/;
 const SHIPMENT_ID_RE=/^[A-Za-z0-9._:-]{1,100}$/;
 const NOTE_CTRL_RE=/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g;
-const CAUSE_OPTIONS=[['','Auto'],['us','Us'],['them','Them']];
-const CAUSE_TIP='Who the delay is on. Us: Spyder (production, supply, QC, a late PO). Them: the customer (hold, reschedule, short ship). Auto: worked out from the override status and the SAP flags.';
+const MANUAL_CAUSE_OPTIONS=[['','Auto'],['us','Us'],['them','Them']];
+const MANUAL_CAUSE_TIP='Who the delay is on. Us: Spyder (production, supply, QC, a late PO). Them: the customer (hold, reschedule, short ship). Auto: worked out from the override status and the SAP flags.';
 // state: '' not checked (or this page cannot reach a server), 'checking', 'shared', 'local' (no shared storage on
 // this site), 'offline' (server not reachable), 'failed' (the server refused; message says why).
 let sharedNotes={state:'',message:'',saving:false,last:null};
-let notesCleared=readLocalJson(NOTES_CLEARED_KEY);
-let sharedShipments=readLocalJson(NOTES_SHIPMENTS_KEY);
+let notesCleared=notesReadLocal(NOTES_CLEARED_KEY);
+let sharedShipments=notesReadLocal(NOTES_SHIPMENTS_KEY);
 // Changes waiting to be sent, as 'rows|<rowKey>' or 'shipments|<id>': a timer per line while edits keep coming,
 // then ready to send.
 const notesTimers=new Map();
@@ -6298,6 +6299,7 @@ let notesFlushTimer=null;
 let notesInFlight=false;
 let notesFlushAgain=false;
 let notesClearedDirty=false;
+let notesSyncing=false;
 let editorDialogOpen=false;
 let editorAsked=false;
 let linkedBulkCause='';
@@ -6307,21 +6309,21 @@ let linkedBulkCause='';
 var firstFlagged={};
 let atRiskWeeks=[];
 
-function readLocalJson(key){
+function notesReadLocal(key){
   try{const v=JSON.parse(localStorage.getItem(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
   catch(err){return {};}
 }
-function writeLocalJson(key,value){
+function notesWriteLocal(key,value){
   if(isSnapshotView)return;
   try{localStorage.setItem(key,JSON.stringify(value));}catch(err){/* saveRowOverrides already warns when storage is full */}
 }
 function persistClearedSoon(){
   if(notesClearedDirty)return;
   notesClearedDirty=true;
-  Promise.resolve().then(()=>{notesClearedDirty=false;writeLocalJson(NOTES_CLEARED_KEY,notesCleared);});
+  Promise.resolve().then(()=>{notesClearedDirty=false;notesWriteLocal(NOTES_CLEARED_KEY,notesCleared);});
 }
 const isSafeNoteKey=k=>k!=='__proto__'&&k!=='constructor'&&k!=='prototype';
-const hasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const notesHasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 // Editor initials: null = never asked, '' = skipped, else the initials.
 function readEditor(){
   try{return localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
@@ -6333,7 +6335,7 @@ function noteTime(e){
   const t=e?Date.parse(e.at):NaN;
   return Number.isFinite(t)?t:0;
 }
-function causeLabel(v){
+function manualCauseLabel(v){
   return v==='us'?'Us':v==='them'?'Them':'Auto';
 }
 const canShareNotes=()=>typeof fetch!=='undefined'&&location.protocol!=='file:'&&!isSnapshotView;
@@ -6449,7 +6451,7 @@ function adoptSharedReply(data){
 // After notes came in from the server: save them here, put them on the loaded lines and redraw.
 function sharedNotesChanged({rows=true,shipments=false}={}){
   if(rows)saveRowOverrides();
-  if(shipments)writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+  if(shipments)notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
   recomputeLastEdit();
   if(rows&&allLoadedRows.length){allLoadedRows.forEach(applyRowOverride);applyInventoryScope();}
   if(document.getElementById('results-screen').style.display==='block')renderResults();
@@ -6461,25 +6463,39 @@ function setNotesLocal(){
   // No shared storage here: nothing will ever need the cleared-line markers.
   if(Object.keys(notesCleared).length){notesCleared={};persistClearedSoon();}
 }
-// Reads the shared notes once (page open) and merges them with this browser's copy; sends back what is newer here.
+// Reads the shared notes (page open, and again when the page comes back into view) and merges them with this
+// browser's copy; sends back what is newer here.
 async function syncSharedNotes(){
-  if(!canShareNotes()||sharedNotes.state==='checking'||sharedNotes.state==='shared')return;
-  sharedNotes={...sharedNotes,state:'checking',message:''};
-  let res;
-  try{res=await fetch('/api/notes',{cache:'no-store'});}
-  catch(err){sharedNotes={...sharedNotes,state:'offline',message:''};renderSidebar();return;}
-  if(isSnapshotView)return;
-  // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON.
-  if([404,405,503].includes(res.status)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();renderSidebar();return;}
-  if(!res.ok){sharedNotes={...sharedNotes,state:'failed',message:res.status===401?'sign-in expired, reload and sign in again':`server error ${res.status}`};renderSidebar();return;}
-  let doc=null;
-  try{doc=await res.json();}catch(err){doc=null;}
-  if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};renderSidebar();return;}
-  const push=mergeSharedNotes(doc);
-  sharedNotes={...sharedNotes,state:'shared',message:''};
-  push.forEach(id=>notesReady.add(id));
-  if(notesReady.size)flushSharedNotesSoon();
-  renderSidebar();
+  if(!canShareNotes()||notesSyncing||sharedNotes.state==='local')return;
+  const refresh=sharedNotes.state==='shared';
+  notesSyncing=true;
+  sharedNotes.syncedAt=Date.now();
+  if(!refresh)sharedNotes={...sharedNotes,state:'checking',message:''};
+  try{
+    let res;
+    try{res=await fetch('/api/notes',{cache:'no-store'});}
+    catch(err){if(!refresh)sharedNotes={...sharedNotes,state:'offline',message:''};return;}
+    if(isSnapshotView)return;
+    // A static host (IIS, a file share) has no /api/notes, or answers with a page instead of JSON.
+    if([404,405,503].includes(res.status)||(res.ok&&!/json/i.test(res.headers.get('content-type')||''))){setNotesLocal();return;}
+    if(!res.ok){sharedNotes={...sharedNotes,state:'failed',message:res.status===401?'sign-in expired, reload and sign in again':`server error ${res.status}`};return;}
+    let doc=null;
+    try{doc=await res.json();}catch(err){doc=null;}
+    if(!doc||typeof doc!=='object'||!doc.rows||typeof doc.rows!=='object'){if(!refresh)sharedNotes={...sharedNotes,state:'failed',message:'the shared notes could not be read'};return;}
+    const push=mergeSharedNotes(doc);
+    sharedNotes={...sharedNotes,state:'shared',message:''};
+    push.forEach(id=>notesReady.add(id));
+    if(notesReady.size)flushSharedNotesSoon();
+  }finally{
+    notesSyncing=false;
+    renderSidebar();
+  }
+}
+// A page left open for hours does not see other people's edits by itself: read them again when it comes back
+// into view (at most once a minute), so an edit here does not replace a newer note with an old copy.
+function refreshSharedNotes(){
+  if((sharedNotes.state!=='shared'&&sharedNotes.state!=='offline')||Date.now()-(sharedNotes.syncedAt||0)<60000)return;
+  syncSharedNotes();
 }
 // Line by line, the newer edit wins. Returns the ids to send (newer here, or not on the server yet).
 function mergeSharedNotes(doc){
@@ -6490,7 +6506,7 @@ function mergeSharedNotes(doc){
   const keys=new Set([...Object.keys(rowOverrides),...Object.keys(notesCleared),...Object.keys(srvRows)]);
   keys.forEach(k=>{
     if(!isSafeNoteKey(k))return;
-    const srv=hasOwn(srvRows,k)&&srvRows[k]&&typeof srvRows[k]==='object'?srvRows[k]:null;
+    const srv=notesHasOwn(srvRows,k)&&srvRows[k]&&typeof srvRows[k]==='object'?srvRows[k]:null;
     const local=rowOverrides[k]||notesCleared[k]||null;
     if(srv&&noteTime(srv)>noteTime(local)){adoptRowEntry(k,srv);changed=true;return;}
     if(!local)return;
@@ -6502,7 +6518,7 @@ function mergeSharedNotes(doc){
   const srvShips=doc.shipments&&typeof doc.shipments==='object'?doc.shipments:{};
   new Set([...Object.keys(sharedShipments),...Object.keys(srvShips)]).forEach(id=>{
     if(!isSafeNoteKey(id))return;
-    const srv=hasOwn(srvShips,id)&&srvShips[id]&&typeof srvShips[id]==='object'?srvShips[id]:null;
+    const srv=notesHasOwn(srvShips,id)&&srvShips[id]&&typeof srvShips[id]==='object'?srvShips[id]:null;
     const local=sharedShipments[id]||null;
     if(srv&&noteTime(srv)>noteTime(local)){sharedShipments[id]=sharedShipmentEntry(srv);shipChanged=true;return;}
     if(local&&noteTime(local)>noteTime(srv)&&SHIPMENT_ID_RE.test(id))push.push(`shipments|${id}`);
@@ -6611,8 +6627,9 @@ function finishEditorDialog(initials){
       if(e&&!e.by){e.by=initials;if(kind==='rows')rows=true;else ships=true;}
     });
     if(rows){saveRowOverrides();persistClearedSoon();}
-    if(ships)writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+    if(ships)notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
     if(sharedNotes.last&&!sharedNotes.last.by)recomputeLastEdit();
+    if(typeof showToast==='function')showToast(`Initials saved: ${initials}. They are shown with your edits.`);
   }
   renderSidebar();
   flushSharedNotesSoon();
@@ -6621,17 +6638,19 @@ function finishEditorDialog(initials){
 // --- Us / Them cause controls (note editor, Build Risk rows, linked-lines bulk bar) ---
 function renderCauseSelect(r){
   const current=r.overrideCause||'';
-  return `<select class="row-cause" data-key="${esc(rowKey(r))}" data-field="cause" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Cause, us or them, for ${esc(r.documentNumber)}" data-tip="${esc(CAUSE_TIP)}">
-    ${CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===current?' selected':''}>${l}</option>`).join('')}
+  return `<select class="row-cause" data-key="${esc(rowKey(r))}" data-field="cause" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Cause, us or them, for ${esc(r.documentNumber)}" data-tip="${esc(MANUAL_CAUSE_TIP)}">
+    ${MANUAL_CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===current?' selected':''}>${l}</option>`).join('')}
   </select>`;
 }
 function renderBulkCauseControls(){
-  return `<label>Cause <select id="linked-bulk-cause" class="select" onchange="linkedBulkCause=this.value" data-tip="${esc(CAUSE_TIP)}">${CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===linkedBulkCause?' selected':''}>${l}</option>`).join('')}</select></label>
+  return `<label>Cause <select id="linked-bulk-cause" class="select" onchange="linkedBulkCause=this.value" data-tip="${esc(MANUAL_CAUSE_TIP)}">${MANUAL_CAUSE_OPTIONS.map(([v,l])=>`<option value="${v}"${v===linkedBulkCause?' selected':''}>${l}</option>`).join('')}</select></label>
           <button type="button" class="btn btn-sm" id="linked-bulk-cause-apply" onclick="applyLinkedCause()" data-tip="Set this cause on every selected line. Auto clears the cause set by hand. Override statuses and notes are kept.">Set cause</button>`;
 }
 function applyLinkedCause(){
-  if(linkedSelection.size)setRowOverrides(linkedSelection,'cause',linkedBulkCause);
+  const n=linkedSelection.size;
+  if(n)setRowOverrides(linkedSelection,'cause',linkedBulkCause);
   keepLinkedFocus();
+  if(n&&typeof showToast==='function')showToast(`Cause set to ${manualCauseLabel(linkedBulkCause)} on ${fmtNum(n)} line${n===1?'':'s'}.`);
 }
 
 // --- Shipping page helpers (tracking numbers typed in by hand, shared like notes) ---
@@ -6655,7 +6674,7 @@ function sharedNotesPatchShipments(map){
     if(notesSharing())queueSharedNote('shipments',id);
   });
   if(!n)return 0;
-  writeLocalJson(NOTES_SHIPMENTS_KEY,sharedShipments);
+  notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
   noteLastEdit(stamp);
   if(notesSharing())askEditorInitials();
   return n;
@@ -6683,7 +6702,7 @@ function mergeAtRiskWeeks(...lists){
 }
 function refreshFirstFlagged(){
   const out={};
-  atRiskWeeks.forEach(w=>w.keys.forEach(k=>{if(isSafeNoteKey(k)&&!hasOwn(out,k))out[k]=w.asOf;}));
+  atRiskWeeks.forEach(w=>w.keys.forEach(k=>{if(isSafeNoteKey(k)&&!notesHasOwn(out,k))out[k]=w.asOf;}));
   firstFlagged=out;
 }
 // A report the server just saved adds its week here too, without reading the history again.
@@ -6705,7 +6724,8 @@ async function loadAtRiskHistory(){
 }
 // Changes still waiting go out when the page is closed or hidden (keepalive lets the request finish).
 addEventListener('pagehide',()=>flushSharedNotes({all:true,keepalive:true}));
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSharedNotes({all:true,keepalive:true});});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSharedNotes({all:true,keepalive:true});else refreshSharedNotes();});
+addEventListener('focus',refreshSharedNotes);
 
 renderSidebar();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
