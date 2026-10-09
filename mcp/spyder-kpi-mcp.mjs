@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Spyder KPI MCP server: lets an AI app (Claude Desktop, Claude Code, Cursor, ...) answer questions from SAP B1
-// exports on this computer. No dependencies (Node 18+). It runs ../index.html in a Node vm, loads the exports
+// exports on this computer. No dependencies (Node.js 20 or newer). It runs ../index.html in a Node vm, loads the exports
 // through the page's own handleFiles, and serves the page's KPI_TOOLS over MCP stdio (one JSON-RPC 2.0 message
 // per line). stdout carries only protocol messages; logs go to stderr. See docs/MCP.md.
 //

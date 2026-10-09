@@ -30,7 +30,7 @@ Supply / Demand and Supply Mix need `queries/sap_b1_hana_supply_demand_snapshot_
 - **Build Risk:** add the "Orders At Risk - Clear to Build" workbook (.xlsx) with **Add file**. Every weekly "Orders at Risk" sheet is read; the page opens on the newest week, and **Report week** picks another. Weeks are never added together. "CTB % by CM" shows the last 8 weeks. The Lacombe block is shown but not matched to sales order lines.
 - **Big picture:** a button on Order Health, Build Risk and Supply Mix opens a flow (Sankey) chart of the page: boxes in columns joined by bands as thick as the value they carry. Order Health shows open order value from warehouse to status to customer segment, and at-risk value from reason to Us / Them to customer (top 8, the rest grouped as Other). Build Risk shows each CM's orders in the picked report week flowing into clear to build, at risk and late, then the month due. Supply Mix shows open demand value from warehouse to item group to demand month, coloured by how well open POs cover it. The columns add up to the page's own cards. Hover or Tab to a box for its full numbers; click it (or press Enter / Space) to apply that page's filter: warehouse, segment, customer or the matching card on Order Health, the CM on Build Risk, the warehouse on Supply Mix (shared with Supply / Demand). Click the same warehouse, segment, customer or CM again to undo; boxes with no filter (months, item groups) stay highlighted until clicked again. Arrow keys move between boxes. The chart scrolls sideways inside its card on a phone, prints as drawn, and stays still when the computer asks for reduced motion. Which charts are open, and a CM picked on Build Risk, travel in a share snapshot. The layout is the page's own `sankeyLayout` (no chart library).
 - **Ask AI:** a chat panel (page header) that answers questions about the loaded export with the AI provider you pick: Claude or ChatGPT (paid) or Groq or OpenRouter's free models (free), using the same numbers as the pages. The keys are server secrets shared by everyone who signs in (`functions/api/ai/`); nothing is sent to a provider until the user ticks its consent box. Setup, costs and each provider's data terms: [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md).
-- **Connect an AI (MCP):** `mcp/spyder-kpi-mcp.mjs` is a dependency-free MCP server (Node 18+) that gives Claude Desktop, Claude Code and other MCP apps the same tools as Ask AI, reading SAP exports on that computer. Setup: the **Connect an AI** page (sidebar, Help) or [docs/MCP.md](docs/MCP.md). Check it with `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"`.
+- **Connect an AI (MCP):** `mcp/spyder-kpi-mcp.mjs` is a dependency-free MCP server (Node.js 20 or newer) that gives Claude Desktop, Claude Code and other MCP apps the same tools as Ask AI, reading SAP exports on that computer. Setup: the **Connect an AI** page (sidebar, Help) or [docs/MCP.md](docs/MCP.md). Check it with `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"`.
 
 ## Hosting
 
@@ -59,7 +59,7 @@ The page uses the Inter font from Google Fonts. With no internet access it falls
 
 ## Tests
 
-No build step or dependencies. With Node 18 or newer:
+No build step or dependencies. With Node.js 20 or newer:
 
 ```
 node tests/run-all.js

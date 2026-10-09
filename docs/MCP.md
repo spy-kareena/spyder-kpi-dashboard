@@ -12,7 +12,7 @@ There is nothing to install. On the hosted site, click **Ask AI** at the top of 
 
 The connector is a small program in the `mcp` folder (`mcp/spyder-kpi-mcp.mjs`). It runs on your computer and reads the export files you list. It needs nothing but Node.js.
 
-1. Install Node.js 18 or newer from [nodejs.org](https://nodejs.org).
+1. Install Node.js 20 or newer from [nodejs.org](https://nodejs.org).
 2. Save the dashboard folder on this computer. Ask IT for it if you only use the website. It needs `index.html` and the `mcp` folder.
 3. In Claude Desktop, open **Settings → Developer → Edit Config**. This opens `claude_desktop_config.json`:
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
@@ -110,7 +110,7 @@ node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"
 
 It loads the file, prints the overview (the same numbers as Order Health and Purchase Orders) and exits. If the file cannot be read, it prints why and exits with code 1.
 
-**"node" is not recognized / command not found.** Node.js is not installed, or the AI app started before it was installed. Install Node.js 18+ from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer). `node --version` in a new terminal should print v18 or newer. If the app still can't find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`. On a Mac, Claude Desktop does not see the Terminal's PATH (for example when Node.js came from nvm or Homebrew): run `which node` in Terminal and use the path it prints, such as `/opt/homebrew/bin/node`.
+**"node" is not recognized / command not found.** Node.js is not installed, or the AI app started before it was installed. Install Node.js 20 or newer from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer). `node --version` in a new terminal should print v20 or newer. If the app still can't find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`. On a Mac, Claude Desktop does not see the Terminal's PATH (for example when Node.js came from nvm or Homebrew): run `which node` in Terminal and use the path it prints, such as `/opt/homebrew/bin/node`.
 
 **Paths with spaces.** In the Claude Desktop config each path is its own quoted string in `args`, so spaces are fine. In a terminal command (Claude Code, `--check`), put each path in double quotes. Use full paths, not paths relative to the dashboard folder.
 

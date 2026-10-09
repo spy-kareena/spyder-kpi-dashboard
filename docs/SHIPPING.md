@@ -73,7 +73,7 @@ the export without live status, and says so. A snapshot keeps the statuses that 
 ## One-time setup (owner / IT)
 
 You need: the Cloudflare account that hosts the dashboard (with the `REPORT_STORE` KV namespace already set up for the
-shared report, see [IT_HOSTING_README.md](IT_HOSTING_README.md)), the FedEx account you ship with, and Node.js 18+
+shared report, see [IT_HOSTING_README.md](IT_HOSTING_README.md)), the FedEx account you ship with, and Node.js 20 or newer
 for the `npx wrangler` commands.
 
 ### 1. Re-run the SAP query

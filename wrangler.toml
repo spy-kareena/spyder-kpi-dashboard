@@ -12,8 +12,10 @@ compatibility_date = "2026-10-01"
 # history and live FedEx statuses (keys: report, overrides, history, tracking:*).
 # One-time setup (see docs/IT_HOSTING_README.md):
 #   1. npx wrangler kv namespace create spyder-kpi-report
-#   2. Paste the id it prints below and remove the "# " in front of the three lines.
+#   2. Paste the id it prints below in place of REPLACE_WITH_REPORT_STORE_NAMESPACE_ID and remove the "# " in
+#      front of the three lines. Put the same id in workers/shipping-poller/wrangler.toml.
+#   3. Commit and push (Git builds read this file), or run npx wrangler pages deploy . --project-name spyder-kpi-dashboard
 # Until then the site still works; sharing falls back to each browser.
 # [[kv_namespaces]]
 # binding = "REPORT_STORE"
-# id = "PASTE_THE_NAMESPACE_ID_HERE"
+# id = "REPLACE_WITH_REPORT_STORE_NAMESPACE_ID"

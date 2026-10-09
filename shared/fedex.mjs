@@ -2,7 +2,7 @@
  * FedEx tracking for the Shipping page. One copy of this code is used by both:
  *   - the Pages Function functions/api/shipping.js ("Refresh now" on the page), and
  *   - the scheduled Worker workers/shipping-poller (checks every 4 hours).
- * No dependencies; runs on Cloudflare Workers and Node 18+. See docs/SHIPPING.md.
+ * No dependencies; runs on Cloudflare Workers and Node.js 20+. See docs/SHIPPING.md.
  *
  * FedEx APIs (a project at developer.fedex.com with the Track API added):
  *   POST {base}/oauth/token                client-credentials sign-in; the token is cached in KV until it expires

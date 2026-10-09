@@ -4877,7 +4877,7 @@ function renderConnectPage(){
     <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
     <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel on the right. Nothing is sent until you tick the consent box for a provider." onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, setup, costs and data terms.">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
-      ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
+      ${step(1,'Install Node.js 20 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
       ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>. This opens claude_desktop_config.json:<code>Windows: %APPDATA%\\Claude\\claude_desktop_config.json</code><code>macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</code>Add the lines below with your two paths (keep the double backslashes), save, then restart Claude.')}
     </div>

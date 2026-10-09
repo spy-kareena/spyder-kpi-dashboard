@@ -16,7 +16,7 @@ It does not need a database, application server, Node, Python, or internet acces
 - `functions/` - Cloudflare Pages Functions: the sign-in gate, shared storage (`functions/api/report.js` the last report, `functions/api/notes.js` notes / overrides / causes, `functions/api/history.js` at-risk history), live shipping (`functions/api/shipping.js`) and the Ask AI proxy for Claude, ChatGPT, Groq and OpenRouter (`functions/api/ai/`)
 - `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker
 - `workers/shipping-poller/` - optional Cloudflare Worker that checks FedEx every 4 hours for the Shipping page (its own `wrangler.toml` and README); see `docs/SHIPPING.md`
-- `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node 18+) to connect Claude or other AI apps; see `docs/MCP.md`
+- `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node.js 20 or newer) to connect Claude or other AI apps; see `docs/MCP.md`
 - `web.config` - optional IIS static hosting config
 
 ## Hosting
@@ -121,7 +121,7 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
 
 ## Tests
 
-With Node 18+ (no install needed): `node tests/run-all.js`.
+With Node.js 20 or newer (no install needed): `node tests/run-all.js`.
 
 ## Updating later
 
