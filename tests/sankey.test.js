@@ -172,6 +172,13 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.match(html(page), /class="sk-node sk-calm sk-sel sk-on" role="button" tabindex="0" aria-pressed="true"/);
   click('open', '1:ok');
   assert.equal(page.run('sankeyPinned.weekly'), '');
+  // A pinned box that a filter takes out of the chart leaves nothing dimmed.
+  click('open', '1:ok');
+  page.run("setWeeklyWarehouseFilter(['CM - DSM'])");
+  assert.doesNotMatch(html(page), /data-pinned|sk-svg sk-hl/);
+  page.run("setWeeklyWarehouseFilter(['ALL'])");
+  assert.match(html(page), /data-pinned="1:ok"/, 'and it comes back with the box');
+  click('open', '1:ok');
   // Keyboard: Enter and Space activate, other keys do nothing.
   let prevented = 0;
   page.ctx.__ev = (key) => ({ key, preventDefault() { prevented++; } });
@@ -189,6 +196,17 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.deepEqual(page.errors, []);
 });
 
+test('credit lines (negative open value) are left out of the bands and the sub-title says how much', async () => {
+  const page = await orderHealth([...ATRISK, sapRow({ DocumentNumber: '77', 'Internal Number': '77', Warehouse: 'CM - DSM', AmountLocal: '-300.00', ...due('08/10/2026') })]);
+  const oh = page.run('(()=>{const d=orderHealthData(currentMetrics());return {all:d.allOrdersAmt,late:d.lateAmt}})()');
+  const [open, risk] = flows(page, 'weekly');
+  assert.equal(open.total, oh.all + 300);
+  assert.equal(risk.total, oh.late + 300);
+  assert.match(open.sub, / · \$300 of credit lines not drawn$/);
+  assert.match(risk.sub, / · \$300 of credit lines not drawn$/);
+  assert.doesNotMatch(flows(await orderHealth(ATRISK), 'weekly')[0].sub, /not drawn/);
+});
+
 test('markup: the toggle and every box carry plain-English tips with full numbers; SAP text is escaped; tags balance', async () => {
   const page = await orderHealth();
   const closed = html(page);
@@ -203,7 +221,7 @@ test('markup: the toggle and every box carry plain-English tips with full number
   assert.ok(boxes.length >= 20);
   boxes.forEach((b) => assert.equal(b[1], b[2]));
   assert.ok(boxes.some((b) => /Appliance Inc \(APP1\): \$1,721,806 at risk, 1 order, 1 line/.test(b[1])), 'full dollar values in tips');
-  assert.match(h, /<text x="218" y="14" text-anchor="end">Warehouse \/ CM<\/text>/, 'column headings line up with the boxes');
+  assert.match(h, /<text x="218" y="14" text-anchor="end" data-tip="Warehouse or contract manufacturer [^"]+"><title>Warehouse or contract manufacturer [^<]+<\/title>Warehouse \/ CM<\/text>/, 'column headings line up with the boxes and explain themselves');
   assert.match(h, /<details class="about sk-about"><summary>About this chart<\/summary>/);
   assert.match(h, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
   assert.doesNotMatch(h, /<b>Co|undefined|NaN/);

@@ -6506,9 +6506,11 @@ function sankeyWeeklyFlows(m){
   const names=new Map();
   d.lateTileRows.forEach(r=>{const c=rowCustomer(r);if(!names.has(c))names.set(c,String(r.name||'').trim()||c);});
   const reasonFilter=typeof lineReasons==='function'&&typeof setWeeklyReasonFilter==='function';
-  const risk=sankeyBuild(d.lateTileRows,{value:openLineValue,doc,tone:r=>SANKEY_CAUSES[sankeyLineCause(r)].tone,cols:[
+  const causes=new Map(d.lateTileRows.map(r=>[r,sankeyLineCause(r)]));
+  const causeOf=r=>causes.get(r)||'unknown';
+  const risk=sankeyBuild(d.lateTileRows,{value:openLineValue,doc,tone:r=>SANKEY_CAUSES[causeOf(r)].tone,cols:[
     {key:sankeyLineReason,top:6,other:'Other reasons',action:(ms,other)=>other?null:reasonFilter?{type:'reason',value:ms[0]}:SANKEY_REASON_TILE[ms[0]]?{type:'tile',value:SANKEY_REASON_TILE[ms[0]]}:null},
-    {key:sankeyLineCause,label:k=>SANKEY_CAUSES[k].label,order:k=>SANKEY_CAUSES[k].order,tone:k=>SANKEY_CAUSES[k].tone,action:ms=>typeof setWeeklyCauseFilter==='function'?{type:'cause',value:ms[0]}:null},
+    {key:causeOf,label:k=>SANKEY_CAUSES[k].label,order:k=>SANKEY_CAUSES[k].order,tone:k=>SANKEY_CAUSES[k].tone,action:ms=>typeof setWeeklyCauseFilter==='function'?{type:'cause',value:ms[0]}:null},
     {key:rowCustomer,label:k=>names.get(k)||k,top:8,other:'Other customers',action:ms=>({type:'customer',values:ms})}
   ]});
   const lines=n=>`${fmtNum(n.docs)} ${n.docs===1?'order':'orders'}, ${fmtNum(n.count)} ${n.count===1?'line':'lines'}`;
@@ -6528,12 +6530,16 @@ function sankeyWeeklyFlows(m){
       :'Click to highlight where this value goes.';
     n.tip=`${what}: ${money(n.value)} at risk, ${lines(n)} (${share}).${n.level===1?` ${SANKEY_CAUSES[n.key].tip}`:''} ${click}`;
   });
+  // Credit lines (negative open value) cannot be drawn as bands; the sub-title says how much was left out.
+  const notDrawn=(all,drawn)=>Math.abs(all-drawn)>=0.5?` · ${money(drawn-all)} of credit lines not drawn`:'';
   return [
     {id:'open',title:'Open order value',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,
-      sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view`,empty:'No open order value in this view.',
+      colTips:['Warehouse or contract manufacturer the open lines ship from (the 8 largest; the rest are grouped).','Each open line counted once: no commit date, past due with no reschedule, rescheduled, marked urgent, or not at risk.','Customer segment from the customer code or business-partner group.'],
+      sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view${notDrawn(d.allOrdersAmt,open.total)}`,empty:'No open order value in this view.',
       legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
     {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,
-      sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card`,empty:'Nothing at risk in this view.',
+      colTips:['Main reason the line is at risk: an override reason someone picked, otherwise the SAP signal.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
+      sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
       legend:[['crit','Us'],['warn','Them'],['muted','Not set']]}
   ];
 }
@@ -6582,6 +6588,7 @@ function sankeyBuildRiskFlows(m){
       :`${n.label}: ${orders} due (${split(n)}). Click to highlight where they come from.`;
   });
   return [{id:'ctb',title:`Orders in ${week}`,unit:'orders',cols:['CM','Clear to build status','Month'],...f,
+    colTips:['Contract manufacturer in the Clear To Build report.','Orders the report marks clear to build, at risk or late.','Month the orders are due, from the report.'],
     sub:`${fmtNum(f.total)} orders · ${fmtNum(br.totalClearToBuild)} clear to build · ${fmtNum(br.totalAtRisk)} at risk · ${fmtNum(br.totalLate)} late`,
     empty:'The picked report week has no CM / month rows with orders.',legend:[['good','Clear to build'],['warn','At risk'],['crit','Late']]}];
 }
@@ -6610,6 +6617,7 @@ function sankeySupplyFlows(m){
   });
   const wh=supplyWarehouseFilter.includes('ALL')?'all warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
   return [{id:'demand',title:byValue?'Open demand value':'Open demand quantity',unit:byValue?'money':'qty',cols:['Warehouse','Item group','Demand month'],...f,
+    colTips:['Warehouse of the demand rows in the supply / demand snapshot (the 8 largest; the rest are grouped).','SAP item group (the 8 largest; the rest are grouped).','Month the demand is planned for.'],
     sub:`${fmtV(f.total)} · ${wh} · coloured by open PO coverage`,empty:'No open demand for this warehouse selection.',
     legend:[['crit','Short of open PO supply'],['warn','Covered by supply at risk'],['calm','Covered']]}];
 }
@@ -6714,21 +6722,23 @@ function renderSankeyFlow(tab,flow){
   const head=`<div class="sk-flow-head"><h3 class="sk-title">${esc(flow.title)}</h3><span class="section-sub">${esc(flow.sub)}</span></div>`;
   if(!flow.links.length)return `<div class="sk-flow">${head}<p class="empty-note">${esc(flow.empty)}</p></div>`;
   const W=sankeyChartWidth(),LEFT=210,RIGHT=210,TOP=26;
+  sankeyDrawnWidth=W;
   const perCol=[0,0,0];
   flow.nodes.forEach(n=>{perCol[n.level]=(perCol[n.level]||0)+1;});
   const layout=sankeyLayout(flow.nodes,flow.links,{width:W,height:Math.max(160,Math.min(520,Math.max(...perCol)*34)),marginLeft:LEFT,marginRight:RIGHT,format:v=>sankeyFormat(flow.unit,v,true)});
   const r=v=>Math.round(v*10)/10;
   const nodeById=new Map(layout.nodes.map(n=>[n.id,n]));
   const pinnedKey=sankeyPinned[tab]||'';
-  const pinned=pinnedKey.startsWith(`${flow.id}|`)?pinnedKey.slice(flow.id.length+1):'';
+  let pinned=pinnedKey.startsWith(`${flow.id}|`)?pinnedKey.slice(flow.id.length+1):'';
   const conn=pinned&&nodeById.has(pinned)?sankeyConnected(layout.links,pinned):null;
+  if(!conn)pinned=''; // the pinned box is not in this view (filters changed)
   const svgH=r(layout.height+TOP+6);
   const ids=`sankey-${tab}-${flow.id}`;
   const colX=layout.columns.map(c=>c.length?nodeById.get(c[0]):null);
   // Label room: the side margins for the first and last columns, the gap to the next column for the middle ones.
   const step=layout.columns.length>1?(W-LEFT-RIGHT-layout.nodeWidth)/(layout.columns.length-1):0;
   const room=n=>n.column===0?LEFT-12:n.column===layout.columns.length-1?RIGHT-12:step-layout.nodeWidth-22;
-  const heads=flow.cols.map((c,i)=>{const n=colX[i];if(!n)return '';const end=n.anchor==='end';return `<text x="${r(end?n.x1:n.x0)}" y="14" text-anchor="${end?'end':'start'}">${esc(c)}</text>`;}).join('');
+  const heads=flow.cols.map((c,i)=>{const n=colX[i];if(!n)return '';const end=n.anchor==='end';const tip=(flow.colTips||[])[i]||c;return `<text x="${r(end?n.x1:n.x0)}" y="14" text-anchor="${end?'end':'start'}" data-tip="${esc(tip)}"><title>${esc(tip)}</title>${esc(c)}</text>`;}).join('');
   const links=layout.links.map((l,i)=>`<path class="sk-link sk-${esc(l.tone||'calm')}${conn&&conn.links.has(i)?' sk-on':''}" d="${l.path}" data-s="${esc(l.source)}" data-t="${esc(l.target)}"><title>${esc(`${nodeById.get(l.source).label} → ${nodeById.get(l.target).label}: ${sankeyFormat(flow.unit,l.value)}${flow.unit==='money'?` (${fmtNum(l.count)} ${l.count===1?'line':'lines'})`:''}`)}</title></path>`).join('');
   const nodes=layout.nodes.map(n=>{
     const sel=sankeyNodeSelected(n)||pinned===n.id;
@@ -6769,12 +6779,13 @@ function sankeyFilterNote(tab){
 // The one hook each page calls: the "Big picture" button, or the open card with its charts.
 function renderBigPicture(tab,m){
   if(!SANKEY_TABS[tab])return '';
+  let flows=[];
+  // Flows first: building them also drops filter values the data no longer has, so the note below is current.
+  if(sankeyOpen[tab]){try{flows=sankeyFlows(tab,m);}catch(err){console.error('Big picture could not be drawn',err);}}
   const note=sankeyFilterNote(tab);
   if(!sankeyOpen[tab]){
     return `${note}<div class="sk-bar print-hide"><button type="button" class="btn sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="false" data-tip="${esc(`Show the big picture chart. ${SANKEY_INTRO[tab]} Click a box in it to filter this page.`)}" onclick="toggleSankey('${tab}')">${SANKEY_ICON}Big picture</button><span class="section-sub">${esc(SANKEY_INTRO[tab])}</span></div>`;
   }
-  let flows=[];
-  try{flows=sankeyFlows(tab,m);}catch(err){console.error('Big picture could not be drawn',err);}
   const about=tab==='weekly'?`<details class="about sk-about"><summary>About this chart</summary><div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
   return `${note}<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
     <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value. Hover or Tab to a box for its numbers; click a box to filter the page.</span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
@@ -6785,7 +6796,7 @@ function renderBigPicture(tab,m){
 // "About these numbers" text for the Big picture on each page (Order Health shows it inside the card).
 function sankeyAbout(tab){
   const p=t=>`<p>${t}</p>`;
-  if(tab==='weekly')return p('Big picture, open order value: every open sales-order line in this view flows from its warehouse to one status and on to its customer segment. Values are open line value, the same as the cards, so the at-risk statuses add up to the At Risk card and all boxes in a column add up to All open orders. A line with more than one risk counts once, in this order: no commit date, past due with no reschedule, rescheduled, marked urgent. The 8 largest warehouses are shown; the rest are grouped as Other warehouses.')
+  if(tab==='weekly')return p('Big picture, open order value: every open sales-order line in this view flows from its warehouse to one status and on to its customer segment. Values are open line value, the same as the cards, so the at-risk statuses add up to the At Risk card and all boxes in a column add up to All open orders (credit lines with a negative value cannot be drawn as bands; the chart’s sub-title says when some are left out). A line with more than one risk counts once, in this order: no commit date, past due with no reschedule, rescheduled, marked urgent. The 8 largest warehouses are shown; the rest are grouped as Other warehouses.')
     +p('At-risk value: the At Risk card’s lines by main reason (an override reason someone picked, otherwise the SAP signal), then Us or Them (a cause set on the line, else the override reason, else the SAP signal: past due or no commit date is us; anything else is Not set), then customer (top 8, the rest grouped as Other customers).')
     +p('Clicking a warehouse, segment or customer box filters Order Health to it (click it again to show all); a status or reason box picks the matching card so its lines are listed under Linked lines. Other boxes stay highlighted until clicked again.');
   if(tab==='buildrisk')return p('Big picture: the picked report week as a flow chart. Each CM’s orders flow into Clear to build, At risk and Late, then into the month they are due; band thickness is the number of orders, so the three middle boxes match the cards above. Click a CM box to show only that CM on this page; click it again, or Show every CM, to undo.');
@@ -6810,6 +6821,17 @@ function sankeyAnimate(tab){
   card.querySelectorAll('.sk-svg').forEach(svg=>{if(typeof svg.animate==='function')svg.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:650,easing:ease});});
   card.querySelectorAll('.sk-rect').forEach((rect,i)=>{if(typeof rect.animate==='function')rect.animate([{opacity:0,transform:'scaleY(0.2)'},{opacity:1,transform:'none'}],{duration:380,delay:Math.min(i,24)*18,easing:ease,fill:'backwards'});});
 }
+// The chart is drawn at the window's width; after a resize (phone turned, window dragged) an open chart is redrawn
+// once the width settles, if that changes its width.
+let sankeyDrawnWidth=0,sankeyResizeTimer=null;
+if(typeof addEventListener==='function')addEventListener('resize',()=>{
+  clearTimeout(sankeyResizeTimer);
+  sankeyResizeTimer=setTimeout(()=>{
+    const el=document.getElementById('results-screen');
+    if(printMode||!sankeyOpen[activeTab]||!el||el.style.display!=='block')return;
+    if(Math.abs(sankeyChartWidth()-sankeyDrawnWidth)>=40)renderResults();
+  },250);
+});
 // Share snapshots keep only known pages switched on.
 function sankeyOpenState(v){
   return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>v[t]===true).map(t=>[t,true])):{};
