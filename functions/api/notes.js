@@ -13,15 +13,23 @@
  *         busy (one write per second to the key), so the page sends the batch again.
  * Row entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}. `by` is the editor's initials, `at` the
  * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause or deleted flag
- * records that the line was cleared; it is kept so other browsers drop their copy. When storage runs full (5 MB),
- * cleared markers older than 180 days go first, then the entries edited longest ago (`pruned` in the reply).
+ * records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
+ * dropped on every save). When storage runs full (2 MB), the entries edited longest ago go (`pruned` in the reply).
  * Shipment entry: {order, number, carrier?, deleted?, by, at}.
  * One KV read per page open and one KV write per batch of edits (the page waits 800 ms after the last change to a
- * line, and at least 1.1 s between PATCHes).
+ * line, and at least 1.1 s between PATCHes). GET hands back the stored text without parsing it (every entry was
+ * checked before it was saved), so a page open costs almost no CPU whatever the size; only a PATCH reads and
+ * rewrites the whole document.
+ * Workers KV has no locking, and another Cloudflare location can read a copy up to 60 s old, so a PATCH there within
+ * a minute of one here can drop this one's lines. The page reads the notes again about a minute after each save that
+ * changed something and sends back any line missing on the server (recheckSharedNotes in index.html).
  */
 const KEY = 'overrides';
 const MAX_BODY = 1024 * 1024; // one PATCH
-const MAX_DOC = 5 * 1024 * 1024; // everything stored (a KV value may hold 25 MiB)
+// Everything stored. A KV value may hold 25 MiB, but each PATCH parses and rewrites the whole document, and its CPU
+// time grows with the size (the Workers Free plan allows 10 ms per request).
+const MAX_DOC = 2 * 1024 * 1024;
+const EMPTY_DOC = '{"v":1,"rows":{},"shipments":{},"savedAt":""}';
 const MAX_ENTRIES = 5000; // keys in one PATCH
 const MAX_NEW_KEYS = 500; // keys in one PATCH that are not stored yet (the page sends at most 500 per PATCH)
 const MAX_NOTE = 4000;
@@ -40,7 +48,7 @@ export async function onRequest(context) {
   if (request.method !== 'GET' && request.method !== 'PATCH') return json(405, { error: 'Use GET or PATCH.' }, { Allow: 'GET, PATCH' });
   if (!store) return json(503, { configured: false, error: 'Shared notes storage is not set up on this site (REPORT_STORE).' });
 
-  if (request.method === 'GET') return json(200, await readDoc(store));
+  if (request.method === 'GET') return raw(await readText(store));
 
   // The session cookie is SameSite=Lax, and only the dashboard page itself may change the notes.
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json(403, { error: 'Cross-site request refused.' });
@@ -56,7 +64,7 @@ export async function onRequest(context) {
   let doc;
   // A failed read must never be taken for "nothing saved": the merged document would replace everyone's notes.
   // (Not 503: the page reads 503 as "no shared storage on this site" and stops sharing.)
-  try { doc = await readDoc(store, { strict: true }); } catch (err) {
+  try { doc = await readDoc(store); } catch (err) {
     return json(500, { error: 'Shared notes storage could not be read; your changes are kept in this browser, try again.' });
   }
   let applied = 0;
@@ -81,9 +89,10 @@ export async function onRequest(context) {
   let pruned = 0;
   if (applied) {
     doc.savedAt = savedAt;
+    pruned = dropOldMarkers(doc, now);
     let stored = JSON.stringify(doc);
-    if (!fits(stored)) { pruned = prune(doc, now, sent); stored = JSON.stringify(doc); }
-    if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (5 MB). Ask IT to clear old notes.' });
+    if (!fits(stored)) { pruned += prune(doc, sent); stored = JSON.stringify(doc); }
+    if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (2 MB). Ask IT to clear old notes.' });
     try { await store.put(KEY, stored); } catch (err) {
       // Workers KV takes one write per second to the same key; another save may have just gone in. Try once more.
       await new Promise((r) => setTimeout(r, PUT_RETRY_MS));
@@ -95,14 +104,21 @@ export async function onRequest(context) {
   return json(200, { savedAt: applied ? savedAt : doc.savedAt || '', applied, ...(skipped ? { skipped } : {}), ...(pruned ? { pruned } : {}), ...out });
 }
 
-// The stored document, or an empty one when nothing is saved yet. Reading for the page (GET), a failed read or an
-// unreadable value also gives the empty document. strict (before a write): those throw instead.
-async function readDoc(store, { strict = false } = {}) {
-  let saved = null;
-  if (strict) saved = await store.get(KEY, { type: 'json' });
-  else try { saved = await store.get(KEY, { type: 'json' }); } catch (err) { saved = null; }
+// For the page (GET): the stored text as it is. Every PATCH writes JSON.stringify of a document that starts with
+// {"v":1,"rows":{ and checked each entry first, so the text is not parsed here. Nothing saved yet, a failed read or a
+// value that is not such a document (edited by hand) gives the empty document.
+async function readText(store) {
+  let text = null;
+  try { text = await store.get(KEY); } catch (err) { text = null; }
+  return typeof text === 'string' && text.startsWith('{"v":1,"rows":{') && text.endsWith('}') ? text : EMPTY_DOC;
+}
+
+// The stored document before a write, or an empty one when nothing is saved yet. A failed read or an unreadable
+// value throws: it must never be taken for "nothing saved".
+async function readDoc(store) {
+  const saved = await store.get(KEY, { type: 'json' });
   const doc = { v: 1, rows: {}, shipments: {}, savedAt: '' };
-  if (strict && saved !== null && (typeof saved !== 'object' || Array.isArray(saved))) throw new Error('The stored notes are not a notes document.');
+  if (saved !== null && (typeof saved !== 'object' || Array.isArray(saved))) throw new Error('The stored notes are not a notes document.');
   if (!saved || typeof saved !== 'object') return doc;
   for (const kind of ['rows', 'shipments']) {
     const map = saved[kind];
@@ -182,15 +198,20 @@ function isCleared(e) {
   return !e.status && !e.notes && !e.cause && !e.deleted;
 }
 
-// Storage full. First drop cleared-line markers older than 180 days (their lines have long left the report). If it
-// is still full, drop the entries edited longest ago (notes, cleared markers and hand-added numbers alike), never
+// On every save: cleared-line markers older than 180 days go (their lines have long left the report, and browsers
+// drop their copy as soon as they see the marker), so they never pile up. Returns how many were dropped.
+function dropOldMarkers(doc, now) {
+  let dropped = 0;
+  for (const [k, e] of Object.entries(doc.rows)) if (isCleared(e) && now - time(e.at) > PRUNE_AFTER_MS) { delete doc.rows[k]; dropped++; }
+  return dropped;
+}
+
+// Storage full: drop the entries edited longest ago (notes, cleared markers and hand-added numbers alike), never
 // the ones this request sent, until the document fits again: old notes give way rather than every new edit
 // being refused. A browser that still has a dropped note sends it back the next time it opens.
 // Returns how many entries were dropped.
-function prune(doc, now, keep = new Set()) {
+function prune(doc, keep = new Set()) {
   let dropped = 0;
-  for (const [k, e] of Object.entries(doc.rows)) if (isCleared(e) && now - time(e.at) > PRUNE_AFTER_MS) { delete doc.rows[k]; dropped++; }
-  if (fits(JSON.stringify(doc))) return dropped;
   const bytes = (s) => new TextEncoder().encode(s).length;
   const old = [];
   for (const kind of ['rows', 'shipments']) {
@@ -221,7 +242,11 @@ function tooLarge() {
 }
 
 function json(status, data, extra = {}) {
-  return new Response(JSON.stringify(data), {
+  return raw(JSON.stringify(data), status, extra);
+}
+
+function raw(text, status = 200, extra = {}) {
+  return new Response(text, {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...extra },
   });

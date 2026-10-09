@@ -7,13 +7,15 @@
  * Bundle: 4-byte big-endian header length, a UTF-8 JSON header {v:1, savedAt, files:[{name, type,
  * lastModified, length}], atRisk?}, then each file's gzip bytes in header order. The server never reads the files.
  * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...]} lists the lines on the report's At Risk card. It is not
- * stored with the report; it is added to the at-risk history (KV key 'history', read by GET /api/history in
- * functions/api/history.js): one entry per week (Monday to Sunday), a second upload in the same week is merged
- * into it, 52 weeks kept. A bad atRisk, or a history that cannot be read, never stops the report from saving
- * ({history:{error}} says why it was left out; the stored history is then left as it was).
+ * stored with the report; it is added to the at-risk history (KV key 'history', plus the compact copy
+ * 'history:first' that GET /api/history in functions/api/history.js serves): one entry per week (Monday to Sunday),
+ * a second upload in the same week is merged into it, 52 weeks kept. A bad atRisk, or a history that cannot be
+ * read, never stops the report from saving ({history:{error}} says why it was left out; the stored history is then
+ * left as it was).
  */
 const KEY = 'report';
 const HISTORY_KEY = 'history';
+const HISTORY_FIRST_KEY = 'history:first'; // the compact copy GET /api/history serves (see addHistoryWeek)
 // One Workers KV value holds at most 25 MiB; the gzip copy of a year of SO/PO lines is about 1.3 MB.
 const MAX_BYTES = 24 * 1024 * 1024;
 const MAX_FILES = 12;
@@ -122,6 +124,16 @@ async function addHistoryWeek(store, { asOf, keys }, savedAt) {
   let text = JSON.stringify({ v: 1, weeks });
   while (weeks.length > 1 && tooBig(text)) { weeks.shift(); text = JSON.stringify({ v: 1, weeks }); }
   await store.put(HISTORY_KEY, text);
+  // The compact copy GET /api/history serves on every page open: each line only under the first kept week it was
+  // at risk (the page's "first flagged"), so a line at risk all year is sent once instead of 52 times. Built from the
+  // kept weeks, so it gives the same answer as the full history, also after the oldest week drops off. If it cannot
+  // be written it is removed, and GET serves the full history instead of an older compact copy.
+  const seen = new Set();
+  const firstSeen = (k) => { if (seen.has(k)) return false; seen.add(k); return true; };
+  const first = weeks.map((w) => ({ asOf: w.asOf, savedAt: w.savedAt, keys: w.keys.filter(firstSeen) }));
+  try { await store.put(HISTORY_FIRST_KEY, JSON.stringify({ v: 1, weeks: first })); } catch (err) {
+    try { await store.delete(HISTORY_FIRST_KEY); } catch (err2) { /* the older copy is served until the next upload */ }
+  }
   return weeks.length;
 }
 

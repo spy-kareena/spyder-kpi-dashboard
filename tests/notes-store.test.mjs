@@ -155,7 +155,7 @@ test('bad changes are refused with a reason and nothing is stored', async () => 
   assert.equal(ok.status, 200);
 });
 
-test('size limits: 1 MB per change, 5 MB stored (old cleared-line markers are pruned first)', async () => {
+test('size limits: 1 MB per change, 2 MB stored (old cleared-line markers are pruned first)', async () => {
   const env = { REPORT_STORE: kv() };
   const big = await call({ method: 'PATCH', env, body: { rows: {} }, headers: { 'content-length': String(1024 * 1024 + 1) } });
   assert.equal(big.status, 413);
@@ -163,8 +163,8 @@ test('size limits: 1 MB per change, 5 MB stored (old cleared-line markers are pr
   assert.equal(huge.status, 413);
   assert.equal(env.REPORT_STORE.map.size, 0);
 
-  // A stored document of long notes 30 KB short of 5 MB, plus 600 cleared-line markers from a year ago (about 80 KB).
-  const MAX = 5 * 1024 * 1024;
+  // A stored document of long notes 30 KB short of 2 MB, plus 600 cleared-line markers from a year ago (about 80 KB).
+  const MAX = 2 * 1024 * 1024;
   const yearAgo = new Date(Date.now() - 365 * 864e5).toISOString();
   const rows = {};
   for (let i = 0; JSON.stringify({ v: 1, rows, shipments: {}, savedAt: '' }).length < MAX - 30000; i++) rows[`note-${i}`] = { notes: 'n'.repeat(4000), by: 'KK', at: T(1) };
@@ -185,7 +185,7 @@ test('size limits: 1 MB per change, 5 MB stored (old cleared-line markers are pr
     assert.equal(res.status, 200, `more-${i}`);
   }
   const after = await stored(env);
-  assert.ok(env.REPORT_STORE.map.get('overrides').length <= MAX, 'the stored document stays within 5 MB');
+  assert.ok(env.REPORT_STORE.map.get('overrides').length <= MAX, 'the stored document stays within 2 MB');
   for (let i = 0; i < 40; i++) assert.ok(after.rows[`more-${i}`], `more-${i} kept`);
   assert.ok(after.rows['note-new'], 'newer entries kept');
   const dropped = oldest.filter((k) => !after.rows[k]);
@@ -195,7 +195,7 @@ test('size limits: 1 MB per change, 5 MB stored (old cleared-line markers are pr
 test('storage filled with made-up lines: real edits still save; at most 500 new lines per request', async () => {
   const env = { REPORT_STORE: kv() };
   await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'real note', by: 'KK', at: T(1) } } } });
-  // Five 240-line batches of 4,000-character junk, then more, fill the 5 MB document.
+  // Two 240-line batches of 4,000-character junk fill the 2 MB document; five more keep it full.
   let pruned = 0;
   for (let b = 0; b < 7; b++) {
     const rows = Object.fromEntries(Array.from({ length: 240 }, (_, i) => [`junk|${b}|${i}`, { notes: 'j'.repeat(4000), by: 'AB', at: new Date().toISOString() }]));
@@ -209,7 +209,7 @@ test('storage filled with made-up lines: real edits still save; at most 500 new 
     assert.equal(res.status, 200, 'not 413 "storage is full"');
     assert.ok((await stored(env)).rows[`${KEY_B}|${i}`]);
   }
-  assert.ok(env.REPORT_STORE.map.get('overrides').length <= 5 * 1024 * 1024);
+  assert.ok(env.REPORT_STORE.map.get('overrides').length <= 2 * 1024 * 1024);
 
   // New keys are capped per request; edits to stored keys are not.
   const env2 = { REPORT_STORE: kv() };
@@ -285,6 +285,46 @@ test('an unreadable stored value is treated as empty, not as an error', async ()
   const res = await call({ env });
   assert.equal(res.status, 200);
   assert.deepEqual((await res.json()).rows, {});
+  // Values that are not a notes document (edited by hand) read as empty too, without parsing them.
+  for (const text of ['[1,2]', '"x"', '{"rows":{"a":{"notes":"x"}}}', '{"v":1,"rows":{"a":']) {
+    env.REPORT_STORE.map.set('overrides', new TextEncoder().encode(text));
+    assert.deepEqual(await (await call({ env })).json(), { v: 1, rows: {}, shipments: {}, savedAt: '' }, text);
+  }
+});
+
+test('GET hands back the stored text as it is (no parsing, so a page open costs no CPU to speak of)', async () => {
+  const env = { REPORT_STORE: kv() };
+  await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'line 1\nline "2" é', cause: 'us', by: 'KK', at: T(1) } }, shipments: { 'm-1': { order: '500', number: '123', at: T(1) } } } });
+  const realGet = env.REPORT_STORE.get;
+  const asked = [];
+  env.REPORT_STORE.get = async (k, opts) => { asked.push(opts && opts.type || 'text'); return realGet(k, opts); };
+  const res = await call({ env });
+  assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  const text = await res.text();
+  assert.equal(text, new TextDecoder().decode(env.REPORT_STORE.map.get('overrides')), 'the stored bytes, unchanged');
+  assert.deepEqual(asked, ['text'], 'read as text, not as JSON');
+  const doc = JSON.parse(text);
+  assert.deepEqual(Object.keys(doc), ['v', 'rows', 'shipments', 'savedAt']);
+  assert.equal(doc.rows[KEY_A].notes, 'line 1\nline "2" é');
+});
+
+test('cleared-line markers older than 180 days are dropped on every save, not only when storage is full', async () => {
+  const env = { REPORT_STORE: kv() };
+  const old = new Date(Date.now() - 200 * 864e5).toISOString();
+  const recent = new Date(Date.now() - 100 * 864e5).toISOString();
+  await env.REPORT_STORE.put('overrides', JSON.stringify({ v: 1, rows: {
+    'gone-old': { by: 'KK', at: old }, 'gone-recent': { by: 'KK', at: recent },
+    'deleted-old': { deleted: true, by: 'KK', at: old }, 'note-old': { notes: 'still open', by: 'KK', at: old },
+  }, shipments: {}, savedAt: '' }));
+  const res = await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'x', at: T(1) } } } });
+  assert.equal((await res.json()).pruned, 1);
+  const doc = await stored(env);
+  assert.deepEqual(Object.keys(doc.rows).sort(), ['deleted-old', 'gone-recent', 'note-old', KEY_A].sort(), 'only the old cleared marker went; deleted lines and notes stay');
+  // A request that changes nothing writes nothing (and drops nothing).
+  const writes = env.REPORT_STORE.puts;
+  await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'x', at: T(1) } } } });
+  assert.equal(env.REPORT_STORE.puts, writes);
 });
 
 let failed = 0;

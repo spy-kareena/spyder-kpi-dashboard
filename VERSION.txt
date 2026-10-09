@@ -78,3 +78,8 @@ tracking list; notes saves are spaced 1.1 s apart, retried when the server is bu
 server's time, at most 500 new lines per save, and a full store drops the oldest entries instead of refusing edits.
 The at-risk history keeps one entry per week (52 weeks). Ask AI caps the paid providers per site per day
 (AI_DAILY_REQUESTS, default 300) and per browser per minute; OpenRouter models without tool support say so.
+Further server fixes: a page that saved notes reads them again about a minute later and re-sends any line a save
+from another Cloudflare location dropped (KV copies there can be a minute old); GET /api/notes and GET /api/history
+hand back the stored text without parsing it, the history page read is a compact copy (KV key "history:first",
+each line under its first week only), shared notes are capped at 2 MB and old cleared-line markers are dropped on
+every save; FedEx's 600-number cap counts only shipments still moving, hand-added numbers first.

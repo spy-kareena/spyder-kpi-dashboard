@@ -180,6 +180,60 @@ test('GET /api/history: 503 without the KV binding, 405 for other methods, empty
   assert.deepEqual((await saved.json()).history, { weeks: 1 });
 });
 
+test('GET serves the compact copy as stored: each line only under its first week, the same "first flagged" answer', async () => {
+  const env = { REPORT_STORE: kv() };
+  await put(env, { asOf: day(0), keys: [key(1), key(2)] });
+  await put(env, { asOf: day(1), keys: [key(1), key(3)] });
+  await put(env, { asOf: day(2), keys: [key(2), key(3), key(4)] });
+  const text = (k) => new TextDecoder().decode(env.REPORT_STORE.map.get(k));
+  // The full history (what new uploads merge into) keeps every line of every week.
+  assert.deepEqual(JSON.parse(text('history')).weeks.map((w) => w.keys), [[key(1), key(2)], [key(1), key(3)], [key(2), key(3), key(4)]]);
+  const res = await getHistory(env);
+  assert.equal(res.headers.get('content-type'), 'application/json; charset=utf-8');
+  const body = await res.text();
+  assert.equal(body, text('history:first'), 'the stored text, not parsed and written out again');
+  const served = JSON.parse(body).weeks;
+  assert.deepEqual(served.map((w) => [w.asOf, w.keys]), [[day(0), [key(1), key(2)]], [day(1), [key(3)]], [day(2), [key(4)]]]);
+  assert.ok(served.every((w) => w.savedAt), 'savedAt kept for the page\'s merge');
+  // First flagged (the page's refreshFirstFlagged: the first week a key appears) is the same from either copy.
+  const firstFlagged = (weeks) => { const out = {}; for (const w of weeks) for (const k of w.keys) if (!(k in out)) out[k] = w.asOf; return out; };
+  assert.deepEqual(firstFlagged(served), firstFlagged(JSON.parse(text('history')).weeks));
+  // A line at risk every week of more than a year: once the oldest week drops off, it moves to the new oldest week.
+  // 20 lines at risk all year (plus one new line a week) are sent once, not 52 times.
+  const env2 = { REPORT_STORE: kv() };
+  const always = Array.from({ length: 20 }, (_, i) => key(500 + i));
+  for (let i = 0; i < 53; i++) await put(env2, { asOf: day(i), keys: [...always, key(100 + i)] });
+  const year = await weeks(env2);
+  assert.equal(year.length, 52);
+  assert.deepEqual(year[0].keys, [...always, key(101)]);
+  assert.deepEqual(year[1].keys, [key(102)]);
+  const size = (k) => env2.REPORT_STORE.map.get(k).length;
+  assert.ok(size('history:first') < size('history') / 5, `${size('history:first')} bytes served instead of ${size('history')}`);
+});
+
+test('GET falls back to the full history until the compact copy exists, or when it could not be written', async () => {
+  const env = { REPORT_STORE: kv() };
+  // Saved by an earlier version: only the full history.
+  await env.REPORT_STORE.put('history', JSON.stringify({ v: 1, weeks: [{ asOf: '2026-09-01', savedAt: 'a', keys: [key(1)] }, { asOf: '2026-09-08', savedAt: 'b', keys: [key(1), key(2)] }] }));
+  assert.deepEqual((await weeks(env)).map((w) => w.keys), [[key(1)], [key(1), key(2)]]);
+  // The next upload writes both.
+  await put(env, { asOf: '2026-09-15', keys: [key(2), key(3)] });
+  assert.deepEqual((await weeks(env)).map((w) => w.keys), [[key(1)], [key(2)], [key(3)]]);
+  // The compact write fails: it is removed rather than left behind (older), and the full history is served.
+  const realPut = env.REPORT_STORE.put;
+  env.REPORT_STORE.put = async (k, v) => { if (k === 'history:first') throw new Error('KV PUT failed: 500'); return realPut(k, v); };
+  const res = await put(env, { asOf: '2026-09-22', keys: [key(4)] });
+  assert.deepEqual((await res.json()).history, { weeks: 4 });
+  env.REPORT_STORE.put = realPut;
+  assert.equal(env.REPORT_STORE.map.has('history:first'), false);
+  const list = await weeks(env);
+  assert.deepEqual(list.map((w) => w.asOf), ['2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22']);
+  assert.deepEqual(list[3].keys, [key(4)]);
+  // Neither value readable: the empty history.
+  env.REPORT_STORE.get = async () => { throw new Error('KV GET failed: 503'); };
+  assert.deepEqual(await (await getHistory(env)).json(), { v: 1, weeks: [] });
+});
+
 let failed = 0;
 for (const t of tests) {
   try { await t.fn(); console.log(`ok   ${t.name}`); }

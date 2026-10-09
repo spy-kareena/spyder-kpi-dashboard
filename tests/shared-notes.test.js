@@ -261,6 +261,57 @@ test('the newer edit wins when two people change the same line', async () => {
   assert.equal((await site.doc()).rows[k].notes, 'A: newest');
 });
 
+test('a save at another Cloudflare location that read a stale copy (KV, up to 60 s) is caught by the re-read a minute later', async () => {
+  const site = fakeSite();
+  const kv = site.env.REPORT_STORE;
+  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const k900 = keyOf(a, '900');
+  const k901 = keyOf(a, '901');
+  // What B's Cloudflare location still reads for up to a minute: the notes before A's save.
+  const stale = kv.map.get('overrides');
+  clock(a, '2026-10-08T15:00:00Z');
+  edit(a, '900', 'notes', 'A: board ships Friday');
+  await sendNow(a);
+  assert.equal((await site.doc()).rows[k900].notes, 'A: board ships Friday');
+  assert.equal(a.run('!!notesRecheckTimer'), true, 'a save that changed something sets the re-read');
+  assert.ok(a.run('NOTES_RECHECK_MS') > 60000, 'after the KV cache window');
+  // B saves 2.5 s later; its PATCH merges into the stale copy and A's line is dropped. A is told nothing.
+  const realGet = kv.get;
+  kv.get = async (k, o) => {
+    if (k !== 'overrides') return realGet(k, o);
+    const now = kv.map.get(k);
+    if (stale) kv.map.set(k, stale); else kv.map.delete(k);
+    try { return await realGet(k, o); } finally { kv.map.set(k, now); }
+  };
+  clock(b, '2026-10-08T15:00:02.500Z');
+  edit(b, '901', 'status', 'Hold');
+  await sendNow(b);
+  kv.get = realGet;
+  let doc = await site.doc();
+  assert.equal(doc.rows[k900], undefined, 'the stale-copy write dropped A\'s line');
+  assert.equal(doc.rows[k901].status, 'Hold');
+  assert.equal(a.run('notesReady.size'), 0);
+  assert.doesNotMatch(sidebar(a), /Notes not shared/);
+  // A minute later A reads the notes again, finds its line missing and sends it back; it also takes B's line.
+  const patches = site.patches();
+  await a.ctx.recheckSharedNotes();
+  await settle(a);
+  assert.equal(site.patches(), patches + 1);
+  doc = await site.doc();
+  assert.equal(doc.rows[k900].notes, 'A: board ships Friday');
+  assert.equal(doc.rows[k901].status, 'Hold');
+  assert.equal(line(a, '901').status, 'Hold');
+  // Nothing missing: the re-read sends nothing (and a reply that changed nothing sets no new re-read).
+  a.run('clearTimeout(notesRecheckTimer);notesRecheckTimer=null');
+  await a.ctx.recheckSharedNotes();
+  await settle(a);
+  assert.equal(site.patches(), patches + 1);
+  assert.equal(a.run('notesRecheckTimer'), null);
+});
+
 test('a page left open reads other people\'s edits again when it comes back into view (at most once a minute)', async () => {
   const site = fakeSite();
   const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });

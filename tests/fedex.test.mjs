@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { memoryKv, fakeFedex, trackResponse, RESULTS, NUMBERS } from './fedex-fixtures.mjs';
 import {
   normalizeTrackResponse, normalizeTrackResult, trackNumbers, getFedexToken, pollTracking, wantedNumbers, cleanTrackingNumber,
-  splitTrackingNumbers, fedexBase, FedexError, TRACK_BATCH, INDEX_KEY, WANTED_KEY, TOKEN_KEY, MAX_PER_RUN, maxPerRun,
+  splitTrackingNumbers, fedexBase, FedexError, TRACK_BATCH, INDEX_KEY, WANTED_KEY, TOKEN_KEY, MAX_PER_RUN, MAX_TRACKED, maxPerRun,
 } from '../shared/fedex.mjs';
 
 const NOW = Date.parse('2026-10-09T16:00:00Z');
@@ -101,7 +101,7 @@ test('tracking numbers are cleaned; one SAP field can hold several', () => {
   assert.deepEqual(splitTrackingNumbers('7700 1234 5678 and 7700 1234 5679'), ['770012345678', '770012345679']);
   assert.deepEqual(splitTrackingNumbers('7700-1234-5678 7700-1234-5679'), ['770012345678', '770012345679']);
   assert.deepEqual(splitTrackingNumbers('SANDBOX123'), ['SANDBOX123'], '"and" inside a number is not a separator');
-  assert.deepEqual(wantedNumbers({ export: ['770012345678', 'bad', '770012345678'], manual: ['1234567890'] }), ['770012345678', '1234567890']);
+  assert.deepEqual(wantedNumbers({ export: ['770012345678', 'bad', '770012345678'], manual: ['1234567890'] }), ['1234567890', '770012345678'], 'hand-added numbers first');
 });
 
 test('sign-in token is cached in KV until a minute before it ends; a new key or an expired token signs in again', async () => {
@@ -243,6 +243,38 @@ test('a check asks FedEx about at most 60 numbers, never-checked first, then the
   assert.equal(asked().length, 130);
   assert.equal(maxPerRun({ FEDEX_MAX_PER_RUN: '5000' }), 600);
   assert.equal(maxPerRun({ FEDEX_MAX_PER_RUN: 'x' }), 60);
+});
+
+test('delivered export numbers never crowd out hand-added ones: the 600 cap counts only numbers still moving', async () => {
+  const e = env();
+  const fx = fakeFedex();
+  const exp = Array.from({ length: 500 }, (_, i) => String(880000000000 + i));
+  const manual = Array.from({ length: 150 }, (_, i) => String(990000000000 + i));
+  const delivered = (n) => ({ number: n, stage: 'delivered', deliveredAt: new Date(NOW - 2 * 864e5).toISOString(), checkedAt: new Date(NOW - 3600e3).toISOString() });
+  await e.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 1, statuses: Object.fromEntries(exp.map((n) => [n, delivered(n)])) }));
+  await e.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ v: 1, export: exp, manual }));
+  assert.equal(MAX_TRACKED, 600);
+  assert.equal(wantedNumbers({ export: exp, manual }).length, 650, 'the whole list, hand-added first');
+  const asked = () => { const n = fx.calls.filter((c) => c.kind === 'track').flatMap((c) => c.numbers); fx.calls.length = 0; return n; };
+  // Workers Paid (the whole list each check): every hand-added number, none of the delivered ones.
+  const doc = await pollTracking({ ...e, FEDEX_MAX_PER_RUN: '600' }, { fetch: fx.fetch, now: NOW });
+  assert.deepEqual(asked(), manual);
+  assert.deepEqual([doc.count, doc.polled, doc.waiting], [650, 150, 0]);
+  assert.equal(Object.keys(doc.statuses).length, 650, 'the delivered statuses are kept');
+  // Free plan: 60 per check, hand-added first.
+  const e2 = env();
+  await e2.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 1, statuses: Object.fromEntries(exp.map((n) => [n, delivered(n)])) }));
+  await e2.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ v: 1, export: exp, manual }));
+  const free = await pollTracking(e2, { fetch: fx.fetch, now: NOW });
+  assert.deepEqual(asked(), manual.slice(0, 60));
+  assert.equal(free.waiting, 90);
+  // 700 numbers all still moving: 600 are tracked (the 200 hand-added, then the newest 400 of the export).
+  const e3 = env();
+  const manual200 = Array.from({ length: 200 }, (_, i) => String(990000000000 + i));
+  await e3.REPORT_STORE.put(WANTED_KEY, JSON.stringify({ v: 1, export: exp, manual: manual200 }));
+  const full = await pollTracking({ ...e3, FEDEX_MAX_PER_RUN: '600' }, { fetch: fx.fetch, now: NOW });
+  assert.deepEqual(asked(), [...manual200, ...exp.slice(0, 400)]);
+  assert.deepEqual([full.count, full.polled, full.waiting], [700, 600, 0]);
 });
 
 test('a failed KV read stops the check before anything is written over the stored list or results', async () => {

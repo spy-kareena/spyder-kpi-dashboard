@@ -7515,6 +7515,9 @@ const NOTES_PATCH_DELAY=800;
 const NOTES_PATCH_GAP=1100; // ms between PATCHes: Workers KV takes one write per second to the notes key
 const NOTES_MAX_RETRIES=6; // a failed batch is sent again after 2, 4, 8, 16, 32 and 60 seconds
 const NOTES_BATCH_BYTES=512*1024;
+// Another Cloudflare location can read a copy of the notes up to 60 s old, so the notes are read again this long
+// after the last save that changed something (see recheckSharedNotes).
+const NOTES_RECHECK_MS=65000;
 // Same limits as functions/api/notes.js: keys it would refuse stay in this browser only.
 const NOTE_KEY_RE=/^[^\u0000-\u001f\u007f]{1,300}$/;
 const SHIPMENT_ID_RE=/^[A-Za-z0-9._:-]{1,100}$/;
@@ -7533,6 +7536,7 @@ const notesReady=new Set();
 let notesFlushTimer=null;
 let notesPatchGate=null;
 let notesRetryTimer=null;
+let notesRecheckTimer=null;
 let notesRetries=0;
 let notesInFlight=false;
 let notesFlushAgain=false;
@@ -7687,6 +7691,7 @@ async function flushSharedNotes({all=false,keepalive=false}={}){
     const data=await res.json().catch(()=>({}));
     if(res.ok){
       sharedNotes.message='';notesRetries=0;adoptSharedReply(data);
+      if(data&&data.applied)scheduleNotesRecheck();
       // Lines the server left for another request (over its limit of new lines) go in the next batch.
       if(data&&data.skipped)sent.forEach(id=>{const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);const got=data[kind];if(!got||typeof got!=='object'||!notesHasOwn(got,key))notesReady.add(id);});
     }
@@ -7710,6 +7715,18 @@ async function flushSharedNotes({all=false,keepalive=false}={}){
     else if(notesReady.size||notesFlushAgain){notesFlushAgain=false;flushSharedNotesSoon();}
     renderSidebar();
   }
+}
+// Workers KV has no locking, and another Cloudflare location (another office, a phone on mobile data) can read a copy
+// of the notes up to 60 s old: a save made there within a minute of one made here can drop this browser's lines,
+// although the server's reply said they were saved. So the notes are read again once, NOTES_RECHECK_MS after the
+// last save that changed something; a line missing (or older) on the server then goes back through mergeSharedNotes.
+function scheduleNotesRecheck(){
+  clearTimeout(notesRecheckTimer);
+  notesRecheckTimer=setTimeout(recheckSharedNotes,NOTES_RECHECK_MS);
+}
+function recheckSharedNotes(){
+  clearTimeout(notesRecheckTimer);notesRecheckTimer=null;
+  if(sharedNotes.state==='shared')return syncSharedNotes();
 }
 // The server answers with what it now holds for each key sent; a newer edit from another computer wins here too.
 function adoptSharedReply(data){

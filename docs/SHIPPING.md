@@ -44,7 +44,9 @@ Which shipments are tracked:
 
 - Sales deliveries that **shipped in the 30 days before the export date**, until **7 days after FedEx delivered them**.
 - Numbers **added by hand**, for **45 days**.
-- At most 500 numbers from the export (newest first) and 200 added by hand.
+- At most 500 numbers from the export (newest first) and 200 added by hand. Of those, up to 600 that are not
+  delivered yet are checked with FedEx, hand-added numbers first (delivered ones are not asked again, so they never
+  take a place).
 
 ## How it works
 
@@ -142,9 +144,10 @@ when you switch to production keys, so the default `https://apis.fedex.com` is u
 
 ## Limits and costs
 
-- **How many per check:** up to 600 numbers are tracked (500 from the export, 200 added by hand), but each check (the
-  4-hourly run and each Refresh now) asks FedEx about **at most 60** of the ones still moving: first those never
-  checked, then those checked longest ago. The others keep their last status until their turn, so a long list takes
+- **How many per check:** up to 600 numbers still moving are tracked (from up to 500 from the export and 200 added by
+  hand, hand-added first; delivered ones do not count), but each check (the 4-hourly run and each Refresh now) asks
+  FedEx about **at most 60** of them: first those never checked (hand-added before the export's), then those checked
+  longest ago. The others keep their last status until their turn, so a long list takes
   several checks to go round (300 shipments still moving: 5 checks, about 20 hours). Delivered shipments are not
   asked again.
 - **Why 60:** the Cloudflare **Workers Free** plan allows 10 ms of CPU per run, and reading FedEx's detailed answers

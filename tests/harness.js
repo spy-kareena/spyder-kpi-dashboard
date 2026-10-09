@@ -56,7 +56,10 @@ function loadPage({ html = HTML, today = '2026-09-24', storage = {} } = {}) {
     localStorage: { getItem: (k) => (k in storage ? storage[k] : null), setItem: (k, v) => { storage[k] = String(v); }, removeItem: (k) => { delete storage[k]; } },
     FileReader: FileReaderStub, Blob: class { constructor(parts) { this.parts = parts; blobs.push(this); } },
     URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} },
-    setTimeout, clearTimeout, Date: PinnedDate, Intl, TextDecoder, TextEncoder, Uint8Array, ArrayBuffer,
+    // Timers of 30 s or more (the shared-notes re-read a minute after a save, retries) never keep a test file
+    // running after its last test; tests that need one call its function directly.
+    setTimeout: (fn, ms, ...a) => { const t = setTimeout(fn, ms, ...a); if (ms >= 30000) t.unref(); return t; },
+    clearTimeout, Date: PinnedDate, Intl, TextDecoder, TextEncoder, Uint8Array, ArrayBuffer,
     navigator: {}, location: { href: 'http://localhost/' }, print() {}, addEventListener() {},
   };
   ctx.window = ctx; ctx.self = ctx;

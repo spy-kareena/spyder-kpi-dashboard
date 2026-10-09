@@ -38,12 +38,17 @@ export const REFRESH_KEY = 'tracking:refresh';
 export const REFRESH_SECONDS = 10 * 60; // "Refresh now" at most once per 10 minutes
 export const MAX_EXPORT = 500; // numbers from the export, newest first
 export const MAX_MANUAL = 200; // numbers added by hand
-export const MAX_TRACKED = 600; // numbers on the list (export + hand-added)
+// Numbers still moving that are tracked (hand-added first, then the export's). Delivered numbers are never asked
+// again, so they do not count: a list of 700 with many delivered still gets every hand-added number checked.
+export const MAX_TRACKED = 600;
 // Numbers asked per check, stalest first (never checked, then the oldest checkedAt): 2 FedEx calls. Parsing FedEx's
 // detailed answers costs about 1 ms of CPU per 10 numbers, and the Workers Free plan allows 10 ms per run, so a
 // long list is worked through over several checks. On Workers Paid (30 s of CPU) set FEDEX_MAX_PER_RUN, up to 600.
 export const MAX_PER_RUN = 60;
-export const INDEX_KEEP_DAYS = 45; // delivered statuses stay this long after delivery, even when no longer tracked
+// Delivered statuses stay this long after delivery, even when no longer tracked: the page stops tracking a delivery
+// 7 days after FedEx delivered it but still lists it while it shipped within 30 days of the export (SHIP_WINDOW_DAYS
+// in index.html), so a shorter time would show those rows as "Not checked yet".
+export const INDEX_KEEP_DAYS = 45;
 export const STAGES = ['label', 'pickedUp', 'inTransit', 'customs', 'outForDelivery', 'delivered'];
 export const STAGE_LABELS = {
   label: 'Label created', pickedUp: 'Picked up', inTransit: 'In transit', customs: 'In customs',
@@ -344,11 +349,13 @@ export function normalizeTrackResult(r, number, now = Date.now()) {
 }
 
 // --- The tracking set and the stored results -------------------------------------------------------------------
-// Numbers to check: the export's (newest first) and the hand-added ones, cleaned, without repeats, capped.
+// The tracking list: the hand-added numbers first, then the export's (newest first), cleaned, without repeats (at
+// most MAX_MANUAL + MAX_EXPORT). pollTracking applies MAX_TRACKED to the ones still moving, so delivered numbers
+// (never asked again) do not use up the cap and hand-added numbers are never crowded out by the export.
 export function wantedNumbers(doc) {
   const d = doc && typeof doc === 'object' ? doc : {};
   const list = (v, max) => (Array.isArray(v) ? v : []).map(cleanTrackingNumber).filter(Boolean).slice(0, max);
-  return [...new Set([...list(d.export, MAX_EXPORT), ...list(d.manual, MAX_MANUAL)])].slice(0, MAX_TRACKED);
+  return [...new Set([...list(d.manual, MAX_MANUAL), ...list(d.export, MAX_EXPORT)])];
 }
 
 function scrub(message, env) {
@@ -364,11 +371,12 @@ export function maxPerRun(env) {
   return Number.isFinite(n) && n >= 1 ? Math.min(n, MAX_TRACKED) : MAX_PER_RUN;
 }
 
-// One check: asks FedEx about up to maxPerRun(env) wanted numbers that are not delivered yet, stalest first (never
-// checked, then the oldest check), and saves the results (tracking:index). The other numbers keep their last
-// status and come up in the next checks. Delivered numbers are final, so they are not asked again. When FedEx
-// cannot be used at all, the previous results stay and lastError says why; the error is thrown for the caller (the
-// Refresh button or the Worker log). If the stored list or results cannot be read, nothing is written.
+// One check: asks FedEx about up to maxPerRun(env) wanted numbers that are not delivered yet (the first MAX_TRACKED
+// of them, hand-added first), stalest first (never checked, then the oldest check), and saves the results
+// (tracking:index). The other numbers keep their last status and come up in the next checks. Delivered numbers are
+// final, so they are not asked again (and do not count toward MAX_TRACKED). When FedEx cannot be used at all, the
+// previous results stay and lastError says why; the error is thrown for the caller (the Refresh button or the Worker
+// log). If the stored list or results cannot be read, nothing is written.
 export async function pollTracking(env, opts = {}) {
   const kv = env && env.REPORT_STORE;
   if (!kv) throw new FedexError('Shared storage is not set up on this site (REPORT_STORE).', 503);
@@ -384,7 +392,8 @@ export async function pollTracking(env, opts = {}) {
   }
   const prevStatuses = prev.statuses && typeof prev.statuses === 'object' ? prev.statuses : {};
   const numbers = wantedNumbers(wanted);
-  const pending = numbers.filter((n) => !(prevStatuses[n] && prevStatuses[n].stage === 'delivered'));
+  // Still moving: the numbers FedEx is asked about over the checks, capped here (not on the whole list).
+  const pending = numbers.filter((n) => !(prevStatuses[n] && prevStatuses[n].stage === 'delivered')).slice(0, MAX_TRACKED);
   const lastChecked = (n) => (prevStatuses[n] && time(prevStatuses[n].checkedAt)) ?? -Infinity;
   const toPoll = pending.map((n, i) => ({ n, i, t: lastChecked(n) }))
     .sort((a, b) => (a.t === b.t ? a.i - b.i : a.t - b.t))
