@@ -129,6 +129,63 @@ test('non-form POSTs and malformed cookies do not throw', async () => {
   assert.ok(await refused(await call('/', { cookie: '__Host-spyder_kpi_session=%E0' })));
 });
 
+test('the sign-in logo under /assets/ is served without a session (GET and HEAD)', async () => {
+  for (const method of ['GET', 'HEAD']) {
+    const res = await call('/assets/spyder-logo.jpg', { method });
+    assert.equal(res.status, 200, method);
+    if (method === 'GET') assert.equal(await res.text(), STATIC_BODY, 'the file itself, not the sign-in page');
+    assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff');
+    assert.equal(setCookies(res).filter(Boolean).length, 0, 'no cookie is set for a public file');
+  }
+});
+
+test('only plain file names directly under /assets/ skip the sign-in (no traversal, no other methods)', async () => {
+  const paths = ['/assets/', '/assets', '/assets/../index.html', '/assets/%2e%2e/index.html', '/assets/..%2Findex.html', '/assets/%2E%2E%2Findex.html',
+    '/assets/sub/logo.jpg', '/assets/.hidden', '/assets/a..jpg', '/assets/logo.jpg/', '/assetsx/logo.jpg', '/ASSETS/spyder-logo.jpg', '/index.html?f=/assets/spyder-logo.jpg', '/api/report?x=/assets/a.jpg'];
+  for (const path of paths) {
+    const res = await call(path);
+    if (path.startsWith('/api/')) { assert.equal(res.status, 401, path); continue; }
+    assert.ok(await refused(res), `${path} must need a session`);
+  }
+  for (const method of ['POST', 'PUT', 'DELETE']) {
+    assert.ok(await refused(await call('/assets/spyder-logo.jpg', { method })), method);
+  }
+});
+
+test('login page: logo, welcome message, footer, password autocomplete; no error before a try', async () => {
+  const res = await call('/');
+  const page = await res.text();
+  assert.equal(res.status, 200);
+  assert.match(page, /<img class="logo" src="\/assets\/spyder-logo\.jpg" alt="Spyder Controls"/);
+  assert.match(page, /<h1>Welcome back<\/h1>/);
+  assert.ok(page.includes("Sign in to see this week's order health, purchase orders and build risk."));
+  assert.ok(page.includes('Internal use · Spyder Controls'));
+  assert.match(page, /<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>/);
+  assert.match(page, /<button type="submit">Sign in<\/button>/);
+  assert.ok(!/role="alert"|autofocus aria-invalid/.test(page), 'no error state');
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+});
+
+test('a wrong password shows an inline error tied to the field (401); an unreadable form says so (400)', async () => {
+  const wrong = await call('/login', { method: 'POST', form: { password: 'nope' } });
+  assert.equal(wrong.status, 401);
+  const page = await wrong.text();
+  assert.match(page, /autocomplete="current-password" required autofocus aria-invalid="true" aria-describedby="password-error">/);
+  assert.match(page, /<p class="error" id="password-error" role="alert"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg>That password is not correct\. Try again\.<\/p>/);
+  const bad = await call('/login', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
+  assert.equal(bad.status, 400);
+  assert.match(await bad.text(), /The sign-in form could not be read\. Try again\./);
+});
+
+test('assets/spyder-logo.jpg holds exactly the logo embedded in index.html (LOGO_SRC)', () => {
+  const html = readFileSync(join(here, '..', 'index.html'), 'utf8');
+  const m = html.match(/const LOGO_SRC='data:image\/jpeg;base64,([A-Za-z0-9+/=]+)'/);
+  assert.ok(m, 'index.html keeps its inline logo for Share snapshot');
+  const file = readFileSync(join(here, '..', 'assets', 'spyder-logo.jpg'));
+  assert.ok(file.equals(Buffer.from(m[1], 'base64')), 'same bytes');
+  assert.equal(file.subarray(0, 3).toString('hex'), 'ffd8ff', 'a JPEG file, matching its .jpg name');
+});
+
 test('logout clears the session and the legacy cookie', async () => {
   const res = await call('/logout');
   assert.equal(res.status, 302);

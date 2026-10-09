@@ -10,6 +10,11 @@ const LEGACY_COOKIE_NAME = 'spyder_kpi_auth';
 const SESSION_DAYS = 14;
 const SESSION_SECONDS = SESSION_DAYS * 24 * 60 * 60;
 const FAILED_LOGIN_DELAY_MS = 1000;
+// Files in the assets/ folder (the logo on the sign-in page) are public: the sign-in page needs them before anyone
+// has signed in, and they hold nothing private. Only a plain file name directly under /assets/ passes, so path
+// tricks (/assets/../index.html, encoded slashes or dots) can never reach the rest of the site without a session.
+const PUBLIC_ASSET = /^\/assets\/[A-Za-z0-9][A-Za-z0-9_-]*(\.[A-Za-z0-9]+)*$/;
+const LOGO_PATH = '/assets/spyder-logo.jpg';
 const encoder = new TextEncoder();
 
 export async function onRequest(context) {
@@ -27,6 +32,10 @@ export async function onRequest(context) {
   }
   // Both values key the session signature, so changing the password also signs everyone out.
   const secret = `${sessionSecret}\u0000${password}`;
+
+  if ((request.method === 'GET' || request.method === 'HEAD') && PUBLIC_ASSET.test(url.pathname)) {
+    return withSecurityHeaders(await next());
+  }
 
   if (url.pathname === '/logout') {
     return redirectWithCookie(url.origin + '/', '');
@@ -138,40 +147,58 @@ function withSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+// The sign-in page uses the dashboard's look (zinc neutrals, Inter with a system-font fallback, the blue accent) and
+// the logo from assets/ (served without a session above). A wrong password shows an inline error under the field.
 function loginPage(failed, status) {
+  const error = !failed ? '' : status === 400
+    ? 'The sign-in form could not be read. Try again.'
+    : 'That password is not correct. Try again.';
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spyder KPI Dashboard</title>
+  <title>Sign in · Spyder KPI Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    :root{--fg:#18181b;--muted:#5f5f69;--border:#e4e4e7;--input:#71717a;--bg:#fafafa;--accent:#1570ef;--accent-strong:#175cd3;--ring:rgba(21,112,239,.35);--crit:#b42318;--crit-tint:#fef3f2;--crit-border:#fecdca;
+      --font:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(180deg,#f8fafc 0,#eef2f6 100%);color:#0f172a}
-    .top-bar{background:#111827;color:#fff;padding:.85rem 2rem}
-    .top-bar strong{font-size:15px}
-    .top-bar span{margin-left:10px;font-size:13px;opacity:.65}
-    .card{max-width:420px;margin:4rem auto;background:#fff;border:1px solid #dbe3ec;border-radius:10px;padding:1.6rem 1.5rem;box-shadow:0 14px 32px rgba(15,23,42,.06)}
-    h1{font-size:22px;margin-bottom:.4rem}
-    p{font-size:13px;color:#64748b;line-height:1.5;margin-bottom:1.1rem}
-    label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#64748b;margin-bottom:6px}
-    input{width:100%;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font-size:14px}
-    input:focus{outline:2px solid rgba(14,102,85,.25);border-color:#0E6655}
-    button{margin-top:12px;width:100%;background:#0f766e;color:#fff;border:0;border-radius:8px;padding:10px 12px;font-size:14px;font-weight:700;cursor:pointer}
-    button:hover{background:#0e6655}
-    .error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;padding:.7rem .8rem;font-size:13px;margin-bottom:1rem}
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
+    .card{width:100%;max-width:400px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:32px 28px 28px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+    .logo{display:block;width:150px;height:29px;object-fit:cover;object-position:center;margin:0 0 28px -2px}
+    h1{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.25}
+    .lead{margin-top:6px;font-size:14px;color:var(--muted);line-height:1.55}
+    form{display:grid;gap:8px;margin-top:24px}
+    label{font-size:13px;font-weight:500;color:var(--fg)}
+    input{width:100%;height:40px;border:1px solid var(--input);border-radius:8px;padding:0 12px;font:inherit;font-size:16px;color:var(--fg);background:#fff;transition:border-color .15s,box-shadow .15s}
+    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
+    input[aria-invalid="true"]{border-color:var(--crit)}
+    input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(180,35,24,.25)}
+    .error{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--crit)}
+    .error svg{flex:none;width:16px;height:16px;margin-top:1px}
+    button{margin-top:8px;height:40px;width:100%;border:0;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+    button:hover{background:var(--accent-strong)}
+    button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    .foot{font-size:12px;color:var(--muted)}
+    @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
 <body>
-  <div class="top-bar"><strong>Spyder Controls</strong><span>KPI Export Visualizer</span></div>
-  <form class="card" method="post" action="/login">
-    <h1>Sign in</h1>
-    <p>This dashboard is for internal Spyder use. Enter the shared password to continue.</p>
-    ${failed ? '<div class="error" role="alert">That password is not correct.</div>' : ''}
-    <label for="password">Password</label>
-    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
-    <button type="submit">Open dashboard</button>
-  </form>
+  <main class="card">
+    <img class="logo" src="${LOGO_PATH}" alt="Spyder Controls" width="150" height="29">
+    <h1>Welcome back</h1>
+    <p class="lead">Sign in to see this week's order health, purchase orders and build risk.</p>
+    <form method="post" action="/login">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required autofocus${error ? ' aria-invalid="true" aria-describedby="password-error"' : ''}>
+      ${error ? `<p class="error" id="password-error" role="alert"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.8v3.6M8 10.9v.1" stroke-linecap="round"/></svg>${error}</p>` : ''}
+      <button type="submit">Sign in</button>
+    </form>
+  </main>
+  <p class="foot">Internal use · Spyder Controls</p>
 </body>
 </html>`;
   return new Response(html, {
@@ -180,7 +207,9 @@ function loginPage(failed, status) {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
-      'X-Frame-Options': 'DENY'
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'no-referrer'
     }
   });
 }
