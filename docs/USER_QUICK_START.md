@@ -12,7 +12,7 @@ On the Order Health linked-lines list, tick rows (or the header box for the whol
 
 Use the search box under the logo (or press Ctrl+K, Cmd+K on a Mac) to find any order line by number, customer, vendor, item or warehouse.
 
-**Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". It sends your question and the data needed to answer it to Google Gemini, so only use it for data your company has approved for sharing. Setup and privacy: docs/AI_ASSISTANT.md.
+**Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". The first time, pick a provider in **Settings** and tick its box: Claude or ChatGPT (paid, they do not train on your data) or Groq or OpenRouter (free, they may keep what you send, so use them only for data you are allowed to share). It sends your question and the data needed to answer it to that provider. Setup, costs and privacy: docs/AI_ASSISTANT.md.
 
 **Help > Connect an AI** in the sidebar shows how to use the same data from Claude Desktop, Claude Code or another MCP app. The page opens before an export is loaded.
 

@@ -24,8 +24,8 @@ Supply / Demand and Supply Mix need `queries/sap_b1_hana_supply_demand_snapshot_
 - **Linked lines (Order Health):** tick rows, or the header box for the whole list, to set an override on many lines at once or to delete them. Deleted lines are hidden from every page in that browser and can be restored from **Data check**. Click any column header to sort; click again to reverse. Purchase Orders linked lines are sorted with **Sort rows** and edited one line at a time.
 - **Search:** type in the box under the logo, or press Ctrl+K (Cmd+K on a Mac). It finds order lines by SO/PO, delivery or receipt number, customer PO, customer or vendor, item, warehouse, owner or project. Every word must match. Notes can be edited from the results. Press Esc to go back.
 - **Build Risk:** add the "Orders At Risk - Clear to Build" workbook (.xlsx) with **Add file**. Every weekly "Orders at Risk" sheet is read; the page opens on the newest week, and **Report week** picks another. Weeks are never added together. "CTB % by CM" shows the last 8 weeks. The Lacombe block is shown but not matched to sales order lines.
-- **Ask AI:** a chat panel (page header) that answers questions about the loaded export with Google Gemini, using the same numbers as the pages. Nothing is sent until the user agrees to the privacy note. Keys, the optional server key and the free-tier data terms: [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md).
-- **Connect an AI (MCP):** `mcp/spyder-kpi-mcp.mjs` is a dependency-free MCP server (Node 18+) that gives Claude Desktop, Claude Code and other MCP apps the same tools as Ask AI, reading SAP exports on that computer. Setup: the **Connect an AI** page (sidebar, Help) or [docs/MCP.md](docs/MCP.md). Check it with `node mcp/spyder-kpi-mcp.mjs --check "C:path	okpi_export.xls"`.
+- **Ask AI:** a chat panel (page header) that answers questions about the loaded export with the AI provider you pick: Claude or ChatGPT (paid) or Groq or OpenRouter's free models (free), using the same numbers as the pages. The keys are server secrets shared by everyone who signs in (`functions/api/ai/`); nothing is sent to a provider until the user ticks its consent box. Setup, costs and each provider's data terms: [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md).
+- **Connect an AI (MCP):** `mcp/spyder-kpi-mcp.mjs` is a dependency-free MCP server (Node 18+) that gives Claude Desktop, Claude Code and other MCP apps the same tools as Ask AI, reading SAP exports on that computer. Setup: the **Connect an AI** page (sidebar, Help) or [docs/MCP.md](docs/MCP.md). Check it with `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"`.
 
 ## Hosting
 
@@ -33,9 +33,9 @@ Cloudflare Pages serves the site. Sign-in is the Pages Function in `functions/_m
 
 - `DASHBOARD_PASSWORD` — the shared sign-in password
 - `SESSION_SECRET` — 32 or more random characters that sign the session cookie
-- `GEMINI_API_KEY` (optional) — a Gemini API key for Ask AI, so users don't need their own (`functions/api/gemini/`)
+- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` (each optional) — AI keys for Ask AI (Claude, ChatGPT, Groq, OpenRouter free models), shared by everyone who signs in (`functions/api/ai/`). Set at least one to turn Ask AI on; see [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md)
 
-Without both, every page returns a "not configured" error. Changing either one signs everyone out. Open `/logout` to clear the sign-in cookie.
+Without the first two, every page returns a "not configured" error. Changing either of those two signs everyone out. Open `/logout` to clear the sign-in cookie.
 
 For IIS or another static host, serve `index.html` as the default document. That path does not use the Cloudflare login gate. See `docs/IT_HOSTING_README.md`.
 
