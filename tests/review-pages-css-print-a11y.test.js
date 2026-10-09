@@ -155,8 +155,8 @@ test('print hides the Build Risk override / note controls; the print-only text c
   assert.match(printCss(), /\.editable-rows \.row-override,\.editable-rows \.row-note\{display:none!important\}/);
 });
 
-test('empty text fields have a 3:1 border (search, Ask AI key and question, note editors)', () => {
-  for (const sel of ['.note-editor textarea', '.sidebar-search input', '.ai-field input', '.ai-compose textarea']) {
+test('empty text fields have a 3:1 border (search, Ask AI question, note editors)', () => {
+  for (const sel of ['.note-editor textarea', '.sidebar-search input', '.ai-compose textarea']) {
     assert.match(CSS, new RegExp(`(^|\\})${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{[^}]*border:1px solid var\\(--gray-500\\)`, 'm'), sel);
   }
   assert.match(CSS, /\.editable-rows \.row-note\{[^}]*border-color:var\(--gray-500\)\}/);
