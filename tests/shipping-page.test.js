@@ -4,14 +4,16 @@
 // Workers KV stand-in, and FedEx is a stand-in, so nothing leaves the machine.
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+const { loadPage, upload, SAP_HEADERS, sapRow, utf16Tsv, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const ORIGIN = 'https://kpi.example.test';
 const TODAY = '2026-10-09';
 const NOW = new Date(`${TODAY}T10:00:00`).getTime(); // the page's pinned clock (harness loadPage)
 // The 2v1 KPI query adds four columns to the delivery rows; older exports do not have them.
-const SHIP_HEADERS = [...SAP_HEADERS, 'TrackingNumber', 'ShipMethod', 'ShipToCountry', 'ShipDate'];
+const SHIP_COLS = ['TrackingNumber', 'ShipMethod', 'ShipToCountry', 'ShipDate'];
+const SHIP_HEADERS = [...new Set([...SAP_HEADERS, ...SHIP_COLS])];
+const OLD_HEADERS = SAP_HEADERS.filter((h) => !SHIP_COLS.includes(h));
 const N = { parcel: '770012345678', customsDelay: '770099990001', freight: '1234567890', exception: '770055550002', delivered: '770077770003', old: '770000000099', longAgo: '770011110004', receipt: '770000000777' };
 
 const row = (o) => sapRow({ ExportDate: '10/08/2026', ...o });
@@ -91,7 +93,7 @@ test('delivery rows read TrackingNumber, ShipMethod, ShipToCountry and ShipDate;
   assert.equal(page.run(`displayDate(allLoadedRows.find(r=>r.deliveryDocNumber==='9002').lineDueDate)`), '2026-10-08');
 
   const old = loadPage({ today: TODAY });
-  await upload(old, [{ name: 'old.xls', bytes: sapExport([sapRow({}), sapRow({ DocumentNumber: '3', OrderType: 'Sales Delivery', Status: 'Closed', ClosedDate: '08/28/2026', CloseDateSource: 'Delivery', DeliveryDocNumber: '77', OpenQuantity: '0' })]) }]);
+  await upload(old, [{ name: 'old.xls', bytes: utf16Tsv(OLD_HEADERS, [sapRow({}), sapRow({ DocumentNumber: '3', OrderType: 'Sales Delivery', Status: 'Closed', ClosedDate: '08/28/2026', CloseDateSource: 'Delivery', DeliveryDocNumber: '77', OpenQuantity: '0' })]) }]);
   assert.deepEqual(old.run('allLoadedRows.map(r=>[r.trackingNumber,r.shipMethod,r.shipToCountry,r.shipDate])'), [['', '', '', ''], ['', '', '', '']]);
   old.run("setTab('shipping')");
   assert.match(html(old), /This export has no TrackingNumber column/);
