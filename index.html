@@ -6316,12 +6316,16 @@ function sankeyLayout(nodes,links,opts){
     byId.set(String(n.id),{...n,id:String(n.id),index:i,given:Number.isInteger(n.level)&&n.level>=0,inValue:0,outValue:0,out:[],in:[]});
   });
   const candidates=(Array.isArray(links)?links:[]).filter(l=>l&&byId.has(String(l.source))&&byId.has(String(l.target))&&String(l.source)!==String(l.target)&&Number(l.value)>0&&isFinite(Number(l.value)));
-  // Levels: given ones stay; the rest take the longest path from a start node (a cycle stops after one pass per node).
-  byId.forEach(n=>{if(!n.given)n.level=0;});
-  for(let pass=0;pass<byId.size;pass++){
-    let changed=false;
-    candidates.forEach(l=>{const s=byId.get(String(l.source)),t=byId.get(String(l.target));if(!t.given&&t.level<s.level+1){t.level=s.level+1;changed=true;}});
-    if(!changed)break;
+  // Levels: given ones stay; the rest take the longest path from a start node, in flow order. A link that closes a
+  // cycle is not followed (it is dropped below as a backwards link).
+  byId.forEach(n=>{if(!n.given)n.level=0;n.waiting=0;n.next=[];});
+  candidates.forEach(l=>{const t=byId.get(String(l.target));t.waiting++;byId.get(String(l.source)).next.push(t);});
+  const placed=new Set(),queue=[...byId.values()].filter(n=>!n.waiting);
+  while(placed.size<byId.size){
+    const n=queue.length?queue.shift():[...byId.values()].find(x=>!placed.has(x.id));
+    if(placed.has(n.id))continue;
+    placed.add(n.id);
+    n.next.forEach(t=>{if(placed.has(t.id))return;if(!t.given)t.level=Math.max(t.level,n.level+1);if(--t.waiting===0)queue.push(t);});
   }
   const L=[];
   candidates.forEach(l=>{
@@ -6374,7 +6378,7 @@ function sankeyLayout(nodes,links,opts){
   });
   // Labels: first column on the left of its boxes, every other column on the right.
   const outNodes=columns.flat().map(n=>{
-    const {out,in:inn,given,...rest}=n;
+    const {out,in:inn,given,waiting,next,...rest}=n;
     const anchor=n.column===0&&columns.length>1?'end':'start';
     return {...rest,height:n.y1-n.y0,anchor,labelX:anchor==='end'?n.x0-6:n.x1+6,labelY:(n.y0+n.y1)/2,valueLabel:fmt(n.value)};
   });
@@ -6732,7 +6736,7 @@ function renderSankeyFlow(tab,flow){
     const hx=n.anchor==='end'?n.labelX-tw-4:n.x0-3;
     const hw=n.anchor==='end'?n.x1+3-hx:n.labelX+tw+4-hx;
     const hy=Math.min(n.y0,n.labelY-8)-2,hh=Math.max(n.y1,n.labelY+8)+2-hy;
-    return `<g class="sk-node sk-${esc(n.tone||'node')}${sel?' sk-sel':''}${conn&&conn.nodes.has(n.id)?' sk-on':''}" role="button" tabindex="0" aria-pressed="${sel?'true':'false'}" aria-label="${esc(n.tip||n.label)}" data-tip="${esc(n.tip||n.label)}" data-focus-key="sk-${tab}-${flow.id}-${sankeyHash(n.id)}" data-sk-tab="${tab}" data-sk-flow="${esc(flow.id)}" data-sk-node="${esc(n.id)}" data-col="${n.column}" data-row="${n.row}" data-cy="${r(n.labelY)}" onclick="sankeyNodeClick(this.dataset.skTab,this.dataset.skFlow,this.dataset.skNode)" onkeydown="sankeyNodeKey(event,this)" onmouseenter="sankeyHover(this)" onmouseleave="sankeyHover(this,true)" onfocus="sankeyHover(this)" onblur="sankeyHover(this,true)"><title>${esc(n.tip||n.label)}</title><rect class="sk-hit" x="${r(hx)}" y="${r(hy)}" width="${r(hw)}" height="${r(hh)}" rx="4"/><rect class="sk-rect" x="${r(n.x0)}" y="${r(n.y0)}" width="${r(n.x1-n.x0)}" height="${r(Math.max(1,n.y1-n.y0))}" rx="1.5"/><text class="sk-label" x="${r(n.labelX)}" y="${r(n.labelY)}" dy="0.35em" text-anchor="${n.anchor}">${esc(label)} <tspan class="sk-val">${esc(n.valueLabel)}</tspan></text></g>`;
+    return `<g class="sk-node sk-${esc(n.tone||'plain')}${sel?' sk-sel':''}${conn&&conn.nodes.has(n.id)?' sk-on':''}" role="button" tabindex="0" aria-pressed="${sel?'true':'false'}" aria-label="${esc(n.tip||n.label)}" data-tip="${esc(n.tip||n.label)}" data-focus-key="sk-${tab}-${flow.id}-${sankeyHash(n.id)}" data-sk-tab="${tab}" data-sk-flow="${esc(flow.id)}" data-sk-node="${esc(n.id)}" data-col="${n.column}" data-row="${n.row}" data-cy="${r(n.labelY)}" onclick="sankeyNodeClick(this.dataset.skTab,this.dataset.skFlow,this.dataset.skNode)" onkeydown="sankeyNodeKey(event,this)" onmouseenter="sankeyHover(this)" onmouseleave="sankeyHover(this,true)" onfocus="sankeyHover(this)" onblur="sankeyHover(this,true)"><title>${esc(n.tip||n.label)}</title><rect class="sk-hit" x="${r(hx)}" y="${r(hy)}" width="${r(hw)}" height="${r(hh)}" rx="4"/><rect class="sk-rect" x="${r(n.x0)}" y="${r(n.y0)}" width="${r(n.x1-n.x0)}" height="${r(Math.max(1,n.y1-n.y0))}" rx="1.5"/><text class="sk-label" x="${r(n.labelX)}" y="${r(n.labelY)}" dy="0.35em" text-anchor="${n.anchor}">${esc(label)} <tspan class="sk-val">${esc(n.valueLabel)}</tspan></text></g>`;
   }).join('');
   return `<div class="sk-flow">${head}
     <div class="sk-scroll"><svg class="sk-svg${conn?' sk-hl':''}" role="group" aria-labelledby="${ids}-title" aria-describedby="${ids}-desc" viewBox="0 0 ${W} ${svgH}" width="${W}" height="${svgH}"${pinned?` data-pinned="${esc(pinned)}"`:''}><title id="${ids}-title">${esc(`${flow.title}: ${flow.cols.join(' to ')}`)}</title><desc id="${ids}-desc">${esc(`${sankeyFormat(flow.unit,flow.total)} in all. Each box is a button with its numbers; Enter or Space applies it, arrow keys move between boxes.`)}</desc><g class="sk-heads" aria-hidden="true">${heads}</g><g transform="translate(0,${TOP})"><g class="sk-links" aria-hidden="true">${links}</g><g class="sk-nodes">${nodes}</g></g></svg></div>
