@@ -162,6 +162,12 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.match(html(page), /Linked lines — No Commit Date/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit', 'a second click keeps the list open');
+  // With Needs attention hidden, picking a card from the chart shows the section again so its lines are listed.
+  page.run('toggleLeadingIndicators()');
+  assert.equal(page.run('weeklyLeadingCollapsed'), true);
+  click('open', '1:resched');
+  assert.deepEqual(page.run('[weeklyLeadingCollapsed,weeklyTileFilter]'), [false, 'active']);
+  assert.match(html(page), /Linked lines — Rescheduled/);
   click('risk', '2:MAR1');
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['MAR1']);
   page.run('resetWeeklyFilters()');

@@ -859,7 +859,7 @@ button.trow.po-wh-cols{font-size:13px}
 .sk-node:hover .sk-hit{fill:rgba(16,24,40,.04)}
 .sk-node:focus-visible .sk-hit{stroke:var(--accent)}
 .sk-node.sk-sel .sk-rect{stroke:var(--gray-900);stroke-width:1.5}
-.sk-label{font-size:12px;fill:var(--gray-700);paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.sk-label{font-size:12px;fill:var(--gray-700);paint-order:stroke;stroke:var(--white,#fff);stroke-width:3px;stroke-linejoin:round}
 .sk-val{font-weight:600;fill:var(--gray-900)}
 .sk-node.sk-sel .sk-label{font-weight:600;fill:var(--gray-900)}
 .sk-svg.sk-hl .sk-link{fill-opacity:.1}
@@ -6426,7 +6426,7 @@ function sankeyBuild(items,spec){
     });
     const tone=spec.tone?spec.tone(it):'calm';
     for(let ci=0;ci+1<ids.length;ci++){
-      const lk=`${ids[ci]}\n${ids[ci+1]}\n${tone}`;
+      const lk=`${ids[ci]}\u0001${ids[ci+1]}\u0001${tone}`;
       if(!links.has(lk))links.set(lk,{source:ids[ci],target:ids[ci+1],tone,value:0,count:0});
       const l=links.get(lk);l.value+=v;l.count++;
     }
@@ -6661,7 +6661,12 @@ function sankeyNodeClick(tab,flowId,nodeId){
     if(a.type==='segment'){toast(on?'Showing every customer segment':`Showing the ${node.label} segment`);setWeeklySegmentFilter(pick);return;}
     if(a.type==='customer'){toast(on?'Showing every customer':`Showing ${node.label}`);setWeeklyCustomerFilter(pick);return;}
     // A card pick is not a toggle here: a second click keeps its lines listed.
-    if(a.type==='tile'){toast(`Linked lines below list the ${a.value==='late'?'At Risk':node.label} lines`);if(weeklyTileFilter!==a.value)setWeeklyTileFilter(a.value);else renderResults();return;}
+    if(a.type==='tile'){
+      toast(`Linked lines below list the ${a.value==='late'?'At Risk':node.label} lines`);
+      weeklyLeadingCollapsed=false; // these cards sit under Needs attention; a hidden section would hide their lines too
+      if(weeklyTileFilter!==a.value)setWeeklyTileFilter(a.value);else renderResults();
+      return;
+    }
     if(a.type==='reason'&&typeof setWeeklyReasonFilter==='function'){setWeeklyReasonFilter(a.value);return;}
     if(a.type==='cause'&&typeof setWeeklyCauseFilter==='function'){setWeeklyCauseFilter(a.value);return;}
     if(a.type==='cm'){toast(on?'Showing every CM':`Showing CM ${node.label} only`);setBuildRiskCm(a.value);return;}
