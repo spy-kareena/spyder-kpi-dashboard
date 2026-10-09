@@ -49,7 +49,7 @@ For IIS or another static host, serve `index.html` as the default document. That
 
 SAP query templates are in `queries/`.
 
-The page uses the Inter font from Google Fonts. With no internet access it falls back to the system font. The logo is embedded in the page (a copy in `assets/` is used by the sign-in page).
+The page uses the Inter font from Google Fonts. With no internet access it falls back to the system font. The logo is embedded in the page (a copy in `assets/` is used by the sign-in page). Excel and CSV files are read by SheetJS Community Edition 0.20.3, built into `index.html` (the `<script id="sheetjs-lib">` block); to update it, replace that block's contents with a newer `xlsx.full.min.js` from https://cdn.sheetjs.com and run the tests.
 
 ### Page conventions (for whoever changes the page next)
 

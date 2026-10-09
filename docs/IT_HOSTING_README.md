@@ -8,7 +8,7 @@ It does not need a database, application server, Node, Python, or internet acces
 
 ## Files
 
-- `index.html` - the dashboard page to host
+- `index.html` - the dashboard page to host. The spreadsheet reader, SheetJS Community Edition 0.20.3 (`xlsx.full.min.js` from cdn.sheetjs.com, Apache 2.0 licence), is built into it, so no script is loaded from the internet
 - `assets/spyder-logo.jpg` - the logo shown on the Cloudflare sign-in page (the dashboard itself has the logo built in)
 - `queries/` - SAP B1 HANA query templates used to generate Excel exports
 - `samples/` - example CSV for a local smoke test
