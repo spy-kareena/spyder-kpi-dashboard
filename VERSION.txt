@@ -20,3 +20,11 @@ report replaces it; icons on Ask AI, Share snapshot and Export PDF.
 1v5: shared report storage on Cloudflare Pages (functions/api/report.js, Workers KV binding REPORT_STORE):
 the last uploaded report is kept on the server for everyone who signs in until a new upload replaces it;
 hosts without it keep the report in each browser. Sidebar shows where the report is saved.
+
+1v8: Order Health v2. Leading / Lagging tabs (arrow keys switch them; Export PDF prints both). Leading: open order
+states (On track, Due this week, Rescheduled, Past due, No commit), top 6 at-risk reasons, When flagged (weeks since
+first at risk, from the upload history), Us vs Them (cause = the one picked on the line, else the override, else the
+SAP signal). Lagging: perfect order 12 mo and average days late 3 mo next to OTD, shipped, fill and reschedule hit,
+each with the Us / Them split of its misses. Reason, cause and when-flagged filters from the charts (chips to clear,
+kept in snapshots); Top offenders as $20k blocks; Search finds reasons and causes; get_overview / search_lines report
+cause, leading and lagging. About these numbers on Order Health explains every number.
