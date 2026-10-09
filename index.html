@@ -591,7 +591,6 @@ details.about p{margin:0}
 .ai-check{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;font-weight:500;color:var(--gray-700);line-height:1.45;cursor:pointer}
 .ai-check input{margin:2px 0 0;accent-color:var(--accent)}
 .ai-field{display:grid;gap:6px;font-size:12px;font-weight:500;color:var(--gray-600)}
-.ai-field input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);color:var(--gray-900)}
 .ai-panel .select{max-width:none;width:100%}
 .ai-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ai-status{font-size:12px;color:var(--gray-500);min-height:16px}
@@ -1199,6 +1198,24 @@ button.ship-kpi{width:100%}
   .oh-bar-row,.waffle-row,.oh-cause-btn,.oh-chip{break-inside:avoid}
   .oh-chip .oh-x,.oh-drill .link-btn{display:none!important}
 }
+/* --- Stream C: Ask AI providers (picker, per-provider data notice, not-set-up view) --- */
+.ai-notice-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ai-notice-head strong{font-size:12.5px;font-weight:600;color:var(--gray-900)}
+.ai-tier{display:inline-flex;align-items:center;padding:1px 8px;border-radius:var(--r-pill);font-size:11px;font-weight:600;border:1px solid var(--gray-300);background:#fff;color:var(--gray-700)}
+.ai-tier:empty{display:none}
+.ai-tier.paid{border-color:var(--accent-border);background:var(--accent-tint);color:var(--accent-strong)}
+.ai-tier.free{border-color:var(--warn-border);background:#fff;color:var(--warn-text)}
+.ai-links{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px}
+.ai-settings .select:disabled{cursor:not-allowed;opacity:.65}
+.ai-check input:disabled{cursor:not-allowed}
+.ai-setup{padding:18px 18px 22px;display:grid;gap:12px;align-content:start;overflow-y:auto;line-height:1.55}
+.ai-setup h3{margin:0;font-size:14px;font-weight:600;color:var(--gray-900)}
+.ai-setup h3:focus{outline:none}
+.ai-setup p{margin:0;color:var(--gray-600)}
+.ai-setup-list{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--gray-700)}
+.ai-setup code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;margin-right:6px;overflow-wrap:anywhere}
+.ai-msg.note{align-self:stretch;max-width:none;padding:0 4px;background:none;border:0;font-size:12px;color:var(--gray-500);text-align:center}
+@media print{.ai-setup{display:none!important}}
 </style>
 </head>
 <body>
@@ -1246,36 +1263,45 @@ button.ship-kpi{width:100%}
   <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
-    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode"></span><button type="button" class="link-btn" id="ai-settings-btn" onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" onclick="aiToggle(false)">×</button></div>
+    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The AI provider and model answering your questions. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Pick the AI provider and model, and read what data each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat stays until you clear it or load new data." onclick="aiToggle(false)">×</button></div>
     <div class="ai-settings" id="ai-settings" hidden>
-      <div class="ai-notice">
-        <p>Questions, and the dashboard data needed to answer them (order lines, customers, vendors, values), are sent from this browser to Google's Gemini API. On the free tier Google may use prompts and responses to improve its products (<a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">Gemini API terms</a>). Don't use it for data your company hasn't approved for sharing.</p>
-        <label class="ai-check"><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> I understand. Allow Ask AI on this browser.</label>
+      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid: Claude and ChatGPT, billed to the company's account; they do not train on what you send. Free: Groq and OpenRouter, with tight limits; free services may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
+      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models handle harder questions better but are slower and, on paid providers, cost more per question." onchange="aiSetModel(this.value)"></select></label>
+      <div class="ai-notice" id="ai-notice" hidden>
+        <p class="ai-notice-head"><span class="ai-tier" id="ai-tier"></span><strong>What gets sent, and where</strong></p>
+        <p id="ai-notice-text"></p>
+        <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="Opens this provider's own data and privacy terms in a new tab.">Provider's data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, what they cost and what they do with data.">Ask AI guide</a></p>
+        <label class="ai-check" data-tip="Nothing is sent to this provider until this box is ticked. The choice is saved in this browser, separately for each provider; untick it to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">I understand. Allow Ask AI to send my questions and the dashboard data needed to answer them to this provider from this browser.</span></label>
       </div>
-      <p id="ai-server-note" hidden>This site has a Gemini key set up on its server, so you don't need your own.</p>
-      <div id="ai-key-box" class="stack">
-        <label class="ai-field" for="ai-key">Gemini API key<input type="password" id="ai-key" autocomplete="off" spellcheck="false" placeholder="Paste your key"></label>
-        <label class="ai-check"><input type="checkbox" id="ai-remember"> Remember on this browser (otherwise only until this tab closes)</label>
-        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-key-save" onclick="aiSaveKey()">Save key</button><button type="button" class="btn btn-sm" id="ai-key-remove" onclick="aiRemoveKey()">Remove key</button></div>
-        <p class="ai-foot">Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>. It stays in this browser and is sent only to Google.</p>
-      </div>
-      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" onchange="aiSetModel(this.value)"></select></label>
-      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" onclick="aiShowSettings(false)">Back to chat</button></div>
+      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Return to the chat with the provider and model picked above." onclick="aiBackToChat()">Back to chat</button></div>
       <p class="ai-status" id="ai-settings-status" role="status"></p>
+    </div>
+    <div class="ai-setup" id="ai-setup" hidden>
+      <h3 id="ai-setup-title" tabindex="-1">Ask AI is not set up</h3>
+      <p id="ai-setup-why">None of the four AI providers has a key set up on this site yet.</p>
+      <p>To turn it on, whoever runs the site adds at least one of these keys as a Cloudflare Pages secret and redeploys. Nobody needs a key of their own.</p>
+      <ul class="ai-setup-list">
+        <li><code>ANTHROPIC_API_KEY</code> Claude (paid)</li>
+        <li><code>OPENAI_API_KEY</code> ChatGPT (paid)</li>
+        <li><code>GROQ_API_KEY</code> Groq (free tier)</li>
+        <li><code>OPENROUTER_API_KEY</code> OpenRouter (free models)</li>
+      </ul>
+      <p>Step by step, with costs and data terms: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English setup guide for Ask AI, including the commands IT runs.">Ask AI guide</a>. To ask about an export on your own computer instead, use Claude Desktop or Claude Code (see Connect an AI).</p>
+      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Opens the Connect an AI page: set up Claude Desktop, Claude Code or another AI app to read your exports." onclick="aiToggle(false);setTab('connect')">Connect an AI</button></div>
     </div>
     <div class="ai-chat" id="ai-chat">
       <div class="ai-log" id="ai-log"></div>
       <p class="ai-sr" id="ai-announce" role="status"></p>
       <div class="ai-chips" id="ai-chips" role="group" aria-label="Suggested questions">
-        <button type="button" class="chip" data-q="What is at risk right now, and which customers have the most value at risk?" onclick="aiSend(this.dataset.q)">What is at risk right now?</button>
-        <button type="button" class="chip" data-q="Which warehouses have the most past-due open value?" onclick="aiSend(this.dataset.q)">Past due by warehouse</button>
-        <button type="button" class="chip" data-q="Which vendors have the most late purchase order lines and value?" onclick="aiSend(this.dataset.q)">Late POs by vendor</button>
-        <button type="button" class="chip" data-q="Summarize OTD, fill rate and reschedule hit rate as of the export date." onclick="aiSend(this.dataset.q)">How are we performing?</button>
+        <button type="button" class="chip" data-q="What is at risk right now, and which customers have the most value at risk?" data-tip="Asks: what is at risk right now, and which customers have the most value at risk?" onclick="aiSend(this.dataset.q)">What is at risk right now?</button>
+        <button type="button" class="chip" data-q="Which warehouses have the most past-due open value?" data-tip="Asks: which warehouses have the most past-due open value?" onclick="aiSend(this.dataset.q)">Past due by warehouse</button>
+        <button type="button" class="chip" data-q="Which vendors have the most late purchase order lines and value?" data-tip="Asks: which vendors have the most late purchase order lines and value?" onclick="aiSend(this.dataset.q)">Late POs by vendor</button>
+        <button type="button" class="chip" data-q="Summarize OTD, fill rate and reschedule hit rate as of the export date." data-tip="Asks for on-time delivery, fill rate and reschedule hit rate as of the export date." onclick="aiSend(this.dataset.q)">How are we performing?</button>
       </div>
       <div class="ai-compose">
-        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends, Shift+Enter for a new line)" onkeydown="aiInputKey(event)"></textarea>
-        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" onclick="aiClear()">Clear chat</button></div>
-        <span class="ai-foot">Answers come from Gemini and can be wrong. Check key numbers on the page.</span>
+        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends, Shift+Enter for a new line)" data-tip="Type a question in plain English. Enter sends it; Shift+Enter starts a new line." onkeydown="aiInputKey(event)"></textarea>
+        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send the question. The AI looks up the numbers it needs from the loaded export." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat. Earlier questions and answers are removed and not sent again." onclick="aiClear()">Clear chat</button></div>
+        <span class="ai-foot" id="ai-foot">Answers can be wrong. Check key numbers on the page.</span>
       </div>
     </div>
   </aside>
@@ -4176,7 +4202,7 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
   const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
   return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty,info});
 }
-// --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Gemini chat (and later an MCP server) ---
+// --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Ask AI chat and the MCP server (mcp/) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
 // the call and put back afterwards, so the page on screen never changes.
 const AI_SCOPES=['at_risk','no_commit','rescheduled','due_this_week','open','po_late','po_no_commit','po_open','all'];
@@ -4373,32 +4399,115 @@ function aiRunTool(name,args){
     return out&&typeof out==='object'&&!Array.isArray(out)?out:{result:out};
   }catch(err){return {error:String(err&&err.message||err)};}
 }
-// Gemini rejects an OBJECT schema with no properties, so tools without arguments are declared without parameters.
-function aiDeclarations(){
-  return KPI_TOOLS.map(({name,description,parameters:p})=>Object.keys(p.properties).length
-    ?{name,description,parameters:{type:'object',properties:p.properties,...(p.required.length?{required:p.required}:{})}}
-    :{name,description});
-}
-
-// --- Ask AI panel: a Gemini chat that answers from KPI_TOOLS. Nothing is sent before the consent box is ticked. ---
-const AI_GOOGLE_BASE='https://generativelanguage.googleapis.com/v1beta';
-const AI_MODEL_RE=/^[a-z0-9][a-z0-9.-]{0,62}$/;
-const AI_PREFERRED_MODELS=['gemini-3.5-flash','gemini-3.6-flash','gemini-3.8-flash','gemini-3.5-flash-lite','gemini-2.5-flash'];
-const AI_MAX_ROUNDS=6;
-const AI_KEY_STORE='spyderKpiGeminiKeyV1',AI_CONSENT_STORE='spyderKpiAiConsentV1',AI_MODEL_STORE='spyderKpiAiModelV1';
-const aiState={open:false,opener:'',server:null,serverError:'',serverCheck:null,models:[],modelLoad:null,model:'',memKey:'',busy:false,controller:null,history:[],messages:[],rows:null};
+// --- Stream C: Ask AI with four providers (Claude, ChatGPT, Groq, OpenRouter) through /api/ai ---
+// The site's server holds the AI keys (functions/api/ai/[[path]].js); this page never sees them. The panel lists
+// the providers the site has set up, grouped Paid / Free, asks for consent per provider before anything is sent,
+// and runs the model's tool calls here with aiRunTool, so answers use the same numbers as the pages.
+// Claude speaks the Anthropic dialect (tool_use / tool_result blocks); ChatGPT, Groq and OpenRouter speak the
+// OpenAI dialect (tool_calls / role "tool" messages). Setup, costs and data terms: docs/AI_ASSISTANT.md.
+const AI_API='/api/ai';
+const AI_MAX_ROUNDS=8; // model turns per question; the last one has to answer without more lookups
+const AI_CONSENT_STORE='spyderKpiAiConsentV2',AI_CHOICE_STORE='spyderKpiAiChoiceV2';
+// Names and secrets for the "not set up" view and before the site has answered; the site's status adds the rest.
+const AI_PROVIDER_INFO={
+  anthropic:{id:'anthropic',short:'Claude',name:'Claude (Anthropic)',tier:'paid',dialect:'anthropic',secret:'ANTHROPIC_API_KEY'},
+  openai:{id:'openai',short:'ChatGPT',name:'ChatGPT (OpenAI)',tier:'paid',dialect:'openai',secret:'OPENAI_API_KEY'},
+  groq:{id:'groq',short:'Groq',name:'Groq',tier:'free',dialect:'openai',secret:'GROQ_API_KEY'},
+  openrouter:{id:'openrouter',short:'OpenRouter',name:'OpenRouter (free models)',tier:'free',dialect:'openai',secret:'OPENROUTER_API_KEY'}
+};
+// Characters of JSON per conversation and per tool result (about 4 characters a token): free tiers allow only a few
+// thousand tokens per minute, so they get shorter tool results and a shorter history.
+const AI_HISTORY_CHARS={paid:300000,free:24000},AI_RESULT_CHARS={paid:30000,free:8000};
+const aiState={open:false,opener:'',view:'chat',status:null,statusError:'',statusCheck:null,provider:'',model:'',chatKey:'',system:'',busy:false,controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
-const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#]/g,'');};
+const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#_]/g,'');};
 // A newly loaded export starts a new chat (showResults checks after every load), so follow-up questions never mix in
 // tool results from the old data and old answers leave the screen. A question still pending is stopped; its late
 // answer or "Stopped." goes to the old chat and is dropped.
-function aiSyncData(){if(aiState.rows!==allLoadedRows){aiStop();aiState.rows=allLoadedRows;aiState.history=[];aiState.messages=[];aiRenderLog();}}
+function aiSyncData(){if(aiState.rows!==allLoadedRows){aiStop();aiState.rows=allLoadedRows;aiState.history=[];aiState.system='';aiState.chatKey='';aiState.messages=[];aiRenderLog();}}
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
 function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
-const aiKey=()=>aiGet(AI_KEY_STORE,'session')||aiGet(AI_KEY_STORE)||aiState.memKey;
-const aiConsented=()=>aiGet(AI_CONSENT_STORE)==='1';
+// Versions 1v2-1v8 kept a personal Gemini key and a Google consent in the browser; neither is used any more.
+['spyderKpiGeminiKeyV1','spyderKpiAiConsentV1','spyderKpiAiModelV1'].forEach(k=>{aiSet(k,'');aiSet(k,'','session');});
+function aiReadJson(key){try{const v=JSON.parse(aiGet(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}}
+// Consent is kept per provider ({anthropic:'2026-10-09', ...}): agreeing to Claude's terms does not allow Groq.
+const aiConsented=id=>!!(id&&aiReadJson(AI_CONSENT_STORE)[id]);
 function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
+
+// --- Providers and models (from GET /api/ai/status) ---
+// A shared snapshot never asks a site for AI: wherever the file is opened from, that site does not hold the keys.
+const aiHosted=()=>!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));
+function aiProviders(){return ((aiState.status&&aiState.status.providers)||[]).filter(p=>p&&AI_PROVIDER_INFO[p.id]).map(p=>({...AI_PROVIDER_INFO[p.id],...p,models:Array.isArray(p.models)?p.models.filter(m=>typeof m==='string'):[]}));}
+const aiConfigured=()=>aiProviders().filter(p=>p.configured&&p.models.length);
+const aiCurrent=()=>aiConfigured().find(p=>p.id===aiState.provider)||null;
+function aiModelLabel(p,id){return (p&&p.modelLabels&&typeof p.modelLabels[id]==='string'&&p.modelLabels[id])||id;}
+// Keeps the provider and model picked earlier when the site still offers them, else the first set-up provider
+// (paid before free) and its default model.
+function aiChoose(){
+  const list=aiConfigured(),saved=aiReadJson(AI_CHOICE_STORE);
+  const p=list.find(x=>x.id===aiState.provider)||list.find(x=>x.id===saved.provider)||list[0];
+  if(!p){aiState.provider='';aiState.model='';return;}
+  aiState.provider=p.id;
+  if(!p.models.includes(aiState.model))aiState.model=saved.provider===p.id&&p.models.includes(saved.model)?saved.model:p.models.includes(p.defaultModel)?p.defaultModel:p.models[0];
+}
+function aiCheckStatus(){
+  if(!aiState.statusCheck)aiState.statusCheck=(async()=>{
+    let status={hosted:false,providers:[]},error='';
+    // Opened as a file (or a snapshot): there is no server to hold the keys.
+    if(aiHosted()){
+      try{
+        const res=await fetch(`${AI_API}/status`,{headers:{accept:'application/json'},cache:'no-store'});
+        let data=null;try{data=await res.json();}catch(err){}
+        if(res.ok&&data&&Array.isArray(data.providers))status={hosted:true,providers:data.providers};
+        else if(res.status===404)status={hosted:false,providers:[]}; // a host without the AI service (IIS, a file share)
+        else error=aiHttpError(data&&typeof data==='object'?res.status:401,data); // a 200 sign-in page: the session expired
+      }catch(err){error='Could not reach this site\'s AI service. Check the connection and try again.';}
+    }
+    aiState.status=error?null:status;aiState.statusError=error;
+    if(error)aiState.statusCheck=null; // asked again next time, e.g. after signing in
+    aiChoose();
+  })();
+  return aiState.statusCheck;
+}
+// A different provider or model starts a new conversation: each one keeps its own history format, and Claude
+// only accepts its own earlier thinking back.
+function aiNewConversation(note){
+  aiStop();
+  aiState.history=[];aiState.system='';aiState.chatKey='';
+  // Arrowing through the pickers replaces the last note instead of stacking one per step.
+  const log=aiState.messages,last=log[log.length-1];
+  if(note&&log.length){if(last&&last.role==='note')last.text=note;else log.push({role:'note',text:note});}
+  aiRenderLog();
+}
+function aiSaveChoice(){aiSet(AI_CHOICE_STORE,aiState.provider?JSON.stringify({provider:aiState.provider,model:aiState.model}):'');}
+function aiSetProvider(id){
+  const p=aiConfigured().find(x=>x.id===id);
+  if(!p||p.id===aiState.provider)return;
+  aiState.provider=p.id;aiState.model='';
+  aiChoose();aiSaveChoice();
+  aiNewConversation(`Now asking ${p.short} (${aiModelLabel(p,aiState.model)}). Earlier questions are not sent to it.`);
+  aiSyncSettings();
+  aiSettingsStatus(aiConsented(p.id)?`${p.short} is allowed on this browser.`:`Read what ${p.short} receives, then tick the box to allow it.`,aiConsented(p.id)?'good':'');
+}
+function aiSetModel(id){
+  const p=aiCurrent();
+  if(!p||!p.models.includes(id)||id===aiState.model)return;
+  aiState.model=id;aiSaveChoice();
+  aiNewConversation(`Now asking ${aiModelLabel(p,id)}. Earlier questions are not sent to it.`);
+  aiSyncSettings();
+}
+function aiSetConsent(on){
+  const p=aiCurrent();
+  if(!p)return;
+  const all=aiReadJson(AI_CONSENT_STORE);
+  if(on)all[p.id]=new Date().toISOString().slice(0,10);else delete all[p.id];
+  aiSet(AI_CONSENT_STORE,Object.keys(all).length?JSON.stringify(all):'');
+  aiSettingsStatus(on?`Thanks. Ask AI may send questions to ${p.short} from this browser.`:`Ask AI will not send anything to ${p.short} from this browser.`,on?'good':'');
+  aiSyncSettings();
+}
+
+// --- Drawer: open / close, views, keyboard ---
 function aiToggle(force){
   const wasOpen=aiState.open;
   aiState.open=force===undefined?!aiState.open:!!force;
@@ -4414,7 +4523,7 @@ function aiToggle(force){
   if(!wasOpen){const a=document.activeElement;aiState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
   aiSyncData();
   aiRenderLog();
-  aiShowSettings(!aiConsented());
+  aiShowView(aiNeededView()||'chat');
   aiPrepare();
 }
 // Below 1600px no page space is kept for the drawer (see .ai-open .main), so it covers page controls: Tab and
@@ -4434,202 +4543,196 @@ document.addEventListener('keydown',aiDocKey);
 function aiInputKey(e){
   if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();aiSend();}
 }
-function aiShowSettings(show){
-  aiEl('ai-settings').hidden=!show;
-  aiEl('ai-chat').hidden=!!show;
-  aiEl('ai-consent').checked=aiConsented();
-  if(show)aiEl('ai-remember').checked=!!aiGet(AI_KEY_STORE);
-  aiSyncSettings();
-  aiFocus(!show?'ai-input':!aiConsented()?'ai-consent':aiState.server?'ai-model':'ai-key');
+// The view the panel has to show before anyone can chat: the site's answer is an error (settings, with the
+// message), nothing is set up (setup), or the picked provider is not allowed yet (settings). '' means chat is fine.
+function aiNeededView(){
+  if(aiState.statusError)return 'settings';
+  if(!aiState.status)return aiConsented(aiReadJson(AI_CHOICE_STORE).provider)?'':'settings';
+  if(!aiConfigured().length)return 'setup';
+  return aiConsented(aiState.provider)?'':'settings';
 }
-function aiSyncSettings(){
-  const server=!!aiState.server,hasKey=!!aiKey();
-  aiEl('ai-server-note').hidden=!server;
-  // With a server key the box is only needed to remove a personal key saved here earlier.
-  aiEl('ai-key-box').hidden=server&&!hasKey;
-  aiEl('ai-key-remove').disabled=!hasKey;
-  aiEl('ai-mode').textContent=`${server?'Server key':hasKey?'Your key':'Not set up'}${aiState.model?` · ${aiState.model}`:''}`;
-  const models=aiState.models.length?aiState.models:[aiState.model||aiGet(AI_MODEL_STORE)||'gemini-2.5-flash'];
-  aiEl('ai-model').innerHTML=models.map(n=>`<option value="${esc(n)}"${n===aiState.model?' selected':''}>${esc(n)}</option>`).join('');
+function aiShowView(view){
+  aiState.view=view;
+  aiEl('ai-settings').hidden=view!=='settings';
+  aiEl('ai-setup').hidden=view!=='setup';
+  aiEl('ai-chat').hidden=view!=='chat';
+  aiSyncSettings();
+  aiFocus(view==='chat'?'ai-input':view==='setup'?'ai-setup-title':!aiCurrent()?'ai-start':aiConsented(aiState.provider)?'ai-provider':'ai-consent');
+}
+function aiShowSettings(show){aiShowView(show?'settings':aiNeededView()==='setup'?'setup':'chat');}
+function aiBackToChat(){
+  const need=aiNeededView();
+  if(need==='settings'&&!aiState.statusError&&aiCurrent()){aiSettingsStatus(`Tick the box above to allow ${aiCurrent().short} first.`,'bad');aiFocus('ai-consent');return;}
+  aiShowView(need==='setup'?'setup':'chat');
+}
+// Asks the site which providers are set up (again after an error), then moves to the view that is needed.
+async function aiPrepare(){
+  // On the first open the view is a guess made before the site answered; once it has, focus moves to the right control.
+  const guessed=!aiState.status&&!aiState.statusError;
+  await aiCheckStatus();
+  aiSyncSettings();
+  if(aiState.statusError)aiSettingsStatus(aiState.statusError,'bad');
+  if(!aiState.open)return;
+  const need=aiNeededView();
+  if(need&&(need!==aiState.view||guessed))aiShowView(need);
+  else if(!need&&aiState.view==='setup')aiShowView('chat');
 }
 function aiSettingsStatus(text,tone){
   const el=aiEl('ai-settings-status');
   el.textContent=text;
   el.className=`ai-status${tone?` ${tone}`:''}`;
 }
-function aiSetConsent(on){
-  aiSet(AI_CONSENT_STORE,on?'1':'');
-  aiSettingsStatus(on?'Thanks. Ask AI is allowed on this browser.':'Ask AI is turned off on this browser.',on?'good':'');
-  if(on)aiPrepare();
+// Fills the provider / model pickers, the data notice and the labels from the site's status.
+function aiSyncSettings(){
+  const all=aiProviders(),p=aiCurrent(),consented=aiConsented(aiState.provider);
+  const group=(tier,label)=>{
+    const items=all.filter(x=>x.tier===tier);
+    return items.length?`<optgroup label="${label}">${items.map(x=>`<option value="${esc(x.id)}"${x.id===aiState.provider?' selected':''}${x.configured&&x.models.length?'':' disabled'}>${esc(x.name)}${x.configured&&x.models.length?'':' (not set up)'}</option>`).join('')}</optgroup>`:'';
+  };
+  const provider=aiEl('ai-provider');
+  provider.innerHTML=all.length?group('paid','Paid')+group('free','Free'):`<option value="">${aiState.status||aiState.statusError?'No provider set up':'Checking this site…'}</option>`;
+  provider.disabled=!p;
+  const model=aiEl('ai-model');
+  model.innerHTML=p?p.models.map(m=>`<option value="${esc(m)}"${m===aiState.model?' selected':''}>${esc(aiModelLabel(p,m))}</option>`).join(''):'';
+  model.disabled=!p;
+  aiEl('ai-notice').hidden=!p;
+  const tier=aiEl('ai-tier');
+  tier.textContent=p?(p.tier==='paid'?'Paid':'Free'):'';
+  tier.className=`ai-tier ${p?p.tier:''}`;
+  aiEl('ai-notice-text').textContent=p?String(p.dataNotice||''):'';
+  const terms=aiEl('ai-terms');
+  terms.hidden=!(p&&/^https:\/\//.test(String(p.termsUrl||'')));
+  if(!terms.hidden)terms.href=p.termsUrl;
+  aiEl('ai-consent').checked=consented;
+  aiEl('ai-consent').disabled=!p;
+  aiEl('ai-consent-text').textContent=`I understand. Allow Ask AI to send my questions and the dashboard data needed to answer them to ${p?p.short:'this provider'} from this browser.`;
+  aiEl('ai-mode').textContent=aiState.statusError?'Needs attention':!aiState.status?'':p?`${p.short} · ${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}`:'Not set up';
+  aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiState.model}) and can be wrong. Check key numbers on the page.`:'Answers can be wrong. Check key numbers on the page.';
+  aiEl('ai-setup-why').textContent=aiState.status&&!aiState.status.hosted
+    ?'Ask AI needs the hosted dashboard: this is a shared snapshot, a copy opened as a file, or a site without the AI service, so there is no server to hold the AI keys.'
+    :'None of the four AI providers has a key set up on this site yet.';
 }
-// Server mode: a site that serves /api/gemini with a key set up there; the page needs no key of its own.
-// Own-key mode only when the site has no /api/gemini (404) or says it has no key. Any other answer (the password
-// gate's 401 after the sign-in expired, a sign-in page) is an error, so company data never quietly moves to a personal key.
-function aiCheckServer(){
-  if(!aiState.serverCheck)aiState.serverCheck=(async()=>{
-    let server=false,error='';
-    if(/^https?:$/.test(String(location.protocol||''))){
-      try{
-        const res=await fetch('/api/gemini/status',{headers:{accept:'application/json'},cache:'no-store'});
-        let data=null;try{data=await res.json();}catch(err){}
-        server=res.ok&&!!data&&data.configured===true;
-        if(!server&&res.status!==404&&!(data&&data.configured===false))error=aiHttpError(data&&typeof data==='object'?res.status:401,data,true);
-      }catch(err){error='Could not reach this site\'s Gemini service. Check the connection and try again.';}
-    }
-    aiState.server=server;aiState.serverError=error;
-    if(error)aiState.serverCheck=null; // asked again next time, e.g. after signing in
-  })();
-  return aiState.serverCheck;
-}
-async function aiPrepare(){
-  if(!aiConsented())return;
-  await aiCheckServer();
-  aiSyncSettings();
-  if(aiState.serverError){aiSettingsStatus(aiState.serverError,'bad');return;}
-  if(!aiState.models.length&&(aiState.server||aiKey()))await aiLoadModels();
-  if(!aiState.server&&!aiKey()&&aiState.open&&aiEl('ai-settings').hidden)aiShowSettings(true);
-}
-// Opening the panel, ticking consent and saving a key can all ask for the list at once; they share one request.
-function aiLoadModels(){
-  if(!aiState.modelLoad)aiState.modelLoad=(async()=>{
-    let names=[];
-    try{
-      const data=await aiFetch('models?pageSize=100');
-      names=(data.models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name||''))
-        .map(x=>String(x.name).replace(/^models\//,'')).filter(n=>AI_MODEL_RE.test(n)&&!/tts|image|audio|live/.test(n));
-      if(!names.length)aiSettingsStatus('No Gemini Flash models are available for this key.','bad');
-    }catch(err){aiSettingsStatus(aiErrorText(err),'bad');}
-    aiState.models=names;
-    const saved=aiGet(AI_MODEL_STORE);
-    aiState.model=names.includes(saved)?saved:AI_PREFERRED_MODELS.find(n=>names.includes(n))||names[0]||(AI_MODEL_RE.test(saved)?saved:'gemini-2.5-flash');
-    aiSyncSettings();
-  })().finally(()=>{aiState.modelLoad=null;});
-  return aiState.modelLoad;
-}
-function aiSetModel(name){
-  if(!AI_MODEL_RE.test(name))return;
-  aiState.model=name;
-  aiSet(AI_MODEL_STORE,name);
-  aiSyncSettings();
-}
-function aiSaveKey(){
-  const input=aiEl('ai-key'),key=String(input.value||'').trim();
-  if(!key){aiSettingsStatus('Paste a Gemini API key first.','bad');return;}
-  const remember=aiEl('ai-remember').checked;
-  aiSet(AI_KEY_STORE,'');aiSet(AI_KEY_STORE,'','session');
-  const saved=aiSet(AI_KEY_STORE,key,remember?'local':'session');
-  aiState.memKey=saved?'':key;
-  input.value='';
-  aiSettingsStatus(!saved?'This browser blocked saving the key; it is kept until the page is closed.':remember?'Key saved on this browser.':'Key saved until this tab closes.','good');
-  aiState.models=[];
-  aiPrepare();
-}
-function aiRemoveKey(){
-  aiSet(AI_KEY_STORE,'');aiSet(AI_KEY_STORE,'','session');
-  aiState.memKey='';aiState.models=[];
-  aiEl('ai-key').value='';
-  aiSettingsStatus('Key removed from this browser.','');
-  aiSyncSettings();
-}
+
+// --- Asking: one question, the tool loop, errors ---
 const aiFail=message=>Object.assign(new Error(message),{aiFriendly:true});
-function aiErrorText(err){return err&&err.aiFriendly?err.message:'Something went wrong talking to Gemini. Try again.';}
-function aiHttpError(status,data,server){
-  const message=String(data&&data.error&&data.error.message||'');
-  if(server&&status===401)return 'Your sign-in to this site has expired. Reload the page and sign in again.';
-  if(status===401||status===403||(status===400&&/api[ _]?key/i.test(message)))return server?'The server\'s Gemini key was rejected. Ask whoever runs this site to check GEMINI_API_KEY.':'Google did not accept this API key. Check it in Settings, or create a new one in Google AI Studio.';
-  if(status===429)return 'Gemini\'s free-tier limit was reached (requests per minute or per day). Wait a minute and try again, or pick a lighter model in Settings.';
-  if(status===404)return 'That Gemini model is not available. Pick another model in Settings.';
-  if(status===503&&data&&data.configured===false)return 'This site has no Gemini key set up on its server.';
+function aiErrorText(err){return err&&err.aiFriendly?err.message:'Something went wrong talking to the AI service. Try again.';}
+// The site's /api/ai answers with plain-English messages (keys and provider auth errors never pass through).
+function aiHttpError(status,data){
+  const message=data&&data.error&&typeof data.error.message==='string'?data.error.message:'';
+  if(status===401)return 'Your sign-in to this site has expired. Reload the page and sign in again.';
+  if(message)return message.slice(0,400);
   if(status===413)return 'The question and its data were too large to send. Clear the chat and ask a narrower question.';
-  if(status>=500)return `Gemini is busy or unavailable right now (error ${status}). Try again in a moment.`;
-  return `Gemini could not answer (error ${status}${message?`: ${message.slice(0,200)}`:''}).`;
+  if(status===429)return 'The AI provider is busy or a usage limit was reached. Wait a minute and try again.';
+  if(status>=500)return `This site's AI service is busy or unavailable right now (error ${status}). Try again in a moment.`;
+  return `This site's AI service could not answer (error ${status}).`;
 }
-// Own-key mode calls Google directly with the key in a header (never in the URL); server mode calls /api/gemini.
-async function aiFetch(path,{body,signal}={}){
-  const server=!!aiState.server,headers={};
-  if(body)headers['content-type']='application/json';
-  if(!server){const key=aiKey();if(!key)throw aiFail('Add a Gemini API key in Settings first.');headers['x-goog-api-key']=key;}
+async function aiPost(body,signal){
   let res;
-  try{res=await fetch(`${server?'/api/gemini':AI_GOOGLE_BASE}/${path}`,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined,signal});}
+  try{res=await fetch(`${AI_API}/chat`,{method:'POST',headers:{'content-type':'application/json',accept:'application/json'},body:JSON.stringify(body),signal,cache:'no-store'});}
   catch(err){
     if(err&&err.name==='AbortError')throw err;
-    throw aiFail(server?'Could not reach this site\'s Gemini service. Check the connection and try again.':'Could not reach Google\'s Gemini API. Check the network connection; a firewall, proxy or browser extension may be blocking generativelanguage.googleapis.com.');
+    throw aiFail('Could not reach this site\'s AI service. Check the connection and try again.');
   }
-  let data;
+  let data=null;
   try{data=await res.json();}catch(err){}
-  // In server mode a 2xx without JSON is a sign-in page, not Gemini: the site's session has expired.
-  if(!res.ok||(server&&!(data&&typeof data==='object')))throw aiFail(aiHttpError(res.ok?401:res.status,data,server));
-  return data||{};
+  // A 2xx without JSON is the sign-in page, not the AI service: the site's session has expired.
+  if(!res.ok||!(data&&typeof data==='object'))throw aiFail(aiHttpError(res.ok?401:res.status,data));
+  return data;
 }
 function aiSystemPrompt(){
   return `You are an operations KPI analyst for Spyder Controls. You answer questions about the SAP Business One KPI dashboard loaded in the user's browser: sales orders, purchase orders, deliveries, receipts, supply / demand and Clear To Build data. The report's as-of date is ${displayDate(reportToday())}.
-Answer only from tool results: call the tools for every number and never guess or use outside knowledge. Cite the numbers you use and the as-of date. If the data needed is not loaded, or a tool returns nothing, say so plainly. Keep answers short: a sentence or two, then a few bullets or a small table only when it helps. Values are open (or shipped) value in the export's local currency. "At risk" means open lines past due with no reschedule, with no commit date, rescheduled, or marked Urgent.`;
+Answer only from tool results: call the tools for every number and never guess or use outside knowledge. Cite the numbers you use and the as-of date. If the data needed is not loaded, or a tool returns nothing, say so plainly. Keep answers short: a sentence or two, then a few bullets or a small table only when it helps. Write money in full with thousands separators (for example $1,721,806). Values are open (or shipped) value in the export's local currency. "At risk" means open lines past due with no reschedule, with no commit date, rescheduled, or marked Urgent.`;
 }
-// One question: call Gemini, run any functionCalls locally, send the results back, up to AI_MAX_ROUNDS lookups.
-// The model's content is kept exactly as returned (thoughtSignature included), as Gemini requires.
-async function aiAsk(question,signal){
-  const history=aiState.history,start=history.length,used=[];
-  history.push({role:'user',parts:[{text:question}]});
+const aiToolDefs=()=>KPI_TOOLS.map(({name,description,parameters})=>({name,description,parameters}));
+// Free tiers count tokens per minute, so long tool results are cut (largest list first) and marked truncated.
+function aiFitResult(out,limit){
+  if(!out||typeof out!=='object'||JSON.stringify(out).length<=limit)return out;
+  const res=JSON.parse(JSON.stringify(out));
+  for(let guard=0;guard<200&&JSON.stringify(res).length>limit;guard++){
+    const key=Object.keys(res).filter(k=>Array.isArray(res[k])&&res[k].length>1).sort((a,b)=>JSON.stringify(res[b]).length-JSON.stringify(res[a]).length)[0];
+    if(!key)break;
+    res[key]=res[key].slice(0,Math.max(1,Math.floor(res[key].length*0.75)));
+    res.truncated=true;
+    if('returned' in res&&(key==='rows'||key==='groups'))res.returned=res[key].length;
+  }
+  return res;
+}
+// One question: ask the model, run its tool calls here, send the results back, up to AI_MAX_ROUNDS turns.
+// Each assistant turn is kept exactly as the site returned it (Claude's thinking blocks included).
+async function aiAsk(p,question,signal){
+  const history=aiState.history,start=history.length,used=[],limit=AI_RESULT_CHARS[p.tier==='free'?'free':'paid'];
+  history.push({role:'user',content:question});
   try{
-    for(let round=0;;round++){
+    for(let round=1;;round++){
       const last=round>=AI_MAX_ROUNDS;
-      const data=await aiFetch(`models/${aiState.model}:generateContent`,{signal,body:{
-        systemInstruction:{parts:[{text:aiSystemPrompt()}]},contents:history,tools:[{functionDeclarations:aiDeclarations()}],
-        ...(last?{toolConfig:{functionCallingConfig:{mode:'NONE'}}}:{})}});
-      const cand=(data.candidates||[])[0];
-      const blocked=(data.promptFeedback&&data.promptFeedback.blockReason)||(cand&&/SAFETY|BLOCKLIST|PROHIBITED|SPII/.test(cand.finishReason||''));
-      if(blocked)throw aiFail('Gemini declined to answer this one (its safety filter blocked it). Try rephrasing the question.');
-      if(!cand||!cand.content)throw aiFail('Gemini returned an empty answer. Try again or rephrase the question.');
-      history.push(cand.content);
-      const parts=cand.content.parts||[],calls=parts.filter(p=>p.functionCall);
-      if(calls.length&&last)throw aiFail('This question needed too many lookups. Try a narrower question.');
+      const data=await aiPost({provider:p.id,model:aiState.model,system:aiState.system,messages:history,tools:aiToolDefs(),final:last},signal);
+      const calls=Array.isArray(data.toolCalls)?data.toolCalls.filter(c=>c&&typeof c.name==='string'):[];
+      const text=typeof data.text==='string'?data.text.trim():'';
+      if(data.stop==='refusal')throw aiFail(`${p.short} declined to answer this one${text?`: ${text.slice(0,200)}`:''}. Try rephrasing the question, or pick another model in Settings.`);
+      if(data.stop==='max_tokens'&&(calls.length||!text))throw aiFail(`${p.short}'s answer was cut off before it finished. Ask a narrower question.`);
+      if(!data.message||typeof data.message!=='object')throw aiFail(`${p.short} returned an empty answer. Try again or rephrase the question.`);
+      history.push(data.message);
       if(!calls.length){
-        const text=parts.filter(p=>p.text&&!p.thought).map(p=>p.text).join('').trim();
-        if(!text)throw aiFail('Gemini returned an empty answer. Try again or rephrase the question.');
-        return {text,used:[...new Set(used)]};
+        if(!text)throw aiFail(`${p.short} returned an empty answer. Try again or rephrase the question.`);
+        return {text:data.stop==='max_tokens'?`${text}\n\n_(The answer was cut off.)_`:text,used:[...new Set(used)],by:aiModelLabel(p,String(data.model||aiState.model)).replace(/\s*\(.*\)$/,'')};
       }
-      history.push({role:'user',parts:calls.map(({functionCall:fc})=>{
-        used.push(fc.name);
-        return {functionResponse:{name:fc.name,...(fc.id?{id:fc.id}:{}),response:aiRunTool(fc.name,fc.args)}};
-      })});
+      if(last)throw aiFail('This question needed too many lookups. Try a narrower question.');
+      const results=calls.map(c=>{
+        used.push(c.name);
+        const out=c.invalid?{error:'The tool arguments were not valid JSON. Call the tool again with a JSON object.'}:aiRunTool(c.name,c.input);
+        return {id:String(c.id||''),out:aiFitResult(out,limit)};
+      });
+      // Anthropic: every result in one user turn; OpenAI style: one "tool" message per call.
+      if(p.dialect==='anthropic')history.push({role:'user',content:results.map(({id,out})=>({type:'tool_result',tool_use_id:id,content:JSON.stringify(out),...(out&&out.error?{is_error:true}:{})}))});
+      else results.forEach(({id,out})=>history.push({role:'tool',tool_call_id:id,content:JSON.stringify(out)}));
     }
   }catch(err){
     history.length=start;
     throw err;
   }
 }
-// Old exchanges are dropped once the history nears the proxy's 1 MB limit (each one carries its tool results).
-function aiTrimHistory(){
-  const h=aiState.history;
-  while(h.length&&JSON.stringify(h).length>300000){
-    const next=h.findIndex((c,i)=>i>0&&c.role==='user'&&(c.parts||[]).some(p=>typeof p.text==='string'));
+// Old exchanges are dropped once the history nears the tier's budget (each one carries its tool results).
+// Claude checks that everything before a thinking block is unchanged, so after a cut the earlier thinking is left
+// out instead of being sent back with a different history.
+function aiTrimHistory(p){
+  const h=aiState.history,max=AI_HISTORY_CHARS[p.tier==='free'?'free':'paid'];
+  let cut=false;
+  while(h.length&&JSON.stringify(h).length>max){
+    const next=h.findIndex((m,i)=>i>0&&m.role==='user'&&typeof m.content==='string');
     h.splice(0,next>0?next:h.length);
+    cut=true;
   }
+  if(cut&&p.dialect==='anthropic')h.forEach((m,i)=>{if(m.role==='assistant'&&Array.isArray(m.content))h[i]={...m,content:m.content.filter(b=>!(b&&(b.type==='thinking'||b.type==='redacted_thinking')))};});
 }
 async function aiSend(text){
   if(aiState.busy)return;
   const input=aiEl('ai-input');
   const question=String(text===undefined?input.value:text).trim();
   if(!question)return;
-  if(!aiConsented()){aiShowSettings(true);aiSettingsStatus('Tick the box above to allow Ask AI before asking a question.','bad');return;}
-  if(!hasLoadedData()){aiState.messages.push({role:'error',text:'Load a KPI export first: Ask AI answers from the data loaded in this dashboard.'});aiRenderLog();aiAnnounce(aiState.messages[aiState.messages.length-1].text);return;}
   aiState.busy=true;
   aiSyncData();
   // Messages go to this chat's list; after Clear chat or a new export, a late answer or "Stopped." is dropped.
   const log=aiState.messages,start=log.length;
   try{
-    await aiCheckServer();
-    if(aiState.serverError)throw aiFail(aiState.serverError);
-    if(!aiState.server&&!aiKey()){aiShowSettings(true);aiSettingsStatus('Add a Gemini API key first, or ask whoever runs this site to set one up on the server.','bad');return;}
-    if(!aiState.model)await aiLoadModels();
+    await aiCheckStatus();
+    if(aiState.statusError)throw aiFail(aiState.statusError);
+    const p=aiCurrent();
+    if(!p){aiShowView('setup');return;}
+    // Nothing leaves the browser for a provider until its consent box is ticked.
+    if(!aiConsented(p.id)){aiShowView('settings');aiSettingsStatus(`Tick the box above to allow sending data to ${p.short} before asking a question.`,'bad');return;}
+    if(!hasLoadedData())throw aiFail('Load a KPI export first: Ask AI answers from the data loaded in this dashboard.');
+    const key=`${p.id}|${aiState.model}`;
+    if(aiState.chatKey!==key){aiState.history=[];aiState.system='';aiState.chatKey=key;}
+    // The system prompt is fixed for the whole conversation (Claude re-checks earlier turns byte for byte).
+    if(!aiState.system)aiState.system=aiSystemPrompt();
     if(text===undefined)input.value='';
-    aiTrimHistory();
+    aiTrimHistory(p);
     log.push({role:'user',text:question});
     aiState.controller=typeof AbortController==='function'?new AbortController():null;
     aiRenderLog();
     aiAnnounce('Looking it up…');
-    const answer=await aiAsk(question,aiState.controller?aiState.controller.signal:undefined);
-    log.push({role:'model',text:answer.text,used:answer.used});
+    const answer=await aiAsk(p,question,aiState.controller?aiState.controller.signal:undefined);
+    log.push({role:'model',text:answer.text,used:answer.used,by:answer.by});
   }catch(err){
     const stopped=err&&err.name==='AbortError';
     if(!stopped&&!(err&&err.aiFriendly))console.error('Ask AI request failed',err);
@@ -4645,7 +4748,7 @@ async function aiSend(text){
 function aiStop(){if(aiState.controller)aiState.controller.abort();}
 function aiClear(){
   aiStop();
-  aiState.history=[];aiState.messages=[];
+  aiState.history=[];aiState.system='';aiState.chatKey='';aiState.messages=[];
   aiRenderLog();
   aiFocus('ai-input');
 }
@@ -4653,7 +4756,8 @@ function aiRenderLog(){
   const log=aiEl('ai-log');
   if(!log)return;
   const messages=aiState.messages.map(m=>m.role==='user'?`<div class="ai-msg user">${esc(m.text)}</div>`
-    :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}${m.used&&m.used.length?`<div class="ai-tools">Looked up: ${esc(m.used.join(', '))}</div>`:''}</div>`
+    :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}<div class="ai-tools">${m.by?`${esc(m.by)}${m.used&&m.used.length?' · ':''}`:''}${m.used&&m.used.length?`Looked up: ${esc(m.used.join(', '))}`:''}</div></div>`
+    :m.role==='note'?`<div class="ai-msg note">${esc(m.text)}</div>`
     :`<div class="ai-msg error">${esc(m.text)}</div>`).join('');
   log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: what is at risk, which customers, vendors or warehouses drive it, what is due next, or how OTD and fill are doing. Answers use the same numbers as these pages, as of the export date.</p>')
     +(aiState.busy?'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>':'');
@@ -4703,13 +4807,14 @@ function aiMarkdown(text){
   flush();
   return out.join('');
 }
-// Shared snapshots copy the page DOM; the chat, model list and typed values must not travel with them.
+// Shared snapshots copy the page DOM; the chat, provider and model lists, notices and typed values must not travel
+// with them (a snapshot fills them in again from its own, file-based, state).
 function aiResetClone(root){
   root.querySelector('body')?.classList.remove('ai-open');
   const panel=root.querySelector('#ai-panel');
   if(!panel)return;
   panel.hidden=true;
-  panel.querySelectorAll('#ai-log,#ai-announce,#ai-model,#ai-mode,#ai-settings-status').forEach(n=>{n.innerHTML='';});
+  panel.querySelectorAll('#ai-log,#ai-announce,#ai-provider,#ai-model,#ai-mode,#ai-settings-status,#ai-tier,#ai-notice-text,#ai-foot,#ai-setup-why').forEach(n=>{n.innerHTML='';});
   panel.querySelectorAll('input,textarea').forEach(n=>{n.removeAttribute('value');n.removeAttribute('checked');n.textContent='';});
 }
 // Pages that need a separate export show what they need, how to get it, and a preview of what they will show.
@@ -4760,8 +4865,13 @@ function renderConnectPage(){
   const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
   const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
   return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener">docs/MCP.md</a>.</p>
-  ${section(1,'Option 1: Ask AI in this dashboard','Google Gemini · nothing to install',`<p>Click <strong>Ask AI</strong>, tick the consent box and, if it asks for one, paste a free Google AI Studio key. Your question and the numbers needed to answer it go from this browser to Google.</p>
-    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle(true)"${tipAttr('Open the Ask AI chat panel on the right.')}>Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener"${tipAttr('Open the Ask AI guide: setup, keys and what data is sent (docs/AI_ASSISTANT.md, new tab).')}>Ask AI guide</a></div>`)}
+  ${section(1,'Option 1: Ask AI in this dashboard','Claude, ChatGPT, Groq or OpenRouter · nothing to install',`<p>Click <strong>Ask AI</strong>, pick a provider in <strong>Settings</strong> and tick its consent box. The hosted site keeps the AI keys on its server, so nobody needs a key of their own. Your question and the numbers needed to answer it go from the site to the provider you picked.</p>
+    <ul>
+      <li><strong>Paid:</strong> Claude (Anthropic) and ChatGPT (OpenAI). Billed to the company's account, usually from under a cent to about 20 cents per question depending on the model; they do not train on what you send.</li>
+      <li><strong>Free:</strong> Groq and OpenRouter's free models. Tight limits per minute and per day, and free services may keep or publish what you send, so use them only for data you may share.</li>
+    </ul>
+    <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
+    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel on the right. Nothing is sent until you tick the consent box for a provider." onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, setup, costs and data terms.">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
       ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
       ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
@@ -5344,7 +5454,7 @@ function renderResults(){
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('This is a shared snapshot file: its numbers are frozen as of the day it was saved, and note changes here are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask questions about the loaded export in plain English. Opens a chat panel on the right.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
+    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export. Nothing is sent until you allow a provider in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
       :`<button type="button" class="btn btn-primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`}</div>
   </div>`;
 

@@ -61,7 +61,7 @@ export async function onRequest(context) {
     return withSecurityHeaders(await next());
   }
 
-  // The page's background calls (Ask AI's /api/gemini/*) need a status they can read, not a 200 sign-in form.
+  // The page's background calls (Ask AI's /api/ai/*, the shared report) need a status they can read, not a 200 sign-in form.
   if (url.pathname.startsWith('/api/')) {
     return new Response(JSON.stringify({ error: { code: 401, message: 'Your sign-in to this site has expired. Reload the page and sign in again.' } }), {
       status: 401,

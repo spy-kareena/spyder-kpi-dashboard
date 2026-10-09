@@ -13,7 +13,7 @@ It does not need a database, application server, Node, Python, or internet acces
 - `queries/` - SAP B1 HANA query templates used to generate Excel exports
 - `samples/` - example CSV for a local smoke test
 - `VERSION.txt` - package/version marker
-- `functions/` - Cloudflare Pages Functions: the sign-in gate, shared storage (`functions/api/report.js` the last report, `functions/api/notes.js` notes / overrides / causes, `functions/api/history.js` at-risk history), live shipping (`functions/api/shipping.js`) and the optional Ask AI key proxy (`functions/api/gemini/`)
+- `functions/` - Cloudflare Pages Functions: the sign-in gate, shared storage (`functions/api/report.js` the last report, `functions/api/notes.js` notes / overrides / causes, `functions/api/history.js` at-risk history), live shipping (`functions/api/shipping.js`) and the Ask AI proxy for Claude, ChatGPT, Groq and OpenRouter (`functions/api/ai/`)
 - `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker
 - `workers/shipping-poller/` - optional Cloudflare Worker that checks FedEx every 4 hours for the Shipping page (its own `wrangler.toml` and README); see `docs/SHIPPING.md`
 - `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node 18+) to connect Claude or other AI apps; see `docs/MCP.md`
@@ -102,7 +102,14 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
 
 ## Security notes
 
-- No external data upload is required by this package. The optional **Ask AI** panel sends questions and the data needed to answer them to Google's Gemini API, only after the user ticks a consent box; on the free tier Google may use that data to improve its products. See `docs/AI_ASSISTANT.md`. To offer it without per-user keys on Cloudflare Pages, set the `GEMINI_API_KEY` Pages secret; the `/api/gemini` proxy is behind the same sign-in gate. IIS has no proxy, so users there enter their own key.
+- No external data upload is required by this package. The optional **Ask AI** panel sends questions and the data needed to answer them to the AI provider the user picks, only after the user ticks that provider's consent box. Paid providers (Claude, ChatGPT) do not train on API data; the free ones (Groq, OpenRouter free models) have weaker terms, and OpenRouter's free hosts may keep or publish prompts. See `docs/AI_ASSISTANT.md`.
+- Ask AI keys (Cloudflare Pages secrets, each optional; set at least one to turn Ask AI on, for Production and Preview as needed, then redeploy):
+  - `ANTHROPIC_API_KEY` - Claude (paid, billed to the Anthropic account)
+  - `OPENAI_API_KEY` - ChatGPT (paid, billed to the OpenAI account)
+  - `GROQ_API_KEY` - Groq (free tier)
+  - `OPENROUTER_API_KEY` - OpenRouter (free models only)
+
+  Set each with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`. The keys never reach the browser: the page calls `/api/ai/status` and `/api/ai/chat`, which sit behind the same sign-in gate, accept chat requests only from the dashboard page itself, cap each request at 1 MB and allow only listed models. Set a monthly spend limit on the paid accounts. IIS and other static hosts have no proxy, so Ask AI is not available there (users can connect Claude Desktop instead, see `docs/MCP.md`).
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
 - Restrict access to internal users only. On Cloudflare Pages with `REPORT_STORE` bound, the last uploaded export, the shared notes, the at-risk history and the Shipping page's FedEx results are stored in Workers KV and readable by anyone with the dashboard password; otherwise uploaded KPI data and notes never reach the server. The page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.

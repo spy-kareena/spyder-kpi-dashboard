@@ -44,6 +44,13 @@ each with the Us / Them split of its misses. Reason, cause and when-flagged filt
 kept in snapshots); Top offenders as $20k blocks; Search finds reasons and causes; get_overview / search_lines report
 cause, leading and lagging. About these numbers on Order Health explains every number.
 
+1v9: Ask AI rebuilt for four providers with the keys kept on the server (functions/api/ai/, Pages secrets
+ANTHROPIC_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY): Claude and ChatGPT (paid), Groq and
+OpenRouter free models (free). Provider and model picker grouped Paid / Free, a data-use notice and consent tick
+per provider, tool loop in both the Anthropic and OpenAI formats, plain-English "not set up" help (also shown in
+shared snapshots and file copies). The Gemini panel, its proxy and personal browser keys are removed (an old saved
+Gemini key is deleted from the browser).
+
 2v0: Big picture (Sankey) charts. A "Big picture" button on Order Health (open order value: warehouse to status to
 customer segment; at-risk value: reason to Us / Them to customer), Build Risk (CM to clear to build / at risk / late
 to month, for the picked report week) and Supply Mix (open demand value: warehouse to item group to demand month,
