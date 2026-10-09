@@ -67,12 +67,18 @@ Use a key made only for this dashboard, so it can be limited or replaced without
   - `POST /api/ai/chat` sends one step of a conversation to the chosen provider and returns its reply.
 - The code is `functions/api/ai/[[path]].js`. It adds the key on the server, so the browser never sees it.
 - The AI cannot read the export by itself. It asks for numbers through six read-only tools (overview tiles, line search, group totals, monthly summary, build risk, supply / demand). The page runs those tools in the browser, on the loaded data, and sends back only the results. These are the same tools the MCP connector offers (`KPI_TOOLS` in `index.html`). Each question may take up to 8 steps.
-- Claude uses Anthropic's Messages API with adaptive thinking at medium effort and prompt caching. For Opus and Sonnet it turns on Anthropic's server-side fallback (`server-side-fallback-2026-07-01`): if a safety check declines a question, Anthropic re-runs it on its recommended fallback model in the same call. If the account does not accept that option, the request is sent again without it. ChatGPT, Groq and OpenRouter use the OpenAI Chat Completions format.
+- Claude uses Anthropic's Messages API (`anthropic-version: 2023-06-01`) with adaptive thinking at medium effort and prompt caching. Two Anthropic options are switched on:
+  - **Fallback** (Opus and Sonnet, `server-side-fallback-2026-07-01`): if a safety check declines a question, Anthropic re-runs it on its recommended fallback model in the same call. The answer then says which model replied.
+  - **Thinking kept with its chat** (`thinking-binding-controls-2026-08-01`): Claude's hidden reasoning from earlier steps is sent back with the chat, and Claude checks that the chat before it has not changed. The page only ever adds to a chat (it keeps one fixed set of instructions and tools per chat), and if something earlier ever differs, Claude drops that old reasoning instead of refusing the question.
+
+  If the Anthropic account does not accept either option, the request is sent again once without them. ChatGPT, Groq and OpenRouter use the OpenAI Chat Completions format.
+- Answers can be up to 16,000 tokens long on the paid providers (reasoning included), 2,048 on Groq and 4,096 on OpenRouter. Groq counts this allowance against its per-minute limit, so a smaller one lets more questions through; a short data answer fits easily.
 
 Safeguards in the proxy:
 
 - Only the dashboard page itself may call `/api/ai/chat` (same-origin check), and only when signed in.
 - Each request is limited to 1 MB. Free providers get smaller tool results and a shorter chat history, to stay inside their limits.
+- Questions and tool results must be plain text: the proxy refuses images, files or links, so nobody can make a provider fetch something on the company's account.
 - Each provider has a model allowlist. Claude: the three models above only. ChatGPT and Groq: the listed models plus newer ones in the same families, read from the provider's model list once an hour (no "pro" or dated models). OpenRouter: free (`:free`, price 0) models that support tools only.
 - Replies are never cached. Calls to a provider time out after 95 seconds.
 - Error messages are plain English. When a provider rejects the key, the page only says which secret to check; the provider's own message (which can contain part of the key) is never passed on, and anything that looks like a key is removed from other messages.
@@ -103,5 +109,7 @@ Ask AI does not see charts. It cannot change notes, filters or data. Questions a
 | The question and its data were too large | Click **Clear chat** and ask a narrower question. |
 | … could not use that model | Pick another model in Settings. For OpenRouter, see the privacy setting under Setup. |
 | … declined to answer this one | Rephrase the question, or pick another model. |
+| …'s answer was cut off | Ask a narrower question. Free providers allow shorter answers, so a paid provider may help. |
+| This question needed too many lookups | Ask about one thing at a time (one customer, warehouse or week). |
 | Your sign-in to this site has expired | Reload the page and sign in again. |
 | Load a KPI export first | Ask AI only answers from loaded data. |

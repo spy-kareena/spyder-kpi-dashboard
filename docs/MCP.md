@@ -6,7 +6,7 @@ The dashboard has the same steps on its **Connect an AI** page (sidebar, under *
 
 ## Option 1: Ask AI in this dashboard (Claude, ChatGPT, Groq or OpenRouter)
 
-There is nothing to install. On the hosted site, click **Ask AI** at the top of any page, pick a provider in **Settings** and tick its consent box. The site keeps the AI keys on its server, so nobody needs a key of their own. Claude and ChatGPT are paid and do not train on what you send; Groq and OpenRouter's free models cost nothing but may keep what you send. Your question and the numbers needed to answer it go from the site to the provider you picked. A copy opened as a file cannot use Ask AI; use Options 2 to 4. See [AI_ASSISTANT.md](AI_ASSISTANT.md).
+There is nothing to install. On the hosted site, click **Ask AI** at the top of any page, pick a provider in **Settings** and tick its consent box. The site keeps the AI keys on its server, so nobody needs a key of their own. Claude and ChatGPT are paid and do not train on what you send; Groq and OpenRouter's free models cost nothing but may keep what you send. Your question and the numbers needed to answer it go from the site to the provider you picked. A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4. See [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
 ## Option 2: Claude Desktop
 

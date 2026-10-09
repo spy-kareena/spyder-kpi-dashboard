@@ -250,6 +250,17 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
   await file.run('aiPrepare()');
   assert.equal(fetched, 0, 'a file copy does not call the network');
   assert.equal(file.els['ai-setup'].hidden, false);
+
+  // A shared snapshot never asks the site it is opened from, even over https.
+  const snap = await loaded({ storage: consent('anthropic') });
+  const snapCalls = site(snap);
+  snap.run('isSnapshotView=true');
+  snap.run('aiToggle(true)');
+  await snap.run('aiPrepare()');
+  await snap.run("aiSend('hello')");
+  assert.equal(snapCalls.length, 0, 'a snapshot sends nothing anywhere');
+  assert.equal(snap.els['ai-setup'].hidden, false);
+  assert.match(snap.els['ai-setup-why'].textContent, /shared snapshot/);
   // The markup lists every secret with plain instructions and a link to the guide.
   for (const s of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY']) assert.match(HTML, new RegExp(`<li><code>${s}</code>`));
   assert.match(HTML, /id="ai-setup"[\s\S]*?href="docs\/AI_ASSISTANT\.md"/);
@@ -454,6 +465,7 @@ test('a newly loaded export starts a new chat', async () => {
 test('no data loaded: Ask AI says so and sends nothing', async () => {
   const empty = loadPage({ storage: consent('anthropic') });
   await tick(); // the stub DOM's empty embedded snapshot finishes "loading" (a load clears the chat)
+  empty.run('isSnapshotView=false'); // a real page only has embedded snapshot data when it is a snapshot file
   const calls = site(empty);
   await empty.run("aiSend('hello')");
   assert.equal(chats(calls).length, 0);

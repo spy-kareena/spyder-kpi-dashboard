@@ -4007,7 +4007,7 @@ function aiSyncData(){if(aiState.rows!==allLoadedRows){aiStop();aiState.rows=all
 function aiStorage(kind){try{return kind==='session'?sessionStorage:localStorage;}catch(err){return null;}}
 function aiGet(key,kind){try{return aiStorage(kind).getItem(key)||'';}catch(err){return '';}}
 function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(key,value);else s.removeItem(key);return true;}catch(err){return false;}}
-// Version 1v4-1v8 kept a personal Gemini key and a Google consent in the browser; neither is used any more.
+// Versions 1v2-1v8 kept a personal Gemini key and a Google consent in the browser; neither is used any more.
 ['spyderKpiGeminiKeyV1','spyderKpiAiConsentV1','spyderKpiAiModelV1'].forEach(k=>{aiSet(k,'');aiSet(k,'','session');});
 function aiReadJson(key){try{const v=JSON.parse(aiGet(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}}
 // Consent is kept per provider ({anthropic:'2026-10-09', ...}): agreeing to Claude's terms does not allow Groq.
@@ -4015,7 +4015,8 @@ const aiConsented=id=>!!(id&&aiReadJson(AI_CONSENT_STORE)[id]);
 function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
 
 // --- Providers and models (from GET /api/ai/status) ---
-const aiHosted=()=>/^https?:$/.test(String(location.protocol||''));
+// A shared snapshot never asks a site for AI: wherever the file is opened from, that site does not hold the keys.
+const aiHosted=()=>!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));
 function aiProviders(){return ((aiState.status&&aiState.status.providers)||[]).filter(p=>p&&AI_PROVIDER_INFO[p.id]).map(p=>({...AI_PROVIDER_INFO[p.id],...p,models:Array.isArray(p.models)?p.models.filter(m=>typeof m==='string'):[]}));}
 const aiConfigured=()=>aiProviders().filter(p=>p.configured&&p.models.length);
 const aiCurrent=()=>aiConfigured().find(p=>p.id===aiState.provider)||null;
@@ -4187,7 +4188,7 @@ function aiSyncSettings(){
   aiEl('ai-mode').textContent=aiState.statusError?'Needs attention':!aiState.status?'':p?`${p.short} · ${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}`:'Not set up';
   aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiState.model}) and can be wrong. Check key numbers on the page.`:'Answers can be wrong. Check key numbers on the page.';
   aiEl('ai-setup-why').textContent=aiState.status&&!aiState.status.hosted
-    ?'Ask AI needs the hosted dashboard: this copy is opened as a file, or from a site without the AI service, so there is no server to hold the AI keys.'
+    ?'Ask AI needs the hosted dashboard: this is a shared snapshot, a copy opened as a file, or a site without the AI service, so there is no server to hold the AI keys.'
     :'None of the four AI providers has a key set up on this site yet.';
 }
 
@@ -4448,7 +4449,7 @@ function renderConnectPage(){
       <li><strong>Paid:</strong> Claude (Anthropic) and ChatGPT (OpenAI). Billed to the company's account, usually from under a cent to about 20 cents per question depending on the model; they do not train on what you send.</li>
       <li><strong>Free:</strong> Groq and OpenRouter's free models. Tight limits per minute and per day, and free services may keep or publish what you send, so use them only for data you may share.</li>
     </ul>
-    <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
+    <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
     <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel on the right. Nothing is sent until you tick the consent box for a provider." onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, setup, costs and data terms.">Ask AI guide</a></div>`)}
   ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
       ${step(1,'Install Node.js 18 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.')}
