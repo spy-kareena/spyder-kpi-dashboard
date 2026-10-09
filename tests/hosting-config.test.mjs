@@ -57,6 +57,16 @@ test('docs name Node.js 20 or newer for the MCP connector and tests, never Node 
   }
 });
 
+test('README, IT hosting notes and the owner checklist name every secret, the KV binding and the Worker cron', () => {
+  const secrets = ['DASHBOARD_PASSWORD', 'SESSION_SECRET', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'FEDEX_CLIENT_ID', 'FEDEX_CLIENT_SECRET'];
+  for (const file of ['README.md', 'docs/IT_HOSTING_README.md', 'docs/OWNER_CHECKLIST.md']) {
+    const text = read(file);
+    for (const name of [...secrets, 'REPORT_STORE']) assert.ok(text.includes(name), `${file} names ${name}`);
+  }
+  assert.match(read('docs/IT_HOSTING_README.md'), /crons = \["0 \*\/4 \* \* \*"\]/);
+  assert.match(read('README.md'), /\(docs\/OWNER_CHECKLIST\.md\)/);
+});
+
 let failed = 0;
 for (const t of tests) {
   try { await t.fn(); console.log(`ok   ${t.name}`); }

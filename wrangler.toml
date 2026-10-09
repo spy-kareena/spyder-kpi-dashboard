@@ -10,7 +10,7 @@ compatibility_date = "2026-10-01"
 
 # Shared storage for the last report, shared notes / causes / typed-in tracking numbers, the at-risk
 # history and live FedEx statuses (keys: report, overrides, history, tracking:*).
-# One-time setup (see docs/IT_HOSTING_README.md):
+# One-time setup (see docs/OWNER_CHECKLIST.md, step 3, and docs/IT_HOSTING_README.md):
 #   1. npx wrangler kv namespace create spyder-kpi-report
 #   2. Paste the id it prints below in place of REPLACE_WITH_REPORT_STORE_NAMESPACE_ID and remove the "# " in
 #      front of the three lines. Put the same id in workers/shipping-poller/wrangler.toml.

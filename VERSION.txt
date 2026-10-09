@@ -66,4 +66,6 @@ lines, ETA against the promised date, cross-border section (clearance delay, day
 by tracking number. FedEx Track API code in shared/fedex.mjs, used by functions/api/shipping.js (results, tracking list,
 Refresh now) and the scheduled Worker workers/shipping-poller (every 4 hours). See docs/SHIPPING.md.
 Also in 2v1: the built-in spreadsheet reader is updated from SheetJS 0.18.5 to SheetJS Community Edition 0.20.3
-(same .xls / .csv / .xlsx / Clear To Build support).
+(same .xls / .csv / .xlsx / Clear To Build support). wrangler.toml (Pages) and the poller's wrangler.toml share one
+REPORT_STORE placeholder and compatibility date; web.config maps .jpg / .png / .svg; the MCP connector, tests and
+wrangler need Node.js 20 or newer. Owner deploy steps: docs/OWNER_CHECKLIST.md.

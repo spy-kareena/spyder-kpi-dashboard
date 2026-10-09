@@ -1,5 +1,7 @@
 # Spyder KPI Dashboard — next version plan
 
+> **Status (2026-10-09): built.** Steps 1–8 (waves 1 and 2) are in version 2v1 (see `VERSION.txt`, entries 1v6 to 2v1); all tests pass with `node tests/run-all.js`. What is left needs the owner: [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md) (Cloudflare deploy, KV id, secrets, FedEx Worker, SQL re-run, real-data checks). Line numbers and file names below are from when the plan was written (for example `functions/api/gemini/` has since been removed).
+
 ## Context
 Owner wants the dashboard to keep its uploaded SAP report, get a matching login screen, roomier shadcn-style UI, a rebuilt Ask AI (Claude, ChatGPT, Groq, OpenRouter with shared server keys), Order Health split into Leading/Lagging tabs with Us/Them cause, reasons, "when flagged", $20k waffle offenders, CM SFG split in the Warehouse scorecard, Sankey "big picture" toggles, and a live FedEx (parcel + Freight LTL) shipping page with cross-border tracking. Decisions from Q&A:
 - **No TypeScript/React rewrite.** Stay with the single `index.html` (vanilla JS, inline CSS, bundled SheetJS). Update what exists (SheetJS, wrangler config, docs). shadcn **look** rebuilt in plain CSS.

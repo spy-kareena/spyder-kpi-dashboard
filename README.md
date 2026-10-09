@@ -11,14 +11,27 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 3. Choose a page in the sidebar. Click a KPI card to list the lines behind it. Use **Add note** on a line to set an override, mark the cause (**Us** or **Them**) or write a note.
 4. Not sure what a number means? Rest the pointer on any card, tile, chart bar, column heading, filter or button (or Tab to it, or press and hold on a phone) for a short plain-English explanation with the numbers in full. The **ⓘ** next to a section title explains what the section shows, which SAP fields feed it and what clicking does; the same texts are under **About these numbers** at the bottom of each page. Short first-visit hints can be closed with ×; **Show hints again** (sidebar, Help) brings them back.
 
-| Group | Pages |
-|---|---|
-| Sales | Order Health, Monthly, Warehouse Timeline, Metrics Timeline, Shipping |
-| Supply | Purchase Orders, Supply / Demand, Supply Mix, Build Risk |
+| Page | Sidebar group | What it shows |
+|---|---|---|
+| Order Health | Sales | Sales orders at risk this week, what is due next and how on-time delivery has gone, on two tabs (**Leading** and **Lagging**, below), with Us / Them causes, the top at-risk reasons, **When flagged**, the warehouse scorecard, top offenders, linked lines and **Big picture** |
+| Monthly | Sales | Shipped and open sales-order value by month, year over year, and a ship target scenario |
+| Warehouse Timeline | Sales | Open value, late lines and on-track rate by warehouse and due month |
+| Metrics Timeline | Sales | Order quality rates (on-track, perfect order, backorder, partial ship) and risk by due month |
+| Shipping | Sales | Live FedEx tracking (parcel and FedEx Freight LTL) for recent deliveries: where each shipment is, what is late, what is held at customs |
+| Purchase Orders | Supply | Late, unconfirmed and no-commit PO lines, receiving performance and late value by vendor |
+| Supply / Demand | Supply | Open sales-order demand against open PO supply by warehouse and month: shortages and risky supply (needs the supply / demand snapshot) |
+| Supply Mix | Supply | Net quantity by month, demand by warehouse, risk by item group, and **Big picture** (needs the supply / demand snapshot) |
+| Build Risk | Supply | The Clear To Build report matched to open sales orders by CM and month, and **Big picture** (needs the Clear To Build workbook) |
+| Connect an AI | Help | How to ask an AI about the export: **Ask AI** on the site, or Claude Desktop / Claude Code through the MCP connector |
 
 KPIs are calculated as of the export's `ExportDate`, so an older file or a shared snapshot keeps the numbers it had on that day. Rows the export could not fully use (for example a due date typed as year 0202) are listed under the amber **Data check** pill next to the page title.
 
-The last loaded files reopen on the next visit until a new export is loaded in their place: on Cloudflare Pages with the `REPORT_STORE` KV binding they are kept on the server for everyone who signs in (`functions/api/report.js`, setup in [docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md)); on other hosts they are kept in that browser. Notes, override statuses, Us / Them causes and deleted lines are shared the same way: on the hosted site everyone who signs in sees the same ones (`functions/api/notes.js`, merged line by line, the newest edit wins; the sidebar says "Notes shared · last edit KK Oct 8"), and each edit carries the editor's initials, asked once per browser. On other hosts, or when the server cannot be reached, they stay in that browser. **Share snapshot** saves a self-contained `.html` copy of the loaded data (compressed, about 2 MB for a year of SO/PO lines) with the notes for those rows. **Export PDF** prints the page that is open.
+What is kept, and for whom:
+
+- **Shared report:** the last loaded files reopen on the next visit until a new export is loaded in their place. On Cloudflare Pages with the `REPORT_STORE` KV binding they are kept on the server for everyone who signs in (`functions/api/report.js`; the sidebar says "Saved for everyone who signs in"). On other hosts they are kept in that browser.
+- **Shared notes:** notes, override statuses, Us / Them causes, deleted lines and tracking numbers typed in on the Shipping page are shared the same way: on the hosted site everyone who signs in sees the same ones (`functions/api/notes.js`, merged line by line, the newest edit wins; the sidebar says "Notes shared · last edit KK Oct 8"), and each edit carries the editor's initials, asked once per browser. On other hosts, or when the server cannot be reached, they stay in that browser and are sent the next time the page opens.
+- **At-risk history:** each upload on the hosted site records which lines were on the At Risk card (`functions/api/history.js`, the last 52 export dates), which drives **When flagged** on Order Health.
+- **Share snapshot** saves a self-contained `.html` copy of the loaded data (compressed, about 2 MB for a year of SO/PO lines) with the notes for those rows. **Export PDF** prints the page that is open.
 
 Supply / Demand and Supply Mix need `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`. Build Risk needs the Clear To Build report as Excel or CSV. Until those files are added, those pages explain what to load.
 
@@ -34,16 +47,25 @@ Supply / Demand and Supply Mix need `queries/sap_b1_hana_supply_demand_snapshot_
 
 ## Hosting
 
-Cloudflare Pages serves the site. Sign-in is the Pages Function in `functions/_middleware.js`. Production needs two secrets, set in the Cloudflare project and not in this repo:
+Cloudflare Pages serves the site (project `spyder-kpi-dashboard`, deployed from GitHub `spy-kareena/spyder-kpi-dashboard`, branch `main`). Sign-in is the Pages Function in `functions/_middleware.js`. **First deploy or new Cloudflare account: follow [docs/OWNER_CHECKLIST.md](docs/OWNER_CHECKLIST.md)** (KV namespace, secrets, FedEx Worker, checks after deploy).
 
-- `DASHBOARD_PASSWORD` — the shared sign-in password
-- `SESSION_SECRET` — 32 or more random characters that sign the session cookie
-- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY` (each optional) — AI keys for Ask AI (Claude, ChatGPT, Groq, OpenRouter free models), shared by everyone who signs in (`functions/api/ai/`). Set at least one to turn Ask AI on; see [docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md)
-- `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` (optional) — FedEx Track API keys for the Shipping page's **Refresh now**; the 4-hourly checks run in the separate Worker `workers/shipping-poller`, which has its own copy of these secrets ([docs/SHIPPING.md](docs/SHIPPING.md))
+Secrets are set in Cloudflare (`npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`, or `npx wrangler secret put <NAME>` for the Worker), never in this repo:
 
-One Workers KV namespace bound as `REPORT_STORE` holds what everyone shares: the last report (`report`), notes / overrides / causes and typed-in tracking numbers (`overrides`), and which lines were at risk in each of the last 52 uploads (`history`, used for "first flagged"). Setup and what is stored: [docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md).
+| Secret | Where | Needed? | What it is for |
+|---|---|---|---|
+| `DASHBOARD_PASSWORD` | Pages | Required | The shared sign-in password |
+| `SESSION_SECRET` | Pages | Required | 32 or more random characters that sign the session cookie |
+| `ANTHROPIC_API_KEY` | Pages | Optional | Ask AI with Claude (paid) |
+| `OPENAI_API_KEY` | Pages | Optional | Ask AI with ChatGPT (paid) |
+| `GROQ_API_KEY` | Pages | Optional | Ask AI with Groq (free) |
+| `OPENROUTER_API_KEY` | Pages | Optional | Ask AI with OpenRouter's free models (free) |
+| `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` | Worker `workers/shipping-poller` (and Pages for **Refresh now**) | Optional | FedEx Track API keys for the Shipping page |
 
-Without the first two, every page returns a "not configured" error. Changing either of those two signs everyone out. Open `/logout` to clear the sign-in cookie. The sign-in page shows the logo from `assets/spyder-logo.jpg`; files directly in `assets/` are the only ones served before signing in (they hold nothing private).
+Set at least one AI key to turn Ask AI on ([docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md)); the AI keys are shared by everyone who signs in (`functions/api/ai/`). The FedEx checks every 4 hours run in the separate Worker, which has its own copy of the FedEx keys ([docs/SHIPPING.md](docs/SHIPPING.md)). Keep `DASHBOARD_PASSWORD` and `SESSION_SECRET` as encrypted secrets: because the repo has a `wrangler.toml`, plain-text variables typed into the Cloudflare dashboard are replaced on each deploy.
+
+One Workers KV namespace bound as `REPORT_STORE` holds what everyone shares: the last report (`report`), notes / overrides / causes and typed-in tracking numbers (`overrides`), which lines were at risk in each of the last 52 uploads (`history`, used for "first flagged"), and the FedEx results (`tracking:*`). The binding is in `wrangler.toml` (commented out until the namespace id is pasted in; the Worker's `workers/shipping-poller/wrangler.toml` needs the same id). Setup and what is stored: [docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md).
+
+Without the two required secrets, every page returns a "not configured" error. Changing either of them signs everyone out. Open `/logout` to clear the sign-in cookie. The sign-in page shows the logo from `assets/spyder-logo.jpg`; files directly in `assets/` are the only ones served before signing in (they hold nothing private).
 
 For IIS or another static host, serve `index.html` as the default document. That path does not use the Cloudflare login gate. See `docs/IT_HOSTING_README.md`.
 
@@ -65,4 +87,4 @@ No build step or dependencies. With Node.js 20 or newer:
 node tests/run-all.js
 ```
 
-That runs every `tests/*.test.js` and `*.test.mjs` file. They load the page's own scripts (`tests/harness.js`), the Cloudflare functions, the shipping poller Worker, and the MCP server over stdio, all against synthetic SAP-style exports and stand-ins for Workers KV and FedEx (no real data, no network).
+That runs every `tests/*.test.js` and `*.test.mjs` file. They load the page's own scripts (`tests/harness.js`), the Cloudflare functions, the shipping poller Worker, and the MCP server over stdio, all against synthetic SAP-style exports and stand-ins for Workers KV and FedEx (no real data, no network), and check that the hosting files (`wrangler.toml`, the Worker's `wrangler.toml`, `web.config`) agree.

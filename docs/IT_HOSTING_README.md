@@ -1,10 +1,13 @@
-# Spyder KPI Dashboard 1v2 - IT Hosting Notes
+# Spyder KPI Dashboard 2v1 - IT Hosting Notes
 
 ## What this is
 
-This package is a static browser dashboard for SAP B1 KPI exports.
+This package is a browser dashboard for SAP B1 KPI exports. The user opens the page, uploads Excel/CSV exports, and the dashboard processes the files in the browser.
 
-It does not need a database, application server, Node, Python, or internet access. The user opens the page, uploads Excel/CSV exports, and the dashboard processes the files in the browser.
+There are two ways to host it:
+
+- **Cloudflare Pages (the live site, https://spyder-kpi-dashboard.pages.dev):** adds a sign-in page, one shared report and shared notes for everyone who signs in, the at-risk history, Ask AI and live FedEx tracking. These use the Pages Functions in `functions/`, one Workers KV namespace and a small scheduled Worker. Settings are listed under "Cloudflare settings at a glance" below; the owner's step-by-step list is [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md).
+- **IIS or any other static web server:** serve the folder as it is. It needs no database, application server, Node, Python or internet access. Reports and notes stay in each browser, and Ask AI and live FedEx status are not available.
 
 ## Files
 
@@ -13,6 +16,8 @@ It does not need a database, application server, Node, Python, or internet acces
 - `queries/` - SAP B1 HANA query templates used to generate Excel exports
 - `samples/` - example CSV for a local smoke test
 - `VERSION.txt` - package/version marker
+- `wrangler.toml` - Cloudflare Pages settings (project name, the `REPORT_STORE` KV binding); secrets are not kept in it
+- `docs/` - guides: user quick start, this file, the owner checklist, Ask AI, MCP connector, Shipping
 - `functions/` - Cloudflare Pages Functions: the sign-in gate, shared storage (`functions/api/report.js` the last report, `functions/api/notes.js` notes / overrides / causes, `functions/api/history.js` at-risk history), live shipping (`functions/api/shipping.js`) and the Ask AI proxy for Claude, ChatGPT, Groq and OpenRouter (`functions/api/ai/`)
 - `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker
 - `workers/shipping-poller/` - optional Cloudflare Worker that checks FedEx every 4 hours for the Shipping page (its own `wrangler.toml` and README); see `docs/SHIPPING.md`
@@ -21,7 +26,9 @@ It does not need a database, application server, Node, Python, or internet acces
 
 ## Hosting
 
-Host this project folder as a static site. The default document is `index.html`.
+**Cloudflare Pages:** the Pages project `spyder-kpi-dashboard` builds from GitHub `spy-kareena/spyder-kpi-dashboard` (branch `main`, output folder `.`, no build command), or is deployed by hand with `npx wrangler pages deploy . --project-name spyder-kpi-dashboard`. First-time setup: [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md).
+
+**IIS or another static server:** host this project folder as a static site. The default document is `index.html`.
 
 For IIS:
 
@@ -46,9 +53,11 @@ The files of the last report are kept so the dashboard reopens on them; loading 
 
 ### Shared report storage (Cloudflare Pages)
 
-1. Cloudflare dashboard > Storage & Databases > Workers KV > **Create namespace**, name it `spyder-kpi-report` (or run `npx wrangler kv namespace create spyder-kpi-report`).
-2. Workers & Pages > **spyder-kpi-dashboard** > Settings > Bindings > **Add** > KV namespace: variable name `REPORT_STORE`, namespace `spyder-kpi-report`. Add it for Production (and Preview if previews should share it).
-3. Redeploy (Deployments > latest > Retry deployment) so the binding takes effect. The sidebar then says "Saved for everyone who signs in" after an upload.
+The binding lives in the repo's `wrangler.toml`, which Cloudflare Pages reads on every deploy. Once that file is in use, bindings are no longer edited in the Cloudflare dashboard.
+
+1. Create the namespace once: `npx wrangler kv namespace create spyder-kpi-report` (or Cloudflare dashboard > Storage & Databases > Workers KV > **Create namespace**). If it already exists from an earlier version, keep it: `npx wrangler kv namespace list` shows its id.
+2. In `wrangler.toml`, put the id in place of `REPLACE_WITH_REPORT_STORE_NAMESPACE_ID` and remove the `# ` in front of the three lines that start with `[[kv_namespaces]]`. Put the same id in `workers/shipping-poller/wrangler.toml`.
+3. Commit and push to `main` (Pages builds from GitHub), or deploy by hand with `npx wrangler pages deploy . --project-name spyder-kpi-dashboard`. The sidebar then says "Saved for everyone who signs in" after an upload.
 
 `/api/report`, `/api/notes` and `/api/history` sit behind the same sign-in as the page; only a signed-in page on the same site can change what is stored (requests from another site are refused). The same binding turns on shared notes and the at-risk history; nothing else needs setting up.
 
@@ -63,7 +72,7 @@ Full steps: [SHIPPING.md](SHIPPING.md). In short:
 1. In `workers/shipping-poller/wrangler.toml`, set the `REPORT_STORE` namespace id (the same namespace as above).
 2. In that folder: `npx wrangler secret put FEDEX_CLIENT_ID`, `npx wrangler secret put FEDEX_CLIENT_SECRET`, then `npx wrangler deploy`.
 3. Optional, for the page's **Refresh now** button: `npx wrangler pages secret put FEDEX_CLIENT_ID --project-name spyder-kpi-dashboard` and the same for `FEDEX_CLIENT_SECRET`, then redeploy.
-4. Sandbox (test) keys only: set `FEDEX_API_BASE` to `https://apis-sandbox.fedex.com` (Worker `[vars]` and/or Pages environment variable).
+4. Sandbox (test) keys only: set `FEDEX_API_BASE` to `https://apis-sandbox.fedex.com`: uncomment the `[vars]` lines in the Worker's `wrangler.toml`, and for the Pages project run `npx wrangler pages secret put FEDEX_API_BASE --project-name spyder-kpi-dashboard` (a plain dashboard variable would be replaced by `wrangler.toml` on the next deploy).
 
 KV keys used: `tracking:wanted` (the list the page sends), `tracking:index` (FedEx results), `tracking:token` (the FedEx
 sign-in, expires on its own) and `tracking:refresh` (the 10-minute Refresh limit). Only tracking numbers are sent to
@@ -71,6 +80,23 @@ FedEx. On IIS or another static host the Shipping page lists the tracking number
 
 The SAP KPI query must be re-run once with the updated `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`
 so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipDate` on delivery rows.
+
+### Cloudflare settings at a glance
+
+| Setting | Where it is set | Needed? | What it does |
+|---|---|---|---|
+| `DASHBOARD_PASSWORD` | Pages secret | Required | The shared sign-in password |
+| `SESSION_SECRET` | Pages secret | Required | 32+ random characters that sign the session cookie; changing it signs everyone out |
+| `ANTHROPIC_API_KEY` | Pages secret | Optional | Ask AI with Claude (paid) |
+| `OPENAI_API_KEY` | Pages secret | Optional | Ask AI with ChatGPT (paid) |
+| `GROQ_API_KEY` | Pages secret | Optional | Ask AI with Groq (free tier) |
+| `OPENROUTER_API_KEY` | Pages secret | Optional | Ask AI with OpenRouter's free models |
+| `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` | Worker secrets in `workers/shipping-poller`; also Pages secrets for **Refresh now** | Optional | FedEx Track API keys for the Shipping page |
+| `FEDEX_API_BASE` | Worker `[vars]` / Pages secret | Only with FedEx sandbox keys | `https://apis-sandbox.fedex.com` |
+| `REPORT_STORE` | KV binding in `wrangler.toml` and `workers/shipping-poller/wrangler.toml` (same namespace, `spyder-kpi-report`) | Recommended | Shared report, notes, at-risk history and FedEx results (keys below) |
+| Worker cron | `workers/shipping-poller/wrangler.toml`: `crons = ["0 */4 * * *"]` | With live shipping | Checks FedEx every 4 hours (00:00, 04:00, ... 20:00 UTC) |
+
+Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard` (or Workers & Pages > **spyder-kpi-dashboard** > Settings > Variables and Secrets, type **Secret**), then redeploy. Worker secrets: `npx wrangler secret put <NAME>` in `workers/shipping-poller`. Because the repo has a `wrangler.toml`, plain-text variables typed into the Cloudflare dashboard are replaced on each deploy, so use the **Secret** type for everything above.
 
 ### What is stored in the KV namespace
 

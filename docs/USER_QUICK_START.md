@@ -1,4 +1,4 @@
-# Spyder KPI Dashboard 1v2 - User Quick Start
+# Spyder KPI Dashboard 2v1 - User Quick Start
 
 1. Open the dashboard link from IT.
 2. Run the SAP KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`).

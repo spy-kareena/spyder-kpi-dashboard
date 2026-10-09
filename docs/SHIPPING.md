@@ -37,8 +37,8 @@ Every number, card, button and column has a tooltip in plain English.
 
    **Re-run the updated query in SAP** and load the new export to bring them in. Older exports still load; the page
    then says the column is missing and you can add numbers by hand.
-2. **Add tracking #** on the page. These are shared with everyone who signs in once shared notes are set up (version
-   1v7); before that they are kept in the browser that added them.
+2. **Add tracking #** on the page. On the hosted site these are shared with everyone who signs in (they are saved with
+   the shared notes); on a site without shared storage they are kept in the browser that added them.
 
 Which shipments are tracked:
 
@@ -73,7 +73,7 @@ the export without live status, and says so. A snapshot keeps the statuses that 
 ## One-time setup (owner / IT)
 
 You need: the Cloudflare account that hosts the dashboard (with the `REPORT_STORE` KV namespace already set up for the
-shared report, see [IT_HOSTING_README.md](IT_HOSTING_README.md)), the FedEx account you ship with, and Node.js 20 or newer
+shared report, see [IT_HOSTING_README.md](IT_HOSTING_README.md) and [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md)), the FedEx account you ship with, and Node.js 20 or newer
 for the `npx wrangler` commands.
 
 ### 1. Re-run the SAP query
@@ -127,8 +127,10 @@ up, and everything else works.
 ### Testing with FedEx sandbox keys
 
 Set `FEDEX_API_BASE` to `https://apis-sandbox.fedex.com` where the test keys are used: uncomment the `[vars]` lines in
-`workers/shipping-poller/wrangler.toml` (then `npx wrangler deploy`), and/or add it as a Pages environment variable.
-Remove it when you switch to production keys, so the default `https://apis.fedex.com` is used.
+`workers/shipping-poller/wrangler.toml` (then `npx wrangler deploy`), and/or for the Pages project run
+`npx wrangler pages secret put FEDEX_API_BASE --project-name spyder-kpi-dashboard` (a secret works here; a plain
+variable typed into the Cloudflare dashboard is replaced by the repo's `wrangler.toml` on the next deploy). Remove it
+when you switch to production keys, so the default `https://apis.fedex.com` is used.
 
 ## Checking that it works
 
@@ -155,7 +157,7 @@ Remove it when you switch to production keys, so the default `https://apis.fedex
 |---|---|
 | "This export has no TrackingNumber column" | Re-run the updated SAP query (step 1) and load the new export. |
 | "Live FedEx tracking needs the hosted dashboard" | The page was opened from a file or a server without the Cloudflare functions. Use https://spyder-kpi-dashboard.pages.dev. |
-| "This site has no shared storage (REPORT_STORE)" | Bind the KV namespace to the Pages project (IT_HOSTING_README.md). |
+| "This site has no shared storage (REPORT_STORE)" | Put the KV namespace id in the repo's `wrangler.toml`, uncomment the binding and redeploy (IT_HOSTING_README.md, OWNER_CHECKLIST.md). |
 | "Not checked yet" for hours | The Worker is not deployed, has no keys, or has the wrong KV id. Check its Logs. |
 | "The last FedEx check … failed: FedEx refused the API key…" | Wrong keys, test keys used against production (or the reverse), or the project lacks the Track API. Fix the secrets (step 3) and wait for the next check. |
 | A row says "Not found at FedEx" | FedEx does not know that number yet (label not scanned) or it has a typo. Check it on fedex.com. |
