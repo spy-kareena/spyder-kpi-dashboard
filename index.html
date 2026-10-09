@@ -6592,18 +6592,18 @@ function openEditorDialog(){
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
       <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save your initials in this browser. They are saved with every note, override and cause you change.">Save</button>
-      <button type="submit" value="skip" class="btn btn-sm" data-tip="Edit without initials. Your edits are shared without a name; add initials later from the sidebar.">Not now</button>
+      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without initials. Your edits are shared without a name; add initials later from the sidebar.">Not now</button>
     </div>
   </form>`;
   const form=d.querySelector('form'),input=d.querySelector('#editor-initials'),error=d.querySelector('#editor-error');
+  // Save (or Enter in the box) checks the initials; Not now and Esc close without them.
   form.addEventListener('submit',e=>{
-    if(e.submitter&&e.submitter.value!=='save')return;
     const v=normalizeInitials(input.value);
     if(!v){e.preventDefault();error.textContent='Type 1 to 4 letters or numbers, for example KK.';input.focus();return;}
     input.value=v;
-    // Enter in the box submits without a submitter; close with the Save result.
-    if(!e.submitter){e.preventDefault();d.close('save');}
+    if(!e.submitter||e.submitter.value!=='save'){e.preventDefault();d.close('save');}
   });
+  d.querySelector('[data-editor-skip]').addEventListener('click',()=>d.close('skip'));
   d.addEventListener('close',()=>{
     finishEditorDialog(d.returnValue==='save'?normalizeInitials(input.value):'');
     d.remove();

@@ -92,9 +92,11 @@ async function addHistoryWeek(store, { asOf, keys }, savedAt) {
   weeks.push({ asOf, savedAt, keys });
   weeks.sort((a, b) => (a.asOf < b.asOf ? -1 : a.asOf > b.asOf ? 1 : 0));
   while (weeks.length > HISTORY_WEEKS) weeks.shift();
-  const size = () => new TextEncoder().encode(JSON.stringify({ v: 1, weeks })).length;
-  while (weeks.length > 1 && size() > MAX_HISTORY_BYTES) weeks.shift();
-  await store.put(HISTORY_KEY, JSON.stringify({ v: 1, weeks }));
+  // UTF-8 needs at most 3 bytes per UTF-16 unit, so a short history is measured without encoding it.
+  const tooBig = (text) => text.length * 3 > MAX_HISTORY_BYTES && new TextEncoder().encode(text).length > MAX_HISTORY_BYTES;
+  let text = JSON.stringify({ v: 1, weeks });
+  while (weeks.length > 1 && tooBig(text)) { weeks.shift(); text = JSON.stringify({ v: 1, weeks }); }
+  await store.put(HISTORY_KEY, text);
   return weeks.length;
 }
 

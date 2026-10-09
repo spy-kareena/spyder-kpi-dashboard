@@ -53,7 +53,7 @@ export async function onRequest(context) {
   for (const kind of ['rows', 'shipments']) {
     for (const [key, entry] of incoming[kind]) {
       if (entry.at > now + FUTURE_SLACK_MS) entry.at = now; // a computer clock set ahead cannot win every merge
-      const current = doc[kind][key];
+      const current = Object.prototype.hasOwnProperty.call(doc[kind], key) ? doc[kind][key] : null;
       if (!current || entry.at > time(current.at)) { doc[kind][key] = { ...entry, at: new Date(entry.at).toISOString() }; applied++; }
       out[kind][key] = doc[kind][key];
     }
@@ -61,9 +61,10 @@ export async function onRequest(context) {
   const savedAt = new Date(now).toISOString();
   if (applied) {
     doc.savedAt = savedAt;
-    if (!fits(doc)) prune(doc, now);
-    if (!fits(doc)) return json(413, { error: 'Shared notes storage is full (5 MB). Ask IT to clear old notes.' });
-    await store.put(KEY, JSON.stringify(doc));
+    let stored = JSON.stringify(doc);
+    if (!fits(stored)) { prune(doc, now); stored = JSON.stringify(doc); }
+    if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (5 MB). Ask IT to clear old notes.' });
+    await store.put(KEY, stored);
   }
   return json(200, { savedAt: applied ? savedAt : doc.savedAt || '', applied, ...out });
 }
@@ -157,8 +158,9 @@ function prune(doc, now) {
   for (const [k, e] of Object.entries(doc.rows)) if (isCleared(e) && now - time(e.at) > PRUNE_AFTER_MS) delete doc.rows[k];
 }
 
-function fits(doc) {
-  return new TextEncoder().encode(JSON.stringify(doc)).length <= MAX_DOC;
+// UTF-8 needs at most 3 bytes per UTF-16 unit, so short documents are measured without encoding them.
+function fits(text) {
+  return text.length * 3 <= MAX_DOC || new TextEncoder().encode(text).length <= MAX_DOC;
 }
 
 function tooLarge() {

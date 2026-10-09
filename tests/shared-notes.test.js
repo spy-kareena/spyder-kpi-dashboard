@@ -424,15 +424,18 @@ function fakeDialog() {
   const input = field('editor-initials');
   const error = field('editor-error');
   const form = { addEventListener: (t, fn) => { listeners[`form:${t}`] = fn; } };
+  const skip = { addEventListener: (t, fn) => { listeners[`skip:${t}`] = fn; } };
   const d = {
     opened: 0, removed: false, returnValue: '', innerHTML: '', attrs: {},
     setAttribute(k, v) { this.attrs[k] = v; },
-    querySelector: (s) => ({ form, '#editor-initials': input, '#editor-error': error }[s]),
+    querySelector: (s) => ({ form, '#editor-initials': input, '#editor-error': error, '[data-editor-skip]': skip }[s]),
     addEventListener: (t, fn) => { listeners[t] = fn; },
     showModal() { this.opened++; input.value = /value="([^"]*)"/.exec(this.innerHTML.match(/<input[^>]*>/)[0])[1]; },
     close(v) { if (v !== undefined) this.returnValue = v; listeners.close(); },
     remove() { this.removed = true; },
+    // Save: the form submits with the Save button; a submit that is not prevented closes with its value.
     submit(value) { let prevented = false; listeners['form:submit']({ submitter: { value }, preventDefault() { prevented = true; } }); if (!prevented) this.close(value); return prevented; },
+    skip() { listeners['skip:click'](); },
     input, error,
   };
   return d;
@@ -455,7 +458,7 @@ test('editor initials are asked once, in a dialog, and stamped on the edits', as
   assert.match(d.innerHTML, /<h2 id="editor-dialog-title">Your initials<\/h2>/);
   assert.match(d.innerHTML, /<label for="editor-initials">/);
   assert.match(d.innerHTML, /aria-describedby="editor-error"/);
-  assert.equal((d.innerHTML.match(/<button type="submit"[^>]*data-tip="[^"]+"/g) || []).length, 2, 'Save and Not now carry tips');
+  assert.equal((d.innerHTML.match(/<button type="(submit|button)"[^>]*data-tip="[^"]+"/g) || []).length, 2, 'Save and Not now carry tips');
   // Nothing is sent while the question is open, so the edit goes out with the initials.
   await page.run('flushSharedNotes({all:true})');
   assert.equal(site.patches(), 0);
@@ -491,7 +494,7 @@ test('editor initials are asked once, in a dialog, and stamped on the edits', as
   other.run(`toggleRowNote(${JSON.stringify(k)})`);
   await tick(5);
   assert.equal(more.length, 1, 'opening a note editor asks before the first edit');
-  more[0].submit('skip');
+  more[0].skip();
   assert.equal(other.storage.spyderKpiEditor, '');
   edit(other, '902', 'notes', 'no initials');
   await tick(5);
