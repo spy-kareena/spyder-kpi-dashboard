@@ -428,7 +428,8 @@ const SEP24 = { name: '0924 - Orders at Risk', aoa: [HEAD, ['Price <i>x</i>', 'S
 function workbook(page, sheets) {
   return new Uint8Array(page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify(sheets)}){const ws=XLSX.utils.aoa_to_sheet(s.aoa);if(s.merges)ws['!merges']=s.merges.map(r=>XLSX.utils.decode_range(r));XLSX.utils.book_append_sheet(wb,ws,s.name);}return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`));
 }
-const stat = (h, label) => Number((h.match(new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
+// 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
+const stat = (h, label) => Number((h.match(label === 'CTB report rows' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report rows/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
 
 test('Build Risk: the flow matches the cards; clicking a CM narrows the page to it and the week picker still works', async () => {
   const page = loadPage();
@@ -444,7 +445,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   page.run("toggleSankey('buildrisk')");
   let h = html(page);
   const at = (s) => h.indexOf(s);
-  assert.ok(at('id="build-risk-snapshot"') > 0 && at('id="build-risk-snapshot"') < at('id="sankey-buildrisk"') && at('id="sankey-buildrisk"') < at('class="grid-5'), 'the card is above the KPI cards');
+  assert.ok(at('id="build-risk-snapshot"') > 0 && at('id="build-risk-snapshot"') < at('id="sankey-buildrisk"') && at('id="sankey-buildrisk"') < at('class="grid-4 pg-stats'), 'the card is above the KPI cards');
   assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-buildrisk-title">Big picture<\/h2><span class="sk-name">Orders in the Sep 30 report<\/span><span class="section-sub sk-sub">48 orders · 40 clear to build · 5 at risk · 3 late<\/span><\/div>/);
   const [f] = flows(page, 'buildrisk');
   const mid = Object.fromEntries(f.nodes.filter((n) => n.level === 1).map((n) => [n.label, n.value]));
@@ -480,7 +481,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   h = html(page);
   assert.match(h, /Showing CM <strong>DSM<\/strong> only/);
   assert.doesNotMatch(h, /sk-card/);
-  assert.ok(h.indexOf('class="sk-filter"') < h.indexOf('class="grid-5'));
+  assert.ok(h.indexOf('class="sk-filter"') < h.indexOf('class="grid-4 pg-stats'));
   page.run("setBuildRiskCm('')");
   assert.equal(page.run('buildRiskCmFilter'), '');
   assert.equal(stat(html(page), 'Clear to build'), 40);
@@ -511,7 +512,7 @@ test('Supply Mix: open demand value adds up, bands are coloured by coverage, a w
   const page = await supplyPage();
   // The card is the first thing under the page head, above the KPI cards.
   const top = html(page);
-  assert.ok(top.indexOf('id="sankey-supplydemand"') > top.indexOf('class="page-head') && top.indexOf('id="sankey-supplydemand"') < top.indexOf('class="grid-5'));
+  assert.ok(top.indexOf('id="sankey-supplydemand"') > top.indexOf('class="page-head') && top.indexOf('id="sankey-supplydemand"') < top.indexOf('class="grid-4 pg-stats'));
   assert.match(top, /<\/div>\n  <\/div>\n      <section class="card sk-card rise" id="sankey-supplydemand"/);
   let [f] = flows(page, 'supplydemand');
   assert.equal(f.total, page.run('currentMetrics().supplyDemand.demandValue'));
