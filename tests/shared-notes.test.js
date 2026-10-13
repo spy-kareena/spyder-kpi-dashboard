@@ -601,9 +601,16 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   assert.match(page.run(`renderNoteButton(allLoadedRows.find(r=>r.documentNumber==='900'))`), /has-note[\s\S]*Edit note/);
   assert.match(page.run(`renderPrintNoteRow(allLoadedRows.find(r=>r.documentNumber==='900'),5)`), /Cause: Us/);
 
-  // Build Risk's editable rows: a cause select under the override select; print shows the text instead.
-  const table = page.run("renderRowsTable(parsedRows,{key:'t',title:'T',editable:true})");
-  assert.match(table, /class="row-override"[\s\S]*?<select class="row-cause"[\s\S]*?<span class="print-only">Cause: Us<\/span>/);
+  // Build Risk's editable rows: the cause shows as a tag beside the override text; Edit opens the same note editor
+  // (override and cause selects), and print shows the text.
+  page.run('expandedNoteRows.clear()');
+  let table = page.run("renderRowsTable(parsedRows.filter(r=>r.documentNumber==='900'),{key:'t',title:'T',editable:true})");
+  assert.match(table, /<span class="cause-tag us">Us<\/span>/);
+  assert.doesNotMatch(table, /<select/);
+  page.run(`toggleRowNote(${JSON.stringify(k)})`);
+  table = page.run("renderRowsTable(parsedRows.filter(r=>r.documentNumber==='900'),{key:'t',title:'T',editable:true})");
+  assert.match(table, /<tr class="note-editor-row print-hide">[\s\S]*?<select class="row-override"[\s\S]*?<select class="row-cause"[\s\S]*?<option value="us" selected>Us<\/option>/);
+  page.run(`toggleRowNote(${JSON.stringify(k)})`);
   assert.match(HTML, /@media print\{\.editable-rows \.row-cause,\.editor-dialog\{display:none!important\}\}/);
 
   // Bulk bar: Set cause on every selected line; statuses and notes stay; Auto clears the cause.

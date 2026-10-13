@@ -235,13 +235,24 @@ test('Connect an AI opens before any export is loaded: two short options and a w
   assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same Claude Desktop config as the page');
 });
 
-test('Connect an AI keeps the usual actions when an export is loaded; Copy uses the clipboard or a fallback', async () => {
+test('Connect an AI with an export loaded: only Ask AI in the header (no Share snapshot, Export PDF or Data check); Copy uses the clipboard or a fallback', async () => {
   const page = await pageFor(ROWS_A);
   page.run("setTab('connect')");
   const html = page.els['results-screen'].innerHTML;
   assert.match(html, /answers use the export as of 2026-09-03/);
-  assert.match(html, /data-focus-key="ask-ai"[^>]*>(<svg[^]*?<\/svg>)?Ask AI</);
-  assert.match(html, />Share(?:<span class="btn-long">)? snapshot</);
+  const head = html.slice(0, html.indexOf('</div>\n  </div>'));
+  assert.match(head, /data-focus-key="ask-ai"[^>]*>(<svg[^]*?<\/svg>)?Ask AI</);
+  assert.doesNotMatch(head, /share-snapshot|export-pdf|data-check|Share snapshot|Export PDF/);
+  // The other pages keep them (Data check only when the export has rows to check).
+  page.run("setTab('weekly')");
+  const weekly = page.els['results-screen'].innerHTML;
+  assert.match(weekly, /data-focus-key="share-snapshot"[^>]*>[^]*?Share<span class="btn-long"> snapshot<\/span><\/button>/);
+  assert.match(weekly, /data-focus-key="export-pdf"[^>]*>[^]*?<span class="btn-long">Export&nbsp;<\/span>PDF<\/button>/);
+  page.run("dataQualityIssues=[{message:'test'}];setTab('connect')");
+  assert.doesNotMatch(page.els['results-screen'].innerHTML, /class="data-check/);
+  page.run("setTab('weekly')");
+  assert.match(page.els['results-screen'].innerHTML, /class="data-check/);
+  page.run("dataQualityIssues=[];setTab('connect')");
 
   let copied = '';
   page.ctx.navigator.clipboard = { writeText: async (t) => { copied = t; } };

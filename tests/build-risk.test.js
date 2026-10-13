@@ -128,13 +128,39 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
 });
 
-test('risk-bucket orders: the Override and Notes controls keep a readable width on screen', async () => {
-  const h = html(await loaded());
-  const table = h.slice(h.indexOf('Sales orders in risk buckets') - 200);
-  assert.match(table, /<section class="table editable-rows">[\s\S]*?style="min-width:1600px"/);
-  assert.match(table, /<td class="due-cell soft">Due in/);
-  // 140px fits the longest option ("Waiting on Production") with padding and arrow; print keeps its own sizing.
+test('risk-bucket orders: the override as text with its cause, one Edit button opens the note editor, an Amount column', async () => {
+  const page = await loaded();
+  const table = () => { const h = html(page); return h.slice(h.indexOf('Sales orders in risk buckets') - 200); };
+  let t = table();
+  assert.match(t, /<section class="table editable-rows">[\s\S]*?style="min-width:960px"/);
+  const heads = [...t.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+  assert.deepEqual(heads, ['Doc #', 'Customer / vendor', 'Effective due', 'Warehouse', 'Item', 'Qty open', 'Amount', 'Status', 'Override', '']);
+  // No dropdowns or note boxes in the rows: the override reads as text and the editor opens on Edit.
+  assert.doesNotMatch(t.split('</table>')[0], /<select|<textarea/);
+  let row = t.match(/<tr class="">\s*<td class="strong">71001<\/td>[\s\S]*?<\/tr>/)[0];
+  assert.match(row, /<td class="date due-cell soft">2026-09-15<span class="sub [a-z-]+">Due in [^<]+<\/span><\/td>/, 'due timing under the date');
+  assert.match(row, /<td class="num strong">\$1,000<\/td>/, 'the amount');
+  assert.match(row, /<td class="ovr-cell"><span class="ovr-line"><span class="muted">—<\/span><\/span><\/td>/);
+  assert.match(row, /<td class="c-edit print-hide"><button type="button" class="note-btn" data-key="[^"]+" onclick="toggleRowNote\(this\.dataset\.key\)" aria-expanded="false" aria-label="Edit override, cause and note for 71001" data-tip="[^"]+">Edit<\/button><\/td>/);
+  // Edit opens the shared editor row under the line (Override, Cause, Note, Done), as on Purchase Orders.
+  const key = JSON.stringify(page.run("rowKey(parsedRows.find(r=>r.documentNumber==='71001'))"));
+  page.run(`toggleRowNote(${key})`);
+  t = table();
+  assert.match(t, /aria-expanded="true"[^>]*>Edit<\/button><\/td>\s*<\/tr><tr class="note-editor-row print-hide"><td colspan="10">[\s\S]*?<select class="row-override"[\s\S]*?<select class="row-cause"[\s\S]*?<textarea class="row-note"[\s\S]*?>Done<\/button>/);
+  // What was saved shows as text in the row (and on paper); the button stays one short Edit.
+  page.run(`updateRowOverride(${key},'status','Supplier Late');updateRowOverride(${key},'cause','us');updateRowOverride(${key},'notes','Boards <Friday>');toggleRowNote(${key})`);
+  t = table();
+  assert.doesNotMatch(t, /note-editor-row/);
+  row = t.match(/<tr class="">\s*<td class="strong">71001<\/td>[\s\S]*?<\/tr>/)[0];
+  assert.match(row, /<td class="ovr-cell"><span class="ovr-line"><span class="ovr-text">Supplier Late<\/span><span class="cause-tag us">Us<\/span><\/span><span class="ovr-note" title="Boards &lt;Friday&gt;">Boards &lt;Friday&gt;<\/span><\/td>/);
+  assert.match(row, /class="note-btn has-note"[^>]*>Edit<\/button>/);
+  // The bucket legend's Clear is green, like the Clear bars (blue is not a status colour here).
+  const h = html(page);
+  assert.match(h, /<span><i class="sw" style="background:var\(--good\)"><\/i>Clear<\/span>/);
+  assert.doesNotMatch(h, /var\(--accent\)"><\/i>Clear/);
+  // Screen widths for the editor's controls and the due cell stay; print hides the editor.
   assert.match(HTML, /@media screen\{\.editable-rows \.row-override\{min-width:140px\}\.editable-rows \.row-note\{min-width:200px\}\.editable-rows \.due-cell\{white-space:nowrap\}\}/);
+  assert.deepEqual(page.errors, []);
 });
 
 test('the blank notes header is read as Notes; notes keep their line breaks and are escaped', async () => {

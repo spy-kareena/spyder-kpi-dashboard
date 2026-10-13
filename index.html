@@ -573,7 +573,6 @@ details.about .about-list{margin:0;padding-left:18px;display:grid;gap:4px}
 .heat-cell .late-badge{z-index:1;font-size:12px}
 .heat-slot:focus-visible{outline:none}
 .heat-slot:focus-visible .heat-cell{outline:2px solid var(--accent);outline-offset:2px}
-.heat-detail{margin:0;padding:10px 22px 12px;font-size:12px;line-height:1.45;color:var(--gray-700)}
 .heat-0{background:var(--gray-50);color:var(--gray-500)}
 .heat-1{background:var(--accent-tint);color:var(--accent-strong)}
 .heat-2{background:var(--accent-border);color:var(--gray-900)}
@@ -1504,6 +1503,95 @@ details.oh-more[open] .oh-more-less{display:inline}
 .lines-table.search{min-width:1040px}
 .lines-table.po{min-width:1040px} /* 848px of fixed columns: Item / Description keeps about 200px */
 /* --- end 2v2 (pages) --- */
+
+/* --- 2v2 design fixes (D3: load screen, phone header, Supply / Demand, Supply Mix, Build Risk, Monthly, timelines) --- */
+/* Phone header: no button icons, short labels (Share, PDF) so the actions fit one row; the as-of line keeps Data
+   check beside it (the line itself shortens with an ellipsis; its full text is in the tip) */
+@media (max-width:640px){
+  .page-head{gap:10px 16px}
+  .page-head-main{min-width:0;max-width:100%}
+  .page-head .actions{flex-wrap:nowrap;gap:6px;max-width:100%}
+  .page-head .actions .btn{padding-left:10px;padding-right:10px;white-space:nowrap}
+  .page-head .actions .btn .ico{display:none}
+  .page-head .actions .btn.bp-switch{gap:7px;padding-left:8px}
+  .page-sub{flex-wrap:nowrap;max-width:100%;min-width:0}
+  .page-sub .page-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .page-sub>details.data-check,.page-sub>.snapshot-note{flex-shrink:0}
+}
+/* Sidebar file card: open in the sidebar; on a phone one line (dot, file names, chevron) that opens to the notes
+   status, Add your name, Add file and New file */
+.loaded-fold{margin-top:auto;display:block}
+.loaded-fold>summary{display:none}
+/* The compact top bar keeps its own tight spacing (the roomy sidebar gaps above are for the side column) */
+@media (max-width:980px){.sidebar{gap:10px}.nav{gap:4px}.loaded-fold{margin-top:0}.loaded-fold.empty{display:none}}
+@media (max-width:640px){
+  .loaded-fold{border:1px solid var(--gray-200);border-radius:10px;background:#fff}
+  .loaded-fold>summary{display:flex;align-items:center;gap:8px;min-height:36px;padding:6px 12px;font-size:12.5px;font-weight:500;color:var(--gray-700);cursor:pointer;list-style:none;border-radius:10px}
+  .loaded-fold>summary::-webkit-details-marker{display:none}
+  .loaded-fold>summary::after{content:"";margin-left:auto;flex-shrink:0;width:6px;height:6px;border-right:1.5px solid var(--gray-500);border-bottom:1.5px solid var(--gray-500);transform:translateY(-2px) rotate(45deg)}
+  .loaded-fold[open]>summary::after{transform:translateY(1px) rotate(-135deg)}
+  .loaded-fold>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .loaded-sum-text{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .loaded-fold>.loaded-card{border:0;border-top:1px solid var(--gray-100);border-radius:0 0 10px 10px;box-shadow:none;padding:8px 12px 10px}
+  .loaded-fold>.loaded-card .loaded-name{display:none}
+  .loaded-fold>.loaded-card .loaded-notes{grid-row:1;grid-column:1}
+}
+/* Supply / Demand: warehouse sub-heading rows inside the one table; the Supply at risk only chip in its head */
+.data-table tr.grp-row>td{padding-top:14px;padding-bottom:7px;background:#fff;border-bottom:1px solid var(--gray-100)}
+.data-table tbody tr.grp-row:hover{background:#fff}
+.grp-name{font-size:12.5px;font-weight:600;color:var(--gray-900)}
+.grp-sub{margin-left:10px;font-size:12px;color:var(--gray-500)}
+.sd-rows .card-head .inline-controls{flex-wrap:wrap}
+@media print{.data-table tr.grp-row{break-after:avoid;page-break-after:avoid}}
+/* Build Risk rows: the override as text with its cause, the note on one line (full text on paper), one Edit button */
+.ovr-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ovr-text{font-weight:500;color:var(--gray-800);white-space:nowrap}
+.ovr-note{display:block;max-width:220px;margin-top:2px;font-size:12px;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cause-tag{display:inline-block;font-size:11.5px;font-weight:600;line-height:1.4;padding:0 7px;border-radius:var(--r-pill);background:var(--gray-100);color:var(--gray-700)}
+.cause-tag.us{background:#efedfa;color:var(--cause-us)}
+.cause-tag.them{background:#fdeef4;color:var(--cause-them-text)}
+.editable-rows .c-edit{width:1%;white-space:nowrap}
+/* Two lines a row at most: one line of item description (the code is above it), short headings on one line */
+.editable-rows .item-desc{-webkit-line-clamp:1;line-clamp:1;min-width:150px}
+.editable-rows .due-cell .sub{display:block;margin:1px 0 0}
+.editable-rows th{white-space:nowrap}
+@media print{.ovr-note{white-space:normal;max-width:none}}
+/* Monthly month cards: three short labels in one row, their values in the row under them, so every card lines up
+   (the top row keeps the This month tag's height on every card) */
+.month-card .kpi-top{min-height:22px}
+.month-stats{grid-template-columns:repeat(3,auto);grid-template-rows:auto auto;grid-auto-flow:column;justify-content:space-between;column-gap:10px;row-gap:2px}
+.month-stats>div{display:contents}
+.month-stats .stat-label{white-space:nowrap}
+@media screen and (min-width:1321px){.month-spot.n3{grid-template-columns:repeat(3,minmax(0,1fr))}.month-spot.n2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media screen and (max-width:1320px) and (min-width:641px){.month-spot{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Number strips (Coming due, Shipped, Ship target, Purchase Orders, Supply / Demand): one layout everywhere, the label,
+   the number under it, then the small lines; cells share a height so the numbers sit level */
+.mini-strip>div,.mini-strip>button{display:grid;grid-auto-rows:min-content;align-content:start;justify-items:start;gap:2px}
+.mini-strip .ms-text,.mini-strip .ms-num{display:contents}
+.mini-strip .ms-label{order:1}
+.mini-strip .ms-big{order:2;margin:3px 0 1px;font-size:20px;line-height:1.2;text-align:left}
+.mini-strip .ms-amt{order:3}
+.mini-strip .ms-sub{order:4}
+@media (max-width:980px){
+  .mini-strip.cols-2,.mini-strip.cols-3,.mini-strip.cols-4,.mini-strip.cols-5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mini-strip>*{border-right:0;border-bottom:1px solid var(--gray-100)}
+  .mini-strip>:nth-child(odd){border-right:1px solid var(--gray-100)}
+  .mini-strip>:last-child:nth-child(odd){grid-column:1/-1;border-right:0}
+  .mini-strip>:last-child,.mini-strip>:nth-last-child(2):nth-child(odd){border-bottom:0}
+}
+/* Phones: the three Shipped cells have long labels, so they stack (one label line each, numbers level) */
+@media (max-width:640px){
+  .mini-strip.cols-3{grid-template-columns:minmax(0,1fr)}
+  .mini-strip.cols-3>*{border-right:0;border-bottom:1px solid var(--gray-100)}
+  .mini-strip.cols-3>:last-child{border-bottom:0}
+}
+@media print{.mini-strip .ms-big{font-size:12pt}}
+/* Warehouse Timeline: the late-lines badge sits inside the cell's top-right corner; the legend names it */
+.heat-cell .late-badge{top:3px;right:3px;min-width:17px;height:17px;padding:0 5px;font-size:10.5px;box-shadow:none}
+.heat-key-late{font-style:normal;font-size:11px;color:var(--crit-text)}
+/* Open ship calendar: the first day's label ("Oct 1") starts at its column instead of being cut off on the left */
+.day-col:first-child>span{align-self:flex-start}
+/* --- end 2v2 design fixes (D3) --- */
 </style>
 </head>
 <body>
@@ -2278,11 +2366,12 @@ function isNoteEditorVisible(r){
   if(expandedNoteRows.has(key))return true;
   return false;
 }
-function renderNoteButton(r){
+// label: Build Risk shows one short "Edit" (its override and note are already in the row); else Add note / Edit note.
+function renderNoteButton(r,label=''){
   const key=esc(rowKey(r));
   const hasNote=!!(r.overrideStatus||r.overrideNotes||r.overrideCause);
   const visible=isNoteEditorVisible(r);
-  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${tipAttr(hasNote?[r.overrideStatus?`Override: ${r.overrideStatus}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:'','Click to edit.'].filter(Boolean).join(' '):'Set an override or a note on this line.')}>${hasNote?'Edit note':'Add note'}</button>`;
+  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${label?` aria-label="${esc(`${label} override, cause and note for ${r.documentNumber}`)}"`:''}${tipAttr(hasNote?[r.overrideStatus?`Override: ${r.overrideStatus}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:'','Click to edit.'].filter(Boolean).join(' '):'Set an override or a note on this line.')}>${label||(hasNote?'Edit note':'Add note')}</button>`;
 }
 function renderNoteEditorRow(r,colspan){
   if(!isNoteEditorVisible(r))return '';
@@ -4473,7 +4562,6 @@ function renderToneCell(rate,good,warn){
 // assistive tech.
 function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNum(rate)}%`;}
 // Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
-function showHeatDetail(tip){const el=document.getElementById('wh-heat-detail');if(el)el.textContent=tip;}
 // Card with a data table; long tables show their first rows with a "Show all" toggle (state kept per table key).
 let tableMore={};
 function toggleTableMore(key){
@@ -4501,30 +4589,49 @@ function renderBarCell(width,text,color='var(--accent)',size=''){
 function rateColor(rate,good,warn){
   return rate>=good?'var(--good)':rate>=warn?'var(--warn-fill)':'var(--crit)';
 }
-// Detail rows (Metrics "rows needing attention", Build Risk sales orders). Editable tables keep the override
-// and note inputs; read-only ones point people to Order Health for notes.
+// Detail rows (Metrics "rows needing attention", Build Risk sales orders). Read-only tables show a saved override
+// and note under the status. Editable ones (Build Risk) show the override as text with its cause, and one Edit
+// button per line opens the shared note editor row (override, cause, note), as on Purchase Orders.
 function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='No rows.',info=''}){
   const statusTone=s=>/late|past|no commit|missed/i.test(s)?'bad':/resched|risk/i.test(s)?'warn':'good';
+  const head=editable
+    ?[['Doc #'],['Customer / vendor'],['Effective due'],['Warehouse'],['Item'],['Qty open','num'],['Amount','num'],['Status'],['Override'],['','print-hide']]
+    :[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],['Reschedule'],['Amount','num']];
   const renderRow=r=>{
     const effective=r.noCommitDate?'No commit date':displayDate(r.effectiveDueDate||r.dueDate);
     const resched=r.noCommitDate?'No commit date':displayDate(r.rescheduleDate)||r.rescheduleFlag||'';
-    return `<tr>
-      <td class="strong">${esc(r.documentNumber)}</td>
-      <td>${esc(r.name)}</td>
-      <td class="due-cell ${/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft'}">${esc(r.dueText||'')}</td>
-      <td class="date ${/\d{4}-/.test(effective||'')?'soft':'muted'}">${esc(effective||'—')}</td>
-      <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
+    const lead=`<td class="strong">${esc(r.documentNumber)}</td>
+      <td>${esc(r.name)}</td>`;
+    const tail=`<td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
-      <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
-      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes||r.overrideCause)?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'',r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
-      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
+      <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>`;
+    const dueTone=/overdue|late/i.test(r.dueText||'')?'crit-soft':'soft';
+    const effTone=/\d{4}-/.test(effective||'')?'soft':'muted';
+    if(editable){
+      // Build Risk: one Effective due column, its due timing ("Due in 2 weeks") on the line under the date.
+      const cells=`${lead}
+      <td class="date due-cell ${effTone}">${esc(effective||'—')}${r.dueText?`<span class="sub ${dueTone}">${esc(r.dueText)}</span>`:''}</td>
+      ${tail}`;
+      const noteOpen=isNoteEditorVisible(r);
+      const ovr=String(r.overrideStatus||'');
+      return `<tr class="${noteOpen?'editing':''}">${cells}
+      <td class="num strong">${money(r.amountLocal)}</td>
+      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span></td>
+      <td class="ovr-cell"><span class="ovr-line">${ovr?`<span class="ovr-text">${esc(ovr)}</span>`:'<span class="muted">—</span>'}${r.overrideCause?`<span class="cause-tag ${esc(r.overrideCause)}">${esc(manualCauseLabel(r.overrideCause))}</span>`:''}</span>${r.overrideNotes?`<span class="ovr-note" title="${esc(r.overrideNotes)}">${esc(r.overrideNotes)}</span>`:''}</td>
+      <td class="c-edit print-hide">${renderNoteButton(r,'Edit')}</td>
+    </tr>${renderNoteEditorRow(r,head.length)}`;
+    }
+    const cells=`${lead}
+      <td class="due-cell ${dueTone}">${esc(r.dueText||'')}</td>
+      <td class="date ${effTone}">${esc(effective||'—')}</td>
+      ${tail}`;
+    return `<tr>${cells}
+      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${r.overrideStatus||r.overrideNotes||r.overrideCause?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'',r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
       <td class="soft${/^\d{4}-/.test(resched)?' date':''}">${esc(resched)}</td>
-      ${editable?`<td class="soft">${esc(r.deliveryDocNumber||'—')}</td><td class="soft">${esc(r.closeDateSource||'—')}</td>`:''}
       <td class="num strong">${money(r.amountLocal)}</td>
     </tr>`;
   };
-  const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
-  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty,info});
+  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?960:1000,className:editable?'editable-rows':'',empty,info});
 }
 // --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Ask AI chat and the MCP server (mcp/) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
@@ -5279,13 +5386,61 @@ function groupMoreButton(key,count,noun,showLabel='Show all'){
   const open=!!tableMore[key];
   return `<button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}" aria-expanded="${open?'true':'false'}"${tipAttr(open?`Hide the ${noun}.`:`Show the ${fmtNum(count)} ${noun}.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Hide':showLabel}</button>`;
 }
-// Supply / demand rows (Supply Mix, Search). 2v2: the four risky-supply quantities are one Supply risk column (the
-// SAP flag, the risky quantity, and the breakdown in the cell's tip) so the table fits the page without scrolling.
+// One status for a supply / demand row wherever it is listed (Supply / Demand, Search): short first (running total,
+// then the month), then risky PO supply, then sales-order demand with no commit; the small line lists the risky
+// quantities, else the SAP SupplyRiskFlag (also in the cell's tip).
+function supplyRowStatus(r){
+  const bits=[];
+  if(r.unconfirmedSupplyQty>0)bits.push(`Unconfirmed ${fmtNum(r.unconfirmedSupplyQty)}`);
+  if(r.noCommitSupplyQty>0)bits.push(`No commit ${fmtNum(r.noCommitSupplyQty)}`);
+  if(r.rescheduledSupplyQty>0)bits.push(`Rescheduled ${fmtNum(r.rescheduledSupplyQty)}`);
+  if(r.lateSupplyQty>0)bits.push(`Late ${fmtNum(r.lateSupplyQty)}`);
+  if(r.demandNoCommitQty>0)bits.push(`SO no commit ${fmtNum(r.demandNoCommitQty)}`);
+  const flag=r.supplyRiskFlag&&r.supplyRiskFlag!=='OK'?String(r.supplyRiskFlag):'';
+  const label=r.isCumulativeShortage?'Shortage':r.isMonthlyShortage?'Monthly short':r.hasSupplyRisk?'Supply risk':r.hasDemandRisk?'SO no commit':'Covered';
+  const tone=r.isCumulativeShortage||r.isMonthlyShortage?'bad':r.hasSupplyRisk||r.hasDemandRisk?'warn':'good';
+  return {label,tone,detail:bits.join(' · ')||flag,flag};
+}
+function supplyStatusCell(r){
+  const st=supplyRowStatus(r);
+  return `<td${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''}><span class="pill ${st.tone}">${esc(st.label)}</span>${st.detail?`<span class="sub">${esc(st.detail)}</span>`:''}</td>`;
+}
+// Supply / Demand: one table of supply rows with a sub-heading row per warehouse (its row count, demand qty and
+// value), like the Warehouse scorecard. limit counts data rows only; Show all (tableMore[key]) and print list all.
+function renderSupplyRowsTable({key,title,rows,limit=20,headExtra='',empty='No rows.'}){
+  const head=[['Month'],['Item','','26%'],['Demand qty','num'],['Demand value','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%'],['Risk qty','num']];
+  const open=!!tableMore[key]||printMode;
+  let left=open?Infinity:limit,shown=0;
+  const body=groupSupplyRowsByWarehouse(rows).map(g=>{
+    if(left<=0)return '';
+    const vis=g.rows.slice(0,left);
+    left-=vis.length;shown+=vis.length;
+    const qty=g.rows.reduce((t,r)=>t+r.demandOpenQty,0),value=g.rows.reduce((t,r)=>t+r.demandOpenValue,0);
+    return `<tr class="grp-row"><td colspan="${head.length}"><span class="grp-name" role="heading" aria-level="3">${esc(g.warehouse)}</span><span class="grp-sub">${fmtNum(g.rows.length)} ${g.rows.length===1?'row':'rows'} · ${fmtNum(qty)} demand qty · ${money(value)}</span></td></tr>${vis.map(r=>`<tr>
+      <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'No month')}</td>
+      <td><span class="m">${esc(r.itemCode||'No item')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
+      <td class="num">${fmtNum(r.demandOpenQty)}</td>
+      <td class="num strong">${money(r.demandOpenValue)}</td>
+      <td class="num">${fmtNum(r.usableSupplyQty)}</td>
+      <td class="num ${r.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.monthlyNetQty)}</td>
+      <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
+      ${supplyStatusCell(r)}
+      <td class="num ${r.riskSupplyQty?'warn-soft':'muted'}">${fmtNum(r.riskSupplyQty)}</td>
+    </tr>`).join('')}`;
+  }).join('');
+  return `<section class="table sd-rows">
+    <div class="card-head lg"><h2>${esc(title)}</h2>${headExtra}</div>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="${esc(title)}"><table class="data-table" style="min-width:1000px">
+      <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
+      <tbody>${body||`<tr><td colspan="${head.length}" class="soft">${esc(empty)}</td></tr>`}</tbody>
+    </table></div>
+    ${rows.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown)} of ${fmtNum(rows.length)}</span><button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}"${tipAttr(open?`Show only the first ${fmtNum(limit)} rows.`:`Show all ${fmtNum(rows.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}
+  </section>`;
+}
+// Supply / demand rows elsewhere (Search). 2v2: the risky-supply quantities are in the Risk column (supplyRowStatus,
+// the same status as Supply / Demand) so the table fits the page without scrolling.
 function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows.',info=''}){
-  const body=rows.map(r=>{
-    const parts=[['unconfirmed',r.unconfirmedSupplyQty],['no commit',r.noCommitSupplyQty],['rescheduled',r.rescheduledSupplyQty],['late',r.lateSupplyQty]].filter(p=>p[1]>0);
-    const riskQty=parts.reduce((t,p)=>t+p[1],0);
-    return `<tr>
+  const body=rows.map(r=>`<tr>
       <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'')}</td>
       <td class="soft">${esc(r.warehouseName)}</td>
       <td><span class="m">${esc(r.itemCode)}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
@@ -5293,9 +5448,8 @@ function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows
       <td class="num">${fmtNum(r.usableSupplyQty)}</td>
       <td class="num ${r.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.monthlyNetQty)}</td>
       <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
-      <td${parts.length?tipAttr(`Risky PO supply: ${parts.map(([l,q])=>`${fmtNum(q)} ${l}`).join(', ')}.`):''}><span class="pill ${!r.supplyRiskFlag||r.supplyRiskFlag==='OK'?'good':/rescheduled|so has no commit/i.test(r.supplyRiskFlag)?'warn':'bad'}">${esc(r.supplyRiskFlag||'OK')}</span>${riskQty?`<span class="sub">${fmtNum(riskQty)} qty</span>`:''}</td>
-    </tr>`;
-  });
+      ${supplyStatusCell(r)}
+    </tr>`);
   return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,
     head:[['Month'],['Warehouse','','16%'],['Item','','18%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Risk','','18%']]});
 }
@@ -5586,8 +5740,21 @@ function renderSidebar(){
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
     <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}${group==='Help'?hintsResetButton():''}</div>`).join('')}</nav>
-    <div class="loaded-card${loaded?'':' empty'}"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${notesLine?`<div class="loaded-notes">${notesLine}</div>`:''}${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand or Clear To Build) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button></div>`:''}</div>`;
+    <details class="loaded-fold${loaded?'':' empty'}"${!isPhoneWidth()||loadedFoldOpen?' open':''} ontoggle="if(isPhoneWidth())loadedFoldOpen=this.open"><summary class="loaded-sum" data-focus-key="sidebar-file"${tipAttr('Loaded files, notes status, Add file and New file.')}><span class="live-dot${loaded?'':' off'}"></span><span class="loaded-sum-text">${esc(fileName)}</span></summary><div class="loaded-card${loaded?'':' empty'}"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${notesLine?`<div class="loaded-notes">${notesLine}</div>`:''}${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand or Clear To Build) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button></div>`:''}</div></details>`;
   restoreFocus(el,focus);
+}
+// Phones (640px and below): the sidebar file card folds into one line (loaded-fold), closed until opened; wider
+// screens always show it open. Crossing the width redraws the sidebar so the fold follows.
+let loadedFoldOpen=false;
+const PHONE_QUERY='(max-width:640px)';
+function isPhoneWidth(){
+  try{return !!(window.matchMedia&&window.matchMedia(PHONE_QUERY).matches);}catch(e){return false;}
+}
+function watchPhoneWidth(){
+  try{
+    const mq=window.matchMedia&&window.matchMedia(PHONE_QUERY);
+    if(mq&&mq.addEventListener)mq.addEventListener('change',()=>{loadedFoldOpen=false;renderSidebar();});
+  }catch(e){}
 }
 function setTab(t){
   // Connect an AI is a help page, so it opens before any export is loaded.
@@ -5855,9 +6022,11 @@ function renderResults(){
   const said=activeTab==='search'?headMeta:'';
   if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
+  // Connect an AI is a help page: no Share snapshot, Export PDF or Data check in its header (Ask AI stays).
+  const isConnect=activeTab==='connect';
   let html=`<div class="page-head rise">
-    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><div class="page-sub"><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div></div>
-    <div class="actions">${loaded?`${bigPictureSwitchHtml(activeTab)}<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share<span class="btn-long"> snapshot</span></button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF, with every linked line.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
+    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><div class="page-sub"><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${isConnect?'':renderDataQualityNote()}${snapshotTag}</div></div>
+    <div class="actions">${loaded?`${bigPictureSwitchHtml(activeTab)}<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button>${isConnect?'':`<button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share<span class="btn-long"> snapshot</span></button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF, with every linked line.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg><span class="btn-long">Export&nbsp;</span>PDF</button>`}`
       :`<button type="button" class="btn btn-primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`}</div>
   </div>`;
 
@@ -6694,35 +6863,13 @@ function renderResults(){
       const activePreset=presets.find(p=>p[2]);
       const selectedSupplyLabel=activePreset?(activePreset[0]==='ALL'?'All warehouses':activePreset[1]):supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
       const multi=!isAll&&supplyWarehouseFilter.length>1;
-      const renderSupplyCoverage=(key,rows,emptyText)=>{
-        if(!rows.length)return `<div class="card"><p class="empty-note">${esc(emptyText)}</p></div>`;
-        return groupSupplyRowsByWarehouse(rows).map(group=>renderTableCard({key:`${key}-${group.warehouse}`,title:esc(group.warehouse),
-          note:`${fmtNum(group.rows.length)} rows${group.rows.length>40?' (first 40 listed)':''} · ${fmtNum(group.rows.reduce((s,r)=>s+r.demandOpenQty,0))} demand qty · ${money(group.rows.reduce((s,r)=>s+r.demandOpenValue,0))}`,
-          head:[['Month'],['Item','','26%'],['Demand qty','num'],['Demand value','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%'],['Risk qty','num']],
-          limit:10,minWidth:1000,
-          rows:group.rows.slice(0,40).map(r=>{
-            const riskBits=[];
-            if(r.unconfirmedSupplyQty>0)riskBits.push(`Unconfirmed ${fmtNum(r.unconfirmedSupplyQty)}`);
-            if(r.noCommitSupplyQty>0)riskBits.push(`No commit ${fmtNum(r.noCommitSupplyQty)}`);
-            if(r.rescheduledSupplyQty>0)riskBits.push(`Rescheduled ${fmtNum(r.rescheduledSupplyQty)}`);
-            if(r.lateSupplyQty>0)riskBits.push(`Late ${fmtNum(r.lateSupplyQty)}`);
-            if(r.demandNoCommitQty>0)riskBits.push(`SO no commit ${fmtNum(r.demandNoCommitQty)}`);
-            const riskQty=r.riskSupplyQty;
-            const coverageClass=r.isCumulativeShortage||r.isMonthlyShortage?'bad':r.hasSupplyRisk||r.hasDemandRisk?'warn':'good';
-            return `<tr>
-              <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'No month')}</td>
-              <td><span class="m">${esc(r.itemCode||'No item')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
-              <td class="num">${fmtNum(r.demandOpenQty)}</td>
-              <td class="num strong">${money(r.demandOpenValue)}</td>
-              <td class="num">${fmtNum(r.usableSupplyQty)}</td>
-              <td class="num ${r.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.monthlyNetQty)}</td>
-              <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
-              <td><span class="pill ${coverageClass}">${esc(r.isCumulativeShortage?'Shortage':r.isMonthlyShortage?'Monthly short':r.hasSupplyRisk?'Supply risk':r.hasDemandRisk?'SO no commit':'Covered')}</span>${riskBits.length||(r.supplyRiskFlag&&r.supplyRiskFlag!=='OK')?`<span class="sub">${esc(riskBits.join(' · ')||r.supplyRiskFlag)}</span>`:''}</td>
-              <td class="num ${riskQty?'warn-soft':'muted'}">${fmtNum(riskQty)}</td>
-            </tr>`;
-          })
-        })).join('');
-      };
+      // One table for the rows to act on (short or with risky supply), warehouse sub-heading rows in it like the
+      // Warehouse scorecard; "Supply at risk only" narrows it to the risky-supply rows. The chip and the Show all
+      // choices are kept with the view (tableMore), so a redraw, a snapshot and Reset treat them like other view state.
+      const riskOnly=!!tableMore['sd-risk-only'];
+      const actRows=filteredSupplyRows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage||r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
+      const listRows=riskOnly?riskRows:actRows;
+      const riskChip=`<button type="button" class="chip${riskOnly?' active':''}" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show every short or at-risk row again.':'List only rows whose PO supply is unconfirmed, has no commit, is rescheduled or late.')} onclick="toggleTableMore(this.dataset.tableKey)">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
       html+=`
       <div class="filter-bar rise rise-1">
         <div class="segmented" role="group" aria-label="Warehouse group">${presets.map(([id,label,on])=>`<button type="button" class="${on?'active':''}" data-focus-key="supply-wh-${id}" onclick="setSupplyWarehousePreset('${id}')" aria-pressed="${on?'true':'false'}"${tipAttr(WAREHOUSE_PRESET_TIPS[id])}>${label}</button>`).join('')}</div>
@@ -6733,7 +6880,7 @@ function renderResults(){
         </select>
         <button type="button" class="link-btn filter-reset" data-focus-key="supply-reset"${tipAttr('Show every warehouse again.')} onclick="setSupplyWarehousePreset('ALL')">Reset</button>
       </div>
-      <div class="print-only">Filters: ${esc(selectedSupplyLabel)}</div>
+      <div class="print-only">Filters: ${esc(selectedSupplyLabel)}${riskOnly?' · supply at risk only':''}</div>
       ${pageGroupHtml('sd-coverage','Coverage',`
         <div class="grid-4 pg-stats">
           ${renderStatCard(shortageRows.length?'Shortage rows':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'row':'rows'} short of usable open PO supply, ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short; stock on hand is not included.`)}
@@ -6745,15 +6892,14 @@ function renderResults(){
           <div${tipAttr(`No commit supply: ${fmtNum(noCommitQty)} qty on open purchase orders with no confirmed date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${noCommitQty?'crit':'good'}"></span>No commit supply</span></div><div class="ms-num"><span class="ms-big xl ${noCommitQty?'crit-text':''}">${fmtNum(noCommitQty)}</span></div></div>
           <div${tipAttr(`Late supply: ${fmtNum(lateQty)} qty on open purchase orders already past their date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${lateQty?'crit':'good'}"></span>Late supply</span></div><div class="ms-num"><span class="ms-big xl ${lateQty?'crit-text':''}">${fmtNum(lateQty)}</span></div></div>
         </div>`,{info:'sd-coverage',rise:'rise-2'})}
-      ${pageGroupHtml('sd-shortages','Shortages by warehouse',renderSupplyCoverage('sd-short',shortageRows,'No supply shortages found for this warehouse selection.'),{info:'sd-shortages',rise:'rise-3',
-        badge:`<span class="count-badge ${shortageRows.length?'bad':'good'}">${fmtNum(shortageRows.length)} rows</span>`})}
-      ${pageGroupHtml('sd-risk','Supply at risk',renderSupplyCoverage('sd-risk',riskRows,'No supply risk rows found for this warehouse selection.'),{info:'sd-risk',rise:'rise-4',
-        badge:`<span class="count-badge ${riskRows.length?'warn':'good'}">${fmtNum(riskRows.length)} rows</span>`})}
-      ${pageGroupHtml('sd-all','All open demand',
-        // Every demand row, also the covered ones: behind Show (always printed).
-        tableMore['sd-all-group']||printMode?renderSupplyCoverage('sd-all',demandRows,'No open demand rows found for this warehouse selection.'):' ',
-        {info:'sd-all',rise:'rise-5',badge:`<span class="count-badge">${fmtNum(demandRows.length)} rows</span>`,tools:demandRows.length&&!printMode?groupMoreButton('sd-all-group',demandRows.length,'open demand rows'):''})}
-      ${renderAbout(['sd-coverage','sd-shortages','sd-risk','sd-all'])}`;
+      ${pageGroupHtml('sd-shortages','Shortages by warehouse',`${renderSupplyRowsTable({key:'sd-rows',title:riskOnly?'Supply at risk':'Short or at risk',rows:listRows,limit:20,
+          headExtra:`<div class="inline-controls"><span class="section-sub">${fmtNum(listRows.length)} ${listRows.length===1?'row':'rows'}</span>${riskChip}</div>`,
+          empty:riskOnly?'No supply risk rows found for this warehouse selection.':'No shortages or supply risk found for this warehouse selection.'})}
+        ${tableMore['sd-all-group']||printMode?renderSupplyRowsTable({key:'sd-all',title:'All open demand',rows:demandRows,limit:Infinity,
+          headExtra:`<div class="inline-controls"><span class="section-sub">${fmtNum(demandRows.length)} ${demandRows.length===1?'row':'rows'}</span>${printMode?'':groupMoreButton('sd-all-group',demandRows.length,'open demand rows')}</div>`,
+          empty:'No open demand rows found for this warehouse selection.'})
+        :`<section class="table pg-collapsed"><div class="card-head lg"><h2>All open demand</h2><div class="inline-controls"><span class="section-sub">${fmtNum(demandRows.length)} ${demandRows.length===1?'row':'rows'}</span>${demandRows.length?groupMoreButton('sd-all-group',demandRows.length,'open demand rows'):''}</div></div></section>`}`,{info:'sd-shortages',rise:'rise-3'})}
+      ${renderAbout(['sd-coverage','sd-shortages'])}`;
     }
   }
   // Monthly: original line-delivery month, ship scenario, and YoY shipped value.
@@ -6813,9 +6959,10 @@ function renderResults(){
     const emptyMonth=key=>({key,label:monthLabel(key),openAmount:0,closedAmount:0,openRows:0,closedRows:0,lateRows:0,atRiskRows:0,rescheduledRows:0});
     const monthGroup=key=>m.byMonth.find(g=>g.key===key)||emptyMonth(key);
 
-    // Spotlight: last month, this month, and the next two.
-    const spotlight=[-1,0,1,2].map(offset=>{
-      const g=monthGroup(monthKey(addMonths(new Date(thisYear,today.getMonth(),1),offset)));
+    // Spotlight: last month, this month, and the next two; a coming month with nothing open or shipped is left out.
+    const spotMonths=[-1,0,1,2].map(offset=>({offset,g:monthGroup(monthKey(addMonths(new Date(thisYear,today.getMonth(),1),offset)))}))
+      .filter(({offset,g})=>offset<=0||g.openAmount||g.closedAmount);
+    const spotlight=spotMonths.map(({offset,g})=>{
       const isCurrent=offset===0,isPast=offset<0;
       const totalRows=g.openRows+g.closedRows;
       const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
@@ -6826,8 +6973,8 @@ function renderResults(){
         <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · now late':'open'}</span></div>
         <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
         <div class="month-stats">
-          <div><span class="stat-label">${isPast?'Closed rows':'Open rows'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
-          <div><span class="stat-label">At risk / late</span><span class="stat-val${atRisk?' crit-text':''}">${fmtNum(atRisk)}</span></div>
+          <div><span class="stat-label">${isPast?'Closed':'Open'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
+          <div><span class="stat-label">At risk</span><span class="stat-val${atRisk?' crit-text':''}">${fmtNum(atRisk)}</span></div>
           <div><span class="stat-label">Rescheduled</span><span class="stat-val${g.rescheduledRows?' warn-text':''}">${fmtNum(g.rescheduledRows)}</span></div>
         </div>
       </div>`;
@@ -6917,7 +7064,7 @@ function renderResults(){
     if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
 
     html+=`
-    ${pageGroupHtml('mo-months','Month by month',`<div class="month-spot">${spotlight}</div>`,{rise:'rise-1'})}
+    ${pageGroupHtml('mo-months','Month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
     ${pageGroupHtml('mo-shipped','Shipped',`
     <section class="mini-strip cols-3" aria-label="Shipped to date">
       <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${fmtNum(mtd.rows)} delivery rows (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${fmtNum(mtd.rows)} delivery rows</span></div></div>
@@ -7059,19 +7206,18 @@ function renderResults(){
       </div>
     </div>
     <section class="table">
-      <div class="card-head lg"><div class="card-head-text"><div class="title-row"><h2>Open value by warehouse and due month</h2>${infoButton('wh-heat')}</div></div></div>
+      <div class="card-head lg"><div class="card-head-text"><div class="title-row"><h2>Open value by warehouse and due month</h2>${infoButton('wh-heat')}</div></div>${heatShown.some(x=>months.some(mo=>(byWarehouseMonth.get(`${x.w}|||${mo}`)||{}).lateRows))?'<span class="legend heat-key"><span><i class="heat-key-late" aria-hidden="true">●</i>late lines</span></span>':''}</div>
       <div class="heat-scroll" role="table" aria-label="Open value by warehouse and due month">
         <div class="heat-grid head" role="row" style="${heatCols}"><div role="columnheader">Warehouse</div>${months.map(mo=>`<div role="columnheader">${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
         ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
           const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
-          // Each cell carries its breakdown as text (read by screen readers, shown under the grid on focus or hover);
-          // cells with lines are Tab stops, empty ones are not.
-          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
+          // Each cell carries its breakdown as text (its tooltip on hover or focus, read by screen readers); cells with
+          // lines are Tab stops, empty ones are not.
+          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
-      ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover a cell for its breakdown.</p>':''}
       ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show only the 10 warehouses with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
     </section>`,{rise:'rise-1'})}
     ${pageGroupHtml('wh-kpis','Performance by warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',
@@ -7086,15 +7232,10 @@ function renderResults(){
       html+=renderNeedsFile('supplydemand');
     }else{
       const itemGroupRows=sd.byItemGroup.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${fmtNum(g.demandQty)}</td><td class="num">${fmtNum(g.usableQty)}</td><td class="num ${g.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(g.monthlyNetQty)}</td><td class="num ${g.cumulativeShortageRows?'crit-strong':'muted'}">${fmtNum(g.cumulativeShortageRows)}</td><td class="num ${g.riskRows?'warn-soft':'muted'}">${fmtNum(g.riskRows)}</td><td class="num soft">${fmtNum(g.unconfirmedQty)}</td><td class="num soft">${fmtNum(g.noCommitQty)}</td><td class="num soft">${fmtNum(g.rescheduledQty)}</td><td class="num soft">${fmtNum(g.lateQty)}</td></tr>`);
-      // Big picture (Stream F) first, then the totals, where the gaps are, and the rows behind them.
+      // Big picture (Stream F) first, then where the gaps are. The totals and the shortage / risk rows are on
+      // Supply / Demand (one button away), so this page does not repeat them.
       html+=`
       ${renderBigPicture('supplydemand',m)}
-      ${pageGroupHtml('mix-totals','Demand vs supply',`<div class="grid-4 pg-stats">
-        ${renderStatCard('Demand qty',fmtNum(sd.demandQty),`${money(sd.demandValue)}`,'','neutral',`Demand: ${fmtNum(sd.demandQty)} qty on open sales orders in the snapshot, worth ${money(sd.demandValue)}.`)}
-        ${renderStatCard('Usable supply qty',fmtNum(sd.usableQty),'',sd.usableQty>=sd.demandQty?'good':'warn',sd.usableQty>=sd.demandQty?'good':'warn',`Usable supply: ${fmtNum(sd.usableQty)} qty on confirmed, committed open POs; stock on hand is not included.`)}
-        ${renderStatCard('Shortage qty',fmtNum(sd.shortageQty),`${fmtNum(sd.shortageRows.length)} shortage ${sd.shortageRows.length===1?'row':'rows'}`,sd.shortageQty>0?'crit':'good',sd.shortageQty>0?'crit':'good',`Shortage: ${fmtNum(sd.shortageQty)} qty, the worst running shortfall per item and warehouse, added up; ${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'row is':'rows are'} short.`)}
-        ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),`${fmtNum(sd.riskRows.length)} risk ${sd.riskRows.length===1?'row':'rows'}`,sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of unconfirmed, no-commit, rescheduled or late PO supply.`)}
-      </div>`,{rise:'rise-1'})}
       ${pageGroupHtml('mix-gaps','Where the gaps are',`<div class="grid-2">
         <div class="card list-card roomy">
           <div class="list-head"><div class="title-row"><h2>Net qty by month</h2>${infoButton('mix-net')}</div></div>
@@ -7107,9 +7248,8 @@ function renderResults(){
       </div>
       ${renderTableCard({key:'mix-groups',info:'mix-groups',title:'Supply risk by item group',
         head:[['Item group'],['Demand qty','num'],['Usable supply','num'],['Net qty','num'],['Shortage rows','num'],['Risk rows','num'],['Unconfirmed qty','num'],['No commit qty','num'],['Rescheduled qty','num'],['Late qty','num']],
-        rows:itemGroupRows,limit:12,minWidth:980})}`,{rise:'rise-2'})}
-      ${pageGroupHtml('mix-rows','Rows to check',`${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage rows',note:sd.shortageRows.length>50?`first 50 of ${fmtNum(sd.shortageRows.length)}`:`${fmtNum(sd.shortageRows.length)} ${sd.shortageRows.length===1?'row':'rows'}`,limit:8,empty:'No shortage rows.'})}
-      ${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk rows',note:sd.riskRows.length>50?`first 50 of ${fmtNum(sd.riskRows.length)}`:`${fmtNum(sd.riskRows.length)} ${sd.riskRows.length===1?'row':'rows'}`,limit:8,empty:'No supply risk rows.'})}`,{rise:'rise-3'})}
+        rows:itemGroupRows,limit:12,minWidth:980})}`,{rise:'rise-1',
+        tools:`<button type="button" class="link-btn" data-focus-key="mix-open-sd" onclick="setTab('supplyweekly')"${tipAttr(`The ${fmtNum(sd.shortageRows.length)} shortage and ${fmtNum(sd.riskRows.length)} supply-risk rows, with the totals, are on Supply / Demand.`)}>Rows on Supply / Demand</button>`})}
       <details class="about">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</ul></div></details>`;
     }
   }
@@ -7155,8 +7295,8 @@ function renderResults(){
         ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the report’s CM warehouses and due months.`)}
       </div>`,{rise:'rise-1'})}
       ${pageGroupHtml('br-buckets','By CM and month',`<section class="card list-card roomy">
-        <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--accent)"></i>Clear</span></span></div>
-        ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(r.matchedRows.length)} SO rows · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
+        <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--good)"></i>Clear</span></span></div>
+        ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--good)',sub:`${fmtNum(r.matchedRows.length)} SO rows · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
       </section>
       ${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',
         head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Matched SO rows','num'],['Matched open qty','num'],['Matched open value','num'],['Notes','','22%']],
@@ -7739,14 +7879,8 @@ const SECTION_INFO={
     what:'Open sales-order demand against open PO supply; stock on hand is not included.',
     click:'Filter with the warehouse buttons or list above.'},
   'sd-shortages':{title:'Shortages by warehouse',
-    what:'Months where demand is more than usable open PO supply.',
-    click:'Show all lists every row.'},
-  'sd-risk':{title:'Supply at risk',
-    what:'Rows whose supply is unconfirmed, has no commit date, is rescheduled or is late.',
-    click:'Show all lists every row.'},
-  'sd-all':{title:'All open demand',
-    what:'Every open demand row, by warehouse and month.',
-    click:'Show all lists every row.'},
+    what:'Rows short of usable open PO supply, or whose PO supply is at risk.',
+    click:'Supply at risk only lists the risky-supply rows; All open demand lists every row.'},
   'mo-chart':{title:'Shipped and open value by month',
     what:'Shipped value by delivery month, open value by the month it is due now.',
     click:'Rest the pointer on a bar for its value.'},
@@ -10903,6 +11037,9 @@ function ohAiOrderHealth(oh){
 }
 
 renderSidebar();
+// The load screen lists every page from the first visit (showUpload() is not called until a report is replaced).
+renderUploadPages();
+watchPhoneWidth();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
 // Shared notes and the at-risk history load next to the report (see Stream B: shared notes).
 function startApp(){loadEmbeddedSnapshot();restoreSavedReport();syncSharedNotes();loadAtRiskHistory();}
