@@ -581,7 +581,7 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   assert.match(html(page), /<div class="note-picks"><label>Override<select class="row-override"/);
   assert.match(select[0], /data-field="cause"/);
   assert.match(select[0], /aria-label="Cause, us or them, for 900"/);
-  assert.match(select[0], /data-tip="Who the delay is on\./);
+  assert.match(select[0], /data-tip="Who the delay is on: Us \(Spyder\) or Them/);
   assert.deepEqual([...select[0].matchAll(/<option value="([^"]*)"[^>]*>([^<]*)</g)].map((m) => [m[1], m[2]]), [['', 'Auto'], ['us', 'Us'], ['them', 'Them']]);
   for (const ev of ['keydown', 'keyup', 'change', 'blur']) assert.match(select[0], new RegExp(`on${ev}="overrideSelectEvent\\(this,event\\)"`));
 

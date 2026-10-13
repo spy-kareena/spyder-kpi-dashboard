@@ -1,8 +1,8 @@
 # Shipping page: live FedEx tracking
 
-The **Shipping** page (sidebar, Sales) shows where each recent FedEx shipment is: parcel (FedEx Ground, Express,
-International) and FedEx Freight LTL. It answers "what is late, what is stuck, and what is held at customs" without
-opening fedex.com for each order.
+The **Shipping** page (sidebar, Sales) shows where each recent FedEx shipment is, parcel (FedEx Ground, Express,
+International) and FedEx Freight LTL: what is late, what is stuck and what is held at customs, without opening
+fedex.com for each order.
 
 ## What the page shows
 
@@ -10,24 +10,24 @@ opening fedex.com for each order.
   (every 4 hours). **Refresh now** asks FedEx right away (at most once every 10 minutes for everyone).
 - **Cards:** In transit, Out for delivery, Delivered this week, Exceptions, In customs. Click a card to list only those
   shipments; click it again to list all.
-- **Add tracking #:** type a FedEx tracking number (or a FedEx Freight PRO number) and, optionally, the sales order it
-  belongs to. Use it for shipments whose SAP delivery has no tracking number yet.
+- **Add tracking #:** a FedEx tracking number (or FedEx Freight PRO number) and, optionally, its sales order, for
+  shipments whose SAP delivery has no tracking number yet.
 - **Shipments:** one row per tracking number with a 6-step strip: Label created → Picked up → In transit → Customs →
   Out for delivery → Delivered. The strip is filled up to the newest FedEx scan. A red **!** marks an exception or a
   customs hold at that step. The Customs step is dashed for shipments that stay in Canada. On the right: the status
-  and the FedEx delivery estimate against the promised date ("ETA Oct 12 · 2 days late"). Click a row (or press
-  Enter on it) to see the order lines on that delivery, the last scan, any customs scans, and a link to fedex.com.
+  and the FedEx estimate against the promised date ("ETA Oct 12 · 2 days late"). Click a row (or press Enter) for
+  the delivery's order lines, the last scan, any customs scans and a link to fedex.com.
 - **Cross-border:** shipments to an address outside Canada, or with customs scans: In clearance, Clearance delay or
   Released, and how many days customs has had it.
-- **About these numbers** at the bottom of the page repeats the rules below.
+- **About these numbers** at the bottom of the page sums up the rules below.
 
-Every number, card, button and column has a tooltip in plain English.
+Every number, card, button and column has a short plain-English tooltip.
 
 **Search** (the box under the logo) also finds tracking numbers, typed with or without spaces.
 
 ## Where the tracking numbers come from
 
-1. **The KPI export.** The KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`) now adds four
+1. **The KPI export.** The KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`) adds four
    columns to every delivery row:
    - `TrackingNumber`: the delivery's tracking number in SAP (`ODLN.TrackNo`, the **Tracking No.** field on the
      delivery's Logistics tab). One field can hold several numbers separated by commas; the delivery's value is then
@@ -42,9 +42,9 @@ Every number, card, button and column has a tooltip in plain English.
    - `ShipDate`: the delivery date.
 
    **Re-run the updated query in SAP** and load the new export to bring them in. Older exports still load; the page
-   then says the column is missing and you can add numbers by hand.
-2. **Add tracking #** on the page. On the hosted site these are shared with everyone who signs in (they are saved with
-   the shared notes); on a site without shared storage they are kept in the browser that added them.
+   says the column is missing and you can add numbers by hand.
+2. **Add tracking #** on the page. On the hosted site these are shared with everyone who signs in (saved with the
+   shared notes); on a site without shared storage, in the browser that added them.
 
 Which shipments are tracked:
 
@@ -66,17 +66,16 @@ Which shipments are tracked:
                                      └──> FedEx Track API (apis.fedex.com), 30 numbers per call
 ```
 
-- When a report is loaded on the hosted site, the page works out the list of tracking numbers and sends it to
-  `/api/shipping` (only when the list changed). A browser with an older export open never replaces a newer export's
-  list.
+- When a report is loaded on the hosted site, the page sends its list of tracking numbers to `/api/shipping` (only
+  when the list changed). A browser with an older export open never replaces a newer export's list.
 - The scheduled Worker in `workers/shipping-poller` asks FedEx about every listed shipment that is not delivered yet,
   every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 UTC), and saves the results.
 - The page reads the saved results. **Refresh now** makes the site ask FedEx immediately.
 - The FedEx code is in one place, `shared/fedex.mjs`, used by both the Worker and the Pages Function.
 - Only tracking numbers are sent to FedEx. Customer names, order values and the export never leave the dashboard.
 
-Opened from a file, from IIS or another web server, or as a **Share snapshot**, the page lists the tracking numbers from
-the export without live status, and says so. A snapshot keeps the statuses that were on screen when it was saved.
+Opened from a file, from IIS or another web server, or as a **Share snapshot**, the page lists the export's tracking
+numbers without live status, and says so. A snapshot keeps the statuses on screen when it was saved.
 
 ## One-time setup (owner / IT)
 
@@ -91,10 +90,10 @@ to Excel and load the file (New file). Make sure the shipping team fills **Track
 
 ### 2. FedEx developer project (free)
 
-1. Go to **developer.fedex.com** and sign in with the company's fedex.com user.
+1. Go to **developer.fedex.com** and sign in with Spyder Controls' fedex.com user.
 2. Create an **API project** and add the **Track API** to it. Accept the terms.
-3. FedEx shows **test** keys first: an **API key** and a **Secret key**. These only work against the FedEx sandbox,
-   which knows test tracking numbers, not your real shipments.
+3. FedEx shows **test** keys first (an **API key** and a **Secret key**). They only work against the FedEx sandbox,
+   which knows test tracking numbers, not real shipments.
 4. To track real shipments, ask for **production** keys for the project (FedEx asks for your FedEx account number).
    The production **API key** is `FEDEX_CLIENT_ID`, the production **Secret key** is `FEDEX_CLIENT_SECRET`.
 
@@ -129,8 +128,8 @@ npx wrangler pages secret put FEDEX_CLIENT_ID --project-name spyder-kpi-dashboar
 npx wrangler pages secret put FEDEX_CLIENT_SECRET --project-name spyder-kpi-dashboard
 ```
 
-then redeploy the site (Deployments → latest → Retry deployment). Without them the button explains that it is not set
-up, and everything else works.
+then redeploy the site (Deployments → latest → Retry deployment). Without them the button says it is not set up;
+everything else works.
 
 ### Testing with FedEx sandbox keys
 

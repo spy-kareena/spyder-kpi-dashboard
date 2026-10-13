@@ -141,7 +141,7 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   const click = (flow, node) => page.run(`sankeyNodeClick('weekly',${JSON.stringify(flow)},${JSON.stringify(node)})`);
   click('open', '0:CM - DSM');
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['CM - DSM']);
-  assert.match(html(page), /<g class="sk-node sk-plain sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="CM - DSM: \$3,500 open sales-order value, 2 orders, 2 lines \(100% of \$3,500\)\. Click to show every warehouse again\./);
+  assert.match(html(page), /<g class="sk-node sk-plain sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="CM - DSM: \$3,500 open, 2 orders, 2 lines \(100%\); click to show all\./);
   click('open', '0:CM - DSM');
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL']);
   click('open', '0#other');
@@ -155,7 +155,7 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.equal(page.run('weeklyTileFilter'), 'late');
   click('open', '1:pastdue');
   assert.equal(page.run('weeklyTileFilter'), 'late');
-  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="-1" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open sales-order value, 1 order, 1 line \([\d.]+% of \$[\d,]+\)\. Click to list these lines under Linked lines\."/);
+  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="-1" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open, 1 order, 1 line \([\d.]+%\); click to list these lines\."/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
   assert.match(html(page), /<g class="sk-node sk-crit sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="No commit date: /);
@@ -241,7 +241,7 @@ test('markup: the toggle and every box carry plain-English tips with full number
   assert.doesNotMatch(h, /<svg class="sk-svg[^>]*><title/, 'the chart has no root SVG title tooltip');
   assert.match(h, /<svg class="sk-svg[^"]*" role="group" aria-label="[^"]+" aria-describedby="sankey-weekly-[^"]+-desc"/);
   assert.match(h, /<path class="sk-link[^>]*><title>[^<]+ → [^<]+<\/title><\/path>/, 'bands keep a native title');
-  assert.match(h, /<details class="about sk-about"><summary data-tip="Show how this chart is built: [^"]+">About this chart<\/summary>/);
+  assert.match(h, /<details class="about sk-about"><summary data-tip="Show how this chart is built\.">About this chart<\/summary>/);
   assert.match(h, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
   assert.doesNotMatch(h, /<b>Co|undefined|NaN/);
   // Self-closing SVG shapes (<path …/>, <rect …/>) need no closing tag.
@@ -322,10 +322,10 @@ test('with the Big picture open, a redraw that changes no data or filter reuses 
   page.run("sankeyNodeClick('weekly','risk','2:APP1')");
   assert.ok(calls().reason > 0 && calls().cause > 0, 'rebuilt for the new filter');
   const app = () => page.run("sankeyFlows('weekly')[1].nodes.find(n=>n.id==='2:APP1')");
-  assert.match(app().tip, /Click to show every customer again\.$/);
+  assert.match(app().tip, /; click to show all\.$/);
   assert.match(html(page), /class="sk-node sk-[a-z]+ sk-sel"[^>]*aria-pressed="true"[^>]*data-sk-node="2:APP1"/);
   page.run("sankeyNodeClick('weekly','risk','2:APP1')");
-  assert.match(app().tip, /Click to show only this customer on Order Health\.$/);
+  assert.match(app().tip, /; click to filter\.$/);
   // Rebuilding the flows (same data and causes) reads each line's reasons and cause from the memo, not the rules.
   page.run("ohRowMemoFresh();orderHealthData(currentMetrics()).lateTileRows.forEach(ohRowInfo);filterCache.entries.forEach((v,key)=>{if(key.startsWith('sk|'))filterCache.entries.delete(key)})");
   reset();
@@ -367,7 +367,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   const L = page.run("(()=>{const f=sankeyFlows('buildrisk')[0];return sankeyLayout(f.nodes,f.links,{height:200});})()");
   assert.deepEqual(L.columns[2], ['2:2026-09', '2:2026-10']);
   checkLayout(L);
-  assert.match(h, /aria-label="DSM: 16 orders in the Sep 30 report \(13 clear to build, 2 at risk, 1 late\)\. Click to show only this CM on Build Risk\."/);
+  assert.match(h, /aria-label="DSM: 16 orders in the Sep 30 report \(13 clear to build, 2 at risk, 1 late\); click to filter\."/);
   assert.match(h, /Price &lt;i&gt;x&lt;\/i&gt;/);
   assert.doesNotMatch(h, /<i>x/);
 

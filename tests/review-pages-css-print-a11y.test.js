@@ -46,11 +46,11 @@ test('scorecard and PO warehouse rows name each value by its column; header rows
   assert.match(m, /<div class="thead sc-cols" aria-hidden="true">/);
   // The row's name is its tip, amounts in full: screen readers hear it once (wireTip adds no description when the
   // aria-label equals the tip), never "$1.7K" and then "$1,722" again.
-  assert.match(m, /class="trow sc-cols[^"]*"[^>]*aria-label="(Spyder - Lacombe: open \$[\d,]+, at risk \$[\d,]+, [\d,]+ lines? past due, OTD 3 mo no data, fill [^,]+, reschedule hit no data\. Click to show only this warehouse on the page\.)" data-tip="\1"/);
+  assert.match(m, /class="trow sc-cols[^"]*"[^>]*aria-label="(Spyder - Lacombe: open \$[\d,]+, at risk \$[\d,]+, [\d,]+ past due, OTD no data, fill [^,]+, reschedule hit no data; click to filter\.)" data-tip="\1"/);
   page.run('setTab("purchaseorders")');
   m = html(page);
   assert.match(m, /<div class="thead po-wh-cols" aria-hidden="true">/);
-  assert.match(m, /class="trow po-wh-cols[^"]*"[^>]*aria-label="(CM - Alta: \$1,000 open on 1 PO line; 1 late, 0 no commit, 0 future reschedules\. Click to show only this warehouse\.)" data-tip="\1"/);
+  assert.match(m, /class="trow po-wh-cols[^"]*"[^>]*aria-label="(CM - Alta: \$1,000 open on 1 PO line, 1 late, 0 no commit, 0 future; click to filter\.)" data-tip="\1"/);
   assert.doesNotMatch(m, /class="trow (?:sc|po-wh)-cols[^"]*"[^>]*aria-label="[^"]*\$[\d.]+[KM]\b/, 'no short money in a row name');
 });
 

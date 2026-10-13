@@ -95,32 +95,53 @@ test('tooltips say what a card counts with the numbers written in full ($1,721,8
   page.run("setTab('weekly')");
   const html = results(page);
   const atRisk = html.match(/data-focus-key="tile-late"[^>]*data-tip="([^"]+)"/)[1];
-  assert.match(atRisk, /^At risk: \$1,72\d,\d{3} open on \d+ orders \(\d+ lines\): /);
-  assert.match(atRisk, /Click to list them below\.$/);
+  assert.match(atRisk, /^At risk: \$1,72\d,\d{3} open on \d+ orders \(\d+ lines\); click to list them below\.$/);
   assert.match(html, /data-focus-key="tile-nocommit"[^>]*data-tip="No commit date: \$[\d,]+ open on 1 order \(1 line\) with no valid commit date/);
   assert.match(html, /data-focus-key="sc-Spyder - Lacombe"[^>]*data-tip="Spyder - Lacombe: open \$1,721,806, at risk \$1,721,806,/);
   for (const [, t] of html.matchAll(/data-tip="([^"]+)"/g)) assert.doesNotMatch(t, /\$\d+(\.\d+)?[KM]\b/, `short money in a tip: ${t}`);
   // Sortable headings say what the column is and how sorting works.
-  assert.match(html, /class="th-sort" data-focus-key="linked-sort-value" data-col="value" data-tip="Open value for open lines, line value for closed ones\. Click to sort by Value; click again to reverse\."/);
+  assert.match(html, /class="th-sort" data-focus-key="linked-sort-value" data-col="value" data-tip="Open value for open lines, line value for closed ones\. Click to sort, again to reverse\."/);
   // Column headings of data tables come from one list (COLUMN_TIPS); headings with no entry stay plain.
   page.run("setTab('supplyweekly')");
-  assert.match(results(page), /<th class="num" data-tip="Usable supply minus demand for that month alone\. Below zero means short that month\.">Monthly net<\/th>/);
+  assert.match(results(page), /<th class="num" data-tip="Usable supply minus demand for that month; below zero is short\.">Monthly net<\/th>/);
   page.run("setTab('buildrisk')");
   assert.match(results(page), /<th class="num">Sep 24<\/th>/);
 });
 
-test('section ⓘ buttons: every key has its texts, opens one shared popover, and About these numbers repeats them', async () => {
+test('tooltips stay short on every page: about 20 words, never a paragraph', async () => {
+  const page = await loadedAll();
+  let checked = 0;
+  eachView(page, (html, view) => {
+    for (const [, raw] of html.matchAll(/data-tip="([^"]+)"/g)) {
+      const t = raw.replace(/&[a-z#0-9]+;/gi, ' ');
+      checked++;
+      // Data tips list a few values with "·"; prose tips are one short sentence.
+      assert.ok(t.split(/\s+/).length <= 30, `${view}: long tip (${t.split(/\s+/).length} words): ${t}`);
+    }
+  });
+  assert.ok(checked > 1000, `checked ${checked} tips`);
+});
+
+test('section ⓘ buttons: every key has a short what and click text, opens one shared popover; About these numbers is 3-5 short bullets', async () => {
   const page = await loadedAll();
   const keys = new Set();
+  const sentences = (t) => t.split(/[.!?](?:\s|$)/).filter((x) => x.trim()).length;
   eachView(page, (html, view) => {
     const pageKeys = [...html.matchAll(/<button type="button" class="info-btn print-hide" data-info="([\w-]+)" data-focus-key="info-\1" aria-haspopup="dialog" aria-expanded="false" aria-controls="info-pop" aria-label="About ([^"]+)"/g)];
     for (const [, key, title] of pageKeys) {
       keys.add(key);
       const info = page.run(`SECTION_INFO[${JSON.stringify(key)}]`);
-      assert.ok(info && info.title && info.what && info.source && info.click, `${view}: ${key} has a definition, a source and a click text`);
+      assert.ok(info && info.title && info.what && info.click, `${view}: ${key} has a definition and a click text`);
       assert.equal(title, info.title.replace(/’/g, '’'));
-      // The same text is in the page's About these numbers block.
-      assert.ok(html.includes(`<strong>${page.run(`esc(SECTION_INFO[${JSON.stringify(key)}].title)`)}.</strong>`), `${view}: About block lists ${key}`);
+      // At most two short sentences: what the section shows, what clicking does.
+      assert.equal(sentences(info.what) + sentences(info.click), 2, `${view}: ${key} is two sentences`);
+      assert.ok(`${info.what} ${info.click}`.split(/\s+/).length <= 30, `${view}: ${key} is short`);
+    }
+    // Every page's About block is a short list: 3 to 5 bullets of at most 30 words.
+    for (const [about] of html.matchAll(/<details class="about[^"]*"><summary[^>]*>About these numbers<\/summary>[\s\S]*?<\/details>/g)) {
+      const items = about.match(/<li>[\s\S]*?<\/li>/g) || [];
+      assert.ok(items.length >= 3 && items.length <= 5, `${view}: About has ${items.length} bullets`);
+      for (const li of items) assert.ok(li.replace(/<[^>]+>/g, '').split(/\s+/).length <= 30, `${view}: ${li}`);
     }
   });
   assert.ok(keys.size >= 35, `${keys.size} sections have an ⓘ`);
@@ -134,7 +155,7 @@ test('section ⓘ buttons: every key has its texts, opens one shared popover, an
   page.ctx.__btn = btn;
   page.run('toggleInfo(__btn)');
   assert.equal(pop.hidden, false);
-  assert.match(pop.innerHTML, /<h3 id="info-pop-title">Warehouse scorecard<\/h3>[\s\S]*<dt>Where the numbers come from<\/dt>[\s\S]*<dt>Clicking<\/dt><dd>Click a row to show only that warehouse/);
+  assert.match(pop.innerHTML, /<h3 id="info-pop-title">Warehouse scorecard<\/h3>[\s\S]*<p>Open, at-risk and past-due value[^<]*<\/p><p>Click a row to show only that warehouse/);
   assert.equal(btn.attrs['aria-expanded'], 'true');
   page.run('toggleInfo(__btn)');
   assert.deepEqual([pop.hidden, btn.attrs['aria-expanded'], btn.focused], [true, 'false', true]);
@@ -257,10 +278,11 @@ test('tipped headings, column headings and static cards become tab stops; table 
 test('nested tips reach keyboard users through their control: delta pill text in the card tip', () => {
   const page = loadPage();
   const series = JSON.stringify([{ label: 'Jul', otd: 70 }, { label: 'Aug', otd: 80 }, { label: 'Sep', otd: null }]);
-  assert.equal(page.run(`withDeltaText('OTD: 80%. Target 90%. Click for late deliveries.',${series},'otd')`), 'OTD: 80%. Target 90%. Aug: 80% against Jul: 70% (the last full month against the month before). Click for late deliveries.');
-  assert.equal(page.run(`withDeltaText('PO OTD: 80%. Target 90%.',${series},'otd')`), 'PO OTD: 80%. Target 90%. Aug: 80% against Jul: 70% (the last full month against the month before).');
+  assert.equal(page.run(`withDeltaText('OTD: 80%; click for late deliveries.',${series},'otd')`), 'OTD: 80% (Aug 80% vs Jul 70%); click for late deliveries.');
+  assert.equal(page.run(`withDeltaText('OTD: 80%. Target 90%. Click for late deliveries.',${series},'otd')`), 'OTD: 80%. Target 90% (Aug 80% vs Jul 70%). Click for late deliveries.');
+  assert.equal(page.run(`withDeltaText('PO OTD: 80%.',${series},'otd')`), 'PO OTD: 80% (Aug 80% vs Jul 70%).');
   assert.equal(page.run(`withDeltaText('No data.',[{label:'Aug',otd:null}],'otd')`), 'No data.');
-  assert.match(page.run(`renderDeltaPill(${series},'otd')`), /data-tip="Aug: 80% against Jul: 70% \(the last full month against the month before\)\. Target 90%\."/);
+  assert.match(page.run(`renderDeltaPill(${series},'otd')`), /data-tip="Aug 80% vs Jul 70%; target 90%\."/);
 });
 
 test('tooltip and popover placement: preferred side, flips when there is no room, stays inside the window', () => {
@@ -409,7 +431,7 @@ test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast
 
 test('first-visit hints stay dismissed (localStorage spyderKpiHints) until Show hints again', async () => {
   const page = loadPage();
-  assert.match(page.els['upload-hint'].innerHTML, /data-hint="upload"[\s\S]*Start here\./);
+  assert.match(page.els['upload-hint'].innerHTML, /data-hint="upload"[\s\S]*Start here:/);
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
   page.run("setTab('weekly')");
   assert.match(results(page), /<div class="hint-card print-hide" role="note" aria-label="Hint" data-hint="weekly-cards">/);
@@ -450,9 +472,9 @@ test('every column heading on every page explains itself (its own tip or a tippe
   assert.ok(checked > 150, `checked ${checked} headings`);
   for (const h of ['Doc #', 'SO #', 'PO #', 'Customer / vendor', 'Warehouse', 'Item / description', 'Month', 'Type']) assert.ok(seen.has(h), `${h} was drawn and checked`);
   // Headings that mean something else in one table use that table's text.
-  assert.equal(page.run("columnTip('metrics-timeline','Month')"), 'Effective due month: the reschedule date when the line has one, otherwise its due date.');
+  assert.equal(page.run("columnTip('metrics-timeline','Month')"), 'Effective due month: the reschedule date, else the due date.');
   assert.match(page.run("columnTip('br-ctb','Month')"), /Clear To Build report row/);
-  assert.match(page.run("columnTip('anything','Month')"), /demand month \(YearMonth\)/);
+  assert.match(page.run("columnTip('anything','Month')"), /Demand month \(YearMonth\)/);
   assert.deepEqual(page.errors, []);
 });
 
@@ -462,7 +484,13 @@ test('first-visit hints say what the Order Health tabs are and where Shipping ge
   const hint = (html, id) => (html.match(new RegExp(`data-hint="${id}">([\\s\\S]*?)</div>`)) || [])[1] || '';
   assert.match(hint(results(page), 'weekly-cards'), /<strong>Leading<\/strong> shows what needs action now[\s\S]*<strong>Lagging<\/strong> shows how we performed/);
   page.run("setTab('shipping')");
-  assert.match(hint(results(page), 'shipping'), /taken from the delivery in SAP \(its tracking number field\)/);
+  assert.match(hint(results(page), 'shipping'), /an SAP delivery with a FedEx tracking number/);
+  // Every first-visit hint is one short sentence.
+  for (const id of ['weekly-cards', 'shipping']) {
+    page.run(`setTab(${JSON.stringify(id === 'shipping' ? 'shipping' : 'weekly')})`);
+    const text = hint(results(page), id).replace(/<[^>]+>/g, '');
+    assert.ok(text.split(/\s+/).length <= 25 && !/[.!?]\s+\S/.test(text.trim()), `${id}: ${text}`);
+  }
   assert.deepEqual(page.errors, []);
 });
 
@@ -472,12 +500,13 @@ test('page descriptions: under each page name on the load screen, as the tooltip
   const descs = page.run('PAGE_TIPS');
   for (const [id, text] of Object.entries(descs)) {
     assert.match(sidebar(page), new RegExp(`data-focus-key="nav-${id}"[^>]*>[^]*?<span class="nav-desc">${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</span>`), id);
+    assert.ok(text.split(/\s+/).length <= 8, `${id}: a few words`);
   }
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
   assert.doesNotMatch(sidebar(page), /nav-desc/);
   // The badge's meaning is in the button's own tip (keyboard focus shows that one) and hidden text for screen readers.
-  assert.match(sidebar(page), new RegExp(`data-focus-key="nav-weekly" onclick="setTab\\('weekly'\\)" aria-current="page" data-tip="${descs.weekly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+ orders at risk \\(same count as the At risk card\\)\\."`));
-  assert.match(sidebar(page), /<span class="nav-badge" data-tip="\d+ orders at risk \(same count as the At risk card\)">\d+<span class="sr-only"> orders at risk<\/span><\/span>/);
+  assert.match(sidebar(page), new RegExp(`data-focus-key="nav-weekly" onclick="setTab\\('weekly'\\)" aria-current="page" data-tip="${descs.weekly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+ orders at risk\\."`));
+  assert.match(sidebar(page), /<span class="nav-badge" data-tip="\d+ orders at risk">\d+<span class="sr-only"> orders at risk<\/span><\/span>/);
 });
 
 // Warehouse scorecard: two CM SFG and three other warehouses, with open, at-risk, past-due lines and deliveries.

@@ -2,7 +2,7 @@
 
 ## What this is
 
-This package is a browser dashboard for SAP B1 KPI exports. The user opens the page, uploads Excel/CSV exports, and the dashboard processes the files in the browser.
+A browser dashboard for SAP B1 KPI exports: users upload Excel/CSV exports and the page processes them in the browser.
 
 There are two ways to host it:
 
@@ -44,24 +44,20 @@ For any other internal static server, point the document root at this folder and
 
 ## Data and notes behavior
 
-The dashboard reads uploaded Excel/CSV files locally in the browser.
-
-The files of the last report are kept so the dashboard reopens on them; loading a new report replaces them.
+The dashboard reads uploaded Excel/CSV files in the browser and keeps the last report's files so it reopens on them; loading a new report replaces them.
 
 - **Cloudflare Pages with shared storage:** a compressed copy of the files (about 1.5 MB for a year of SO/PO lines plus the Clear To Build workbook) is kept in Workers KV, and everyone who signs in opens on it. One upload replaces it for everyone. Setup below.
 - **Other hosts, or Cloudflare without the binding:** the files are kept in each browser (IndexedDB, database `spyderKpiReport`). To remove them, clear the site data for the dashboard in the browser settings. On a shared computer, use a separate browser profile per person.
 
 ### Shared report storage (Cloudflare Pages)
 
-The binding lives in the repo's `wrangler.toml`, which Cloudflare Pages reads on every deploy. Once that file is in use, bindings are no longer edited in the Cloudflare dashboard.
+The binding lives in the repo's `wrangler.toml`, which Cloudflare Pages reads on every deploy; bindings are then no longer edited in the Cloudflare dashboard.
 
 1. Create the namespace once: `npx wrangler kv namespace create spyder-kpi-report` (or Cloudflare dashboard > Storage & Databases > Workers KV > **Create namespace**). If it already exists from an earlier version, keep it: `npx wrangler kv namespace list` shows its id.
 2. In `wrangler.toml`, put the id in place of `REPLACE_WITH_REPORT_STORE_NAMESPACE_ID` and remove the `# ` in front of the three lines that start with `[[kv_namespaces]]`. Put the same id in `workers/shipping-poller/wrangler.toml`.
 3. Commit and push to `main` (Pages builds from GitHub), or deploy by hand with `npx wrangler pages deploy . --project-name spyder-kpi-dashboard`. The sidebar then says "Saved for everyone who signs in" after an upload.
 
-`/api/report`, `/api/notes` and `/api/history` sit behind the same sign-in as the page; only a signed-in page on the same site can change what is stored (requests from another site are refused). The same binding turns on shared notes and the at-risk history; nothing else needs setting up.
-
-The same namespace also holds the Shipping page's FedEx results (keys starting with `tracking:`, see below).
+`/api/report`, `/api/notes` and `/api/history` sit behind the same sign-in as the page; only a signed-in page on the same site can change what is stored (requests from another site are refused). The same binding turns on shared notes and the at-risk history; nothing else needs setting up. The namespace also holds the Shipping page's FedEx results (keys starting with `tracking:`, see below).
 
 ### Live shipping (FedEx, optional)
 
@@ -96,7 +92,7 @@ so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipD
 | `REPORT_STORE` | KV binding in `wrangler.toml` and `workers/shipping-poller/wrangler.toml` (same namespace, `spyder-kpi-report`) | Recommended | Shared report, notes, at-risk history and FedEx results (keys below) |
 | Worker cron | `workers/shipping-poller/wrangler.toml`: `crons = ["0 */4 * * *"]` | With live shipping | Checks FedEx every 4 hours (00:00, 04:00, ... 20:00 UTC) |
 
-Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard` (or Workers & Pages > **spyder-kpi-dashboard** > Settings > Variables and Secrets, type **Secret**), then redeploy. Worker secrets: `npx wrangler secret put <NAME>` in `workers/shipping-poller`. Because the repo has a `wrangler.toml`, plain-text variables typed into the Cloudflare dashboard are replaced on each deploy, so use the **Secret** type for everything above.
+Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard` (or Workers & Pages > **spyder-kpi-dashboard** > Settings > Variables and Secrets, type **Secret**), then redeploy. Worker secrets: `npx wrangler secret put <NAME>` in `workers/shipping-poller`. The repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy: use the **Secret** type for everything above.
 
 ### What is stored in the KV namespace
 
@@ -111,7 +107,17 @@ Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-d
 
 A line key looks like `Sales Order|1234|5678|0|SPY-100|Spyder - Lacombe`. Notes are free text typed by users, so treat the namespace like the SAP export itself. Initials are what each person types the first time they edit a note (kept in their browser as `spyderKpiEditor`); they are not checked against accounts, since the site has one shared password.
 
-How shared notes merge: every browser keeps its own copy (localStorage) and, when the page opens (and again when it comes back into view, at most once a minute), reads the server copy and merges line by line. The newer edit wins, so if two people change the same line the later change stays (two edits with exactly the same time: the server keeps the one it stored first, and every browser takes that one). Times come from each computer's clock, corrected to the server's time when the computer's clock is more than two minutes off (the page reads the server's Date header); a time ahead of the server's is saved as the server's time, and the page then keeps the server's time for that edit, so a computer with a fast clock does not keep overwriting newer edits from others. Workers KV has no locking and takes one write per second to the same key: the page waits at least 1.1 seconds between saves (edits made meanwhile go out together), the server tries a busy write once more after a second, and the page sends a batch again (after 2, 4, 8 ... seconds) when the server is busy or fails. Workers KV has no locking and other Cloudflare locations can see an older copy for up to about a minute, so two saves from different locations within about a minute (or two at the same moment) can overwrite each other; the browser whose edit was dropped reads the notes again about a minute after its save and sends it again (if that page was closed first, it sends it the next time it opens). If the stored notes cannot be read, a save is refused (nothing is overwritten) and the page tries again. A line whose note was cleared is kept as a small marker (initials and time only) so other browsers drop their copy; markers older than 180 days are dropped on every save. When the 2 MB cap is reached (each save reads and rewrites the whole value, so it is kept small for the Workers Free plan's 10 ms of CPU per request), the entries edited longest ago go, so new edits always save; a browser that still has a dropped note sends it back the next time it opens. At most 500 lines new to the server are taken per save; a save sent while the page is being hidden or closed is kept under 60 KB (browsers refuse larger keep-alive requests) and the rest goes after, or the next time the page opens. If the server cannot be reached or answers with an error page, edits stay in that browser and are sent again shortly, when the page comes back into view, or the next time it opens. A save the server refuses (an expired sign-in, full storage) is not sent again by itself: the sidebar says how many changes are not saved until they go out (the next read of the notes sends them). Only an answer that clearly says the site has no notes API (the function's own "not set up" reply, or a 404 / 405 page that is not JSON) makes the page keep notes in the browser for that visit. Hosts without these functions (IIS, a file share) keep notes in each browser, as before.
+How shared notes merge:
+
+- Every browser keeps its own copy (localStorage). When the page opens (and when it comes back into view, at most once a minute) it reads the server copy and merges line by line. The newer edit wins, so if two people change the same line the later change stays (with exactly the same time, the server keeps the one it stored first and every browser takes it).
+- Times come from each computer's clock, corrected to the server's time (its Date header) when the clock is more than two minutes off. A time ahead of the server's is saved as the server's time and the page keeps that, so a computer with a fast clock does not keep overwriting newer edits.
+- Workers KV has no locking and takes one write per second to the same key: the page waits at least 1.1 seconds between saves (edits made meanwhile go out together), the server retries a busy write once after a second, and the page sends a batch again (after 2, 4, 8 ... seconds) when the server is busy or fails. Other Cloudflare locations can see an older copy for up to about a minute, so two saves from different locations within about a minute (or at the same moment) can overwrite each other; the browser whose edit was dropped reads the notes again about a minute after its save and sends it again (or the next time it opens, if the page was closed).
+- If the stored notes cannot be read, a save is refused (nothing is overwritten) and the page tries again.
+- A line whose note was cleared is kept as a small marker (initials and time only) so other browsers drop their copy; markers older than 180 days are dropped on every save.
+- At the 2 MB cap (each save reads and rewrites the whole value, kept small for the Workers Free plan's 10 ms of CPU per request) the entries edited longest ago go, so new edits always save; a browser that still has a dropped note sends it back the next time it opens.
+- At most 500 lines new to the server are taken per save. A save sent while the page is being hidden or closed is kept under 60 KB (browsers refuse larger keep-alive requests); the rest goes after, or the next time the page opens.
+- If the server cannot be reached or answers with an error page, edits stay in that browser and are sent again shortly, when the page comes back into view, or the next time it opens. A save the server refuses (an expired sign-in, full storage) is not resent by itself: the sidebar says how many changes are not saved until they go out (the next read of the notes sends them).
+- Only an answer that clearly says the site has no notes API (the function's own "not set up" reply, or a 404 / 405 page that is not JSON) makes the page keep notes in the browser for that visit. Hosts without these functions (IIS, a file share) keep notes in each browser, as before.
 
 Free tier: 1,000 writes and 100,000 reads a day. One upload is three writes (report, history and history:first), each batch of note edits is one write (and one read about a minute later by the browser that saved), and each page open is three reads. A team of a few people stays well inside the limit.
 
@@ -131,7 +137,7 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
 
 ## Security notes
 
-- No external data upload is required by this package. The optional **Ask AI** panel sends questions and the data needed to answer them to the AI provider the user picks, only after the user ticks that provider's consent box. Paid providers (Claude, ChatGPT) do not train on API data; the free ones (Groq, OpenRouter free models) have weaker terms, and OpenRouter's free hosts may keep or publish prompts. See `docs/AI_ASSISTANT.md`.
+- No external data upload is required. The optional **Ask AI** panel sends questions and the data needed to answer them to the AI provider the user picks, only after the user ticks that provider's consent box. Paid providers (Claude, ChatGPT) do not train on API data; the free ones (Groq, OpenRouter free models) have weaker terms, and OpenRouter's free hosts may keep or publish prompts. See `docs/AI_ASSISTANT.md`.
 - Ask AI keys (Cloudflare Pages secrets, each optional; set at least one to turn Ask AI on, for Production and Preview as needed, then redeploy):
   - `ANTHROPIC_API_KEY` - Claude (paid, billed to the Anthropic account)
   - `OPENAI_API_KEY` - ChatGPT (paid, billed to the OpenAI account)
@@ -154,4 +160,4 @@ With Node.js 20 or newer (no install needed): `node tests/run-all.js`.
 
 ## Updating later
 
-To update the dashboard later, replace `index.html` with a newer version and update `VERSION.txt`.
+To update the dashboard, replace `index.html` with a newer version and update `VERSION.txt`.

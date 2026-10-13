@@ -153,7 +153,7 @@ test('open order states partition the open lines (count and value) and match the
 test('when flagged: weeks since first at risk from firstFlagged; missing history counts as new this week', async () => {
   const page = await withOverrides();
   assert.deepEqual(lead(page).ages, [['new', 7], ['1-2', 0], ['3-4', 0], ['5-8', 0], ['9+', 0]]);
-  assert.match(html(page), /No upload history yet, so every line counts as new this week/);
+  assert.match(html(page), /No upload history yet, so every line counts as new\./);
   // The shared notes store fills the global firstFlagged map (rowKey -> export date of the first at-risk upload).
   page.ctx.firstFlagged = {
     [key(page, '100')]: '2026-09-03', [key(page, '101')]: '2026-08-27', [key(page, '102')]: '2026-08-13',
@@ -161,7 +161,7 @@ test('when flagged: weeks since first at risk from firstFlagged; missing history
   };
   page.run('renderResults()');
   assert.deepEqual(lead(page).ages, [['new', 3], ['1-2', 1], ['3-4', 2], ['5-8', 0], ['9+', 1]]); // 7, 21 and 28 days, 63 days
-  assert.match(html(page), /From the at-risk history of earlier uploads\./);
+  assert.doesNotMatch(html(page), /No upload history yet/);
   assert.equal(page.run(`ohFlaggedSince(${row('106')})`), '2026-07-02');
 });
 
@@ -372,7 +372,7 @@ test('Lagging: perfect order and average days late, Us / Them on every rate, bui
   const m = html(page);
   assert.match(m, /Perfect order · 12 mo<\/span>[\s\S]*?<span class="kpi-value crit">25%<\/span>/);
   assert.match(m, /Avg days late · 3 mo<\/span>[\s\S]*?<span class="kpi-value crit">7\.3 d<\/span>/);
-  assert.match(m, /3 of 4 deliveries shipped after the original date/);
+  assert.match(m, /3 of 4 deliveries late · \$/);
   // Each lagging card says who caused its misses.
   assert.match(m, /OTD · 3 mo<\/span>[\s\S]*?1\+ days late: <b class="cause-text-us">Us 3<\/b><\/span>/);
   assert.match(m, /Fill rate<\/span>[\s\S]*?Past due, open: <b class="cause-text-us">Us 3<\/b> · <b class="cause-text-them">Them 1<\/b> · <b class="cause-text-neutral">Neutral 1<\/b> · <b class="cause-text-unknown">Not set 2<\/b><\/span>/);
@@ -410,7 +410,7 @@ test('Top offenders draws the waffle; clicking a row filters the page to it, a v
   assert.deepEqual(blocks('PATRICK'), ['us', 'us']); // $45,000 -> 2 blocks, all Us
   assert.deepEqual(blocks('FIREFLY'), ['us']); // $23,500 -> 1 block; Us has the biggest share ($10,000)
   assert.deepEqual(blocks('AQUHOT'), ['us half']); // $8,000 -> half block
-  assert.match(offenders, /data-tip="Patrick: \$45,000 at-risk open value on 1 line\. Us \$45,000\. +Click to show only this customer on Order Health\."/);
+  assert.match(offenders, /data-tip="Patrick: \$45,000 at-risk value on 1 line \(Us \$45,000\); click to filter\."/);
   assert.match(offenders, /■ = \$20k/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['PATRICK']);
@@ -468,9 +468,13 @@ test('every new control and chart carries a plain-English tip with full numbers;
 test('About these numbers defines every new number in plain English', async () => {
   const page = await loaded();
   const about = html(page).match(/<details class="about rise"><summary data-tip="[^"]+">About these numbers<\/summary>[\s\S]*?<\/details>/)[0];
-  for (const term of ['Leading and Lagging', 'Us vs Them', 'Reasons', 'Open order states', 'When flagged', 'OTD · 3 mo', 'Shipped this week', 'Fill rate', 'Reschedule hit · 12 mo', 'Perfect order · 12 mo', 'Avg days late · 3 mo', 'Top offenders', '$20,000']) {
+  // Short: 3 to 5 bullets with the definitions people need (the cards' own tips carry the rest).
+  const bullets = about.match(/<li>/g) || [];
+  assert.ok(bullets.length >= 3 && bullets.length <= 5, `${bullets.length} bullets`);
+  for (const term of ['At risk', 'Us / Them', 'OTD', 'Reschedule hit', 'Fill rate', 'When flagged', '90%']) {
     assert.ok(about.includes(term), term);
   }
+  for (const li of about.match(/<li>[\s\S]*?<\/li>/g)) assert.ok(li.replace(/<[^>]+>/g, '').split(/\s+/).length <= 25, li);
 });
 
 test('an export with no sales order lines still draws Order Health without errors', async () => {
