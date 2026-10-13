@@ -142,7 +142,7 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   const click = (flow, node) => page.run(`sankeyNodeClick('weekly',${JSON.stringify(flow)},${JSON.stringify(node)})`);
   click('open', '0:CM - DSM');
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['CM - DSM']);
-  assert.match(html(page), /<g class="sk-node sk-plain sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="CM - DSM: \$3,500 open sales-order value, 2 orders, 2 lines \(100% of \$3,500\)\. Click to show every warehouse again\./);
+  assert.match(html(page), /<g class="sk-node sk-plain sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="CM - DSM: \$3,500 open, 2 orders, 2 lines \(100%\); click to show all\./);
   click('open', '0:CM - DSM');
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['ALL']);
   click('open', '0#other');
@@ -156,7 +156,7 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   assert.equal(page.run('weeklyTileFilter'), 'late');
   click('open', '1:pastdue');
   assert.equal(page.run('weeklyTileFilter'), 'late');
-  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="-1" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open sales-order value, 1 order, 1 line \([\d.]+% of \$[\d,]+\)\. Click to list these lines under Linked lines\."/);
+  assert.match(html(page), /<g class="sk-node sk-crit" role="button" tabindex="-1" aria-pressed="false" aria-label="Past due, no reschedule: \$1,000 open, 1 order, 1 line \([\d.]+%\); click to list these lines\."/);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
   assert.match(html(page), /<g class="sk-node sk-crit sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="No commit date: /);
@@ -222,17 +222,17 @@ test('markup: the header switch and every box carry plain-English tips with full
   assert.doesNotMatch(closed, /<svg class="sk-svg|sk-card|sk-toggle|sk-bar/, 'nothing is drawn while the switch is off, and there is no in-page button');
   page.run("toggleSankey('weekly')");
   const h = html(page);
-  assert.match(h, /<button type="button" class="btn bp-switch" role="switch" aria-checked="true" aria-controls="sankey-weekly" data-focus-key="bp-switch-weekly" data-tip="Hide the flow chart\. Filters picked in it stay on\."/);
+  assert.match(h, /<button type="button" class="btn bp-switch" role="switch" aria-checked="true" aria-controls="sankey-weekly" data-focus-key="bp-switch-weekly" data-tip="Hide the flow chart; filters picked in it stay on\."/);
   assert.match(h, /<section class="card sk-card rise" id="sankey-weekly" aria-labelledby="sankey-weekly-title">/);
   // A compact head: the title, the chart picker (Order Health has two charts, one shown at a time) and one sub-title.
-  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-weekly-title">Big picture<\/h2><div class="segmented sk-pick" role="group" aria-label="Big picture chart"><button type="button" class="active" aria-pressed="true" data-focus-key="sk-pick-weekly-open" data-tip="Where open order value sits: warehouse, status, customer segment\." onclick="setSankeyFlow\('weekly','open'\)">Open order value<\/button><button type="button" class="" aria-pressed="false" data-focus-key="sk-pick-weekly-risk" data-tip="Why value is at risk: reason, Us \/ Them, customer\." onclick="setSankeyFlow\('weekly','risk'\)">At-risk value<\/button><\/div><span class="sk-name print-only">Open order value<\/span><span class="section-sub sk-sub">\$[\d,]+ across \d+ orders in this view<\/span><\/div>/);
+  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-weekly-title">Big picture<\/h2><div class="segmented sk-pick" role="group" aria-label="Big picture chart"><button type="button" class="active" aria-pressed="true" data-focus-key="sk-pick-weekly-open" data-tip="Where open order value sits: warehouse, status, customer segment\." onclick="setSankeyFlow\('weekly','open'\)">Open order value<\/button><button type="button" class="" aria-pressed="false" data-focus-key="sk-pick-weekly-risk" data-tip="Why value is at risk: reason, Us \/ Them, customer\." onclick="setSankeyFlow\('weekly','risk'\)">At-risk value<\/button><\/div><span class="sk-name print-only">Open order value<\/span><span class="section-sub sk-sub">\$[\d,]+ across \d+ orders<\/span><\/div>/);
   assert.doesNotMatch(h, /Band thickness is value|Tab to the chart and use the arrow keys/, 'no long captions around the chart');
   assert.match(h, /<p class="sk-detail print-hide" aria-hidden="true">Hover a box for its numbers; click it to filter\.<\/p>/);
   page.run("setSankeyFlow('weekly','risk')");
   const hr = html(page);
   assert.equal(page.run('sankeyFlowPick.weekly'), 'risk');
   assert.match(hr, /aria-pressed="true" data-focus-key="sk-pick-weekly-risk"/);
-  assert.match(hr, /<span class="section-sub sk-sub">\$[\d,]+ across \d+ orders · same lines as the At Risk card<\/span>/);
+  assert.match(hr, /<span class="section-sub sk-sub">\$[\d,]+ across \d+ orders<\/span>/);
   for (const one of [h, hr]) {
     // Each chart is one Tab stop (roving tabindex): the arrow keys move between its boxes, Tab goes on past it.
     const svgs = one.match(/<svg class="sk-svg[\s\S]*?<\/svg>/g);
@@ -257,7 +257,7 @@ test('markup: the header switch and every box carry plain-English tips with full
   assert.doesNotMatch(both, /<svg class="sk-svg[^>]*><title/, 'the chart has no root SVG title tooltip');
   assert.match(h, /<svg class="sk-svg[^"]*" role="group" aria-label="[^"]+" aria-describedby="sankey-weekly-[^"]+-desc"/);
   assert.match(h, /<path class="sk-link[^>]*><title>[^<]+ → [^<]+<\/title><\/path>/, 'bands keep a native title');
-  assert.match(h, /<details class="about sk-about"><summary data-tip="How this chart is built and what clicking does\.">About this chart<\/summary>/);
+  assert.match(h, /<details class="about sk-about"><summary data-tip="Show how this chart is built\.">About this chart<\/summary>/);
   assert.match(hr, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
   assert.doesNotMatch(both, /<b>Co|undefined|NaN/);
   // Self-closing SVG shapes (<path …/>, <rect …/>) need no closing tag.
@@ -402,10 +402,10 @@ test('with the Big picture open, a redraw that changes no data or filter reuses 
   page.run("sankeyNodeClick('weekly','risk','2:APP1')");
   assert.ok(calls().reason > 0 && calls().cause > 0, 'rebuilt for the new filter');
   const app = () => page.run("sankeyFlows('weekly')[1].nodes.find(n=>n.id==='2:APP1')");
-  assert.match(app().tip, /Click to show every customer again\.$/);
+  assert.match(app().tip, /; click to show all\.$/);
   assert.match(html(page), /class="sk-node sk-[a-z]+ sk-sel"[^>]*aria-pressed="true"[^>]*data-sk-node="2:APP1"/);
   page.run("sankeyNodeClick('weekly','risk','2:APP1')");
-  assert.match(app().tip, /Click to show only this customer on Order Health\.$/);
+  assert.match(app().tip, /; click to filter\.$/);
   // Rebuilding the flows (same data and causes) reads each line's reasons and cause from the memo, not the rules.
   page.run("ohRowMemoFresh();orderHealthData(currentMetrics()).lateTileRows.forEach(ohRowInfo);filterCache.entries.forEach((v,key)=>{if(key.startsWith('sk|'))filterCache.entries.delete(key)})");
   reset();
@@ -455,7 +455,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   const L = page.run("(()=>{const f=sankeyFlows('buildrisk')[0];return sankeyLayout(f.nodes,f.links,{height:200});})()");
   assert.deepEqual(L.columns[2], ['2:2026-09', '2:2026-10']);
   checkLayout(L);
-  assert.match(h, /aria-label="DSM: 16 orders in the Sep 30 report \(13 clear to build, 2 at risk, 1 late\)\. Click to show only this CM on Build Risk\."/);
+  assert.match(h, /aria-label="DSM: 16 orders in the Sep 30 report \(13 clear to build, 2 at risk, 1 late\); click to filter\."/);
   assert.match(h, /Price &lt;i&gt;x&lt;\/i&gt;/);
   assert.doesNotMatch(h, /<i>x/);
 

@@ -1,16 +1,16 @@
 # Owner checklist: put version 2v1 live
 
-For the owner, deploying from Kareena's Cloudflare account. Run the commands in a terminal in the dashboard folder (the GitHub repo `spy-kareena/spyder-kpi-dashboard`) on a computer with Node.js 20 or newer. Sign in to Cloudflare once with `npx wrangler login` (as Kareena's account; `npx wrangler whoami` shows which account is signed in).
+For the owner, deploying from Kareena's Cloudflare account. Run the commands in a terminal in the dashboard folder (GitHub repo `spy-kareena/spyder-kpi-dashboard`) on a computer with Node.js 20 or newer. Sign in to Cloudflare once with `npx wrangler login` (as Kareena's account; `npx wrangler whoami` shows which account is signed in).
 
 Never commit the SAP export, the Clear To Build workbook or any key.
 
-1. **Check how the site deploys.** Cloudflare > Workers & Pages > **spyder-kpi-dashboard** > Settings > Build (Builds & deployments). It should be connected to GitHub `spy-kareena/spyder-kpi-dashboard` with production branch `main`; then every push to `main` deploys the site. If it is not connected, deploy by hand after each change:
+1. **Check how the site deploys.** Cloudflare > Workers & Pages > **spyder-kpi-dashboard** > Settings > Build (Builds & deployments) should be connected to GitHub `spy-kareena/spyder-kpi-dashboard`, production branch `main`, so every push to `main` deploys. If not, deploy by hand after each change:
 
    ```
    npx wrangler pages deploy . --project-name spyder-kpi-dashboard
    ```
 
-2. **Make the sign-in settings secrets.** Same project > Settings > Variables and Secrets. `DASHBOARD_PASSWORD` and `SESSION_SECRET` must both be type **Secret** (value hidden), not **Plain text**, for Production (and Preview if you use previews). The repo's `wrangler.toml` takes over plain-text variables on the next deploy, so a plain one would disappear and the site would say "not configured". To change one into a secret, delete the plain-text entry, then:
+2. **Make the sign-in settings secrets.** Same project > Settings > Variables and Secrets: `DASHBOARD_PASSWORD` and `SESSION_SECRET` must be type **Secret** (value hidden), not **Plain text**, for Production (and Preview if you use previews). The repo's `wrangler.toml` replaces plain-text variables on the next deploy, so a plain one would disappear and the site would say "not configured". To make one a secret, delete the plain-text entry, then:
 
    ```
    npx wrangler pages secret put DASHBOARD_PASSWORD --project-name spyder-kpi-dashboard
@@ -39,12 +39,12 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    npx wrangler pages secret put OPENROUTER_API_KEY --project-name spyder-kpi-dashboard
    ```
 
-   - Set a monthly spend limit on the paid accounts: Claude Console > Limits, and OpenAI > Limits. The site also caps the paid providers at 300 requests a day each (`AI_DAILY_REQUESTS` changes it; see AI_ASSISTANT.md).
-   - OpenRouter: decide on Settings > Privacy. Free models only work if the account allows providers that may train on or publish prompts; if you leave that off, OpenRouter models say they "could not be used with this account's privacy settings". Treat anything sent to OpenRouter as public.
+   - Set a monthly spend limit on the paid accounts (Claude Console > Limits, OpenAI > Limits). The site also caps each paid provider at 300 requests a day (`AI_DAILY_REQUESTS` changes it; see AI_ASSISTANT.md).
+   - OpenRouter: decide on Settings > Privacy. Free models only work if the account allows providers that may train on or publish prompts; otherwise OpenRouter models say they "could not be used with this account's privacy settings". Treat anything sent to OpenRouter as public.
    - Redeploy (push, or Deployments > latest > Retry deployment) so new secrets take effect. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
 5. **Set up live FedEx tracking.**
-   - At developer.fedex.com, sign in with the company's fedex.com user, create an API project with the **Track API**, and ask for **production** keys (FedEx asks for the account number). The API key is `FEDEX_CLIENT_ID`, the Secret key is `FEDEX_CLIENT_SECRET`.
+   - At developer.fedex.com, sign in with Spyder Controls' fedex.com user, create an API project with the **Track API** and ask for **production** keys (FedEx asks for the account number). The API key is `FEDEX_CLIENT_ID`, the Secret key is `FEDEX_CLIENT_SECRET`.
    - In the `workers/shipping-poller` folder (after step 3):
 
      ```
@@ -61,7 +61,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
 7. **Check the numbers on your PC with the real export** (counts only; nothing leaves the PC). Open the dashboard and load the files:
    - With the same export as last time, the Order Health **At risk** card still shows **62 orders / 124 lines / $836,876**.
    - With the new export: on the **Leading** tab the open order states (On track, Due this week, Rescheduled, Past due, No commit) add up to **All open**.
-   - **Big picture** on Order Health: each column, including the middle (status) column, adds up to **All open**, the at-risk status boxes add up to the **At risk** card, and the at-risk chart totals the At risk value. On Build Risk the three middle boxes (Clear to build, At risk, Late) match the cards above it.
+   - **Big picture** on Order Health: each column (including the middle status column) adds up to **All open**, the at-risk status boxes add up to the **At risk** card, and the at-risk chart totals the At risk value. On Build Risk the three middle boxes (Clear to build, At risk, Late) match the cards above.
    - The **Shipping** page lists the tracking numbers from the new export (live status comes after deploy).
    - The MCP connector still reads it: `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"` prints the overview with the same at-risk numbers.
 
@@ -72,4 +72,4 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - Ask AI: for each provider with a key, tick its box in Settings and ask one question, such as "What is at risk right now?". The answer should match the At risk card. Providers without a key show "(not set up)".
    - Shipping: click **Refresh now** (if the Pages project has the FedEx keys) or wait for the next 4-hour check; the header then says "Updated ... ago" and rows show FedEx statuses. The Worker's Logs show "checked N tracking numbers".
 
-If something does not work, the troubleshooting tables in [SHIPPING.md](SHIPPING.md), [AI_ASSISTANT.md](AI_ASSISTANT.md) and [IT_HOSTING_README.md](IT_HOSTING_README.md) list the messages and fixes.
+If something does not work, the troubleshooting tables in [SHIPPING.md](SHIPPING.md), [AI_ASSISTANT.md](AI_ASSISTANT.md) and [IT_HOSTING_README.md](IT_HOSTING_README.md) list messages and fixes.

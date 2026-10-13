@@ -145,7 +145,7 @@ test('an override, note and cause set in one browser show in another browser, wi
   assert.deepEqual(line(b, '900'), { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', deleted: false });
   assert.equal(atRiskCount(b), 1, 'Not At Risk from the other browser takes the line off At Risk');
   assert.match(sidebar(b), /Notes shared · last edit Kareena · Oct 8/);
-  assert.match(sidebar(b), /data-tip="Notes, overrides and causes are saved for everyone who signs in\. Last edit by Kareena: Oct 8, 2026/);
+  assert.match(sidebar(b), /data-tip="Notes, overrides and causes are saved for everyone who signs in; last edit by Kareena: Oct 8, 2026/);
   // The copy is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(saved(b)[k], entry);
   // Opening the page costs one read; nothing newer here, so nothing is sent back.
@@ -586,7 +586,7 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   assert.match(html(page), /<div class="note-picks"><label>Override<select class="row-override"/);
   assert.match(select[0], /data-field="cause"/);
   assert.match(select[0], /aria-label="Cause, us or them, for 900"/);
-  assert.match(select[0], /data-tip="Who the delay is on\./);
+  assert.match(select[0], /data-tip="Who the delay is on: Us \(Spyder\) or Them/);
   assert.deepEqual([...select[0].matchAll(/<option value="([^"]*)"[^>]*>([^<]*)</g)].map((m) => [m[1], m[2]]), [['', 'Auto'], ['us', 'Us'], ['them', 'Them']]);
   for (const ev of ['keydown', 'keyup', 'change', 'blur']) assert.match(select[0], new RegExp(`on${ev}="overrideSelectEvent\\(this,event\\)"`));
 
@@ -731,7 +731,7 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   await tick(5);
   assert.equal(dialogs.length, 1);
   assert.match(sidebar(page), /Notes shared · last edit Kareena · Sep \d+/);
-  assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName\(true\)" data-tip="Your notes show “Kareena”\. Click to change it\.">Change name<\/button>/);
+  assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName\(true\)" data-tip="Your notes show “Kareena”; click to change it\.">Change name<\/button>/);
   // The status and the button have their own row, outside .loaded-meta (hidden at 980px and below), which stays
   // visible under the file name and buttons in the compact card.
   assert.match(sidebar(page), /<div class="loaded-meta">(?:(?!<\/div>)[\s\S])*<\/div><div class="loaded-notes"><span class="notes-sync" data-tip="[^"]+">Notes shared[^<]*<\/span><br><button type="button" class="link-btn notes-editor-btn"/);
@@ -932,7 +932,7 @@ test('every name shown is escaped (saved names, the last editor, this browser); 
   const full = sidebar(b);
   const bar = full.slice(full.indexOf('<div class="loaded-notes">'));
   assert.match(bar, /last edit &quot;&gt;&lt;svg\/onload=1&gt; · Sep 1/);
-  assert.match(bar, /data-tip="[^"]*Last edit by &quot;&gt;&lt;svg\/onload=1&gt;:/);
+  assert.match(bar, /data-tip="[^"]*last edit by &quot;&gt;&lt;svg\/onload=1&gt;:/);
   assert.ok(!/<svg|<img/.test(bar), 'no markup from a stored name');
   assert.match(bar, />Add your name<\/button>/);
   assert.equal(b.run('readEditor()'), null);
@@ -947,7 +947,7 @@ test('every name shown is escaped (saved names, the last editor, this browser); 
   d.pick("Zoë O'Brien-Smith");
   await tick(10);
   assert.equal(b.storage.spyderKpiEditorName, "Zoë O'Brien-Smith");
-  assert.match(sidebar(b), /data-tip="Your notes show “Zoë O&#39;Brien-Smith”\. Click to change it\.">Change name<\/button>/);
+  assert.match(sidebar(b), /data-tip="Your notes show “Zoë O&#39;Brien-Smith”; click to change it\.">Change name<\/button>/);
   assert.deepEqual(b.errors, []);
 });
 

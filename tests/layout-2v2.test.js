@@ -68,10 +68,10 @@ test('Leading / Lagging is a full-width switch right under the page head, each h
   // Leading: the at-risk open value (short on the switch, in full in the tip); Lagging: OTD over the last 3 months.
   assert.match(tab('leading'), /<span class="oh-tab-title">Leading<\/span>/);
   assert.match(tab('leading'), new RegExp(`<span class="oh-tab-num crit">${page.run('moneyShort(35700)').replace('$', '\\$')}<small>at risk</small></span>`));
-  assert.match(tab('leading'), /data-tip="\$35,700 at risk on 7 orders \(7 lines\)\./);
+  assert.match(tab('leading'), /data-tip="\$35,700 at risk on 7 orders \(7 lines\); arrow keys switch tabs\."/);
   assert.match(tab('lagging'), /<span class="oh-tab-title">Lagging<\/span>/);
   assert.match(tab('lagging'), /<span class="oh-tab-num crit">50%<small>OTD · 3 mo<\/small><\/span>/);
-  assert.match(tab('lagging'), /data-tip="On-time delivery, last 3 months: 50% \(2 of 4 deliveries\)\./);
+  assert.match(tab('lagging'), /data-tip="On-time delivery, last 3 months: 50% \(2 of 4 deliveries\); arrow keys switch tabs\."/);
   // The numbers follow the page filters, like the cards.
   page.run("setWeeklyWarehouseFilter(['CM - DSM'])");
   assert.equal(page.run('orderHealthData(currentMetrics()).lateAmt'), 14000);
@@ -127,7 +127,7 @@ test('the owner filter is gone from the filter bar and the notes; weeklyOwnerFil
   assert.deepEqual(page.run('weeklyOwnerFilter'), ['ALL']);
   // Owners still rank in Top offenders, as plain rows (no filter behind them).
   page.run("setWeeklyOffenderView('owners')");
-  assert.match(html(page), /<div class="waffle-row static" data-focus-key="offrow-Ana Diaz" data-tip="Ana Diaz: \$10,000 at-risk open value on 1 line\./);
+  assert.match(html(page), /<div class="waffle-row static" data-focus-key="offrow-Ana Diaz" data-tip="Ana Diaz: \$10,000 at-risk value on 1 line( \([^)"]+\))?\."/);
   assert.doesNotMatch(html(page), /data-view="owners"/);
   page.run("setWeeklyOffenderFilter('owners','Ana Diaz')");
   assert.deepEqual(page.run('weeklyOwnerFilter'), ['ALL']);
@@ -174,10 +174,10 @@ test('six tiles under the At Risk card count its open lines with each override; 
   assert.ok(m.indexOf('>At risk now</h2>') < hero);
   const b = tileButtons(page);
   assert.equal(b.length, 6);
-  assert.match(b[0], /^<button type="button" class="ovr-tile" data-focus-key="ovr-shipping-delay" data-status="Shipping Delay" onclick="setWeeklyOverrideTile\(this\.dataset\.status\)" aria-pressed="false" data-tip="Shipping Delay: 2 at-risk lines, \$12,000 open\. Click to list them\."><span class="ovr-name">Shipping Delay<\/span><span class="ovr-count">2<\/span><\/button>$/);
-  assert.match(b[2], /class="ovr-tile zero"[^>]*data-tip="R&amp;D Hold: 0 at-risk lines, \$0 open\.[^"]*"><span class="ovr-name">R&amp;D Hold<\/span><span class="ovr-count">0<\/span>/);
-  assert.match(b[3], /data-tip="Supplier Delay \(override “Supplier Late”\): 1 at-risk line, \$6,000 open\./);
-  assert.match(b[5], /data-tip="Wait on Prod \(override “Waiting on Production”\): 1 at-risk line, \$5,000 open\./);
+  assert.match(b[0], /^<button type="button" class="ovr-tile" data-focus-key="ovr-shipping-delay" data-status="Shipping Delay" onclick="setWeeklyOverrideTile\(this\.dataset\.status\)" aria-pressed="false" data-tip="Shipping Delay: 2 at-risk lines, \$12,000 open; click to list them\."><span class="ovr-name">Shipping Delay<\/span><span class="ovr-count">2<\/span><\/button>$/);
+  assert.match(b[2], /class="ovr-tile zero"[^>]*data-tip="R&amp;D Hold: 0 at-risk lines, \$0 open;[^"]*"><span class="ovr-name">R&amp;D Hold<\/span><span class="ovr-count">0<\/span>/);
+  assert.match(b[3], /data-tip="Supplier Delay \(override “Supplier Late”\): 1 at-risk line, \$6,000 open;/);
+  assert.match(b[5], /data-tip="Wait on Prod \(override “Waiting on Production”\): 1 at-risk line, \$5,000 open;/);
   assert.ok(b.every((x) => /aria-pressed="false"/.test(x) && /data-tip="[^"]{20,}"/.test(x)));
   assert.match(m, /<span class="ovr-head" id="ovr-head">At risk by override<\/span><div class="ovr-grid" role="group" aria-labelledby="ovr-head">/);
 });
@@ -215,7 +215,7 @@ test('a tile click filters the page and the linked lines to that override; a chi
   assert.match(html(page), /Linked lines — At Risk/);
   // The picked tile is pressed; the others keep their counts (the tiles ignore their own filter).
   const b = tileButtons(page);
-  assert.match(b[0], /class="ovr-tile selected"[^>]*aria-pressed="true"[^>]*data-tip="[^"]*Click to show every line again\."/);
+  assert.match(b[0], /class="ovr-tile selected"[^>]*aria-pressed="true"[^>]*data-tip="[^"]*; click to show all\."/);
   assert.deepEqual(tiles(page).map((t) => t[1]), [2, 1, 0, 1, 1, 1]);
   // The card and the switch show the filtered numbers.
   assert.match(html(page), /data-count="12000" data-fmt="money">\$12,000</);

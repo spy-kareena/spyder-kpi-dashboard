@@ -573,7 +573,7 @@ test('every Ask AI control carries a plain-English tooltip', () => {
 test('the Ask AI button in the page header names the four providers and says nothing is sent until one is allowed', async () => {
   const page = await loaded();
   const head = page.els['results-screen'].innerHTML.match(/<button [^>]*data-focus-key="ask-ai"[^>]*>/)[0];
-  assert.match(head, /data-tip="Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export\. Nothing is sent until you allow a provider in Settings\."/);
+  assert.match(head, /data-tip="Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings\."/);
   assert.match(head, /aria-controls="ai-panel"/);
 });
 
@@ -584,7 +584,7 @@ test('Connect an AI describes the four providers and opens the panel', () => {
   assert.match(html, /<h2 class="connect-title" id="connect-opt-1"><span class="connect-no">Option 1<span class="sr-only">:<\/span><\/span> Ask AI in this dashboard<\/h2>/);
   assert.match(html, /<span class="ai-tier paid">Paid<\/span><span><strong>Claude and ChatGPT<\/strong><span class="connect-tier-note">Billed to Spyder Controls\. Not used to train models\.<\/span>/);
   assert.match(html, /<span class="ai-tier free">Free<\/span><span><strong>Groq and OpenRouter<\/strong><span class="connect-tier-note">Tight limits\. May keep or publish what you send\.<\/span>/);
-  assert.match(html, /data-focus-key="connect-ask-ai"[^>]*data-tip="Opens the Ask AI panel/);
+  assert.match(html, /data-focus-key="connect-ask-ai"[^>]*data-tip="Open the Ask AI panel; nothing is sent/);
   assert.doesNotMatch(html, /Gemini|Google AI Studio/);
 });
 

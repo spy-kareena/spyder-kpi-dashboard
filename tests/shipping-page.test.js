@@ -143,7 +143,7 @@ test('hosted: header shows when FedEx was checked and the next check; cards coun
   const card = (id) => (m.match(new RegExp(`data-focus-key="ship-kpi-${id}"[\\s\\S]*?<span class="kpi-value[^"]*">([^<]*)<`)) || [])[1];
   assert.deepEqual(['transit', 'out', 'delivered', 'exception', 'customs'].map(card), ['1', '1', '1', '1', '1']);
   // Tips carry the full numbers.
-  assert.match(m, /data-tip="Out for delivery: 1 shipment on a FedEx vehicle for delivery today, worth \$20,000 on their SAP deliveries\. Click to list only these\."/);
+  assert.match(m, /data-tip="Out for delivery: 1 shipment on a FedEx vehicle for delivery today, worth \$20,000; click to list only these\."/);
   // No FedEx keys on this site: Refresh now explains why instead of calling.
   assert.match(m, /data-focus-key="ship-refresh"[^>]*aria-disabled="true"[^>]*data-tip="Refresh now needs the FedEx keys/);
   assert.deepEqual(page.errors, []);
@@ -291,7 +291,7 @@ test('other carriers (UPS, Purolator…) and words in TrackNo are not FedEx ship
   assert.deepEqual(page.run('shippingWantedLists(shippingModel()).export').sort(), want, 'never sent to FedEx');
   assert.equal(page.run('shippingModel().otherCarrier'), 3);
   page.run("setTab('shipping')");
-  assert.match(html(page), /3 tracking numbers from the last 30 days are not listed: their ship method or number is another carrier’s \(UPS, Purolator, Canpar, DHL and so on\)\. This page tracks FedEx only\./);
+  assert.match(html(page), /3 tracking numbers from the last 30 days are another carrier’s \(UPS, Purolator…\) and not listed\./);
   assert.doesNotMatch(html(page), /1Z999AA|335123456789|CUSTOMERPICKUP/);
   // The two parcels of delivery 9715 share its $1,000, so a card total counts the delivery once.
   assert.deepEqual(page.run("shippingModel().list.filter(s=>s.number.startsWith('77001234567')).map(s=>s.value)"), [500, 500]);
@@ -370,7 +370,7 @@ test('Add tracking # round-trips through the shared notes store (/api/notes): ev
   // of the server's clock back to now), and the second browser's edit is the newer one.
   const a = await notesBrowser(site, 'Kareena', '2026-10-07');
   assert.equal(a.run('sharedNotes.state'), 'shared');
-  assert.match(html(a), /everyone who signs in sees it/);
+  assert.match(html(a), /shared with everyone/);
   field(a, 'ship-add-number').value = '1234 5678 91';
   field(a, 'ship-add-order').value = 'SO 600';
   a.run('shippingAddManual()');
