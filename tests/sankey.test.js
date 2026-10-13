@@ -225,7 +225,7 @@ test('markup: the header switch and every box carry plain-English tips with full
   assert.match(h, /<button type="button" class="btn bp-switch" role="switch" aria-checked="true" aria-controls="sankey-weekly" data-focus-key="bp-switch-weekly" data-tip="Hide the flow chart\. Filters picked in it stay on\."/);
   assert.match(h, /<section class="card sk-card rise" id="sankey-weekly" aria-labelledby="sankey-weekly-title">/);
   // A compact head: the title, the chart picker (Order Health has two charts, one shown at a time) and one sub-title.
-  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-weekly-title">Big picture<\/h2><div class="segmented sk-pick" role="group" aria-label="Chart"><button type="button" class="active" aria-pressed="true" data-focus-key="sk-pick-weekly-open" data-tip="Open order value" onclick="setSankeyFlow\('weekly','open'\)">Open order value<\/button><button type="button" class="" aria-pressed="false" data-focus-key="sk-pick-weekly-risk" data-tip="At-risk value" onclick="setSankeyFlow\('weekly','risk'\)">At-risk value<\/button><\/div><span class="sk-name print-only">Open order value<\/span><span class="section-sub sk-sub">\$[\d,]+ across \d+ orders in this view<\/span><\/div>/);
+  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-weekly-title">Big picture<\/h2><div class="segmented sk-pick" role="group" aria-label="Big picture chart"><button type="button" class="active" aria-pressed="true" data-focus-key="sk-pick-weekly-open" data-tip="Where open order value sits: warehouse, status, customer segment\." onclick="setSankeyFlow\('weekly','open'\)">Open order value<\/button><button type="button" class="" aria-pressed="false" data-focus-key="sk-pick-weekly-risk" data-tip="Why value is at risk: reason, Us \/ Them, customer\." onclick="setSankeyFlow\('weekly','risk'\)">At-risk value<\/button><\/div><span class="sk-name print-only">Open order value<\/span><span class="section-sub sk-sub">\$[\d,]+ across \d+ orders in this view<\/span><\/div>/);
   assert.doesNotMatch(h, /Band thickness is value|Tab to the chart and use the arrow keys/, 'no long captions around the chart');
   assert.match(h, /<p class="sk-detail print-hide" aria-hidden="true">Hover a box for its numbers; click it to filter\.<\/p>/);
   page.run("setSankeyFlow('weekly','risk')");
@@ -606,6 +606,36 @@ test('opening animates with the Web Animations API only when motion is allowed, 
   calls.length = 0;
   page.run("toggleSankey('weekly')");
   assert.deepEqual(calls, []);
+});
+
+test('the chart is as wide as its card (900px to 1400px) and is redrawn when it would no longer fit', async () => {
+  const page = await orderHealth();
+  const screen = page.els['results-screen'];
+  page.run("toggleSankey('weekly')");
+  Object.assign(page.ctx, { innerWidth: 1366 });
+  screen.style.display = 'block';
+  screen.clientWidth = 1057; // 1366 less the sidebar and the page padding
+  assert.equal(page.run('sankeyChartWidth()'), 1001, "the card's inner width (less its padding)");
+  screen.clientWidth = 0;
+  assert.equal(page.run('sankeyChartWidth()'), 1020, 'worked out from the window before the results are shown');
+  screen.clientWidth = 2600; page.ctx.innerWidth = 2900;
+  assert.equal(page.run('sankeyChartWidth()'), 1400);
+  screen.clientWidth = 343; page.ctx.innerWidth = 375;
+  assert.equal(page.run('sankeyChartWidth()'), 900, 'phones keep 12px text and scroll inside the card');
+  page.run('printMode=true');
+  assert.equal(page.run('sankeyChartWidth()'), 960);
+  page.run('printMode=false');
+  // A page scrollbar appearing (or the window narrowing) redraws a chart that would overflow; a few spare pixels do not.
+  screen.clientWidth = 1057; page.ctx.innerWidth = 1366;
+  page.run('var __renders=0;var __render=renderResults;renderResults=()=>{__renders++;__render()}');
+  const refit = async (drawn) => { page.run(`__renders=0;sankeyDrawnWidth=${drawn};sankeyRefit()`); await new Promise((r) => setTimeout(r, 300)); return page.run('__renders'); };
+  assert.equal(await refit(1017), 1, 'too wide by 16px: redrawn');
+  assert.equal(page.run('sankeyDrawnWidth'), 1001, 'redrawn to fit');
+  assert.equal(await refit(1001), 0);
+  assert.equal(await refit(985), 0, '16px of spare room is kept');
+  assert.equal(await refit(950), 1, '40px or more of spare room: redrawn wider');
+  page.run("toggleSankey('weekly')");
+  assert.equal(await refit(1017), 0, 'nothing to redraw with the switch off');
 });
 
 test('hover / focus light up the bands touching a box (both ways, not further on); arrow keys move between boxes', async () => {

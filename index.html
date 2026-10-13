@@ -989,9 +989,9 @@ details.about>summary:hover{color:var(--gray-900)}
 /* --- Stream F: Sankey "big picture" --- */
 /* The Big picture switch in the page header (role="switch"): an outline button holding a track and thumb */
 .btn.bp-switch{gap:9px;padding-left:11px}
-.bp-track{position:relative;flex:none;width:28px;height:16px;border-radius:99px;background:var(--gray-300);transition:background-color var(--dur) var(--ease)}
+.bp-track{position:relative;flex:none;width:28px;height:16px;border-radius:99px;background:var(--gray-400);transition:background-color var(--dur) var(--ease)}
 .bp-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:99px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform var(--dur) var(--ease)}
-.bp-switch:hover .bp-track{background:var(--gray-400)}
+.bp-switch:hover .bp-track{background:var(--gray-500)}
 .bp-switch[aria-checked="true"] .bp-track{background:var(--accent)}
 .bp-switch[aria-checked="true"]:hover .bp-track{background:var(--accent-strong)}
 .bp-switch[aria-checked="true"] .bp-thumb{transform:translateX(12px)}
@@ -1048,7 +1048,7 @@ details.about>summary:hover{color:var(--gray-900)}
   /* Keep the card title with its first chart (no "Big picture" heading stranded at the foot of a page) */
   .sk-head,.sk-card .sk-filter{break-after:avoid;page-break-after:avoid}
   .sk-head+.sk-flow,.sk-card .sk-filter+.sk-flow{break-before:avoid;page-break-before:avoid}
-  .sk-head .print-only{display:inline!important;font-size:inherit;color:var(--gray-700)}
+  .sk-head .sk-name.print-only{display:inline!important;font-size:13px;color:var(--gray-700)}
   .sk-scroll{overflow:visible}
   .sk-svg{width:100%!important;height:auto!important}
   .sk-svg.sk-hl .sk-link{fill-opacity:.3}.sk-svg.sk-hl .sk-node:not(.sk-on){opacity:1}
@@ -8627,11 +8627,11 @@ function sankeyWeeklyFlows(m){
   // Credit lines (negative open value) cannot be drawn as bands; the sub-title says how much was left out.
   const notDrawn=(all,drawn)=>Math.abs(all-drawn)>=0.5?` · ${money(drawn-all)} of credit lines not drawn`:'';
   return [
-    {id:'open',title:'Open order value',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,nodes:openNodes,
+    {id:'open',title:'Open order value',pickTip:'Where open order value sits: warehouse, status, customer segment.',unit:'money',cols:['Warehouse / CM','Status','Customer segment'],...open,nodes:openNodes,
       colTips:['Warehouse or contract manufacturer the open lines ship from (the 8 largest; the rest are grouped).','Each open line counted once: no commit date, past due with no reschedule, rescheduled, marked urgent, or not at risk.','Customer segment from the customer code or business-partner group.'],
       sub:`${money(open.total)} across ${fmtNum(rowDocCount(d.allOrderRows))} orders in this view${notDrawn(d.allOrdersAmt,open.total)}`,empty:'No open order value in this view.',
       legend:[['crit','At risk: no commit, past due or urgent'],['warn','At risk: rescheduled'],['calm','Not at risk']]},
-    {id:'risk',title:'At-risk value',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,nodes:riskNodes,
+    {id:'risk',title:'At-risk value',pickTip:'Why value is at risk: reason, Us / Them, customer.',unit:'money',cols:['Reason','Us / Them','Customer'],...risk,nodes:riskNodes,
       colTips:['The first reason the line is at risk, as Order Health lists them: the SAP signals first, then an override reason someone picked. Each line counts once.','Whose side the delay is on: a cause set on the line, else the override reason, else the SAP signal.','Customer (the 8 with the most value at risk; the rest are grouped).'],
       sub:`${money(risk.total)} across ${fmtNum(rowDocCount(d.lateTileRows))} orders · same lines as the At Risk card${notDrawn(d.lateAmt,risk.total)}`,empty:'Nothing at risk in this view.',
       legend:[['us','Us'],['them','Them'],['neutral','Neutral'],['unknown','Not set']]}
@@ -8736,7 +8736,7 @@ function sankeySupplyFlows(m){
   const wh=supplyWarehouseFilter.includes('ALL')?'all warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
   return [{id:'demand',title:byValue?'Open demand value':'Open demand quantity',unit:byValue?'money':'qty',cols:['Warehouse','Item group','Demand month'],...f,
     colTips:['Warehouse of the demand rows in the supply / demand snapshot (the 8 largest; the rest are grouped).','SAP item group (the 8 largest; the rest are grouped).','Month the demand is planned for.'],
-    sub:`${fmtV(f.total)} · ${wh} · coloured by open PO coverage`,empty:'No open demand for this warehouse selection.',
+    sub:`${fmtV(f.total)} · ${wh}`,empty:'No open demand for this warehouse selection.',
     legend:[['crit','Short of open PO supply'],['warn','Covered by supply at risk'],['calm','Covered']]}];
 }
 // Nodes and links each page draws (also handy for tests and the MCP vm). Each flow: {id,title,unit,cols,total,nodes,links}.
@@ -8939,7 +8939,7 @@ function renderBigPicture(tab,m){
   // A page with more than one chart (Order Health) shows one at a time, picked in the card head.
   const flow=flows.find(f=>f.id===sankeyFlowPick[tab])||flows[0];
   const head=!flow?'':flows.length>1
-    ?`<div class="segmented sk-pick" role="group" aria-label="Chart">${flows.map(f=>`<button type="button" class="${f===flow?'active':''}" aria-pressed="${f===flow?'true':'false'}" data-focus-key="sk-pick-${tab}-${esc(f.id)}"${tipAttr(f.pickTip||f.title)} onclick="setSankeyFlow('${tab}','${esc(f.id)}')">${esc(f.title)}</button>`).join('')}</div><span class="sk-name print-only">${esc(flow.title)}</span>`
+    ?`<div class="segmented sk-pick" role="group" aria-label="Big picture chart">${flows.map(f=>`<button type="button" class="${f===flow?'active':''}" aria-pressed="${f===flow?'true':'false'}" data-focus-key="sk-pick-${tab}-${esc(f.id)}"${tipAttr(f.pickTip||f.title)} onclick="setSankeyFlow('${tab}','${esc(f.id)}')">${esc(f.title)}</button>`).join('')}</div><span class="sk-name print-only">${esc(flow.title)}</span>`
     :`<span class="sk-name">${esc(flow.title)}</span>`;
   const about=tab==='weekly'?`<details class="about sk-about">${aboutSummary('About this chart','How this chart is built and what clicking does.')}<div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
   return `<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
@@ -8984,17 +8984,21 @@ function sankeyAnimate(tab){
   card.querySelectorAll('.sk-svg').forEach(svg=>{if(typeof svg.animate==='function')svg.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:650,easing:ease});});
   card.querySelectorAll('.sk-rect').forEach((rect,i)=>{if(typeof rect.animate==='function')rect.animate([{opacity:0,transform:'scaleY(0.2)'},{opacity:1,transform:'none'}],{duration:380,delay:Math.min(i,24)*18,easing:ease,fill:'backwards'});});
 }
-// The chart is drawn at the page's width; after a resize (phone turned, window dragged) an open chart is redrawn
-// once the width settles, if that changes its width.
+// The chart is drawn at the page's width. When that width changes (window dragged, phone turned, the page scrollbar
+// coming or going, the results first shown) an open chart is redrawn once it settles: always when it would no longer
+// fit (no sideways scrollbar in the card for a few pixels), else when it is 40px or more narrower than it could be.
 let sankeyDrawnWidth=0,sankeyResizeTimer=null;
-if(typeof addEventListener==='function')addEventListener('resize',()=>{
+function sankeyRefit(){
   clearTimeout(sankeyResizeTimer);
   sankeyResizeTimer=setTimeout(()=>{
     const el=document.getElementById('results-screen');
-    if(printMode||!sankeyOpen[activeTab]||!el||el.style.display!=='block')return;
-    if(Math.abs(sankeyChartWidth()-sankeyDrawnWidth)>=40)renderResults();
+    if(printMode||!sankeyOpen[activeTab]||!el||el.style.display!=='block'||!document.getElementById(`sankey-${activeTab}`))return;
+    const w=sankeyChartWidth();
+    if(w<sankeyDrawnWidth||w-sankeyDrawnWidth>=40)renderResults();
   },250);
-});
+}
+if(typeof addEventListener==='function')addEventListener('resize',sankeyRefit);
+if(typeof ResizeObserver==='function'){const el=document.getElementById('results-screen');if(el)new ResizeObserver(sankeyRefit).observe(el);}
 // Share snapshots and the browser memory keep only known pages switched on.
 function sankeyOpenState(v){
   return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>v[t]===true).map(t=>[t,true])):{};
