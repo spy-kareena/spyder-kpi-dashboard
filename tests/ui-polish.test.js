@@ -386,6 +386,38 @@ test('a tip queued on focus is dropped when focus moves on before it shows (no s
   assert.equal(rig.layer.hidden, true);
 });
 
+test('focus never pops a tip over a text box or a checkbox (a text box is :focus-visible on every click); hover still does', async () => {
+  const page = loadPage();
+  const rig = tipRig(page);
+  const hoverable = (el, tag, type) => Object.assign(el, { tagName: tag, type, hovered: false, matches(sel) { return sel === ':focus-visible' || (sel === ':hover' && this.hovered); } });
+  // Ask AI puts focus back in its question box after Send: no bubble repeating the placeholder.
+  const box = hoverable(rig.control('Shift+Enter starts a new line.'), 'TEXTAREA');
+  rig.focus(null, box);
+  await wait(300);
+  assert.equal(rig.layer.hidden, true);
+  // The consent checkbox (its tip is on the label) and plain text boxes behave the same.
+  for (const [tag, type] of [['INPUT', 'checkbox'], ['INPUT', 'text'], ['INPUT', 'search'], ['INPUT', 'date'], ['INPUT', undefined]]) {
+    const el = hoverable(rig.control('A tip.'), tag, type);
+    rig.focus(null, el);
+    await wait(300);
+    assert.equal(rig.layer.hidden, true, `${tag} ${type}`);
+  }
+  assert.equal(page.run("tipFocusVisible({tagName:'INPUT',type:'checkbox',matches:()=>true})"), false);
+  assert.equal(page.run("tipFocusVisible({tagName:'INPUT',type:'button',matches:()=>true})"), true);
+  assert.equal(page.run("tipFocusVisible({tagName:'BUTTON',matches:()=>true})"), true);
+  // Keyboard focus on a button still shows its tip; hovering the text box shows the box's tip.
+  const send = rig.control('Send.');
+  rig.focus(null, send);
+  await wait(300);
+  assert.deepEqual([rig.layer.hidden, rig.text.textContent], [false, 'Send.']);
+  page.run('hideTip()');
+  rig.doc.activeElement = rig.body;
+  box.hovered = true;
+  page.dispatch('pointerover', { target: box, pointerType: 'mouse' });
+  await wait(300);
+  assert.deepEqual([rig.layer.hidden, rig.text.textContent], [false, 'Shift+Enter starts a new line.']);
+});
+
 test('a tip for a control in the modal Your name dialog is drawn inside the dialog (top layer); one Esc closes both', async () => {
   const page = loadPage();
   const rig = tipRig(page);

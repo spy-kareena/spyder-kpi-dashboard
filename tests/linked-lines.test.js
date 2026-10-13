@@ -272,7 +272,6 @@ test('every column header sorts the list ascending and descending on the values 
     value: ['100', '55', '9', '10'],
     status: ['9', '55', '100', '10'],
     reschedule: ['55', '10', '100', '9'],
-    lead: ['55', '100', '9', '10'],
   };
   const desc = { reschedule: ['10', '55', '100', '9'] };
   for (const [col, order] of Object.entries(asc)) {
@@ -282,6 +281,10 @@ test('every column header sorts the list ascending and descending on the values 
     page.run(`weeklyLineSort='col:${col}:desc';renderResults()`);
     assert.deepEqual(shownDocs(page), desc[col] || [...order].reverse(), `${col} descending`);
   }
+  // Lead time has no column (the table fits a 1366px screen); it is in the delivery date's tip instead.
+  page.run("weeklyLineSort='default';renderResults()");
+  assert.doesNotMatch(html(page), /data-col="lead"|>Lead<|c-lead/);
+  assert.match(html(page), /<td class="c-date" data-label="Original delivery"><span data-tip="Lead time 7\.1 wks \(order date to original delivery\)\.">2026-08-20<\/span><\/td>/);
   // Header clicks: text columns start A to Z, amounts start high to low, a second click flips.
   page.run("weeklyLineSort='default';sortLinkedColumn('customer')");
   assert.equal(page.run('weeklyLineSort'), 'col:customer:asc');
@@ -295,16 +298,26 @@ test('every column header sorts the list ascending and descending on the values 
   assert.doesNotMatch(html(page), /Column: |aria-sort/);
 });
 
-test('Order Health and PO linked lines leave Item / Description about 200px at the table minimum width', async () => {
+test('Order Health, PO and Search lines fit the 1055px card of a 1366px screen and keep room for Item / Description', async () => {
   // Screen min-width of the table: the last plain (not print !important) rule that names it.
   const css = HTML.replace(/\/\*[\s\S]*?\*\//g, '');
   const cssMin = (cls) => Number([...css.matchAll(/([^{}]+)\{min-width:(\d+)px\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(`.lines-table.${cls}`)).pop()[2]);
   const fixedCols = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">\\s*<colgroup>([\\s\\S]*?)</colgroup>`))[1].matchAll(/width:(\d+)px/g)].reduce((t, m) => t + Number(m[1]), 0);
+  const heads = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">[\\s\\S]*?</thead>`))[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
   const page = await atRiskPage([...pastDue(2), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorName: 'Acme Parts' })]);
+  // Order Health: no Lead column; every other column (with Notes) is in the 1055px card at 1366.
+  assert.deepEqual(heads(html(page), 'so'), ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original delivery', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
   const so = cssMin('so') - fixedCols(html(page), 'so');
   page.run("setTab('purchaseorders')");
   const po = cssMin('po') - fixedCols(html(page), 'po');
-  assert.ok(so >= 190 && po >= 190, `Item / Description gets ${so}px (SO) and ${po}px (PO)`);
+  page.run("onGlobalSearchInput('Acme');applyGlobalSearch()");
+  const search = cssMin('search') - fixedCols(html(page), 'search');
+  for (const cls of ['so', 'po', 'search']) assert.ok(cssMin(cls) <= 1055, `${cls} table minimum ${cssMin(cls)}px`);
+  assert.ok(so >= 130 && po >= 190 && search >= 140, `Item / Description gets ${so}px (SO), ${po}px (PO), ${search}px (Search) at the minimum width`);
+  // Fixed layout: long customer and warehouse names stop at two lines (title has the full name) instead of widening rows.
+  assert.match(HTML, /\.lines-table\{width:100%;border-collapse:collapse;table-layout:fixed;/);
+  assert.match(HTML, /\.lines-table \.clip\{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;/);
+  assert.match(html(page), /<td class="c-name" title="Acme Parts"><span class="clip"><mark>Acme<\/mark> Parts<\/span><\/td>/);
 });
 
 test('an override redraws Order Health without building other pages\' aggregates; delivery date math is worked out once', async () => {

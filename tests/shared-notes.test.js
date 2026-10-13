@@ -597,9 +597,10 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   assert.equal(line(page, '900').cause, 'us');
   assert.equal(saved(page)[k].cause, 'us');
   assert.match(html(page), /<option value="us" selected>Us<\/option>/);
-  // A line with only a cause still counts as having a note, and prints its cause.
+  // A line with only a cause still counts as having a note, and prints its cause in its Status cell (no extra row).
   assert.match(page.run(`renderNoteButton(allLoadedRows.find(r=>r.documentNumber==='900'))`), /has-note[\s\S]*Edit note/);
-  assert.match(page.run(`renderPrintNoteRow(allLoadedRows.find(r=>r.documentNumber==='900'),5)`), /Cause: Us/);
+  assert.equal(page.run(`renderPrintOverride(allLoadedRows.find(r=>r.documentNumber==='900'))`), '<span class="print-ovr">Cause: Us</span>');
+  assert.equal(page.run(`renderPrintNoteRow(allLoadedRows.find(r=>r.documentNumber==='900'),5)`), '');
 
   // Build Risk's editable rows: a cause select under the override select; print shows the text instead.
   const table = page.run("renderRowsTable(parsedRows,{key:'t',title:'T',editable:true})");
