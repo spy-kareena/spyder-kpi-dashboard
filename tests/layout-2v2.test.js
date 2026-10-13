@@ -107,10 +107,10 @@ test('the Big picture switch is visible when off: its track is --gray-500 (3:1 o
   assert.ok(contrast(token('gray-500'), token('gray-100')) >= 3, 'also on a hovered button');
 });
 
-test('Why lines are at risk opens with Top reasons (the bars), not a second count of open orders', async () => {
+test('By reason and cause opens with Top reasons (the bars), not a second count of open orders', async () => {
   const page = await withStatuses();
   const m = html(page);
-  const why = m.slice(m.indexOf('>Why lines are at risk</h2>'), m.indexOf('<details class="oh-more"'));
+  const why = m.slice(m.indexOf('>By reason and cause</h2>'), m.indexOf('<details class="oh-more"'));
   const first = why.match(/<section class="card list-card oh-card" aria-labelledby="([^"]+)">[\s\S]*?<\/section>/);
   assert.equal(first[1], 'oh-reasons-title');
   assert.match(first[0], /<h2 id="oh-reasons-title" data-tip="[^"]{20,}">Top reasons<\/h2><span class="section-sub">by at-risk value<\/span>/);

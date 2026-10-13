@@ -95,7 +95,8 @@ test('every page but Order Health is a few named groups; each group is labelled 
     assert.doesNotMatch(h, /NaN|undefined|\[object Object\]/, tab);
   }
   // Order Health uses the same group titles (no old section heading left either).
-  assert.doesNotMatch(open(page, 'weekly'), /class="section-title"/);
+  // (The Big picture card, on by default on Order Health, keeps its own in-card heading.)
+  assert.doesNotMatch(open(page, 'weekly').replace(/<div class="sk-head">[\s\S]*?<\/h2>/, ''), /class="section-title"/);
   assert.deepEqual(page.errors, []);
 });
 
