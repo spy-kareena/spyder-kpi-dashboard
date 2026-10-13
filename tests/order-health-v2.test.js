@@ -298,10 +298,13 @@ test('tabs: an ARIA tablist with one visible panel, arrow keys, and the linked l
   assert.match(m, /role="tab" class="oh-tab" id="oh-tab-lagging" aria-selected="false" aria-controls="oh-panel-lagging" tabindex="-1"/);
   assert.match(m, /<div class="oh-panel" role="tabpanel" id="oh-panel-leading" aria-labelledby="oh-tab-leading">/);
   assert.match(m, /<div class="oh-panel" role="tabpanel" id="oh-panel-lagging" aria-labelledby="oh-tab-lagging" hidden>/);
-  // The existing sections live in their tab; the filter bar is above the tabs and the linked lines below both.
-  assert.ok(m.indexOf('class="filter-bar') < m.indexOf('role="tablist"'));
-  assert.ok(m.indexOf('id="oh-panel-leading"') < m.indexOf('Needs attention') && m.indexOf('Needs attention') < m.indexOf('id="oh-panel-lagging"'));
-  assert.ok(m.indexOf('id="oh-panel-lagging"') < m.indexOf('How we performed') && m.indexOf('How we performed') < m.indexOf('Warehouse scorecard'));
+  // The existing sections live in their tab; 2v2: the tabs are the page's main switch, right under the page head and
+  // above the filter bar, and the linked lines are below both panels.
+  assert.ok(m.indexOf('class="page-head') < m.indexOf('role="tablist"') && m.indexOf('role="tablist"') < m.indexOf('class="filter-bar'));
+  const attention = m.indexOf('>At risk now</h2>');
+  assert.ok(m.indexOf('id="oh-panel-leading"') < attention && attention < m.indexOf('id="oh-panel-lagging"'));
+  const performed = m.indexOf('>Delivery performance</h2>');
+  assert.ok(m.indexOf('id="oh-panel-lagging"') < performed && performed < m.indexOf('Warehouse scorecard'));
   assert.ok(m.indexOf('id="linked-lines"') > m.indexOf('Warehouse scorecard'));
   // Right arrow shows Lagging and focuses its tab; a Leading card gives way to OTD.
   const focused = [];

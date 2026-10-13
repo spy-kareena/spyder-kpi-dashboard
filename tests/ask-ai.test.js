@@ -97,10 +97,11 @@ test('get_overview equals the Order Health tiles with all filters, and leaves pa
   const h = hero(html);
   assert.deepEqual([oh.at_risk.open_value, oh.at_risk.orders, oh.at_risk.lines], [h.value, h.first, h.lines]);
   assert.deepEqual([oh.at_risk.past_due_no_reschedule_lines, oh.at_risk.no_commit_lines, oh.at_risk.rescheduled_lines], [1, 1, 1]);
-  for (const [label, key] of [['No commit date', 'no_commit'], ['Rescheduled', 'rescheduled'], ['This week focus', 'this_week_focus']]) {
+  for (const [label, key] of [['No commit date', 'no_commit'], ['Rescheduled', 'rescheduled']]) {
     assert.deepEqual(card(html, label), { count: oh[key].orders, value: oh[key].open_value }, label);
   }
-  for (const [label, key] of [['Due next week', 'due_next_week'], ['Due this month', 'due_this_month'], ['All open orders', 'all_open']]) {
+  // 2v2: This week focus moved into the Coming due strip with the other due-date cells.
+  for (const [label, key] of [['This week focus', 'this_week_focus'], ['Due next week', 'due_next_week'], ['Due this month', 'due_this_month'], ['All open orders', 'all_open']]) {
     assert.deepEqual(mini(html, label, ' orders'), { count: oh[key].orders, value: oh[key].open_value }, label);
   }
   assert.equal(oh.fill_rate.rate_pct, Number(html.match(/Fill rate<\/span>[\s\S]*?data-count="(\d+)" data-fmt="pct"/)[1]));
