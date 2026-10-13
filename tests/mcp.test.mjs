@@ -198,7 +198,7 @@ test('--check prints the overview and exits; exits 1 without files', () => {
 // --- The "Connect an AI" help page in index.html --------------------------------------------------------
 const unescape = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-test('Connect an AI opens before any export is loaded, with working setup snippets', () => {
+test('Connect an AI opens before any export is loaded: two short options and a working config snippet', () => {
   const page = loadPage();
   const sidebar = () => page.els['app-sidebar'].innerHTML;
   assert.doesNotMatch(sidebar().match(/<button[^>]*data-focus-key="nav-connect"[^>]*>/)[0], /disabled/);
@@ -210,19 +210,29 @@ test('Connect an AI opens before any export is loaded, with working setup snippe
   assert.match(html, /<h1 class="page-title"[^>]*>Connect an AI<\/h1>/);
   assert.match(html, /onclick="showUpload\(\)">Load an export</);
   assert.doesNotMatch(html, /Share snapshot|Export PDF/);
-  for (const t of ['Option 1: Ask AI in this dashboard', 'Option 2: Claude Desktop', 'Option 3: Claude Code', 'Option 4: Any other MCP app', 'Example questions', 'Privacy']) assert.ok(html.includes(t), t);
+  // Concise: one intro line, two option cards, one privacy line; the details live in the two guides.
+  const text = unescape(html.replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ');
+  for (const t of ['Option 1: Ask AI in this dashboard', 'Option 2: Your own AI app', 'Use only an AI app Spyder Controls approves.']) assert.ok(text.includes(t), t);
+  assert.equal((html.match(/<section class="card connect-opt\b/g) || []).length, 2, 'two option cards');
+  assert.doesNotMatch(text, /Option 3|Option 4|\bcompan(y|ies)\b/i);
+  assert.ok(text.split(' ').length < 220, `the page stays short (${text.split(' ').length} words with the page head)`);
   assert.match(html, /onclick="aiToggle\(true\)"/);
   assert.match(html, /href="docs\/AI_ASSISTANT\.md"/);
-  assert.match(html, /%APPDATA%\\Claude\\claude_desktop_config\.json/);
+  assert.match(html, /href="docs\/MCP\.md"/);
+  assert.match(html, /<span class="connect-file">claude_desktop_config\.json<\/span>/);
   assert.match(html, /Settings → Developer → Edit Config/);
 
-  const config = JSON.parse(unescape(html.match(/<pre id="connect-desktop">([^<]*)<\/pre>/)[1]));
+  const config = JSON.parse(unescape(html.match(/<pre id="connect-desktop"[^>]*>([^<]*)<\/pre>/)[1]));
   assert.deepEqual(config.mcpServers['spyder-kpi'], { command: 'node', args: ['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs', 'C:\\path\\to\\kpi_export.xls'] });
-  assert.equal(unescape(html.match(/<pre id="connect-code">([^<]*)<\/pre>/)[1]),
-    'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"');
-  // Copy buttons read the snippet id from data-copy and are left out of print.
-  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><button type="button" class="btn" data-copy="connect-(desktop|code)" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
-  assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config', 'Copy the Claude Code command'], 'each Copy button has its own accessible name');
+  // The scrolling snippet can be reached with the keyboard.
+  assert.match(html, /<pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">/);
+  // The one Copy button reads the snippet id from data-copy and is left out of print.
+  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><span class="connect-status" id="connect-(desktop)-status" role="status"><\/span><button type="button" class="btn btn-sm" data-copy="connect-\1" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
+  assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config'], 'the Copy button has its own accessible name');
+  // The Claude Code command and the other apps' settings stay in the guide.
+  const guide = fs.readFileSync(path.join(path.dirname(SERVER), '..', 'docs', 'MCP.md'), 'utf8');
+  assert.ok(guide.includes('claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'));
+  assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same Claude Desktop config as the page');
 });
 
 test('Connect an AI keeps the usual actions when an export is loaded; Copy uses the clipboard or a fallback', async () => {
@@ -235,11 +245,12 @@ test('Connect an AI keeps the usual actions when an export is loaded; Copy uses 
 
   let copied = '';
   page.ctx.navigator.clipboard = { writeText: async (t) => { copied = t; } };
-  const btn = { dataset: { copy: 'connect-code' }, focus() {} };
+  const btn = { dataset: { copy: 'connect-desktop' }, focus() {} };
   page.ctx.copyConnectSnippet(btn);
   await new Promise((r) => setTimeout(r, 5));
-  assert.match(copied, /^claude mcp add spyder-kpi -- node "C:\\path/);
-  assert.equal(page.els['connect-code-status'].textContent, 'Copied');
+  assert.deepEqual(JSON.parse(copied).mcpServers['spyder-kpi'].command, 'node');
+  assert.equal(page.els['connect-desktop-status'].textContent, 'Copied');
+  page.els['connect-desktop-status'].textContent = '';
 
   // No clipboard API (e.g. plain http): a hidden textarea and execCommand('copy').
   delete page.ctx.navigator.clipboard;

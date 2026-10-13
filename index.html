@@ -583,8 +583,8 @@ details.about p{margin:0}
 .ai-panel{position:fixed;top:0;right:0;z-index:40;width:420px;max-width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;background:#fff;border-left:1px solid var(--gray-200);box-shadow:-10px 0 30px -6px rgba(0,0,0,.12);font-size:13px;color:var(--gray-900)}
 .ai-panel[hidden],.ai-panel [hidden]{display:none!important}
 .ai-head{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--gray-200)}
-.ai-head h2{margin:0;font-size:15px;font-weight:600}
-.ai-mode{margin-right:auto;font-size:12px;color:var(--gray-500)}
+.ai-head h2{margin:0;font-size:15px;font-weight:600;white-space:nowrap}
+.ai-mode{margin-right:auto;min-width:0;font-size:12px;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ai-close{font:inherit;font-size:20px;line-height:1;border:0;background:none;color:var(--gray-500);cursor:pointer;padding:2px 7px;border-radius:6px}
 .ai-close:hover{background:var(--gray-100);color:var(--gray-900)}
 .ai-settings{padding:16px 18px 20px;display:grid;gap:14px;align-content:start;overflow-y:auto}
@@ -656,16 +656,41 @@ details.about p{margin:0}
 .preview-item .skeleton{border-radius:8px;animation-duration:2.4s}
 
 /* Connect an AI (help page) */
+/* Connect an AI: one intro line, two option cards (text and actions left, details right), one privacy line */
 .connect-intro{margin:0;font-size:14px;color:var(--gray-600);line-height:1.6;max-width:720px}
-.connect-card{display:grid;gap:14px;font-size:13.5px;color:var(--gray-700);line-height:1.6}
-.connect-card p,.connect-card ul{margin:0}
-.connect-card ul{padding-left:20px;display:grid;gap:6px}
-.connect-card a.btn{text-decoration:none}
-.connect-code{display:grid;gap:8px}
-.connect-code pre{margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.55;background:var(--gray-100);color:var(--gray-700);border-radius:6px;padding:10px 12px;white-space:pre-wrap;overflow-wrap:anywhere}
-.connect-copy{display:flex;align-items:center;gap:10px}
-.connect-table td{vertical-align:top}
-.connect-table code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+.connect-grid{display:grid;gap:20px}
+.connect-opt{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);grid-template-rows:auto 1fr;grid-template-areas:"main side" "act side";gap:18px 40px;align-items:start;padding:26px 28px}
+.connect-main{grid-area:main;display:grid;gap:16px;align-content:start}
+.connect-side{grid-area:side}
+.connect-opt>.connect-actions{grid-area:act}
+.connect-head{display:grid;gap:4px}
+.connect-no{display:block;margin-bottom:2px;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-strong)}
+.connect-title{margin:0;font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--gray-900)}
+.connect-sub{margin:0;font-size:12.5px;color:var(--gray-500);line-height:1.5}
+.connect-text{margin:0;font-size:13.5px;line-height:1.6;color:var(--gray-700)}
+.connect-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.connect-actions a.btn{text-decoration:none}
+.connect-more{font-size:12.5px;color:var(--gray-500)}
+.connect-tiers{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.connect-tiers li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px}
+.connect-tiers .ai-tier{justify-content:center;margin-top:1px}
+.connect-tiers strong{display:block;font-size:13.5px;font-weight:600;color:var(--gray-900);line-height:1.45}
+.connect-tier-note{display:block;margin-top:2px;font-size:12.5px;color:var(--gray-600);line-height:1.5}
+.connect-steps{margin-top:0;gap:10px}
+.connect-steps a{color:var(--accent-strong)}
+.connect-code{border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;background:var(--gray-50)}
+.connect-code-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:6px 8px 6px 14px;background:#fff;border-bottom:1px solid var(--gray-200)}
+.connect-file{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--gray-600);overflow-wrap:anywhere}
+.connect-copy{display:flex;align-items:center;gap:10px;margin-left:auto}
+.connect-status{font-size:12px;color:var(--gray-600)}
+.connect-code pre{margin:0;padding:14px 16px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.6;color:var(--gray-700);white-space:pre;overflow-x:auto}
+.connect-code pre:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.connect-privacy{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:13px;color:var(--gray-600);line-height:1.55}
+.connect-privacy svg{flex:none;width:16px;height:16px;margin-top:2px;color:var(--gray-500)}
+@media (max-width:1240px){.connect-opt{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-template-areas:"main" "side" "act"}}
+@media screen and (min-width:1600px){body.ai-open .connect-opt{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-template-areas:"main" "side" "act"}}
+@media (max-width:640px){.connect-opt{padding:20px 18px;gap:18px}}
+@media print{.connect-code pre{white-space:pre-wrap;overflow:visible}.connect-opt{break-inside:avoid}}
 
 /* Upload */
 /* #upload-screen and #results-screen are shown and hidden inline, so section spacing is a sibling margin */
@@ -1319,31 +1344,31 @@ button.ship-kpi{width:100%}
   <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
-    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The AI provider and model answering your questions. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Pick the AI provider and model, and read what data each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat stays until you clear it or load new data." onclick="aiToggle(false)">×</button></div>
+    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The provider and model answering. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Pick the provider and model, and see what each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat is kept." onclick="aiToggle(false)">×</button></div>
     <div class="ai-settings" id="ai-settings" hidden>
-      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid: Claude and ChatGPT, billed to the company's account; they do not train on what you send. Free: Groq and OpenRouter, with tight limits; free services may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
-      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models handle harder questions better but are slower and, on paid providers, cost more per question." onchange="aiSetModel(this.value)"></select></label>
+      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid (Claude, ChatGPT): billed to Spyder Controls, not used for training. Free (Groq, OpenRouter): tight limits, may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
+      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models answer better but are slower, and cost more on paid providers." onchange="aiSetModel(this.value)"></select></label>
       <div class="ai-notice" id="ai-notice" hidden>
-        <p class="ai-notice-head"><span class="ai-tier" id="ai-tier"></span><strong>What gets sent, and where</strong></p>
+        <p class="ai-notice-head"><span class="ai-tier" id="ai-tier"></span><strong>Where the data goes</strong></p>
         <p id="ai-notice-text"></p>
-        <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="Opens this provider's own data and privacy terms in a new tab.">Provider's data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, what they cost and what they do with data.">Ask AI guide</a></p>
-        <label class="ai-check" data-tip="Nothing is sent to this provider until this box is ticked. The choice is saved in this browser, separately for each provider; untick it to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">I understand. Allow Ask AI to send my questions and the dashboard data needed to answer them to this provider from this browser.</span></label>
+        <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="This provider's own data terms (new tab).">Data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Providers, costs and data terms (docs/AI_ASSISTANT.md).">Ask AI guide</a></p>
+        <label class="ai-check" data-tip="Nothing is sent until this is ticked. Saved in this browser for each provider; untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
       </div>
-      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Return to the chat with the provider and model picked above." onclick="aiBackToChat()">Back to chat</button></div>
+      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Back to the chat with this provider and model." onclick="aiBackToChat()">Back to chat</button></div>
       <p class="ai-status" id="ai-settings-status" role="status"></p>
     </div>
     <div class="ai-setup" id="ai-setup" hidden>
       <h3 id="ai-setup-title" tabindex="-1">Ask AI is not set up</h3>
-      <p id="ai-setup-why">None of the four AI providers has a key set up on this site yet.</p>
-      <p>To turn it on, whoever runs the site adds at least one of these keys as a Cloudflare Pages secret and redeploys. Nobody needs a key of their own.</p>
+      <p id="ai-setup-why">No AI provider has a key on this site yet.</p>
+      <p>To turn it on, IT adds one of these Cloudflare Pages secrets and redeploys:</p>
       <ul class="ai-setup-list">
         <li><code>ANTHROPIC_API_KEY</code> Claude (paid)</li>
         <li><code>OPENAI_API_KEY</code> ChatGPT (paid)</li>
         <li><code>GROQ_API_KEY</code> Groq (free tier)</li>
         <li><code>OPENROUTER_API_KEY</code> OpenRouter (free models)</li>
       </ul>
-      <p>Step by step, with costs and data terms: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English setup guide for Ask AI, including the commands IT runs.">Ask AI guide</a>. To ask about an export on your own computer instead, use Claude Desktop or Claude Code (see Connect an AI).</p>
-      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Opens the Connect an AI page: set up Claude Desktop, Claude Code or another AI app to read your exports." onclick="aiToggle(false);setTab('connect')">Connect an AI</button></div>
+      <p>Steps: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs (docs/AI_ASSISTANT.md).">Ask AI guide</a>. Or connect your own AI app instead.</p>
+      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up Claude Desktop or another AI app to read your exports." onclick="aiToggle(false);setTab('connect')">Connect an AI</button></div>
     </div>
     <div class="ai-chat" id="ai-chat">
       <div class="ai-log" id="ai-log"></div>
@@ -1355,9 +1380,9 @@ button.ship-kpi{width:100%}
         <button type="button" class="chip" data-q="Summarize OTD, fill rate and reschedule hit rate as of the export date." data-tip="Asks for on-time delivery, fill rate and reschedule hit rate as of the export date." onclick="aiSend(this.dataset.q)">How are we performing?</button>
       </div>
       <div class="ai-compose">
-        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends, Shift+Enter for a new line)" data-tip="Type a question in plain English. Enter sends it; Shift+Enter starts a new line." onkeydown="aiInputKey(event)"></textarea>
-        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send the question. The AI looks up the numbers it needs from the loaded export." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat. Earlier questions and answers are removed and not sent again." onclick="aiClear()">Clear chat</button></div>
-        <span class="ai-foot" id="ai-foot">Answers can be wrong. Check key numbers on the page.</span>
+        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends)" data-tip="Type a question. Enter sends; Shift+Enter adds a line." onkeydown="aiInputKey(event)"></textarea>
+        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send. The AI looks up the numbers it needs." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat. Earlier messages are not sent again." onclick="aiClear()">Clear chat</button></div>
+        <span class="ai-foot" id="ai-foot">Answers can be wrong. Check key numbers.</span>
       </div>
     </div>
   </aside>
@@ -4594,7 +4619,7 @@ function aiSetProvider(id){
   aiChoose();aiSaveChoice();
   aiNewConversation(`Now asking ${p.short} (${aiModelLabel(p,aiState.model)}). Earlier questions are not sent to it.`);
   aiSyncSettings();
-  aiSettingsStatus(aiConsented(p.id)?`${p.short} is allowed on this browser.`:`Read what ${p.short} receives, then tick the box to allow it.`,aiConsented(p.id)?'good':'');
+  aiSettingsStatus(aiConsented(p.id)?`${p.short} is allowed on this browser.`:`Read the notice, then tick the box to allow ${p.short}.`,aiConsented(p.id)?'good':'');
 }
 function aiSetModel(id){
   const p=aiCurrent();
@@ -4609,7 +4634,7 @@ function aiSetConsent(on){
   const all=aiReadJson(AI_CONSENT_STORE);
   if(on)all[p.id]=new Date().toISOString().slice(0,10);else delete all[p.id];
   aiSet(AI_CONSENT_STORE,Object.keys(all).length?JSON.stringify(all):'');
-  aiSettingsStatus(on?`Thanks. Ask AI may send questions to ${p.short} from this browser.`:`Ask AI will not send anything to ${p.short} from this browser.`,on?'good':'');
+  aiSettingsStatus(on?`${p.short} is allowed on this browser.`:`Nothing will be sent to ${p.short} from this browser.`,on?'good':'');
   aiSyncSettings();
 }
 
@@ -4711,12 +4736,12 @@ function aiSyncSettings(){
   if(!terms.hidden)terms.href=p.termsUrl;
   aiEl('ai-consent').checked=consented;
   aiEl('ai-consent').disabled=!p;
-  aiEl('ai-consent-text').textContent=`I understand. Allow Ask AI to send my questions and the dashboard data needed to answer them to ${p?p.short:'this provider'} from this browser.`;
+  aiEl('ai-consent-text').textContent=`Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to ${p?p.short:'this provider'}.`;
   aiEl('ai-mode').textContent=aiState.statusError?'Needs attention':!aiState.status?'':p?`${p.short} · ${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}`:'Not set up';
-  aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiState.model}) and can be wrong. Check key numbers on the page.`:'Answers can be wrong. Check key numbers on the page.';
+  aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiState.model}) and can be wrong. Check key numbers.`:'Answers can be wrong. Check key numbers.';
   aiEl('ai-setup-why').textContent=aiState.status&&!aiState.status.hosted
-    ?'Ask AI needs the hosted dashboard: this is a shared snapshot, a copy opened as a file, or a site without the AI service, so there is no server to hold the AI keys.'
-    :'None of the four AI providers has a key set up on this site yet.';
+    ?'Ask AI needs the hosted site. A shared snapshot, a file copy or a site without the AI service has no server for the keys.'
+    :'No AI provider has a key on this site yet.';
 }
 
 // --- Asking: one question, the tool loop, errors ---
@@ -4853,7 +4878,7 @@ async function aiSend(text){
     const p=aiCurrent();
     if(!p){aiShowView('setup');return;}
     // Nothing leaves the browser for a provider until its consent box is ticked.
-    if(!aiConsented(p.id)){aiShowView('settings');aiSettingsStatus(`Tick the box above to allow sending data to ${p.short} before asking a question.`,'bad');return;}
+    if(!aiConsented(p.id)){aiShowView('settings');aiSettingsStatus(`Tick the box above to allow ${p.short} first.`,'bad');return;}
     if(!hasLoadedData())throw aiFail('Load a KPI export first: Ask AI answers from the data loaded in this dashboard.');
     const key=`${p.id}|${aiState.model}`;
     if(aiState.chatKey!==key){aiState.history=[];aiState.system='';aiState.chatKey=key;}
@@ -4893,7 +4918,7 @@ function aiRenderLog(){
     :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}<div class="ai-tools">${m.by?`${esc(m.by)}${m.used&&m.used.length?' · ':''}`:''}${m.used&&m.used.length?`Looked up: ${esc(m.used.join(', '))}`:''}</div></div>`
     :m.role==='note'?`<div class="ai-msg note">${esc(m.text)}</div>`
     :`<div class="ai-msg error">${esc(m.text)}</div>`).join('');
-  log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: what is at risk, which customers, vendors or warehouses drive it, what is due next, or how OTD and fill are doing. Answers use the same numbers as these pages, as of the export date.</p>')
+  log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: what is at risk and why, customers, vendors, warehouses, OTD or fill. Answers use the same numbers as these pages.</p>')
     +(aiState.busy?'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>':'');
   log.scrollTop=log.scrollHeight;
   aiEl('ai-send').disabled=aiState.busy;
@@ -4988,51 +5013,44 @@ function renderNeedsFile(kind){
     </div>
   </section>`;
 }
-// Help page: ways to ask an AI about the export (Ask AI here, or the MCP server in mcp/ for Claude and other apps).
-// It works before any file is loaded. Setup details and troubleshooting are in docs/MCP.md.
+// Help page: the two ways to ask an AI about the export: Ask AI here, or the MCP connector in mcp/ for Claude
+// Desktop and other AI apps. It works before any file is loaded. Details: docs/AI_ASSISTANT.md and docs/MCP.md.
 const CONNECT_SNIPPETS={
-  'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2),
-  'connect-code':'claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'
+  'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2)
 };
 function renderConnectPage(){
-  const code=(id,label)=>`<div class="connect-code"><pre id="${id}">${esc(CONNECT_SNIPPETS[id])}</pre><div class="connect-copy print-hide"><button type="button" class="btn" data-copy="${id}" data-focus-key="copy-${id}" aria-label="${esc(label)}"${tipAttr(`${label} to the clipboard.`)} onclick="copyConnectSnippet(this)">Copy</button><span class="section-sub" id="${id}-status" role="status"></span></div></div>`;
+  const doc=(href,label,tip)=>`<a class="btn" href="${href}" target="_blank" rel="noopener"${tipAttr(tip)}>${label}</a>`;
   const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
-  const section=(n,title,sub,body,cls='card connect-card')=>`<section class="section rise rise-${n}"><div class="section-head"><h2 class="section-title">${title}</h2><span class="section-sub">${sub}</span></div><div class="${cls}">${body}</div></section>`;
-  return `<p class="connect-intro rise">Ask questions about the export in plain English, such as “What is at risk this week?”. Pick one of the options below. Each one answers from the same numbers these pages show. Setup help: <a href="docs/MCP.md" target="_blank" rel="noopener" data-tip="Open the connector setup guide (docs/MCP.md) in a new tab: setup steps and troubleshooting.">docs/MCP.md</a>.</p>
-  ${section(1,'Option 1: Ask AI in this dashboard','Claude, ChatGPT, Groq or OpenRouter · nothing to install',`<p>Click <strong>Ask AI</strong>, pick a provider in <strong>Settings</strong> and tick its consent box. The hosted site keeps the AI keys on its server, so nobody needs a key of their own. Your question and the numbers needed to answer it go from the site to the provider you picked.</p>
-    <ul>
-      <li><strong>Paid:</strong> Claude (Anthropic) and ChatGPT (OpenAI). Billed to the company's account, usually from under a cent to about 20 cents per question depending on the model; they do not train on what you send.</li>
-      <li><strong>Free:</strong> Groq and OpenRouter's free models. Tight limits per minute and per day, and free services may keep or publish what you send, so use them only for data you may share.</li>
-    </ul>
-    <p>If Ask AI says it is not set up, IT adds at least one key on the server (see the guide). A shared snapshot or a copy opened as a file cannot use Ask AI; use Options 2 to 4 instead.</p>
-    <div class="need-actions print-hide"><button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel on the right. Nothing is sent until you tick the consent box for a provider." onclick="aiToggle(true)">Open Ask AI</button><a class="btn" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Plain-English guide to Ask AI: the four providers, setup, costs and data terms.">Ask AI guide</a></div>`)}
-  ${section(2,'Option 2: Claude Desktop','runs on your computer and reads the export files you list',`<div class="steps">
-      ${step(1,'Install Node.js 20 or newer from <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Open nodejs.org in a new tab to download Node.js (version 20 or newer).">nodejs.org</a>.')}
-      ${step(2,'Save the dashboard folder on this computer (ask IT for it if you only use the website). It needs <strong>index.html</strong> and the <strong>mcp</strong> folder.')}
-      ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>. This opens claude_desktop_config.json:<code>Windows: %APPDATA%\\Claude\\claude_desktop_config.json</code><code>macOS: ~/Library/Application Support/Claude/claude_desktop_config.json</code>Add the lines below with your two paths (keep the double backslashes), save, then restart Claude.')}
-    </div>
-    ${code('connect-desktop','Copy the Claude Desktop config')}
-    <p>If the file already has settings, keep them: put the "spyder-kpi" entry inside its "mcpServers" section, or add the "mcpServers" part after the last setting, separated by a comma. After a new export, ask Claude to load it (for example “Load C:\\Exports\\kpi_export.xls”), or change the path and restart Claude.</p>`)}
-  ${section(3,'Option 3: Claude Code','one command in a terminal',`<p>Run this once with your two paths, in the folder where you use Claude Code (to use it in every folder, add <strong>--scope user</strong> after <strong>add</strong>). Then start <strong>claude</strong> there and type <strong>/mcp</strong> to check that spyder-kpi is connected.</p>${code('connect-code','Copy the Claude Code command')}`)}
-  ${section(4,'Option 4: Any other MCP app','Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers',`<table class="data-table connect-table"><thead><tr><th scope="col"${tipAttr('What to fill in, in your AI app’s settings for a local MCP server.')}>Setting</th><th scope="col"${tipAttr('What to type there. Use the full paths of node, the connector and your export files on this computer.')}>Value</th></tr></thead><tbody>
-      <tr><td class="m">Transport</td><td>stdio (a local command)</td></tr>
-      <tr><td class="m">Command</td><td><code>node</code></td></tr>
-      <tr><td class="m">Arguments</td><td>The full path of <code>mcp\\spyder-kpi-mcp.mjs</code>, then the full path of each export file</td></tr>
-    </tbody></table>`,'card flush')}
-  ${section(5,'Example questions','the last one needs Options 2 to 4',`<ul>
-      <li>What is at risk right now, and why?</li>
-      <li>How much of the at-risk value is waiting on us, and what are the top reasons?</li>
-      <li>Which customers have the most past due value?</li>
-      <li>Show the late purchase orders by vendor.</li>
-      <li>Which orders are due next week in the CM warehouses?</li>
-      <li>How was on-time delivery over the last 3 months?</li>
-      <li>Load C:\\Exports\\kpi_export.xls and give me the overview.</li>
-    </ul>`)}
-  ${section(6,'Privacy','read before you connect',`<p>The server runs on your computer and reads only the files you list. The AI app you connect receives the tool answers (order lines, customers, values) and sends them to its provider. Use only an AI app your company approves.</p>`)}`;
+  // Wide screens: text and actions on the left, details on the right; narrow: text, details, then actions.
+  const option=(n,title,sub,main,side,actions)=>`<section class="card connect-opt rise rise-${n}" aria-labelledby="connect-opt-${n}">
+    <div class="connect-main"><div class="connect-head"><h2 class="connect-title" id="connect-opt-${n}"><span class="connect-no">Option ${n}<span class="sr-only">:</span></span> ${title}</h2><p class="connect-sub">${sub}</p></div>${main}</div>
+    <div class="connect-side">${side}</div>
+    <div class="connect-actions print-hide">${actions}</div>
+  </section>`;
+  const tier=(cls,label,names,note)=>`<li><span class="ai-tier ${cls}">${label}</span><span><strong>${names}</strong><span class="connect-tier-note">${note}</span></span></li>`;
+  return `<p class="connect-intro rise">Ask an AI about the export in plain English, such as “What is at risk this week?”.</p>
+  <div class="connect-grid">
+  ${option(1,'Ask AI in this dashboard','Nothing to install',
+    `<p class="connect-text">Click <strong>Ask AI</strong> at the top of any page, pick a provider in <strong>Settings</strong> and tick its consent box.</p>`,
+    `<ul class="connect-tiers">
+      ${tier('paid','Paid','Claude and ChatGPT','Billed to Spyder Controls. Not used to train models.')}
+      ${tier('free','Free','Groq and OpenRouter','Tight limits. May keep or publish what you send.')}
+    </ul>`,
+    `<button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Opens the Ask AI panel. Nothing is sent until you allow a provider." onclick="aiToggle(true)">Open Ask AI</button>${doc('docs/AI_ASSISTANT.md','Ask AI guide','Providers, costs and data terms (docs/AI_ASSISTANT.md).')}`)}
+  ${option(2,'Your own AI app','Claude Desktop, Claude Code, Cursor and other MCP apps',
+    `<div class="steps connect-steps">
+      ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
+      ${step(2,'Get the dashboard folder from IT.')}
+      ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
+    </div>`,
+    `<div class="connect-code"><div class="connect-code-head"><span class="connect-file">claude_desktop_config.json</span><div class="connect-copy print-hide"><span class="connect-status" id="connect-desktop-status" role="status"></span><button type="button" class="btn btn-sm" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>`,
+    `${doc('docs/MCP.md','Setup guide','Other apps, updates and troubleshooting (docs/MCP.md).')}<span class="connect-more">Other apps and troubleshooting</span>`)}
+  </div>
+  <p class="connect-privacy rise rise-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI provider receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
 }
 function copyConnectSnippet(btn){
   const id=btn.dataset.copy,text=CONNECT_SNIPPETS[id],status=document.getElementById(`${id}-status`);
-  const done=ok=>{if(status)status.textContent=ok?'Copied':'Copy did not work. Select the text and press Ctrl+C.';};
+  const done=ok=>{if(status)status.textContent=ok?'Copied':'Select the text and press Ctrl+C.';};
   const fallback=()=>{
     const ta=document.createElement('textarea');
     ta.value=text;ta.setAttribute('readonly','');ta.style.position='fixed';ta.style.opacity='0';

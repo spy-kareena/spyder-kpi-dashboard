@@ -207,7 +207,7 @@ test('status: providers grouped Paid / Free, unconfigured ones disabled, default
   assert.equal(page.els['ai-tier'].textContent, 'Paid');
   assert.equal(page.els['ai-notice-text'].textContent, 'Claude data notice: what is sent and kept.');
   assert.equal(page.els['ai-terms'].href, 'https://anthropic.example.test/terms');
-  assert.match(page.els['ai-consent-text'].textContent, /send my questions and the dashboard data needed to answer them to Claude/);
+  assert.equal(page.els['ai-consent-text'].textContent, 'Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to Claude.');
   // Not yet allowed: the settings view is shown, not the chat.
   assert.deepEqual([page.els['ai-settings'].hidden, page.els['ai-chat'].hidden, page.els['ai-setup'].hidden], [false, true, true]);
   page.run('aiSetConsent(true)');
@@ -231,7 +231,7 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
   none.run('aiToggle(true)');
   await none.run('aiPrepare()');
   assert.deepEqual([none.els['ai-setup'].hidden, none.els['ai-settings'].hidden, none.els['ai-chat'].hidden], [false, true, true]);
-  assert.match(none.els['ai-setup-why'].textContent, /None of the four AI providers has a key set up/);
+  assert.match(none.els['ai-setup-why'].textContent, /No AI provider has a key on this site yet/);
   assert.equal(none.els['ai-mode'].textContent, 'Not set up');
   await none.run("aiSend('hello')");
   assert.equal(chats(calls).length, 0, 'nothing is sent');
@@ -241,7 +241,7 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
   iis.run('aiToggle(true)');
   await iis.run('aiPrepare()');
   assert.equal(iis.els['ai-setup'].hidden, false);
-  assert.match(iis.els['ai-setup-why'].textContent, /needs the hosted dashboard/);
+  assert.match(iis.els['ai-setup-why'].textContent, /needs the hosted site/);
 
   const file = await loaded();
   let fetched = 0;
@@ -275,7 +275,7 @@ test('consent is per provider: nothing is sent to a provider until its box is ti
   await page.run("aiSend('hello')");
   assert.equal(chats(calls).length, 0, 'Groq was not allowed, so nothing went out');
   assert.equal(page.els['ai-settings'].hidden, false);
-  assert.match(page.els['ai-settings-status'].textContent, /Tick the box above to allow sending data to Groq/);
+  assert.match(page.els['ai-settings-status'].textContent, /Tick the box above to allow Groq first/);
   page.run("aiSetProvider('anthropic')");
   await page.run("aiSend('hello')");
   assert.equal(chats(calls).length, 1);
@@ -580,11 +580,27 @@ test('Connect an AI describes the four providers and opens the panel', () => {
   const page = loadPage();
   page.run("setTab('connect')");
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /Option 1: Ask AI in this dashboard<\/h2><span class="section-sub">Claude, ChatGPT, Groq or OpenRouter/);
-  assert.match(html, /<strong>Paid:<\/strong> Claude \(Anthropic\) and ChatGPT \(OpenAI\)/);
-  assert.match(html, /<strong>Free:<\/strong> Groq and OpenRouter/);
+  assert.match(html, /<h2 class="connect-title" id="connect-opt-1"><span class="connect-no">Option 1<span class="sr-only">:<\/span><\/span> Ask AI in this dashboard<\/h2>/);
+  assert.match(html, /<span class="ai-tier paid">Paid<\/span><span><strong>Claude and ChatGPT<\/strong><span class="connect-tier-note">Billed to Spyder Controls\. Not used to train models\.<\/span>/);
+  assert.match(html, /<span class="ai-tier free">Free<\/span><span><strong>Groq and OpenRouter<\/strong><span class="connect-tier-note">Tight limits\. May keep or publish what you send\.<\/span>/);
   assert.match(html, /data-focus-key="connect-ask-ai"[^>]*data-tip="Opens the Ask AI panel/);
   assert.doesNotMatch(html, /Gemini|Google AI Studio/);
+});
+
+test('"company" is never used: Spyder Controls is named on Connect an AI, in the Ask AI panel and in the AI guides', () => {
+  const fs = require('node:fs'), path = require('node:path');
+  const page = loadPage();
+  page.run("setTab('connect')");
+  const connect = page.els['results-screen'].innerHTML;
+  const panel = HTML.slice(HTML.indexOf('<aside id="ai-panel"'), HTML.indexOf('</aside>', HTML.indexOf('<aside id="ai-panel"')));
+  const app = HTML.slice(HTML.indexOf('// --- Providers and models'), HTML.indexOf('// Model text is escaped first'));
+  const root = path.join(__dirname, '..');
+  const files = ['functions/api/ai/[[path]].js', 'docs/AI_ASSISTANT.md', 'docs/MCP.md'].map((f) => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
+  for (const [name, text] of [['Connect an AI', connect], ['Ask AI panel', panel], ['Ask AI code', app], ...files]) assert.doesNotMatch(text, /\bcompan(y|ies)\b/i, name);
+  assert.match(connect, /Use only an AI app Spyder Controls approves\./);
+  assert.match(panel, /data-tip="Paid \(Claude, ChatGPT\): billed to Spyder Controls/);
+  assert.match(files[2][1], /Use only an AI app Spyder Controls approves for this data\./);
+  assert.match(files[1][1], /outside providers that host the models/);
 });
 
 run();

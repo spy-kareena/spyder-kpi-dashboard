@@ -68,11 +68,17 @@ test('status lists all four providers grouped by tier, configured only where the
   assert.equal(claude.defaultModel, 'claude-opus-5-5');
   assert.match(claude.modelLabels['claude-opus-5-5'], /Opus 5\.5/);
   for (const p of s.providers) {
-    assert.ok(p.dataNotice.length > 80, `${p.id} has a data notice`);
+    // One short line or two on what happens to the data, naming Spyder Controls (never "the company").
+    assert.ok(p.dataNotice.length > 80 && p.dataNotice.length <= 160, `${p.id} has a short data notice`);
+    assert.doesNotMatch(p.dataNotice, /\bcompan(y|ies)\b/i);
     assert.match(p.termsUrl, /^https:\/\//);
     assert.match(p.secret, /^[A-Z]+_API_KEY$/);
   }
-  assert.match(s.providers[3].dataNotice, /public/i, 'OpenRouter warns that free hosts may keep or publish data');
+  assert.match(s.providers[0].dataNotice, /^Billed to Spyder Controls\. Anthropic does not train on this data/, 'Claude: paid, no training');
+  assert.match(s.providers[1].dataNotice, /^Billed to Spyder Controls\. OpenAI does not train on this data by default/, 'ChatGPT: paid, no training by default');
+  assert.match(s.providers[2].dataNotice, /^Free\b.*Groq says it does not train on this data, but free terms can change/, 'Groq: free, terms can change');
+  assert.match(s.providers[3].dataNotice, /outside providers that host them may keep, train on or publish/, 'OpenRouter warns that free hosts may keep, train on or publish data');
+  assert.match(s.providers[3].dataNotice, /public/i, 'OpenRouter says to treat it as public');
   assert.deepEqual(s.providers[1].models, [], 'no models for a provider without a key');
   assert.ok(s.providers[2].models.includes('openai/gpt-oss-120b'));
   assert.ok(calls.every((c) => !/anthropic/.test(c.url)), 'Claude needs no upstream call for status');
