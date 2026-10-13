@@ -78,7 +78,10 @@ test('the canonical page-group CSS is in the main stylesheet, as the 2v2 contrac
   assert.match(CSS, /#results-screen>\*\+\.pg-group,#results-screen>\.pg-group\+\*,#upload-screen>\*\+\.pg-group\{margin-top:var\(--space-group\)\}/);
   assert.match(CSS, /\.pg-group>\.pg-group-head\+\*\{margin-top:0\}/);
   // On paper a long group may break across pages, but its title stays with its first card.
-  assert.match(CSS, /@media print\{\.pg-group\{break-inside:auto;page-break-inside:auto\}\.pg-group-head\{break-after:avoid;/);
+  // !important: the older print rule keeps every <section> whole (a group is a <section>), which pushed whole groups
+  // to a new page; a group must run on over pages while its cards stay whole.
+  assert.match(CSS, /@media print\{\.pg-group\{break-inside:auto!important;page-break-inside:auto!important\}\.pg-group-head\{break-after:avoid;/);
+  assert.match(CSS, /@media print\{\n[^]*?section,\.section,[^{]*\.card\{break-inside:avoid;page-break-inside:avoid\}/, 'cards stay whole');
 });
 
 test('every page but Order Health is a few named groups; each group is labelled by its own title', async () => {

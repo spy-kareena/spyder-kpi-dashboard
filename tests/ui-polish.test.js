@@ -406,7 +406,7 @@ test('a tip for a control in the modal Your name dialog is drawn inside the dial
   assert.equal(rig.layer.parentNode, rig.body);
   // Closing the dialog sends the layer home before the dialog is removed (else every later tip is gone with it).
   assert.match(HTML, /d\.addEventListener\('close',\(\)=>\{[^}]*?hideTip\(\);[\s\S]*?d\.remove\(\);/);
-  assert.match(HTML, /<input id="editor-name"[^\n]*\$\{tipAttr\('Not in the list\? Type your name\.'\)\}>/);
+  assert.match(HTML, /<input id="editor-name"[^\n]*\$\{tipAttr\(any\?'Not in the list\? Type your name\.':'Type your name\.'\)\}>/);
 });
 
 test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast status region', async () => {

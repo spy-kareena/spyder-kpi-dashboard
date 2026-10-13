@@ -631,6 +631,7 @@ function fakeDialog() {
   const error = field('editor-error');
   const people = field('editor-people');
   const filter = field('editor-filter');
+  const label = field('editor-name-label');
   const chipList = () => [...chips.innerHTML.matchAll(/<button type="button" class="editor-chip" data-name="([^"]*)"[^>]*>/g)].map((m) => ({ dataset: { name: unesc(m[1]) }, focus() {} }));
   const chips = { id: 'editor-chips', innerHTML: '', addEventListener: on('chips'), querySelector: () => chipList()[0] || null, querySelectorAll: () => chipList(), contains: () => false };
   const form = { addEventListener: on('form') };
@@ -641,13 +642,16 @@ function fakeDialog() {
     get innerHTML() { return html; },
     set innerHTML(v) {
       html = v;
-      input.value = unesc(/ value="([^"]*)"/.exec(v.match(/<input id="editor-name"[^>]*>/)[0])[1]);
+      const box = v.match(/<input id="editor-name"[^>]*>/)[0];
+      input.value = unesc(/ value="([^"]*)"/.exec(box)[1]);
+      input.placeholder = unesc((/ placeholder="([^"]*)"/.exec(box) || ['', ''])[1]);
+      label.textContent = (v.match(/<label for="editor-name" id="editor-name-label">([^<]*)<\/label>/) || ['', ''])[1];
       people.hidden = /id="editor-people" hidden>/.test(v);
       filter.hidden = /<input type="search" id="editor-filter"[^>]* hidden>/.test(v);
       chips.innerHTML = v.match(/id="editor-chips"[^>]*>([\s\S]*?)<\/div>/)[1];
     },
     setAttribute(k, v) { this.attrs[k] = v; },
-    querySelector: (s) => ({ form, '#editor-name': input, '#editor-error': error, '[data-editor-skip]': skip, '#editor-people': people, '#editor-filter': filter, '#editor-chips': chips }[s]),
+    querySelector: (s) => ({ form, '#editor-name': input, '#editor-error': error, '[data-editor-skip]': skip, '#editor-people': people, '#editor-filter': filter, '#editor-chips': chips, '#editor-name-label': label }[s]),
     addEventListener: (t, fn) => { listeners[t] = fn; },
     showModal() { this.opened++; },
     close(v) { if (v !== undefined) this.returnValue = v; listeners.close(); },
@@ -659,15 +663,18 @@ function fakeDialog() {
     names: () => chipList().map((c) => c.dataset.name),
     current: () => unesc((chips.innerHTML.match(/data-name="([^"]*)" aria-current="true"/) || ['', ''])[1]),
     pick(name) { listeners['chips:click']({ target: { closest: (s) => (s === '[data-name]' ? { dataset: { name } } : null) } }); },
+    // A click on the × beside a saved name.
+    unlist(name) { listeners['chips:click']({ target: { closest: (s) => (s === '[data-remove]' ? { dataset: { remove: name } } : s === '[data-name]' ? { dataset: { name } } : null) } }); },
     find(text) { filter.value = text; listeners['editor-filter:input'](); },
     findEnter() { const e = { key: 'Enter', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } }; listeners['editor-filter:keydown'](e); return e.defaultPrevented; },
-    input, error, people, filter, chips,
+    input, error, people, filter, chips, label,
   };
   return d;
 }
 // Names already in the shared list (Workers KV key 'people'), the first seen most recently.
-async function seedPeople(site, names, newest = Date.UTC(2026, 9, 7)) {
-  const people = names.map((name, i) => ({ name, firstSeen: new Date(Date.UTC(2026, 0, 1)).toISOString(), lastSeen: new Date(newest - i * 3600000).toISOString() }));
+// Seen in the last week (the server leaves out names not seen for 180 days, by its own clock).
+async function seedPeople(site, names, newest = Date.now() - 6 * 86400000) {
+  const people = names.map((name, i) => ({ name, firstSeen: new Date(newest - 90 * 86400000).toISOString(), lastSeen: new Date(newest - i * 3600000).toISOString() }));
   await site.env.REPORT_STORE.put('people', JSON.stringify({ v: 1, people }));
 }
 function catchDialogs(page) {
@@ -697,7 +704,10 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   assert.equal(d.attrs['aria-labelledby'], 'editor-dialog-title');
   // With saved names it opens on its title (a stray Enter picks no one; no phone keyboard over the list).
   assert.match(d.innerHTML, /<h2 id="editor-dialog-title" tabindex="-1" autofocus>Your name<\/h2>\s*<p id="editor-dialog-desc">Shown with the notes you save\.<\/p>/);
-  assert.match(d.innerHTML, /<label for="editor-name">New name<\/label>/);
+  // Beside a list the box is for a new name; each saved name has a × (with a tip and a label naming it).
+  assert.match(d.innerHTML, /<label for="editor-name" id="editor-name-label">New name<\/label>/);
+  assert.match(d.chips.innerHTML, /<span class="editor-pick"><button type="button" class="editor-chip" data-name="Kareena" data-tip="Use this name\.">Kareena<\/button><button type="button" class="editor-chip-x" data-remove="Kareena" aria-label="Remove Kareena" data-tip="Remove this name from the list for everyone\.">×<\/button><\/span>/);
+  assert.equal(d.input.placeholder, '', 'no hint without initials saved before 2v2');
   assert.match(d.innerHTML, /<input id="editor-name" name="name" maxlength="40" autocomplete="name"[^>]*aria-describedby="editor-error"/);
   assert.doesNotMatch(d.innerHTML.match(/<input id="editor-name"[^>]*>/)[0], /autofocus/);
   assert.match(d.innerHTML, /<input type="search" id="editor-filter"[^>]* data-tip="Type part of your name\."/);
@@ -824,7 +834,7 @@ test('Your name: a long list shows the 12 names seen most recently, Find your na
   assert.equal(page.storage.spyderKpiEditorName, 'Kareena Kapoor');
 });
 
-test('Your name: initials saved before 2v2 are stamped until the name is given, fill the New name box, and the name is asked once', async () => {
+test('Your name: initials saved before 2v2 are stamped until the name is given, show only as a hint in the Your name box, and the name is asked once', async () => {
   const site = fakeSite();
   const page = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
   const dialogs = catchDialogs(page);
@@ -835,8 +845,14 @@ test('Your name: initials saved before 2v2 are stamped until the name is given, 
   const k = keyOf(page, '900');
   assert.equal(page.run(`rowOverrides[${JSON.stringify(k)}].by`), 'KK', 'the old initials until the name is given');
   assert.equal(dialogs.length, 1, 'asked although initials were saved');
-  assert.equal(dialogs[0].input.value, 'KK', 'the initials fill the New name box');
+  assert.equal(dialogs[0].input.value, '', 'the initials are not put in the box as a value');
+  assert.equal(dialogs[0].input.placeholder, 'Before: KK', 'they show as a hint');
   assert.equal(dialogs[0].people.hidden, true, 'no saved names yet');
+  assert.equal(dialogs[0].label.textContent, 'Your name', 'no list: the box is labelled Your name, not New name');
+  assert.match(dialogs[0].innerHTML, /<input id="editor-name"[^>]* data-tip="Type your name\."/);
+  // Save with the box left empty (only the hint showing) asks for a name; it never saves the initials.
+  assert.equal(dialogs[0].submit('save'), true);
+  assert.match(dialogs[0].error.textContent, /1 to 40 letters/);
   assert.match(dialogs[0].innerHTML, /<input id="editor-name"[^>]* autofocus/);
   assert.match(dialogs[0].innerHTML, /<h2 id="editor-dialog-title">/, 'no saved names: the New name box has the focus, not the title');
   dialogs[0].input.value = 'Kareena Kapoor';
@@ -861,6 +877,61 @@ test('Your name: initials saved before 2v2 are stamped until the name is given, 
   assert.equal(none.length, 0);
   assert.match(sidebar(skipped), />Add your name<\/button>/);
   assert.equal(peopleCalls(site, 'GET'), reads, 'the browser that answered before reads no names on open');
+});
+
+test('Your name: × removes a saved name for everyone after a confirm; the list and the box label follow; a failure says so', async () => {
+  const site = fakeSite();
+  await seedPeople(site, ['Jamie Cole', 'Jamie Cloe', 'Kareena']);
+  const page = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
+  const dialogs = catchDialogs(page);
+  await upload(page);
+  await page.ctx.syncSharedNotes();
+  page.run('askEditorName(true)');
+  await tick(20);
+  const d = dialogs[0];
+  assert.deepEqual(d.names(), ['Kareena', 'Jamie Cole', 'Jamie Cloe']);
+  assert.equal(d.label.textContent, 'New name');
+  // Cancel at the confirm: nothing is sent.
+  const asked = [];
+  page.ctx.confirm = (q) => { asked.push(q); return false; };
+  d.unlist('Jamie Cloe');
+  await tick(10);
+  assert.deepEqual(asked, ['Remove “Jamie Cloe” from the names list for everyone?']);
+  assert.equal(peopleCalls(site, 'DELETE'), 0);
+  assert.deepEqual(d.names(), ['Kareena', 'Jamie Cole', 'Jamie Cloe']);
+  // OK: removed for everyone; the dialog stays open on the shorter list; no name is picked.
+  page.ctx.confirm = () => true;
+  d.unlist('Jamie Cloe');
+  await tick(10);
+  assert.equal(peopleCalls(site, 'DELETE'), 1);
+  assert.deepEqual((await site.people()).people.map((p) => p.name), ['Kareena', 'Jamie Cole']);
+  assert.deepEqual(d.names(), ['Kareena', 'Jamie Cole']);
+  assert.deepEqual([d.removed, d.error.textContent, d.label.textContent], [false, '', 'New name']);
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena');
+  // The last names gone: the list hides and the box is labelled Your name. This browser keeps its own name.
+  d.unlist('Jamie Cole');
+  await tick(10);
+  d.unlist('Kareena');
+  await tick(10);
+  assert.deepEqual(d.names(), []);
+  assert.equal(d.people.hidden, true);
+  assert.equal(d.label.textContent, 'Your name');
+  assert.deepEqual((await site.people()).people, []);
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena');
+  d.close('');
+  // The server cannot be reached: the dialog says so and the list stays as it was.
+  await seedPeople(site, ['Jamie Cole']);
+  page.run('askEditorName(true)');
+  await tick(20);
+  const d2 = dialogs[1];
+  assert.deepEqual(d2.names(), ['Jamie Cole']);
+  site.peopleDown = true;
+  d2.unlist('Jamie Cole');
+  await tick(10);
+  assert.equal(d2.error.textContent, 'The name could not be removed. Try again later.');
+  assert.deepEqual(d2.names(), ['Jamie Cole']);
+  assert.deepEqual((await site.people()).people.map((p) => p.name), ['Jamie Cole']);
+  assert.deepEqual(page.errors, []);
 });
 
 test('the name is sent to the shared list at most once a day when the page opens; offline, a static host and a failed save stay quiet', async () => {

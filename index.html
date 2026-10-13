@@ -671,7 +671,6 @@ details.about .about-list{margin:0;padding-left:18px;display:grid;gap:4px}
 .connect-text{margin:0;font-size:13.5px;line-height:1.6;color:var(--gray-700)}
 .connect-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .connect-actions a.btn{text-decoration:none}
-.connect-more{font-size:12.5px;color:var(--gray-500)}
 .connect-tiers{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .connect-tiers li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:10px;padding:14px 16px}
 .connect-tiers .ai-tier{justify-content:center;margin-top:1px}
@@ -999,20 +998,28 @@ details.about>summary:hover{color:var(--gray-900)}
 .editor-people[hidden],.editor-form .editor-filter[hidden]{display:none}
 .editor-form .editor-sub{font-size:12px;font-weight:500;color:var(--gray-700)}
 .editor-chips{display:flex;flex-wrap:wrap;gap:6px}
-.editor-chip{font:inherit;font-size:13px;font-weight:500;line-height:1.3;min-height:32px;max-width:100%;padding:5px 12px;border:1px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;color:var(--gray-800);cursor:pointer;text-align:left;overflow-wrap:anywhere;transition:background-color var(--dur),border-color var(--dur)}
-.editor-chip:hover{background:var(--gray-100);border-color:var(--gray-400)}
-.editor-chip[aria-current="true"]{background:var(--accent-tint);border-color:var(--accent-border);color:var(--accent-strong)}
+/* One pill per saved name: the name (one click picks it) and a small × that removes it for everyone */
+.editor-pick{display:inline-flex;align-items:stretch;max-width:100%;min-width:0;border:1px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;overflow:hidden;transition:border-color var(--dur)}
+.editor-pick:hover{border-color:var(--gray-400)}
+.editor-pick:has(.editor-chip[aria-current="true"]){border-color:var(--accent-border)}
+.editor-chip{font:inherit;font-size:13px;font-weight:500;line-height:1.3;min-height:32px;min-width:0;max-width:100%;padding:5px 8px 5px 12px;border:0;border-radius:0;background:#fff;color:var(--gray-800);cursor:pointer;text-align:left;overflow-wrap:anywhere;transition:background-color var(--dur)}
+.editor-chip:hover{background:var(--gray-100)}
+.editor-chip[aria-current="true"]{background:var(--accent-tint);color:var(--accent-strong)}
+.editor-chip-x{font:inherit;font-size:15px;line-height:1;flex:none;width:30px;min-height:32px;padding:0;border:0;border-left:1px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;transition:background-color var(--dur),color var(--dur)}
+.editor-chip-x:hover{background:var(--crit-tint);color:var(--crit-text)}
+.editor-chip:focus-visible,.editor-chip-x:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .editor-form .editor-none{font-size:12px}
 .editor-form .editor-error{color:var(--crit-text);font-weight:500}
 .editor-form .editor-error:empty{margin-top:-10px}
 .editor-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 @media print{.editable-rows .row-cause,.editor-dialog{display:none!important}}
 /* --- Stream F: Sankey "big picture" --- */
-/* The Big picture switch in the page header (role="switch"): an outline button holding a track and thumb */
+/* The Big picture switch in the page header (role="switch"): an outline button holding a track and thumb. The off
+   track is --gray-500 (4.8:1 on white, so the switch's shape and state read at 3:1 or better) */
 .btn.bp-switch{gap:9px;padding-left:11px}
-.bp-track{position:relative;flex:none;width:28px;height:16px;border-radius:99px;background:var(--gray-400);transition:background-color var(--dur) var(--ease)}
+.bp-track{position:relative;flex:none;width:28px;height:16px;border-radius:99px;background:var(--gray-500);transition:background-color var(--dur) var(--ease)}
 .bp-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:99px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform var(--dur) var(--ease)}
-.bp-switch:hover .bp-track{background:var(--gray-500)}
+.bp-switch:hover .bp-track{background:var(--gray-600)}
 .bp-switch[aria-checked="true"] .bp-track{background:var(--accent)}
 .bp-switch[aria-checked="true"]:hover .bp-track{background:var(--accent-strong)}
 .bp-switch[aria-checked="true"] .bp-thumb{transform:translateX(12px)}
@@ -1192,7 +1199,9 @@ button.ship-kpi{width:100%}
 .oh-tab-num{display:inline-flex;align-items:baseline;gap:6px;font-size:26px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:var(--gray-900);font-variant-numeric:tabular-nums}
 .oh-tab-num small{font-size:12px;font-weight:500;letter-spacing:0;color:var(--gray-500)}
 .oh-tab-num.crit{color:var(--crit)}.oh-tab-num.warn{color:var(--warn)}.oh-tab-num.good{color:var(--good)}
-.oh-tab[aria-selected="false"] .oh-tab-num{opacity:.6}
+/* The other half: no white card and a lighter number weight, in full-contrast grey (7:1 on the track; no opacity) */
+.oh-tab[aria-selected="false"] .oh-tab-num{color:var(--gray-600);font-weight:500}
+.oh-tab[aria-selected="false"]:hover{background:rgba(255,255,255,.55)}
 .oh-drill{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .oh-drill-label{font-size:12px;color:var(--gray-600)}
 .oh-chip{display:inline-flex;align-items:center;gap:6px}
@@ -1292,7 +1301,7 @@ button.ship-kpi{width:100%}
 /* Why lines are at risk: its three cards share one height */
 .pg-group .oh-grid{align-items:stretch}
 /* Top offenders by owner rank only (no owner filter): plain rows */
-.waffle-row.static{cursor:default}.waffle-row.static:hover{background:none}
+.waffle-row.static{cursor:default}.waffle-row.static:hover{background:none}.waffle-row.static:focus-visible{outline-offset:-2px}
 /* At risk now: the At Risk card with its six override tiles under it, No commit date and Rescheduled beside them */
 .oh-risk{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}
 .oh-risk-main{display:grid;gap:20px;align-content:start;min-width:0}
@@ -1305,7 +1314,9 @@ button.ship-kpi{width:100%}
 .ovr-tile:hover{border-color:var(--gray-300);box-shadow:var(--sh-hover)}
 .ovr-tile.selected{border-color:var(--accent);background:var(--accent-tint);box-shadow:var(--sh-select)}
 .ovr-name{min-width:0;font-size:13px;font-weight:500;line-height:1.3;color:var(--gray-700);overflow-wrap:anywhere}
-.ovr-count{font-size:20px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ovr-num{display:grid;gap:1px;flex-shrink:0;text-align:right;white-space:nowrap}
+.ovr-count{font-size:16px;font-weight:600;font-variant-numeric:tabular-nums}
+.ovr-amt{font-size:12px;color:var(--gray-500);font-variant-numeric:tabular-nums}
 .ovr-tile.zero{background:var(--gray-50);box-shadow:none}
 .ovr-tile.zero .ovr-name{color:var(--gray-500)}
 .ovr-tile.zero .ovr-count{color:var(--gray-500);font-weight:500}
@@ -1336,7 +1347,7 @@ details.oh-more[open] .oh-more-less{display:inline}
   .ovr-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .ovr-tile{padding:10px 12px}
   .ovr-name{font-size:12.5px}
-  .ovr-count{font-size:18px}
+  .ovr-count{font-size:15px}
 }
 @media print{
   details.oh-more>summary{display:none!important}
@@ -1348,8 +1359,9 @@ details.oh-more[open] .oh-more-less{display:inline}
   .pg-group .mini-strip.cols-4>button{flex-direction:column;align-items:flex-start;gap:4px;border-right:1px solid var(--gray-100);border-bottom:0}
   .pg-group .mini-strip.cols-4>button:last-child{border-right:0}
   .pg-group .mini-strip.cols-4 .ms-num{text-align:left}
+  .ovr{break-inside:avoid;page-break-inside:avoid} /* the six tiles stay with their label */
   .ovr-tile{padding:.04in .08in;box-shadow:none}
-  .ovr-count{font-size:11pt}
+  .ovr-count{font-size:10pt}.ovr-amt{font-size:8pt}
   .pg-group-head{break-after:avoid;page-break-after:avoid}
   .oh-group-tools{display:none!important}
 }
@@ -1394,7 +1406,9 @@ details.oh-more[open] .oh-more-less{display:inline}
 .pg-group-tools{margin-left:auto;display:flex;align-items:center;gap:14px;align-self:center}
 /* Paper is about 990px wide, which would hit the 1180px two-column rule: print keeps the desktop columns */
 @media print{.grid-lead{grid-template-columns:1.5fr 1fr 1fr 1fr}.grid-4,.month-spot{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media print{.pg-group{break-inside:auto;page-break-inside:auto}.pg-group-head{break-after:avoid;page-break-after:avoid;margin-bottom:.05in}.pg-group-tools{display:none!important}}
+/* A group runs on over pages (the print rule above keeps every <section> whole, which would push a long group to a
+   new page); its cards stay whole and its title stays with its first card. */
+@media print{.pg-group{break-inside:auto!important;page-break-inside:auto!important}.pg-group-head{break-after:avoid;page-break-after:avoid;margin-bottom:.05in}.pg-group-tools{display:none!important}}
 
 /* --- 2v2 (pages): quieter cards and badges, tidy header, sidebar and filter bars --- */
 /* Count badges without their outline; plain tags ("target 90%", "Sun–Thu") read as text, not as one more badge
@@ -1665,6 +1679,14 @@ let collapsedNoteRows = new Set();
 // everyone who signs in (see "Stream B: shared notes" near the end of this script).
 const ROW_OVERRIDE_KEY = 'spyderKpiRowOverridesV1';
 const OVERRIDE_OPTIONS = ['', 'Urgent', 'Close Short', 'Short Ship', 'Hold', 'Not At Risk', 'Shipping Delay', 'QC Delay', 'Supply Chain', 'R&D Hold', 'Waiting on PO', 'Waiting on Production', 'Supplier Late', 'No Commit', 'Partial Coverage', 'Covered'];
+// 2v2: the owner's names for three override statuses, for display only (dropdowns, tiles, Top reasons, chips, line
+// status, Big picture, Search and Ask AI / MCP answers). The stored value, the SAP OverrideStatus column, saved and
+// shared notes, CAUSE_MAP and every filter keep the original words, so nothing saved before changes meaning.
+const OVERRIDE_DISPLAY = new Map([['supplier late', 'Supplier Delay'], ['supply chain', 'Supply Chain Delay'], ['waiting on production', 'Wait on Prod']]);
+function overrideLabel(v){
+  const s = String(v ?? '');
+  return OVERRIDE_DISPLAY.get(s.trim().toLowerCase()) || s;
+}
 // CardCode and BP group lookups used to bucket customers on Order Health.
 const CUSTOMER_SEGMENT_BY_CODE = {
   FIREFLLY:'RV', FIREFLY:'RV', AQUHOT:'Appliance', RVPROD:'Appliance',
@@ -2265,7 +2287,7 @@ function renderOverrideSelect(r){
   const key=esc(rowKey(r));
   const current=String(r.overrideStatus||'');
   return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}"${tipAttr('Your status for this line in place of the SAP one; saved at once and shared on the hosted site.')}>
-    ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt||'No override')}</option>`).join('')}
+    ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}
   </select>`;
 }
 function renderOverrideNote(r){
@@ -2282,7 +2304,7 @@ function renderNoteButton(r){
   const key=esc(rowKey(r));
   const hasNote=!!(r.overrideStatus||r.overrideNotes||r.overrideCause);
   const visible=isNoteEditorVisible(r);
-  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${tipAttr(hasNote?[r.overrideStatus?`Override: ${r.overrideStatus}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:'','Click to edit.'].filter(Boolean).join(' '):'Set an override or a note on this line.')}>${hasNote?'Edit note':'Add note'}</button>`;
+  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${tipAttr(hasNote?[r.overrideStatus?`Override: ${overrideLabel(r.overrideStatus)}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:'','Click to edit.'].filter(Boolean).join(' '):'Set an override or a note on this line.')}>${hasNote?'Edit note':'Add note'}</button>`;
 }
 function renderNoteEditorRow(r,colspan){
   if(!isNoteEditorVisible(r))return '';
@@ -2301,7 +2323,7 @@ function renderPrintNoteRow(r,colspan){
   if(!status&&!notes&&!cause)return '';
   return `<tr class="print-note-row has-print-note"><td colspan="${colspan}">
     <div class="print-note-card">
-      ${status?`<span class="print-note-status">${esc(status)}</span>`:''}
+      ${status?`<span class="print-note-status">${esc(overrideLabel(status))}</span>`:''}
       ${cause?`<span class="print-note-status">${esc(cause)}</span>`:''}
       ${notes?`<strong>Note:</strong> ${esc(notes)}`:''}
     </div>
@@ -4516,8 +4538,8 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
       <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
       <td><span class="m">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
       <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
-      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes||r.overrideCause)?`<span class="sub block row-saved-note">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'',r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
-      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([r.overrideStatus,r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
+      <td><span class="pill ${statusTone(r.statusBucket)}">${esc(r.statusBucket)}</span>${!editable&&(r.overrideStatus||r.overrideNotes||r.overrideCause)?`<span class="sub block row-saved-note">${esc([overrideLabel(r.overrideStatus),r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'',r.overrideNotes].filter(Boolean).join(' · '))}</span>`:''}</td>
+      ${editable?`<td class="override-cell">${renderOverrideSelect(r)}${renderCauseSelect(r)}<span class="print-only">${esc([overrideLabel(r.overrideStatus),r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:''].filter(Boolean).join(' · '))}</span></td><td class="notes-cell">${renderOverrideNote(r)}<span class="print-only">${esc(r.overrideNotes||'')}</span></td>`:''}
       <td class="soft${/^\d{4}-/.test(resched)?' date':''}">${esc(resched)}</td>
       ${editable?`<td class="soft">${esc(r.deliveryDocNumber||'—')}</td><td class="soft">${esc(r.closeDateSource||'—')}</td>`:''}
       <td class="num strong">${money(r.amountLocal)}</td>
@@ -4574,10 +4596,10 @@ function aiLine(r){
   const out={type:`${r.sourceType||'Order'}${isOrderLineRow(r)?'':po?' receipt':' delivery'}`,doc:String(r.documentNumber||''),line:String(r.lineNumber??''),[po?'vendor':'customer']:String(r.name||'').trim()||rowCustomer(r),
     warehouse:rowWarehouse(r),item:String(r.itemCode||''),description:String(r.itemDescription||'').slice(0,80),original_due:displayDate(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate),
     reschedule:r.noCommitDate?'no commit date':displayDate(rowRealRescheduleDate(r)),days_past_original_due:aiDaysLate(r),open_qty:r.openQuantity,open_value:aiR(openLineValue(r)),
-    status:aiStatus(r),override:String(r.overrideStatus||''),notes:String(r.overrideNotes||'').slice(0,240)};
+    status:aiStatus(r),override:overrideLabel(r.overrideStatus||''),notes:String(r.overrideNotes||'').slice(0,240)};
   if(hasRealDate(r.closeDate))out.closed=displayDate(r.closeDate);
   const cause=po?'':ohCauseFor(r);
-  if(cause){out.cause=ohAiKey(cause);out.reasons=lineReasons(r);const since=ohFlaggedSince(r);if(since)out.first_flagged=since;}
+  if(cause){out.cause=ohAiKey(cause);out.reasons=lineReasons(r).map(overrideLabel);const since=ohFlaggedSince(r);if(since)out.first_flagged=since;}
   return out;
 }
 function aiScopeRows(scope){
@@ -4661,7 +4683,7 @@ const KPI_TOOLS=[
       const rows=aiScopeRows(a.scope).filter(r=>{
         if(!has(rowWarehouse(r),a.warehouse)||!has(rowCustomerLabel(r),a.customer)||!has(poVendorLabel(r),a.vendor))return false;
         if(wantCause&&!(ohIsSalesRow(r)&&ohRowInfo(r).causeFor===wantCause))return false;
-        const text=[r.documentNumber,r.itemCode,r.itemDescription,r.name,r.code,rowWarehouse(r),r.customerPONumber,r.deliveryDocNumber,r.overrideStatus,r.overrideNotes].join(' ').toLowerCase();
+        const text=[r.documentNumber,r.itemCode,r.itemDescription,r.name,r.code,rowWarehouse(r),r.customerPONumber,r.deliveryDocNumber,r.overrideStatus,overrideLabel(r.overrideStatus),r.overrideNotes].join(' ').toLowerCase();
         return words.every(w=>text.includes(w));
       });
       const days=new Map(rows.map(r=>[r,aiDaysLate(r)??-1e9])),byDoc=new Intl.Collator('en',{numeric:true}).compare;
@@ -5235,14 +5257,14 @@ function renderConnectPage(){
       ${tier('free','Free','Groq and OpenRouter','Tight limits. May keep or publish what you send.')}
     </ul>`,
     `<button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Open the Ask AI panel; nothing is sent until you allow a provider." onclick="aiToggle(true)">Open Ask AI</button>${doc('docs/AI_ASSISTANT.md','Ask AI guide','Providers, costs and data terms (docs/AI_ASSISTANT.md).')}`)}
-  ${option(2,'Your own AI app','Claude Desktop, Claude Code, Cursor and other MCP apps',
+  ${option(2,'Your own AI app','Claude Desktop below; other apps: see Setup guide.',
     `<div class="steps connect-steps">
       ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
       ${step(2,'Get the dashboard folder from IT.')}
       ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
     </div>`,
     `<div class="connect-code"><div class="connect-code-head"><span class="connect-file">claude_desktop_config.json</span><div class="connect-copy print-hide"><span class="connect-status" id="connect-desktop-status" role="status"></span><button type="button" class="btn btn-sm" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>`,
-    `${doc('docs/MCP.md','Setup guide','Other apps, updates and troubleshooting (docs/MCP.md).')}<span class="connect-more">Other apps and troubleshooting</span>`)}
+    doc('docs/MCP.md','Setup guide','Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).'))}
   </div>
   <p class="connect-privacy rise rise-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI provider receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
 }
@@ -5907,9 +5929,9 @@ function renderResults(){
         ${options.map(o=>{const value=typeof o==='string'?o:o.value;const text=typeof o==='string'?o:o.label;return `<option value="${esc(value)}"${!multi&&current.includes(value)?' selected':''}>${esc(text)}</option>`;}).join('')}
       </select>`;
     };
-    // 2v2: the Leading / Lagging switch is the first thing in the page content; the Big picture (when on) follows it.
+    // 2v2: the Leading / Lagging switch is the first thing in the page content, then the filters; the Big picture
+    // (when on) follows the filters and their chips, so what narrows the chart sits above it, and comes before every card.
     html+=ohRenderTabs(m);
-    html+=renderBigPicture('weekly',m);
     html+=`
     <div class="filter-bar rise rise-1">
       <div class="segmented" role="group" aria-label="Warehouse group">
@@ -5934,6 +5956,7 @@ function renderResults(){
     </div>
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
     html+=ohRenderDrillBar(); // the reason / cause / when-flagged / override filters picked from the charts
+    html+=renderBigPicture('weekly',m);
     html+=renderHint('weekly-cards','<strong>Leading</strong> shows what needs action now and <strong>Lagging</strong> shows how we performed; click a card to list its lines.');
     html+=ohPanelOpen('leading');
 
@@ -6325,7 +6348,7 @@ function renderResults(){
       if(selectedCount&&!allSelected)Promise.resolve().then(()=>{const box=document.getElementById('linked-select-all');if(box)box.indeterminate=true;});
       const bulkBar=selectedCount?`<div class="bulk-actions" role="group" aria-label="Selected lines">
           <span class="bulk-count">${fmtNum(selectedCount)} selected</span>
-          <label>Override <select id="linked-bulk-status" class="select"${tipAttr('The override to set on the selected lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt||'No override')}</option>`).join('')}</select></label>
+          <label>Override <select id="linked-bulk-status" class="select"${tipAttr('The override to set on the selected lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}</select></label>
           <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply"${tipAttr(`Set the chosen override on the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'}.`)} onclick="applyLinkedOverride()">Apply</button>
           ${renderBulkCauseControls()}
           <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete"${tipAttr(`Hide the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'} from every page; Data check brings them back.`)} onclick="deleteLinkedSelection()">Delete</button>
@@ -8036,7 +8059,7 @@ initStreamAUi();
 const NOTE_MAX_LENGTH=4000;
 // The editor's name: null = never asked, '' = skipped (Not now), else the name.
 const NOTES_EDITOR_KEY='spyderKpiEditorName';
-// Initials saved before 2v2: stamped on edits until the name is given, and put in the New name box when it is asked.
+// Initials saved before 2v2: stamped on edits until the name is given, and shown as a hint (not a value) in the name box.
 const NOTES_INITIALS_KEY='spyderKpiEditor';
 // {name, at}: when this browser last sent its name to the shared list (at most once a day, PEOPLE_SEEN_MS).
 const PEOPLE_SEEN_KEY='spyderKpiNameSeenV1';
@@ -8496,9 +8519,9 @@ function sharedNotesSidebarLine(){
 // --- Editor name: asked once, in a small dialog, the first time notes are shared from this browser ---
 // The names already saved for everyone (functions/api/people.js, Workers KV key 'people') are one-click choices; a
 // new name is added there. The name is kept in this browser (NOTES_EDITOR_KEY), and sent again at most once a day
-// when the page opens so the list stays in recent order. Initials saved before 2v2 are stamped until the name is
-// given and fill the New name box. A static host, a page that cannot reach the server and a shared snapshot send
-// nothing: the name stays in this browser.
+// when the page opens so the list stays in recent order; × next to a saved name removes it for everyone (after a
+// confirm). Initials saved before 2v2 are stamped until the name is given and show as the name box's placeholder.
+// A static host, a page that cannot reach the server and a shared snapshot send nothing: the name stays in this browser.
 // Same rules as the server: trimmed, spaces collapsed, 1 to 40 letters (any language), spaces and . ' - with at
 // least one letter. '' when it is not a name.
 function normalizeEditorName(v){
@@ -8569,6 +8592,16 @@ async function postEditorName(name){
     return true;
   }catch(err){return false;}
 }
+// Removes a name from the shared list (a typo, someone who left); true when the server answered with the new list.
+async function deletePerson(name){
+  if(!name||!canSharePeople())return false;
+  try{
+    const res=await fetch('/api/people',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({name})});
+    if(!res.ok||!/json/i.test(res.headers.get('content-type')||''))return false;
+    const data=await res.json();
+    return !isSnapshotView&&adoptPeople(data&&data.people);
+  }catch(err){return false;}
+}
 // Notes just became shared on this page: send the name if it was not sent today, or read the saved names when the
 // name question is still to come (so they are ready when it opens).
 function peopleOnOpen(){
@@ -8592,7 +8625,7 @@ function editorChipsHtml(filter=''){
   const q=String(filter||'').trim().toLowerCase();
   const list=(q?sharedPeople.filter(p=>p.name.toLowerCase().includes(q)):sharedPeople).slice(0,PEOPLE_SHOWN);
   if(!list.length)return q?'<p class="editor-none">No match. Type it below as a new name.</p>':'';
-  return list.map(p=>`<button type="button" class="editor-chip" data-name="${esc(p.name)}"${p.name.toLowerCase()===current?' aria-current="true"':''} data-tip="Use this name.">${esc(p.name)}</button>`).join('');
+  return list.map(p=>`<span class="editor-pick"><button type="button" class="editor-chip" data-name="${esc(p.name)}"${p.name.toLowerCase()===current?' aria-current="true"':''} data-tip="Use this name.">${esc(p.name)}</button><button type="button" class="editor-chip-x" data-remove="${esc(p.name)}" aria-label="${esc(`Remove ${p.name}`)}" data-tip="Remove this name from the list for everyone.">×</button></span>`).join('');
 }
 function openEditorDialog(){
   if(editorDialogOpen||isSnapshotView)return;
@@ -8604,6 +8637,7 @@ function openEditorDialog(){
   d.setAttribute('aria-labelledby','editor-dialog-title');
   d.setAttribute('aria-describedby','editor-dialog-desc');
   const any=sharedPeople.length>0;
+  const name=readEditor()||'',initials=name?'':legacyInitials();
   d.innerHTML=`<form method="dialog" class="editor-form" novalidate>
     <h2 id="editor-dialog-title"${any?' tabindex="-1" autofocus':''}>Your name</h2>
     <p id="editor-dialog-desc">Shown with the notes you save.</p>
@@ -8612,8 +8646,8 @@ function openEditorDialog(){
       <input type="search" id="editor-filter" class="editor-filter" placeholder="Find your name" aria-label="Find your name" autocomplete="off" spellcheck="false"${tipAttr('Type part of your name.')}${sharedPeople.length>PEOPLE_SHOWN?'':' hidden'}>
       <div class="editor-chips" id="editor-chips" role="group" aria-labelledby="editor-people-label">${editorChipsHtml()}</div>
     </div>
-    <label for="editor-name">New name</label>
-    <input id="editor-name" name="name" maxlength="${EDITOR_NAME_MAX}" autocomplete="name" spellcheck="false" autocapitalize="words" value="${esc(readEditor()||legacyInitials())}" aria-describedby="editor-error"${any?'':' autofocus'}${tipAttr('Not in the list? Type your name.')}>
+    <label for="editor-name" id="editor-name-label">${any?'New name':'Your name'}</label>
+    <input id="editor-name" name="name" maxlength="${EDITOR_NAME_MAX}" autocomplete="name" spellcheck="false" autocapitalize="words" value="${esc(name)}"${initials?` placeholder="${esc(`Before: ${initials}`)}"`:''} aria-describedby="editor-error"${any?'':' autofocus'}${tipAttr(any?'Not in the list? Type your name.':'Type your name.')}>
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
       <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save this name for your notes.">Save</button>
@@ -8622,12 +8656,40 @@ function openEditorDialog(){
   </form>`;
   const form=d.querySelector('form'),input=d.querySelector('#editor-name'),error=d.querySelector('#editor-error');
   const people=d.querySelector('#editor-people'),filter=d.querySelector('#editor-filter'),chips=d.querySelector('#editor-chips');
+  const label=d.querySelector('#editor-name-label');
   let picked='',open=true;
   const pick=name=>{picked=name;d.close('pick');};
+  // The list part follows sharedPeople (read again, or a name removed); the box is "New name" only beside a list.
+  const showPeople=()=>{
+    people.hidden=!sharedPeople.length;
+    filter.hidden=sharedPeople.length<=PEOPLE_SHOWN;
+    chips.innerHTML=editorChipsHtml(filter.value);
+    if(label)label.textContent=sharedPeople.length?'New name':'Your name';
+  };
+  // × on a saved name: asks first, then removes it for everyone; focus goes to the name now in its place.
+  const remove=async who=>{
+    hideTip();
+    if(typeof confirm!=='function'||!confirm(`Remove “${who}” from the names list for everyone?`))return;
+    const at=[...chips.querySelectorAll('[data-name]')].findIndex(b=>b.dataset.name===who);
+    const ok=await deletePerson(who);
+    if(!open)return;
+    error.textContent=ok?'':'The name could not be removed. Try again later.';
+    if(!ok)return;
+    showPeople();
+    const left=[...chips.querySelectorAll('[data-name]')];
+    const next=left[Math.max(0,Math.min(at,left.length-1))]||input;
+    if(next&&next.focus)next.focus();
+  };
   // A saved name is one click (or Enter on it). Find your name narrows the list; Enter there picks the first match
   // (only once something is typed, so a stray Enter never picks someone else's name). With saved names the dialog
   // opens on its title, not on a name or the New name box (no keyboard popping up over the list on a phone).
-  chips.addEventListener('click',e=>{const b=e.target&&e.target.closest?e.target.closest('[data-name]'):null;if(b)pick(b.dataset.name);});
+  chips.addEventListener('click',e=>{
+    const t=e.target&&e.target.closest?e.target:null;
+    const x=t&&t.closest('[data-remove]');
+    if(x){remove(x.dataset.remove);return;}
+    const b=t&&t.closest('[data-name]');
+    if(b)pick(b.dataset.name);
+  });
   filter.addEventListener('input',()=>{chips.innerHTML=editorChipsHtml(filter.value);});
   filter.addEventListener('keydown',e=>{
     if(e.key!=='Enter')return;
@@ -8660,9 +8722,7 @@ function openEditorDialog(){
     if(!ok||!open||sharedPeople.map(p=>p.name).join('\n')===before)return;
     const active=document.activeElement;
     const focused=active&&active.dataset&&chips.contains&&chips.contains(active)?active.dataset.name:null;
-    people.hidden=!sharedPeople.length;
-    filter.hidden=sharedPeople.length<=PEOPLE_SHOWN;
-    chips.innerHTML=editorChipsHtml(filter.value);
+    showPeople();
     const again=focused===null?null:[...chips.querySelectorAll('[data-name]')].find(b=>b.dataset.name===focused);
     if(again)again.focus();
   });
@@ -8809,6 +8869,8 @@ addEventListener('focus',refreshSharedNotes);
 // CM pick and the Order Health chart picked travel in snapshots and reset with a new report.
 const SANKEY_TABS={weekly:'Order Health',buildrisk:'Build Risk',supplydemand:'Supply Mix'};
 const BIG_PICTURE_KEY='spyderKpiBigPicture';
+// 2v2: the switch's choice when this browser has made none: Order Health opens with its chart, the others without.
+const BIG_PICTURE_DEFAULT={weekly:true};
 let sankeyOpen=bigPictureMemory(); // {weekly:true,...}: pages showing the Big picture card
 let sankeyFlowPick={};    // {weekly:'risk'}: the chart shown on a page with more than one (first one by default)
 let sankeyPinned={};      // {weekly:'flowId|nodeId'}: a box clicked for highlight only (not saved)
@@ -9068,7 +9130,7 @@ function sankeyWeeklyBuild(m){
   const causes=new Map(d.lateTileRows.map(r=>[r,sankeyLineCause(r)]));
   const causeOf=r=>causes.get(r)||'unknown';
   const risk=sankeyBuild(d.lateTileRows,{value:openLineValue,doc,tone:r=>SANKEY_CAUSES[causeOf(r)].tone,cols:[
-    {key:sankeyLineReason,top:6,other:'Other reasons',action:(ms,other)=>other?null:reasonFilter?{type:'reason',value:ms[0],main:true}:SANKEY_REASON_TILE[ms[0]]?{type:'tile',value:SANKEY_REASON_TILE[ms[0]]}:null},
+    {key:sankeyLineReason,label:overrideLabel,top:6,other:'Other reasons',action:(ms,other)=>other?null:reasonFilter?{type:'reason',value:ms[0],main:true}:SANKEY_REASON_TILE[ms[0]]?{type:'tile',value:SANKEY_REASON_TILE[ms[0]]}:null},
     {key:causeOf,label:k=>SANKEY_CAUSES[k].label,order:k=>SANKEY_CAUSES[k].order,tone:k=>SANKEY_CAUSES[k].tone,action:ms=>typeof setWeeklyCauseFilter==='function'?{type:'cause',value:ms[0]}:null},
     {key:rowCustomer,label:k=>names.get(k)||k,top:8,other:'Other customers',action:ms=>({type:'customer',values:ms})}
   ]});
@@ -9420,17 +9482,21 @@ function sankeyOpenState(v){
 function sankeyFlowState(v){
   return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>typeof v[t]==='string'&&/^[a-z]{1,20}$/.test(v[t])).map(t=>[t,v[t]])):{};
 }
-// Per-browser memory of the switch (localStorage spyderKpiBigPicture = {weekly:true,...}). Storage can be missing,
-// blocked or full (a private window, a snapshot opened from a file): the switch then simply starts off.
+// Per-browser memory of the switch (localStorage spyderKpiBigPicture = {weekly:false,buildrisk:true,...}): each
+// page's on / off once the switch was used there, else BIG_PICTURE_DEFAULT (Order Health on). Storage can be
+// missing, blocked or full (a private window, a snapshot opened from a file), or hold something else: the page then
+// has no stored choice and uses the default.
+function bigPictureStored(){
+  let v=null;
+  try{v=JSON.parse(localStorage.getItem(BIG_PICTURE_KEY)||'{}');}catch(err){v=null;}
+  return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>typeof v[t]==='boolean').map(t=>[t,v[t]])):{};
+}
 function bigPictureMemory(){
-  try{return sankeyOpenState(JSON.parse(localStorage.getItem(BIG_PICTURE_KEY)||'{}'));}catch(err){return {};}
+  const v=bigPictureStored();
+  return Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>t in v?v[t]:BIG_PICTURE_DEFAULT[t]===true).map(t=>[t,true]));
 }
 function rememberBigPicture(tab,on){
-  try{
-    const v=bigPictureMemory();
-    if(on)v[tab]=true;else delete v[tab];
-    localStorage.setItem(BIG_PICTURE_KEY,JSON.stringify(v));
-  }catch(err){}
+  try{localStorage.setItem(BIG_PICTURE_KEY,JSON.stringify({...bigPictureStored(),[tab]:!!on}));}catch(err){}
 }
 // --- Stream E: Shipping (live FedEx tracking) ---
 // The Shipping page lists the deliveries in the export that carry a FedEx tracking number (TrackingNumber = SAP
@@ -10442,7 +10508,7 @@ function ohRenderDrillChips(){
   const tile=!weeklyReasonMain&&OH_OVERRIDE_TILES.find(t=>t.status===weeklyReasonFilter);
   return `<div class="oh-drill" role="group" aria-label="Order Health chart filters">
     <span class="oh-drill-label">Filtered by</span>
-    ${weeklyReasonFilter?(tile?chip('reason','Override',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',weeklyReasonFilter)):''}
+    ${weeklyReasonFilter?(tile?chip('reason','Override',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',overrideLabel(weeklyReasonFilter))):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
     ${age?chip('age','When flagged',age[1]):''}
     <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove the chart filters; other filters stay.">Clear all</button>
@@ -10492,14 +10558,9 @@ function ohHeroCause(m){
 // (lineReasons lists a line's override status as a reason), so the chip, Clear all, snapshots, the linked lines and
 // Search all work as for the Top reasons bars. While one tile's filter is on, the tiles count as if it were off, so
 // the other five keep their numbers instead of dropping to zero.
-const OH_OVERRIDE_TILES=[
-  ['Shipping Delay','Shipping Delay'],
-  ['QC Delay','QC Delay'],
-  ['R&D Hold','R&D Hold'],
-  ['Supplier Delay','Supplier Late'],
-  ['Supply Chain Delay','Supply Chain'],
-  ['Wait on Prod','Waiting on Production']
-].map(([label,status])=>({label,status}));
+// The tile names are the owner's words for the statuses (overrideLabel), shown the same way in the dropdowns.
+const OH_OVERRIDE_TILES=['Shipping Delay','QC Delay','R&D Hold','Supplier Late','Supply Chain','Waiting on Production']
+  .map(status=>({label:overrideLabel(status),status}));
 function ohOverrideTileOn(status){return !weeklyReasonMain&&weeklyReasonFilter===status;}
 function ohOverrideTileData(m){
   const facet=OH_OVERRIDE_TILES.some(t=>ohOverrideTileOn(t.status));
@@ -10522,9 +10583,9 @@ function setWeeklyOverrideTile(status){
 function ohRenderOverrideTiles(m){
   const tiles=ohOverrideTileData(m);
   const cells=tiles.map(t=>{
-    const statusNote=t.label===t.status?'':` (override “${t.status}”)`;
-    const tip=`${t.label}${statusNote}: ${ohN(t.lines,'at-risk line')}, ${money(t.value)} open; ${t.on?'click to show all.':'click to list them.'}`;
-    return `<button type="button" class="ovr-tile${t.lines?'':' zero'}${t.on?' selected':''}" data-focus-key="ovr-${esc(t.status.replace(/\W+/g,'-').toLowerCase())}" data-status="${esc(t.status)}" onclick="setWeeklyOverrideTile(this.dataset.status)" aria-pressed="${t.on}" data-tip="${esc(tip)}"><span class="ovr-name">${esc(t.label)}</span><span class="ovr-count">${fmtNum(t.lines)}</span></button>`;
+    const tip=`${t.label}: ${ohN(t.lines,'at-risk line')}, ${money(t.value)} open; ${t.on?'click to show all.':'click to list them.'}`;
+    // Lines and their open value, short (the tip has it in full), as the Coming due cells show orders and value.
+    return `<button type="button" class="ovr-tile${t.lines?'':' zero'}${t.on?' selected':''}" data-focus-key="ovr-${esc(t.status.replace(/\W+/g,'-').toLowerCase())}" data-status="${esc(t.status)}" onclick="setWeeklyOverrideTile(this.dataset.status)" aria-pressed="${t.on}" data-tip="${esc(tip)}"><span class="ovr-name">${esc(t.label)}</span><span class="ovr-num"><span class="ovr-count">${ohN(t.lines,'line')}</span><span class="ovr-amt">${moneyShort(t.value)}</span></span></button>`;
   }).join('');
   return `<div class="ovr"><span class="ovr-head" id="ovr-head">At risk by override</span><div class="ovr-grid" role="group" aria-labelledby="ovr-head">${cells}</div></div>`;
 }
@@ -10544,13 +10605,13 @@ function ohRenderLeading(m){
   const maxReason=Math.max(1,...d.topReasons.map(x=>x.value));
   const reasonRows=d.topReasons.map((x,i)=>{
     const on=weeklyReasonFilter===x.label&&!weeklyReasonMain;
-    const tip=`${x.label}: ${money(x.value)} on ${ohN(x.rows.length,'at-risk line')} (${ohN(x.orders,'order')}), usually ${x.cause==='unknown'?'not set':OH_CAUSE_LABEL[x.cause]}; ${on?'click to show all.':'click to filter.'}`;
-    return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-reason-${esc(x.label)}" data-reason="${esc(x.label)}" onclick="setWeeklyReasonFilter(this.dataset.reason)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(x.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w cause-${x.cause}" style="width:${(x.value/maxReason*100).toFixed(1)}%;animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(x.value)}</span></button>`;
+    const tip=`${overrideLabel(x.label)}: ${money(x.value)} on ${ohN(x.rows.length,'at-risk line')} (${ohN(x.orders,'order')}), usually ${x.cause==='unknown'?'not set':OH_CAUSE_LABEL[x.cause]}; ${on?'click to show all.':'click to filter.'}`;
+    return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-reason-${esc(x.label)}" data-reason="${esc(x.label)}" onclick="setWeeklyReasonFilter(this.dataset.reason)" aria-pressed="${on}" data-tip="${esc(tip)}"><span class="oh-bar-name">${esc(overrideLabel(x.label))}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w cause-${x.cause}" style="width:${(x.value/maxReason*100).toFixed(1)}%;animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${moneyShort(x.value)}</span></button>`;
   }).join('');
   const causeLegend=`<div class="legend oh-legend">${OH_CAUSES.filter(([c])=>c!=='neutral').map(([c,label])=>`<span><i class="sw lg cause-${c}"></i>${label}</span>`).join('')}</div>`;
-  const openCard=`<section class="card list-card oh-card" aria-labelledby="oh-open-title">
-      <div class="list-head"><h2 id="oh-open-title" data-tip="${esc(`Open orders: ${ohN(d.open.orders,'order')}, ${ohN(lines,'line')}, ${money(d.open.value)}; the bars rank at-risk reasons by value.`)}">Open orders</h2><span class="section-sub">top 6 at-risk reasons</span></div>
-      <div class="kpi-row"><span class="kpi-value oh-num">${fmtNum(d.open.orders)}</span><span class="kpi-unit">${d.open.orders===1?'order':'orders'} · ${ohN(lines,'line')} · ${money(d.open.value)}</span></div>
+  // Top reasons: the bars only (the open order count is in Coming due, so it is not repeated here).
+  const openCard=`<section class="card list-card oh-card" aria-labelledby="oh-reasons-title">
+      <div class="list-head"><h2 id="oh-reasons-title" data-tip="The 6 at-risk reasons with the most open value; click a bar to filter.">Top reasons</h2><span class="section-sub">by at-risk value</span></div>
       <div class="oh-bars" role="group" aria-label="Top at-risk reasons by open value">${reasonRows||'<div class="empty-note">Nothing at risk in this view.</div>'}</div>
       ${reasonRows?causeLegend:''}
       <span class="oh-note">A line can have several reasons.</span>
@@ -10756,7 +10817,7 @@ function ohLinkedStatus(r){
 // users get them too (table cells are not tab stops; the tip only adds the rule behind the cause).
 function ohLineWhy(r){
   if(!ohIsSalesRow(r))return '';
-  const reasons=lineReasons(r);
+  const reasons=lineReasons(r).map(overrideLabel);
   if(!reasons.length&&!ohManualCause(r))return '';
   const {cause,rule}=ohCauseRule(r);
   const since=ohFlaggedSince(r),sinceText=since?`first at risk in the ${displayDate(since)||since} upload`:'';
@@ -10779,7 +10840,7 @@ function ohSearchWanted(terms){
   if(!ohSearchMemo.vocab){
     const statuses=new Set(OVERRIDE_OPTIONS);
     allLoadedRows.forEach(r=>{if(r.overrideStatus)statuses.add(String(r.overrideStatus));});
-    ohSearchMemo.vocab=[...Object.values(OH_REASON_LABEL),...statuses,'caused by us them cause not set neutral'].join(' ').toLowerCase();
+    ohSearchMemo.vocab=[...Object.values(OH_REASON_LABEL),...statuses,...[...statuses].map(overrideLabel),'caused by us them cause not set neutral'].join(' ').toLowerCase();
   }
   return terms.some(t=>ohSearchMemo.vocab.includes(t));
 }
@@ -10787,7 +10848,7 @@ function ohSearchText(r){
   let text=ohSearchMemo.map.get(r);
   if(text===undefined){
     const x=ohIsSalesRow(r)?ohRowInfo(r):null,c=x?x.causeFor:'';
-    text=c?`${x.reasons.join(' ')} ${c==='us'||c==='them'?`caused by ${c}`:`cause ${OH_CAUSE_LABEL[c].toLowerCase()}`}`:'';
+    text=c?`${x.reasons.map(t=>{const l=overrideLabel(t);return l===t?t:`${t} ${l}`;}).join(' ')} ${c==='us'||c==='them'?`caused by ${c}`:`cause ${OH_CAUSE_LABEL[c].toLowerCase()}`}`:'';
     ohSearchMemo.map.set(r,text);
   }
   return text;
@@ -10841,7 +10902,8 @@ function ohRenderWaffle(m,view,offenders,keyOf){
     const tip=`${o.name}: ${money(o.value)} ${vendors?'late PO value':'at-risk value'} on ${ohN(o.rows.length,'line')}${split}${b.capped?`, first ${OH_WAFFLE_MAX} blocks shown`:''}${rankOnly?'.':`; ${vendors?'click to open Purchase Orders for this vendor.':on?`click to show all.`:`click to filter.`}`}`;
     const inner=`<span class="rank-top"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(o.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(o.rows.length)} · </span><strong>${money(o.value)}</strong></span></span>
         <span class="waffle" aria-hidden="true">${kinds.map((c,k)=>`<i class="pop wb-${c}${b.half?' half':''}" style="animation-delay:${Math.min(i*60+k*8,600)}ms"></i>`).join('')}${b.capped?'<span class="waffle-more">+</span>':''}</span>`;
-    if(rankOnly)return `<div class="waffle-row static" data-focus-key="offrow-${esc(key)}" data-tip="${esc(tip.trim())}">
+    // A tab stop of its own, so keyboard users reach the tip (it has no click).
+    if(rankOnly)return `<div class="waffle-row static" tabindex="0" data-focus-key="offrow-${esc(key)}" data-tip="${esc(tip.trim())}">
         ${inner}
       </div>`;
     return `<button type="button" class="waffle-row${on?' selected':''}" data-focus-key="offrow-${esc(key)}" data-view="${view}" data-off="${esc(key)}" onclick="setWeeklyOffenderFilter(this.dataset.view,this.dataset.off)" aria-pressed="${on}" data-tip="${esc(tip)}">
@@ -10888,7 +10950,7 @@ function ohAiOrderHealth(oh){
       at_risk_by_cause:ohAiCause(lead.cause),
       open_orders:aiTile(oh.allOrderRows),
       states:Object.fromEntries(lead.states.map(st=>[st.key,aiTile(st.rows)])),
-      top_reasons:lead.topReasons.map(r=>({reason:r.label,usual_cause:ohAiKey(r.cause),...aiTile(r.rows)})),
+      top_reasons:lead.topReasons.map(r=>({reason:overrideLabel(r.label),usual_cause:ohAiKey(r.cause),...aiTile(r.rows)})),
       when_flagged:{history_available:lead.historyLoaded,buckets:lead.ages.map(a=>({bucket:a.label,...aiTile(a.rows)}))}
     },
     lagging:{

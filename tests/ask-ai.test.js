@@ -586,6 +586,11 @@ test('Connect an AI describes the four providers and opens the panel', () => {
   assert.match(html, /<span class="ai-tier free">Free<\/span><span><strong>Groq and OpenRouter<\/strong><span class="connect-tier-note">Tight limits\. May keep or publish what you send\.<\/span>/);
   assert.match(html, /data-focus-key="connect-ask-ai"[^>]*data-tip="Open the Ask AI panel; nothing is sent/);
   assert.doesNotMatch(html, /Gemini|Google AI Studio/);
+  // Option 2: the steps are for Claude Desktop, and the sub-line sends other apps to the Setup guide; no grey text
+  // beside the button that reads as disabled.
+  assert.match(html, /Your own AI app<\/h2><p class="connect-sub">Claude Desktop below; other apps: see Setup guide\.<\/p>/);
+  assert.match(html, /<div class="connect-actions print-hide"><a class="btn" href="docs\/MCP\.md" target="_blank" rel="noopener" data-tip="Claude Code, Cursor and other apps, updates and troubleshooting \(docs\/MCP\.md\)\.">Setup guide<\/a><\/div>/);
+  assert.doesNotMatch(html, /connect-more|Other apps and troubleshooting/);
 });
 
 test('"company" is never used: Spyder Controls is named on Connect an AI, in the Ask AI panel and in the AI guides', () => {

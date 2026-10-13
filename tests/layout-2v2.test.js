@@ -83,6 +83,42 @@ test('Leading / Lagging is a full-width switch right under the page head, each h
   assert.match(html(calm), /<span class="oh-tab-num good">\$0<small>at risk<\/small><\/span>/);
 });
 
+// WCAG contrast of two #rrggbb colours.
+function contrast(a, b) {
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+const token = (name) => HTML.match(new RegExp(`--${name}:(#[0-9a-f]{6})`))[1];
+
+test('the other Leading / Lagging half is marked by background and weight, never by opacity; its number keeps 4.5:1', () => {
+  assert.doesNotMatch(HTML, /\.oh-tab[^{]*\{[^}]*opacity/, 'no opacity on the switch');
+  assert.match(HTML, /\.oh-tab\[aria-selected="true"\]\{background:#fff;/, 'the active half is the white raised card');
+  assert.match(HTML, /\.oh-tab\[aria-selected="false"\] \.oh-tab-num\{color:var\(--gray-600\);font-weight:500\}/);
+  // On the zinc track (--gray-100): the number, its unit and the sub-line.
+  assert.ok(contrast(token('gray-600'), token('gray-100')) >= 4.5);
+  assert.ok(contrast(token('gray-500'), token('gray-100')) >= 4.5, 'unit and sub-line (small text)');
+});
+
+test('the Big picture switch is visible when off: its track is --gray-500 (3:1 or better on the button)', () => {
+  assert.match(HTML, /\.bp-track\{[^}]*background:var\(--gray-500\)/);
+  assert.match(HTML, /\.bp-switch:hover \.bp-track\{background:var\(--gray-600\)\}/);
+  assert.ok(contrast(token('gray-500'), '#ffffff') >= 3);
+  assert.ok(contrast(token('gray-500'), token('gray-100')) >= 3, 'also on a hovered button');
+});
+
+test('Why lines are at risk opens with Top reasons (the bars), not a second count of open orders', async () => {
+  const page = await withStatuses();
+  const m = html(page);
+  const why = m.slice(m.indexOf('>Why lines are at risk</h2>'), m.indexOf('<details class="oh-more"'));
+  const first = why.match(/<section class="card list-card oh-card" aria-labelledby="([^"]+)">[\s\S]*?<\/section>/);
+  assert.equal(first[1], 'oh-reasons-title');
+  assert.match(first[0], /<h2 id="oh-reasons-title" data-tip="[^"]{20,}">Top reasons<\/h2><span class="section-sub">by at-risk value<\/span>/);
+  assert.doesNotMatch(first[0], /kpi-value|Open orders|\d+ orders ·/, 'the open order count is in Coming due only');
+  assert.match(first[0], /<div class="oh-bars" role="group" aria-label="Top at-risk reasons by open value"><button type="button" class="oh-bar-row/);
+  assert.doesNotMatch(m, />Open orders</);
+});
+
 test('the switch keeps the tablist: arrow keys, Home / End, the view in snapshots and reset with a new report', async () => {
   const page = await withStatuses();
   assert.match(html(page), /<div class="oh-tabs" role="tablist" aria-label="Order Health indicators">/);
@@ -104,16 +140,18 @@ test('the switch keeps the tablist: arrow keys, Home / End, the view in snapshot
   assert.equal(page.run('weeklyView'), 'leading');
 });
 
-test('the Big picture call sits directly after the switch, once (above the filters and the cards)', async () => {
-  // Source: the one weekly call follows the switch line.
-  assert.match(HTML, /html\+=ohRenderTabs\(m\);\n\s*html\+=renderBigPicture\('weekly',m\);/);
+test('the Big picture call sits after the filters and their chips, once (filters above the chart, the chart above every card)', async () => {
+  // Source: the one weekly call follows the chart-filter chips (ohRenderDrillBar), which follow the filter bar.
+  assert.match(HTML, /html\+=ohRenderDrillBar\(\);[^\n]*\n\s*html\+=renderBigPicture\('weekly',m\);/);
   assert.equal(HTML.split("renderBigPicture('weekly'").length - 1, 1);
   const page = await withStatuses();
-  page.run("sankeyOpen={weekly:true};renderResults()");
+  page.run("sankeyOpen={weekly:true};setWeeklyReasonFilter('Shipping Delay')");
   const m = html(page);
   const card = m.indexOf('id="sankey-weekly"');
   assert.ok(card > m.indexOf('<div class="oh-tabbar'), 'after the switch');
-  assert.ok(card < m.indexOf('class="filter-bar') && card < m.indexOf('class="pg-group'), 'above the filters and every group');
+  assert.ok(card > m.indexOf('class="filter-bar') && card > m.indexOf('<div class="print-only">Filters: '), 'after the filter bar and its printed Filters: line');
+  assert.ok(m.indexOf('class="oh-drillbar"') > 0 && card > m.indexOf('class="oh-drillbar"'), 'after the Filtered by chips');
+  assert.ok(card < m.indexOf('class="pg-group') && card < m.indexOf('class="card kpi'), 'above every group and card');
 });
 
 // --- Owner filter --------------------------------------------------------------------------------------
@@ -127,7 +165,9 @@ test('the owner filter is gone from the filter bar and the notes; weeklyOwnerFil
   assert.deepEqual(page.run('weeklyOwnerFilter'), ['ALL']);
   // Owners still rank in Top offenders, as plain rows (no filter behind them).
   page.run("setWeeklyOffenderView('owners')");
-  assert.match(html(page), /<div class="waffle-row static" data-focus-key="offrow-Ana Diaz" data-tip="Ana Diaz: \$10,000 at-risk value on 1 line( \([^)"]+\))?\."/);
+  // A tab stop of its own (no click), so keyboard users reach its tip.
+  assert.match(html(page), /<div class="waffle-row static" tabindex="0" data-focus-key="offrow-Ana Diaz" data-tip="Ana Diaz: \$10,000 at-risk value on 1 line( \([^)"]+\))?\."/);
+  assert.match(HTML, /\.waffle-row\.static:focus-visible\{outline-offset:-2px\}/);
   assert.doesNotMatch(html(page), /data-view="owners"/);
   page.run("setWeeklyOffenderFilter('owners','Ana Diaz')");
   assert.deepEqual(page.run('weeklyOwnerFilter'), ['ALL']);
@@ -174,10 +214,15 @@ test('six tiles under the At Risk card count its open lines with each override; 
   assert.ok(m.indexOf('>At risk now</h2>') < hero);
   const b = tileButtons(page);
   assert.equal(b.length, 6);
-  assert.match(b[0], /^<button type="button" class="ovr-tile" data-focus-key="ovr-shipping-delay" data-status="Shipping Delay" onclick="setWeeklyOverrideTile\(this\.dataset\.status\)" aria-pressed="false" data-tip="Shipping Delay: 2 at-risk lines, \$12,000 open; click to list them\."><span class="ovr-name">Shipping Delay<\/span><span class="ovr-count">2<\/span><\/button>$/);
-  assert.match(b[2], /class="ovr-tile zero"[^>]*data-tip="R&amp;D Hold: 0 at-risk lines, \$0 open;[^"]*"><span class="ovr-name">R&amp;D Hold<\/span><span class="ovr-count">0<\/span>/);
-  assert.match(b[3], /data-tip="Supplier Delay \(override “Supplier Late”\): 1 at-risk line, \$6,000 open;/);
-  assert.match(b[5], /data-tip="Wait on Prod \(override “Waiting on Production”\): 1 at-risk line, \$5,000 open;/);
+  // Each tile: its name, then lines with their unit and the open value short (as the Coming due cells); the tip has
+  // the value in full.
+  assert.match(b[0], /^<button type="button" class="ovr-tile" data-focus-key="ovr-shipping-delay" data-status="Shipping Delay" onclick="setWeeklyOverrideTile\(this\.dataset\.status\)" aria-pressed="false" data-tip="Shipping Delay: 2 at-risk lines, \$12,000 open; click to list them\."><span class="ovr-name">Shipping Delay<\/span><span class="ovr-num"><span class="ovr-count">2 lines<\/span><span class="ovr-amt">\$12K<\/span><\/span><\/button>$/);
+  assert.match(b[2], /class="ovr-tile zero"[^>]*data-tip="R&amp;D Hold: 0 at-risk lines, \$0 open;[^"]*"><span class="ovr-name">R&amp;D Hold<\/span><span class="ovr-num"><span class="ovr-count">0 lines<\/span><span class="ovr-amt">\$0<\/span>/);
+  assert.match(b[1], /<span class="ovr-count">1 line<\/span><span class="ovr-amt">\$8K<\/span>/);
+  // The owner's names everywhere on screen; the stored status stays in data-status (the filter value).
+  assert.match(b[3], /data-status="Supplier Late"[^>]*data-tip="Supplier Delay: 1 at-risk line, \$6,000 open;[^"]*"><span class="ovr-name">Supplier Delay</);
+  assert.match(b[5], /data-status="Waiting on Production"[^>]*data-tip="Wait on Prod: 1 at-risk line, \$5,000 open;/);
+  assert.doesNotMatch(b.join(''), /Supplier Late<|Supply Chain<|Waiting on Production<|override “/);
   assert.ok(b.every((x) => /aria-pressed="false"/.test(x) && /data-tip="[^"]{20,}"/.test(x)));
   assert.match(m, /<span class="ovr-head" id="ovr-head">At risk by override<\/span><div class="ovr-grid" role="group" aria-labelledby="ovr-head">/);
 });
@@ -263,6 +308,61 @@ test('a tile filter travels in a shared snapshot, and Search finds the lines by 
   const found = (q) => saver.run(`(searchQuery=${JSON.stringify(q)},globalSearchResults(currentMetrics()).rows.map(x=>x.r.documentNumber).sort())`);
   assert.deepEqual(found('shipping delay'), ['300', '301', '306']);
   assert.deepEqual(found('waiting on production'), ['305']);
+  // The owner's name for a status finds the same lines as the stored one.
+  assert.deepEqual(found('wait on prod'), ['305']);
+  assert.deepEqual(found('supplier delay'), ['303']);
+});
+
+test('override names show in the owner\'s words everywhere; stored values, saved notes, filters and the cause rules keep the old ones', async () => {
+  const page = await withStatuses();
+  assert.deepEqual(page.run("['Supplier Late','supply chain',' Waiting on Production ','R&D Hold','QC Delay','Shipping Delay','Waiting on PO','','Hold'].map(overrideLabel)"),
+    ['Supplier Delay', 'Supply Chain Delay', 'Wait on Prod', 'R&D Hold', 'QC Delay', 'Shipping Delay', 'Waiting on PO', '', 'Hold']);
+  assert.equal(page.run("overrideLabel('constructor')"), 'constructor', 'no inherited object keys');
+  // Stored values and the dropdown values are unchanged; only the option text is the owner's.
+  assert.ok(['Supplier Late', 'Supply Chain', 'Waiting on Production'].every((v) => page.run(`OVERRIDE_OPTIONS.includes(${JSON.stringify(v)})`)));
+  const editor = page.run(`renderOverrideSelect(${row('303')})`);
+  assert.match(editor, /<option value="Supplier Late" selected>Supplier Delay<\/option>/);
+  assert.match(editor, /<option value="Supply Chain">Supply Chain Delay<\/option>/);
+  assert.match(editor, /<option value="Waiting on Production">Wait on Prod<\/option>/);
+  assert.match(editor, /<option value="R&amp;D Hold">R&amp;D Hold<\/option>/);
+  assert.equal(page.run(`rowOverrides[${JSON.stringify(key(page, '303'))}].status`), 'Supplier Late');
+  assert.equal(page.run(`${row('303')}.overrideStatus`), 'Supplier Late');
+  assert.equal(page.run("causeOfLabel('Supplier Late')"), 'us');
+  page.run('selectAllLinked(true)');
+  const bulk = html(page).match(/<select id="linked-bulk-status"[\s\S]*?<\/select>/)[0];
+  assert.match(bulk, /<option value="Waiting on Production">Wait on Prod<\/option>/);
+  assert.match(bulk, /<option value="Supply Chain">Supply Chain Delay<\/option>/);
+  page.run('selectAllLinked(false)');
+  // Top reasons bars: the name shown is the owner's; the filter value is the stored one.
+  const bar = html(page).match(/<button type="button" class="oh-bar-row[^"]*" data-focus-key="oh-reason-Supplier Late" data-reason="Supplier Late"[^>]*>[\s\S]*?<\/button>/)[0];
+  assert.match(bar, /data-tip="Supplier Delay: \$6,000 on 1 at-risk line/);
+  assert.match(bar, /<span class="oh-bar-name">Supplier Delay<\/span>/);
+  // The chip, the line's status cell (cause · first reason, other reasons) and the note button tip.
+  page.run("setWeeklyReasonFilter('Waiting on Production')");
+  assert.equal(page.run('weeklyReasonFilter'), 'Waiting on Production');
+  const chip = html(page).match(/<button type="button" class="chip active oh-chip" data-kind="reason"[^>]*>([^<]*)</)[1].trim();
+  assert.equal(chip, 'Override: Wait on Prod');
+  page.run("clearWeeklyDrill('');setWeeklyMainReasonFilter('Supply Chain')");
+  assert.equal(html(page).match(/<button type="button" class="chip active oh-chip" data-kind="reason"[^>]*>([^<]*)</)[1].trim(), 'Main reason: Supply Chain Delay');
+  page.run("clearWeeklyDrill('')");
+  assert.match(page.run(`ohLineWhy(${row('305')})`), /data-tip="Cause: Us \(override Waiting on Production\)\. Reasons: [^"]*Wait on Prod\.[^"]*"/);
+  assert.match(page.run(`ohLineWhy(${row('303')})`), /Supplier Delay/);
+  assert.doesNotMatch(page.run(`ohLineWhy(${row('303')})`), />[^<]*Supplier Late/);
+  assert.match(page.run(`renderNoteButton(${row('304')})`), /data-tip="Override: Supply Chain Delay\./);
+  assert.match(page.run(`renderPrintNoteRow(${row('304')},5)`), /<span class="print-note-status">Supply Chain Delay<\/span>/);
+  // The Big picture's reason boxes (a line's first reason, usually a SAP signal): an override box is labelled in the
+  // owner's words while its key, and so its filter, stays the stored value.
+  assert.match(HTML, /\{key:sankeyLineReason,label:overrideLabel,top:6,other:'Other reasons',/);
+  const box = page.run("sankeyBuild([{k:'Waiting on Production'}],{value:()=>1,cols:[{key:x=>x.k,label:overrideLabel,action:ms=>({type:'reason',value:ms[0]})},{key:()=>'us'}]}).nodes.find(n=>n.level===0)");
+  assert.deepEqual([box.key, box.label, box.action.value], ['Waiting on Production', 'Wait on Prod', 'Waiting on Production']);
+  // Ask AI / MCP: a line's override and reasons, and the top reasons, in the owner's words.
+  const lines = page.run("aiRunTool('search_lines',{scope:'at_risk',query:'wait on prod'}).rows");
+  assert.equal(lines.length, 1);
+  assert.equal(lines[0].override, 'Wait on Prod');
+  assert.ok(lines[0].reasons.includes('Wait on Prod') && !lines[0].reasons.includes('Waiting on Production'));
+  const top = page.run("aiRunTool('get_overview',{}).order_health.leading.top_reasons.map(r=>r.reason)");
+  assert.ok(top.includes('Supplier Delay') && !top.includes('Supplier Late'), top.join(', '));
+  assert.equal(page.errors.length, 0, page.errors.join('\n'));
 });
 
 // --- Page groups ---------------------------------------------------------------------------------------

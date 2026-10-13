@@ -97,8 +97,10 @@ const ATRISK = [
 // Eleven more warehouses with one healthy line each: the chart keeps the 8 largest and groups the rest.
 const SPREAD = Array.from({ length: 11 }, (_, i) => sapRow({ DocumentNumber: String(100 + i), 'Internal Number': String(100 + i), Warehouse: `WH ${String(i + 1).padStart(2, '0')}`, AmountLocal: `${(i + 1) * 100}.00`, ...due('10/20/2026') }));
 
-async function orderHealth(rows = [...ATRISK, ...SPREAD]) {
-  const page = loadPage();
+// A browser that has switched Order Health's chart off (2v2: with no stored choice it opens on), so each test opens it.
+const BP_OFF = () => ({ spyderKpiBigPicture: '{"weekly":false}' });
+async function orderHealth(rows = [...ATRISK, ...SPREAD], storage = BP_OFF()) {
+  const page = loadPage({ storage });
   await new Promise((r) => setTimeout(r, 0));
   page.run('isSnapshotView=false;rowOverrides=loadRowOverrides()');
   await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
@@ -312,16 +314,17 @@ test('the Big picture switch: role, aria-checked, the card only when on, memory 
   assert.deepEqual(again.run('sankeyOpen'), { weekly: true });
   assert.match(html(again), /role="switch" aria-checked="true"[\s\S]*id="sankey-weekly"/);
   again.run("toggleSankey('weekly')");
-  assert.equal(page.storage.spyderKpiBigPicture, '{}', 'switching off is remembered too');
+  assert.equal(page.storage.spyderKpiBigPicture, '{"weekly":false}', 'switching off is remembered too (an explicit off)');
   assert.match(html(again), /role="switch" aria-checked="false"/);
   assert.doesNotMatch(html(again), /sk-card/);
-  // Odd or unreadable memory, or storage that throws (private window, blocked site data): the switch starts off and
-  // still works.
-  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: 'not json' } }).run('sankeyOpen'), {});
-  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: '{"weekly":"yes","search":true,"buildrisk":true}' } }).run('sankeyOpen'), { buildrisk: true });
+  // Odd or unreadable memory, or storage that throws (private window, blocked site data): no stored choice, so Order
+  // Health has the default (on) and the others are off; the switch still works.
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: 'not json' } }).run('sankeyOpen'), { weekly: true });
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: '{"weekly":"yes","search":true,"buildrisk":true}' } }).run('sankeyOpen'), { weekly: true, buildrisk: true });
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: '{"weekly":false,"buildrisk":false,"supplydemand":true}' } }).run('sankeyOpen'), { supplydemand: true });
   const blocked = await orderHealth();
   blocked.ctx.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() {} };
-  assert.deepEqual(blocked.run('bigPictureMemory()'), {});
+  assert.deepEqual(blocked.run('bigPictureMemory()'), { weekly: true });
   blocked.run("toggleSankey('weekly')");
   assert.match(html(blocked), /role="switch" aria-checked="true"/);
   assert.deepEqual(blocked.errors, []);
@@ -336,7 +339,7 @@ test('the Big picture switch: role, aria-checked, the card only when on, memory 
   assert.deepEqual(viewer.run('sankeyOpen'), { buildrisk: true });
   assert.equal(snapStore.spyderKpiBigPicture, '{"supplydemand":true}');
   const old = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows})'), snapStore);
-  assert.deepEqual(old.run('sankeyOpen'), { supplydemand: true });
+  assert.deepEqual(old.run('sankeyOpen'), { weekly: true, supplydemand: true }, 'this browser: Supply Mix on, Order Health by default');
   assert.deepEqual(page.errors, []);
 });
 
@@ -572,9 +575,10 @@ test('switches, the chart picked and the Build Risk CM travel in share snapshots
   const viewer = await openSnapshot(saved);
   assert.deepEqual(viewer.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true }, sankeyFlowPick: { weekly: 'risk' }, buildRiskCmFilter: 'dsm' });
   assert.match(html(viewer), /<section class="card sk-card rise" id="sankey-weekly"[\s\S]*aria-label="At-risk value: /);
-  // Older snapshots (in a browser with no switch memory), and unknown or non-boolean entries, open with every card closed.
+  // Older snapshots (in a browser with no switch memory) open with this browser's defaults (Order Health on); unknown
+  // or non-boolean entries in a snapshot's own switches are dropped.
   const old = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows})'));
-  assert.deepEqual(old.run(STATE), { sankeyOpen: {}, sankeyFlowPick: {}, buildRiskCmFilter: '' });
+  assert.deepEqual(old.run(STATE), { sankeyOpen: { weekly: true }, sankeyFlowPick: {}, buildRiskCmFilter: '' });
   const odd = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows,sankeyOpen:{weekly:"yes",search:true,supplydemand:true},sankeyFlow:{weekly:"<b>",search:"open",buildrisk:7}})'));
   assert.deepEqual(odd.run('({sankeyOpen,sankeyFlowPick})'), { sankeyOpen: { supplydemand: true }, sankeyFlowPick: {} });
   // Add file keeps the view; a replacement report goes back to the switches this browser remembers (Order Health was
@@ -584,6 +588,32 @@ test('switches, the chart picked and the Build Risk CM travel in share snapshots
   assert.deepEqual(page.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true, supplydemand: false }, sankeyFlowPick: { weekly: 'risk' }, buildRiskCmFilter: 'dsm' });
   await upload(page, [{ name: 'new.xls', bytes: sapExport(ATRISK) }]);
   assert.deepEqual(page.run('({sankeyOpen,sankeyFlowPick,buildRiskCmFilter,sankeyPinned})'), { sankeyOpen: { weekly: true }, sankeyFlowPick: {}, buildRiskCmFilter: '', sankeyPinned: {} });
+});
+
+test('2v2: Order Health opens with the Big picture on when this browser has no stored choice; Build Risk and Supply Mix stay off; a stored off is kept', async () => {
+  const fresh = await orderHealth(undefined, {});
+  assert.deepEqual(fresh.run('sankeyOpen'), { weekly: true });
+  assert.equal(fresh.storage.spyderKpiBigPicture, undefined, 'the default is not written until the switch is used');
+  const h = html(fresh);
+  assert.match(h, /role="switch" aria-checked="true" aria-controls="sankey-weekly" data-focus-key="bp-switch-weekly"/);
+  assert.match(h, /<section class="card sk-card rise" id="sankey-weekly"/);
+  assert.equal(fresh.run("[bigPictureMemory().buildrisk,bigPictureMemory().supplydemand].filter(Boolean).length"), 0);
+  // A new report goes back to the same default.
+  await upload(fresh, [{ name: 'new.xls', bytes: sapExport(ATRISK) }]);
+  assert.deepEqual(fresh.run('sankeyOpen'), { weekly: true });
+  // Switched off: kept for this browser, on the next visit and after a new report.
+  fresh.run("setTab('weekly');toggleSankey('weekly')");
+  assert.equal(fresh.storage.spyderKpiBigPicture, '{"weekly":false}');
+  const next = await orderHealth(undefined, fresh.storage);
+  assert.deepEqual(next.run('sankeyOpen'), {});
+  assert.doesNotMatch(html(next), /sk-card/);
+  await upload(next, [{ name: 'new.xls', bytes: sapExport(ATRISK) }]);
+  assert.deepEqual(next.run('sankeyOpen'), {});
+  // Switching another page on keeps Order Health's off; a browser that stored only "on" (before 2v2) still opens it.
+  next.run("toggleSankey('buildrisk')");
+  assert.deepEqual(JSON.parse(next.storage.spyderKpiBigPicture), { weekly: false, buildrisk: true });
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: '{"weekly":true}' } }).run('sankeyOpen'), { weekly: true });
+  assert.deepEqual([fresh.errors, next.errors], [[], []]);
 });
 
 // --- Motion and pointer helpers (fake DOM) ----------------------------------------------------------------------

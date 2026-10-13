@@ -55,15 +55,15 @@ test('nothing saved yet lists no names; no KV binding gives 503; other methods 4
   assert.equal(res.headers.get('cache-control'), 'no-store');
   assert.match(res.headers.get('content-type'), /application\/json/);
   assert.deepEqual(await res.json(), { v: 1, people: [] });
-  for (const method of ['GET', 'POST']) {
-    const off = await call({ method, env: {}, body: method === 'POST' ? { name: 'Kareena' } : undefined });
+  for (const method of ['GET', 'POST', 'DELETE']) {
+    const off = await call({ method, env: {}, body: method === 'GET' ? undefined : { name: 'Kareena' } });
     assert.equal(off.status, 503, method);
     assert.equal((await off.json()).configured, false);
   }
-  for (const method of ['PUT', 'PATCH', 'DELETE']) {
-    const r = await call({ method, env: { REPORT_STORE: kv() }, body: method === 'DELETE' ? undefined : { name: 'Kareena' } });
+  for (const method of ['PUT', 'PATCH']) {
+    const r = await call({ method, env: { REPORT_STORE: kv() }, body: { name: 'Kareena' } });
     assert.equal(r.status, 405, method);
-    assert.equal(r.headers.get('allow'), 'GET, POST');
+    assert.equal(r.headers.get('allow'), 'GET, POST, DELETE');
   }
 });
 
@@ -258,6 +258,108 @@ test('Workers KV busy: one more try after a second, then 429 with Retry-After (t
   assert.equal(busy.status, 429);
   assert.equal(busy.headers.get('retry-after'), '2');
   assert.deepEqual(stored(env).people.map((p) => p.name), ['Kareena']);
+});
+
+const del = (env, name, extra = {}) => call({ method: 'DELETE', env, body: { name }, ...extra });
+
+test('DELETE removes a name for everyone (any capitals); a name not in the list changes nothing and costs no write', async () => {
+  const env = { REPORT_STORE: kv() };
+  seed(env, [
+    { name: 'Aaron', firstSeen: ago(30 * DAY), lastSeen: ago(3600000) },
+    { name: 'Jamie Cole', firstSeen: ago(30 * DAY), lastSeen: ago(2 * 3600000) },
+    { name: 'Jamie Cloe', firstSeen: ago(DAY), lastSeen: ago(3 * 3600000) },
+  ]);
+  const res = await del(env, '  jamie   CLOE ');
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  const out = await res.json();
+  assert.equal(out.removed, true);
+  assert.deepEqual(out.people.map((p) => p.name), ['Aaron', 'Jamie Cole']);
+  assert.deepEqual(stored(env).people.map((p) => p.name), ['Aaron', 'Jamie Cole']);
+  assert.equal(env.REPORT_STORE.puts, 1);
+  assert.deepEqual((await (await call({ env })).json()).people.map((p) => p.name), ['Aaron', 'Jamie Cole']);
+  // Again (already gone), or a name never saved: nothing written.
+  for (const name of ['Jamie Cloe', 'Nobody Here']) {
+    const again = await (await del(env, name)).json();
+    assert.equal(again.removed, false, name);
+    assert.deepEqual(again.people.map((p) => p.name), ['Aaron', 'Jamie Cole']);
+  }
+  assert.equal(env.REPORT_STORE.puts, 1);
+  // The browser that still uses a removed name adds it back when it sends it (a POST is a normal add).
+  const back = await (await post(env, 'Jamie Cloe')).json();
+  assert.equal(back.saved, true);
+  assert.deepEqual(back.people.map((p) => p.name), ['Jamie Cloe', 'Aaron', 'Jamie Cole']);
+});
+
+test('DELETE has the POST rules: same origin only, a valid name, a capped body; a list that cannot be read is kept', async () => {
+  const env = { REPORT_STORE: kv() };
+  seed(env, [{ name: 'Aaron', firstSeen: ago(DAY), lastSeen: ago(DAY) }]);
+  for (const origin of [null, 'https://evil.example', 'http://kpi.example.test', 'null']) {
+    const res = await del(env, 'Aaron', { origin });
+    assert.equal(res.status, 403, String(origin));
+  }
+  for (const body of ['not json', '[]', '{}', { name: '' }, { name: 'Bob!' }, { name: 'a'.repeat(41) }, { names: 'Aaron' }]) {
+    const res = await call({ method: 'DELETE', env, body });
+    assert.equal(res.status, 400, JSON.stringify(body));
+    assert.ok((await res.json()).error);
+  }
+  assert.equal((await call({ method: 'DELETE', env, body: { name: 'Aaron' }, headers: { 'content-length': '2049' } })).status, 413);
+  assert.equal((await call({ method: 'DELETE', env, body: JSON.stringify({ name: 'Aaron', pad: 'x'.repeat(2100) }) })).status, 413);
+  env.REPORT_STORE.failGets = 1;
+  const failed = await del(env, 'Aaron');
+  assert.equal(failed.status, 500);
+  assert.match((await failed.json()).error, /nothing was removed/);
+  for (const junk of ['"some text"', '[1,2,3]', '{not json']) {
+    env.REPORT_STORE.map.set('people', junk);
+    assert.equal((await del(env, 'Aaron')).status, 500, junk);
+    assert.equal(env.REPORT_STORE.map.get('people'), junk);
+  }
+  assert.equal(env.REPORT_STORE.puts, 0);
+  // Workers KV busy: one more try, then 429 with Retry-After and the name stays.
+  seed(env, [{ name: 'Aaron', firstSeen: ago(DAY), lastSeen: ago(DAY) }]);
+  env.REPORT_STORE.failPuts = 2;
+  const busy = await del(env, 'Aaron');
+  assert.equal(busy.status, 429);
+  assert.equal(busy.headers.get('retry-after'), '2');
+  assert.deepEqual(stored(env).people.map((p) => p.name), ['Aaron']);
+});
+
+test('names not seen for 180 days drop off: left out of every read, removed from Workers KV at the next save', async () => {
+  const env = { REPORT_STORE: kv() };
+  seed(env, [
+    { name: 'Recent', firstSeen: ago(400 * DAY), lastSeen: ago(179 * DAY) },
+    { name: 'Gone Away', firstSeen: ago(400 * DAY), lastSeen: ago(181 * DAY) },
+    { name: 'Never Back', firstSeen: ago(200 * DAY), lastSeen: '' },
+    { name: 'No Dates', firstSeen: 'soon', lastSeen: 12 },
+  ]);
+  const list = await (await call({ env })).json();
+  assert.deepEqual(list.people.map((p) => p.name), ['Recent', 'No Dates'], 'last seen (else first seen) over 180 days ago is left out; no dates at all is kept');
+  assert.equal(env.REPORT_STORE.puts, 0, 'a read never writes');
+  // A POST for a name seen today writes only to drop the stale ones.
+  seed(env, [
+    { name: 'Kareena', firstSeen: ago(DAY), lastSeen: ago(3600000) },
+    { name: 'Gone Away', firstSeen: ago(400 * DAY), lastSeen: ago(200 * DAY) },
+  ]);
+  const out = await (await post(env, 'Kareena')).json();
+  assert.equal(out.saved, true);
+  assert.deepEqual(out.people.map((p) => p.name), ['Kareena']);
+  assert.deepEqual(stored(env).people.map((p) => p.name), ['Kareena']);
+  assert.equal(env.REPORT_STORE.puts, 1);
+  await post(env, 'Kareena');
+  assert.equal(env.REPORT_STORE.puts, 1, 'nothing stale left: no write');
+  // A stale name sent again comes back as new.
+  seed(env, [{ name: 'Gone Away', firstSeen: ago(400 * DAY), lastSeen: ago(200 * DAY) }]);
+  const again = await (await post(env, 'gone away')).json();
+  assert.equal(again.name, 'gone away', 'a new entry: the old spelling was dropped');
+  assert.ok(Date.now() - Date.parse(again.people[0].firstSeen) < 5000);
+  // DELETE of another name also drops the stale ones.
+  seed(env, [
+    { name: 'Aaron', firstSeen: ago(DAY), lastSeen: ago(DAY) },
+    { name: 'Gone Away', firstSeen: ago(400 * DAY), lastSeen: ago(200 * DAY) },
+  ]);
+  const removed = await (await del(env, 'Nobody')).json();
+  assert.equal(removed.removed, false);
+  assert.deepEqual(stored(env).people.map((p) => p.name), ['Aaron']);
 });
 
 let failed = 0;

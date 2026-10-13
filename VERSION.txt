@@ -1,6 +1,6 @@
 Spyder KPI Dashboard
-Version: 2v1
-Package date: 2026-10-09
+Version: 2v2
+Package date: 2026-10-13
 
 Main file: index.html
 Type: Static offline-capable browser dashboard
@@ -119,3 +119,14 @@ cut further and the model answers with what it has instead of failing at the sit
 vendor, warehouse, item, item group, month, type; Search, Purchase Orders and Connect an AI tables too), the Order
 Health hint says what the Leading and Lagging tabs show, and the Shipping hint says the tracking numbers come from
 the SAP delivery.
+
+2v2: a cleaner, less crowded board. The editor's name replaces "Your initials": asked once in a small dialog and
+saved in the site's database for everyone (functions/api/people.js), so a saved name is one click; x removes a name
+and names not used for 180 days drop off. Connect an AI and the help text (tooltips, info popovers, About notes,
+hints) are much shorter, and say "Spyder Controls" where they name the business. Big picture is a switch in the page
+header with its chart at the top of the page (on Order Health below the filters, and on by default there). Order
+Health: a large Leading / Lagging switch with each half's headline number; six delay tiles under At Risk (Shipping
+Delay, QC Delay, R&D Hold, Supplier Delay, Supply Chain Delay, Wait on Prod) with lines and value, those names used
+in every dropdown, chart, Search and Ask AI answer (stored values unchanged); the owner filter is removed; Top
+reasons no longer repeats the open order count. Every page is grouped into named sections with more space between
+them, and print is tidier (sections run on over pages, cards stay whole).
