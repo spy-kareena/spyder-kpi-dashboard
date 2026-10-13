@@ -1,7 +1,8 @@
 // "Big picture" Sankey charts (Order Health, Build Risk, Supply Mix). Run with `node tests/sankey.test.js`.
 // Fixtures are synthetic (no SAP data). Covers the pure layout (sankeyLayout), that each page's flows add up to the
-// numbers on its cards, that clicking a box applies the page's own filter, the markup (focusable boxes with full
-// values, escaping), share-snapshot state, and the open animation's reduced-motion / print guards.
+// numbers on its cards, that clicking a box applies the page's own filter, the markup (the header switch, focusable
+// boxes with full values, escaping), where the card sits, the switch's memory and share-snapshot state, and the open
+// animation's reduced-motion / print guards.
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
@@ -213,21 +214,36 @@ test('credit lines (negative open value) are left out of the bands and the sub-t
   assert.doesNotMatch(flows(await orderHealth(ATRISK), 'weekly')[0].sub, /not drawn/);
 });
 
-test('markup: the toggle and every box carry plain-English tips with full numbers; SAP text is escaped; tags balance', async () => {
+test('markup: the header switch and every box carry plain-English tips with full numbers; SAP text is escaped; tags balance', async () => {
   const page = await orderHealth();
   const closed = html(page);
-  assert.match(closed, /<button type="button" class="btn sk-toggle" data-focus-key="sankey-toggle-weekly" aria-expanded="false" data-tip="Show the big picture chart\. [^"]+"[^>]*>[\s\S]*?Big picture<\/button>/);
-  assert.doesNotMatch(closed, /<svg class="sk-svg/, 'nothing is drawn while the card is closed');
+  // The switch is the first control in the page header's actions (always visible at the top), not a button in the page.
+  assert.match(closed, /<div class="actions"><button type="button" class="btn bp-switch" role="switch" aria-checked="false" data-focus-key="bp-switch-weekly" data-tip="Show a flow chart of open and at-risk order value at the top of this page\." onclick="toggleSankey\('weekly'\)"><span class="bp-track" aria-hidden="true"><span class="bp-thumb"><\/span><\/span>Big picture<\/button><button type="button" class="btn" data-focus-key="ask-ai"/);
+  assert.doesNotMatch(closed, /<svg class="sk-svg|sk-card|sk-toggle|sk-bar/, 'nothing is drawn while the switch is off, and there is no in-page button');
   page.run("toggleSankey('weekly')");
   const h = html(page);
+  assert.match(h, /<button type="button" class="btn bp-switch" role="switch" aria-checked="true" aria-controls="sankey-weekly" data-focus-key="bp-switch-weekly" data-tip="Hide the flow chart\. Filters picked in it stay on\."/);
   assert.match(h, /<section class="card sk-card rise" id="sankey-weekly" aria-labelledby="sankey-weekly-title">/);
-  assert.match(h, /data-focus-key="sankey-toggle-weekly" aria-expanded="true" aria-controls="sankey-weekly" data-tip="[^"]+"[^>]*>[\s\S]*?Hide big picture</);
-  const boxes = [...h.matchAll(/<g class="sk-node[^"]*" role="button" tabindex="(?:0|-1)" aria-pressed="(?:true|false)" aria-label="([^"]+)" data-tip="([^"]+)" data-focus-key="sk-weekly-(?:open|risk)-[0-9a-z]+"/g)];
-  assert.equal(boxes.length, (h.match(/class="sk-node /g) || []).length, 'every box is a focusable button with a tip and a focus key');
-  // Each chart is one Tab stop (roving tabindex): the arrow keys move between its boxes, Tab goes on past it.
-  const svgs = h.match(/<svg class="sk-svg[\s\S]*?<\/svg>/g);
-  assert.equal(svgs.length, 2);
-  for (const svg of svgs) assert.equal((svg.match(/class="sk-node[^"]*" role="button" tabindex="0"/g) || []).length, 1, 'one Tab stop per chart');
+  // A compact head: the title, the chart picker (Order Health has two charts, one shown at a time) and one sub-title.
+  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-weekly-title">Big picture<\/h2><div class="segmented sk-pick" role="group" aria-label="Chart"><button type="button" class="active" aria-pressed="true" data-focus-key="sk-pick-weekly-open" data-tip="Open order value" onclick="setSankeyFlow\('weekly','open'\)">Open order value<\/button><button type="button" class="" aria-pressed="false" data-focus-key="sk-pick-weekly-risk" data-tip="At-risk value" onclick="setSankeyFlow\('weekly','risk'\)">At-risk value<\/button><\/div><span class="sk-name print-only">Open order value<\/span><span class="section-sub sk-sub">\$[\d,]+ across \d+ orders in this view<\/span><\/div>/);
+  assert.doesNotMatch(h, /Band thickness is value|Tab to the chart and use the arrow keys/, 'no long captions around the chart');
+  assert.match(h, /<p class="sk-detail print-hide" aria-hidden="true">Hover a box for its numbers; click it to filter\.<\/p>/);
+  page.run("setSankeyFlow('weekly','risk')");
+  const hr = html(page);
+  assert.equal(page.run('sankeyFlowPick.weekly'), 'risk');
+  assert.match(hr, /aria-pressed="true" data-focus-key="sk-pick-weekly-risk"/);
+  assert.match(hr, /<span class="section-sub sk-sub">\$[\d,]+ across \d+ orders · same lines as the At Risk card<\/span>/);
+  for (const one of [h, hr]) {
+    // Each chart is one Tab stop (roving tabindex): the arrow keys move between its boxes, Tab goes on past it.
+    const svgs = one.match(/<svg class="sk-svg[\s\S]*?<\/svg>/g);
+    assert.equal(svgs.length, 1, 'one chart at a time');
+    assert.equal((svgs[0].match(/class="sk-node[^"]*" role="button" tabindex="0"/g) || []).length, 1, 'one Tab stop per chart');
+  }
+  assert.match(h, /aria-labelledby="sankey-weekly-title">[\s\S]*aria-label="Open order value: Warehouse \/ CM to Status to Customer segment"/);
+  assert.match(hr, /aria-label="At-risk value: Reason to Us \/ Them to Customer"/);
+  const both = h + hr;
+  const boxes = [...both.matchAll(/<g class="sk-node[^"]*" role="button" tabindex="(?:0|-1)" aria-pressed="(?:true|false)" aria-label="([^"]+)" data-tip="([^"]+)" data-focus-key="sk-weekly-(?:open|risk)-[0-9a-z]+"/g)];
+  assert.equal(boxes.length, (both.match(/class="sk-node /g) || []).length, 'every box is a focusable button with a tip and a focus key');
   // The column headings' tips (mouse-only in the drawing) are in the chart's description too.
   assert.match(h, /<desc id="sankey-weekly-open-desc">[^<]* Columns: Warehouse \/ CM – Warehouse or contract manufacturer [^<]*Status – Each open line counted once[^<]*<\/desc>/);
   assert.ok(boxes.length >= 20);
@@ -237,30 +253,91 @@ test('markup: the toggle and every box carry plain-English tips with full number
   // One tooltip per element: boxes and headings use the dashboard's tip bubble (#tip-layer, placed by script, so it
   // works on SVG), so they carry no SVG <title> (the browser would show its own tooltip on top). The chart is named
   // by aria-label rather than a root <title> for the same reason; only the bands (no data-tip) keep a <title>.
-  assert.doesNotMatch(h, /<g class="sk-node[^>]*><title>/, 'boxes have no native SVG title tooltip');
-  assert.doesNotMatch(h, /<svg class="sk-svg[^>]*><title/, 'the chart has no root SVG title tooltip');
+  assert.doesNotMatch(both, /<g class="sk-node[^>]*><title>/, 'boxes have no native SVG title tooltip');
+  assert.doesNotMatch(both, /<svg class="sk-svg[^>]*><title/, 'the chart has no root SVG title tooltip');
   assert.match(h, /<svg class="sk-svg[^"]*" role="group" aria-label="[^"]+" aria-describedby="sankey-weekly-[^"]+-desc"/);
   assert.match(h, /<path class="sk-link[^>]*><title>[^<]+ → [^<]+<\/title><\/path>/, 'bands keep a native title');
-  assert.match(h, /<details class="about sk-about"><summary data-tip="Show how this chart is built: [^"]+">About this chart<\/summary>/);
-  assert.match(h, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
-  assert.doesNotMatch(h, /<b>Co|undefined|NaN/);
+  assert.match(h, /<details class="about sk-about"><summary data-tip="How this chart is built and what clicking does\.">About this chart<\/summary>/);
+  assert.match(hr, /Marine &lt;b&gt;Co&lt;\/b&gt;/);
+  assert.doesNotMatch(both, /<b>Co|undefined|NaN/);
   // Self-closing SVG shapes (<path …/>, <rect …/>) need no closing tag.
-  const opens = (tag) => (h.match(new RegExp(`<${tag}(?:\\s[^>]*[^/]|)>`, 'g')) || []).length;
-  for (const tag of ['div', 'section', 'button', 'span', 'details', 'p', 'svg', 'g', 'text', 'title', 'path', 'tspan']) {
-    assert.equal(opens(tag), h.split(`</${tag}>`).length - 1, `balanced <${tag}>`);
+  for (const one of [h, hr]) {
+    const opens = (tag) => (one.match(new RegExp(`<${tag}(?:\\s[^>]*[^/]|)>`, 'g')) || []).length;
+    for (const tag of ['div', 'section', 'button', 'span', 'details', 'p', 'svg', 'g', 'text', 'title', 'path', 'tspan']) {
+      assert.equal(opens(tag), one.split(`</${tag}>`).length - 1, `balanced <${tag}>`);
+    }
   }
-  // The chart keeps readable 12px text on phones by scrolling inside the card; print scales it to the page.
+  // The chart keeps readable 12px text on phones by scrolling inside the card; print scales it to the page and hides
+  // the switch, the chart picker (the picked chart's name prints instead) and the hover line.
   assert.match(HTML, /\.sk-scroll\{overflow-x:auto;overflow-y:hidden;max-width:100%/);
-  assert.match(HTML, /@media print\{\n  \.sk-bar,\.sk-toggle,\.sk-detail\{display:none!important\}[\s\S]*?\.sk-svg\{width:100%!important;height:auto!important\}/);
-  // Print keeps the card title with its first chart (not stranded at the foot of a page) and drops the screen-only
-  // "hover / Tab / click" instructions from the subtitle (.print-hide), as it does .sk-detail.
-  const skPrint = HTML.slice(HTML.indexOf('@media print{\n  .sk-bar,.sk-toggle,.sk-detail'), HTML.indexOf('--- Stream E: Shipping page'));
-  assert.match(skPrint, /\.sk-head\{break-after:avoid;page-break-after:avoid\}/);
-  assert.match(skPrint, /\.sk-head\+\.sk-flow\{break-before:avoid;page-break-before:avoid\}/);
-  assert.match(h, /<div class="section-head sk-head"><h2 [^>]*>Big picture<\/h2><span class="section-sub">Band thickness is value\.<span class="print-hide"> Hover a box[^<]*click a box to filter the page\.<\/span><\/span>/);
-  assert.match(HTML, /@media print\{[\s\S]*?,\.print-hide,[^{}]*\{display:none!important\}/, 'the existing .print-hide rule hides the instructions');
+  assert.match(HTML, /@media print\{\n  \.bp-switch,\.sk-pick,\.sk-detail\{display:none!important\}[\s\S]*?\.sk-svg\{width:100%!important;height:auto!important\}/);
+  // Print keeps the card title (and a filter note) with the chart, not stranded at the foot of a page.
+  const skPrint = HTML.slice(HTML.indexOf('@media print{\n  .bp-switch,.sk-pick,.sk-detail'), HTML.indexOf('--- Stream E: Shipping page'));
+  assert.match(skPrint, /\.sk-head,\.sk-card \.sk-filter\{break-after:avoid;page-break-after:avoid\}/);
+  assert.match(skPrint, /\.sk-head\+\.sk-flow,\.sk-card \.sk-filter\+\.sk-flow\{break-before:avoid;page-break-before:avoid\}/);
+  assert.match(skPrint, /\.sk-about:not\(\[open\]\)\{display:none!important\}/, 'a closed About this chart is not printed');
+  assert.match(HTML, /@media print\{[\s\S]*?,\.print-hide,[^{}]*\{display:none!important\}/, 'the existing .print-hide rule hides the hover line');
   assert.match(HTML, /\.sk-node:focus-visible \.sk-hit\{stroke:var\(--accent\)\}/);
   assert.match(h, /viewBox="0 0 960 \d+(\.\d)?" width="960"/, 'a fixed 960px chart when the window width is unknown (tests, print)');
+  // Generous height: at least 240px of drawing, about 44px a box in the fullest column.
+  const svgH = Number(h.match(/viewBox="0 0 960 ([\d.]+)"/)[1]);
+  assert.ok(svgH >= 9 * 44 && svgH <= 560 + 40, `chart height ${svgH}`);
+  // A stale chart pick (from an older snapshot) falls back to the first chart.
+  page.run("sankeyFlowPick={weekly:'nope'};renderResults()");
+  assert.match(html(page), /aria-pressed="true" data-focus-key="sk-pick-weekly-open"/);
+});
+
+test('the Big picture switch: role, aria-checked, the card only when on, memory in this browser, snapshot and reset', async () => {
+  const page = await orderHealth();
+  const m = 'currentMetrics()';
+  const switches = (h) => (h.match(/class="btn bp-switch"/g) || []).length;
+  assert.equal(page.run(`renderBigPicture('weekly',${m})`), '', 'nothing at all while off');
+  assert.equal(page.run("bigPictureSwitchHtml('weekly')").includes('aria-checked="false"'), true);
+  assert.equal(page.run("bigPictureSwitchHtml('search')"), '', 'only Order Health, Build Risk and Supply Mix');
+  page.run("toggleSankey('weekly')");
+  assert.match(page.run(`renderBigPicture('weekly',${m})`), /^<section class="card sk-card rise" id="sankey-weekly"/, 'only the card, wherever the page calls it');
+  assert.equal(page.storage.spyderKpiBigPicture, '{"weekly":true}', 'the choice is remembered per browser');
+  assert.equal(switches(html(page)), 1);
+  // Pages without a chart, or without the file their chart needs, have no switch.
+  for (const tab of ['purchaseorders', 'monthly', 'buildrisk', 'supplydemand']) {
+    page.run(`setTab(${JSON.stringify(tab)})`);
+    assert.equal(switches(html(page)), 0, `${tab}: no switch`);
+  }
+  page.run("setTab('weekly')");
+  // The next visit (same browser) starts with the switch on, also after a new report is loaded.
+  const again = loadPage({ storage: page.storage });
+  assert.deepEqual(again.run('sankeyOpen'), { weekly: true });
+  await upload(again, [{ name: 'e.xls', bytes: sapExport(ATRISK) }]);
+  again.run("setTab('weekly')");
+  assert.deepEqual(again.run('sankeyOpen'), { weekly: true });
+  assert.match(html(again), /role="switch" aria-checked="true"[\s\S]*id="sankey-weekly"/);
+  again.run("toggleSankey('weekly')");
+  assert.equal(page.storage.spyderKpiBigPicture, '{}', 'switching off is remembered too');
+  assert.match(html(again), /role="switch" aria-checked="false"/);
+  assert.doesNotMatch(html(again), /sk-card/);
+  // Odd or unreadable memory, or storage that throws (private window, blocked site data): the switch starts off and
+  // still works.
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: 'not json' } }).run('sankeyOpen'), {});
+  assert.deepEqual(loadPage({ storage: { spyderKpiBigPicture: '{"weekly":"yes","search":true,"buildrisk":true}' } }).run('sankeyOpen'), { buildrisk: true });
+  const blocked = await orderHealth();
+  blocked.ctx.localStorage = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() {} };
+  assert.deepEqual(blocked.run('bigPictureMemory()'), {});
+  blocked.run("toggleSankey('weekly')");
+  assert.match(html(blocked), /role="switch" aria-checked="true"/);
+  assert.deepEqual(blocked.errors, []);
+  // A snapshot's own switches win while it is open, and opening it does not change this browser's memory; one saved
+  // before the switch existed uses this browser's choice.
+  page.run("toggleSankey('weekly');sankeyOpen.buildrisk=true");
+  const saved = await saveSnapshot(page);
+  page.run("toggleSankey('weekly')");
+  assert.equal(page.storage.spyderKpiBigPicture, '{"weekly":true}');
+  const snapStore = { spyderKpiBigPicture: '{"supplydemand":true}' };
+  const viewer = await openSnapshot(saved, snapStore);
+  assert.deepEqual(viewer.run('sankeyOpen'), { buildrisk: true });
+  assert.equal(snapStore.spyderKpiBigPicture, '{"supplydemand":true}');
+  const old = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows})'), snapStore);
+  assert.deepEqual(old.run('sankeyOpen'), { supplydemand: true });
+  assert.deepEqual(page.errors, []);
 });
 
 test('Us / Them and reasons come from the Order Health cause engine (Stream D) and match its Us vs Them card; boxes use its filters', async () => {
@@ -317,6 +394,9 @@ test('with the Big picture open, a redraw that changes no data or filter reuses 
   page.run(`toggleLinkedRow(${JSON.stringify(k)},true)`);
   page.run("sankeyNodeClick('weekly','open','1:ok')");
   assert.match(html(page), /data-pinned="1:ok"/);
+  // Showing the other chart reuses them too (both charts come from one build).
+  page.run("setSankeyFlow('weekly','risk')");
+  assert.match(html(page), /aria-label="At-risk value: /);
   assert.deepEqual([calls().reason, calls().cause], [0, 0], 'the flows are reused');
   // A filter change rebuilds them, and the pressed box and its tip follow (the tips are written on every call).
   page.run("sankeyNodeClick('weekly','risk','2:APP1')");
@@ -356,8 +436,16 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   page.run('isSnapshotView=false');
   const kpi = sapExport([sapRow({ DocumentNumber: '71001', Warehouse: 'CM - DSM', ...due('09/15/2026') }), sapRow({ DocumentNumber: '71002', Warehouse: 'CM - Price', ...due('10/10/2026') })]);
   await upload(page, [{ name: 'kpi.xls', bytes: kpi }, { name: 'ctb.xlsx', bytes: workbook(page, [SEP30, SEP24]) }]);
-  page.run("setTab('buildrisk');toggleSankey('buildrisk')");
+  page.run("setTab('buildrisk')");
+  // Switch off: no card. On: the card sits at the top of the page, under the report-week picker it depends on and
+  // above the KPI cards.
+  assert.doesNotMatch(html(page), /sk-card|sk-filter/);
+  assert.match(html(page), /role="switch" aria-checked="false" data-focus-key="bp-switch-buildrisk"/);
+  page.run("toggleSankey('buildrisk')");
   let h = html(page);
+  const at = (s) => h.indexOf(s);
+  assert.ok(at('id="build-risk-snapshot"') > 0 && at('id="build-risk-snapshot"') < at('id="sankey-buildrisk"') && at('id="sankey-buildrisk"') < at('class="grid-5'), 'the card is above the KPI cards');
+  assert.match(h, /<div class="sk-head"><h2 class="section-title" id="sankey-buildrisk-title">Big picture<\/h2><span class="sk-name">Orders in the Sep 30 report<\/span><span class="section-sub sk-sub">48 orders · 40 clear to build · 5 at risk · 3 late<\/span><\/div>/);
   const [f] = flows(page, 'buildrisk');
   const mid = Object.fromEntries(f.nodes.filter((n) => n.level === 1).map((n) => [n.label, n.value]));
   assert.deepEqual(mid, { 'Clear to build': stat(h, 'Clear to build'), 'At risk': stat(h, 'At risk'), Late: stat(h, 'Late') });
@@ -376,19 +464,23 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   h = html(page);
   assert.equal(stat(h, 'Clear to build'), 13);
   assert.equal(stat(h, 'CTB report rows'), 2);
-  assert.match(h, /<div class="sk-filter"><span>Showing CM <strong>DSM<\/strong> only, picked in the Big picture\.<\/span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="[^"]+" onclick="setBuildRiskCm\(''\)">Show every CM<\/button><\/div>/);
+  assert.match(h, /<div class="sk-filter"><span>Showing CM <strong>DSM<\/strong> only\.<\/span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="[^"]+" onclick="setBuildRiskCm\(''\)">Show every CM<\/button><\/div>/);
+  assert.ok(h.indexOf('id="sankey-buildrisk"') < h.indexOf('class="sk-filter"'), 'with the switch on, the one-line note is inside the card');
   assert.match(h, /<option value="2026-09-30" selected>Sep 30<\/option>/);
   assert.deepEqual(flows(page, 'buildrisk')[0].nodes.filter((n) => n.level === 0).map((n) => n.label), ['DSM']);
   // A week without that CM shows every CM and says so; the pick comes back on a week that has it.
   page.run('setBuildRiskSnapshot("2026-09-24")');
   h = html(page);
   assert.equal(stat(h, 'Clear to build'), 9);
-  assert.match(h, /CM <strong>DSM<\/strong> is not in this report week, so every CM is shown\./);
+  assert.match(h, /CM <strong>DSM<\/strong> is not in this week; showing every CM\./);
   page.run('setBuildRiskSnapshot("2026-09-30")');
   assert.equal(stat(html(page), 'Clear to build'), 13);
-  // The note stays (and prints) with the chart closed; Show every CM, or the CM box again, undoes it.
+  // The note stays (and prints) with the switch off, at the top of the page; Show every CM, or the CM box again, undoes it.
   page.run("toggleSankey('buildrisk')");
-  assert.match(html(page), /Showing CM <strong>DSM<\/strong> only/);
+  h = html(page);
+  assert.match(h, /Showing CM <strong>DSM<\/strong> only/);
+  assert.doesNotMatch(h, /sk-card/);
+  assert.ok(h.indexOf('class="sk-filter"') < h.indexOf('class="grid-5'));
   page.run("setBuildRiskCm('')");
   assert.equal(page.run('buildRiskCmFilter'), '');
   assert.equal(stat(html(page), 'Clear to build'), 40);
@@ -417,6 +509,10 @@ async function supplyPage(rows = SD) {
 
 test('Supply Mix: open demand value adds up, bands are coloured by coverage, a warehouse click narrows the chart', async () => {
   const page = await supplyPage();
+  // The card is the first thing under the page head, above the KPI cards.
+  const top = html(page);
+  assert.ok(top.indexOf('id="sankey-supplydemand"') > top.indexOf('class="page-head') && top.indexOf('id="sankey-supplydemand"') < top.indexOf('class="grid-5'));
+  assert.match(top, /<\/div>\n  <\/div>\n      <section class="card sk-card rise" id="sankey-supplydemand"/);
   let [f] = flows(page, 'supplydemand');
   assert.equal(f.total, page.run('currentMetrics().supplyDemand.demandValue'));
   assert.deepEqual(colSums(f), [1750, 1750, 1750]);
@@ -429,7 +525,7 @@ test('Supply Mix: open demand value adds up, bands are coloured by coverage, a w
   [f] = flows(page, 'supplydemand');
   assert.equal(f.total, 1000);
   const h = html(page);
-  assert.match(h, /The Big picture shows <strong>CM - DSM<\/strong> only \(the same warehouse filter as Supply \/ Demand\)\./);
+  assert.match(h, /<div class="sk-filter"><span>Showing <strong>CM - DSM<\/strong> only \(shared with Supply \/ Demand\)\.<\/span>/);
   assert.match(h, /onclick="setTab\('supplyweekly'\)">Open Supply \/ Demand<\/button>/);
   // The page's own cards are not narrowed (Supply Mix has no warehouse filter of its own).
   assert.match(h, /Demand qty<\/span><span class="kpi-value">17</);
@@ -437,6 +533,11 @@ test('Supply Mix: open demand value adds up, bands are coloured by coverage, a w
   assert.match(html(page), /<option value="CM - DSM" selected>CM - DSM<\/option>/, 'Supply / Demand opens on the same warehouse');
   page.run("setTab('supplydemand');sankeyNodeClick('supplydemand','demand','0:CM - DSM')");
   assert.deepEqual(page.run('supplyWarehouseFilter'), ['ALL']);
+  // Switch off: no card and no note (the warehouse filter belongs to Supply / Demand).
+  page.run("sankeyNodeClick('supplydemand','demand','0:CM - DSM');toggleSankey('supplydemand')");
+  assert.doesNotMatch(html(page), /sk-card|sk-filter/);
+  assert.equal(page.run("renderBigPicture('supplydemand',currentMetrics())"), '');
+  page.run("setSupplyWarehouseFilter(['ALL'])");
   // A snapshot without demand values falls back to open quantity.
   const qty = await supplyPage(SD.map((r) => ({ ...r, DemandOpenValue: '' })));
   [f] = flows(qty, 'supplydemand');
@@ -452,34 +553,36 @@ async function saveSnapshot(page) {
   await page.ctx.exportShareSnapshot();
   return payload;
 }
-async function openSnapshot(payload) {
-  const snap = loadPage();
+async function openSnapshot(payload, storage) {
+  const snap = loadPage({ storage });
   snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
   snap.els['embedded-snapshot-data'].textContent = payload;
   await snap.run('loadEmbeddedSnapshot()');
   return snap;
 }
 
-test('open cards and the Build Risk CM travel in share snapshots; a new report resets them, Add file keeps them', async () => {
+test('switches, the chart picked and the Build Risk CM travel in share snapshots; a new report resets them to the remembered switches, Add file keeps them', async () => {
   const page = await orderHealth();
-  page.run("toggleSankey('weekly');sankeyOpen.buildrisk=true;buildRiskCmFilter='dsm';sankeyNodeClick('weekly','open','1:ok')");
-  const STATE = '({sankeyOpen,buildRiskCmFilter})';
+  page.run("toggleSankey('weekly');setSankeyFlow('weekly','risk');sankeyOpen.buildrisk=true;sankeyOpen.supplydemand=false;buildRiskCmFilter='dsm';sankeyNodeClick('weekly','open','1:ok')");
+  const STATE = '({sankeyOpen,sankeyFlowPick,buildRiskCmFilter})';
   const saved = await saveSnapshot(page);
-  assert.deepEqual(JSON.parse(saved).sankeyOpen, { weekly: true, buildrisk: true });
+  assert.deepEqual(JSON.parse(saved).sankeyOpen, { weekly: true, buildrisk: true }, 'only switches that are on are saved');
+  assert.deepEqual(JSON.parse(saved).sankeyFlow, { weekly: 'risk' });
   const viewer = await openSnapshot(saved);
-  assert.deepEqual(viewer.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true }, buildRiskCmFilter: 'dsm' });
-  assert.match(html(viewer), /<section class="card sk-card rise" id="sankey-weekly"/);
-  // Older snapshots, and unknown or non-boolean entries, open with every card closed.
+  assert.deepEqual(viewer.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true }, sankeyFlowPick: { weekly: 'risk' }, buildRiskCmFilter: 'dsm' });
+  assert.match(html(viewer), /<section class="card sk-card rise" id="sankey-weekly"[\s\S]*aria-label="At-risk value: /);
+  // Older snapshots (in a browser with no switch memory), and unknown or non-boolean entries, open with every card closed.
   const old = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows})'));
-  assert.deepEqual(old.run(STATE), { sankeyOpen: {}, buildRiskCmFilter: '' });
-  const odd = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows,sankeyOpen:{weekly:"yes",search:true,supplydemand:true}})'));
-  assert.deepEqual(odd.run('sankeyOpen'), { supplydemand: true });
-  // Add file keeps the view; a replacement report starts closed.
+  assert.deepEqual(old.run(STATE), { sankeyOpen: {}, sankeyFlowPick: {}, buildRiskCmFilter: '' });
+  const odd = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows,sankeyOpen:{weekly:"yes",search:true,supplydemand:true},sankeyFlow:{weekly:"<b>",search:"open",buildrisk:7}})'));
+  assert.deepEqual(odd.run('({sankeyOpen,sankeyFlowPick})'), { sankeyOpen: { supplydemand: true }, sankeyFlowPick: {} });
+  // Add file keeps the view; a replacement report goes back to the switches this browser remembers (Order Health was
+  // switched on with the switch; Build Risk was set only in this view) with every pick cleared.
   page.ctx.__more = [{ name: 'more.xls', bytes: sapExport([sapRow({ DocumentNumber: '9001', 'Internal Number': '9001' })]) }];
   await page.run('handleFiles([...loadedFiles,...__more],{adding:true})');
-  assert.deepEqual(page.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true }, buildRiskCmFilter: 'dsm' });
+  assert.deepEqual(page.run(STATE), { sankeyOpen: { weekly: true, buildrisk: true, supplydemand: false }, sankeyFlowPick: { weekly: 'risk' }, buildRiskCmFilter: 'dsm' });
   await upload(page, [{ name: 'new.xls', bytes: sapExport(ATRISK) }]);
-  assert.deepEqual(page.run(`(${STATE.slice(1, -1).replace('}', ',sankeyPinned}')})`), { sankeyOpen: {}, buildRiskCmFilter: '', sankeyPinned: {} });
+  assert.deepEqual(page.run('({sankeyOpen,sankeyFlowPick,buildRiskCmFilter,sankeyPinned})'), { sankeyOpen: { weekly: true }, sankeyFlowPick: {}, buildRiskCmFilter: '', sankeyPinned: {} });
 });
 
 // --- Motion and pointer helpers (fake DOM) ----------------------------------------------------------------------

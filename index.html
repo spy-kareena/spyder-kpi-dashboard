@@ -987,14 +987,21 @@ details.about>summary:hover{color:var(--gray-900)}
 .editor-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 @media print{.editable-rows .row-cause,.editor-dialog{display:none!important}}
 /* --- Stream F: Sankey "big picture" --- */
-.sk-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.sk-bar .section-sub{flex:1 1 260px;min-width:0}
-.sk-card{display:grid;gap:18px;min-width:0}
-.sk-head{flex-wrap:wrap}
-.sk-flow{display:grid;gap:8px;min-width:0}
-.sk-flow+.sk-flow{border-top:1px solid var(--gray-100);padding-top:16px}
-.sk-flow-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.sk-title{margin:0;font-size:13.5px;font-weight:600;color:var(--gray-900)}
+/* The Big picture switch in the page header (role="switch"): an outline button holding a track and thumb */
+.btn.bp-switch{gap:9px;padding-left:11px}
+.bp-track{position:relative;flex:none;width:28px;height:16px;border-radius:99px;background:var(--gray-300);transition:background-color var(--dur) var(--ease)}
+.bp-thumb{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:99px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform var(--dur) var(--ease)}
+.bp-switch:hover .bp-track{background:var(--gray-400)}
+.bp-switch[aria-checked="true"] .bp-track{background:var(--accent)}
+.bp-switch[aria-checked="true"]:hover .bp-track{background:var(--accent-strong)}
+.bp-switch[aria-checked="true"] .bp-thumb{transform:translateX(12px)}
+@media (prefers-reduced-motion:reduce){.bp-track,.bp-thumb{transition:none}}
+@media (forced-colors:active){.bp-track{border:1px solid ButtonText;background:Canvas}.bp-thumb{top:1px;left:1px;background:ButtonText}.bp-switch[aria-checked="true"] .bp-track{background:Highlight;border-color:Highlight}.bp-switch[aria-checked="true"] .bp-thumb{background:HighlightText}}
+.sk-card{display:grid;gap:12px;min-width:0}
+.sk-head{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;min-height:30px}
+.sk-name{font-size:13px;font-weight:500;color:var(--gray-700)}
+.sk-head .sk-sub{margin-left:auto}
+.sk-flow{display:grid;gap:10px;min-width:0}
 /* The chart keeps 12px text: on narrow screens it scrolls sideways inside the card, never the page */
 .sk-scroll{overflow-x:auto;overflow-y:hidden;max-width:100%;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
 .sk-svg{display:block;margin:0 auto;max-width:none;font-family:var(--font)}
@@ -1026,24 +1033,28 @@ details.about>summary:hover{color:var(--gray-900)}
 .sk-foot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
 .sk-detail{margin:0;min-height:1.5em;font-size:12px;color:var(--gray-600);flex:1 1 320px;text-align:right}
 .sk-sw-crit{background:var(--crit)}.sk-sw-warn{background:var(--warn-fill)}.sk-sw-good{background:var(--good)}.sk-sw-calm{background:var(--accent)}.sk-sw-muted{background:var(--gray-500)}.sk-sw-us{background:var(--cause-us)}.sk-sw-them{background:var(--cause-them)}.sk-sw-neutral{background:var(--cause-neutral)}.sk-sw-unknown{background:var(--cause-unknown)}
-.sk-filter{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--gray-700);background:var(--accent-tint);border:1px solid var(--accent-border);border-radius:var(--r-ctl);padding:8px 12px}
-.sk-about{margin-top:-4px}
+.sk-filter{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--gray-700);background:var(--accent-tint);border:1px solid var(--accent-border);border-radius:var(--r-ctl);padding:7px 12px}
+.sk-card details.sk-about{border:0;border-top:1px solid var(--gray-100);border-radius:0;padding:10px 0 0;background:none}
 .sk-swipe{display:none;font-size:12px;color:var(--gray-500)}
 @media (max-width:980px){.sk-swipe{display:block}}
-@media (max-width:640px){.sk-detail{text-align:left}}
+/* Phones: no hover, so the hover line gives way to the swipe hint; the sub-title wraps under the title */
+@media (max-width:640px){.sk-detail{display:none}.sk-head .sk-sub{margin-left:0;flex-basis:100%}}
 @media (prefers-reduced-motion:reduce){.sk-link,.sk-node{transition:none}}
-/* Print: the open chart prints as drawn (no hover dimming), scaled to the page; the button bar and hints are hidden */
+/* Print: the open chart prints as drawn (no hover dimming), scaled to the page; the switch, picker and hints are hidden */
 @media print{
-  .sk-bar,.sk-toggle,.sk-detail{display:none!important}
+  .bp-switch,.sk-pick,.sk-detail{display:none!important}
   .sk-card{break-inside:auto!important;page-break-inside:auto!important}
   .sk-flow{break-inside:avoid;page-break-inside:avoid}
   /* Keep the card title with its first chart (no "Big picture" heading stranded at the foot of a page) */
-  .sk-head{break-after:avoid;page-break-after:avoid}
-  .sk-head+.sk-flow{break-before:avoid;page-break-before:avoid}
+  .sk-head,.sk-card .sk-filter{break-after:avoid;page-break-after:avoid}
+  .sk-head+.sk-flow,.sk-card .sk-filter+.sk-flow{break-before:avoid;page-break-before:avoid}
+  .sk-head .print-only{display:inline!important;font-size:inherit;color:var(--gray-700)}
   .sk-scroll{overflow:visible}
   .sk-svg{width:100%!important;height:auto!important}
   .sk-svg.sk-hl .sk-link{fill-opacity:.3}.sk-svg.sk-hl .sk-node:not(.sk-on){opacity:1}
   .sk-filter{background:#fff}
+  .sk-about:not([open]){display:none!important}
+  .sk-card details.sk-about{border:0!important;border-top:1px solid var(--gray-300)!important;border-radius:0!important}
 }
 /* --- Stream E: Shipping page (live FedEx tracking) --- */
 .ship-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-bar);padding:12px 16px;box-shadow:var(--sh-rest)}
@@ -1560,7 +1571,7 @@ async function exportShareSnapshot(){
     shipScenarioDateBasis,
     originalDeliveryMonthFilter,
     buildRiskSnapshot,
-    sankeyOpen,buildRiskCmFilter, // Stream F: which Big picture cards are open, and the CM picked on Build Risk
+    sankeyOpen:sankeyOpenState(sankeyOpen),sankeyFlow:sankeyFlowPick,buildRiskCmFilter, // Stream F: Big picture switches, the Order Health chart picked, the Build Risk CM
     reportAsOfDate:displayDate(reportToday()),
     reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
@@ -1685,7 +1696,8 @@ async function loadEmbeddedSnapshot(){
     shipScenarioDateBasis=data.shipScenarioDateBasis||'effective';
     originalDeliveryMonthFilter=data.originalDeliveryMonthFilter||'ALL';
     buildRiskSnapshot=String(data.buildRiskSnapshot||'');
-    sankeyOpen=sankeyOpenState(data.sankeyOpen);buildRiskCmFilter=String(data.buildRiskCmFilter||'');
+    // Stream F: the snapshot's Big picture switches win; one saved before they existed uses this browser's choice.
+    sankeyOpen=data.sankeyOpen&&typeof data.sankeyOpen==='object'?sankeyOpenState(data.sankeyOpen):bigPictureMemory();sankeyFlowPick=sankeyFlowState(data.sankeyFlow);buildRiskCmFilter=String(data.buildRiskCmFilter||'');
     reportAsOfDate=parseDate(data.reportAsOfDate)||parseDate(parsedRows[0]&&parsedRows[0].exportDate)||null;
     dataQualityIssues=Array.isArray(data.dataQualityIssues)?data.dataQualityIssues:[];
     excludedQuarantineRows=Number(data.excludedQuarantineRows)||0;
@@ -5098,7 +5110,7 @@ function showUploadError(msg){
 function resetViewState(){
   activeTab='weekly';weeklyWarehouseFilter=['ALL'];weeklyCustomerFilter=['ALL'];weeklySegmentFilter=['ALL'];weeklyOwnerFilter=['ALL'];weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyTileFilter='late';weeklyOtdFilter='total';weeklyRescheduleFilter='total';weeklyLineSort='default';weeklyLeadingCollapsed=false;weeklyLaggingCollapsed=false;weeklyAdvancedOpen=false;weeklyOffenderView='customers';weeklyLinkedShowAll=false;weeklyScorecardAll=false;poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='';poLineSort='default';poLinkedShowAll=false;poWarehouseAll=false;supplyWarehouseFilter=['ALL'];shipScenarioStartDate='';shipScenarioTargetDate='';shipScenarioDateBasis='effective';originalDeliveryMonthFilter='ALL';tableMore={};includeNonInventory=false;dataCheckOpen=false;expandedNoteRows=new Set();collapsedNoteRows=new Set();
   linkedSelection=new Set();linkedBulkStatus='';searchQuery='';searchPrevTab='weekly';clearTimeout(searchTimer);buildRiskSnapshot='';
-  sankeyOpen={};sankeyPinned={};buildRiskCmFilter='';
+  sankeyOpen=bigPictureMemory();sankeyFlowPick={};sankeyPinned={};buildRiskCmFilter=''; // Stream F: switches go back to this browser's choice
   ohResetView();
 }
 function resetApp(){
@@ -5582,7 +5594,7 @@ function renderResults(){
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('This is a shared snapshot file: its numbers are frozen as of the day it was saved, and note changes here are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
     <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export. Nothing is sent until you allow a provider in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
+    <div class="actions">${loaded?`${bigPictureSwitchHtml(activeTab)}<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export. Nothing is sent until you allow a provider in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
       :`<button type="button" class="btn btn-primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`}</div>
   </div>`;
 
@@ -6815,6 +6827,7 @@ function renderResults(){
     }else{
       const itemGroupRows=sd.byItemGroup.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${fmtNum(g.demandQty)}</td><td class="num">${fmtNum(g.usableQty)}</td><td class="num ${g.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(g.monthlyNetQty)}</td><td class="num ${g.cumulativeShortageRows?'crit-strong':'muted'}">${fmtNum(g.cumulativeShortageRows)}</td><td class="num ${g.riskRows?'warn-soft':'muted'}">${fmtNum(g.riskRows)}</td><td class="num soft">${fmtNum(g.unconfirmedQty)}</td><td class="num soft">${fmtNum(g.noCommitQty)}</td><td class="num soft">${fmtNum(g.rescheduledQty)}</td><td class="num soft">${fmtNum(g.lateQty)}</td></tr>`);
       html+=`
+      ${renderBigPicture('supplydemand',m)}
       <section class="grid-5 rise rise-1">
         ${renderStatCard('Demand qty',fmtNum(sd.demandQty),`${money(sd.demandValue)} open demand value`,'','neutral',`Demand: ${fmtNum(sd.demandQty)} qty on open sales orders in the snapshot, worth ${money(sd.demandValue)}.`)}
         ${renderStatCard('Usable supply qty',fmtNum(sd.usableQty),'Confirmed and committed PO supply',sd.usableQty>=sd.demandQty?'good':'warn',sd.usableQty>=sd.demandQty?'good':'warn',`Usable supply: ${fmtNum(sd.usableQty)} qty on open purchase orders with a confirmed, committed date. Stock on hand is not included.`)}
@@ -6822,7 +6835,6 @@ function renderResults(){
         ${renderStatCard('Shortage rows',fmtNum(sd.shortageRows.length),'Monthly or cumulative shortage',sd.shortageRows.length?'crit':'good',sd.shortageRows.length?'crit':'good',`${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'row is':'rows are'} short that month or on the running total.`)}
         ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),'Unconfirmed, no commit, rescheduled, or late',sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of PO supply that is unconfirmed, has no commit date, is rescheduled or is late.`)}
       </section>
-      ${renderBigPicture('supplydemand',m)}
       <section class="grid-2 rise rise-2">
         <div class="card list-card roomy">
           <div class="list-head"><div class="title-row"><h2>Net qty by month</h2>${infoButton('mix-net')}</div><span class="section-sub">usable supply minus demand</span></div>
@@ -6872,6 +6884,7 @@ function renderResults(){
         <label>Report week <select id="build-risk-snapshot" class="select"${tipAttr('Pick which weekly Clear To Build sheet the page shows. Weeks are never added together.')} onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===brAll?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>
         <span class="filter-note">${esc(`${br.sheet||br.label} · ${fmtNum(snapshots.length)} report ${snapshots.length===1?'week':'weeks'} loaded; weeks are never added together`)}</span>
       </div>`:''}
+      ${renderBigPicture('buildrisk',m)}
       <section class="grid-5 rise rise-1">
         ${renderStatCard('CTB report rows',fmtNum(br.rows.length),br.dated?`CM / month rows in the ${esc(br.label)} report`:'CM / month rows imported','','neutral',`${fmtNum(br.rows.length)} CM / month rows in the ${br.dated?`${br.label} `:''}Clear To Build report.`)}
         ${renderStatCard('Clear to build',fmtNum(br.totalClearToBuild),`${pct(br.totalClearToBuild,br.totalOrders)}% of CTB orders`,'good','good',`Clear to build: ${fmtNum(br.totalClearToBuild)} of ${fmtNum(br.totalOrders)} orders in the report (${pct(br.totalClearToBuild,br.totalOrders)}%) can be built now.`)}
@@ -6879,7 +6892,6 @@ function renderResults(){
         ${renderStatCard('Late',fmtNum(br.totalLate),'From the CTB report',br.totalLate?'crit':'good',br.totalLate?'crit':'good',`Late: ${fmtNum(br.totalLate)} orders the Clear To Build report marks late.`)}
         ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty in matching CM / month buckets`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the same CM warehouses and due months as the report rows.`)}
       </section>
-      ${renderBigPicture('buildrisk',m)}
       <section class="card list-card roomy rise rise-2">
         <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="section-sub">open SO value by CM and month · red = late, amber = at risk</span></div>
         ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(r.matchedRows.length)} SO rows · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
@@ -8373,15 +8385,19 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 addEventListener('focus',refreshSharedNotes);
 
 // --- Stream F: Sankey "big picture" ---
-// A "Big picture" button on Order Health, Build Risk and Supply Mix opens a Sankey chart: columns of boxes (nodes)
-// joined by bands (links) as thick as the value they carry, so a page reads at a glance: where the open value sits,
-// what state it is in and who it is for. Clicking a box applies that page's own filter (warehouse, segment, customer,
-// linked-lines card, Build Risk CM, supply warehouse); boxes with no filter (months, item groups) stay highlighted
-// instead. sankeyLayout is a pure function with no DOM, so tests and the MCP server's vm can call it; sankeyFlows(tab)
-// gives the nodes and links each page draws. Which pages have it open (sankeyOpen) and the Build Risk CM pick travel
-// in share snapshots and reset when a new report is loaded.
+// A "Big picture" switch in the page header of Order Health, Build Risk and Supply Mix shows a Sankey chart at the top
+// of the page: columns of boxes (nodes) joined by bands (links) as thick as the value they carry, so a page reads at a
+// glance: where the open value sits, what state it is in and who it is for. Clicking a box applies that page's own
+// filter (warehouse, segment, customer, linked-lines card, Build Risk CM, supply warehouse); boxes with no filter
+// (months, item groups) stay highlighted instead. sankeyLayout is a pure function with no DOM, so tests and the MCP
+// server's vm can call it; sankeyFlows(tab) gives the nodes and links each page draws. Which pages have it on
+// (sankeyOpen) is remembered per browser (localStorage spyderKpiBigPicture), travels in share snapshots (a snapshot's
+// own choice wins while it is open) and goes back to the remembered choice when a new report is loaded; the Build Risk
+// CM pick and the Order Health chart picked travel in snapshots and reset with a new report.
 const SANKEY_TABS={weekly:'Order Health',buildrisk:'Build Risk',supplydemand:'Supply Mix'};
-let sankeyOpen={};        // {weekly:true,...}: pages showing the Big picture card
+const BIG_PICTURE_KEY='spyderKpiBigPicture';
+let sankeyOpen=bigPictureMemory(); // {weekly:true,...}: pages showing the Big picture card
+let sankeyFlowPick={};    // {weekly:'risk'}: the chart shown on a page with more than one (first one by default)
 let sankeyPinned={};      // {weekly:'flowId|nodeId'}: a box clicked for highlight only (not saved)
 let buildRiskCmFilter=''; // Build Risk: CM picked in the Big picture ('' = every CM)
 
@@ -8825,22 +8841,27 @@ function sankeyFormat(unit,v,short){
   if(unit==='orders')return short?fmtNum(v):`${fmtNum(v)} ${num(v)===1?'order':'orders'}`;
   return short?fmtNum(Math.round(v)):`${fmtNum(v)} qty`;
 }
-// Fixed pixel width (text stays 12px): the page width when known, at least 900px (phones scroll inside the card).
+// Fixed pixel width (text stays 12px): the card's inner width when the page is on screen (the results column less the
+// card's padding), else worked out from the window; at least 900px (phones scroll inside the card), 960px when unknown.
 function sankeyChartWidth(){
   if(printMode||typeof innerWidth!=='number'||!(innerWidth>0))return 960;
-  return Math.round(Math.max(900,Math.min(1240,innerWidth-(innerWidth>980?346:80))));
+  const col=document.getElementById('results-screen');
+  const w=col&&col.clientWidth>0?col.clientWidth-(innerWidth<=640?38:54)-2:innerWidth-(innerWidth>980?346:80);
+  return Math.floor(Math.max(900,Math.min(1400,w)));
 }
 // Short stable id for data-focus-key (SAP names can hold characters a CSS selector cannot).
 function sankeyHash(s){let h=5381;for(const ch of String(s))h=((h*33)^ch.codePointAt(0))>>>0;return h.toString(36);}
 function sankeyClip(s,n){const t=String(s);return t.length>n?`${t.slice(0,n-1)}…`:t;}
+// One chart: the drawing, then its legend and the line that repeats a hovered box's numbers. Its title and sub-title
+// are in the card head (renderBigPicture).
 function renderSankeyFlow(tab,flow){
-  const head=`<div class="sk-flow-head"><h3 class="sk-title">${esc(flow.title)}</h3><span class="section-sub">${esc(flow.sub)}</span></div>`;
-  if(!flow.links.length)return `<div class="sk-flow">${head}<p class="empty-note">${esc(flow.empty)}</p></div>`;
+  if(!flow.links.length)return `<div class="sk-flow"><p class="empty-note">${esc(flow.empty)}</p></div>`;
   const W=sankeyChartWidth(),LEFT=210,RIGHT=210,TOP=26;
   sankeyDrawnWidth=W;
   const perCol=[0,0,0];
   flow.nodes.forEach(n=>{perCol[n.level]=(perCol[n.level]||0)+1;});
-  const layout=sankeyLayout(flow.nodes,flow.links,{width:W,height:Math.max(160,Math.min(520,Math.max(...perCol)*34)),marginLeft:LEFT,marginRight:RIGHT,format:v=>sankeyFormat(flow.unit,v,true)});
+  // Generous height: about 44px a box in the fullest column, from 240px to 560px.
+  const layout=sankeyLayout(flow.nodes,flow.links,{width:W,height:Math.max(240,Math.min(560,Math.max(...perCol)*44)),marginLeft:LEFT,marginRight:RIGHT,format:v=>sankeyFormat(flow.unit,v,true)});
   const r=v=>Math.round(v*10)/10;
   const nodeById=new Map(layout.nodes.map(n=>[n.id,n]));
   const pinnedKey=sankeyPinned[tab]||'';
@@ -8866,18 +8887,19 @@ function renderSankeyFlow(tab,flow){
     const hy=Math.min(n.y0,n.labelY-8)-2,hh=Math.max(n.y1,n.labelY+8)+2-hy;
     return `<g class="sk-node sk-${esc(n.tone||'plain')}${sel?' sk-sel':''}${conn&&conn.nodes.has(n.id)?' sk-on':''}" role="button" tabindex="${n===stop?'0':'-1'}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(n.tip||n.label)}" data-tip="${esc(n.tip||n.label)}" data-focus-key="sk-${tab}-${flow.id}-${sankeyHash(n.id)}" data-sk-tab="${tab}" data-sk-flow="${esc(flow.id)}" data-sk-node="${esc(n.id)}" data-col="${n.column}" data-row="${n.row}" data-cy="${r(n.labelY)}" onclick="sankeyNodeClick(this.dataset.skTab,this.dataset.skFlow,this.dataset.skNode)" onkeydown="sankeyNodeKey(event,this)" onmouseenter="sankeyHover(this)" onmouseleave="sankeyHover(this,true)" onfocus="sankeyRove(this);sankeyHover(this)" onblur="sankeyHover(this,true)"><rect class="sk-hit" x="${r(hx)}" y="${r(hy)}" width="${r(hw)}" height="${r(hh)}" rx="4"/><rect class="sk-rect" x="${r(n.x0)}" y="${r(n.y0)}" width="${r(n.x1-n.x0)}" height="${r(Math.max(1,n.y1-n.y0))}" rx="1.5"/><text class="sk-label" x="${r(n.labelX)}" y="${r(n.labelY)}" dy="0.35em" text-anchor="${n.anchor}">${esc(label)} <tspan class="sk-val">${esc(n.valueLabel)}</tspan></text></g>`;
   }).join('');
-  return `<div class="sk-flow">${head}
+  return `<div class="sk-flow">
     <div class="sk-scroll"><svg class="sk-svg${conn?' sk-hl':''}" role="group" aria-label="${esc(`${flow.title}: ${flow.cols.join(' to ')}`)}" aria-describedby="${ids}-desc" viewBox="0 0 ${W} ${svgH}" width="${W}" height="${svgH}"${pinned?` data-pinned="${esc(pinned)}"`:''}><desc id="${ids}-desc">${esc(`${sankeyFormat(flow.unit,flow.total)} in all. Each box is a button with its numbers; Enter or Space applies it, arrow keys move between boxes. Columns: ${flow.cols.map((c,i)=>{const t=(flow.colTips||[])[i];return t&&t!==c?`${c} – ${t}`:`${c}.`;}).join(' ')}`)}</desc><g class="sk-heads" aria-hidden="true">${heads}</g><g transform="translate(0,${TOP})"><g class="sk-links" aria-hidden="true">${links}</g><g class="sk-nodes">${nodes}</g></g></svg></div>
-    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><span class="sk-swipe print-hide" aria-hidden="true">Swipe sideways to see the whole chart.</span><p class="sk-detail print-hide" aria-hidden="true">Hover a box, or Tab to the chart and use the arrow keys, for its numbers. Click a box to filter the page.</p></div>
+    <div class="sk-foot"><div class="legend">${(flow.legend||[]).map(([tone,label])=>`<span><i class="sw sk-sw-${tone}"></i>${esc(label)}</span>`).join('')}</div><span class="sk-swipe print-hide" aria-hidden="true">Swipe to see the whole chart.</span><p class="sk-detail print-hide" aria-hidden="true">Hover a box for its numbers; click it to filter.</p></div>
   </div>`;
 }
+// What each page's chart shows, for the switch's tip.
 const SANKEY_INTRO={
-  weekly:'See where open order value sits (warehouse to status to customer segment) and why at-risk value is late (reason to us or them to customer).',
-  buildrisk:'See each CM’s orders in the picked report week split into clear to build, at risk and late, by month.',
-  supplydemand:'See open demand by warehouse, item group and month, coloured by how well open purchase orders cover it.'
+  weekly:'open and at-risk order value',
+  buildrisk:'each CM’s orders by status and month',
+  supplydemand:'open demand by warehouse, item group and month'
 };
-const SANKEY_ICON='<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h4c6 0 6 14 12 14h2"/><path d="M3 19h4c6 0 6-14 12-14h2"/><path d="M3 12h18"/></svg>';
-// Notes that say what the Big picture is narrowing (they stay visible with the chart closed, and print).
+// One-line notes that say what the Big picture is narrowing (the Build Risk CM note stays, and prints, with the
+// chart off, since it narrows the whole page).
 function sankeyFilterNote(tab){
   if(tab==='buildrisk'&&buildRiskCmFilter){
     const row=buildRiskRows.find(r=>ctbCmId(r)===buildRiskCmFilter);
@@ -8885,29 +8907,44 @@ function sankeyFilterNote(tab){
     const snapshots=ctbSnapshots(buildRiskRows);
     const week=snapshots.find(s=>s.key===buildRiskSnapshot)||snapshots[0];
     const inWeek=!!week&&week.rows.some(r=>!r.isTotal&&r.monthKey&&ctbCmId(r)===buildRiskCmFilter);
-    return `<div class="sk-filter"><span>${inWeek?`Showing CM <strong>${esc(name)}</strong> only, picked in the Big picture.`:`CM <strong>${esc(name)}</strong> is not in this report week, so every CM is shown.`}</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="Show every CM on Build Risk again." onclick="setBuildRiskCm('')">Show every CM</button></div>`;
+    return `<div class="sk-filter"><span>${inWeek?`Showing CM <strong>${esc(name)}</strong> only.`:`CM <strong>${esc(name)}</strong> is not in this week; showing every CM.`}</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="Show every CM on Build Risk again." onclick="setBuildRiskCm('')">Show every CM</button></div>`;
   }
   if(tab==='supplydemand'&&sankeyOpen.supplydemand&&!supplyWarehouseFilter.includes('ALL')){
     const wh=supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
-    return `<div class="sk-filter"><span>The Big picture shows <strong>${esc(wh)}</strong> only (the same warehouse filter as Supply / Demand).</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-clear" data-tip="Show every warehouse in the Big picture and on Supply / Demand." onclick="setSupplyWarehouseFilter(['ALL'])">Show every warehouse</button><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-open" data-tip="Open Supply / Demand with this warehouse filter to see the item rows." onclick="setTab('supplyweekly')">Open Supply / Demand</button></div>`;
+    return `<div class="sk-filter"><span>Showing <strong>${esc(wh)}</strong> only (shared with Supply / Demand).</span><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-clear" data-tip="Show every warehouse here and on Supply / Demand." onclick="setSupplyWarehouseFilter(['ALL'])">Show every warehouse</button><button type="button" class="link-btn print-hide" data-focus-key="sankey-supply-open" data-tip="Open Supply / Demand with this warehouse filter." onclick="setTab('supplyweekly')">Open Supply / Demand</button></div>`;
   }
   return '';
 }
-// The one hook each page calls: the "Big picture" button, or the open card with its charts.
+// Whether a page has data for its chart (the switch is not drawn without it).
+function sankeyHasData(tab){
+  return tab==='weekly'?allLoadedRows.length>0:tab==='buildrisk'?buildRiskRows.length>0:tab==='supplydemand'?supplyDemandRows.length>0:false;
+}
+// The header switch on Order Health, Build Risk and Supply Mix. A native button with role="switch", so Space and Enter
+// work as on any button and a screen reader hears "Big picture, switch, on / off"; hidden in print.
+function bigPictureSwitchHtml(tab){
+  if(!SANKEY_TABS[tab]||!sankeyHasData(tab))return '';
+  const on=!!sankeyOpen[tab];
+  const tip=on?'Hide the flow chart. Filters picked in it stay on.':`Show a flow chart of ${SANKEY_INTRO[tab]} at the top of this page.`;
+  return `<button type="button" class="btn bp-switch" role="switch" aria-checked="${on?'true':'false'}"${on?` aria-controls="sankey-${tab}"`:''} data-focus-key="bp-switch-${tab}"${tipAttr(tip)} onclick="toggleSankey('${tab}')"><span class="bp-track" aria-hidden="true"><span class="bp-thumb"></span></span>Big picture</button>`;
+}
+// The one hook each page calls, at the top of its content: the card when the switch is on; with it off, nothing but
+// the note of a filter picked in the chart that still narrows the page (the Build Risk CM).
 function renderBigPicture(tab,m){
   if(!SANKEY_TABS[tab])return '';
+  if(!sankeyOpen[tab])return sankeyFilterNote(tab);
   let flows=[];
   // Flows first: building them also drops filter values the data no longer has, so the note below is current.
-  if(sankeyOpen[tab]){try{flows=sankeyFlows(tab,m);}catch(err){console.error('Big picture could not be drawn',err);}}
+  try{flows=sankeyFlows(tab,m);}catch(err){console.error('Big picture could not be drawn',err);}
   const note=sankeyFilterNote(tab);
-  if(!sankeyOpen[tab]){
-    return `${note}<div class="sk-bar print-hide"><button type="button" class="btn sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="false" data-tip="${esc(`Show the big picture chart. ${SANKEY_INTRO[tab]} Click a box in it to filter this page.`)}" onclick="toggleSankey('${tab}')">${SANKEY_ICON}Big picture</button><span class="section-sub">${esc(SANKEY_INTRO[tab])}</span></div>`;
-  }
-  const about=tab==='weekly'?`<details class="about sk-about">${aboutSummary('About this chart','Show how this chart is built: what each column and band counts, how boxes are grouped and what clicking does.')}<div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
-  return `${note}<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
-    <div class="section-head sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2><span class="section-sub">Band thickness is value.<span class="print-hide"> Hover a box, or Tab to the chart and use the arrow keys, for its numbers; click a box to filter the page.</span></span><div class="section-tools"><button type="button" class="btn btn-sm sk-toggle" data-focus-key="sankey-toggle-${tab}" aria-expanded="true" aria-controls="sankey-${tab}" data-tip="Hide the big picture chart. Filters picked in it stay on." onclick="toggleSankey('${tab}')">${SANKEY_ICON}Hide big picture</button></div></div>
-    ${flows.map(f=>renderSankeyFlow(tab,f)).join('')||'<p class="empty-note">Nothing to draw for this page yet.</p>'}
-    ${about}
+  // A page with more than one chart (Order Health) shows one at a time, picked in the card head.
+  const flow=flows.find(f=>f.id===sankeyFlowPick[tab])||flows[0];
+  const head=!flow?'':flows.length>1
+    ?`<div class="segmented sk-pick" role="group" aria-label="Chart">${flows.map(f=>`<button type="button" class="${f===flow?'active':''}" aria-pressed="${f===flow?'true':'false'}" data-focus-key="sk-pick-${tab}-${esc(f.id)}"${tipAttr(f.pickTip||f.title)} onclick="setSankeyFlow('${tab}','${esc(f.id)}')">${esc(f.title)}</button>`).join('')}</div><span class="sk-name print-only">${esc(flow.title)}</span>`
+    :`<span class="sk-name">${esc(flow.title)}</span>`;
+  const about=tab==='weekly'?`<details class="about sk-about">${aboutSummary('About this chart','How this chart is built and what clicking does.')}<div class="about-body">${sankeyAbout('weekly')}</div></details>`:'';
+  return `<section class="card sk-card rise" id="sankey-${tab}" aria-labelledby="sankey-${tab}-title">
+    <div class="sk-head"><h2 class="section-title" id="sankey-${tab}-title">Big picture</h2>${head}${flow?`<span class="section-sub sk-sub">${esc(flow.sub)}</span>`:''}</div>
+    ${note}${flow?renderSankeyFlow(tab,flow):'<p class="empty-note">Nothing to draw for this page yet.</p>'}${about}
   </section>`;
 }
 // "About these numbers" text for the Big picture on each page (Order Health shows it inside the card).
@@ -8920,13 +8957,22 @@ function sankeyAbout(tab){
   if(tab==='supplydemand')return p('Big picture: open demand value flows from warehouse to item group to demand month (open quantity when the snapshot has no demand value). Red bands are demand in months short of open PO supply, amber is covered only by supply at risk (unconfirmed, no commit, rescheduled or late) and blue is covered. Click a warehouse box to narrow the chart; Supply / Demand uses the same warehouse filter.');
   return '';
 }
+// The header switch: shows or hides the card and remembers the choice in this browser for this page.
 function toggleSankey(tab){
   if(!SANKEY_TABS[tab])return;
   const open=!sankeyOpen[tab];
   sankeyOpen={...sankeyOpen,[tab]:open};
   if(!open)sankeyPinned={...sankeyPinned,[tab]:''};
+  rememberBigPicture(tab,open);
   renderResults();
   if(open)sankeyAnimate(tab);
+}
+// The chart picked on a page with more than one (Order Health: open order value or at-risk value).
+function setSankeyFlow(tab,id){
+  if(!SANKEY_TABS[tab]||sankeyFlowPick[tab]===id)return;
+  sankeyFlowPick={...sankeyFlowPick,[tab]:String(id||'')};
+  renderResults();
+  sankeyAnimate(tab);
 }
 // Opening the card draws the bands in from the left and grows the boxes (Web Animations API). Nothing moves with
 // reduced motion or while printing; the markup is already final, so a skipped animation changes nothing.
@@ -8938,7 +8984,7 @@ function sankeyAnimate(tab){
   card.querySelectorAll('.sk-svg').forEach(svg=>{if(typeof svg.animate==='function')svg.animate([{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],{duration:650,easing:ease});});
   card.querySelectorAll('.sk-rect').forEach((rect,i)=>{if(typeof rect.animate==='function')rect.animate([{opacity:0,transform:'scaleY(0.2)'},{opacity:1,transform:'none'}],{duration:380,delay:Math.min(i,24)*18,easing:ease,fill:'backwards'});});
 }
-// The chart is drawn at the window's width; after a resize (phone turned, window dragged) an open chart is redrawn
+// The chart is drawn at the page's width; after a resize (phone turned, window dragged) an open chart is redrawn
 // once the width settles, if that changes its width.
 let sankeyDrawnWidth=0,sankeyResizeTimer=null;
 if(typeof addEventListener==='function')addEventListener('resize',()=>{
@@ -8949,9 +8995,24 @@ if(typeof addEventListener==='function')addEventListener('resize',()=>{
     if(Math.abs(sankeyChartWidth()-sankeyDrawnWidth)>=40)renderResults();
   },250);
 });
-// Share snapshots keep only known pages switched on.
+// Share snapshots and the browser memory keep only known pages switched on.
 function sankeyOpenState(v){
   return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>v[t]===true).map(t=>[t,true])):{};
+}
+function sankeyFlowState(v){
+  return v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(SANKEY_TABS).filter(t=>typeof v[t]==='string'&&/^[a-z]{1,20}$/.test(v[t])).map(t=>[t,v[t]])):{};
+}
+// Per-browser memory of the switch (localStorage spyderKpiBigPicture = {weekly:true,...}). Storage can be missing,
+// blocked or full (a private window, a snapshot opened from a file): the switch then simply starts off.
+function bigPictureMemory(){
+  try{return sankeyOpenState(JSON.parse(localStorage.getItem(BIG_PICTURE_KEY)||'{}'));}catch(err){return {};}
+}
+function rememberBigPicture(tab,on){
+  try{
+    const v=bigPictureMemory();
+    if(on)v[tab]=true;else delete v[tab];
+    localStorage.setItem(BIG_PICTURE_KEY,JSON.stringify(v));
+  }catch(err){}
 }
 // --- Stream E: Shipping (live FedEx tracking) ---
 // The Shipping page lists the deliveries in the export that carry a FedEx tracking number (TrackingNumber = SAP
