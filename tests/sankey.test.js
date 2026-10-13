@@ -348,7 +348,8 @@ const SEP24 = { name: '0924 - Orders at Risk', aoa: [HEAD, ['Price <i>x</i>', 'S
 function workbook(page, sheets) {
   return new Uint8Array(page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify(sheets)}){const ws=XLSX.utils.aoa_to_sheet(s.aoa);if(s.merges)ws['!merges']=s.merges.map(r=>XLSX.utils.decode_range(r));XLSX.utils.book_append_sheet(wb,ws,s.name);}return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`));
 }
-const stat = (h, label) => Number((h.match(new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
+// 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
+const stat = (h, label) => Number((h.match(label === 'CTB report rows' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report rows/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
 
 test('Build Risk: the flow matches the cards; clicking a CM narrows the page to it and the week picker still works', async () => {
   const page = loadPage();

@@ -235,8 +235,9 @@ test('PO tab shows unconfirmed and missing-price lines', async () => {
   await upload(page, [{ name: 'e.xls', bytes: sapExport([po({ DocumentNumber: '41', Confirmed: 'N' }), po({ DocumentNumber: '42', PriceFlag: 'Missing Price', AmountLocal: '0.00' }), po({ DocumentNumber: '43' })]) }]);
   page.run('setTab("purchaseorders")');
   const text = page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  assert.match(text, /Unconfirmed vendor has not confirmed 1 /);
-  assert.match(text, /Missing price open lines with no price 1 /);
+  // 2v2: the strip shows the label and the numbers; what each one counts is in its tooltip.
+  assert.match(text, /Unconfirmed 1 \$1,000 /);
+  assert.match(text, /Missing price 1 \$0 /);
 });
 
 test('fractional quantities are not rounded away', () => {

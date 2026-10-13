@@ -466,13 +466,19 @@ test('first-visit hints say what the Order Health tabs are and where Shipping ge
   assert.deepEqual(page.errors, []);
 });
 
-test('page descriptions: under each page name on the load screen, as the tooltip once a report is open', async () => {
+test('page descriptions: listed by page on the load screen, and the tooltip of each page in the sidebar', async () => {
   const page = loadPage();
-  page.run('renderSidebar()');
+  page.run('renderSidebar();renderUploadState()');
   const descs = page.run('PAGE_TIPS');
+  // 2v2: the load screen lists every page under its sidebar group with its description; the sidebar stays a plain list.
+  const pages = page.els['upload-pages'].innerHTML;
   for (const [id, text] of Object.entries(descs)) {
-    assert.match(sidebar(page), new RegExp(`data-focus-key="nav-${id}"[^>]*>[^]*?<span class="nav-desc">${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</span>`), id);
+    const label = page.run(`NAV_GROUPS.flatMap(g=>g[1]).find(i=>i[0]===${JSON.stringify(id)})[1]`);
+    assert.ok(pages.includes(`<li><strong>${label.replace(/&/g, '&amp;')}</strong><span class="page-desc">${page.run(`esc(PAGE_TIPS[${JSON.stringify(id)}])`)}</span></li>`), id);
+    assert.match(sidebar(page), new RegExp(`data-focus-key="nav-${id}"[^>]*data-tip="${page.run(`esc(PAGE_TIPS[${JSON.stringify(id)}])`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), id);
   }
+  assert.match(pages, /<div class="card"><h3>Sales<\/h3><ul><li><strong>Order Health<\/strong>/);
+  assert.doesNotMatch(sidebar(page), /nav-desc/);
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
   assert.doesNotMatch(sidebar(page), /nav-desc/);
   // The badge's meaning is in the button's own tip (keyboard focus shows that one) and hidden text for screen readers.

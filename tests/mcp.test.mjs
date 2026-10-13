@@ -231,7 +231,7 @@ test('Connect an AI keeps the usual actions when an export is loaded; Copy uses 
   const html = page.els['results-screen'].innerHTML;
   assert.match(html, /answers use the export as of 2026-09-03/);
   assert.match(html, /data-focus-key="ask-ai"[^>]*>(<svg[^]*?<\/svg>)?Ask AI</);
-  assert.match(html, />Share snapshot</);
+  assert.match(html, />Share(?:<span class="btn-long">)? snapshot</);
 
   let copied = '';
   page.ctx.navigator.clipboard = { writeText: async (t) => { copied = t; } };

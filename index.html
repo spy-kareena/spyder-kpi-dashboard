@@ -1260,6 +1260,115 @@ button.ship-kpi{width:100%}
   .ship-step.exception>i::after{color:Canvas}
   .waffle>i,.split-bar>i,.oh-bar-track>i,.legend .sw{forced-color-adjust:none}
 }
+/* --- 2v2: page groups (categories). Canonical copy: every page is a few named groups, with more space between
+   groups than inside one. Markup: <section class="pg-group" aria-labelledby="ID"><div class="pg-group-head">
+   <h2 class="pg-group-title" id="ID">…</h2></div> …cards… </section> (pageGroupHtml builds it). --- */
+:root{--space-group:40px;--space-in:20px}
+.pg-group+.pg-group{margin-top:var(--space-group)}
+.pg-group>*+*{margin-top:var(--space-in)}
+.pg-group-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.pg-group-title{margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500)}
+@media (max-width:640px){:root{--space-group:28px;--space-in:14px}}
+@media print{:root{--space-group:.15in;--space-in:.08in}}
+/* Groups sit straight in #results-screen / #upload-screen, whose sibling rhythm (32px) would otherwise win */
+#results-screen>*+.pg-group,#results-screen>.pg-group+*,#upload-screen>*+.pg-group{margin-top:var(--space-group)}
+/* The title sits close to its own cards (12px), further from the group above (--space-group) */
+.pg-group>.pg-group-head+*{margin-top:0}
+.pg-group-head{flex-wrap:wrap;row-gap:6px;min-height:22px}
+.pg-group-head .info-btn{align-self:center;margin:-4px -4px}
+.pg-group-head .count-badge{align-self:center}
+.pg-group-tools{margin-left:auto;display:flex;align-items:center;gap:14px;align-self:center}
+@media print{.pg-group{break-inside:auto;page-break-inside:auto}.pg-group-head{break-after:avoid;page-break-after:avoid;margin-bottom:.05in}.pg-group-tools{display:none!important}}
+
+/* --- 2v2 (pages): quieter cards and badges, tidy header, sidebar and filter bars --- */
+.count-badge{border-color:transparent}
+/* Plain tags ("target 90%", "Sun–Thu") read as text, not as one more badge; real deltas keep their colour */
+.delta.flat{background:transparent;padding:2px 0;color:var(--gray-500)}
+.count-badge.bad,.count-badge.warn,.count-badge.good{border-color:transparent}
+/* Page header: title on top, as-of line and Data check under it; the actions (and a Big picture switch) on the right */
+.page-head{align-items:center;flex-wrap:wrap;gap:12px 24px}
+.page-head-main{flex-direction:column;align-items:flex-start;gap:4px;flex:1 1 320px}
+.page-sub{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}
+.page-lead{margin:2px 0 0;font-size:14px;color:var(--gray-600);line-height:1.55;max-width:640px}
+.page-head .actions{flex-wrap:wrap;justify-content:flex-end;align-items:center}
+/* Filter bars: the controls, then Reset at the far right */
+.filter-bar{padding:12px 18px;gap:10px 14px}
+.filter-reset{margin-left:auto}
+.filter-note+.filter-reset{margin-left:0}
+.filter-bar label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-600)}
+/* Cards in one group row share a height; the two halves of a split row too */
+.grid-split.pg-even{align-items:stretch}
+.kpi-row+.kpi-amt{margin-top:-2px}
+/* Sidebar: clear group labels, roomy items, a bar marks the page you are on */
+.sidebar{gap:24px}
+.nav{gap:20px}
+.nav-group{gap:1px}
+.nav-label{padding:0 10px 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.nav-item{padding:8px 10px;gap:9px}
+.nav-item::before{width:3px;height:14px;border-radius:2px;background:transparent;margin-right:0}
+.nav-item.active::before{background:var(--accent)}
+.nav-plain{padding-left:22px}
+.loaded-card{gap:6px;padding:12px 12px 12px}
+.loaded-meta{line-height:1.45}
+@media (max-width:980px){
+  .nav-label{display:none}
+  .nav-item::before{display:none}
+  .nav-plain{padding-left:10px}
+  .loaded-card.empty{display:none}
+}
+/* Upload screen: one drop area (the loaded report beside it), then what each page shows */
+.upload-shell.single{grid-template-columns:minmax(0,1fr)}
+.upload-shell.single .upload-zone{min-height:240px;align-items:center;text-align:center;justify-content:center}
+.upload-shell.single .upload-copy{justify-items:center}
+.upload-shell.single .upload-actions{justify-content:center}
+.upload-side h2{font-size:14px}
+.upload-current{border-top:0;padding-top:0}
+.upload-side[hidden]{display:none}
+.upload-pages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.upload-pages .card{padding:20px 22px;display:grid;gap:14px;align-content:start}
+.upload-pages h3{margin:0;font-size:13.5px;font-weight:600;color:var(--gray-900)}
+.upload-pages ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.upload-pages li{display:grid;gap:2px}
+.upload-pages li strong{font-size:13px;font-weight:600;color:var(--gray-800)}
+.upload-pages li span{font-size:12.5px;line-height:1.45;color:var(--gray-500)}
+@media (max-width:1180px){.upload-pages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){
+  .upload-pages{grid-template-columns:minmax(0,1fr);gap:14px}
+  .page-head .actions{justify-content:flex-start}
+  /* Header buttons keep their short word on phones; the rest stays in the accessible name */
+  .btn .btn-long{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .card-head{flex-wrap:wrap;row-gap:4px}
+  .card-head .section-sub{text-align:left}
+  /* Small stat cards two to a row on phones */
+  .pg-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .pg-stats .card{padding:14px 16px}
+  .pg-stats .kpi-value{font-size:22px}
+  .pg-stats .kpi-label{font-size:12.5px}
+}
+/* Shipping status: five steps of one pipeline read as one strip, not five separate cards */
+.ship-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);box-shadow:var(--sh-rest);overflow:hidden}
+.ship-kpis>.card.kpi{border:0;border-right:1px solid var(--gray-100);border-radius:0;box-shadow:none;padding:20px 22px}
+.ship-kpis>.card.kpi:last-child{border-right:0}
+.ship-kpis>.card.kpi:hover{background:var(--gray-50);box-shadow:none}
+.ship-kpis>.card.kpi.selected{background:var(--accent-tint);box-shadow:inset 0 -2px 0 var(--accent)}
+.ship-kpis>.card.kpi:focus-visible{outline-offset:-2px}
+.ship-add{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px}
+.ship-add{align-items:center}
+.ship-add .ship-add-title{font-size:13px;font-weight:600;color:var(--gray-700);margin-right:6px}
+@media (max-width:640px){
+  .ship-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ship-kpis>.card.kpi{border-bottom:1px solid var(--gray-100);padding:14px 16px}
+  .ship-kpis>.card.kpi:nth-child(2n){border-right:0}
+  .ship-kpis>.card.kpi:last-child{border-bottom:0}
+  .ship-kpis>.card.kpi:last-child:nth-child(odd){grid-column:1/-1}
+}
+@media print{.ship-kpis{border:1px solid var(--gray-300)!important}.ship-kpis>.card.kpi{border:0!important;border-right:1px solid var(--gray-200)!important;padding:.06in .1in}}
+/* Search: the cause line stays; its longer second line is in the tip */
+.search-results .oh-why-more{display:none}
+.data-table td.nowrap{white-space:nowrap}
+.lines-table.search{min-width:1040px}
+.lines-table.po{min-width:1040px} /* 848px of fixed columns: Item / Description keeps about 200px */
+/* --- end 2v2 (pages) --- */
 </style>
 </head>
 <body>
@@ -1268,14 +1377,11 @@ button.ship-kpi{width:100%}
   <main class="main" id="app-main">
   <div id="upload-screen">
     <div class="page-head rise">
-      <div class="page-head-main"><h1 class="page-title">Load KPI export</h1><span class="page-meta" id="upload-current-meta"></span></div>
-    </div>
-    <div class="upload-intro rise rise-1">
-      <p>Load SAP exports for sales orders, deliveries, purchase orders, and Clear To Build risk reports into one offline summary.</p>
-      <span class="privacy-pill" data-tip="Files are read in this browser. On the hosted site a copy of the last report is also kept on the server for everyone who signs in, until a new report replaces it.">Read in your browser</span>
+      <div class="page-head-main"><h1 class="page-title">Load KPI export</h1><p class="page-lead">Load SAP exports for sales orders, deliveries, purchase orders, and Clear To Build risk reports into one offline summary.</p><div class="page-sub"><span class="page-meta" id="upload-current-meta"></span></div></div>
+      <div class="actions"><span class="privacy-pill" data-tip="Files are read in this browser. On the hosted site a copy of the last report is also kept on the server for everyone who signs in, until a new report replaces it.">Read in your browser</span></div>
     </div>
     <div id="upload-hint" class="rise rise-1"></div>
-    <div class="upload-shell rise rise-2">
+    <div class="upload-shell single rise rise-2" id="upload-shell">
       <label id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Add KPI export files" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click();}" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="handleFiles([...this.files])">
         <div class="upload-copy">
@@ -1291,15 +1397,12 @@ button.ship-kpi{width:100%}
           <span class="upload-chip" data-tip="SAP’s Export to Excel .xls file works as it is, and so do .xlsx, .csv and .txt files.">SAP XLS, XLSX, CSV, or TXT</span>
         </div>
       </label>
-      <aside class="upload-side">
-        <h2>The dashboard reads</h2>
-        <div class="flow-step"><div class="step-num">1</div><div><strong>Status buckets</strong><span>Open, closed, late, and at-risk lines.</span></div></div>
-        <div class="flow-step"><div class="step-num">2</div><div><strong>Operational metrics</strong><span>Fill, on-time, reschedule, missing price, and confirmation flags.</span></div></div>
-        <div class="flow-step"><div class="step-num">3</div><div><strong>Build risk</strong><span>Match CM/month Clear To Build risk against open sales-order demand.</span></div></div>
+      <aside class="upload-side" id="upload-side" hidden>
         <div class="upload-current" id="upload-current" hidden></div>
       </aside>
     </div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
+    <section class="pg-group rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
   </div>
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
@@ -5038,12 +5141,23 @@ function renderRankRows(items,{empty='Nothing to show.'}={}){
   return `<div class="rank-rows">${items.map((i,n)=>`<div class="rank-row wide" title="${esc(i.sub?`${i.label} · ${i.sub}`:i.label)}"><span class="rank-name">${esc(i.label)}<span class="rank-sub">${esc(i.sub||'')}</span></span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(Math.abs(i.value)/max*100).toFixed(1)}%;background:${i.color||'var(--accent)'};animation-delay:${Math.min(n,12)*40}ms"></i></div></div><span class="rv${i.tone?` ${i.tone}-text`:''}">${i.text}</span></div>`).join('')}</div>`;
 }
 function renderStatCard(label,value,sub,tone='',dot='',tipText=''){
-  return `<div class="card kpi static"${tipAttr(tipText)}><span class="kpi-label">${dot?`<span class="dot ${dot}"></span>`:''}${esc(label)}</span><span class="kpi-value${tone?` ${tone}`:''}">${esc(value)}</span><span class="kpi-sub">${sub}</span></div>`;
+  return `<div class="card kpi static"${tipAttr(tipText)}><span class="kpi-label">${dot?`<span class="dot ${dot}"></span>`:''}${esc(label)}</span><span class="kpi-value${tone?` ${tone}`:''}">${esc(value)}</span>${sub?`<span class="kpi-sub">${sub}</span>`:''}</div>`;
+}
+// 2v2 page groups: a page is a few named groups (CSS .pg-group). id makes the heading id (pg-<id>); info adds the
+// section ⓘ; badge sits after the title; tools go to the right (Back, Show more). Animations stay per group.
+function pageGroupHtml(id,title,body,{info='',badge='',tools='',rise='',anchor=''}={}){
+  if(!body)return '';
+  return `<section class="pg-group${rise?` rise ${rise}`:''}"${anchor?` id="${anchor}"`:''} aria-labelledby="pg-${id}" data-group="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-${id}">${esc(title)}</h2>${info?infoButton(info):''}${badge}${tools?`<div class="pg-group-tools">${tools}</div>`:''}</div>${body}</section>`;
+}
+// "Show more" for a long group: tableMore[key] keeps the choice; print always shows it.
+function groupMoreButton(key,count,noun){
+  const open=!!tableMore[key];
+  return `<button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}" aria-expanded="${open?'true':'false'}"${tipAttr(open?`Hide the ${noun}.`:`Show the ${fmtNum(count)} ${noun}.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Hide':'Show all'}</button>`;
 }
 function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows.',info=''}){
   const body=rows.map(r=>`<tr>
       <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'')}</td>
-      <td class="soft">${esc(r.warehouseName)}</td>
+      <td class="soft nowrap">${esc(r.warehouseName)}</td>
       <td><span class="m">${esc(r.itemCode)}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
       <td class="num">${fmtNum(r.demandOpenQty)}</td>
       <td class="num">${fmtNum(r.usableSupplyQty)}</td>
@@ -5055,8 +5169,8 @@ function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows
       <td class="num soft">${fmtNum(r.lateSupplyQty)}</td>
       <td><span class="pill ${!r.supplyRiskFlag||r.supplyRiskFlag==='OK'?'good':/rescheduled|so has no commit/i.test(r.supplyRiskFlag)?'warn':'bad'}">${esc(r.supplyRiskFlag||'OK')}</span></td>
     </tr>`);
-  return renderTableCard({key,title,note,rows:body,limit,minWidth:1100,empty,info,
-    head:[['Month'],['Warehouse'],['Item','','22%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Unconfirmed','num'],['No commit','num'],['Rescheduled','num'],['Late supply','num'],['Risk']]});
+  return renderTableCard({key,title,note,rows:body,limit,minWidth:980,empty,info,
+    head:[['Month'],['Warehouse'],['Item','','14%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Unconfirmed','num'],['No commit','num'],['Rescheduled','num'],['Late supply','num'],['Risk']]});
 }
 // --- Screen switching and shared chart/table markup ---
 function showResults(){
@@ -5085,10 +5199,22 @@ function renderUploadState(){
   const loaded=hasLoadedData();
   const asOf=reportAsOfDate?displayDate(reportAsOfDate):'';
   if(meta)meta.textContent=loaded&&asOf?`Current export: ${asOf}`:'';
+  renderUploadPages();
+  // With a report loaded, the drop area shares the row with "Currently loaded"; otherwise it has the row to itself.
+  const side=document.getElementById('upload-side');
+  if(side)side.hidden=!loaded;
+  const shell=document.getElementById('upload-shell');
+  if(shell&&shell.classList)shell.classList.toggle('single',!loaded);
   if(!box)return;
   box.hidden=!loaded;
   const names=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'Loaded export');
   box.innerHTML=loaded?`<span>Currently loaded</span><strong>${esc(names)}${asOf?` · export date ${esc(asOf)}`:''}</strong><button type="button" class="btn"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
+}
+// Load screen: every page by sidebar group, with its one-line description (PAGE_TIPS, the same text as its tooltip).
+function renderUploadPages(){
+  const box=document.getElementById('upload-pages');
+  if(!box)return;
+  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="card"><h3>${esc(group)}</h3><ul>${items.map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
 }
 function showUploadError(msg){
   const el=document.getElementById('upload-error');
@@ -5247,18 +5373,17 @@ function renderGlobalSearchPage(m){
   const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report (pick the week on Build Risk)`:''),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
-  return `<section class="section rise rise-1 search-results">
-    <div class="section-head"><h2 class="section-title">Order lines</h2><span class="count-badge">${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span><div class="section-tools">${back}</div></div>
-    <div class="table">
-      <div class="table-tools"><span>Open lines first by due date, then shipped and closed lines, newest first.</span><span class="hint">Esc in the search box goes back.</span></div>
+  // Order lines first (how they are sorted is in the count's tip), then the supply / demand and Clear To Build matches.
+  const lines=`<div class="table">
       <div class="table-scroll" tabindex="0" role="region" aria-label="Order lines found"><table class="lines-table search">
-        <colgroup><col style="width:104px"><col style="width:118px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:64px"><col style="width:92px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
+        <colgroup><col style="width:96px"><col style="width:108px"><col style="width:140px"><col style="width:120px"><col><col style="width:92px"><col style="width:56px"><col style="width:88px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
         <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
       ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
-    </div>
-  </section>${supplyTable?`<div class="rise rise-2">${supplyTable}</div>`:''}${ctbTable?`<div class="rise rise-3">${ctbTable}</div>`:''}`;
+    </div>`;
+  return `<div class="search-results">${pageGroupHtml('search-lines','Order lines',lines,{rise:'rise-1',tools:back,
+      badge:`<span class="count-badge"${tipAttr('Open lines first by due date, then shipped and closed lines, newest first. Esc in the search box goes back.')}>${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span>`})}${pageGroupHtml('search-more','Other matches',supplyTable+ctbTable,{rise:'rise-2'})}</div>`;
 }
 // Redraws rebuild the sidebar and the page; put focus, typed text and the caret back on the same control.
 function captureFocus(root){
@@ -5309,10 +5434,9 @@ function renderSidebar(){
     // of the button's own tip (keyboard focus shows the button's tip, never the badge's).
     const badgeText=badges[id]?(id==='weekly'?`${fmtNum(badges[id])} orders at risk (same count as the At risk card)`:`${fmtNum(badges[id])} late purchase-order lines`):'';
     const badge=badges[id]?`<span class="nav-badge"${tipAttr(badgeText)}>${fmtNum(badges[id])}<span class="sr-only"> ${esc(id==='weekly'?'orders at risk':'late purchase-order lines')}</span></span>`:'';
-    // The load screen shows each page's one-line description under its name; elsewhere it is the tooltip.
+    // Each page's one-line description is its tooltip; the load screen also lists them (renderUploadPages).
     const about=PAGE_TIPS[id]||tipText||'';
-    const text=!onResults&&about?`<span class="nav-label-text">${esc(label)}</span><span class="nav-desc">${esc(about)}</span>`:esc(label);
-    return `<button type="button" class="nav-item${active?' active':''}${!onResults&&about?' has-desc':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}${onResults?tipAttr(about&&badgeText?`${about} ${badgeText}.`:about||badgeText):''}><span class="nav-text">${text}</span>${badge}</button>`;
+    return `<button type="button" class="nav-item${active?' active':''}" data-focus-key="nav-${id}" onclick="setTab('${id}')"${active?' aria-current="page"':''}${loaded||id==='connect'?'':' disabled'}${tipAttr(about&&badgeText?`${about} ${badgeText}.`:about||badgeText)}><span class="nav-text">${esc(label)}</span>${badge}</button>`;
   };
   const fileName=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'No export loaded');
   const kinds=[
@@ -5324,8 +5448,9 @@ function renderSidebar(){
   const rowCount=allLoadedRows.length+supplyDemandRows.length+buildRiskRows.length;
   const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
+  // Two short lines: export date and row count (what was loaded is in the tip), then where the report is kept.
   const meta=loaded
-    ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}`
+    ? `<span${tipAttr(`${fmtNum(rowCount)} rows loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export ${esc(displayDate(reportAsOfDate))} · `:''}${fmtNum(rowCount)} rows</span>${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
   // The shared-notes status and the initials button have their own row, which stays visible in the compact card
   // (980px and below hides the meta lines).
@@ -5334,7 +5459,7 @@ function renderSidebar(){
   el.innerHTML=`<div class="sidebar-brand"><img class="logo" src="${LOGO_SRC}" alt="Spyder Controls Corp" width="128" height="25"><span class="product">KPI Visualizer</span></div>
     <div class="sidebar-search" role="search"><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)"${loaded?'':' disabled'}></div>
     <nav class="nav" aria-label="Pages">${NAV_GROUPS.map(([group,items])=>`<div class="nav-group"><div class="nav-label">${group}</div>${items.map(item).join('')}${group==='Help'?hintsResetButton():''}</div>`).join('')}</nav>
-    <div class="loaded-card"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${notesLine?`<div class="loaded-notes">${notesLine}</div>`:''}${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand snapshot or Clear To Build workbook) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Open the load screen to replace this report with a new export. The current report stays until the new file is read.')}>New file</button></div>`:''}</div>`;
+    <div class="loaded-card${loaded?'':' empty'}"><div class="loaded-label"><span class="live-dot${loaded?'':' off'}"></span>${loaded?'Loaded export':'No export loaded'}</div>${loaded?`<div class="loaded-name">${esc(fileName)}</div>`:''}<div class="loaded-meta">${meta}</div>${notesLine?`<div class="loaded-notes">${notesLine}</div>`:''}${loaded?`<div class="loaded-actions">${isSnapshotView?'':`<button type="button" class="btn" data-focus-key="sidebar-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand snapshot or Clear To Build workbook) next to this one.')}>Add file</button>`}<button type="button" class="btn" data-focus-key="sidebar-new" onclick="showUpload()"${tipAttr('Open the load screen to replace this report with a new export. The current report stays until the new file is read.')}>New file</button></div>`:''}</div>`;
   restoreFocus(el,focus);
 }
 function setTab(t){
@@ -5521,8 +5646,7 @@ function renderShipTargetScenario(sd,today){
   };
   const calendarMax=sd.maxDayValue;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
-  return `<section class="section rise">
-    <div class="section-head"><h2 class="section-title">Ship target scenario</h2>${infoButton('mo-scenario')}<span class="section-sub">open lines booked by the end date, by ${esc(sd.scenarioDateLabel)}</span></div>
+  return pageGroupHtml('mo-scenario','Ship target scenario',`
     <div class="filter-bar inline-controls">
       <label>Start date <input type="date" id="ship-scenario-start"${tipAttr('First day of the scenario range (the first of this month unless you change it). Type a date and press Enter, or pick one.')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>End date <input type="date" id="ship-scenario-end"${tipAttr('Last day of the range: open lines booked by this date count (the end of this month unless you change it).')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
@@ -5551,8 +5675,7 @@ function renderShipTargetScenario(sd,today){
     </div>`:`<div class="card"><p class="empty-note">Pick an end date on or after the start date to show the calendar.</p></div>`}
     ${renderTableCard({key:'monthly-scenario',title:'Scenario lines',note:`${fmtNum(sd.openLines.length)} open lines booked by ${esc(displayDate(sd.target))}`,
       head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:sd.openLines,renderRow:lineRow,limit:12,minWidth:1000,empty:'No open lines are booked by this end date.'})}
-  </section>`;
+      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,empty:'No open lines are booked by this end date.'})}`,{info:'mo-scenario',rise:'rise-4'});
 }
 
 // Renders the active tab. Tab ids must stay in sync with the buttons below.
@@ -5581,8 +5704,8 @@ function renderResults(){
   if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('This is a shared snapshot file: its numbers are frozen as of the day it was saved, and note changes here are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   let html=`<div class="page-head rise">
-    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div>
-    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export. Nothing is sent until you allow a provider in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share snapshot</button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
+    <div class="page-head-main"><h1 class="page-title" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1><div class="page-sub"><span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>${renderDataQualityNote()}${snapshotTag}</div></div>
+    <div class="actions">${loaded?`<button type="button" class="btn" data-focus-key="ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about the loaded export. Nothing is sent until you allow a provider in Settings.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/></svg>Ask AI</button><button type="button" class="btn" data-focus-key="share-snapshot" onclick="exportShareSnapshot()"${tipAttr('Save a self-contained .html copy of the loaded data and your notes on it, to send to someone. Anyone with the file can see all of it.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share<span class="btn-long"> snapshot</span></button><button type="button" class="btn btn-primary" data-focus-key="export-pdf" onclick="exportPdf()"${tipAttr('Print this page or save it as a PDF. Every linked line is printed, not just the first screenful.')}><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Export PDF</button>`
       :`<button type="button" class="btn btn-primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`}</div>
   </div>`;
 
@@ -6218,15 +6341,15 @@ function renderResults(){
         return r.isUnconfirmed?'Unconfirmed':'Open';
       };
       const poLines=rows=>`${fmtNum(rows.length)} PO ${rows.length===1?'line':'lines'}`;
+      // Cards show the numbers; what each one counts is in its tooltip (sub is kept for callers, not drawn).
       const poCard=(id,dot,label,rows,sub,hero,tipText)=>`<button type="button" class="card kpi${hero?' hero':''}${poSelected===id?' selected':''}" ${poTileAttrs(id)}${tipAttr(tipText)}>
           <span class="kpi-label"><span class="dot ${dot}"></span>${label}</span>
           <div class="kpi-row">${hero
             ?`<span class="kpi-value hero ${rows.length?'crit':'good'}" data-count="${Math.round(poValue(rows))}" data-fmt="money">${money(poValue(rows))}</span><span class="kpi-unit">${fmtNum(rows.length)} lines</span>`
             :`<span class="kpi-value" data-count="${rows.length}">${fmtNum(rows.length)}</span><span class="kpi-unit">lines</span>`}</div>
           <span class="kpi-amt">${hero?`${fmtNum(poQty(rows))} open qty`:money(poValue(rows))}</span>
-          <span class="kpi-sub">${sub}</span>
         </button>`;
-      const poMini=(id,dot,label,rows,sub,tipText)=>`<button type="button" class="${poSelected===id?'selected':''}" ${poTileAttrs(id)}${tipAttr(tipText)}><div class="ms-text"><span class="ms-label"><span class="dot ${dot}"></span>${label}</span><span class="ms-sub">${sub}</span></div><div class="ms-num"><span class="ms-big lg">${fmtNum(rows.length)}</span><span class="ms-amt">${money(poValue(rows))}</span></div></button>`;
+      const poMini=(id,dot,label,rows,sub,tipText)=>`<button type="button" class="${poSelected===id?'selected':''}" ${poTileAttrs(id)}${tipAttr(tipText)}><div class="ms-text"><span class="ms-label"><span class="dot ${dot}"></span>${label}</span></div><div class="ms-num"><span class="ms-big lg">${fmtNum(rows.length)}</span><span class="ms-amt">${money(poValue(rows))}</span></div></button>`;
 
       // Receiving performance: monthly series and 12 receipt weeks from the same receipt rows as the cards.
       const poSeries=monthlyRateSeries(poReceiptRows,poReschedulePerf.closed,poReschedulePerf.met);
@@ -6272,10 +6395,10 @@ function renderResults(){
         const shown=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
         const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
         return `<div class="table">
-          <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label><span class="hint">Sort by warehouse or vendor to group the lines.</span></div>
+          <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label></div>
           <div class="table-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="lines-table po">
-            <colgroup><col style="width:64px"><col style="width:150px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col style="width:124px"><col class="col-notes" style="width:110px"></colgroup>
-            <thead><tr>${['PO #','Vendor','Warehouse','Item / Description'].map(label=>`<th${tipAttr(columnTip('po',label))}>${label}</th>`).join('')}<th${tipAttr('The reschedule date when there is one, otherwise the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive (AmountLocal).')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with timing against the date.')}>Status</th><th${tipAttr('The vendor’s reschedule date, or why there is none.')}>Reschedule</th><th class="print-hide"${tipAttr('Add note sets an override status or a note on the line.')}>Notes</th></tr></thead>
+            <colgroup><col style="width:64px"><col style="width:140px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col class="col-notes" style="width:110px"></colgroup>
+            <thead><tr>${['PO #','Vendor','Warehouse','Item / Description'].map(label=>`<th${tipAttr(columnTip('po',label))}>${label}</th>`).join('')}<th${tipAttr('The reschedule date when there is one, otherwise the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive (AmountLocal).')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with timing against the date and the vendor’s reschedule date (↻) when there is one.')}>Status</th><th class="print-hide"${tipAttr('Add note sets an override status or a note on the line.')}>Notes</th></tr></thead>
             <tbody>${shown.map((r,i)=>{
               const reschedule=realPoReschedule(r);
               const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
@@ -6289,7 +6412,8 @@ function renderResults(){
                 ? (rescheduleDays>0?timingDeltaText(rescheduleDays,'due'):timingDeltaText(daysBetweenDates(originalDue,reschedule),'schedule'))
                 : (originalDays===null?'Needs due date':timingDeltaText(originalDays,'due'));
               const statusClass=/late|missed|no commit/i.test(status)?'bad':/future|reschedule|due today|due in/i.test(status)||status==='Open'?'warn':'good';
-              const rescheduleLabel=r.noCommitDate?'<span class="badge bad">No commit date</span>':reschedule?`<span class="badge warn">↻ ${esc(displayDate(reschedule))}</span>`:status==='Late'?'<span class="badge bad">No reschedule</span>':'<span class="badge good">Not rescheduled</span>';
+              // The reschedule date sits under the status (the status already says late / no commit / not rescheduled).
+              const rescheduleLabel=reschedule?`<span class="timing">↻ ${esc(displayDate(reschedule))}</span>`:'';
               const noteOpen=isNoteEditorVisible(r);
               return `<tr class="line-row${noteOpen?' editing':''}${i<12?' fade-row':''}"${i<12?` style="animation-delay:${i*30}ms"`:''}>
                 <td class="c-doc">${esc(r.documentNumber||'—')}</td>
@@ -6299,10 +6423,9 @@ function renderResults(){
                 <td class="c-date">${esc(displayDate(dueDate)||'—')}</td>
                 <td class="num c-qty">${fmtNum(r.openQuantity)}</td>
                 <td class="num c-val">${money(openLineValue(r))}</td>
-                <td><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span></div></td>
-                <td>${rescheduleLabel}</td>
+                <td><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${rescheduleLabel}</div></td>
                 <td class="c-notes print-hide">${renderNoteButton(r)}</td>
-              </tr>${renderNoteEditorRow(r,10)}${renderPrintNoteRow(r,10)}`;
+              </tr>${renderNoteEditorRow(r,9)}${renderPrintNoteRow(r,9)}`;
             }).join('')}</tbody>
           </table></div>
           <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines here. Export PDF always prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>
@@ -6313,12 +6436,10 @@ function renderResults(){
       <div class="filter-bar rise rise-1">
         <span class="filter-label">Warehouse</span>${poSelect('po-warehouse-select','Warehouse','All warehouses',poWarehouseFilter,poWarehouseOptions.map(w=>({value:w,label:w})),'setPoWarehouseFilter')}
         <span class="filter-label">Vendor</span>${poSelect('po-vendor-select','Vendor','All vendors',poVendorFilter,poVendorOptions,'setPoVendorFilter')}
-        <span class="filter-note">${esc(poFilterNote)}</span>
-        <button type="button" class="link-btn" data-focus-key="po-filters-reset"${tipAttr('Show every warehouse and vendor again.')} onclick="resetPoFilters()">Reset</button>
+        <button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"${tipAttr('Show every warehouse and vendor again.')} onclick="resetPoFilters()">Reset</button>
       </div>
       <div class="print-only">Filters: ${esc(poFilterNote)}</div>
-      <section class="section rise rise-2">
-        <div class="section-head"><h2 class="section-title">Supply commitments</h2>${infoButton('po-commitments')}<span class="section-sub">open PO lines · click a card to see its lines</span></div>
+      ${pageGroupHtml('po-commitments','Supply commitments',`
         <div class="grid-lead">
           ${poCard('late',poLateRows.length?'crit':'good','Late / missed commit',poLateRows,'Open PO lines past due or past their reschedule date',true,`Late / missed commit: ${money(poValue(poLateRows))} open on ${poLines(poLateRows)} (${fmtNum(poQty(poLateRows))} qty) past the original date with no reschedule, or past their reschedule date. Click to list them.`)}
           ${poCard('nocommit',poNoCommitRows.length?'crit':'good','No commit date',poNoCommitRows,'No valid commit date from the vendor',false,`No commit date: ${money(poValue(poNoCommitRows))} open on ${poLines(poNoCommitRows)} where the vendor has given no valid date (SAP shows 11/11/1111). Click to list them.`)}
@@ -6330,10 +6451,8 @@ function renderResults(){
           ${poMini('unconfirmed',poUnconfirmedRows.length?'warn':'good','Unconfirmed',poUnconfirmedRows,'vendor has not confirmed',`Unconfirmed: ${money(poValue(poUnconfirmedRows))} open on ${poLines(poUnconfirmedRows)} the vendor has not confirmed (SAP Confirmed = N). Click to list them.`)}
           ${poMini('missingprice',poMissingPriceRows.length?'warn':'good','Missing price',poMissingPriceRows,'open lines with no price',`Missing price: ${poLines(poMissingPriceRows)} with no price in SAP (PriceFlag). Click to list them.`)}
           ${poMini('allopen','neutral','All open POs',poAllOpenRows,'all open lines in view',`All open PO lines in this view: ${money(poValue(poAllOpenRows))} on ${poLines(poAllOpenRows)}. Click to list them.`)}
-        </div>
-      </section>
-      <section class="section rise rise-3">
-        <div class="section-head"><h2 class="section-title">Receiving performance</h2>${infoButton('po-receiving')}<span class="section-sub">lagging indicators · target 90%</span></div>
+        </div>`,{info:'po-commitments',rise:'rise-2'})}
+      ${pageGroupHtml('po-receiving','Receiving performance',`
         <div class="grid-4">
           <div class="card kpi lag static"${tipAttr(withDeltaText(poOtd3Mo.scored.length?`On-time receiving, last 3 months: ${fmtNum(poOtd3Mo.rate)}%. ${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts (${money(poOtdAmt)}) arrived on or before the PO line’s original date. Target 90%.`:`On-time receiving, last 3 months: no receipts to score in this view (receipts worth ${money(poOtdAmt)}).`,poSeries,'otd'))}>
             <div class="kpi-top"><span class="kpi-label">On-time · 3 mo</span>${renderDeltaPill(poSeries,'otd')}</div>
@@ -6359,11 +6478,10 @@ function renderResults(){
             ${renderSparkline(poSeries.map(s=>s.hit),poHitTone,40)}
             <span class="kpi-sub">${poReschedulePerf.closed.length?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(poReschedulePerf.closed.length)} closed reschedules met commit`:'No closed reschedules in this filter'}</span>
           </div>
-        </div>
-      </section>
-      <div class="grid-split rise rise-4">
+        </div>`,{info:'po-receiving',rise:'rise-3'})}
+      ${pageGroupHtml('po-where','By warehouse and vendor',`<div class="grid-split pg-even">
         <section class="table" aria-label="Open PO value by warehouse">
-          <div class="card-head lg"><div class="title-row"><h2>Open PO value by warehouse</h2>${infoButton('po-warehouse')}</div><span class="section-sub">${focusedPoWarehouse?'click the row again to show all':'click a row to filter'}</span></div>
+          <div class="card-head lg"><div class="title-row"><h2>Open PO value by warehouse</h2>${infoButton('po-warehouse')}</div>${focusedPoWarehouse?'<span class="section-sub">click the row again to show all</span>':''}</div>
           <div class="thead po-wh-cols" aria-hidden="true"><div${tipAttr('Receiving warehouse (the SAP Warehouse column).')}>Warehouse</div><div class="num"${tipAttr('Open PO lines.')}>Lines</div><div${tipAttr('Value still to receive on open PO lines.')}>Open value</div><div class="num"${tipAttr('Lines past the original date with no reschedule, or past the reschedule date.')}>Late</div><div class="num"${tipAttr('Lines with no valid commit date from the vendor.')}>No commit</div><div class="num"${tipAttr('Lines with a reschedule date still ahead.')}>Future</div></div>
           ${poGroupsShown.map(g=>{const t=`${g.key}: ${money(g.openValue)} open on ${fmtNum(g.rows.length)} PO ${g.rows.length===1?'line':'lines'}; ${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.futureRows)} future reschedules. ${focusedPoWarehouse===g.key?'Click to show every warehouse again.':'Click to show only this warehouse.'}`;return `<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(t)}"${tipAttr(t)}>
             <div class="name m">${esc(g.key)}</div>
@@ -6376,14 +6494,12 @@ function renderResults(){
           ${poGroups.length>8?`<div class="tfoot"><span>${fmtNum(poGroupsShown.length)} of ${fmtNum(poGroups.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open value.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`:''}
         </section>
         <section class="card list-card roomy">
-          <div class="list-head"><div class="title-row"><h2>Late value by vendor</h2>${infoButton('po-vendors')}</div><span class="section-sub">${focusedVendor?'click again to show all vendors':'click to filter'}</span></div>
+          <div class="list-head"><div class="title-row"><h2>Late value by vendor</h2>${infoButton('po-vendors')}</div>${focusedVendor?'<span class="section-sub">click again to show all vendors</span>':''}</div>
           <div class="rank-list roomy">${topVendors.map((v,i)=>`<button type="button" class="rank-item${focusedVendor===v.code?' selected':''}" data-focus-key="povendor-${esc(v.code)}" data-vendor="${esc(v.code)}" onclick="setPoVendorRow(this.dataset.vendor)" aria-pressed="${focusedVendor===v.code?'true':'false'}"${tipAttr(`${v.name}: ${money(v.value)} late across ${fmtNum(v.rows.length)} PO ${v.rows.length===1?'line':'lines'}. ${focusedVendor===v.code?'Click to show every vendor again.':'Click to show only this vendor.'}`)}><div class="rank-top lg"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(v.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(v.rows.length)} · </span><strong>${money(v.value)}</strong></span></div><div class="rank-track"><i class="grow-w" style="width:${(v.value/vendorMax*100).toFixed(1)}%;background:var(--crit);animation-delay:${i*50}ms"></i></div></button>`).join('')||'<div class="empty-note">No late purchase-order lines in this view.</div>'}</div>
         </section>
-      </div>
-      <section class="section rise rise-5" id="po-linked-lines">
-        <div class="section-head"><h2 class="section-title">Linked PO lines — ${esc(poLinkedTitles[poSelected]||poTileTitles[poSelected]||'Late / missed commit')}</h2>${infoButton('po-linked')}<span class="count-badge ${linkedBad?'bad':''}">${fmtNum(linkedPoRows.length)} lines · ${fmtNum(poQty(linkedPoRows))} open qty · ${money(poValue(linkedPoRows))}</span></div>
-        ${renderPoTable(linkedPoRows)}
-      </section>
+      </div>`,{rise:'rise-4'})}
+      ${pageGroupHtml('po-linked','Linked PO lines',renderPoTable(linkedPoRows),{info:'po-linked',rise:'rise-5',anchor:'po-linked-lines',
+        badge:`<span class="count-badge ${linkedBad?'bad':''}">${esc(poLinkedTitles[poSelected]||poTileTitles[poSelected]||'Late / missed commit')} · ${fmtNum(linkedPoRows.length)} lines · ${fmtNum(poQty(linkedPoRows))} open qty · ${money(poValue(linkedPoRows))}</span>`})}
       ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}`;
     }
   }
@@ -6440,7 +6556,7 @@ function renderResults(){
               <td class="num">${fmtNum(r.usableSupplyQty)}</td>
               <td class="num ${r.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.monthlyNetQty)}</td>
               <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
-              <td><span class="pill ${coverageClass}">${esc(r.isCumulativeShortage?'Shortage':r.isMonthlyShortage?'Monthly short':r.hasSupplyRisk?'Supply risk':r.hasDemandRisk?'SO no commit':'Covered')}</span><span class="sub block">${esc(riskBits.join(' · ')||r.supplyRiskFlag||'OK')}</span></td>
+              <td><span class="pill ${coverageClass}">${esc(r.isCumulativeShortage?'Shortage':r.isMonthlyShortage?'Monthly short':r.hasSupplyRisk?'Supply risk':r.hasDemandRisk?'SO no commit':'Covered')}</span>${riskBits.length||(r.supplyRiskFlag&&r.supplyRiskFlag!=='OK')?`<span class="sub">${esc(riskBits.join(' · ')||r.supplyRiskFlag)}</span>`:''}</td>
               <td class="num ${riskQty?'warn-soft':'muted'}">${fmtNum(riskQty)}</td>
             </tr>`;
           })
@@ -6454,35 +6570,28 @@ function renderResults(){
           ${multi?`<option value="" selected disabled>${fmtNum(supplyWarehouseFilter.length)} warehouses selected</option>`:''}
           ${supplyWarehouseOptions.map(w=>`<option value="${esc(w)}"${!multi&&supplyWarehouseFilter.includes(w)?' selected':''}>${esc(w)}</option>`).join('')}
         </select>
-        <span class="filter-note">${esc(selectedSupplyLabel)} · demand vs usable supply by warehouse and scheduled month</span>
-        <button type="button" class="link-btn" data-focus-key="supply-reset"${tipAttr('Show every warehouse again.')} onclick="setSupplyWarehousePreset('ALL')">Reset</button>
+        <button type="button" class="link-btn filter-reset" data-focus-key="supply-reset"${tipAttr('Show every warehouse again.')} onclick="setSupplyWarehousePreset('ALL')">Reset</button>
       </div>
       <div class="print-only">Filters: ${esc(selectedSupplyLabel)}</div>
-      <section class="section rise rise-2">
-        <div class="section-head"><h2 class="section-title">Coverage</h2>${infoButton('sd-coverage')}<span class="section-sub">open sales-order demand vs open PO supply · stock on hand is not included</span></div>
-        <div class="grid-4">
-          ${renderStatCard(shortageRows.length?'Shortage rows':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short (worst cumulative, per item) · demand months not covered by open POs`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'row where':'rows where'} open sales-order demand is more than the usable open PO supply; ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short at the worst point for each item. Stock on hand is not included.`)}
-          ${renderStatCard('Open demand',fmtNum(demandQty),`${money(demandValue)} demand value`,'','neutral',`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}, for this warehouse selection.`)}
-          ${renderStatCard('Usable supply',fmtNum(usableQty),'confirmed / committed PO supply',usableQty>=demandQty?'good':'warn',usableQty>=demandQty?'good':'warn',`Usable supply: ${fmtNum(usableQty)} qty on open purchase orders with a confirmed, committed date (${usableQty>=demandQty?'at least':'less than'} the open demand of ${fmtNum(demandQty)} in total).`)}
-          ${renderStatCard('Supply risk rows',fmtNum(riskRows.length),`${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} risk qty · unconfirmed, no commit, late, or rescheduled supply`,riskRows.length?'warn':'good',riskRows.length?'warn':'good',`Supply risk: ${fmtNum(riskRows.length)} ${riskRows.length===1?'row':'rows'} (${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty) whose PO supply is unconfirmed, has no commit date, is late or is rescheduled.`)}
+      ${pageGroupHtml('sd-coverage','Coverage',`
+        <div class="grid-4 pg-stats">
+          ${renderStatCard(shortageRows.length?'Shortage rows':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'row where':'rows where'} open sales-order demand is more than the usable open PO supply; ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short at the worst point for each item. Stock on hand is not included.`)}
+          ${renderStatCard('Open demand',fmtNum(demandQty),`${money(demandValue)}`,'','neutral',`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}, for this warehouse selection.`)}
+          ${renderStatCard('Usable supply',fmtNum(usableQty),'',usableQty>=demandQty?'good':'warn',usableQty>=demandQty?'good':'warn',`Usable supply: ${fmtNum(usableQty)} qty on open purchase orders with a confirmed, committed date (${usableQty>=demandQty?'at least':'less than'} the open demand of ${fmtNum(demandQty)} in total).`)}
+          ${renderStatCard('Supply risk rows',fmtNum(riskRows.length),`${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} risk qty`,riskRows.length?'warn':'good',riskRows.length?'warn':'good',`Supply risk: ${fmtNum(riskRows.length)} ${riskRows.length===1?'row':'rows'} (${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty) whose PO supply is unconfirmed, has no commit date, is late or is rescheduled.`)}
         </div>
         <div class="mini-strip cols-2">
-          <div${tipAttr(`No commit supply: ${fmtNum(noCommitQty)} qty on open purchase orders with no confirmed date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${noCommitQty?'crit':'good'}"></span>No commit supply</span><span class="ms-sub">PO supply with no confirmed date</span></div><div class="ms-num"><span class="ms-big xl ${noCommitQty?'crit-text':''}">${fmtNum(noCommitQty)}</span></div></div>
-          <div${tipAttr(`Late supply: ${fmtNum(lateQty)} qty on open purchase orders already past their date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${lateQty?'crit':'good'}"></span>Late supply</span><span class="ms-sub">PO supply already late</span></div><div class="ms-num"><span class="ms-big xl ${lateQty?'crit-text':''}">${fmtNum(lateQty)}</span></div></div>
-        </div>
-      </section>
-      <section class="section rise rise-3">
-        <div class="section-head"><h2 class="section-title">Supply shortages by warehouse</h2>${infoButton('sd-shortages')}<span class="count-badge ${shortageRows.length?'bad':'good'}">${fmtNum(shortageRows.length)} rows</span><span class="section-sub">demand in the warehouse / month exceeds usable open PO supply; check stock before expediting</span></div>
-        ${renderSupplyCoverage('sd-short',shortageRows,'No supply shortages found for this warehouse selection.')}
-      </section>
-      <section class="section rise rise-4">
-        <div class="section-head"><h2 class="section-title">Supply orders with risk</h2>${infoButton('sd-risk')}<span class="count-badge ${riskRows.length?'warn':'good'}">${fmtNum(riskRows.length)} rows</span><span class="section-sub">supply exists but is unconfirmed, has no commit date, is rescheduled, or is late</span></div>
-        ${renderSupplyCoverage('sd-risk',riskRows,'No supply risk rows found for this warehouse selection.')}
-      </section>
-      <section class="section rise rise-5">
-        <div class="section-head"><h2 class="section-title">All open demand coverage</h2>${infoButton('sd-all')}<span class="count-badge">${fmtNum(demandRows.length)} rows</span><span class="section-sub">every demand row in the snapshot, by warehouse and scheduled month</span></div>
-        ${renderSupplyCoverage('sd-all',demandRows,'No open demand rows found for this warehouse selection.')}
-      </section>
+          <div${tipAttr(`No commit supply: ${fmtNum(noCommitQty)} qty on open purchase orders with no confirmed date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${noCommitQty?'crit':'good'}"></span>No commit supply</span></div><div class="ms-num"><span class="ms-big xl ${noCommitQty?'crit-text':''}">${fmtNum(noCommitQty)}</span></div></div>
+          <div${tipAttr(`Late supply: ${fmtNum(lateQty)} qty on open purchase orders already past their date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${lateQty?'crit':'good'}"></span>Late supply</span></div><div class="ms-num"><span class="ms-big xl ${lateQty?'crit-text':''}">${fmtNum(lateQty)}</span></div></div>
+        </div>`,{info:'sd-coverage',rise:'rise-2'})}
+      ${pageGroupHtml('sd-shortages','Shortages by warehouse',renderSupplyCoverage('sd-short',shortageRows,'No supply shortages found for this warehouse selection.'),{info:'sd-shortages',rise:'rise-3',
+        badge:`<span class="count-badge ${shortageRows.length?'bad':'good'}">${fmtNum(shortageRows.length)} rows</span>`})}
+      ${pageGroupHtml('sd-risk','Supply at risk',renderSupplyCoverage('sd-risk',riskRows,'No supply risk rows found for this warehouse selection.'),{info:'sd-risk',rise:'rise-4',
+        badge:`<span class="count-badge ${riskRows.length?'warn':'good'}">${fmtNum(riskRows.length)} rows</span>`})}
+      ${pageGroupHtml('sd-all','All open demand',
+        // Every demand row, also the covered ones: behind Show (always printed).
+        tableMore['sd-all-group']||printMode?renderSupplyCoverage('sd-all',demandRows,'No open demand rows found for this warehouse selection.'):' ',
+        {info:'sd-all',rise:'rise-5',badge:`<span class="count-badge">${fmtNum(demandRows.length)} rows</span>`,tools:demandRows.length&&!printMode?groupMoreButton('sd-all-group',demandRows.length,'open demand rows'):''})}
       ${renderAbout(['sd-coverage','sd-shortages','sd-risk','sd-all'])}`;
     }
   }
@@ -6552,7 +6661,7 @@ function renderResults(){
       const atRisk=g.lateRows+g.atRiskRows;
       const lateOpen=isPast&&g.openAmount>0;
       return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(`${g.label}: ${money(g.openAmount)} open${lateOpen?' and now late':''}, ${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} rows closed); ${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled.`)}>
-        <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span><span class="month-tag">${isCurrent?'This month':isPast?'Past month':'Upcoming'}</span></div>
+        <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
         <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · now late':'open'}</span></div>
         <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
         <div class="month-stats">
@@ -6648,30 +6757,33 @@ function renderResults(){
     if(coverageStart)notes.push(`Delivery history in this export starts ${displayDate(coverageStart)}; comparisons with earlier periods show n/a.`);
 
     html+=`
-    <section class="month-spot rise rise-1">${spotlight}</section>
-    <section class="card chart-card rise rise-2">
-      <div class="chart-head"><div class="card-head-text"><div class="title-row"><h2>Shipped and open value by month · ${thisYear}</h2>${infoButton('mo-chart')}</div><span class="section-sub">Open value in past months is late work.</span></div>
+    ${pageGroupHtml('mo-months','Month by month',`<div class="month-spot">${spotlight}</div>`,{rise:'rise-1'})}
+    ${pageGroupHtml('mo-shipped','Shipped',`
+    <section class="mini-strip cols-3" aria-label="Shipped to date">
+      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${fmtNum(mtd.rows)} delivery rows (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; last month ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${fmtNum(mtd.rows)} delivery rows</span></div></div>
+      <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${fmtNum(ytd.rows)} delivery rows${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:`; ${lastYear} ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${fmtNum(ytd.rows)} delivery rows</span></div></div>
+      <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
+    </section>
+    <section class="card chart-card">
+      <div class="chart-head"><div class="card-head-text"><div class="title-row"><h2>Shipped and open value by month · ${thisYear}</h2>${infoButton('mo-chart')}</div></div>
         <div class="legend chart"><span><i class="sw lg" style="background:var(--accent)"></i>Shipped</span><span><i class="sw lg" style="background:var(--crit-soft)"></i>Open, past month</span><span><i class="sw lg" style="background:var(--accent-border)"></i>Open, current / upcoming</span></div></div>
       <div class="pair-chart">${yearGroups.map((g,i)=>{const past=g.key<thisMk,current=g.key===thisMk;return `<div class="pair-col${current?' current':''}"><i class="grow-h" style="height:${barH(g.closedAmount)};background:var(--accent);animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.closedAmount)} shipped`)}></i><i class="grow-h" style="height:${barH(g.openAmount)};background:${past?'var(--crit-soft)':'var(--accent-border)'};animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.openAmount)} open${past?' (late: this month has passed)':''}`)}></i></div>`;}).join('')}</div>
       <div class="pair-labels">${yearGroups.map(g=>`<span class="${g.key===thisMk?'current':''}">${esc(shortMonth(parseDate(`${g.key}-01`)))} '${String(thisYear).slice(2)}</span>`).join('')}</div>
     </section>
-    <div class="rise rise-3">${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
+    ${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
       note:anyLastYear?'Shipped value by delivery month, with open work':`Shipped value by delivery month · the export has no ${lastYear} months for year-over-year`,
       head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% rows shipped','','14%'],['Open rows','num'],['Closed rows','num'],['At risk / late','num']],
-      rows:summaryRows,limit:12,minWidth:anyLastYear?980:820})}</div>
-    <section class="mini-strip cols-3 rise rise-3" aria-label="Shipped to date">
-      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${fmtNum(mtd.rows)} delivery rows (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:''}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:esc(notCovered)}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${fmtNum(mtd.rows)} delivery rows</span></div></div>
-      <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${fmtNum(ytd.rows)} delivery rows${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:''}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`vs ${lastYear}: ${esc(notCovered)}`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${fmtNum(ytd.rows)} delivery rows</span></div></div>
-      <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:esc(notCovered)}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
-    </section>
-    <div class="rise rise-4">${renderShippedByWarehouseCard(scenario,today)}</div>
-    <div class="rise rise-4">${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls"><span class="section-sub">% of booked value shipped, by the line’s original delivery month</span>${monthSelect}</div>`,
+      rows:summaryRows,limit:12,minWidth:anyLastYear?980:820})}
+    ${renderShippedByWarehouseCard(scenario,today)}`,{rise:'rise-2'})}
+    ${pageGroupHtml('mo-open','By original delivery date',`
+    ${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect}</div>`,
       head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open rows','num'],['Closed rows','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
-      rows:originalRows,limit:14,minWidth:980,empty:'No original SO line delivery dates were found in this export.'})}</div>
-    <div class="rise rise-5">${renderTableCard({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
+      rows:originalRows,limit:14,minWidth:980,empty:'No original SO line delivery dates were found in this export.'})}
+    ${renderTableCard({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
       note:`${originalDeliveryMonthFilter==='ALL'?'By original line delivery month':esc(monthLabel(originalDeliveryMonthFilter)||originalDeliveryMonthFilter)} · ${fmtNum(openOriginalRows.length)} open lines`,
       head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,empty:'Every line in these months has shipped.'})}</div>
+      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,empty:'Every line in these months has shipped.'})}
+    `,{rise:'rise-3'})}
     ${renderShipTargetScenario(scenario,today)}
     <details class="about rise">${aboutSummary()}<div class="about-body">${notes.map(n=>`<p>${esc(n)}</p>`).join('')}${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}</div></details>`;
   }
@@ -6710,24 +6822,23 @@ function renderResults(){
     });
     const attention=uniqueRows([...m.attentionRows,...m.missingPriceRows]).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
     html+=`
-    <section class="section rise rise-1">
-      <div class="section-head"><h2 class="section-title">Order quality rates</h2>${infoButton('mt-quality')}<span class="section-sub">open and closed sales order lines</span></div>
+    ${pageGroupHtml('mt-quality','Order quality',`
       <div class="grid-4">
-        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} not late/no-commit rows`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open rows'}. ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open sales-order rows are not late, past due or without a commit date. Target 90%.`)}
-        ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time, never rescheduled`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and were never rescheduled. Target 90%.`)}
-        ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in the last 12 months missed its original date (late or still open)`,`Backorder rate: ${m.backorderRate}%. ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in the last 12 months missed its original date (shipped late or still open). Keep it under 5%.`)}
-        ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} open lines have shipped part of their qty`,`Partial ship rate: ${m.partialShipRate}%. ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines have shipped part of their quantity. Keep it under 5%.`)}
+        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open rows`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open rows'}. ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open sales-order rows are not late, past due or without a commit date. Target 90%.`)}
+        ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and were never rescheduled. Target 90%.`)}
+        ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`Backorder rate: ${m.backorderRate}%. ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in the last 12 months missed its original date (shipped late or still open). Keep it under 5%.`)}
+        ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`Partial ship rate: ${m.partialShipRate}%. ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines have shipped part of their quantity. Keep it under 5%.`)}
       </div>
       <div class="mini-strip cols-4">
         ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of rows`,'crit',`Past due / late: ${fmtNum(lateCount)} open rows past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
         ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of rows`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open rows with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
-        ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of open rows (missed commits count as late)`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open rows with a reschedule date that has not passed yet (${money(rowOpenAmount(m.rescheduledRows))}). A missed reschedule counts as late.`)}
-        ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of open SO rows (PO: see Purchase Orders tab)`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order rows with no price in SAP. Purchase orders are on the Purchase Orders page.`)}
-      </div>
-    </section>
-    <section class="grid-2 rise rise-2">
+        ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of rows`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open rows with a reschedule date that has not passed yet (${money(rowOpenAmount(m.rescheduledRows))}). A missed reschedule counts as late.`)}
+        ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of rows`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order rows with no price in SAP. Purchase orders are on the Purchase Orders page.`)}
+      </div>`,{info:'mt-quality',rise:'rise-1'})}
+    ${pageGroupHtml('mt-month','By due month',`
+    <div class="grid-2">
       <div class="card chart-card tight">
-        <div class="chart-head"><div class="title-row"><h2>Open value by due month</h2>${infoButton('mt-open-month')}</div><span class="section-sub">sales orders</span></div>
+        <div class="chart-head"><div class="title-row"><h2>Open value by due month</h2>${infoButton('mt-open-month')}</div></div>
         <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
         <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
       </div>
@@ -6736,11 +6847,11 @@ function renderResults(){
         <div class="col-chart tall">${mt.map((g,i)=>{const total=g.lateRows+g.noCommitRows+g.rescheduledRows;const part=n=>total?`${(n/total*100).toFixed(2)}%`:'0';return `<div class="col"><span class="col-val">${total?fmtNum(total):'—'}</span><div class="col-bar stack-bar grow-h" style="height:${(total/riskMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`)}><i style="height:${part(g.lateRows)};background:var(--crit)"></i><i style="height:${part(g.noCommitRows)};background:var(--crit-dark)"></i><i style="height:${part(g.rescheduledRows)};background:var(--warn-fill)"></i></div></div>`;}).join('')}</div>
         <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
       </div>
-    </section>
-    <div class="rise rise-3">${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
+    </div>
+    ${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
       head:[['Month'],['Open value','num'],['Open qty','num'],['Open rows','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
-      rows:timelineRows,limit:10,minWidth:900})}</div>
-    <div class="rise rise-4">${renderRowsTable(attention,{key:'metrics-attention',info:'mt-attention',title:'Rows needing attention',note:`most overdue first · ${fmtNum(attention.length)} rows · add notes and overrides on Order Health`,limit:12})}</div>
+      rows:timelineRows,limit:10,minWidth:900})}`,{rise:'rise-2'})}
+    ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',info:'mt-attention',title:'Rows needing attention',note:`most overdue first · ${fmtNum(attention.length)} rows · notes on Order Health`,limit:10}),{rise:'rise-3'})}
     ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
   }
   // Warehouse Timeline: open value, late, and no-commit by warehouse/month.
@@ -6767,7 +6878,7 @@ function renderResults(){
         <td>${renderBarCell(g.otdRate,`${fmtNum(g.otdRate)}%`,rateColor(g.otdRate,90,75),'sm')}</td>
         <td>${perfect===null?'<span class="muted">—</span>':renderBarCell(perfect,`${fmtNum(perfect)}%`,rateColor(perfect,90,75),'sm')}</td>
         <td class="num tone-${toneForLow(g.backorderRate,5,15)}">${fmtNum(g.backorderRate)}%</td>
-        <td class="num soft">${fmtNum(g.partialShipRate)}%<span class="sub block">${fmtNum(g.partialRows.length)} rows</span></td>
+        <td class="num soft"${tipAttr(`${g.key}: ${fmtNum(g.partialRows.length)} open ${g.partialRows.length===1?'line has':'lines have'} shipped part of their quantity.`)}>${fmtNum(g.partialShipRate)}%</td>
         <td class="num soft">${fmtNum(g.activeOpenQty)}</td>
         <td class="num strong">${money(g.activeOpenValue)}</td>
         <td class="num ${g.pastDue?'crit-strong':'muted'}">${fmtNum(g.pastDue)}</td>
@@ -6776,7 +6887,8 @@ function renderResults(){
       </tr>`;
     });
     html+=`
-    <section class="grid-2 rise rise-1">
+    ${pageGroupHtml('wh-open','Open work',`
+    <div class="grid-2">
       <div class="card list-card roomy">
         <div class="list-head"><div class="title-row"><h2>Open value by warehouse</h2>${infoButton('wh-open')}</div><span class="section-sub">top 8</span></div>
         <div class="rank-rows">${topOpen.map((g,i)=>`<div class="rank-row"${tipAttr(`${g.key}: ${money(g.activeOpenValue)} open on ${fmtNum(g.activeCount)} ${g.activeCount===1?'line':'lines'}`)}><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(g.activeOpenValue/openMax*100).toFixed(1)}%;background:var(--accent);animation-delay:${i*50}ms"></i></div></div><span class="rv">${moneyShort(g.activeOpenValue)}</span></div>`).join('')||'<div class="empty-note">No open lines.</div>'}</div>
@@ -6785,8 +6897,8 @@ function renderResults(){
         <div class="list-head"><div class="title-row"><h2>On-track rate by warehouse</h2>${infoButton('wh-ontrack')}</div><span class="section-sub">lowest first · target 90% · 5+ open lines</span></div>
         <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${g.key} · ${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
       </div>
-    </section>
-    <section class="table rise rise-2">
+    </div>
+    <section class="table">
       <div class="card-head lg"><div class="card-head-text"><div class="title-row"><h2>Open value by warehouse and due month</h2>${infoButton('wh-heat')}</div><span class="section-sub">Darker blue = more open value. The red badge counts late or past-due lines.</span></div></div>
       <div class="heat-scroll" role="table" aria-label="Open value by warehouse and due month">
         <div class="heat-grid head" role="row" style="${heatCols}"><div role="columnheader">Warehouse</div>${months.map(mo=>`<div role="columnheader">${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
@@ -6801,10 +6913,10 @@ function renderResults(){
       </div>
       ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover or Tab to a cell for its breakdown.</p>':''}
       ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show only the 10 warehouses with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
-    </section>
-    <div class="rise rise-3">${renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',note:'all warehouses with open or closed lines',
+    </section>`,{rise:'rise-1'})}
+    ${pageGroupHtml('wh-kpis','Performance by warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',note:'all warehouses with open or closed lines',
       head:[['Warehouse'],['Open lines','num'],['On-track (open)','','14%'],['Perfect order','','14%'],['Backorder','num'],['Partial ship','num'],['Open qty','num'],['Open value','num'],['Late','num'],['No commit','num'],['Rescheduled','num']],
-      rows:summaryRows,limit:12,minWidth:1040})}</div>
+      rows:summaryRows,limit:12,minWidth:1040}),{rise:'rise-2'})}
     ${renderAbout(['wh-open','wh-ontrack','wh-heat','wh-summary'])}`;
   }
   // Supply Mix: high-level demand vs usable supply charts.
@@ -6814,30 +6926,30 @@ function renderResults(){
       html+=renderNeedsFile('supplydemand');
     }else{
       const itemGroupRows=sd.byItemGroup.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${fmtNum(g.demandQty)}</td><td class="num">${fmtNum(g.usableQty)}</td><td class="num ${g.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(g.monthlyNetQty)}</td><td class="num ${g.cumulativeShortageRows?'crit-strong':'muted'}">${fmtNum(g.cumulativeShortageRows)}</td><td class="num ${g.riskRows?'warn-soft':'muted'}">${fmtNum(g.riskRows)}</td><td class="num soft">${fmtNum(g.unconfirmedQty)}</td><td class="num soft">${fmtNum(g.noCommitQty)}</td><td class="num soft">${fmtNum(g.rescheduledQty)}</td><td class="num soft">${fmtNum(g.lateQty)}</td></tr>`);
+      // Big picture (Stream F) first, then the totals, where the gaps are, and the rows behind them.
       html+=`
-      <section class="grid-5 rise rise-1">
-        ${renderStatCard('Demand qty',fmtNum(sd.demandQty),`${money(sd.demandValue)} open demand value`,'','neutral',`Demand: ${fmtNum(sd.demandQty)} qty on open sales orders in the snapshot, worth ${money(sd.demandValue)}.`)}
-        ${renderStatCard('Usable supply qty',fmtNum(sd.usableQty),'Confirmed and committed PO supply',sd.usableQty>=sd.demandQty?'good':'warn',sd.usableQty>=sd.demandQty?'good':'warn',`Usable supply: ${fmtNum(sd.usableQty)} qty on open purchase orders with a confirmed, committed date. Stock on hand is not included.`)}
-        ${renderStatCard('Shortage qty',fmtNum(sd.shortageQty),'Worst cumulative shortfall per item / warehouse',sd.shortageQty>0?'crit':'good',sd.shortageQty>0?'crit':'good',`Shortage: ${fmtNum(sd.shortageQty)} qty, the worst running-total shortfall of each item in each warehouse, added up.`)}
-        ${renderStatCard('Shortage rows',fmtNum(sd.shortageRows.length),'Monthly or cumulative shortage',sd.shortageRows.length?'crit':'good',sd.shortageRows.length?'crit':'good',`${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'row is':'rows are'} short that month or on the running total.`)}
-        ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),'Unconfirmed, no commit, rescheduled, or late',sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of PO supply that is unconfirmed, has no commit date, is rescheduled or is late.`)}
-      </section>
       ${renderBigPicture('supplydemand',m)}
-      <section class="grid-2 rise rise-2">
+      ${pageGroupHtml('mix-totals','Demand vs supply',`<div class="grid-4 pg-stats">
+        ${renderStatCard('Demand qty',fmtNum(sd.demandQty),`${money(sd.demandValue)}`,'','neutral',`Demand: ${fmtNum(sd.demandQty)} qty on open sales orders in the snapshot, worth ${money(sd.demandValue)}.`)}
+        ${renderStatCard('Usable supply qty',fmtNum(sd.usableQty),'',sd.usableQty>=sd.demandQty?'good':'warn',sd.usableQty>=sd.demandQty?'good':'warn',`Usable supply: ${fmtNum(sd.usableQty)} qty on open purchase orders with a confirmed, committed date. Stock on hand is not included.`)}
+        ${renderStatCard('Shortage qty',fmtNum(sd.shortageQty),`${fmtNum(sd.shortageRows.length)} shortage ${sd.shortageRows.length===1?'row':'rows'}`,sd.shortageQty>0?'crit':'good',sd.shortageQty>0?'crit':'good',`Shortage: ${fmtNum(sd.shortageQty)} qty, the worst running-total shortfall of each item in each warehouse, added up. ${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'row is':'rows are'} short that month or on the running total.`)}
+        ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),`${fmtNum(sd.riskRows.length)} risk ${sd.riskRows.length===1?'row':'rows'}`,sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of PO supply that is unconfirmed, has no commit date, is rescheduled or is late.`)}
+      </div>`,{rise:'rise-1'})}
+      ${pageGroupHtml('mix-gaps','Where the gaps are',`<div class="grid-2">
         <div class="card list-card roomy">
           <div class="list-head"><div class="title-row"><h2>Net qty by month</h2>${infoButton('mix-net')}</div><span class="section-sub">usable supply minus demand</span></div>
-          ${renderRankRows(sd.byMonth.map(g=>({label:monthLabel(g.key)||g.key,value:g.monthlyNetQty,text:`${g.monthlyNetQty>0?'+':''}${fmtNum(g.monthlyNetQty)}`,color:g.monthlyNetQty<0?'var(--crit)':'var(--good)',tone:g.monthlyNetQty<0?'crit':'good',sub:`${fmtNum(g.monthlyShortageRows)} shortage rows · ${fmtNum(g.riskRows)} supply risk rows`})),{empty:'No months in the snapshot.'})}
+          ${renderRankRows(sd.byMonth.map(g=>({label:monthLabel(g.key)||g.key,value:g.monthlyNetQty,text:`${g.monthlyNetQty>0?'+':''}${fmtNum(g.monthlyNetQty)}`,color:g.monthlyNetQty<0?'var(--crit)':'var(--good)',tone:g.monthlyNetQty<0?'crit':'good',sub:`${fmtNum(g.monthlyShortageRows)} short · ${fmtNum(g.riskRows)} at risk`})),{empty:'No months in the snapshot.'})}
         </div>
         <div class="card list-card roomy">
           <div class="list-head"><div class="title-row"><h2>Demand by warehouse</h2>${infoButton('mix-demand')}</div><span class="section-sub">top 12 by demand value</span></div>
-          ${renderRankRows(sd.byWarehouse.slice(0,12).map(g=>({label:g.key,value:g.demandValue,text:moneyShort(g.demandValue),color:g.cumulativeShortageRows?'var(--crit)':g.riskRows?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(g.demandQty)} demand qty · ${fmtNum(g.usableQty)} usable supply · ${fmtNum(g.cumulativeShortageRows)} shortage rows`})),{empty:'No warehouse demand.'})}
+          ${renderRankRows(sd.byWarehouse.slice(0,12).map(g=>({label:g.key,value:g.demandValue,text:moneyShort(g.demandValue),color:g.cumulativeShortageRows?'var(--crit)':g.riskRows?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(g.demandQty)} demand · ${fmtNum(g.usableQty)} supply${g.cumulativeShortageRows?` · ${fmtNum(g.cumulativeShortageRows)} short`:''}`})),{empty:'No warehouse demand.'})}
         </div>
-      </section>
-      <div class="rise rise-3">${renderTableCard({key:'mix-groups',info:'mix-groups',title:'Supply risk by item group',note:'demand, usable supply and risky supply by item group',
+      </div>
+      ${renderTableCard({key:'mix-groups',info:'mix-groups',title:'Supply risk by item group',note:'demand, usable supply and risky supply by item group',
         head:[['Item group'],['Demand qty','num'],['Usable supply','num'],['Net qty','num'],['Shortage rows','num'],['Risk rows','num'],['Unconfirmed qty','num'],['No commit qty','num'],['Rescheduled qty','num'],['Late qty','num']],
-        rows:itemGroupRows,limit:12,minWidth:980})}</div>
-      <div class="rise rise-4">${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage rows',note:`first ${fmtNum(Math.min(50,sd.shortageRows.length))} of ${fmtNum(sd.shortageRows.length)}`,empty:'No shortage rows.'})}</div>
-      <div class="rise rise-5">${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk rows',note:`first ${fmtNum(Math.min(50,sd.riskRows.length))} of ${fmtNum(sd.riskRows.length)}`,empty:'No supply risk rows.'})}</div>
+        rows:itemGroupRows,limit:12,minWidth:980})}`,{rise:'rise-2'})}
+      ${pageGroupHtml('mix-rows','Rows to check',`${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage rows',note:sd.shortageRows.length>50?`first 50 of ${fmtNum(sd.shortageRows.length)}`:`${fmtNum(sd.shortageRows.length)} ${sd.shortageRows.length===1?'row':'rows'}`,limit:8,empty:'No shortage rows.'})}
+      ${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk rows',note:sd.riskRows.length>50?`first 50 of ${fmtNum(sd.riskRows.length)}`:`${fmtNum(sd.riskRows.length)} ${sd.riskRows.length===1?'row':'rows'}`,limit:8,empty:'No supply risk rows.'})}`,{rise:'rise-3'})}
       <details class="about">${aboutSummary()}<div class="about-body"><p>This view treats sales orders as demand and open purchase orders as supply. Stock on hand is not included, so a "shortage" is a gap in open PO coverage. Unconfirmed POs and no-commit POs are shown as risk and are not counted as clean usable supply.</p>${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</div></details>`;
     }
   }
@@ -6867,29 +6979,31 @@ function renderResults(){
       const riskRows=uniqueRows(br.atRiskMatches.flatMap(r=>r.matchedRows));
       const trendRows=trend.map(t=>`<tr><td class="m">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>'
         :`<td class="num"><span class="pill ${tone(c.clearToBuild,c.total)}" title="${esc(`${fmtNum(c.clearToBuild)} of ${fmtNum(c.total)} clear to build · ${fmtNum(c.atRisk)} at risk · ${fmtNum(c.late)} late`)}">${pct(c.clearToBuild,c.total)}%</span></td>`).join('')}</tr>`);
+      // The report week (and its row count) on top, then the Big picture (Stream F), the week's numbers, the
+      // CM / month buckets and the sales orders to act on.
+      const ctbRowsNote=`<span class="filter-note"${tipAttr(`${fmtNum(br.rows.length)} CM / month rows in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report rows${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}</span>`;
       html+=`
-      ${snapshots.some(s=>s.dated)?`<div class="filter-bar inline-controls rise">
-        <label>Report week <select id="build-risk-snapshot" class="select"${tipAttr('Pick which weekly Clear To Build sheet the page shows. Weeks are never added together.')} onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===brAll?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>
-        <span class="filter-note">${esc(`${br.sheet||br.label} · ${fmtNum(snapshots.length)} report ${snapshots.length===1?'week':'weeks'} loaded; weeks are never added together`)}</span>
-      </div>`:''}
-      <section class="grid-5 rise rise-1">
-        ${renderStatCard('CTB report rows',fmtNum(br.rows.length),br.dated?`CM / month rows in the ${esc(br.label)} report`:'CM / month rows imported','','neutral',`${fmtNum(br.rows.length)} CM / month rows in the ${br.dated?`${br.label} `:''}Clear To Build report.`)}
-        ${renderStatCard('Clear to build',fmtNum(br.totalClearToBuild),`${pct(br.totalClearToBuild,br.totalOrders)}% of CTB orders`,'good','good',`Clear to build: ${fmtNum(br.totalClearToBuild)} of ${fmtNum(br.totalOrders)} orders in the report (${pct(br.totalClearToBuild,br.totalOrders)}%) can be built now.`)}
-        ${renderStatCard('At risk',fmtNum(br.totalAtRisk),'From the CTB report',br.totalAtRisk?'warn':'good',br.totalAtRisk?'warn':'good',`At risk: ${fmtNum(br.totalAtRisk)} orders the Clear To Build report marks at risk.`)}
-        ${renderStatCard('Late',fmtNum(br.totalLate),'From the CTB report',br.totalLate?'crit':'good',br.totalLate?'crit':'good',`Late: ${fmtNum(br.totalLate)} orders the Clear To Build report marks late.`)}
-        ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty in matching CM / month buckets`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the same CM warehouses and due months as the report rows.`)}
-      </section>
+      <div class="filter-bar inline-controls rise">
+        ${snapshots.some(s=>s.dated)?`<label>Report week <select id="build-risk-snapshot" class="select"${tipAttr('Pick which weekly Clear To Build sheet the page shows. Weeks are never added together.')} onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===brAll?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>`:'<span class="filter-label">Clear To Build report</span>'}
+        ${ctbRowsNote}
+      </div>
       ${renderBigPicture('buildrisk',m)}
-      <section class="card list-card roomy rise rise-2">
-        <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="section-sub">open SO value by CM and month · red = late, amber = at risk</span></div>
+      ${pageGroupHtml('br-week','This report week',`<div class="grid-4 pg-stats">
+        ${renderStatCard('Clear to build',fmtNum(br.totalClearToBuild),`${pct(br.totalClearToBuild,br.totalOrders)}% of ${fmtNum(br.totalOrders)} orders`,'good','good',`Clear to build: ${fmtNum(br.totalClearToBuild)} of ${fmtNum(br.totalOrders)} orders in the report (${pct(br.totalClearToBuild,br.totalOrders)}%) can be built now.`)}
+        ${renderStatCard('At risk',fmtNum(br.totalAtRisk),'',br.totalAtRisk?'warn':'good',br.totalAtRisk?'warn':'good',`At risk: ${fmtNum(br.totalAtRisk)} orders the Clear To Build report marks at risk.`)}
+        ${renderStatCard('Late',fmtNum(br.totalLate),'',br.totalLate?'crit':'good',br.totalLate?'crit':'good',`Late: ${fmtNum(br.totalLate)} orders the Clear To Build report marks late.`)}
+        ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the same CM warehouses and due months as the report rows.`)}
+      </div>`,{rise:'rise-1'})}
+      ${pageGroupHtml('br-buckets','By CM and month',`<section class="card list-card roomy">
+        <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--accent)"></i>Clear</span></span></div>
         ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(r.matchedRows.length)} SO rows · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
       </section>
-      <div class="rise rise-3">${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',note:'report rows matched to open sales orders',
+      ${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',note:'report rows matched to open sales orders',
         head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Matched SO rows','num'],['Matched open qty','num'],['Matched open value','num'],['Notes','','22%']],
-        rows:ctbRows,limit:12,minWidth:1100})}</div>
-      ${weeks.length>1?`<div class="rise rise-4">${renderTableCard({key:'br-trend',info:'br-trend',title:'CTB % by CM',note:`clear to build share of each CM’s orders, last ${fmtNum(weeks.length)} report weeks (oldest to newest)`,
-        head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90})}</div>`:''}
-      <div class="rise rise-5">${renderRowsTable(riskRows.slice(0,60),{key:'br-risk',info:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} rows (latest-risk buckets first)`:`${fmtNum(riskRows.length)} rows in buckets the report marks at risk or late`,limit:12,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'})}</div>
+        rows:ctbRows,limit:12,minWidth:1100})}
+      ${weeks.length>1?renderTableCard({key:'br-trend',info:'br-trend',title:'CTB % by CM',note:`last ${fmtNum(weeks.length)} report weeks, oldest to newest`,
+        head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90}):''}`,{rise:'rise-2'})}
+      ${pageGroupHtml('br-orders','Orders to act on',renderRowsTable(riskRows.slice(0,60),{key:'br-risk',info:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} rows (latest-risk buckets first)`:`${fmtNum(riskRows.length)} rows`,limit:8,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}),{rise:'rise-3'})}
       <details class="about">${aboutSummary()}<div class="about-body"><p>This view matches sales orders to the Clear To Build report by CM / warehouse and due month. It is a demand-risk overlay, not exact PO allocation, unless the source report includes PO / item-level detail.</p><p>A Clear To Build workbook holds one sheet per report week. Every number above comes from the week picked at the top; weeks are never added together. The Lacombe firm sales orders block is shown for reference only and is not matched to sales order lines.</p>${aboutSections(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}${sankeyAbout('buildrisk')}</div></details>`;
     }
   }
@@ -9535,17 +9649,17 @@ function renderShippingPage(m){
   const why=st.state==='snapshot'?'No FedEx statuses were saved with this shared snapshot.'
     :st.state==='ready'||st.state==='loading'?'FedEx has not been checked yet; the count shows after the first check.'
     :'Live FedEx status needs the hosted dashboard, so this stays blank here.';
-  const cards=`<section class="grid-5 rise rise-1 ship-kpis">
+  const cards=`<div class="ship-kpis" role="group" aria-label="Shipment status">
       ${renderShipCard('transit','In transit',g.transit,'accent','that FedEx has picked up and that are moving toward the customer (not yet out for delivery)',live,why)}
       ${renderShipCard('out','Out for delivery',g.out,'good','on a FedEx vehicle for delivery today',live,why)}
       ${renderShipCard('delivered','Delivered this week',g.delivered,'good',`that FedEx delivered since Monday ${shipDateLabel(model.weekStart)}`,live,why)}
       ${renderShipCard('exception','Exceptions',g.exception,'crit','with a delivery or shipment exception, delay, hold, return or cancellation (customs holds are under In customs)',live,why)}
       ${renderShipCard('customs','In customs',g.customs,'warn','waiting for customs clearance, including clearance delays',live,why)}
-    </section>`;
+    </div>`;
 
   // Add a tracking number by hand.
-  const addForm=isSnapshotView?'':`<form class="filter-bar ship-add rise rise-2" onsubmit="return shippingAddManual(event)">
-      <span class="filter-label" data-tip="Track a shipment that is not on an SAP delivery yet, or whose delivery has no tracking number in SAP. It is tracked for ${SHIP_MANUAL_DAYS} days${shippingSharedStore()?' and everyone who signs in sees it':' and saved in this browser'}.">Add tracking #</span>
+  const addForm=isSnapshotView?'':`<form class="filter-bar ship-add" onsubmit="return shippingAddManual(event)">
+      <span class="ship-add-title" data-tip="Track a shipment that is not on an SAP delivery yet, or whose delivery has no tracking number in SAP. It is tracked for ${SHIP_MANUAL_DAYS} days${shippingSharedStore()?' and everyone who signs in sees it':' and saved in this browser'}.">Add tracking #</span>
       <label>Sales order # <input id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345" data-tip="The sales order this shipment belongs to, so its order lines show under the tracking number (optional)."></label>
       <label>FedEx tracking # <input id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678" data-tip="The FedEx tracking number, or the PRO number for FedEx Freight. Spaces and dashes are fine."></label>
       <button type="submit" class="btn btn-primary" data-focus-key="ship-add" data-tip="Save this tracking number. Its FedEx status shows after the next check.">Add</button>
@@ -9560,12 +9674,14 @@ function renderShippingPage(m){
   const filterName={transit:'in transit',out:'out for delivery',delivered:'delivered this week',exception:'with an exception',customs:'in customs'}[shippingFilter];
   const listSub=filterName?`only shipments ${filterName}`:`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
   const empty=filterName?`No shipments ${filterName} right now.`:`No FedEx tracking numbers on deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${isSnapshotView?'':', and none added by hand'}.`;
-  const list=`<section class="section rise rise-3">
-      <div class="section-head"><h2 class="section-title">Shipments</h2><span class="count-badge" data-tip="${esc(`${shipPlural(shown.length,'shipment','shipments')} listed`)}">${fmtNum(shown.length)}</span><span class="section-sub">${esc(listSub)}</span>${filterName?`<div class="section-tools"><button type="button" class="link-btn" data-focus-key="ship-filter-clear" onclick="setShippingFilter('')" data-tip="Show every shipment again.">Show all shipments</button></div>`:''}</div>
+  // The window the list covers is in the count's tip; a card filter shows as a note with Show all shipments.
+  const list=pageGroupHtml('ship-list','Shipments',`
       <div class="ship-legend" aria-hidden="true">${SHIP_STAGES.map(([,label])=>esc(label)).join(' → ')}</div>
       <div class="ship-list">${visible.map(renderShipRow).join('')||`<p class="empty-note ship-empty">${esc(empty)}</p>`}</div>
       ${shown.length>SHIP_LIST_LIMIT?`<div class="tfoot ship-foot"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="link-btn" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)" data-tip="${more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`}">${more?'Show fewer':'Show all'}</button></div>`:''}
-    </section>`;
+      ${addForm}`,{rise:'rise-2',
+    badge:`<span class="count-badge" data-tip="${esc(`${shipPlural(shown.length,'shipment','shipments')} listed: ${listSub}`)}">${fmtNum(shown.length)}</span>${filterName?`<span class="section-sub">${esc(listSub)}</span>`:''}`,
+    tools:filterName?`<button type="button" class="link-btn" data-focus-key="ship-filter-clear" onclick="setShippingFilter('')" data-tip="Show every shipment again.">Show all shipments</button>`:''});
 
   // Cross-border: leaving Canada, or with customs scans.
   const crossState={clearance:['In clearance','warn'],delay:['Clearance delay','bad'],released:['Released','good']};
@@ -9583,8 +9699,7 @@ function renderShippingPage(m){
     const lastCustoms=s.status&&s.status.customs&&s.status.customs.length?s.status.customs[s.status.customs.length-1]:null;
     return `<tr><td class="m"><button type="button" class="link-btn ship-link" data-focus-key="ship-x-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')" data-tip="Show ${esc(s.number)} with its progress and order lines in the list above.">${esc(s.number)}</button></td><td>${esc(s.customer||'—')}</td><td class="soft">${esc(shipCountryName(s.dest)||'—')}</td><td><span class="status-chip ${cs?cs[1]:''}">${esc(label)}</span></td><td class="num">${days===null?'—':days<1?'under 1 day':esc(shipPlural(Math.round(days),'day','days'))}</td><td class="soft">${lastCustoms?`${esc(lastCustoms.desc)}<span class="sub">${esc(shipTimeLabel(lastCustoms.at))}</span>`:'—'}</td></tr>`;
   });
-  const cross=`<section class="section rise rise-4">
-      <div class="section-head"><h2 class="section-title">Cross-border</h2><span class="count-badge${model.cross.some(s=>s.delay)?' bad':''}" data-tip="${esc(`${shipPlural(model.cross.length,'shipment','shipments')} crossing a border${model.cross.some(s=>s.delay)?`, ${fmtNum(model.cross.filter(s=>s.delay).length)} held by a clearance delay`:''}`)}">${fmtNum(model.cross.length)}</span><span class="section-sub">shipments to an address outside Canada, or with customs scans</span></div>
+  const cross=pageGroupHtml('ship-cross','Cross-border',`
       <div class="table"><div class="table-scroll" tabindex="0" role="region" aria-label="Cross-border shipments"><table class="data-table ship-cross"><thead><tr>
         <th scope="col" data-tip="FedEx tracking number. Click one to open it in the list above.">Tracking #</th>
         <th scope="col" data-tip="Customer on the SAP delivery or sales order.">Customer</th>
@@ -9592,8 +9707,8 @@ function renderShippingPage(m){
         <th scope="col" data-tip="In clearance: customs is processing it. Clearance delay: customs is holding it (often paperwork). Released: customs let it go.">Customs</th>
         <th scope="col" class="num" data-tip="From the first customs scan to the release, or to now while customs still has it.">Days in customs</th>
         <th scope="col" data-tip="The newest customs scan from FedEx.">Last customs scan</th>
-      </tr></thead><tbody>${crossRows.join('')||`<tr><td colspan="6" class="soft">No cross-border shipments in this list.</td></tr>`}</tbody></table></div></div>
-    </section>`;
+      </tr></thead><tbody>${crossRows.join('')||`<tr><td colspan="6" class="soft">No cross-border shipments in this list.</td></tr>`}</tbody></table></div></div>`,{rise:'rise-3',
+    badge:`<span class="count-badge${model.cross.some(s=>s.delay)?' bad':''}" data-tip="${esc(`${shipPlural(model.cross.length,'shipment','shipments')} to an address outside Canada, or with customs scans${model.cross.some(s=>s.delay)?`; ${fmtNum(model.cross.filter(s=>s.delay).length)} held by a clearance delay`:''}`)}">${fmtNum(model.cross.length)}</span>`});
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body">
       <p>Tracking numbers come from the TrackingNumber column of the KPI export (the delivery’s tracking number in SAP, ODLN.TrackNo) and from numbers added by hand with Add tracking #. A delivery is tracked when it shipped in the ${SHIP_WINDOW_DAYS} days before the export date (${esc(asOf)}); it stops being checked ${SHIP_DELIVERED_DAYS} days after FedEx delivered it. Numbers added by hand are tracked for ${SHIP_MANUAL_DAYS} days.</p>
@@ -9603,7 +9718,7 @@ function renderShippingPage(m){
     </div></details>`;
   // First-visit hint (Stream A's renderHint, localStorage spyderKpiHints); not in a shared snapshot.
   const hint=isSnapshotView?'':renderHint('shipping','<strong>How this page works.</strong> Each row is a delivery with a FedEx tracking number, taken from the delivery in SAP (its tracking number field) and checked every '+SHIP_CHECK_HOURS+' hours. Click a row for its order lines and FedEx scans, click a card to list only those shipments, and use <strong>Add tracking #</strong> for a number that is not in SAP. Rest the pointer on a card, a column heading or a shipment (Tab to it, or press and hold on a phone) for what it shows.');
-  return bar+hint+notesHtml+cards+addForm+list+cross+about;
+  return bar+hint+notesHtml+pageGroupHtml('ship-status','Status',cards,{rise:'rise-1'})+list+cross+about;
 }
 
 // --- Stream D: Order Health v2 (Leading / Lagging tabs, cause engine, reasons, when flagged, $20k waffle) ---

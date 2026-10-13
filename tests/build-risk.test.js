@@ -70,7 +70,8 @@ async function loaded(sheets = [CROSS_TAB, SEP30, JUNK, SEP24], extra = []) {
   return page;
 }
 const html = (page, setup = '') => { page.run(`${setup};setTab("buildrisk")`); return page.els['results-screen'].innerHTML; };
-const stat = (h, label) => Number((h.match(new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1]);
+// 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
+const stat = (h, label) => Number((h.match(label === 'CTB report rows' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report rows/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1]);
 
 test('every weekly sheet is read and the newest week is shown by default; other sheets are ignored', async () => {
   const page = await loaded();
@@ -79,7 +80,7 @@ test('every weekly sheet is read and the newest week is shown by default; other 
   assert.equal(page.run('buildRiskRows.filter(r=>/May|Sheet10/.test(r.snapshotSheet)).length'), 0);
   const h = html(page);
   assert.match(h, /<select id="build-risk-snapshot"[^>]*><option value="2026-09-30" selected>Sep 30<\/option><option value="2026-09-24">Sep 24<\/option>/);
-  assert.match(h, /0930 - Orders at Risk · 2 report weeks loaded/);
+  assert.match(h, /\(sheet 0930 - Orders at Risk\)\.">[\s\S]*?CTB report rows · 2 weeks loaded<\/span>/);
   // Sep 30 only: DSM 10+6, Price 0+28, Lacombe 13. The Sep 24 week is never added in.
   assert.equal(stat(h, 'Clear to build'), 8 + 6 + 26 + 9);
   assert.equal(stat(h, 'At risk'), 2 + 2 + 5);
@@ -265,7 +266,7 @@ test('the workbook alone works, sheet names are escaped, and a share snapshot ke
   await upload(page, [{ name: 'ctb.xlsx', bytes: workbook(page, [{ ...SEP30, name: '0930 <img src=x onerror=x>' }, SEP24]) }]);
   const h = html(page);
   assert.match(h, /<option value="2026-09-30" selected>/);
-  assert.match(h, /0930 &lt;img src=x onerror=x&gt; · 2 report weeks loaded/);
+  assert.match(h, /\(sheet 0930 &lt;img src=x onerror=x&gt;\)\.">[\s\S]*?CTB report rows · 2 weeks loaded<\/span>/);
   assert.doesNotMatch(h, /<img|NaN|undefined/);
   assert.match(h, /No open sales orders fall in CM \/ month buckets/);
   // A share snapshot carries the normalized rows (report week included) and is read back as-is.
