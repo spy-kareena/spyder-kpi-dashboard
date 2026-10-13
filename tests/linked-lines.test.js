@@ -237,7 +237,7 @@ test('emptying the list focuses its KPI card; Restore focuses the next Restore b
   page.run('selectAllLinked(true)');
   assert.deepEqual(focused.splice(0), ['linked-select-all']);
   page.run('deleteLinkedSelection()');
-  assert.match(html(page), /No linked lines for this card/);
+  assert.match(html(page), /No lines for this card/);
   assert.deepEqual(focused.splice(0), ['tile-late']);
   // Restore one line: focus the Restore button that took its place.
   const keys = fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, []).map((b) => b.dataset.key);

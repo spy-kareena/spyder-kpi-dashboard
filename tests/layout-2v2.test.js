@@ -212,7 +212,7 @@ test('a tile click filters the page and the linked lines to that override; a chi
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
   page.run("setWeeklyTileFilter('late')");
   assert.deepEqual(linkedDocs(page), ['300', '301']);
-  assert.match(html(page), /Linked lines — At Risk/);
+  assert.match(html(page), /Lines to act on<\/h2>[\s\S]*?<span class="count-badge bad">At risk · 2 lines · \$12,000<\/span>/);
   // The picked tile is pressed; the others keep their counts (the tiles ignore their own filter).
   const b = tileButtons(page);
   assert.match(b[0], /class="ovr-tile selected"[^>]*aria-pressed="true"[^>]*data-tip="[^"]*; click to show all\."/);
@@ -270,33 +270,36 @@ const groups = (m) => [...m.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]
   .map((x) => { assert.equal(x[1], x[2], 'each group is labelled by its own title'); return x[3]; });
 const visible = (m, view) => m.replace(new RegExp(`<div class="oh-panel" role="tabpanel" id="oh-panel-${view === 'leading' ? 'lagging' : 'leading'}"[^>]*hidden>[\\s\\S]*?(?=<div class="oh-panel"|<section class="pg-group[^"]*" aria-labelledby="oh-g-where")`), '');
 
-test('Order Health reads as a few named groups: Leading, Lagging, then where the risk is and the order lines', async () => {
+test('Order Health reads as a few named groups: Leading, Lagging, then the breakdowns and the lines to act on', async () => {
   const page = await withStatuses();
-  assert.deepEqual(groups(visible(html(page), 'leading')), ['At risk now', 'Coming due', 'Why lines are at risk', 'Where the risk is', 'Order lines']);
+  assert.deepEqual(groups(visible(html(page), 'leading')), ['At risk now', 'By due date', 'By reason and cause', 'By warehouse and customer', 'Lines to act on']);
   const m = html(page);
   const lead = m.slice(m.indexOf('id="oh-panel-leading"'), m.indexOf('id="oh-panel-lagging"'));
-  // Coming due: this week, next week, this month and all open in one strip, then the due-week chart.
-  const dueGroup = lead.slice(lead.indexOf('>Coming due</h2>'), lead.indexOf('>Why lines are at risk</h2>'));
+  // By due date: this week, next week, this month and all open in one strip, then the due-week chart.
+  const dueGroup = lead.slice(lead.indexOf('>By due date</h2>'), lead.indexOf('>By reason and cause</h2>'));
   assert.deepEqual([...dueGroup.matchAll(/data-focus-key="tile-([a-z]+)"/g)].map((x) => x[1]), ['duethisweek', 'duenextweek', 'duemonth', 'allorders']);
   assert.match(dueGroup, /<div class="mini-strip cols-4">/);
   assert.match(dueGroup, /<h2>What's due next<\/h2>/);
   // At risk now: the At Risk card with its tiles, and No commit date / Rescheduled beside them.
-  const riskGroup = lead.slice(lead.indexOf('>At risk now</h2>'), lead.indexOf('>Coming due</h2>'));
+  const riskGroup = lead.slice(lead.indexOf('>At risk now</h2>'), lead.indexOf('>By due date</h2>'));
   assert.deepEqual([...riskGroup.matchAll(/data-focus-key="tile-([a-z]+)"/g)].map((x) => x[1]), ['late', 'nocommit', 'active']);
-  assert.match(riskGroup, /data-focus-key="toggle-leading"[^>]*data-tip="[^"]+"/);
+  // No Hide link: the Leading / Lagging tabs do that job.
+  assert.doesNotMatch(riskGroup, /toggle-leading|>Hide</);
   // Lagging.
   page.run("setWeeklyView('lagging')");
-  assert.deepEqual(groups(visible(html(page), 'lagging')), ['Delivery performance', 'Where the risk is', 'Order lines']);
+  assert.deepEqual(groups(visible(html(page), 'lagging')), ['Delivery performance', 'By warehouse and customer', 'Lines to act on']);
+  assert.doesNotMatch(html(page), /toggle-lagging|toggleLaggingIndicators/);
   const lag = html(page).slice(html(page).indexOf('id="oh-panel-lagging"'), html(page).indexOf('aria-labelledby="oh-g-where"'));
   assert.deepEqual([...lag.matchAll(/data-focus-key="tile-([a-z0-9]+)"/g)].map((x) => x[1]), ['otd3mo', 'shippedweek', 'fillrate', 'reschedhit', 'perfect', 'dayslate']);
-  // Order lines: the linked lines keep their title and count.
+  // Lines to act on: the group title, its ⓘ and a pill with the picked card, its line count and value (as on Purchase Orders).
   const lines = html(page).slice(html(page).indexOf('aria-labelledby="oh-g-lines"'));
-  assert.match(lines, /^aria-labelledby="oh-g-lines"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="oh-g-lines">Order lines<\/h2><\/div>\s*<div class="section-head"><h3 class="section-title">Linked lines — OTD 3 Mo<\/h3>/);
+  assert.match(lines, /^aria-labelledby="oh-g-lines"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="oh-g-lines">Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="oh-linked"[^>]*>[\s\S]*?<\/button><span class="count-badge ">OTD · 3 mo · 4 delivered lines · \$[\d,]+<\/span><\/div>/);
+  assert.doesNotMatch(lines, /class="section-title"|Linked lines/);
   assert.match(html(page).match(/<section class="pg-group[^"]*" id="linked-lines"[^>]*>/)[0], /aria-labelledby="oh-g-lines"/);
-  // Hiding the Leading cards hides Coming due and Why too; the group title stays with its Show button.
-  page.run("setWeeklyView('leading');toggleLeadingIndicators()");
-  assert.deepEqual(groups(visible(html(page), 'leading')), ['At risk now', 'Where the risk is']);
-  assert.match(html(page), /data-focus-key="toggle-leading"[^>]*>Show<\/button>/);
+  // The old Hide calls no longer hide anything.
+  page.run("setWeeklyView('leading');toggleLeadingIndicators();toggleLaggingIndicators()");
+  assert.deepEqual(page.run('[weeklyLeadingCollapsed,weeklyLaggingCollapsed]'), [false, false]);
+  assert.deepEqual(groups(visible(html(page), 'leading')), ['At risk now', 'By due date', 'By reason and cause', 'By warehouse and customer', 'Lines to act on']);
   assert.equal(page.errors.length, 0, page.errors.join('\n'));
 });
 
@@ -305,7 +308,7 @@ test('open order states sit behind Show more (kept across redraws and snapshots,
   const more = () => html(page).match(/<details class="oh-more"[^>]*>[\s\S]*?<\/details>/)[0];
   assert.match(more(), /^<details class="oh-more" data-more="oh-states" ontoggle="ohSetMoreOpen\(this\.dataset\.more,this\.open\)"><summary data-focus-key="more-oh-states" data-tip="[^"]{20,}"><span class="oh-more-show">Show more · open order states<\/span><span class="oh-more-less">Show less<\/span><\/summary>/);
   assert.match(more(), /class="mini-strip cols-5 oh-states"/);
-  assert.ok(html(page).indexOf('<details class="oh-more"') > html(page).indexOf('>Why lines are at risk</h2>'));
+  assert.ok(html(page).indexOf('<details class="oh-more"') > html(page).indexOf('>By reason and cause</h2>'));
   page.run("ohSetMoreOpen('oh-states',true);renderResults()");
   assert.match(more(), /^<details class="oh-more" open /);
   assert.equal(page.run("tableMore['more-oh-states']"), true);
@@ -322,7 +325,7 @@ test('open order states sit behind Show more (kept across redraws and snapshots,
     '@media (max-width:640px){:root{--space-group:28px;--space-in:14px}}',
     '@media print{:root{--space-group:.15in;--space-in:.08in}}',
   ]) assert.ok(HTML.includes(rule), rule);
-  // At most four cards a row on desktop; the six tiles are three a row (two on a phone), the Coming due strip four.
+  // At most four cards a row on desktop; the six tiles are three a row (two on a phone), the By due date strip four.
   assert.match(HTML, /\.oh-risk\{display:grid;grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\);/);
   assert.match(HTML, /\.ovr-grid\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\);/);
   assert.match(HTML, /@media \(max-width:640px\)\{[^}]*\{[^}]*\}[\s\S]*?\.ovr-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);

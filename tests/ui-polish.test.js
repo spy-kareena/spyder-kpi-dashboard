@@ -95,7 +95,7 @@ test('tooltips say what a card counts with the numbers written in full ($1,721,8
   page.run("setTab('weekly')");
   const html = results(page);
   const atRisk = html.match(/data-focus-key="tile-late"[^>]*data-tip="([^"]+)"/)[1];
-  assert.match(atRisk, /^At risk: \$1,72\d,\d{3} open on \d+ orders \(\d+ lines\); click to list them below\.$/);
+  assert.match(atRisk, /^At risk: \$1,72\d,\d{3} open on \d+ orders \(\d+ lines\), \d+ past due with no reschedule; click to list them below\.$/);
   assert.match(html, /data-focus-key="tile-nocommit"[^>]*data-tip="No commit date: \$[\d,]+ open on 1 order \(1 line\) with no valid commit date/);
   assert.match(html, /data-focus-key="sc-Spyder - Lacombe"[^>]*data-tip="Spyder - Lacombe: open \$1,721,806, at risk \$1,721,806,/);
   for (const [, t] of html.matchAll(/data-tip="([^"]+)"/g)) assert.doesNotMatch(t, /\$\d+(\.\d+)?[KM]\b/, `short money in a tip: ${t}`);

@@ -250,8 +250,8 @@ test('supply / demand and Clear To Build matches are listed when those files are
   assert.deepEqual(search(page, 'spy-200'), [['Sales order', '501']]);
   assert.deepEqual(page.run('(s=>[s.supply.map(r=>r.itemCode),s.ctb.map(r=>r.cm)])(globalSearchResults(currentMetrics()))'), [['SPY-200'], ['DSM']]);
   assert.match(html(page), /3 matches for “spy-200”/);
-  assert.match(html(page), /<h2>Supply \/ demand<\/h2><span class="section-sub">1 matching row</);
-  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching row</);
+  assert.match(html(page), /<h2>Supply \/ demand<\/h2><span class="section-sub">1 matching line</);
+  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching line</);
   assert.doesNotMatch(html(page), /undefined|NaN/);
   // Order lines only: no secondary tables.
   const plain = await loaded();
@@ -268,12 +268,12 @@ test('Clear To Build matches come from one report week: the newest, or the one p
   const ctb = () => page.run('globalSearchResults(currentMetrics()).ctb.map(r=>[r.snapshot,r.clearToBuild])');
   search(page, 'ims');
   assert.deepEqual(ctb(), [['2026-09-30', 8]]);
-  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching row · Sep 30 report/);
+  assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching line · Sep 30 report/);
   // The same query after picking another week on Build Risk is not served from the cache.
   page.run('setTab("buildrisk");setBuildRiskSnapshot("2026-09-24")');
   search(page, 'ims');
   assert.deepEqual(ctb(), [['2026-09-24', 5]]);
-  assert.match(html(page), /1 matching row · Sep 24 report/);
+  assert.match(html(page), /1 matching line · Sep 24 report/);
   assert.deepEqual(page.errors, []);
 });
 

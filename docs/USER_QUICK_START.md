@@ -14,7 +14,7 @@ Order Health opens with a large **Leading / Lagging** switch at the top, each ha
 
 The **Warehouse scorecard** (Order Health) lists CM SFG warehouses and all other warehouses as two groups, each with a subtotal row. Click a row to show only that warehouse; click again to show all.
 
-On Order Health linked lines, tick rows (or the header box for the whole list) to set an override or a cause (**Set cause**) on many lines at once, or delete them. Deleted lines are hidden on every page (for everyone, on the hosted site); restore them from **Data check**. A short confirmation appears after Apply, Delete, Restore and when you close a note. Click a column header to sort. On Purchase Orders, sort with **Sort rows** and use **Add note** on each line.
+In Order Health’s Lines to act on, tick rows (or the header box for the whole list) to set an override or a cause (**Set cause**) on many lines at once, or delete them. Deleted lines are hidden on every page (for everyone, on the hosted site); restore them from **Data check**. A short confirmation appears after Apply, Delete, Restore and when you close a note. Click a column header to sort. On Purchase Orders, sort with **Sort rows** and use **Add note** on each line.
 
 The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line by number, customer, vendor, item, warehouse or FedEx tracking number, or by a reason such as "no commit date" or "caused by us".
 
