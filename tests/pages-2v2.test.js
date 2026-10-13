@@ -163,10 +163,10 @@ test('long lists open on request and always print: All open demand, the scenario
   page.run("toggleTableMore('sd-all-group')");
   h = results(page);
   assert.match(h, /aria-expanded="true" data-tip="Hide the open demand lines\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Hide<\/button>/);
-  assert.match(h.slice(h.indexOf('aria-labelledby="pg-sd-all"')), /<table class="data-table"/);
+  assert.match(h.slice(h.indexOf('aria-labelledby="pg-sd-all"')), /<table class="data-table cards"/);
   page.run("toggleTableMore('sd-all-group');printMode=true;renderResults()");
   h = results(page);
-  assert.match(h.slice(h.indexOf('aria-labelledby="pg-sd-all"')), /<table class="data-table"/);
+  assert.match(h.slice(h.indexOf('aria-labelledby="pg-sd-all"')), /<table class="data-table cards"/);
   assert.doesNotMatch(h, /data-focus-key="more-sd-all-group"/);
   page.run('printMode=false');
   // Monthly: the strip and the calendar sum the scenario up; its lines open with Show lines.
@@ -250,7 +250,7 @@ test('supply rows (Supply Mix, Search): one Risk column with the flag, the risky
   const h = results(page);
   const table = h.match(/<h2>Supply risk lines<\/h2>[\s\S]*?<\/table>/)[0];
   assert.deepEqual([...table.matchAll(/<th\b[^>]*>([^<]+)<\/th>/g)].map((m) => m[1]), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
-  assert.match(table, /<td data-tip="Risky PO supply: 5 unconfirmed, 2 late\."><span class="pill bad">PO Not Confirmed<\/span><span class="sub">7 qty<\/span><\/td>/);
+  assert.match(table, /<td data-tip="Risky PO supply: 5 unconfirmed, 2 late\." data-label="Risk" data-card="st"><span class="pill bad">PO Not Confirmed<\/span><span class="sub">7 qty<\/span><\/td>/);
   page.run("searchQuery='SPY-200';applyGlobalSearch()");
   assert.match(results(page), /<h2>Supply \/ demand<\/h2>[\s\S]*?<span class="pill bad">PO Not Confirmed<\/span><span class="sub">7 qty<\/span>/);
   assert.deepEqual(page.errors, []);

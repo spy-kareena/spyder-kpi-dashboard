@@ -132,7 +132,7 @@ test('risk-bucket orders: the Override and Notes controls keep a readable width 
   const h = html(await loaded());
   const table = h.slice(h.indexOf('Sales orders in risk buckets') - 200);
   assert.match(table, /<section class="table editable-rows">[\s\S]*?style="min-width:1600px"/);
-  assert.match(table, /<td class="due-cell soft">Due in/);
+  assert.match(table, /<td class="due-cell soft" data-label="Due timing">Due in/);
   // 140px fits the longest option ("Waiting on Production") with padding and arrow; print keeps its own sizing.
   assert.match(HTML, /@media screen\{\.editable-rows \.row-override\{min-width:140px\}\.editable-rows \.row-note\{min-width:200px\}\.editable-rows \.due-cell\{white-space:nowrap\}\}/);
 });

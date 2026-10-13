@@ -349,7 +349,8 @@ test('override names show in the owner\'s words everywhere; stored values, saved
   assert.match(page.run(`ohLineWhy(${row('303')})`), /Supplier Delay/);
   assert.doesNotMatch(page.run(`ohLineWhy(${row('303')})`), />[^<]*Supplier Late/);
   assert.match(page.run(`renderNoteButton(${row('304')})`), /data-tip="Override: Supply Chain Delay\./);
-  assert.match(page.run(`renderPrintNoteRow(${row('304')},5)`), /<span class="print-note-status">Supply Chain Delay<\/span>/);
+  // On paper the override prints inside the Status cell (renderPrintOverride), in the owner's words.
+  assert.match(page.run(`renderPrintOverride(${row('304')})`), /<span class="print-ovr">Supply Chain Delay/);
   // The Big picture's reason boxes (a line's first reason, usually a SAP signal): an override box is labelled in the
   // owner's words while its key, and so its filter, stays the stored value.
   assert.match(HTML, /\{key:sankeyLineReason,label:overrideLabel,top:6,other:'Other reasons',/);

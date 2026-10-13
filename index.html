@@ -435,14 +435,20 @@ button.rank-item.selected .rank-name{color:var(--accent-strong)}
 .lines-table .c-doc{font-weight:600;font-size:12px}
 .lines-table .c-name{color:var(--gray-700)}
 .lines-table .c-wh{color:var(--gray-500)}
+/* Customer and warehouse take at most the two lines the item already uses (the full name is the cell's title) */
+.lines-table .clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.lines-table .c-name .sub,.lines-table .c-wh .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lines-table .c-item{min-width:0}
 .lines-table .c-item strong{display:block;font-weight:600;overflow-wrap:anywhere}
 .lines-table .c-item .desc{color:var(--gray-500);font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .lines-table .c-date{font-weight:600;white-space:nowrap;font-size:12px}
 .lines-table .c-qty{font-weight:600;color:var(--warn-text);font-size:12px}
 .lines-table .c-val{font-weight:600;font-size:12px}
-.lines-table .c-status{display:grid;gap:4px;justify-items:start}
-.lines-table .c-lead{color:var(--gray-500);font-size:12px;white-space:nowrap}
+/* Status: the chip with its timing beside it when they fit, then one cause line ("Us · No commit date"); the other
+   reasons and when the line was first flagged are in the cause line's tip (and kept for screen readers). */
+.lines-table .c-status{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.lines-table .c-status .oh-why{flex-basis:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lines-table .oh-why-more{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .lines-table .c-notes{padding-top:10px}
 .status-chip{font-size:12px;font-weight:600;border-radius:var(--r-pill);padding:2px 8px;white-space:nowrap;background:var(--gray-100);color:var(--gray-700)}
 .status-chip.bad{background:var(--crit-tint);color:var(--crit-text)}
@@ -478,10 +484,15 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .btn-danger{color:var(--crit-text);border-color:var(--crit-border)}
 .btn-danger:hover{background:var(--crit-tint);border-color:var(--crit)}
 .lines-table .c-notes{padding-left:12px}
-/* The fixed columns take about 1000px; the rest (about 200px) keeps item codes on one line in Item / Description.
-   Narrower screens scroll the table sideways. The note editor lines up with Customer. */
-.lines-table.so,.lines-table.po{min-width:1200px}
-.lines-table.so .note-editor{padding-left:104px}
+/* Order Health lines fit the 1055px card of a 1366px screen: 908px of fixed columns (8px cell padding, no Lead column)
+   leave Item / Description about 147px, and Status fits a chip and its timing on one line ("Planned 53d pushed out").
+   Narrower screens scroll the table sideways down to 640px (phones get cards). The note editor lines up with Customer. */
+.lines-table.so,.lines-table.po{min-width:1040px}
+.lines-table.so th,.lines-table.so td,.lines-table.search th,.lines-table.search td{padding-left:8px;padding-right:8px}
+.lines-table.so tr>:first-child,.lines-table.search tr>:first-child{padding-left:24px}
+.lines-table.so tr>.c-check:first-child{padding-right:0}
+.lines-table.so tr>:last-child,.lines-table.search tr>:last-child{padding-right:24px}
+.lines-table.so .note-editor{padding-left:102px}
 .data-check-pop ul.dc-deleted{list-style:none;padding-left:0}
 .dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .dc-deleted .link-btn{flex-shrink:0}
@@ -806,17 +817,20 @@ details.about .about-list{margin:0;padding-left:18px;display:grid;gap:4px}
   .lines-table,.lines-table.po,.lines-table.so,.table-scroll>.data-table{min-width:0!important;font-size:7.5pt}
   .lines-table th,.lines-table td,.data-table th,.data-table td{padding:4px 5px!important}
   .lines-table .c-item .desc{-webkit-line-clamp:unset}
+  .lines-table .c-status .oh-why{white-space:normal}
+  .lines-table .clip{-webkit-line-clamp:unset}
+  .lines-table .timing,.lines-table .oh-why,.lines-table .c-item .desc,.lines-table .sub{font-size:7pt}
   .data-table{font-size:8pt}
   .note-btn,.lines-table .c-notes,.lines-table col.col-notes,.editable-rows .row-override,.editable-rows .row-note{display:none!important}
   tr.note-editor-row{display:none!important}
   .print-note-row.has-print-note{display:table-row!important}
   .print-note-row.has-print-note td{display:table-cell!important;padding:0 5px 5px 20px!important;border-bottom:1px solid var(--gray-200)!important}
   .print-note-card{font-size:7.5pt;background:var(--gray-50);border-top:1px solid var(--gray-200);color:var(--gray-700);padding:4px 5px}
-  .print-note-card .print-note-status{color:var(--accent-strong);font-weight:700;margin-right:6px}
+  .print-ovr{display:block!important;flex-basis:100%;font-size:7pt;font-weight:700;color:var(--accent-strong)}
   .print-only{display:inline!important}
   .status-chip,.badge,.pill,.tone-cell{font-size:7pt}
 }
-.print-note-row{display:none}
+.print-note-row,.print-ovr{display:none}
 .trow .soft-cell{font-size:12px;color:var(--gray-500)}
 .trow .risk-cell{font-size:12px;font-weight:600;color:var(--crit)}
 .sc-cols>.num{font-size:12px}
@@ -1515,13 +1529,73 @@ details.oh-more[open] .oh-more-less{display:inline}
   .ship-add label{display:grid;gap:4px}
 }
 @media print{.ship-kpis{border:1px solid var(--gray-300)!important}.ship-kpis>.card.kpi{border:0!important;border-right:1px solid var(--gray-200)!important;padding:.06in .1in}}
-/* Search: the cause line stays; its longer second line is in the tip */
-.search-results .oh-why-more{display:none}
 .data-table td.nowrap{white-space:nowrap}
 @media screen{.data-table .due-cell{white-space:nowrap}}
 .lines-table.search{min-width:1040px}
 .lines-table.po{min-width:1040px} /* 848px of fixed columns: Item / Description keeps about 200px */
 /* --- end 2v2 (pages) --- */
+
+/* --- 2v2 design fix D1: order-line tables on phones, table cards, print --- */
+/* Phones: every order line (Order Health, Purchase Orders, Search) is a card, like a Shipping row: the order number and
+   value on top, the status under them, customer and warehouse, the item, date and quantity, then the reschedule badge
+   and Add note. The markup stays a table (desktop and print are unchanged); the row checkbox keeps its column. */
+@media (max-width:640px){
+  .table-scroll>.lines-table{min-width:0!important;display:block}
+  .lines-table>colgroup,.lines-table>thead{display:none}
+  .lines-table.so>thead{display:block}
+  .lines-table.so>thead>tr{display:flex}
+  .lines-table.so>thead th:not(.c-check){display:none}
+  .lines-table.so>thead th.c-check{display:flex;align-items:center;gap:8px;width:100%;padding:10px 18px!important}
+  .lines-table.so>thead th.c-check::after{content:"Select all";font-size:12px;color:var(--gray-500)}
+  .lines-table>tbody{display:block}
+  .lines-table>tbody>tr.line-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"doc val" "st st" "name wh" "item item" "date qty" "notes notes";align-items:start;gap:6px 12px;padding:14px 18px;border-bottom:1px solid var(--gray-100)}
+  .lines-table.so>tbody>tr.line-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"check doc val" "check st st" "check name wh" "check item item" "check date qty" "check resched notes"}
+  .lines-table.search>tbody>tr.line-row{grid-template-areas:"doc val" "st st" "name wh" "item item" "date qty" "type notes"}
+  .lines-table>tbody>tr.line-row>td{display:block;min-width:0;padding:0!important;border:0;text-align:left}
+  .lines-table .c-check{grid-area:check}
+  .lines-table .c-doc{grid-area:doc;font-size:14px}
+  .lines-table .c-val{grid-area:val;font-size:13px;text-align:right!important}
+  .lines-table .c-st{grid-area:st}
+  .lines-table .c-name{grid-area:name}
+  .lines-table .c-wh{grid-area:wh;text-align:right!important;max-width:45vw}
+  .lines-table .clip{-webkit-line-clamp:1}
+  .lines-table .c-item{grid-area:item;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lines-table .c-item strong{display:inline;margin-right:6px}
+  .lines-table .c-item .desc{display:inline}
+  .lines-table .c-date{grid-area:date}
+  .lines-table .c-qty{grid-area:qty;text-align:right!important}
+  .lines-table .c-date[data-label]::before,.lines-table .c-qty[data-label]::before{content:attr(data-label) " ";font-weight:400;color:var(--gray-500)}
+  .lines-table .c-resched{grid-area:resched;align-self:center}
+  .lines-table .c-type{grid-area:type;align-self:center}
+  .lines-table .c-notes{grid-area:notes;justify-self:end}
+  .lines-table>tbody>tr.note-editor-row{display:block}
+  .lines-table>tbody>tr.note-editor-row>td{display:block}
+  .lines-table .note-editor,.lines-table.so .note-editor{grid-template-columns:minmax(0,1fr);padding:10px 18px 14px}
+  /* Build Risk / Metrics rows and the supply tables: the same card, as label / value pairs */
+  .table-scroll>.data-table.cards{min-width:0!important;display:block}
+  .data-table.cards>thead{display:none}
+  .data-table.cards>tbody{display:block}
+  .data-table.cards>tbody>tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:8px 14px;padding:14px 18px;border-bottom:1px solid var(--gray-100)}
+  .data-table.cards>tbody>tr>td{display:block;min-width:0;padding:0!important;border:0;text-align:left;white-space:normal;order:5}
+  .data-table.cards>tbody>tr>td[colspan]{grid-column:1/-1}
+  .data-table.cards td[data-label]:not([data-card=key]):not([data-card=amt]):not([data-card=st])::before{content:attr(data-label);display:block;font-size:11.5px;font-weight:400;color:var(--gray-500);margin-bottom:1px}
+  .data-table.cards td[data-card=key]{order:1;font-size:14px;font-weight:600;color:var(--gray-900)}
+  .data-table.cards td[data-card=amt]{order:2;text-align:right;font-size:13px;font-weight:600}
+  .data-table.cards td[data-card=st]{order:3;grid-column:1/-1}
+  .data-table.cards td[data-card=sub],.data-table.cards td[data-card=item]{order:4}
+  .data-table.cards td[data-card=item],.data-table.cards td[data-card=edit]{grid-column:1/-1}
+  .data-table.cards td[data-card=edit]{order:6}
+  .data-table.cards td[data-card=st] .sub{display:inline;margin-left:6px}
+  .data-table.cards .row-override,.data-table.cards .row-cause,.data-table.cards .row-note{width:100%;min-width:0}
+}
+/* Print: the Warehouse scorecard shares the page with Top offenders, so it drops the 680px minimum the narrow-screen
+   rule gives its rows and leaves out the Resched column (12-month rate; on screen it stays): every column fits. */
+@media print{
+  .table>.thead,.table>.trow,.table>button.trow,.table>.sc-group-head{min-width:0!important}
+  .sc-cols{grid-template-columns:minmax(0,1.7fr) repeat(5,minmax(0,1fr))}
+  .sc-cols>div:nth-child(7){display:none}
+}
+/* --- end 2v2 design fix D1 --- */
 </style>
 </head>
 <body>
@@ -1599,7 +1673,7 @@ details.oh-more[open] .oh-more-less{display:inline}
         <button type="button" class="chip" data-q="Summarize OTD, fill rate and reschedule hit rate as of the export date." data-tip="Asks for on-time delivery, fill rate and reschedule hit rate as of the export date." onclick="aiSend(this.dataset.q)">How are we performing?</button>
       </div>
       <div class="ai-compose">
-        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends)" data-tip="Type a question. Enter sends; Shift+Enter adds a line." onkeydown="aiInputKey(event)"></textarea>
+        <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends)" data-tip="Shift+Enter starts a new line." onkeydown="aiInputKey(event)"></textarea>
         <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send. The AI looks up the numbers it needs." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat. Earlier messages are not sent again." onclick="aiClear()">Clear chat</button></div>
         <span class="ai-foot" id="ai-foot">Answers can be wrong. Check key numbers.</span>
       </div>
@@ -2321,17 +2395,17 @@ function renderNoteEditorRow(r,colspan){
     </div>
   </td></tr>`;
 }
+// Paper only: a line's override and picked cause print inside its Status cell; only a written note gets its own row
+// under the line (an override alone no longer doubles the rows).
+function renderPrintOverride(r){
+  const text=[overrideLabel(String(r.overrideStatus||'').trim()),r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:''].filter(Boolean).join(' · ');
+  return text?`<span class="print-ovr">${esc(text)}</span>`:'';
+}
 function renderPrintNoteRow(r,colspan){
-  const status=String(r.overrideStatus||'').trim();
   const notes=String(r.overrideNotes||'').trim();
-  const cause=r.overrideCause?`Cause: ${manualCauseLabel(r.overrideCause)}`:'';
-  if(!status&&!notes&&!cause)return '';
+  if(!notes)return '';
   return `<tr class="print-note-row has-print-note"><td colspan="${colspan}">
-    <div class="print-note-card">
-      ${status?`<span class="print-note-status">${esc(overrideLabel(status))}</span>`:''}
-      ${cause?`<span class="print-note-status">${esc(cause)}</span>`:''}
-      ${notes?`<strong>Note:</strong> ${esc(notes)}`:''}
-    </div>
+    <div class="print-note-card"><strong>Note:</strong> ${esc(notes)}</div>
   </td></tr>`;
 }
 // --- Filters for Order Health, PO, and Supply / Demand ---
@@ -4515,15 +4589,29 @@ function toggleTableMore(key){
   tableMore={...tableMore,[key]:!tableMore[key]};
   renderResults();
 }
-function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info=''}){
+// Phone cards (cards:true): each body cell gets its column name (data-label) and the column's card place (data-card:
+// key = first line left, amt = first line right, st = full-width status line, sub = customer / warehouse under it,
+// item = the item, full width, edit = the override / note editors, full width at the end); under 640px the CSS
+// turns every row into a card of label / value pairs. Cells keep their own attributes; the two are added last.
+function labelTableCells(rowHtml,head){
+  let i=0;
+  return String(rowHtml).replace(/<td\b([^>]*)>/g,(all,attrs)=>{
+    const col=head[i++];
+    if(!col||/\bcolspan=/.test(attrs))return all;
+    const label=String(col[0]).replace(/<[^>]*>/g,'');
+    return `<td${attrs} data-label="${esc(label)}"${col[3]?` data-card="${col[3]}"`:''}>`;
+  });
+}
+function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false}){
   const open=!!tableMore[key]||printMode;
   const all=items||rows;
   const visible=open?all:all.slice(0,limit);
-  const shown=renderRow?visible.map(renderRow):visible;
+  let shown=renderRow?visible.map(renderRow):visible;
+  if(cards)shown=shown.map(row=>labelTableCells(row,head));
   rows=all;
   return `<section class="table ${className}">
     <div class="card-head lg">${info?`<div class="title-row"><h2>${title}</h2>${infoButton(info)}</div>`:`<h2>${title}</h2>`}${headExtra||`<span class="section-sub">${note}</span>`}</div>
-    <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table" style="min-width:${minWidth}px">
+    <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table${cards?' cards':''}" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
     </table></div>
@@ -4558,8 +4646,8 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
       <td class="num strong">${money(r.amountLocal)}</td>
     </tr>`;
   };
-  const head=[['Doc #'],['Customer / vendor','','13%'],['Due timing'],['Effective due'],['Warehouse'],['Item','','22%'],['Qty open','num'],['Status'],...(editable?[['Override'],['Notes','','14%']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num']];
-  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty,info});
+  const head=[['Doc #','','','key'],['Customer / vendor','','13%','sub'],['Due timing'],['Effective due'],['Warehouse','','','sub'],['Item','','22%','item'],['Qty open','num'],['Status','','','st'],...(editable?[['Override','','','edit'],['Notes','','14%','edit']]:[]),['Reschedule'],...(editable?[['Delivery #'],['Close source']]:[]),['Amount','num','','amt']];
+  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?1600:1000,className:editable?'editable-rows':'',empty,info,cards:true});
 }
 // --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Ask AI chat and the MCP server (mcp/) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
@@ -5331,8 +5419,8 @@ function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows
       <td${parts.length?tipAttr(`Risky PO supply: ${parts.map(([l,q])=>`${fmtNum(q)} ${l}`).join(', ')}.`):''}><span class="pill ${!r.supplyRiskFlag||r.supplyRiskFlag==='OK'?'good':/rescheduled|so has no commit/i.test(r.supplyRiskFlag)?'warn':'bad'}">${esc(r.supplyRiskFlag||'OK')}</span>${riskQty?`<span class="sub">${fmtNum(riskQty)} qty</span>`:''}</td>
     </tr>`;
   });
-  return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,
-    head:[['Month'],['Warehouse','','16%'],['Item','','18%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Risk','','18%']]});
+  return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,cards:true,
+    head:[['Month','','','key'],['Warehouse','','16%','sub'],['Item','','18%','sub'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Risk','','18%','st']]});
 }
 // --- Screen switching and shared chart/table markup ---
 function showResults(){
@@ -5499,6 +5587,12 @@ function searchHighlighter(terms){
     return out+esc(s.slice(last));
   };
 }
+// Search's timing line ("No commit date") adds nothing when the status chip or the cause line already says it.
+function searchTimingRepeats(timing,texts){
+  const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const t=norm(timing);
+  return !!t&&texts.some(x=>{const n=norm(x);return !!n&&(n.includes(t)||t.includes(n));});
+}
 function renderGlobalSearchPage(m){
   const back=`<button type="button" class="link-btn"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Order Health')}</button>`;
   const s=globalSearchResults(m);
@@ -5513,20 +5607,24 @@ function renderGlobalSearchPage(m){
     const type=searchRowType(r);
     const po=/purchase/i.test(String(r.sourceType||''));
     const status=open?r.statusBucket:type==='Delivery'?'Shipped':type==='Receipt'?'Received':'Closed';
-    const refs=[has(r.lineNumber)?`Line ${hl(r.lineNumber)}`:'',has(r.deliveryDocNumber)?`${po?'Receipt':'Delivery'} ${hl(r.deliveryDocNumber)}`:'',has(r.customerPONumber)?`${po?'Vendor ref':'Cust PO'} ${hl(r.customerPONumber)}`:''].filter(Boolean).join(' · ');
-    // Owner, project and FedEx tracking number have no column; show them only when they are why the row matched.
-    const extra=[matched(r.owner)?`Owner ${hl(r.owner)}`:'',matched(r.project)?`Project ${hl(r.project)}`:'',matched(shippingTrackingFor(r))?`Tracking ${hl(shippingTrackingFor(r))}`:''].filter(Boolean).join(' · ');
+    // The line number and the customer / warehouse codes repeat on every row, so they show only when they are why
+    // the row matched, like the owner, project and FedEx tracking number (no column); delivery and PO refs always show.
+    const refs=[has(r.lineNumber)&&matched(r.lineNumber)?`Line ${hl(r.lineNumber)}`:'',has(r.deliveryDocNumber)?`${po?'Receipt':'Delivery'} ${hl(r.deliveryDocNumber)}`:'',has(r.customerPONumber)?`${po?'Vendor ref':'Cust PO'} ${hl(r.customerPONumber)}`:''].filter(Boolean).join(' · ');
+    const extra=[has(r.code)&&matched(r.code)?hl(r.code):'',matched(r.owner)?`Owner ${hl(r.owner)}`:'',matched(r.project)?`Project ${hl(r.project)}`:'',matched(shippingTrackingFor(r))?`Tracking ${hl(shippingTrackingFor(r))}`:''].filter(Boolean).join(' · ');
     const wh=rowWarehouse(r);
+    const why=open?ohLineWhy(r):'';
+    // The timing line is left out when it only repeats the status or the cause line ("No commit date" under No Commit).
+    const timing=open&&r.dueText&&!searchTimingRepeats(r.dueText,[status,why?lineReasons(r)[0]:''])?`<span class="timing">${esc(r.dueText)}</span>`:'';
     return `<tr class="line-row${isNoteEditorVisible(r)?' editing':''}">
       <td class="c-type">${esc(type)}</td>
       <td class="c-doc">${hl(r.documentNumber||'—')}${refs?`<span class="sub">${refs}</span>`:''}</td>
-      <td class="c-name">${hl(r.name||'—')}${has(r.code)||extra?`<span class="sub">${[has(r.code)?hl(r.code):'',extra].filter(Boolean).join(' · ')}</span>`:''}</td>
-      <td class="c-wh">${hl(wh)}${has(r.warehouse)&&String(r.warehouse).trim()!==wh?`<span class="sub">${hl(r.warehouse)}</span>`:''}</td>
+      <td class="c-name" title="${esc(r.name||'')}"><span class="clip">${hl(r.name||'—')}</span>${extra?`<span class="sub">${extra}</span>`:''}</td>
+      <td class="c-wh" title="${esc(wh)}"><span class="clip">${hl(wh)}</span>${has(r.warehouse)&&String(r.warehouse).trim()!==wh&&matched(r.warehouse)?`<span class="sub">${hl(r.warehouse)}</span>`:''}</td>
       <td class="c-item"><strong>${hl(r.itemCode||'—')}</strong><span class="desc">${hl(String(r.itemDescription||'').substring(0,160))}</span></td>
-      <td class="c-date">${esc(displayDate(searchRowDate(r,open))||'—')}</td>
-      <td class="num c-qty">${fmtNum(open?r.openQuantity:r.quantity)}</td>
+      <td class="c-date" data-label="Date">${esc(displayDate(searchRowDate(r,open))||'—')}</td>
+      <td class="num c-qty" data-label="Qty">${fmtNum(open?r.openQuantity:r.quantity)}</td>
       <td class="num c-val">${money(open?openLineValue(r):r.amountLocal)}</td>
-      <td><div class="c-status"><span class="status-chip ${open?tone[status]||'':'good'}">${esc(status)}</span>${open&&r.dueText?`<span class="timing">${esc(r.dueText)}</span>`:''}${open?ohLineWhy(r):''}</div></td>
+      <td class="c-st"><div class="c-status"><span class="status-chip ${open?tone[status]||'':'good'}">${esc(status)}</span>${timing}${why}${renderPrintOverride(r)}</div></td>
       <td class="c-notes print-hide">${renderNoteButton(r)}</td>
     </tr>${renderNoteEditorRow(r,10)}${renderPrintNoteRow(r,10)}`;
   }).join('');
@@ -5538,7 +5636,7 @@ function renderGlobalSearchPage(m){
   // Order lines first (how they are sorted is in the count's tip), then the supply / demand and Clear To Build matches.
   const lines=`<div class="table">
       <div class="table-scroll" tabindex="0" role="region" aria-label="Order lines found"><table class="lines-table search">
-        <colgroup><col style="width:96px"><col style="width:108px"><col style="width:140px"><col style="width:120px"><col><col style="width:92px"><col style="width:56px"><col style="width:88px"><col style="width:132px"><col class="col-notes" style="width:110px"></colgroup>
+        <colgroup><col style="width:86px"><col style="width:92px"><col style="width:116px"><col style="width:100px"><col><col style="width:86px"><col style="width:50px"><col style="width:84px"><col style="width:172px"><col class="col-notes" style="width:106px"></colgroup>
         <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
@@ -6321,8 +6419,7 @@ function renderResults(){
         ['qty',qtyHeader,cellQty,'num'],
         ['value','Value',cellValue,'num'],
         ['status','Status',linkedStatus],
-        ['reschedule','Reschedule',r=>timeOf(rescheduleOf(r))],
-        ['lead','Lead',r=>daysBetweenDates(r.documentDate,originalDueOf(r)),'num']
+        ['reschedule','Reschedule',r=>timeOf(rescheduleOf(r))]
       ];
       const [sortKind,sortId,sortDirName]=String(weeklyLineSort).split(':');
       const sortCol=sortKind==='col'?sortCols.find(c=>c[0]===sortId):null;
@@ -6377,12 +6474,11 @@ function renderResults(){
         </div>`:'';
       // What each column shows, for its heading's tooltip.
       const sortTips={doc:'Sales order number.',customer:'Customer name.',warehouse:'Warehouse the line ships from.',item:'Item code and description.',
-        date:dateHeader==='Delivery date'?'Date the line was delivered.':dateHeader==='Original delivery'?'The line’s original delivery date, before any reschedule.':'The date the line is due now (its reschedule date when it has one).',
+        date:`${dateHeader==='Delivery date'?'Date the line was delivered.':dateHeader==='Original delivery'?'The line’s original delivery date, before any reschedule.':'The date the line is due now (its reschedule date when it has one).'} Point at a date for its lead time.`,
         qty:qtyHeader==='Shipped'?'Quantity delivered.':qtyHeader==='Qty'?'Quantity on the line (open quantity for open lines).':'Quantity still to ship.',
         value:showOtd||showShippedWeek?'Value shipped.':'Open value for open lines, line value for closed ones.',
         status:'Why the line is listed, with its timing.',
-        reschedule:'The reschedule (commit) date, or why there is none.',
-        lead:'Weeks from order date to original delivery date.'};
+        reschedule:'The reschedule (commit) date, or why there is none.'};
       const sortHeader=([id,label,,num])=>{
         const on=sortCol&&sortCol[0]===id;
         return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort, again to reverse.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
@@ -6390,7 +6486,7 @@ function renderResults(){
       return `<div class="table">
         <div class="table-tools linked-tools"><label>Sort lines <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so">
-          <colgroup><col class="col-check" style="width:42px"><col style="width:64px"><col style="width:112px"><col style="width:100px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:146px"><col style="width:124px"><col style="width:62px"><col class="col-notes" style="width:110px"></colgroup>
+          <colgroup><col class="col-check" style="width:40px"><col style="width:60px"><col style="width:100px"><col style="width:92px"><col><col style="width:86px"><col style="width:50px"><col style="width:78px"><col style="width:176px"><col style="width:120px"><col class="col-notes" style="width:106px"></colgroup>
           <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines in this list, not only those shown.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
             const rowValue=cellValue(r);
@@ -6433,17 +6529,16 @@ function renderResults(){
             return `<tr class="line-row${noteOpen?' editing':''}${picked?' selected':''}${i<12?' fade-row':''}"${i<12?` style="animation-delay:${i*30}ms"`:''}>
               <td class="c-check print-hide"><input type="checkbox" class="row-check" data-key="${esc(key)}"${picked?' checked':''} aria-label="Select ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}" onchange="toggleLinkedRow(this.dataset.key,this.checked)"></td>
               <td class="c-doc">${esc(r.documentNumber||'—')}</td>
-              <td class="c-name" title="${esc(r.name||'')}">${esc(r.name||'—')}</td>
-              <td class="c-wh">${esc(rowWarehouse(r)||'—')}</td>
+              <td class="c-name" title="${esc(r.name||'')}"><span class="clip">${esc(r.name||'—')}</span></td>
+              <td class="c-wh" title="${esc(rowWarehouse(r)||'')}"><span class="clip">${esc(rowWarehouse(r)||'—')}</span></td>
               <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
-              <td class="c-date">${esc(displayDate(cellDate(r))||'—')}</td>
-              <td class="num c-qty">${fmtNum(rowQty)}</td>
+              <td class="c-date" data-label="${esc(dateHeader)}">${orderLeadTime==='—'?esc(displayDate(cellDate(r))||'—'):`<span${tipAttr(`Lead time ${orderLeadTime} (order date to original delivery).`)}>${esc(displayDate(cellDate(r))||'—')}</span>`}</td>
+              <td class="num c-qty" data-label="${esc(qtyHeader)}">${fmtNum(rowQty)}</td>
               <td class="num c-val">${money(rowValue)}</td>
-              <td><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${ohLineWhy(r)}</div></td>
-              <td>${rescheduleLabel}</td>
-              <td class="num c-lead">${esc(orderLeadTime)}</td>
+              <td class="c-st"><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${ohLineWhy(r)}${renderPrintOverride(r)}</div></td>
+              <td class="c-resched">${rescheduleLabel}</td>
               <td class="c-notes print-hide">${renderNoteButton(r)}</td>
-            </tr>${renderNoteEditorRow(r,12)}${renderPrintNoteRow(r,12)}`;
+            </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
         <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show up to 80'}</button>`:''}</div>
@@ -6624,13 +6719,13 @@ function renderResults(){
               const noteOpen=isNoteEditorVisible(r);
               return `<tr class="line-row${noteOpen?' editing':''}${i<12?' fade-row':''}"${i<12?` style="animation-delay:${i*30}ms"`:''}>
                 <td class="c-doc">${esc(r.documentNumber||'—')}</td>
-                <td class="c-name" title="${esc(poVendorLabel(r))}">${esc(r.name||'—')}</td>
-                <td class="c-wh">${esc(rowWarehouse(r)||'—')}</td>
+                <td class="c-name" title="${esc(poVendorLabel(r))}"><span class="clip">${esc(r.name||'—')}</span></td>
+                <td class="c-wh" title="${esc(rowWarehouse(r)||'')}"><span class="clip">${esc(rowWarehouse(r)||'—')}</span></td>
                 <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
-                <td class="c-date">${esc(displayDate(dueDate)||'—')}</td>
-                <td class="num c-qty">${fmtNum(r.openQuantity)}</td>
+                <td class="c-date" data-label="Due">${esc(displayDate(dueDate)||'—')}</td>
+                <td class="num c-qty" data-label="Qty open">${fmtNum(r.openQuantity)}</td>
                 <td class="num c-val">${money(openLineValue(r))}</td>
-                <td><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${rescheduleLabel}</div></td>
+                <td class="c-st"><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${rescheduleLabel}${renderPrintOverride(r)}</div></td>
                 <td class="c-notes print-hide">${renderNoteButton(r)}</td>
               </tr>${renderNoteEditorRow(r,9)}${renderPrintNoteRow(r,9)}`;
             }).join('')}</tbody>
@@ -6744,8 +6839,8 @@ function renderResults(){
         if(!rows.length)return `<div class="card"><p class="empty-note">${esc(emptyText)}</p></div>`;
         return groupSupplyRowsByWarehouse(rows).map(group=>renderTableCard({key:`${key}-${group.warehouse}`,title:esc(group.warehouse),
           note:`${fmtNum(group.rows.length)} ${group.rows.length===1?'line':'lines'}${group.rows.length>40?' (first 40 listed)':''} · ${fmtNum(group.rows.reduce((s,r)=>s+r.demandOpenQty,0))} demand qty · ${money(group.rows.reduce((s,r)=>s+r.demandOpenValue,0))}`,
-          head:[['Month'],['Item','','26%'],['Demand qty','num'],['Demand value','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%'],['Risk qty','num']],
-          limit:10,minWidth:1000,
+          head:[['Month','','','key'],['Item','','26%','item'],['Demand qty','num'],['Demand value','num','','amt'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%','st'],['Risk qty','num']],
+          limit:10,minWidth:1000,cards:true,
           rows:group.rows.slice(0,40).map(r=>{
             const riskBits=[];
             if(r.unconfirmedSupplyQty>0)riskBits.push(`Unconfirmed ${fmtNum(r.unconfirmedSupplyQty)}`);
@@ -7473,7 +7568,17 @@ function placeFloating(box,anchor,want,gap,align='center'){
   box.style.setProperty('--arrow-y',`${Math.round(ay)}px`);
   box.dataset.side=pick;
 }
-function tipFocusVisible(el){try{return !!(el&&el.matches&&el.matches(':focus-visible'));}catch(e){return true;}}
+// Focus shows a tip only for keyboard focus (:focus-visible), and never for a text box or a checkbox: a text box is
+// :focus-visible on every focus (a click, or Ask AI putting focus back after Send), so its tip kept popping up over
+// what it already says (label, placeholder), and a checkbox's tip sits on its label over the links around it. Their
+// tips still show on hover and are read with the control (aria-describedby).
+// Inputs that act like buttons keep their focus tips.
+const TIP_FOCUS_INPUT_TYPES=/^(button|submit|reset|image|file|color|range|radio)$/i;
+function tipFocusVisible(el){
+  const tag=String(el&&el.tagName||'').toUpperCase();
+  if(tag==='TEXTAREA'||(tag==='INPUT'&&!TIP_FOCUS_INPUT_TYPES.test(String(el.type||'text'))))return false;
+  try{return !!(el&&el.matches&&el.matches(':focus-visible'));}catch(e){return true;}
+}
 if(document.addEventListener){
   document.addEventListener('pointerover',e=>{
     if(e.pointerType==='touch')return;

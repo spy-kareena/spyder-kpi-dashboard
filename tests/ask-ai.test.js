@@ -568,6 +568,8 @@ test('every Ask AI control carries a plain-English tooltip', () => {
     assert.match(c, /data-tip="[A-Z][^"]{15,}"/, c);
   }
   assert.match(panel, /<label class="ai-check" data-tip="Nothing is sent/);
+  // The question box's tip adds what its placeholder does not say (the placeholder already says Enter sends).
+  assert.match(panel, /<textarea id="ai-input"[^>]*placeholder="Ask about orders, POs, warehouses… \(Enter sends\)" data-tip="Shift\+Enter starts a new line\."/);
 });
 
 test('the Ask AI button in the page header names the four providers and says nothing is sent until one is allowed', async () => {
