@@ -137,7 +137,11 @@ test('bad changes are refused with a reason and nothing is stored', async () => 
     { rows: { [KEY_A]: { status: 'x'.repeat(81), at: T(1) } } },
     { rows: { [KEY_A]: { status: 5, at: T(1) } } },
     { rows: { [KEY_A]: { notes: 'bell\u0007', at: T(1) } } },
-    { rows: { [KEY_A]: { by: 'x'.repeat(17), at: T(1) } } },
+    { rows: { [KEY_A]: { by: 'x'.repeat(41), at: T(1) } } },
+    { rows: { [KEY_A]: { by: 'Bob!', at: T(1) } } },
+    { rows: { [KEY_A]: { by: '<b>KK</b>', at: T(1) } } },
+    { rows: { [KEY_A]: { by: 5, at: T(1) } } },
+    { shipments: { 'm-1': { order: '500', number: '1', by: 'Ann; Lee', at: T(1) } } },
     { rows: { [KEY_A]: 'Hold' } },
     { rows: { 'tab\tkey': { notes: 'x', at: T(1) } } },
     { rows: { ['k'.repeat(301)]: { notes: 'x', at: T(1) } } },
@@ -153,6 +157,30 @@ test('bad changes are refused with a reason and nothing is stored', async () => 
   // Line breaks and tabs inside a note are fine; so is a note of exactly 4,000 characters.
   const ok = await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'line 1\nline 2\tend' + 'x'.repeat(3983), at: T(1) } } } });
   assert.equal(ok.status, 200);
+});
+
+test("the editor (by) is a name of up to 40 letters, spaces and . ' - (stored tidied); initials saved before 2v2 are still taken", async () => {
+  const env = { REPORT_STORE: kv() };
+  const cases = [
+    ['Kareena', 'Kareena'],
+    ['  Zoë   O’Brien-Smith ', "Zoë O'Brien-Smith"],
+    ['करीना', 'करीना'],
+    ['a'.repeat(40), 'a'.repeat(40)],
+    ['KK', 'KK'],
+    ['K2', 'K2'], // initials with a digit, as the dialog before 2v2 saved them
+    ['ABCD1234EFGH5678', 'ABCD1234EFGH5678'],
+    ['', ''],
+    ['   ', ''],
+  ];
+  for (const [i, [by, want]] of cases.entries()) {
+    const key = `${KEY_A}|${i}`;
+    const res = await call({ method: 'PATCH', env, body: { rows: { [key]: { notes: 'x', by, at: T(1) } }, shipments: { [`m-${i}`]: { order: '500', number: '1', by, at: T(1) } } } });
+    assert.equal(res.status, 200, by);
+    const out = await res.json();
+    assert.equal(out.rows[key].by, want, by);
+    assert.equal(out.shipments[`m-${i}`].by, want, by);
+  }
+  assert.equal((await stored(env)).rows[`${KEY_A}|1`].by, "Zoë O'Brien-Smith");
 });
 
 test('size limits: 1 MB per change, 2 MB stored (old cleared-line markers are pruned first)', async () => {

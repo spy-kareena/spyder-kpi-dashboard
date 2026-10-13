@@ -740,7 +740,7 @@ details.about p{margin:0}
   .loaded-card{margin-top:0;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:10px 12px}
   .loaded-card .loaded-label,.loaded-card .loaded-meta{display:none}
   .loaded-card .loaded-actions{padding-top:0;grid-row:1;grid-column:2}
-  /* Notes status and Your initials wrap under the file name and buttons (the only place to change initials) */
+  /* Notes status and Change name wrap under the file name and buttons (the only place to change the name) */
   .loaded-card .loaded-notes{grid-row:2;grid-column:1/-1}
   .main{border-left:0;padding:20px 16px 48px}
   .page-head{flex-wrap:wrap}
@@ -970,18 +970,30 @@ details.about>summary:hover{color:var(--gray-900)}
 }
 /* --- end Stream A --- */
 
-/* --- Stream B: shared notes (Us / Them cause controls, sidebar notes line, editor initials dialog) --- */
+/* --- Stream B: shared notes (Us / Them cause controls, sidebar notes line, Your name dialog) --- */
 .note-picks{display:grid;gap:8px;align-content:start}
 .editable-rows .row-cause{font:inherit;font-size:12px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff;color:var(--gray-700);padding:5px 8px;width:100%;margin-top:6px;cursor:pointer}
 @media screen{.editable-rows .row-cause{min-width:140px}}
 .notes-editor-btn{font-size:12px;font-weight:500;text-align:left}
+.loaded-notes{overflow-wrap:anywhere}
 .editor-dialog{border:1px solid var(--gray-200);border-radius:12px;padding:20px 22px;width:min(380px,calc(100vw - 32px));max-width:calc(100vw - 32px);box-sizing:border-box;color:var(--gray-900);background:#fff;box-shadow:0 16px 40px rgba(16,24,40,.18)}
 .editor-dialog::backdrop{background:rgba(16,24,40,.4)}
 .editor-form{display:grid;gap:10px}
 .editor-form h2{margin:0;font-size:16px;font-weight:600;color:var(--gray-900)}
+.editor-form h2:focus{outline:none}
 .editor-form p{margin:0;font-size:13px;line-height:1.5;color:var(--gray-600)}
 .editor-form label{font-size:12px;font-weight:500;color:var(--gray-700)}
-.editor-form input{font:inherit;font-size:16px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--gray-500);border-radius:var(--r-ctl);padding:8px 10px;width:100%;box-sizing:border-box;color:var(--gray-900);background:#fff}
+.editor-form input{font:inherit;font-size:16px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);padding:8px 10px;width:100%;box-sizing:border-box;color:var(--gray-900);background:#fff}
+.editor-form label,.editor-form .editor-sub{margin-top:4px}
+/* Names already saved (one click each): the most recently seen first; Find your name narrows a long list */
+.editor-people{display:grid;gap:8px}
+.editor-people[hidden],.editor-form .editor-filter[hidden]{display:none}
+.editor-form .editor-sub{font-size:12px;font-weight:500;color:var(--gray-700)}
+.editor-chips{display:flex;flex-wrap:wrap;gap:6px}
+.editor-chip{font:inherit;font-size:13px;font-weight:500;line-height:1.3;min-height:32px;max-width:100%;padding:5px 12px;border:1px solid var(--gray-300);border-radius:var(--r-pill);background:#fff;color:var(--gray-800);cursor:pointer;text-align:left;overflow-wrap:anywhere;transition:background-color var(--dur),border-color var(--dur)}
+.editor-chip:hover{background:var(--gray-100);border-color:var(--gray-400)}
+.editor-chip[aria-current="true"]{background:var(--accent-tint);border-color:var(--accent-border);color:var(--accent-strong)}
+.editor-form .editor-none{font-size:12px}
 .editor-form .editor-error{color:var(--crit-text);font-weight:500}
 .editor-form .editor-error:empty{margin-top:-10px}
 .editor-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
@@ -1888,7 +1900,7 @@ function announce(text){
   if(el)el.textContent=text;
 }
 // Sets one field of a line's saved override (undefined removes it). An older legacy-key entry moves to the
-// current key so editing one field keeps the others. Every change is stamped with the editor's initials (by) and
+// current key so editing one field keeps the others. Every change is stamped with the editor's name (by) and
 // the time (at), and queued for the shared copy on the server (sharedNoteChanged). Callers save and redraw.
 function writeRowOverride(cleanKey,matches,field,value){
   const legacyKeys=[...new Set(matches.flatMap(rowKeyCandidates))].filter(k=>k!==cleanKey&&rowOverrides[k]);
@@ -1982,8 +1994,8 @@ function toggleRowNote(key){
   if(!visible){
     const note=[...document.querySelectorAll('textarea.row-note')].find(t=>t.dataset.key===cleanKey);
     if(note)note.focus();
-    // Shared notes: ask once for the editor's initials before the first edit (focus comes back to the note).
-    askEditorInitials();
+    // Shared notes: ask once for the editor's name before the first edit (focus comes back to the note).
+    askEditorName();
   }else{
     const button=[...document.querySelectorAll('button.note-btn')].find(b=>b.dataset.key===cleanKey);
     if(button)button.focus();
@@ -5327,7 +5339,7 @@ function renderSidebar(){
   const meta=loaded
     ? `${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}<br>`:''}${fmtNum(rowCount)} rows${kinds?` · ${esc(kinds)}`:''}${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
-  // The shared-notes status and the initials button have their own row, which stays visible in the compact card
+  // The shared-notes status and the Change name button have their own row, which stays visible in the compact card
   // (980px and below hides the meta lines).
   const notesLine=loaded?sharedNotesSidebarLine():'';
   const focus=captureFocus(el);
@@ -7067,7 +7079,7 @@ function wireTips(){
 function tipLayer(){return document.getElementById('tip-layer');}
 function tipTarget(node){return node&&node.closest?node.closest('[data-tip]'):null;}
 function tipVisible(){const layer=tipLayer();return !!(layer&&!layer.hidden&&tipState.el);}
-// A modal <dialog> (the initials question) sits in the browser's top layer, above any z-index. A tip for a control
+// A modal <dialog> (the Your name question) sits in the browser's top layer, above any z-index. A tip for a control
 // inside it is drawn from inside that dialog, so it shows on top; the layer goes back to <body> when it hides.
 function tipHost(el){return el&&el.closest?el.closest('dialog[open]'):null;}
 function tipGoHome(layer){
@@ -7744,13 +7756,22 @@ initStreamAUi();
 // this version) is sent back. After that every change is sent 800 ms after the last change to that line, in one
 // batch. Hosts without the API (IIS, a file share, a page opened from disk) keep notes in this browser only, as
 // before. Shared snapshots never read or write either copy; they carry the notes of their rows.
-// Entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}; by = the editor's initials (asked once, kept in
-// localStorage spyderKpiEditor), at = ISO time of the edit. A cleared line is sent as {by, at} only, so other
-// browsers drop their copy; until the server has that marker it is kept in localStorage (spyderKpiNotesClearedV1).
+// Entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}; by = the editor's name (asked once, kept in
+// localStorage spyderKpiEditorName and in the shared list of names, functions/api/people.js), at = ISO time of the
+// edit. A cleared line is sent as {by, at} only, so other browsers drop their copy; until the server has that marker
+// it is kept in localStorage (spyderKpiNotesClearedV1).
 // The same store keeps tracking numbers typed in by hand on the Shipping page (shipments, see
 // sharedNotesPatchShipments / getSharedShipments below).
 const NOTE_MAX_LENGTH=4000;
-const NOTES_EDITOR_KEY='spyderKpiEditor';
+// The editor's name: null = never asked, '' = skipped (Not now), else the name.
+const NOTES_EDITOR_KEY='spyderKpiEditorName';
+// Initials saved before 2v2: stamped on edits until the name is given, and put in the New name box when it is asked.
+const NOTES_INITIALS_KEY='spyderKpiEditor';
+// {name, at}: when this browser last sent its name to the shared list (at most once a day, PEOPLE_SEEN_MS).
+const PEOPLE_SEEN_KEY='spyderKpiNameSeenV1';
+const PEOPLE_SEEN_MS=24*60*60*1000;
+const PEOPLE_SHOWN=12; // saved names shown in the dialog at once; Find your name narrows a longer list
+const EDITOR_NAME_MAX=40;
 const NOTES_CLEARED_KEY='spyderKpiNotesClearedV1';
 const NOTES_SHIPMENTS_KEY='spyderKpiShipmentsV1';
 const NOTES_PATCH_DELAY=800;
@@ -7794,6 +7815,8 @@ const notesUnsent=new Set();
 let notesUnsentReason='';
 let editorDialogOpen=false;
 let editorAsked=false;
+// The names saved for everyone (GET /api/people), the most recently seen first: [{name, lastSeen}].
+let sharedPeople=[];
 let linkedBulkCause='';
 // rowKey -> 'YYYY-MM-DD' export date of the earliest uploaded report in which the line was on the At Risk card (the
 // first export date of that week: the history keeps one entry per week), from the shared at-risk history
@@ -7817,9 +7840,12 @@ function persistClearedSoon(){
 }
 const isSafeNoteKey=k=>k!=='__proto__'&&k!=='constructor'&&k!=='prototype';
 const notesHasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
-// Editor initials: null = never asked, '' = skipped, else the initials.
+// The editor's name: null = never asked, '' = skipped, else the name. A value that is not a name (edited by hand)
+// counts as never asked.
 function readEditor(){
-  try{return localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
+  let v=null;
+  try{v=localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
+  return v===null||v===''?v:normalizeEditorName(v)||null;
 }
 // This computer's clock against the server's (the Date header of a notes reply), used only when it is more than two
 // minutes off: edits are then stamped in server time, so a clock set ahead does not keep winning merges (the server
@@ -7833,7 +7859,7 @@ function noteClockFrom(res){
 }
 const noteNowIso=()=>new Date(Date.now()+notesClockOffset).toISOString();
 function noteStamp(){
-  return {by:readEditor()||'',at:noteNowIso()};
+  return {by:editorStamp(),at:noteNowIso()};
 }
 function noteTime(e){
   const t=e?Date.parse(e.at):NaN;
@@ -7854,12 +7880,12 @@ function sharedRowEntry(e){
   if(e.notes!==undefined)out.notes=cleanNoteText(e.notes,NOTE_MAX_LENGTH);
   if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
   if(e.deleted)out.deleted=true;
-  out.by=cleanNoteText(e.by,16);
+  out.by=cleanEditorTag(e.by);
   out.at=noteTime(e)?e.at:noteNowIso();
   return out;
 }
 function sharedShipmentEntry(e){
-  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanNoteText(e.by,16),at:noteTime(e)?e.at:noteNowIso()};
+  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanEditorTag(e.by),at:noteTime(e)?e.at:noteNowIso()};
 }
 // An entry that came from the server, as this page keeps it.
 function localRowEntry(e){
@@ -7895,7 +7921,7 @@ function sharedNoteChanged(key,entry,stamp){
   else if(sharing){notesCleared[key]={by:stamp.by,at:stamp.at};persistClearedSoon();}
   if(!sharing)return;
   queueSharedNote('rows',key);
-  askEditorInitials();
+  askEditorName();
 }
 function queueSharedNote(kind,key,delay=NOTES_PATCH_DELAY){
   const id=`${kind}|${key}`;
@@ -8112,6 +8138,7 @@ async function syncSharedNotes(){
     // Lines refused earlier are pushed again by the merge when the server still lacks them.
     notesUnsent.clear();notesUnsentReason='';
     sharedNotes={...sharedNotes,state:'shared',message:''};
+    if(!refresh)peopleOnOpen();
     if(notesGaveUp())notesRetries=0;
     push.forEach(id=>notesReady.add(id));
     if(notesReady.size)flushSharedNotesSoon();
@@ -8167,103 +8194,230 @@ function recomputeLastEdit(){
   [...Object.values(rowOverrides),...Object.values(sharedShipments)].forEach(e=>{if(e&&noteTime(e)&&(!last||noteTime(e)>noteTime(last)))last=e;});
   sharedNotes.last=last?{by:String(last.by||''),at:last.at}:null;
 }
-// Sidebar line under the report status (its own .loaded-notes row): "Notes shared · last edit KK Oct 8".
+// Sidebar line under the report status (its own .loaded-notes row): "Notes shared · last edit Kareena · Oct 8", and
+// the Change name button.
 function sharedNotesSidebarLine(){
   if(isSnapshotView)return '';
   const s=sharedNotes;
   let text='',tip='';
   if(s.state==='shared'){
     const last=s.last&&noteTime(s.last)?new Date(noteTime(s.last)):null;
-    const lastBy=last&&s.last.by?`${s.last.by} `:'';
+    const lastBy=last&&s.last.by?`${s.last.by} · `:'';
     if(s.saving)text='Notes shared · saving…';
     else if(s.message)text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
     else text=last?`Notes shared · last edit ${esc(lastBy)}${esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric'}))}`:'Notes shared';
-    tip=`Notes, overrides, Us / Them causes and deleted lines are saved on the server, so everyone who signs in sees the same ones.${last?` Last edit${s.last.by?` by ${s.last.by}`:''} on ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}.`:''}`;
+    tip=`Notes, overrides and causes are saved for everyone who signs in.${last?` Last edit${s.last.by?` by ${s.last.by}`:''}: ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}.`:''}`;
   }else if(s.state==='offline'){
     text='Notes saved in this browser only (server not reachable)';
-    tip='The server could not be reached, or answered with an error, when the page opened. Notes are kept in this browser and shared once it answers: the page tries again when you come back to it (at most once a minute) and the next time it opens.';
+    tip='The server did not answer. Notes are kept here and shared once it does.';
   }else if(s.state==='failed'){
     text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
     tip='Notes are kept in this browser. Reload the page to try again.';
   }else if(s.state==='local'||(!s.state&&!canShareNotes())){
     text='Notes saved in this browser only';
-    tip='This site has no shared storage, so notes, overrides and causes stay in this browser. Share snapshot carries them to others.';
+    tip='This site has no shared storage. Share snapshot carries your notes to others.';
   }else return '';
-  const editor=readEditor();
-  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorInitials(true)" data-tip="Your initials are kept in this browser and saved with every note, override and cause you change, so others see who made the last edit. Click to change them.">${editor?`Your initials: ${esc(editor)}`:'Add your initials'}</button>`:'';
+  const name=readEditor();
+  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName(true)" data-tip="${esc(name?`Your notes show “${name}”. Click to change it.`:'Add your name to the notes you save.')}">${name?'Change name':'Add your name'}</button>`:'';
   return `<span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
 }
 
-// --- Editor initials: asked once, in a small dialog, the first time notes are shared from this browser ---
-function normalizeInitials(v){
-  const s=String(v||'').normalize('NFC').replace(/[\s._-]/g,'').toUpperCase();
-  return /^[\p{L}\p{N}]{1,4}$/u.test(s)?s:'';
+// --- Editor name: asked once, in a small dialog, the first time notes are shared from this browser ---
+// The names already saved for everyone (functions/api/people.js, Workers KV key 'people') are one-click choices; a
+// new name is added there. The name is kept in this browser (NOTES_EDITOR_KEY), and sent again at most once a day
+// when the page opens so the list stays in recent order. Initials saved before 2v2 are stamped until the name is
+// given and fill the New name box. A static host, a page that cannot reach the server and a shared snapshot send
+// nothing: the name stays in this browser.
+// Same rules as the server: trimmed, spaces collapsed, 1 to 40 letters (any language), spaces and . ' - with at
+// least one letter. '' when it is not a name.
+function normalizeEditorName(v){
+  const s=String(v??'').normalize('NFC').replace(/[\u2018\u2019]/g,"'").replace(/\s+/g,' ').trim();
+  return s.length<=EDITOR_NAME_MAX&&/^[\p{L}\p{M} .'-]+$/u.test(s)&&/\p{L}/u.test(s)?s:'';
 }
-function askEditorInitials(force=false){
+// A `by` the notes API takes: a name, or initials saved before 2v2; anything else is sent as ''.
+function cleanEditorTag(v){
+  const s=String(v??'');
+  return /^[\p{L}\p{N}]{1,16}$/u.test(s)?s:normalizeEditorName(s);
+}
+function legacyInitials(){
+  try{const v=localStorage.getItem(NOTES_INITIALS_KEY);return v&&/^[\p{L}\p{N}]{1,16}$/u.test(v)?v:'';}catch(err){return '';}
+}
+// Who an edit is stamped with: the name, else initials saved before 2v2 (until the name question is answered).
+function editorStamp(){
+  const name=readEditor();
+  return name===null?legacyInitials():name;
+}
+// The name question was answered in this browser: a name, Not now, or Not now to the initials question before 2v2.
+function editorAnswered(){
+  if(readEditor()!==null)return true;
+  try{return localStorage.getItem(NOTES_INITIALS_KEY)==='';}catch(err){return false;}
+}
+// A name typed in another capitalisation than a saved one takes the saved spelling, so it is one person in the list.
+function editorKnownName(name){
+  const same=name?sharedPeople.find(p=>p.name.toLowerCase()===name.toLowerCase()):null;
+  return same?same.name:name;
+}
+const canSharePeople=()=>canShareNotes()&&sharedNotes.state==='shared';
+function adoptPeople(list){
+  if(!Array.isArray(list))return false;
+  const seen=new Set();
+  sharedPeople=list.map(p=>({name:normalizeEditorName(p&&p.name),lastSeen:String(p&&p.lastSeen||'')}))
+    .filter(p=>p.name&&!seen.has(p.name.toLowerCase())&&seen.add(p.name.toLowerCase()))
+    .sort((a,b)=>(Date.parse(b.lastSeen)||0)-(Date.parse(a.lastSeen)||0))
+    .slice(0,300);
+  return true;
+}
+// Reads the saved names (when the dialog opens, and on page open while this browser has no name yet).
+async function loadPeople(){
+  if(!canSharePeople())return false;
+  try{
+    const res=await fetch('/api/people',{cache:'no-store'});
+    if(!res.ok||!/json/i.test(res.headers.get('content-type')||''))return false;
+    const data=await res.json();
+    return !isSnapshotView&&adoptPeople(data&&data.people);
+  }catch(err){return false;}
+}
+// Adds the name to the shared list, or marks it as seen. A failure is silent: the name stays in this browser and is
+// sent again the next time the page opens.
+async function postEditorName(name){
+  if(!name||!canSharePeople())return false;
+  try{
+    const res=await fetch('/api/people',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name})});
+    if(!res.ok||!/json/i.test(res.headers.get('content-type')||''))return false;
+    const data=await res.json();
+    if(isSnapshotView)return false;
+    adoptPeople(data&&data.people);
+    // The server keeps the first spelling of a name (any capitalisation): this browser uses it too.
+    const stored=normalizeEditorName(data&&data.name);
+    let sent=name;
+    if(stored&&stored!==name&&stored.toLowerCase()===name.toLowerCase()&&readEditor()===name){
+      try{localStorage.setItem(NOTES_EDITOR_KEY,stored);sent=stored;}catch(err){/* keeps the spelling typed */}
+      renderSidebar();
+    }
+    try{localStorage.setItem(PEOPLE_SEEN_KEY,JSON.stringify({name:sent,at:Date.now()}));}catch(err){/* sent again next open */}
+    return true;
+  }catch(err){return false;}
+}
+// Notes just became shared on this page: send the name if it was not sent today, or read the saved names when the
+// name question is still to come (so they are ready when it opens).
+function peopleOnOpen(){
+  const name=readEditor();
+  if(name){
+    let seen=null;
+    try{seen=JSON.parse(localStorage.getItem(PEOPLE_SEEN_KEY)||'null');}catch(err){seen=null;}
+    if(!seen||seen.name!==name||!(Math.abs(Date.now()-Number(seen.at))<PEOPLE_SEEN_MS))postEditorName(name);
+  }else if(!editorAnswered())loadPeople();
+}
+function askEditorName(force=false){
   if(editorDialogOpen||isSnapshotView)return;
-  if(!force&&(editorAsked||sharedNotes.state!=='shared'||readEditor()!==null))return;
+  if(!force&&(editorAsked||sharedNotes.state!=='shared'||editorAnswered()))return;
   editorAsked=true;
   // Opened after the current click or redraw, so focus goes back to the control in use when it closes.
   setTimeout(openEditorDialog,0);
 }
+// The saved names as buttons: the most recently seen first, at most PEOPLE_SHOWN (filter: Find your name).
+function editorChipsHtml(filter=''){
+  const current=(readEditor()||'').toLowerCase();
+  const q=String(filter||'').trim().toLowerCase();
+  const list=(q?sharedPeople.filter(p=>p.name.toLowerCase().includes(q)):sharedPeople).slice(0,PEOPLE_SHOWN);
+  if(!list.length)return q?'<p class="editor-none">No match. Type it below as a new name.</p>':'';
+  return list.map(p=>`<button type="button" class="editor-chip" data-name="${esc(p.name)}"${p.name.toLowerCase()===current?' aria-current="true"':''} data-tip="Use this name.">${esc(p.name)}</button>`).join('');
+}
 function openEditorDialog(){
   if(editorDialogOpen||isSnapshotView)return;
   const d=document.createElement('dialog');
-  // Older browsers (and the test page) have no modal dialog: edits are then saved without initials.
+  // Older browsers (and the test page) have no modal dialog: edits are then saved without a name.
   if(!d||typeof d.showModal!=='function')return;
   d.id='editor-dialog';
   d.className='editor-dialog';
   d.setAttribute('aria-labelledby','editor-dialog-title');
   d.setAttribute('aria-describedby','editor-dialog-desc');
+  const any=sharedPeople.length>0;
   d.innerHTML=`<form method="dialog" class="editor-form" novalidate>
-    <h2 id="editor-dialog-title">Your initials</h2>
-    <p id="editor-dialog-desc">Notes, overrides and Us / Them causes are shared with everyone who signs in. Your initials are shown with your edits, for example “last edit KK Oct 8”. They are kept in this browser.</p>
-    <label for="editor-initials">Initials (1 to 4 letters)</label>
-    <input id="editor-initials" name="initials" maxlength="4" autocomplete="off" spellcheck="false" autocapitalize="characters" value="${esc(readEditor()||'')}" aria-describedby="editor-error"${tipAttr('Your initials are shown next to the notes, overrides and causes you save.')}>
+    <h2 id="editor-dialog-title"${any?' tabindex="-1" autofocus':''}>Your name</h2>
+    <p id="editor-dialog-desc">Shown with the notes you save.</p>
+    <div class="editor-people" id="editor-people"${any?'':' hidden'}>
+      <p class="editor-sub" id="editor-people-label">Pick your name</p>
+      <input type="search" id="editor-filter" class="editor-filter" placeholder="Find your name" aria-label="Find your name" autocomplete="off" spellcheck="false"${tipAttr('Type part of your name.')}${sharedPeople.length>PEOPLE_SHOWN?'':' hidden'}>
+      <div class="editor-chips" id="editor-chips" role="group" aria-labelledby="editor-people-label">${editorChipsHtml()}</div>
+    </div>
+    <label for="editor-name">New name</label>
+    <input id="editor-name" name="name" maxlength="${EDITOR_NAME_MAX}" autocomplete="name" spellcheck="false" autocapitalize="words" value="${esc(readEditor()||legacyInitials())}" aria-describedby="editor-error"${any?'':' autofocus'}${tipAttr('Not in the list? Type your name.')}>
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
-      <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save your initials in this browser. They are saved with every note, override and cause you change.">Save</button>
-      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without initials. Your edits are shared without a name; add initials later from the sidebar.">Not now</button>
+      <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save this name for your notes.">Save</button>
+      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without a name. Add it later from the sidebar.">Not now</button>
     </div>
   </form>`;
-  const form=d.querySelector('form'),input=d.querySelector('#editor-initials'),error=d.querySelector('#editor-error');
-  // Save (or Enter in the box) checks the initials; Not now and Esc close without them.
+  const form=d.querySelector('form'),input=d.querySelector('#editor-name'),error=d.querySelector('#editor-error');
+  const people=d.querySelector('#editor-people'),filter=d.querySelector('#editor-filter'),chips=d.querySelector('#editor-chips');
+  let picked='',open=true;
+  const pick=name=>{picked=name;d.close('pick');};
+  // A saved name is one click (or Enter on it). Find your name narrows the list; Enter there picks the first match
+  // (only once something is typed, so a stray Enter never picks someone else's name). With saved names the dialog
+  // opens on its title, not on a name or the New name box (no keyboard popping up over the list on a phone).
+  chips.addEventListener('click',e=>{const b=e.target&&e.target.closest?e.target.closest('[data-name]'):null;if(b)pick(b.dataset.name);});
+  filter.addEventListener('input',()=>{chips.innerHTML=editorChipsHtml(filter.value);});
+  filter.addEventListener('keydown',e=>{
+    if(e.key!=='Enter')return;
+    e.preventDefault();
+    const b=filter.value.trim()?chips.querySelector('[data-name]'):null;
+    if(b)pick(b.dataset.name);
+  });
+  // Save (or Enter in the box) checks the name; Not now and Esc close without one.
   form.addEventListener('submit',e=>{
-    const v=normalizeInitials(input.value);
-    if(!v){e.preventDefault();error.textContent='Type 1 to 4 letters or numbers, for example KK.';input.focus();return;}
+    const v=editorKnownName(normalizeEditorName(input.value));
+    if(!v){e.preventDefault();error.textContent=`Use 1 to ${EDITOR_NAME_MAX} letters, spaces and . ' -`;input.focus();return;}
     input.value=v;
     if(!e.submitter||e.submitter.value!=='save'){e.preventDefault();d.close('save');}
   });
   d.querySelector('[data-editor-skip]').addEventListener('click',()=>d.close('skip'));
   d.addEventListener('close',()=>{
+    open=false;
     // A tip shown inside the dialog lives in it until hidden: send it home first, or removing the dialog takes
     // #tip-layer with it and no tip on the page shows again.
     hideTip();
-    finishEditorDialog(d.returnValue==='save'?normalizeInitials(input.value):'');
+    finishEditorDialog(d.returnValue==='pick'?picked:d.returnValue==='save'?editorKnownName(normalizeEditorName(input.value)):'');
     d.remove();
   });
   document.body.appendChild(d);
   editorDialogOpen=true;
   d.showModal();
+  // Names saved since the list was read show up while the dialog is open (focus stays on the same name).
+  const before=sharedPeople.map(p=>p.name).join('\n');
+  loadPeople().then(ok=>{
+    if(!ok||!open||sharedPeople.map(p=>p.name).join('\n')===before)return;
+    const active=document.activeElement;
+    const focused=active&&active.dataset&&chips.contains&&chips.contains(active)?active.dataset.name:null;
+    people.hidden=!sharedPeople.length;
+    filter.hidden=sharedPeople.length<=PEOPLE_SHOWN;
+    chips.innerHTML=editorChipsHtml(filter.value);
+    const again=focused===null?null:[...chips.querySelectorAll('[data-name]')].find(b=>b.dataset.name===focused);
+    if(again)again.focus();
+  });
 }
-function finishEditorDialog(initials){
+function finishEditorDialog(name){
   editorDialogOpen=false;
+  const before=editorStamp();
   try{
-    if(initials)localStorage.setItem(NOTES_EDITOR_KEY,initials);
+    if(name)localStorage.setItem(NOTES_EDITOR_KEY,name);
     else if(readEditor()===null)localStorage.setItem(NOTES_EDITOR_KEY,'');
-  }catch(err){/* initials are a convenience; edits are saved without them */}
-  if(initials){
-    // Edits made just before (or while) the question was open carry the initials too.
+    // Answered once: initials saved before 2v2 are no longer stamped.
+    localStorage.removeItem(NOTES_INITIALS_KEY);
+  }catch(err){/* the name is a convenience; edits are saved without it */}
+  if(name){
+    // Edits made just before (or while) the question was open carry the name too.
     let rows=false,ships=false;
     [...notesReady,...notesTimers.keys()].forEach(id=>{
       const cut=id.indexOf('|'),kind=id.slice(0,cut),key=id.slice(cut+1);
       const e=kind==='rows'?rowOverrides[key]||notesCleared[key]:sharedShipments[key];
-      if(e&&!e.by){e.by=initials;if(kind==='rows')rows=true;else ships=true;}
+      if(e&&e.by!==name&&(e.by||'')===before){e.by=name;if(kind==='rows')rows=true;else ships=true;}
     });
     if(rows){saveRowOverrides();persistClearedSoon();}
     if(ships)notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
-    if(sharedNotes.last&&!sharedNotes.last.by)recomputeLastEdit();
-    if(typeof showToast==='function')showToast(`Initials saved: ${initials}. They are shown with your edits.`);
+    if(rows||ships||(sharedNotes.last&&(sharedNotes.last.by||'')===before))recomputeLastEdit();
+    postEditorName(name);
+    if(typeof showToast==='function')showToast(`Name saved: ${name}.`);
   }
   renderSidebar();
   flushSharedNotesSoon();
@@ -8310,7 +8464,7 @@ function sharedNotesPatchShipments(map){
   if(!n)return 0;
   notesWriteLocal(NOTES_SHIPMENTS_KEY,sharedShipments);
   noteLastEdit(stamp);
-  if(notesSharing())askEditorInitials();
+  if(notesSharing())askEditorName();
   return n;
 }
 
@@ -9033,7 +9187,8 @@ function shipCountryName(code){
 const shipPlural=(n,one,many)=>`${fmtNum(n)} ${n===1?one:many}`;
 
 // --- Hand-added tracking numbers: the shared notes store when it is there (Stream B), else this browser ---
-function shippingEditor(){try{return String(localStorage.getItem('spyderKpiEditor')||'').trim().slice(0,12);}catch(e){return '';}}
+// The editor's name (Your name dialog), or initials saved before 2v2 until it is given.
+function shippingEditor(){try{return String(typeof editorStamp==='function'?editorStamp():'').slice(0,40);}catch(e){return '';}}
 function shippingManualRaw(){
   if(isSnapshotView)return shippingState.snapshotManual||{};
   if(typeof getSharedShipments==='function'){

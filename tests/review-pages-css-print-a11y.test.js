@@ -159,8 +159,8 @@ test('print hides the Build Risk override / note controls; the print-only text c
 });
 
 // The Ask AI key field (.ai-field input) left with the Gemini panel in 1v9 (keys are server secrets now); the
-// editor-initials field from shared notes (1v7) takes its place in the check.
-test('empty text fields have a 3:1 border (search, Ask AI question, note editors, editor initials)', () => {
+// editor's name field from shared notes (1v7; initials until 2v2) takes its place in the check.
+test('empty text fields have a 3:1 border (search, Ask AI question, note editors, editor name)', () => {
   for (const sel of ['.note-editor textarea', '.sidebar-search input', '.ai-compose textarea', '.editor-form input']) {
     assert.match(CSS, new RegExp(`(^|\\})${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{[^}]*border:1px solid var\\(--gray-500\\)`, 'm'), sel);
   }
