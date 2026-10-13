@@ -162,15 +162,14 @@ test('clicking a box applies the Order Health filter (again = show all); status 
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit');
   assert.match(html(page), /<g class="sk-node sk-crit sk-sel" role="button" tabindex="0" aria-pressed="true" aria-label="No commit date: /);
-  assert.match(html(page), /Linked lines — No Commit Date/);
+  assert.match(html(page), /Lines to act on<\/h2>[\s\S]*?<span class="count-badge[^"]*">No commit date · /);
   click('open', '1:nocommit');
   assert.equal(page.run('weeklyTileFilter'), 'nocommit', 'a second click keeps the list open');
-  // With Needs attention hidden, picking a card from the chart shows the section again so its lines are listed.
-  page.run('toggleLeadingIndicators()');
-  assert.equal(page.run('weeklyLeadingCollapsed'), true);
+  // Cards hidden by an older state: picking a card from the chart shows the section again so its lines are listed.
+  page.run('weeklyLeadingCollapsed=true');
   click('open', '1:resched');
   assert.deepEqual(page.run('[weeklyLeadingCollapsed,weeklyTileFilter]'), [false, 'active']);
-  assert.match(html(page), /Linked lines — Rescheduled/);
+  assert.match(html(page), /Lines to act on<\/h2>[\s\S]*?<span class="count-badge[^"]*">Rescheduled · /);
   click('risk', '2:MAR1');
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['MAR1']);
   page.run('resetWeeklyFilters()');
@@ -432,7 +431,7 @@ function workbook(page, sheets) {
   return new Uint8Array(page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify(sheets)}){const ws=XLSX.utils.aoa_to_sheet(s.aoa);if(s.merges)ws['!merges']=s.merges.map(r=>XLSX.utils.decode_range(r));XLSX.utils.book_append_sheet(wb,ws,s.name);}return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`));
 }
 // 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
-const stat = (h, label) => Number((h.match(label === 'CTB report rows' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report rows/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
+const stat = (h, label) => Number((h.match(label === 'CTB report lines' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report lines/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1].replace(/,/g, ''));
 
 test('Build Risk: the flow matches the cards; clicking a CM narrows the page to it and the week picker still works', async () => {
   const page = loadPage();
@@ -467,7 +466,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   assert.equal(page.run('buildRiskCmFilter'), 'DSM');
   h = html(page);
   assert.equal(stat(h, 'Clear to build'), 13);
-  assert.equal(stat(h, 'CTB report rows'), 2);
+  assert.equal(stat(h, 'CTB report lines'), 2);
   assert.match(h, /<div class="sk-filter"><span>Showing CM <strong>DSM<\/strong> only\.<\/span><button type="button" class="link-btn print-hide" data-focus-key="sankey-cm-clear" data-tip="[^"]+" onclick="setBuildRiskCm\(''\)">Show every CM<\/button><\/div>/);
   assert.ok(h.indexOf('id="sankey-buildrisk"') < h.indexOf('class="sk-filter"'), 'with the switch on, the one-line note is inside the card');
   assert.match(h, /<option value="2026-09-30" selected>Sep 30<\/option>/);

@@ -144,7 +144,7 @@ test('open order states partition the open lines (count and value) and match the
   assert.deepEqual(lead(page).states.map(([, r]) => r.length), [0, 0, 0, 1, 0]);
   // Each state is a card: clicking lists its lines.
   page.run("setWeeklyWarehouseFilter(['ALL']);setWeeklyTileFilter('st-pastdue')");
-  assert.match(html(page), /Linked lines — Past Due/);
+  assert.match(html(page), /<span class="count-badge[^"]*">Past due · \d+ lines? · /);
   assert.deepEqual([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((m) => m[1]).sort(), ['100', '103', '106']);
   assert.match(html(page), /<span class="status-chip bad">Past due<\/span>/);
 });
@@ -313,7 +313,7 @@ test('tabs: an ARIA tablist with one visible panel, arrow keys, and the linked l
   page.run('ohTabKey')({ key: 'ArrowRight', preventDefault() { prevented = true; } });
   assert.deepEqual([page.run('weeklyView'), page.run('weeklyTileFilter'), focused, prevented], ['lagging', 'otd3mo', ['lagging'], true]);
   assert.match(html(page), /id="oh-panel-leading" aria-labelledby="oh-tab-leading" hidden>/);
-  assert.match(html(page), /Linked lines — OTD 3 Mo/);
+  assert.match(html(page), /<span class="count-badge[^"]*">OTD · 3 mo · \d+ delivered lines? · /);
   page.run("ohTabKey({key:'End'});ohTabKey({key:'Home'})");
   assert.equal(page.run('weeklyView'), 'leading');
   assert.equal(page.run('weeklyTileFilter'), 'late');
@@ -382,7 +382,7 @@ test('Lagging: perfect order and average days late, Us / Them on every rate, bui
   assert.match(m, /Shipped this week<\/span>[\s\S]*?Shipped late: none/);
   // The new cards list their lines like OTD does.
   page.run("setWeeklyTileFilter('dayslate')");
-  assert.match(html(page), /Linked lines — Late Deliveries · last 3 months/);
+  assert.match(html(page), /<span class="count-badge[^"]*">Late deliveries · 3 mo · \d+ lines? · /);
   assert.match(html(page), /Delivery date/);
   page.run("setWeeklyTileFilter('perfect')");
   assert.deepEqual([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((r) => r[1]).sort(), ['200', '202', '203']);

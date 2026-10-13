@@ -295,6 +295,10 @@ details.data-check>summary:hover{background:#fef0c7}
 .kpi.hero{gap:9px}
 .kpi.lag{gap:7px}
 .kpi-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+/* A long label stays on one line (cut with …; the card's tip names it in full); the pill or tag beside it keeps its size */
+.kpi-top .kpi-label{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:3px 0 3px 3px;margin:-3px 0 -3px -3px}
+.kpi-top .kpi-label>.dot{display:inline-block;vertical-align:middle;margin:-2px 7px 0 0}
+.kpi-top>:not(.kpi-label){flex-shrink:0}
 .kpi-row{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .kpi-row.tight{gap:6px}
 .kpi-unit{font-size:12.5px;color:var(--gray-500)}
@@ -1213,7 +1217,7 @@ button.ship-kpi{width:100%}
 .split-bar.oh-states-bar,.split-bar.oh-cause-bar{gap:2px}
 .mini-strip.oh-states>button{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:6px}
 .mini-strip.oh-states .ms-num{text-align:left}
-.oh-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.oh-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:var(--space-in);align-items:start}
 .oh-num{font-size:24px}
 .oh-bars{display:grid;gap:2px}
 .oh-bar-row{font:inherit;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(40px,1fr) 58px;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-radius:8px;background:none;padding:6px 8px;cursor:pointer;color:var(--gray-900);font-size:12.5px;transition:background .15s}
@@ -1226,16 +1230,17 @@ button.ship-kpi{width:100%}
 .oh-note{font-size:12px;color:var(--gray-500);line-height:1.4}
 .oh-legend{font-size:12px}
 .split-bar.oh-cause-bar.big{height:12px}
-.oh-cause-line,.oh-cause-mini{display:grid;gap:5px}
+.oh-cause-mini{display:grid;gap:5px}
 .oh-cause-text{font-size:12px;color:var(--gray-600);line-height:1.4}
 .oh-cause-text b{font-weight:600}
-.oh-cause-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.oh-cause-btn{font:inherit;display:grid;gap:2px;min-width:0;text-align:left;border:1px solid var(--gray-200);border-radius:10px;background:#fff;padding:9px 11px;cursor:pointer;color:var(--gray-900);transition:background .15s,border-color .15s}
+/* Us vs Them: one row per cause, the name on the left, its value and counts right-aligned */
+.oh-cause-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.oh-cause-btn{font:inherit;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;row-gap:2px;align-items:center;min-width:0;text-align:left;border:1px solid var(--gray-200);border-radius:10px;background:#fff;padding:9px 12px;cursor:pointer;color:var(--gray-900);transition:background .15s,border-color .15s}
 .oh-cause-btn:hover{background:var(--gray-50)}
 .oh-cause-btn.selected{border-color:var(--accent);box-shadow:var(--sh-select)}
-.oh-cause-name{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
-.oh-cause-btn strong{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
-.oh-cause-btn .muted{font-size:12px;color:var(--gray-500)}
+.oh-cause-name{grid-row:1/span 2;display:flex;align-items:center;gap:6px;min-width:0;font-size:12.5px;font-weight:600}
+.oh-cause-btn strong{grid-column:2;text-align:right;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.oh-cause-btn .muted{grid-column:2;text-align:right;white-space:nowrap;font-size:12px;color:var(--gray-500)}
 .oh-why{display:block;font-size:11.5px;font-weight:600;line-height:1.3}
 .oh-spark-wrap{display:block}
 .oh-lag-extra{align-items:stretch}
@@ -1262,7 +1267,6 @@ button.ship-kpi{width:100%}
   .oh-tab-num{font-size:20px;gap:4px}
   .mini-strip.oh-states{grid-template-columns:minmax(0,1fr)}
   .mini-strip.oh-states>button{flex-direction:row;align-items:center;justify-content:space-between}.mini-strip.oh-states .ms-num{text-align:right}
-  .oh-cause-grid{grid-template-columns:minmax(0,1fr)}
   .oh-bar-row{grid-template-columns:minmax(0,1fr) 58px;row-gap:4px}.oh-bar-row .oh-bar-name{grid-column:1/-1}
   .waffle{margin-left:0}
 }
@@ -1298,15 +1302,19 @@ button.ship-kpi{width:100%}
 #results-screen>.oh-panel,#results-screen>.oh-panel+.pg-group{margin-top:var(--space-group)}
 .oh-group-tools{margin-left:auto;display:flex;align-items:center;gap:12px}
 .oh-drillbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-/* Why lines are at risk: its three cards share one height */
-.pg-group .oh-grid{align-items:stretch}
+/* By reason and cause: each card is as tall as its own content (a short card does not stretch into empty space) */
+.pg-group .oh-grid{align-items:start}
 /* Top offenders by owner rank only (no owner filter): plain rows */
 .waffle-row.static{cursor:default}.waffle-row.static:hover{background:none}.waffle-row.static:focus-visible{outline-offset:-2px}
-/* At risk now: the At Risk card with its six override tiles under it, No commit date and Rescheduled beside them */
-.oh-risk{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}
-.oh-risk-main{display:grid;gap:20px;align-content:start;min-width:0}
-.oh-risk-side{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:20px;min-width:0}
-.oh-risk-side>.kpi{align-content:center}
+/* At risk now: one grid, so the rows line up — the At Risk card beside No commit date, the six override tiles beside
+   Rescheduled. The two wrappers are display:contents, so their cards are this grid's items. */
+.oh-risk{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);grid-template-areas:"hero nc" "tiles resch";gap:var(--space-in)}
+.oh-risk-main,.oh-risk-side{display:contents}
+.oh-risk-main>.hero{grid-area:hero;min-width:0}
+.oh-risk-main>.ovr{grid-area:tiles;grid-template-rows:auto minmax(0,1fr)}
+.oh-risk-side>:first-child{grid-area:nc}
+.oh-risk-side>:last-child{grid-area:resch}
+.oh-risk-side>.kpi{align-content:center;min-width:0}
 .ovr{display:grid;gap:10px;min-width:0}
 .ovr-head{font-size:12.5px;font-weight:500;color:var(--gray-600)}
 .ovr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
@@ -1331,10 +1339,9 @@ details.oh-more .oh-more-less,details.oh-more[open] .oh-more-show{display:none}
 details.oh-more[open] .oh-more-less{display:inline}
 .oh-more-body{display:grid;gap:var(--space-in);min-width:0}
 /* Narrower screens: the At Risk card and its tiles take the full width, No commit date and Rescheduled sit side by
-   side under them; the Coming due strip is two by two below 1320px (one column on a phone) */
+   side under them; the By due date strip is two by two below 1320px (one column on a phone) */
 @media (max-width:1180px){
-  .oh-risk{grid-template-columns:minmax(0,1fr)}
-  .oh-risk-side{grid-template-rows:none;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .oh-risk{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"hero hero" "tiles tiles" "nc resch"}
 }
 @media (min-width:641px) and (max-width:1320px){
   .pg-group .mini-strip.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1343,7 +1350,6 @@ details.oh-more[open] .oh-more-less{display:inline}
   .pg-group .mini-strip.cols-4>*:nth-child(-n+2){border-bottom:1px solid var(--gray-100)}
 }
 @media (max-width:640px){
-  .oh-risk-side{gap:14px}
   .ovr-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .ovr-tile{padding:10px 12px}
   .ovr-name{font-size:12.5px}
@@ -1351,9 +1357,7 @@ details.oh-more[open] .oh-more-less{display:inline}
 }
 @media print{
   details.oh-more>summary{display:none!important}
-  .oh-risk{grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:.1in}
-  .oh-risk-main,.oh-risk-side{gap:.1in}
-  .oh-risk-side{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr))}
+  .oh-risk{grid-template-columns:minmax(0,2fr) minmax(0,1fr);grid-template-areas:"hero nc" "tiles resch";gap:.1in}
   .ovr-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:.06in}
   .pg-group .mini-strip.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
   .pg-group .mini-strip.cols-4>button{flex-direction:column;align-items:flex-start;gap:4px;border-right:1px solid var(--gray-100);border-bottom:0}
@@ -1835,7 +1839,7 @@ async function exportShareSnapshot(){
   const blob=new Blob(['\ufeff'+buildSnapshotHtml(payload)],{type:'text/html;charset=utf-8'});
   const stamp=new Date().toISOString().slice(0,10);
   const fileName=`spyder-kpi-snapshot-${stamp}.html`;
-  const contents=`Includes ${fmtNum(allLoadedRows.length+buildRiskRows.length+supplyDemandRows.length)} rows from the loaded export${Object.keys(sharedOverrides).length?` and ${fmtNum(Object.keys(sharedOverrides).length)} saved notes/overrides`:''}; anyone with the file can see all of it.`;
+  const contents=`Includes ${fmtNum(allLoadedRows.length+buildRiskRows.length+supplyDemandRows.length)} lines from the loaded export${Object.keys(sharedOverrides).length?` and ${fmtNum(Object.keys(sharedOverrides).length)} saved notes/overrides`:''}; anyone with the file can see all of it.`;
   activeSnapshotBlob=blob;
   activeSnapshotFileName=fileName;
   if(window.showSaveFilePicker){
@@ -1926,8 +1930,9 @@ async function loadEmbeddedSnapshot(){
     weeklyOtdFilter=data.weeklyOtdFilter||'total';
     weeklyRescheduleFilter=data.weeklyRescheduleFilter||'total';
     weeklyLineSort=data.weeklyLineSort||'default';
-    weeklyLeadingCollapsed=!!data.weeklyLeadingCollapsed;
-    weeklyLaggingCollapsed=!!data.weeklyLaggingCollapsed;
+    // An older snapshot may have saved hidden cards; with no Show link left, they always open shown.
+    weeklyLeadingCollapsed=false;
+    weeklyLaggingCollapsed=false;
     weeklyAdvancedOpen=!!data.weeklyAdvancedOpen;
     weeklyOffenderView=String(data.weeklyOffenderView||'customers');
     weeklyLinkedShowAll=!!data.weeklyLinkedShowAll;
@@ -2465,12 +2470,14 @@ function setWeeklyLineSort(kind){
   weeklyLineSort=kind||'default';
   renderResults();
 }
+// 2v2: the Hide / Show links are gone (the Leading / Lagging tabs do that job), so the cards always show. The two
+// flags stay in snapshots for older readers; these calls (and an older snapshot that saved them on) only clear them.
 function toggleLeadingIndicators(){
-  weeklyLeadingCollapsed=!weeklyLeadingCollapsed;
+  weeklyLeadingCollapsed=false;
   renderResults();
 }
 function toggleLaggingIndicators(){
-  weeklyLaggingCollapsed=!weeklyLaggingCollapsed;
+  weeklyLaggingCollapsed=false;
   renderResults();
 }
 function setWeeklyOtdFilter(kind){
@@ -4443,8 +4450,14 @@ function monthlyRateSeries(shipRows,rescheduleClosed,rescheduleMet){
 function renderDeltaPill(series,key){
   const a=series[series.length-2],b=series[series.length-3];
   if(!a||!b||a[key]===null||b[key]===null)return `<span class="delta flat"${tipAttr('Target 90%; the monthly change shows once two full months have data.')}>target 90%</span>`;
+  // Up is green, down is red, no change is a neutral "→ 0 pts".
   const x=a[key]-b[key];
-  return `<span class="delta ${x>=0?'up':'down'}"${tipAttr(`${deltaPillText(series,key)}; target 90%.`)}>${x>=0?'↑':'↓'} ${fmtNum(Math.abs(x))} pts vs ${esc(b.label)}</span>`;
+  const dir=x>0?'up':x<0?'down':'flat';
+  return `<span class="delta ${dir}"${tipAttr(`${deltaPillText(series,key)}; target 90%.`)}>${x>0?'↑':x<0?'↓':'→'} ${fmtNum(Math.abs(x))} pts vs ${esc(b.label)}</span>`;
+}
+// "target 90%" beside a rate, unless the pill above already says it (no monthly change yet): said once per card.
+function ohTargetUnit(series,key){
+  return deltaPillText(series,key)?'<span class="kpi-unit sm">target 90%</span>':'';
 }
 // The month-against-month comparison behind a delta pill, for the card's own tip ('' while there is none): the pill
 // sits inside the card, so keyboard focus only ever shows the card's tip.
@@ -5209,11 +5222,11 @@ const NEEDS_FILE={
     snapshot:'This shared snapshot has no supply / demand data.'},
   buildrisk:{tag:'Needs a Clear To Build report',title:'Build Risk needs a Clear To Build report',body:'Matches each CM’s Clear To Build risk against open sales orders; add the CTB report to turn it on.',cta:'Add Clear To Build file',
     steps:[['Use the Orders At Risk / Clear To Build workbook (.xlsx); the PDF cannot be read.',''],['Click Add file and choose it.',''],['The newest report week shows; pick another at the top of the page.','']],
-    preview:[['Clear To Build by CM / month','Risk rows against open demand.',56],['CTB % by CM','Clear to build share over 8 weeks.',40],['Sales orders in risk buckets','Open lines the report marks at risk.',40]],
+    preview:[['Clear To Build by CM / month','Risk lines against open demand.',56],['CTB % by CM','Clear to build share over 8 weeks.',40],['Sales orders in risk buckets','Open lines the report marks at risk.',40]],
     snapshot:'This shared snapshot has no Clear To Build report.'},
-  purchaseorders:{tag:'Needs purchase order lines',title:'Purchase Orders needs PO lines in the export',body:'This export has no purchase order rows; export the KPI query again with its PO lines.',cta:'Load a new export',
+  purchaseorders:{tag:'Needs purchase order lines',title:'Purchase Orders needs PO lines in the export',body:'This export has no purchase order lines; export the KPI query again with its PO lines.',cta:'Load a new export',
     steps:[['Run the KPI query in SAP with purchase orders included.','queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql'],['Export the result to Excel.',''],['Click New file and choose it.','']],
-    preview:[['Supply commitments','Late, no-commit and unconfirmed PO lines.',56],['Receiving performance','On-time receipts and fill.',40]],
+    preview:[['Leading · Supply commitments','Late, no-commit and unconfirmed PO lines.',56],['Lagging · Receiving performance','On-time receipts and fill.',40]],
     snapshot:'This shared snapshot has no purchase order lines.',newFile:true}
 };
 function renderNeedsFile(kind){
@@ -5517,9 +5530,9 @@ function renderGlobalSearchPage(m){
       <td class="c-notes print-hide">${renderNoteButton(r)}</td>
     </tr>${renderNoteEditorRow(r,10)}${renderPrintNoteRow(r,10)}`;
   }).join('');
-  const firstOf=list=>list.length>20?`first 20 of ${fmtNum(list.length)} matching rows`:`${fmtNum(list.length)} matching ${list.length===1?'row':'rows'}`;
-  const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand rows match.'}):'';
-  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report`:''),limit:20,minWidth:760,empty:'No Clear To Build rows match.',
+  const firstOf=list=>list.length>20?`first 20 of ${fmtNum(list.length)} matching lines`:`${fmtNum(list.length)} matching ${list.length===1?'line':'lines'}`;
+  const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand lines match.'}):'';
+  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report`:''),limit:20,minWidth:760,empty:'No Clear To Build lines match.',
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
   // Order lines first (how they are sorted is in the count's tip), then the supply / demand and Clear To Build matches.
@@ -5599,7 +5612,7 @@ function renderSidebar(){
   const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
   // Two short lines: export date and row count (what was loaded is in the tip), then where the report is kept.
   const meta=loaded
-    ? `<span${tipAttr(`${fmtNum(rowCount)} rows loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}`:`${fmtNum(rowCount)} rows`}</span>${kept?`<br>${kept}`:''}`
+    ? `<span${tipAttr(`${ohN(rowCount,'line')} loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}`:ohN(rowCount,'line')}</span>${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
   // The shared-notes status and the Change name button have their own row, which stays visible in the compact card
   // (980px and below hides the meta lines).
@@ -5771,8 +5784,8 @@ function renderShippedByWarehouseCard(sd,today){
   });
   return renderTableCard({key:'monthly-wh',info:'mo-warehouse',title:`Shipped by warehouse / CM · ${esc(rangeLabel)}`,
     note:`${sd.isDefaultRange?`Deliveries dated ${esc(today.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}`:'Deliveries in the ship target scenario range'} · ${money(sd.shippedWeekValue)} across ${fmtNum(sd.shippedWeekOrders)} SOs · ${fmtNum(sd.shippedWeekOtd)}% on time`,
-    head:[['Warehouse / CM'],['SO count','num'],['Rows','num'],['Qty shipped','num'],['Shipped value','','30%'],['OTD','num'],['Early','num'],['On time','num'],['Late','num']],
-    rows,limit:9,minWidth:820,empty:'No shipped or closed sales order delivery rows in this range.'});
+    head:[['Warehouse / CM'],['SO count','num'],['Lines','num'],['Qty shipped','num'],['Shipped value','','30%'],['OTD','num'],['Early','num'],['On time','num'],['Late','num']],
+    rows,limit:9,minWidth:820,empty:'No shipped or closed sales order delivery lines in this range.'});
 }
 function renderShipTargetScenario(sd,today){
   const stat=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${esc(label)}</span><span class="ms-sub">${esc(sub)}</span></div><div class="ms-num"><span class="ms-big ${tone||''}">${esc(value)}</span></div></div>`;
@@ -5813,11 +5826,11 @@ function renderShipTargetScenario(sd,today){
       </select></label>
     </div>
     <div class="mini-strip cols-5">
-      ${stat('Booked by target',`${fmtNum(sd.bookedByTarget.length)} rows`,money(sd.bookedValue),'',`Booked by target: ${fmtNum(sd.bookedByTarget.length)} lines due by ${displayDate(sd.target)}, worth ${money(sd.bookedValue)} (open plus shipped).`)}
+      ${stat('Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`Booked by target: ${fmtNum(sd.bookedByTarget.length)} lines due by ${displayDate(sd.target)}, worth ${money(sd.bookedValue)} (open plus shipped).`)}
       ${stat('% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${fmtNum(sd.shippedPct)}% of the booked value has shipped or closed: ${money(sd.shippedValue)} of ${money(sd.bookedValue)}.`)}
-      ${stat('On track window',`${fmtNum(sd.onTrackWindow.length)} rows`,`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`On track window: ${fmtNum(sd.onTrackWindow.length)} open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}, ${money(rowOpenAmount(sd.onTrackWindow))}.`)}
-      ${stat('Past original due',`${fmtNum(sd.pastOriginalDue.length)} rows`,`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Past original due: ${fmtNum(sd.pastOriginalDue.length)} open lines dated before ${displayDate(sd.start)}, ${money(rowOpenAmount(sd.pastOriginalDue))}.`)}
-      ${stat('Still open by target',`${fmtNum(sd.stillOpenByTarget.length)} rows`,`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Still open by target: ${fmtNum(sd.stillOpenByTarget.length)} booked lines not yet shipped, ${money(rowOpenAmount(sd.stillOpenByTarget))}.`)}
+      ${stat('On track window',ohN(sd.onTrackWindow.length,'line'),`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`On track window: ${fmtNum(sd.onTrackWindow.length)} open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}, ${money(rowOpenAmount(sd.onTrackWindow))}.`)}
+      ${stat('Past original due',ohN(sd.pastOriginalDue.length,'line'),`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Past original due: ${fmtNum(sd.pastOriginalDue.length)} open lines dated before ${displayDate(sd.start)}, ${money(rowOpenAmount(sd.pastOriginalDue))}.`)}
+      ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Still open by target: ${fmtNum(sd.stillOpenByTarget.length)} booked lines not yet shipped, ${money(rowOpenAmount(sd.stillOpenByTarget))}.`)}
     </div>
     ${sd.forward?`<div class="card chart-card tight">
       <div class="chart-head"><div class="title-row"><h2>Open ship calendar</h2>${infoButton('mo-calendar')}</div><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
@@ -5839,8 +5852,9 @@ let lastRenderedRows=null;
 // The page is a few named groups: a small heading row (title, optional info button and tools), then its cards. Groups
 // sit further apart than the cards in them (--space-group / --space-in). Secondary detail goes in a Show more
 // disclosure (ohRenderMore) whose open state is kept in tableMore (redraws, snapshots); print opens it.
-function ohGroupOpen(id,title,{cls='',domId='',info='',tools='',tip=''}={}){
-  return `<section class="pg-group${cls?` ${cls}`:''}"${domId?` id="${domId}"`:''} aria-labelledby="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="${id}"${tipAttr(tip)}>${title}</h2>${info?infoButton(info):''}${tools?`<div class="oh-group-tools">${tools}</div>`:''}</div>`;
+// badge: a count pill after the title, as pageGroupHtml draws it ("Lines to act on" on every page).
+function ohGroupOpen(id,title,{cls='',domId='',info='',tools='',tip='',badge=''}={}){
+  return `<section class="pg-group${cls?` ${cls}`:''}"${domId?` id="${domId}"`:''} aria-labelledby="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="${id}"${tipAttr(tip)}>${title}</h2>${info?infoButton(info):''}${badge}${tools?`<div class="oh-group-tools">${tools}</div>`:''}</div>`;
 }
 function ohRenderMore(key,what,body,tipText){
   if(!body)return '';
@@ -5868,9 +5882,15 @@ function renderResults(){
   const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
     : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='shipping'?shippingHeadMeta()
+    // Each page counts what it is about: PO lines, supply / demand lines, or open sales-order lines; Build Risk shows
+    // its CTB report line count in its own bar.
     : activeTab==='purchaseorders'
-    ? `as of ${asOfShort} · ${fmtNum(openPoCount)} open purchase order lines`
-    : `as of ${asOfShort} · ${fmtNum(openSoCount)} open SO rows`;
+    ? `as of ${asOfShort} · ${ohN(openPoCount,'open PO line')}`
+    : activeTab==='supplyweekly'||activeTab==='supplydemand'
+    ? `as of ${asOfShort}${supplyDemandRows.length?` · ${ohN(supplyDemandRows.length,'supply / demand line')}`:''}`
+    : activeTab==='buildrisk'
+    ? `as of ${asOfShort}`
+    : `as of ${asOfShort} · ${ohN(openSoCount,'open SO line')}`;
   // The page head is rebuilt on every redraw, so screen readers hear the search count from one persistent
   // status node, and only when the text changes.
   const announce=document.getElementById('search-announce');
@@ -5964,8 +5984,10 @@ function renderResults(){
     const newPastDue=pastDueNoReschedule.filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1&&d<=7;});
     const inOtherBucket=new Set([...pastDueNoReschedule,...noCommitRows,...activeRescheduleRows]);
     const urgentOnly=urgentRows.filter(r=>!inOtherBucket.has(r)).length;
+    // The bar splits the At Risk lines; the legend names only the parts with their own card beside it (No commit date,
+    // Rescheduled): the red rest is past due with no reschedule, as in the card's tip.
     const splitParts=[
-      [pastDueNoReschedule.length,'#f04438','past due'],
+      [pastDueNoReschedule.length,'#f04438',''],
       [noCommitRows.length,'var(--crit-text)','no commit'],
       [activeRescheduleRows.length,'var(--warn-fill)','rescheduled']
     ];
@@ -5980,15 +6002,14 @@ function renderResults(){
     const miniCell=(id,label,rows,sub,tipText)=>`<button type="button" class="${weeklyTileFilter===id?'selected':''}" ${tileAttrs(id)}${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${label}</span><span class="ms-sub">${sub}</span></div><div class="ms-num"><span class="ms-big">${fmtNum(rowDocCount(rows))} orders</span><span class="ms-amt">${money(rowOpenAmount(rows))}</span></div></button>`;
     // ---------- At risk now: the At Risk card, its six override tiles, No commit date and Rescheduled ----------
     html+=`
-    ${ohGroupOpen('oh-g-risk','At risk now',{cls:'rise rise-2',info:'oh-attention',tools:`<button type="button" class="link-btn" data-focus-key="toggle-leading" onclick="toggleLeadingIndicators()" aria-expanded="${weeklyLeadingCollapsed?'false':'true'}"${tipAttr(weeklyLeadingCollapsed?'Show the Leading cards.':'Hide the Leading cards.')}>${weeklyLeadingCollapsed?'Show':'Hide'}</button>`})}
+    ${ohGroupOpen('oh-g-risk','At risk now',{cls:'rise rise-2',info:'oh-attention'})}
       ${weeklyLeadingCollapsed?'':`<div class="oh-risk">
       <div class="oh-risk-main">
-        <button type="button" class="card kpi hero${selected('late')}" ${tileAttrs('late')}${tipAttr(`At risk: ${money(lateAmt)} open on ${ordersLines(lateTileRows)}; click to list them below.`)}>
+        <button type="button" class="card kpi hero${selected('late')}" ${tileAttrs('late')}${tipAttr(`At risk: ${money(lateAmt)} open on ${ordersLines(lateTileRows)}, ${fmtNum(pastDueNoReschedule.length)} past due with no reschedule; click to list them below.`)}>
           <div class="kpi-top"><span class="kpi-label"><span class="dot ${lateCount?'halo':'good'}"></span>At risk</span>${newPastDue.length?`<span class="pill bad"${tipAttr(`${fmtNum(newPastDue.length)} ${newPastDue.length===1?'line':'lines'} went past the original delivery date in the last 7 days.`)}>+${fmtNum(newPastDue.length)} new this week</span>`:''}</div>
           <div class="kpi-row"><span class="kpi-value hero ${lateCount?'crit':'good'}" data-count="${Math.round(lateAmt)}" data-fmt="money">${money(lateAmt)}</span><span class="kpi-unit">${fmtNum(rowDocCount(lateTileRows))} orders · ${fmtNum(lateTileRows.length)} lines</span></div>
           <div class="split-bar" aria-hidden="true">${splitParts.map(([n,color],i)=>`<i class="grow-w" style="width:${(n/splitTotal*100).toFixed(2)}%;background:${color};animation-delay:${300+i*100}ms"></i>`).join('')}</div>
-          <div class="legend">${splitParts.map(([n,color,label])=>`<span><i class="sw" style="background:${color}"></i>${fmtNum(n)} ${label}</span>`).join('')}${urgentOnly?`<span>+ ${fmtNum(urgentOnly)} marked urgent</span>`:''}</div>
-          ${ohHeroCause(m)}
+          <div class="legend">${splitParts.filter(p=>p[2]).map(([n,color,label])=>`<span><i class="sw" style="background:${color}"></i>${fmtNum(n)} ${label}</span>`).join('')}${urgentOnly?`<span>+ ${fmtNum(urgentOnly)} marked urgent</span>`:''}</div>
         </button>
         ${ohRenderOverrideTiles(m)}
       </div>
@@ -5999,7 +6020,7 @@ function renderResults(){
       </div>`}
     </section>`;
 
-    // ---------- Coming due: this week, next week, this month, all open; open value by due week ----------
+    // ---------- By due date: this week, next week, this month, all open; open value by due week ----------
     const {dueWeeks,pastDueOpenRows,dueMax}=cachedByFilter(m,`${ohKey}|due`,()=>{
     const dueWeeks=weekWindows(thisWeekStart,8);
     const pastDueOpenRows=[];
@@ -6014,7 +6035,7 @@ function renderResults(){
     return {dueWeeks,pastDueOpenRows,dueMax};
     });
     if(!weeklyLeadingCollapsed)html+=`
-    ${ohGroupOpen('oh-g-due','Coming due',{cls:'rise rise-3'})}
+    ${ohGroupOpen('oh-g-due','By due date',{cls:'rise rise-3'})}
       <div class="mini-strip cols-4">
         ${miniCell('duethisweek','This week focus',dueThisWeekRows,ohN(dueThisWeekRows.length,'line'),`This week focus: at risk plus due ${shortDay(thisWeekStart)} to ${shortDay(thisWeekEnd)}, ${money(dueThisAmt)} on ${ordersLines(dueThisWeekRows)}; click to list them.`)}
         ${miniCell('duenextweek','Due next week',dueNextWeekRows,ohN(dueNextWeekRows.length,'line'),`Due next week (${shortDay(nextWeekStart)} to ${shortDay(nextWeekEnd)}): ${money(dueNextWeekAmt)} open on ${ordersLines(dueNextWeekRows)}; click to list them.`)}
@@ -6043,20 +6064,20 @@ function renderResults(){
     });
     const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
     html+=`
-    ${ohGroupOpen('oh-g-performance','Delivery performance',{cls:'rise rise-2',info:'oh-performed',tools:`<button type="button" class="link-btn" data-focus-key="toggle-lagging" onclick="toggleLaggingIndicators()" aria-expanded="${weeklyLaggingCollapsed?'false':'true'}"${tipAttr(weeklyLaggingCollapsed?'Show the Delivery performance cards.':'Hide the Delivery performance cards.')}>${weeklyLaggingCollapsed?'Show':'Hide'}</button>`})}
+    ${ohGroupOpen('oh-g-performance','Delivery performance',{cls:'rise rise-2',info:'oh-performed'})}
       ${weeklyLaggingCollapsed?'':`<div class="grid-4">
         <button type="button" class="card kpi lag${selected('otd3mo')}" ${tileAttrs('otd3mo')}${tipAttr(withDeltaText(otd3Mo.scored.length?`On-time delivery, 3 months: ${fmtNum(otd3Mo.rate)}%, ${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries (${money(otd3MoAmt)}) by the original date; click for details.`:'On-time delivery, 3 months: no deliveries to score; click to list the lines.',series,'otd'))}>
           <div class="kpi-top"><span class="kpi-label">OTD · 3 mo</span>${renderDeltaPill(series,'otd')}</div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[otdTone]}" data-count="${otd3Mo.rate}" data-fmt="pct">${otd3Mo.scored.length?`${fmtNum(otd3Mo.rate)}%`:'—'}</span><span class="kpi-unit sm">target 90%</span></div>
+          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[otdTone]}" data-count="${otd3Mo.rate}" data-fmt="pct">${otd3Mo.scored.length?`${fmtNum(otd3Mo.rate)}%`:'—'}</span>${ohTargetUnit(series,'otd')}</div>
           ${renderSparkline(series.map(s=>s.otd),otdTone)}
           <span class="kpi-sub">${otd3Mo.scored.length?`${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries early/on time vs original date · ${money(otd3MoAmt)}`:(hasShipments?'No deliveries in the last 3 months for this filter':'Needs delivery close-date data')}</span>
           ${ohLagSplit(m,'otd3mo')}
         </button>
         <button type="button" class="card kpi lag${selected('shippedweek')}" ${tileAttrs('shippedweek')}${tipAttr(`Shipped this week (Sunday to ${viewToday.toLocaleDateString('en-CA',{weekday:'long'})}): ${fmtNum(closedThisWeekRows.length)} delivery ${closedThisWeekRows.length===1?'line':'lines'} worth ${money(closedWkAmt)}; click to list them.`)}>
           <div class="kpi-top"><span class="kpi-label">Shipped this week</span><span class="kpi-tag">Sun–${esc(viewToday.toLocaleDateString('en-CA',{weekday:'short'}))}</span></div>
-          <div class="kpi-row tight"><span class="kpi-value" data-count="${closedThisWeekRows.length}">${fmtNum(closedThisWeekRows.length)}</span><span class="kpi-unit">lines · ${moneyShort(closedWkAmt)}</span></div>
-          <div class="col-bars" aria-hidden="true">${weeks.map((w,i)=>{const v=rowShippedAmount(w.rows);return `<i class="grow-h${i===weeks.length-1?' now':''}" style="height:${Math.max(3,v/weekMax*42).toFixed(1)}px;animation-delay:${i*40}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${fmtNum(w.rows.length)} delivery lines · ${money(v)} shipped`)}></i>`;}).join('')}</div>
-          <span class="kpi-sub">${closedThisWeekRows.length||closedLastWeekRows.length?`Last week ${fmtNum(closedLastWeekRows.length)} lines · ${money(rowShippedAmount(closedLastWeekRows))} (this week is partial)`:(hasShipments?'No deliveries yet this week':'Needs delivery close-date data')}</span>
+          <div class="kpi-row tight"><span class="kpi-value" data-count="${closedThisWeekRows.length}">${fmtNum(closedThisWeekRows.length)}</span><span class="kpi-unit">${closedThisWeekRows.length===1?'line':'lines'} · ${moneyShort(closedWkAmt)}</span></div>
+          <div class="col-bars" aria-hidden="true">${weeks.map((w,i)=>{const v=rowShippedAmount(w.rows);return `<i class="grow-h${i===weeks.length-1?' now':''}" style="height:${Math.max(3,v/weekMax*42).toFixed(1)}px;animation-delay:${i*40}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${ohN(w.rows.length,'delivery line')} · ${money(v)} shipped`)}></i>`;}).join('')}</div>
+          <span class="kpi-sub">${closedThisWeekRows.length||closedLastWeekRows.length?`Last week ${ohN(closedLastWeekRows.length,'line')} · ${money(rowShippedAmount(closedLastWeekRows))} (this week is partial)`:(hasShipments?'No deliveries yet this week':'Needs delivery close-date data')}</span>
           ${ohLagSplit(m,'shippedweek')}
         </button>
         <button type="button" class="card kpi lag${selected('fillrate')}" ${tileAttrs('fillrate')}${tipAttr(hasFill?`Fill rate: ${fmtNum(fillRate)}% of ordered quantity delivered or closed, ${fmtNum(fillOpenRows.length)} lines still open; click for details.`:'Fill rate: no ordered quantity to score.')}>
@@ -6069,7 +6090,7 @@ function renderResults(){
         </button>
         <button type="button" class="card kpi lag${selected('reschedhit')}" ${tileAttrs('reschedhit')}${tipAttr(withDeltaText(reschedulePerf.closed.length?`Reschedule hit rate, 12 months: ${fmtNum(reschedulePerf.rate)}%, ${fmtNum(reschedulePerf.met.length)} of ${fmtNum(reschedulePerf.closed.length)} rescheduled deliveries on time; click for details.`:'Reschedule hit rate: no rescheduled deliveries in the last 12 months.',series,'hit'))}>
           <div class="kpi-top"><span class="kpi-label">Reschedule hit · 12 mo</span>${renderDeltaPill(series,'hit')}</div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[hitTone]}" data-count="${reschedulePerf.rate}" data-fmt="pct">${reschedulePerf.closed.length?`${fmtNum(reschedulePerf.rate)}%`:'—'}</span><span class="kpi-unit sm">target 90%</span></div>
+          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[hitTone]}" data-count="${reschedulePerf.rate}" data-fmt="pct">${reschedulePerf.closed.length?`${fmtNum(reschedulePerf.rate)}%`:'—'}</span>${ohTargetUnit(series,'hit')}</div>
           ${renderSparkline(series.map(s=>s.hit),hitTone)}
           <span class="kpi-sub">${reschedulePerf.closed.length?`${fmtNum(reschedulePerf.met.length)} of ${fmtNum(reschedulePerf.closed.length)} rescheduled deliveries met commit`:'No rescheduled deliveries in this filter'}</span>
           ${ohLagSplit(m,'reschedhit')}
@@ -6150,7 +6171,7 @@ function renderResults(){
     });
 
     html+=`
-    ${ohGroupOpen('oh-g-where','Where the risk is',{cls:'rise rise-3'})}
+    ${ohGroupOpen('oh-g-where','By warehouse and customer',{cls:'rise rise-3'})}
     <div class="grid-split">
       <section class="table" aria-label="Warehouse scorecard">
         <div class="card-head"><div class="title-row"><h2>Warehouse scorecard</h2>${infoButton('oh-scorecard')}</div></div>
@@ -6176,7 +6197,7 @@ function renderResults(){
     </section>`;
 
     // ---------- Linked lines for the selected card ----------
-    const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(`${label}: ${valueText} · ${sub}; click to list ${key==='total'?'every row':'them'}.`)}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
+    const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(`${label}: ${valueText} · ${sub}; click to list ${key==='total'?'every line':'them'}.`)}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
     const pctPill=(rate,good,warn)=>`<span class="pill ${rate>=good?'good':rate>=warn?'warn':'bad'}">${fmtNum(rate)}%</span>`;
     const summaryTable=(head,rows)=>`<div class="card flush"><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`${head[1]} by ${String(head[0]).toLowerCase()}`)}"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
     const renderOtdDrillCards=(rows)=>{
@@ -6185,10 +6206,10 @@ function renderResults(){
       const card=(key,label,tone,count,sub,value)=>drillCard('setWeeklyOtdFilter','otd',weeklyOtdFilter,key,label,tone,typeof count==='string'?count:fmtNum(count),`${sub} · ${money(value)}`);
       return `<div class="drill-grid">
         ${card('total','Total shipped','',stats.scored.length,`${fmtNum(stats.rate)}% original-date OTD`,rowShippedAmount(stats.scored))}
-        ${card('early','Early','good',`${pct(stats.early.length,stats.scored.length)}%`,`${fmtNum(stats.early.length)} rows · before original date`,rowShippedAmount(stats.early))}
-        ${card('ontime','On time','good',`${pct(stats.onTime.length,stats.scored.length)}%`,`${fmtNum(stats.onTime.length)} rows · on original date`,rowShippedAmount(stats.onTime))}
-        ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.scored.length)}%`,`${fmtNum(stats.tolerance.length)} rows · 1-2 days late`,rowShippedAmount(stats.tolerance))}
-        ${card('late','Late','crit',`${pct(stats.late.length,stats.scored.length)}%`,`${fmtNum(stats.late.length)} rows · 3+ days late`,rowShippedAmount(stats.late))}
+        ${card('early','Early','good',`${pct(stats.early.length,stats.scored.length)}%`,`${ohN(stats.early.length,'line')} · before original date`,rowShippedAmount(stats.early))}
+        ${card('ontime','On time','good',`${pct(stats.onTime.length,stats.scored.length)}%`,`${ohN(stats.onTime.length,'line')} · on original date`,rowShippedAmount(stats.onTime))}
+        ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.scored.length)}%`,`${ohN(stats.tolerance.length,'line')} · 1-2 days late`,rowShippedAmount(stats.tolerance))}
+        ${card('late','Late','crit',`${pct(stats.late.length,stats.scored.length)}%`,`${ohN(stats.late.length,'line')} · 3+ days late`,rowShippedAmount(stats.late))}
       </div>`;
     };
     const renderOtdWarehouseSummary=(rows)=>{
@@ -6205,10 +6226,10 @@ function renderResults(){
       const card=(key,label,tone,count,sub,value)=>drillCard('setWeeklyRescheduleFilter','resched',weeklyRescheduleFilter,key,label,tone,typeof count==='string'?count:fmtNum(count),`${sub} · ${money(value)}`);
       return `<div class="drill-grid">
         ${card('total','All rescheduled','',stats.rescheduled.length,`${fmtNum(stats.rate)}% hit rate`,stats.rescheduled.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0))}
-        ${card('met','Met commit','good',`${pct(stats.met.length,stats.closed.length)}%`,`${fmtNum(stats.met.length)} rows · met commit`,stats.met.reduce((s,r)=>s+r.amountLocal,0))}
-        ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.closed.length)}%`,`${fmtNum(stats.tolerance.length)} rows · 1-2 days after commit`,stats.tolerance.reduce((s,r)=>s+r.amountLocal,0))}
-        ${card('missed','Missed commit','crit',`${pct(stats.missed.length,stats.closed.length)}%`,`${fmtNum(stats.missed.length)} rows · 3+ days after commit`,stats.missed.reduce((s,r)=>s+r.amountLocal,0))}
-        ${card('openpast','Still open past commit','crit',`${pct(stats.stillOpenPast.length,stats.rescheduled.length)}%`,`${fmtNum(stats.stillOpenPast.length)} rows · open qty remains`,rowOpenAmount(stats.stillOpenPast))}
+        ${card('met','Met commit','good',`${pct(stats.met.length,stats.closed.length)}%`,`${ohN(stats.met.length,'line')} · met commit`,stats.met.reduce((s,r)=>s+r.amountLocal,0))}
+        ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.closed.length)}%`,`${ohN(stats.tolerance.length,'line')} · 1-2 days after commit`,stats.tolerance.reduce((s,r)=>s+r.amountLocal,0))}
+        ${card('missed','Missed commit','crit',`${pct(stats.missed.length,stats.closed.length)}%`,`${ohN(stats.missed.length,'line')} · 3+ days after commit`,stats.missed.reduce((s,r)=>s+r.amountLocal,0))}
+        ${card('openpast','Still open past commit','crit',`${pct(stats.stillOpenPast.length,stats.rescheduled.length)}%`,`${ohN(stats.stillOpenPast.length,'line')} · open qty remains`,rowOpenAmount(stats.stillOpenPast))}
       </div>`;
     };
     const renderRescheduleWarehouseSummary=(rows)=>{
@@ -6234,7 +6255,7 @@ function renderResults(){
       const listKeys=new Set(rows.map(rowKey));
       linkedListKeys=[...listKeys];
       linkedSelection.forEach(k=>{if(!listKeys.has(k))linkedSelection.delete(k);});
-      if(!rows.length)return `<div class="card"><p class="empty-note">No linked lines for this card with the current filters.</p></div>`;
+      if(!rows.length)return `<div class="card"><p class="empty-note">No lines for this card with the current filters.</p></div>`;
       const showLateDetail=weeklyTileFilter==='late';
       const showScheduleChange=weeklyTileFilter==='active';
       const showOtd=weeklyTileFilter==='otd3mo'||OH_LAGGING_EXTRA_TILES.includes(weeklyTileFilter);
@@ -6367,7 +6388,7 @@ function renderResults(){
         return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort, again to reverse.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
       };
       return `<div class="table">
-        <div class="table-tools linked-tools"><label>Sort rows <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
+        <div class="table-tools linked-tools"><label>Sort lines <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
         <div class="table-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so">
           <colgroup><col class="col-check" style="width:42px"><col style="width:64px"><col style="width:112px"><col style="width:100px"><col><col style="width:90px"><col style="width:60px"><col style="width:88px"><col style="width:146px"><col style="width:124px"><col style="width:62px"><col class="col-notes" style="width:110px"></colgroup>
           <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines in this list, not only those shown.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
@@ -6425,7 +6446,7 @@ function renderResults(){
             </tr>${renderNoteEditorRow(r,12)}${renderPrintNoteRow(r,12)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} rows${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show up to 80'}</button>`:''}</div>
+        <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show up to 80'}</button>`:''}</div>
       </div>`;
     };
     const weeklyTileRows={
@@ -6441,18 +6462,19 @@ function renderResults(){
       duemonth:notShippedThisMonthRows,
       allorders:allOrderRows
     };
+    // The picked card's name in the Lines to act on pill, as its card writes it (Purchase Orders does the same).
     const weeklyTileTitles={
-      late:'At Risk',
-      nocommit:'No Commit Date',
+      late:'At risk',
+      nocommit:'No commit date',
       active:'Rescheduled',
-      fillrate:'Fill Rate',
-      otd3mo:'OTD 3 Mo',
-      shippedweek:'Shipped This Week',
-      reschedhit:'Reschedule Hit Rate',
-      duethisweek:'This Week Focus',
-      duenextweek:'Due Next Week',
-      duemonth:'Due This Month',
-      allorders:'All Open Orders'
+      fillrate:'Fill rate',
+      otd3mo:'OTD · 3 mo',
+      shippedweek:'Shipped this week',
+      reschedhit:'Reschedule hit · 12 mo',
+      duethisweek:'This week focus',
+      duenextweek:'Due next week',
+      duemonth:'Due this month',
+      allorders:'All open orders'
     };
     Object.assign(weeklyTileRows,ohTileRows(m));
     Object.assign(weeklyTileTitles,OH_TILE_TITLES);
@@ -6468,17 +6490,18 @@ function renderResults(){
       ? ({met:rescheduleLinkedStats.met,tolerance:rescheduleLinkedStats.tolerance,missed:rescheduleLinkedStats.missed,openpast:rescheduleLinkedStats.stillOpenPast}[weeklyRescheduleFilter]||rescheduleLinkedStats.rescheduled)
       : rawLinkedTileRows;
     const linkedTileValue=weeklyTileFilter==='otd3mo'||weeklyTileFilter==='shippedweek'||OH_LAGGING_EXTRA_TILES.includes(weeklyTileFilter)?rowShippedAmount(linkedTileRows):weeklyTileFilter==='reschedhit'?linkedTileRows.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0):rowOpenAmount(linkedTileRows);
+    const linkedLines=`${linkedTileRows.length===1?'line':'lines'} · ${money(linkedTileValue)}`;
     const linkedTileSummary=weeklyTileFilter==='otd3mo'
-      ? `${fmtNum(linkedTileRows.length)} ${weeklyOtdFilter==='early'?'early':weeklyOtdFilter==='ontime'?'on-time':weeklyOtdFilter==='tolerance'?'2-day tolerance':weeklyOtdFilter==='late'?'late':'delivered'} rows · ${money(linkedTileValue)}`
+      ? `${fmtNum(linkedTileRows.length)} ${weeklyOtdFilter==='early'?'early':weeklyOtdFilter==='ontime'?'on-time':weeklyOtdFilter==='tolerance'?'2-day tolerance':weeklyOtdFilter==='late'?'late':'delivered'} ${linkedLines}`
       : weeklyTileFilter==='shippedweek'
-      ? `${fmtNum(linkedTileRows.length)} shipped rows · ${money(linkedTileValue)}`
+      ? `${fmtNum(linkedTileRows.length)} shipped ${linkedLines}`
       : weeklyTileFilter==='reschedhit'
-      ? `${fmtNum(linkedTileRows.length)} ${weeklyRescheduleFilter==='met'?'met':weeklyRescheduleFilter==='tolerance'?'2-day tolerance':weeklyRescheduleFilter==='missed'?'missed':weeklyRescheduleFilter==='openpast'?'still open':'rescheduled'} rows · ${money(linkedTileValue)}`
-      : `${fmtNum(linkedTileRows.length)} rows · ${money(linkedTileValue)}`;
+      ? `${fmtNum(linkedTileRows.length)} ${weeklyRescheduleFilter==='met'?'met':weeklyRescheduleFilter==='tolerance'?'2-day tolerance':weeklyRescheduleFilter==='missed'?'missed':weeklyRescheduleFilter==='openpast'?'still open':'rescheduled'} ${linkedLines}`
+      : `${fmtNum(linkedTileRows.length)} ${linkedLines}`;
     const linkedBadgeClass=(weeklyTileFilter==='late'||weeklyTileFilter==='nocommit')&&linkedTileRows.length?'bad':weeklyTileFilter==='active'&&linkedTileRows.length?'warn':'';
     html+=weeklyTileFilter&&!hideLinkedTile?`
-    ${ohGroupOpen('oh-g-lines','Order lines',{cls:'rise rise-4',domId:'linked-lines'})}
-      <div class="section-head"><h3 class="section-title">Linked lines — ${esc(weeklyTileTitles[weeklyTileFilter]||'Selected KPI')}</h3>${infoButton('oh-linked')}<span class="count-badge ${linkedBadgeClass}">${esc(linkedTileSummary)}</span></div>
+    ${ohGroupOpen('oh-g-lines','Lines to act on',{cls:'rise rise-4',domId:'linked-lines',info:'oh-linked',
+      badge:`<span class="count-badge ${linkedBadgeClass}">${esc(weeklyTileTitles[weeklyTileFilter]||'Selected card')} · ${esc(linkedTileSummary)}</span>`})}
       ${renderFillWarehouseSummary(fillLineRows)}
       ${renderOtdDrillCards(rawLinkedTileRows)}
       ${renderOtdWarehouseSummary(rawLinkedTileRows)}
@@ -6579,7 +6602,7 @@ function renderResults(){
         const shown=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
         const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
         return `<div class="table">
-          <div class="table-tools"><label>Sort rows <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label></div>
+          <div class="table-tools"><label>Sort lines <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label></div>
           <div class="table-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="lines-table po">
             <colgroup><col style="width:64px"><col style="width:140px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col class="col-notes" style="width:110px"></colgroup>
             <thead><tr>${['PO #','Vendor','Warehouse','Item / Description'].map(label=>`<th${tipAttr(columnTip('po',label))}>${label}</th>`).join('')}<th${tipAttr('The reschedule date, else the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive.')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with the reschedule date (↻) when there is one.')}>Status</th><th class="print-hide"${tipAttr('Add note sets an override or a note on the line.')}>Notes</th></tr></thead>
@@ -6623,7 +6646,7 @@ function renderResults(){
         <button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"${tipAttr('Show every warehouse and vendor again.')} onclick="resetPoFilters()">Reset</button>
       </div>
       <div class="print-only">Filters: ${esc(poFilterNote)}</div>
-      ${pageGroupHtml('po-commitments','Supply commitments',`
+      ${pageGroupHtml('po-commitments','Leading · Supply commitments',`
         <div class="grid-lead pg-lead">
           ${poCard('late',poLateRows.length?'crit':'good','Late / missed commit',poLateRows,'Past due or past their reschedule date',true,`Late / missed commit: ${money(poValue(poLateRows))} open on ${poLines(poLateRows)} (${fmtNum(poQty(poLateRows))} qty) past their date; click to list them.`)}
           ${poCard('nocommit',poNoCommitRows.length?'crit':'good','No commit date',poNoCommitRows,'No valid commit date from the vendor',false,`No commit date: ${money(poValue(poNoCommitRows))} open on ${poLines(poNoCommitRows)} with no valid vendor date; click to list them.`)}
@@ -6636,7 +6659,7 @@ function renderResults(){
           ${poMini('missingprice',poMissingPriceRows.length?'warn':'good','Missing price',poMissingPriceRows,'open lines with no price',`Missing price: ${poLines(poMissingPriceRows)} with no price in SAP; click to list them.`)}
           ${poMini('allopen','neutral','All open POs',poAllOpenRows,'all open lines in view',`All open PO lines: ${money(poValue(poAllOpenRows))} on ${poLines(poAllOpenRows)}; click to list them.`)}
         </div>`,{info:'po-commitments',rise:'rise-2'})}
-      ${pageGroupHtml('po-receiving','Receiving performance',`
+      ${pageGroupHtml('po-receiving','Lagging · Receiving performance',`
         <div class="grid-4">
           <div class="card kpi lag static"${tipAttr(withDeltaText(poOtd3Mo.scored.length?`On-time receiving, 3 months: ${fmtNum(poOtd3Mo.rate)}%, ${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts (${money(poOtdAmt)}) by the original date.`:`On-time receiving, 3 months: no receipts to score (receipts worth ${money(poOtdAmt)}).`,poSeries,'otd'))}>
             <div class="kpi-top"><span class="kpi-label">On-time · 3 mo</span>${renderDeltaPill(poSeries,'otd')}</div>
@@ -6646,9 +6669,9 @@ function renderResults(){
           </div>
           <div class="card kpi lag static"${tipAttr(`Received this week (Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}): ${fmtNum(poReceivedThisWeekRows.length)} receipt ${poReceivedThisWeekRows.length===1?'line':'lines'} worth ${money(poReceivedWeekAmt)}.`)}>
             <div class="kpi-top"><span class="kpi-label">Received this week</span><span class="delta flat">Sun–${esc(today.toLocaleDateString('en-CA',{weekday:'short'}))}</span></div>
-            <div class="kpi-row tight"><span class="kpi-value" data-count="${poReceivedThisWeekRows.length}">${fmtNum(poReceivedThisWeekRows.length)}</span><span class="kpi-unit">lines · ${moneyShort(poReceivedWeekAmt)}</span></div>
-            <div class="col-bars sm" aria-hidden="true">${recvWeeks.map((w,i)=>{const v=rowShippedAmount(w.rows);return `<i class="grow-h${i===recvWeeks.length-1?' now':''}" style="height:${Math.max(3,v/recvMax*40).toFixed(1)}px;animation-delay:${i*40}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${fmtNum(w.rows.length)} receipt lines · ${money(v)} received`)}></i>`;}).join('')}</div>
-            <span class="kpi-sub">${poReceiptRows.length?`Last week ${fmtNum(lastRecvWeek.rows.length)} lines · ${money(rowShippedAmount(lastRecvWeek.rows))}`:'Needs receipt close-date data'}</span>
+            <div class="kpi-row tight"><span class="kpi-value" data-count="${poReceivedThisWeekRows.length}">${fmtNum(poReceivedThisWeekRows.length)}</span><span class="kpi-unit">${poReceivedThisWeekRows.length===1?'line':'lines'} · ${moneyShort(poReceivedWeekAmt)}</span></div>
+            <div class="col-bars sm" aria-hidden="true">${recvWeeks.map((w,i)=>{const v=rowShippedAmount(w.rows);return `<i class="grow-h${i===recvWeeks.length-1?' now':''}" style="height:${Math.max(3,v/recvMax*40).toFixed(1)}px;animation-delay:${i*40}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${ohN(w.rows.length,'receipt line')} · ${money(v)} received`)}></i>`;}).join('')}</div>
+            <span class="kpi-sub">${poReceiptRows.length?`Last week ${ohN(lastRecvWeek.rows.length,'line')} · ${money(rowShippedAmount(lastRecvWeek.rows))}`:'Needs receipt close-date data'}</span>
           </div>
           <button type="button" class="card kpi lag${poSelected==='allopen'?' selected':''}" data-focus-key="potile-fill" onclick="setPoTileFilter('allopen')"${tipAttr(`PO fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed, ${fmtNum(filteredPoOpen.length)} still open; click to list the open lines.`)}>
             <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="delta flat">target 90%</span></div>
@@ -6682,8 +6705,8 @@ function renderResults(){
           <div class="rank-list roomy">${topVendors.map((v,i)=>`<button type="button" class="rank-item${focusedVendor===v.code?' selected':''}" data-focus-key="povendor-${esc(v.code)}" data-vendor="${esc(v.code)}" onclick="setPoVendorRow(this.dataset.vendor)" aria-pressed="${focusedVendor===v.code?'true':'false'}"${tipAttr(`${v.name}: ${money(v.value)} late across ${fmtNum(v.rows.length)} PO ${v.rows.length===1?'line':'lines'}; ${focusedVendor===v.code?'click to show all.':'click to filter.'}`)}><div class="rank-top lg"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(v.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(v.rows.length)} · </span><strong>${money(v.value)}</strong></span></div><div class="rank-track"><i class="grow-w" style="width:${(v.value/vendorMax*100).toFixed(1)}%;background:var(--crit);animation-delay:${i*50}ms"></i></div></button>`).join('')||'<div class="empty-note">No late purchase-order lines in this view.</div>'}</div>
         </section>
       </div>`,{rise:'rise-4'})}
-      ${pageGroupHtml('po-linked','Linked PO lines',renderPoTable(linkedPoRows),{info:'po-linked',rise:'rise-5',anchor:'po-linked-lines',
-        badge:`<span class="count-badge ${linkedBad?'bad':''}">${esc(poLinkedTitles[poSelected]||poTileTitles[poSelected]||'Late / missed commit')} · ${fmtNum(linkedPoRows.length)} lines · ${fmtNum(poQty(linkedPoRows))} open qty · ${money(poValue(linkedPoRows))}</span>`})}
+      ${pageGroupHtml('po-linked','Lines to act on',renderPoTable(linkedPoRows),{info:'po-linked',rise:'rise-5',anchor:'po-linked-lines',
+        badge:`<span class="count-badge ${linkedBad?'bad':''}">${esc(poLinkedTitles[poSelected]||poTileTitles[poSelected]||'Late / missed commit')} · ${fmtNum(linkedPoRows.length)} ${linkedPoRows.length===1?'line':'lines'} · ${fmtNum(poQty(linkedPoRows))} open qty · ${money(poValue(linkedPoRows))}</span>`})}
       ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}`;
     }
   }
@@ -6720,7 +6743,7 @@ function renderResults(){
       const renderSupplyCoverage=(key,rows,emptyText)=>{
         if(!rows.length)return `<div class="card"><p class="empty-note">${esc(emptyText)}</p></div>`;
         return groupSupplyRowsByWarehouse(rows).map(group=>renderTableCard({key:`${key}-${group.warehouse}`,title:esc(group.warehouse),
-          note:`${fmtNum(group.rows.length)} rows${group.rows.length>40?' (first 40 listed)':''} · ${fmtNum(group.rows.reduce((s,r)=>s+r.demandOpenQty,0))} demand qty · ${money(group.rows.reduce((s,r)=>s+r.demandOpenValue,0))}`,
+          note:`${fmtNum(group.rows.length)} ${group.rows.length===1?'line':'lines'}${group.rows.length>40?' (first 40 listed)':''} · ${fmtNum(group.rows.reduce((s,r)=>s+r.demandOpenQty,0))} demand qty · ${money(group.rows.reduce((s,r)=>s+r.demandOpenValue,0))}`,
           head:[['Month'],['Item','','26%'],['Demand qty','num'],['Demand value','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%'],['Risk qty','num']],
           limit:10,minWidth:1000,
           rows:group.rows.slice(0,40).map(r=>{
@@ -6759,23 +6782,23 @@ function renderResults(){
       <div class="print-only">Filters: ${esc(selectedSupplyLabel)}</div>
       ${pageGroupHtml('sd-coverage','Coverage',`
         <div class="grid-4 pg-stats">
-          ${renderStatCard(shortageRows.length?'Shortage rows':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'row':'rows'} short of usable open PO supply, ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short; stock on hand is not included.`)}
+          ${renderStatCard(shortageRows.length?'Shortage lines':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'line':'lines'} short of usable open PO supply, ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short; stock on hand is not included.`)}
           ${renderStatCard('Open demand',fmtNum(demandQty),`${money(demandValue)}`,'','neutral',`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}.`)}
           ${renderStatCard('Usable supply',fmtNum(usableQty),'',usableQty>=demandQty?'good':'warn',usableQty>=demandQty?'good':'warn',`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}).`)}
-          ${renderStatCard('Supply risk rows',fmtNum(riskRows.length),`${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} risk qty`,riskRows.length?'warn':'good',riskRows.length?'warn':'good',`Supply risk: ${fmtNum(riskRows.length)} ${riskRows.length===1?'row':'rows'} (${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty) of unconfirmed, no-commit, late or rescheduled PO supply.`)}
+          ${renderStatCard('Supply risk lines',fmtNum(riskRows.length),`${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} risk qty`,riskRows.length?'warn':'good',riskRows.length?'warn':'good',`Supply risk: ${fmtNum(riskRows.length)} ${riskRows.length===1?'line':'lines'} (${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty) of unconfirmed, no-commit, late or rescheduled PO supply.`)}
         </div>
         <div class="mini-strip cols-2">
           <div${tipAttr(`No commit supply: ${fmtNum(noCommitQty)} qty on open purchase orders with no confirmed date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${noCommitQty?'crit':'good'}"></span>No commit supply</span></div><div class="ms-num"><span class="ms-big xl ${noCommitQty?'crit-text':''}">${fmtNum(noCommitQty)}</span></div></div>
           <div${tipAttr(`Late supply: ${fmtNum(lateQty)} qty on open purchase orders already past their date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${lateQty?'crit':'good'}"></span>Late supply</span></div><div class="ms-num"><span class="ms-big xl ${lateQty?'crit-text':''}">${fmtNum(lateQty)}</span></div></div>
         </div>`,{info:'sd-coverage',rise:'rise-2'})}
-      ${pageGroupHtml('sd-shortages','Shortages by warehouse',renderSupplyCoverage('sd-short',shortageRows,'No supply shortages found for this warehouse selection.'),{info:'sd-shortages',rise:'rise-3',
-        badge:`<span class="count-badge ${shortageRows.length?'bad':'good'}">${fmtNum(shortageRows.length)} rows</span>`})}
-      ${pageGroupHtml('sd-risk','Supply at risk',renderSupplyCoverage('sd-risk',riskRows,'No supply risk rows found for this warehouse selection.'),{info:'sd-risk',rise:'rise-4',
-        badge:`<span class="count-badge ${riskRows.length?'warn':'good'}">${fmtNum(riskRows.length)} rows</span>`})}
-      ${pageGroupHtml('sd-all','All open demand',
-        // Every demand row, also the covered ones: behind Show (always printed).
-        tableMore['sd-all-group']||printMode?renderSupplyCoverage('sd-all',demandRows,'No open demand rows found for this warehouse selection.'):' ',
-        {info:'sd-all',rise:'rise-5',badge:`<span class="count-badge">${fmtNum(demandRows.length)} rows</span>`,tools:demandRows.length&&!printMode?groupMoreButton('sd-all-group',demandRows.length,'open demand rows'):''})}
+      ${pageGroupHtml('sd-shortages','Lines to act on · Shortages',renderSupplyCoverage('sd-short',shortageRows,'No supply shortages found for this warehouse selection.'),{info:'sd-shortages',rise:'rise-3',
+        badge:`<span class="count-badge ${shortageRows.length?'bad':'good'}">${fmtNum(shortageRows.length)} ${shortageRows.length===1?'line':'lines'}</span>`})}
+      ${pageGroupHtml('sd-risk','Lines to act on · Supply risk',renderSupplyCoverage('sd-risk',riskRows,'No supply risk lines found for this warehouse selection.'),{info:'sd-risk',rise:'rise-4',
+        badge:`<span class="count-badge ${riskRows.length?'warn':'good'}">${fmtNum(riskRows.length)} ${riskRows.length===1?'line':'lines'}</span>`})}
+      ${pageGroupHtml('sd-all','All open lines',
+        // Every demand line, also the covered ones: behind Show (always printed).
+        tableMore['sd-all-group']||printMode?renderSupplyCoverage('sd-all',demandRows,'No open demand lines found for this warehouse selection.'):' ',
+        {info:'sd-all',rise:'rise-5',badge:`<span class="count-badge">${fmtNum(demandRows.length)} ${demandRows.length===1?'line':'lines'}</span>`,tools:demandRows.length&&!printMode?groupMoreButton('sd-all-group',demandRows.length,'open demand lines'):''})}
       ${renderAbout(['sd-coverage','sd-shortages','sd-risk','sd-all'])}`;
     }
   }
@@ -6844,12 +6867,12 @@ function renderResults(){
       const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
       const atRisk=g.lateRows+g.atRiskRows;
       const lateOpen=isPast&&g.openAmount>0;
-      return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(`${g.label}: ${money(g.openAmount)} open${lateOpen?' and now late':''}, ${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} rows closed); ${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled.`)}>
+      return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(`${g.label}: ${money(g.openAmount)} open${lateOpen?' and now late':''}, ${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines closed); ${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled.`)}>
         <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
         <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · now late':'open'}</span></div>
         <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
         <div class="month-stats">
-          <div><span class="stat-label">${isPast?'Closed rows':'Open rows'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
+          <div><span class="stat-label">${isPast?'Closed lines':'Open lines'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
           <div><span class="stat-label">At risk / late</span><span class="stat-val${atRisk?' crit-text':''}">${fmtNum(atRisk)}</span></div>
           <div><span class="stat-label">Rescheduled</span><span class="stat-val${g.rescheduledRows?' warn-text':''}">${fmtNum(g.rescheduledRows)}</span></div>
         </div>
@@ -6941,10 +6964,10 @@ function renderResults(){
 
     html+=`
     ${pageGroupHtml('mo-months','Month by month',`<div class="month-spot">${spotlight}</div>`,{rise:'rise-1'})}
-    ${pageGroupHtml('mo-shipped','Shipped',`
+    ${pageGroupHtml('mo-shipped','By delivery month',`
     <section class="mini-strip cols-3" aria-label="Shipped to date">
-      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${fmtNum(mtd.rows)} delivery rows (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${fmtNum(mtd.rows)} delivery rows</span></div></div>
-      <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${fmtNum(ytd.rows)} delivery rows${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:`; no ${lastYear} data, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${fmtNum(ytd.rows)} delivery rows</span></div></div>
+      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${ohN(mtd.rows,'delivery line')} (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${ohN(ytd.rows,'delivery line')}${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:`; no ${lastYear} data, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
       <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data, ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
     </section>
     <section class="card chart-card">
@@ -6955,12 +6978,12 @@ function renderResults(){
     </section>
     ${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
       note:anyLastYear?'':`No ${lastYear} months in the export for year over year`,
-      head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% rows shipped','','14%'],['Open rows','num'],['Closed rows','num'],['At risk / late','num']],
+      head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% lines shipped','','14%'],['Open lines','num'],['Closed lines','num'],['At risk / late','num']],
       rows:summaryRows,limit:12,minWidth:anyLastYear?980:820})}
     ${renderShippedByWarehouseCard(scenario,today)}`,{rise:'rise-2'})}
     ${pageGroupHtml('mo-open','By original delivery date',`
     ${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect}</div>`,
-      head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open rows','num'],['Closed rows','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
+      head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open lines','num'],['Closed lines','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
       rows:originalRows,limit:14,minWidth:980,empty:'No original SO line delivery dates were found in this export.'})}
     ${renderTableCard({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
       note:`${originalDeliveryMonthFilter==='ALL'?'By original line delivery month':esc(monthLabel(originalDeliveryMonthFilter)||originalDeliveryMonthFilter)} · ${fmtNum(openOriginalRows.length)} open lines`,
@@ -7007,22 +7030,22 @@ function renderResults(){
     html+=`
     ${pageGroupHtml('mt-quality','Order quality',`
       <div class="grid-4">
-        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open rows`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open rows'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open rows not late, past due or without a commit date.`)}
+        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open lines'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or without a commit date.`)}
         ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and never rescheduled.`)}
         ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`Backorder rate: ${m.backorderRate}%, ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in 12 months missed its original date; keep under 5%.`)}
         ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`Partial ship rate: ${m.partialShipRate}%, ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines shipped in part; keep under 5%.`)}
       </div>
       <div class="mini-strip cols-4">
-        ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of rows`,'crit',`Past due / late: ${fmtNum(lateCount)} open rows past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
-        ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of rows`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open rows with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
-        ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of rows`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open rows with a reschedule date still ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
-        ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of rows`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order rows with no price in SAP.`)}
+        ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of lines`,'crit',`Past due / late: ${fmtNum(lateCount)} open lines past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
+        ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of lines`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open lines with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
+        ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of lines`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open lines with a reschedule date still ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
+        ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of lines`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order lines with no price in SAP.`)}
       </div>`,{info:'mt-quality',rise:'rise-1'})}
     ${pageGroupHtml('mt-month','By due month',`
     <div class="grid-2">
       <div class="card chart-card tight">
         <div class="chart-head"><div class="title-row"><h2>Open value by due month</h2>${infoButton('mt-open-month')}</div></div>
-        <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
+        <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
         <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
       </div>
       <div class="card chart-card tight">
@@ -7032,9 +7055,10 @@ function renderResults(){
       </div>
     </div>
     ${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
-      head:[['Month'],['Open value','num'],['Open qty','num'],['Open rows','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
+      head:[['Month'],['Open value','num'],['Open qty','num'],['Open lines','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
       rows:timelineRows,limit:10,minWidth:900})}`,{rise:'rise-2'})}
-    ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',info:'mt-attention',title:'Rows needing attention',note:`most overdue first · ${fmtNum(attention.length)} rows`,limit:10}),{rise:'rise-3'})}
+    ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',title:'Lines needing attention',note:'most overdue first',limit:10}),{info:'mt-attention',rise:'rise-3',
+      badge:`<span class="count-badge${attention.length?' bad':''}">${ohN(attention.length,'line')}</span>`})}
     ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
   }
   // Warehouse Timeline: open value, late, and no-commit by warehouse/month.
@@ -7088,7 +7112,7 @@ function renderResults(){
         ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
-          const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${fmtNum(g.openRows)} rows · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
+          const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
           // Each cell carries its breakdown as text (read by screen readers, shown under the grid on focus or hover);
           // cells with lines are Tab stops, empty ones are not.
           return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}" onfocus="showHeatDetail(this.dataset.tip)" onmouseenter="showHeatDetail(this.dataset.tip)"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
@@ -7097,7 +7121,7 @@ function renderResults(){
       ${heatShown.length?'<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">Hover a cell for its breakdown.</p>':''}
       ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show only the 10 warehouses with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
     </section>`,{rise:'rise-1'})}
-    ${pageGroupHtml('wh-kpis','Performance by warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',
+    ${pageGroupHtml('wh-kpis','By warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',
       head:[['Warehouse'],['Open lines','num'],['On-track (open)','','14%'],['Perfect order','','14%'],['Backorder','num'],['Partial ship','num'],['Open qty','num'],['Open value','num'],['Late','num'],['No commit','num'],['Rescheduled','num']],
       rows:summaryRows,limit:12,minWidth:1040}),{rise:'rise-2'})}
     ${renderAbout(['wh-open','wh-ontrack','wh-heat','wh-summary'])}`;
@@ -7115,10 +7139,10 @@ function renderResults(){
       ${pageGroupHtml('mix-totals','Demand vs supply',`<div class="grid-4 pg-stats">
         ${renderStatCard('Demand qty',fmtNum(sd.demandQty),`${money(sd.demandValue)}`,'','neutral',`Demand: ${fmtNum(sd.demandQty)} qty on open sales orders in the snapshot, worth ${money(sd.demandValue)}.`)}
         ${renderStatCard('Usable supply qty',fmtNum(sd.usableQty),'',sd.usableQty>=sd.demandQty?'good':'warn',sd.usableQty>=sd.demandQty?'good':'warn',`Usable supply: ${fmtNum(sd.usableQty)} qty on confirmed, committed open POs; stock on hand is not included.`)}
-        ${renderStatCard('Shortage qty',fmtNum(sd.shortageQty),`${fmtNum(sd.shortageRows.length)} shortage ${sd.shortageRows.length===1?'row':'rows'}`,sd.shortageQty>0?'crit':'good',sd.shortageQty>0?'crit':'good',`Shortage: ${fmtNum(sd.shortageQty)} qty, the worst running shortfall per item and warehouse, added up; ${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'row is':'rows are'} short.`)}
-        ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),`${fmtNum(sd.riskRows.length)} risk ${sd.riskRows.length===1?'row':'rows'}`,sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of unconfirmed, no-commit, rescheduled or late PO supply.`)}
+        ${renderStatCard('Shortage qty',fmtNum(sd.shortageQty),`${fmtNum(sd.shortageRows.length)} shortage ${sd.shortageRows.length===1?'line':'lines'}`,sd.shortageQty>0?'crit':'good',sd.shortageQty>0?'crit':'good',`Shortage: ${fmtNum(sd.shortageQty)} qty, the worst running shortfall per item and warehouse, added up; ${fmtNum(sd.shortageRows.length)} item / warehouse / month ${sd.shortageRows.length===1?'line is':'lines are'} short.`)}
+        ${renderStatCard('Supply risk qty',fmtNum(sd.riskQty),`${fmtNum(sd.riskRows.length)} risk ${sd.riskRows.length===1?'line':'lines'}`,sd.riskQty?'warn':'good',sd.riskQty?'warn':'good',`Supply risk: ${fmtNum(sd.riskQty)} qty of unconfirmed, no-commit, rescheduled or late PO supply.`)}
       </div>`,{rise:'rise-1'})}
-      ${pageGroupHtml('mix-gaps','Where the gaps are',`<div class="grid-2">
+      ${pageGroupHtml('mix-gaps','By month and warehouse',`<div class="grid-2">
         <div class="card list-card roomy">
           <div class="list-head"><div class="title-row"><h2>Net qty by month</h2>${infoButton('mix-net')}</div></div>
           ${renderRankRows(sd.byMonth.map(g=>({label:monthLabel(g.key)||g.key,value:g.monthlyNetQty,text:`${g.monthlyNetQty>0?'+':''}${fmtNum(g.monthlyNetQty)}`,color:g.monthlyNetQty<0?'var(--crit)':'var(--good)',tone:g.monthlyNetQty<0?'crit':'good',sub:`${fmtNum(g.monthlyShortageRows)} short · ${fmtNum(g.riskRows)} at risk`})),{empty:'No months in the snapshot.'})}
@@ -7129,10 +7153,11 @@ function renderResults(){
         </div>
       </div>
       ${renderTableCard({key:'mix-groups',info:'mix-groups',title:'Supply risk by item group',
-        head:[['Item group'],['Demand qty','num'],['Usable supply','num'],['Net qty','num'],['Shortage rows','num'],['Risk rows','num'],['Unconfirmed qty','num'],['No commit qty','num'],['Rescheduled qty','num'],['Late qty','num']],
+        head:[['Item group'],['Demand qty','num'],['Usable supply','num'],['Net qty','num'],['Shortage lines','num'],['Risk lines','num'],['Unconfirmed qty','num'],['No commit qty','num'],['Rescheduled qty','num'],['Late qty','num']],
         rows:itemGroupRows,limit:12,minWidth:980})}`,{rise:'rise-2'})}
-      ${pageGroupHtml('mix-rows','Rows to check',`${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage rows',note:sd.shortageRows.length>50?`first 50 of ${fmtNum(sd.shortageRows.length)}`:`${fmtNum(sd.shortageRows.length)} ${sd.shortageRows.length===1?'row':'rows'}`,limit:8,empty:'No shortage rows.'})}
-      ${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk rows',note:sd.riskRows.length>50?`first 50 of ${fmtNum(sd.riskRows.length)}`:`${fmtNum(sd.riskRows.length)} ${sd.riskRows.length===1?'row':'rows'}`,limit:8,empty:'No supply risk rows.'})}`,{rise:'rise-3'})}
+      ${pageGroupHtml('mix-rows','Lines to act on',`${renderSupplyDemandTable(sd.shortageRows.slice(0,50),{key:'mix-short',title:'Worst shortage lines',note:sd.shortageRows.length>50?`first 50 of ${fmtNum(sd.shortageRows.length)}`:ohN(sd.shortageRows.length,'line'),limit:8,empty:'No shortage lines.'})}
+      ${renderSupplyDemandTable(sd.riskRows.slice(0,50),{key:'mix-risk',title:'Supply risk lines',note:sd.riskRows.length>50?`first 50 of ${fmtNum(sd.riskRows.length)}`:ohN(sd.riskRows.length,'line'),limit:8,empty:'No supply risk lines.'})}`,{info:'mix-rows',rise:'rise-3',
+        badge:`<span class="count-badge${sd.shortageRows.length?' bad':''}">${fmtNum(sd.shortageRows.length)} shortage · ${ohN(sd.riskRows.length,'risk line')}</span>`})}
       <details class="about">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</ul></div></details>`;
     }
   }
@@ -7164,7 +7189,7 @@ function renderResults(){
         :`<td class="num"><span class="pill ${tone(c.clearToBuild,c.total)}" title="${esc(`${fmtNum(c.clearToBuild)} of ${fmtNum(c.total)} clear to build · ${fmtNum(c.atRisk)} at risk · ${fmtNum(c.late)} late`)}">${pct(c.clearToBuild,c.total)}%</span></td>`).join('')}</tr>`);
       // The report week (and its row count) on top, then the Big picture (Stream F), the week's numbers, the
       // CM / month buckets and the sales orders to act on.
-      const ctbRowsNote=`<span class="filter-note"${tipAttr(`${fmtNum(br.rows.length)} CM / month rows in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report rows${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}</span>`;
+      const ctbRowsNote=`<span class="filter-note"${tipAttr(`${ohN(br.rows.length,'CM / month line')} in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report ${br.rows.length===1?'line':'lines'}${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}</span>`;
       html+=`
       <div class="filter-bar inline-controls rise">
         ${snapshots.some(s=>s.dated)?`<label>Report week <select id="build-risk-snapshot" class="select"${tipAttr('Pick which weekly Clear To Build sheet to show; weeks are never added together.')} onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===brAll?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>`:'<span class="filter-label">Clear To Build report</span>'}
@@ -7179,14 +7204,15 @@ function renderResults(){
       </div>`,{rise:'rise-1'})}
       ${pageGroupHtml('br-buckets','By CM and month',`<section class="card list-card roomy">
         <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--accent)"></i>Clear</span></span></div>
-        ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(r.matchedRows.length)} SO rows · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
+        ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--accent)',sub:`${ohN(r.matchedRows.length,'SO line')} · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
       </section>
       ${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',
-        head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Matched SO rows','num'],['Matched open qty','num'],['Matched open value','num'],['Notes','','22%']],
+        head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Matched SO lines','num'],['Matched open qty','num'],['Matched open value','num'],['Notes','','22%']],
         rows:ctbRows,limit:12,minWidth:1100})}
       ${weeks.length>1?renderTableCard({key:'br-trend',info:'br-trend',title:'CTB % by CM',note:`last ${fmtNum(weeks.length)} report weeks, oldest first`,
         head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90}):''}`,{rise:'rise-2'})}
-      ${pageGroupHtml('br-orders','Orders to act on',renderRowsTable(riskRows.slice(0,60),{key:'br-risk',info:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} rows (latest-risk buckets first)`:`${fmtNum(riskRows.length)} rows`,limit:8,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}),{rise:'rise-3'})}
+      ${pageGroupHtml('br-orders','Lines to act on',renderRowsTable(riskRows.slice(0,60),{key:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} lines (latest-risk buckets first)`:'',limit:8,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}),{info:'br-risk',rise:'rise-3',
+        badge:`<span class="count-badge${riskRows.length?' warn':''}">${ohN(riskRows.length,'line')}</span>`})}
       <details class="about">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}${sankeyAbout('buildrisk')}</ul></div></details>`;
     }
   }
@@ -7740,13 +7766,13 @@ const SECTION_INFO={
   'oh-due':{title:'What’s due next',
     what:'Open value due in each of the next 8 weeks.',
     click:'Rest the pointer on a bar for its lines and value.'},
-  'oh-linked':{title:'Linked lines',
+  'oh-linked':{title:'Lines to act on',
     what:'The lines behind the card you picked.',
     click:'Click a heading to sort; tick lines to set an override or delete them.'},
-  'po-commitments':{title:'Supply commitments',
+  'po-commitments':{title:'Leading · Supply commitments',
     what:'Open purchase-order lines that may arrive late.',
     click:'Click a card to list its lines below.'},
-  'po-receiving':{title:'Receiving performance',
+  'po-receiving':{title:'Lagging · Receiving performance',
     what:'How goods receipts did against their PO dates; target 90%.',
     click:'Click Fill rate to list every open PO line.'},
   'po-warehouse':{title:'Open PO value by warehouse',
@@ -7755,21 +7781,21 @@ const SECTION_INFO={
   'po-vendors':{title:'Late value by vendor',
     what:'The eight vendors with the most late open PO value.',
     click:'Click a vendor to show only that vendor; click it again for all.'},
-  'po-linked':{title:'Linked PO lines',
+  'po-linked':{title:'Lines to act on',
     what:'The PO lines behind the card you picked.',
-    click:'Sort with Sort rows; Add note sets an override or a note.'},
+    click:'Sort with Sort lines; Add note sets an override or a note.'},
   'sd-coverage':{title:'Coverage',
     what:'Open sales-order demand against open PO supply; stock on hand is not included.',
     click:'Filter with the warehouse buttons or list above.'},
-  'sd-shortages':{title:'Shortages by warehouse',
-    what:'Months where demand is more than usable open PO supply.',
-    click:'Show all lists every row.'},
-  'sd-risk':{title:'Supply at risk',
-    what:'Rows whose supply is unconfirmed, has no commit date, is rescheduled or is late.',
-    click:'Show all lists every row.'},
-  'sd-all':{title:'All open demand',
-    what:'Every open demand row, by warehouse and month.',
-    click:'Show all lists every row.'},
+  'sd-shortages':{title:'Lines to act on · Shortages',
+    what:'Months where demand is more than usable open PO supply, by warehouse.',
+    click:'Show all lists every line.'},
+  'sd-risk':{title:'Lines to act on · Supply risk',
+    what:'Lines whose supply is unconfirmed, has no commit date, is rescheduled or is late.',
+    click:'Show all lists every line.'},
+  'sd-all':{title:'All open lines',
+    what:'Every open demand line, by warehouse and month.',
+    click:'Show all lists every line.'},
   'mo-chart':{title:'Shipped and open value by month',
     what:'Shipped value by delivery month, open value by the month it is due now.',
     click:'Rest the pointer on a bar for its value.'},
@@ -7801,9 +7827,9 @@ const SECTION_INFO={
     what:'Late, no-commit and rescheduled open lines by due month.',
     click:'Rest the pointer on a bar for its breakdown.'},
   'mt-timeline':{title:'Metrics timeline',
-    what:'Open value, rows, on-track rate and risk counts per due month.',
+    what:'Open value, lines, on-track rate and risk counts per due month.',
     click:'Show all lists every month.'},
-  'mt-attention':{title:'Rows needing attention',
+  'mt-attention':{title:'Lines to act on',
     what:'Late, no-commit, rescheduled and missing-price open lines, most overdue first.',
     click:'Add notes and overrides on Order Health.'},
   'wh-open':{title:'Open value by warehouse',
@@ -7827,16 +7853,19 @@ const SECTION_INFO={
   'mix-groups':{title:'Supply risk by item group',
     what:'Demand, usable supply and risky supply by item group.',
     click:'Show all lists every item group.'},
+  'mix-rows':{title:'Lines to act on',
+    what:'The worst shortage and supply risk lines, up to 50 of each.',
+    click:'Show all lists every line.'},
   'br-demand':{title:'Sales order demand in CTB buckets',
     what:'Open sales-order value in each CM and month of the Clear To Build report.',
     click:'Rest the pointer on a row for its counts.'},
   'br-ctb':{title:'Clear To Build by CM / month',
-    what:'Each report row with its counts and the matching open sales orders.',
-    click:'Show all lists every row.'},
+    what:'Each report line with its counts and the matching open sales orders.',
+    click:'Show all lists every line.'},
   'br-trend':{title:'CTB % by CM',
     what:'Each CM’s clear-to-build share over recent report weeks.',
     click:'Rest the pointer on a cell for its counts.'},
-  'br-risk':{title:'Sales orders in risk buckets',
+  'br-risk':{title:'Lines to act on',
     what:'Open sales-order lines in buckets the report marks at risk or late.',
     click:'Set an override or a note on a line here.'}
 };
@@ -7913,10 +7942,10 @@ const COLUMN_TIPS={
   'Rescheduled':'Lines or quantity with a reschedule date.',
   'Late supply':'PO supply already past its date.',
   'Risk':'The supply risk flag from the snapshot.',
-  'Supply risk':'Coverage for the row and its risky quantities.',
+  'Supply risk':'Coverage for the line and its risky quantities.',
   'Risk qty':'Supply quantity that is unconfirmed, no commit, rescheduled or late.',
   'SO count':'Sales orders with a delivery in the range.',
-  'Rows':'Delivery rows in the range.',
+  'Lines':'Delivery lines in the range.',
   'Qty shipped':'Quantity delivered in the range.',
   'Shipped value':'Value delivered in the range.',
   'OTD':'Share of deliveries shipped by the original delivery date.',
@@ -7941,15 +7970,14 @@ const COLUMN_TIPS={
   'YoY':'Shipped this year minus the same month last year.',
   'Open':'Open value still to ship.',
   'monthly-summary|Open':'Open value due in that month now (reschedules included).',
-  '% rows shipped':'Closed rows as a share of all rows due in the month.',
-  'Open rows':'Open order lines.',
-  'Closed rows':'Closed order lines.',
-  'At risk / late':'Open rows that are late, past due, no commit or at risk.',
+  '% lines shipped':'Closed lines as a share of all lines due in the month.',
+  'Closed lines':'Closed order lines.',
+  'At risk / late':'Open lines that are late, past due, no commit or at risk.',
   '% booked $ shipped':'Shipped share of booked value (shipped plus open).',
   '% lines':'Shipped lines as a share of booked lines.',
   'Early / on time':'Lines shipped on or before the original date.',
   'Open qty':'Quantity still to ship.',
-  'On-track rate':'Open rows that are not late, past due or without a commit date.',
+  'On-track rate':'Open lines that are not late, past due or without a commit date.',
   'Partial':'Open lines that have shipped part of their quantity.',
   'Backorder qty':'Quantity that missed its original date (late or still open).',
   'Open lines':'Open order lines with quantity left to ship.',
@@ -7958,8 +7986,8 @@ const COLUMN_TIPS={
   'Backorder':'Share of quantity due in the last 12 months that missed its original date.',
   'Partial ship':'Share of open lines that shipped part of their quantity.',
   'Net qty':'Usable supply minus demand.',
-  'Shortage rows':'Rows with a monthly or running-total shortage.',
-  'Risk rows':'Rows with unconfirmed, no-commit, rescheduled or late supply.',
+  'Shortage lines':'Lines with a monthly or running-total shortage.',
+  'Risk lines':'Lines with unconfirmed, no-commit, rescheduled or late supply.',
   'Unconfirmed qty':'PO quantity the vendor has not confirmed.',
   'No commit qty':'PO quantity with no commit date.',
   'Rescheduled qty':'PO quantity with a reschedule date.',
@@ -7967,13 +7995,13 @@ const COLUMN_TIPS={
   'CM':'Contract manufacturer, matched to its CM warehouses.',
   'Total':'Orders for this CM and month in the Clear To Build report.',
   'Clear to build':'Orders the report says can be built now, and their share of the total.',
-  'Matched SO rows':'Open sales-order lines in the same CM warehouse and due month.',
+  'Matched SO lines':'Open sales-order lines in the same CM warehouse and due month.',
   'Matched open qty':'Open quantity of those sales-order lines.',
   'Matched open value':'Open value of those sales-order lines.',
   '3 mo OTD':'Deliveries in the last 3 months shipped on or before the original date.',
   '2-day tolerance':'Shipped 1 or 2 days after the date.',
   'Total deliveries':'Deliveries scored in the last 3 months.',
-  'Value':'Value of the rows.',
+  'Value':'Value of the lines.',
   'Hit rate':'Rescheduled deliveries that shipped on or before the reschedule date.',
   'Met':'Shipped on or before the reschedule date.',
   'Missed':'Shipped 3 or more days after the reschedule date.',
@@ -9183,7 +9211,7 @@ function sankeyBuildRiskFlows(m){
   return [{id:'ctb',title:`Orders in ${week}`,unit:'orders',cols:['CM','Clear to build status','Month'],...f,
     colTips:['Contract manufacturer in the Clear To Build report.','Orders the report marks clear to build, at risk or late.','Month the orders are due, from the report.'],
     sub:`${fmtNum(f.total)} orders · ${fmtNum(br.totalClearToBuild)} clear to build · ${fmtNum(br.totalAtRisk)} at risk · ${fmtNum(br.totalLate)} late`,
-    empty:'The picked report week has no CM / month rows with orders.',legend:[['good','Clear to build'],['warn','At risk'],['crit','Late']]}];
+    empty:'The picked report week has no CM / month lines with orders.',legend:[['good','Clear to build'],['warn','At risk'],['crit','Late']]}];
 }
 function sankeySupplyFlows(m){
   if(!supplyDemandRows.length)return [];
@@ -9255,7 +9283,7 @@ function sankeyNodeClick(tab,flowId,nodeId){
     if(a.type==='customer'){toast(on?'Showing every customer':`Showing ${node.label}`);setWeeklyCustomerFilter(pick);return;}
     // A card pick is not a toggle here: a second click keeps its lines listed.
     if(a.type==='tile'){
-      toast(`Linked lines below list the ${a.value==='late'?'At Risk':node.label} lines`);
+      toast(`Lines to act on below list the ${a.value==='late'?'At risk':node.label} lines`);
       weeklyLeadingCollapsed=false; // these cards sit under Needs attention; a hidden section would hide their lines too
       if(weeklyTileFilter!==a.value)setWeeklyTileFilter(a.value);else renderResults();
       return;
@@ -10203,7 +10231,7 @@ const OH_STATES=[
   ['pastdue','past_due','Past due','#f04438','Open lines past their original date with no reschedule, or past their commit date.'],
   ['nocommit','no_commit','No commit','var(--crit-text)','Open lines with no commit date (SAP 1111-11-11).']
 ];
-const OH_TILE_TITLES={'st-ontrack':'On Track','st-duethisweek':'Due This Week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past Due','st-nocommit':'No Commit','perfect':'Perfect Order · deliveries of lines that were not perfect','dayslate':'Late Deliveries · last 3 months'};
+const OH_TILE_TITLES={'st-ontrack':'On track','st-duethisweek':'Due this week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past due','st-nocommit':'No commit','perfect':'Not perfect · 12 mo','dayslate':'Late deliveries · 3 mo'};
 
 // --- Cause engine ---
 // "1 line", "3 lines": a count with its noun.
@@ -10545,13 +10573,6 @@ function ohCauseBar(t,by='value',cls=''){
   const total=OH_CAUSE_IDS.reduce((s,c)=>s+t[c][by],0);
   return `<span class="split-bar oh-cause-bar${cls?` ${cls}`:''}" aria-hidden="true">${total?OH_CAUSE_IDS.filter(c=>t[c][by]>0).map(c=>`<i class="cause-${c}" style="width:${(t[c][by]/total*100).toFixed(2)}%"></i>`).join(''):''}</span>`;
 }
-// Us / Them split under the At Risk value (inside the card's button, so the full numbers are visible text, not a tip).
-function ohHeroCause(m){
-  const t=ohLeadingData(m).cause;
-  const parts=OH_CAUSES.filter(([c])=>t[c].lines);
-  if(!parts.length)return '';
-  return `<span class="oh-cause-line">${ohCauseBar(t)}<span class="legend oh-cause-legend">${parts.map(([c,label])=>`<span><i class="sw cause-${c}"></i>${label} ${money(t[c].value)}</span>`).join('')}</span></span>`;
-}
 // --- 2v2: At risk by override (six small tiles under the At Risk card) ---
 // Each tile counts the open At Risk lines (orderHealthData's lateTileRows: same filters and chart filters as the card)
 // whose override status is that one, and their open value. Clicking a tile is the Reason filter for that status
@@ -10644,7 +10665,7 @@ function ohRenderLeading(m){
     </section>`;
   // The open order states (every open line in exactly one) are secondary detail: under Show more.
   const states=`<div class="oh-states-wrap">${stateBar}<div class="mini-strip cols-5 oh-states" role="group" aria-label="Open order states">${stateCells}</div></div>`;
-  return `${ohGroupOpen('oh-why-title','Why lines are at risk',{cls:'rise rise-3 oh-leading',tip:'Open lines by state, reason, age and cause; click any part to filter.'})}
+  return `${ohGroupOpen('oh-why-title','By reason and cause',{cls:'rise rise-3 oh-leading',tip:'Open lines by state, reason, age and cause; click any part to filter.'})}
       <div class="oh-grid">${openCard}${whenCard}${causeCard}</div>
       ${ohRenderMore('oh-states','open order states',states,'Show or hide every open line by state: on track, due this week, rescheduled, past due, no commit.')}
     </section>`;
@@ -10775,13 +10796,13 @@ function ohRenderLagging(m){
     const on=weeklyTileFilter===id;
     return `<button type="button" class="card kpi lag${on?' selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}">
         <div class="kpi-top"><span class="kpi-label">${label}</span>${top}</div>
-        <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[tone]}">${value}</span><span class="kpi-unit sm">${unit}</span></div>
+        <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[tone]}">${value}</span>${unit?`<span class="kpi-unit sm">${unit}</span>`:''}</div>
         ${chart}
         <span class="kpi-sub">${sub}</span>
         ${split}
       </button>`;
   };
-  const perfectCard=card('perfect','Perfect order · 12 mo',renderDeltaPill(p.series,'perfect'),p.scored.length?`${fmtNum(p.rate)}%`:'—',pTone,'target 90%',
+  const perfectCard=card('perfect','Perfect order · 12 mo',renderDeltaPill(p.series,'perfect'),p.scored.length?`${fmtNum(p.rate)}%`:'—',pTone,deltaPillText(p.series,'perfect')?'target 90%':'',
     renderSparkline(p.series.map(s=>s.perfect),pTone,40),
     p.scored.length?`${fmtNum(p.perfect.length)} of ${fmtNum(p.scored.length)} completed lines perfect`:'No completed lines in the last 12 months',
     ohSplitText(OH_LAG_MISS_LABEL.perfect,p.totals),

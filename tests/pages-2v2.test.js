@@ -50,12 +50,12 @@ async function loadedAll() {
 }
 // The groups each page is built from, in order: [id, title].
 const PAGE_GROUPS = {
-  purchaseorders: [['po-commitments', 'Supply commitments'], ['po-receiving', 'Receiving performance'], ['po-where', 'By warehouse and vendor'], ['po-linked', 'Linked PO lines']],
-  buildrisk: [['br-week', 'This report week'], ['br-buckets', 'By CM and month'], ['br-orders', 'Orders to act on']],
-  supplyweekly: [['sd-coverage', 'Coverage'], ['sd-shortages', 'Shortages by warehouse'], ['sd-risk', 'Supply at risk'], ['sd-all', 'All open demand']],
-  supplydemand: [['mix-totals', 'Demand vs supply'], ['mix-gaps', 'Where the gaps are'], ['mix-rows', 'Rows to check']],
-  monthly: [['mo-months', 'Month by month'], ['mo-shipped', 'Shipped'], ['mo-open', 'By original delivery date'], ['mo-scenario', 'Ship target scenario']],
-  warehouses: [['wh-open', 'Open work'], ['wh-kpis', 'Performance by warehouse']],
+  purchaseorders: [['po-commitments', 'Leading · Supply commitments'], ['po-receiving', 'Lagging · Receiving performance'], ['po-where', 'By warehouse and vendor'], ['po-linked', 'Lines to act on']],
+  buildrisk: [['br-week', 'This report week'], ['br-buckets', 'By CM and month'], ['br-orders', 'Lines to act on']],
+  supplyweekly: [['sd-coverage', 'Coverage'], ['sd-shortages', 'Lines to act on · Shortages'], ['sd-risk', 'Lines to act on · Supply risk'], ['sd-all', 'All open lines']],
+  supplydemand: [['mix-totals', 'Demand vs supply'], ['mix-gaps', 'By month and warehouse'], ['mix-rows', 'Lines to act on']],
+  monthly: [['mo-months', 'Month by month'], ['mo-shipped', 'By delivery month'], ['mo-open', 'By original delivery date'], ['mo-scenario', 'Ship target scenario']],
+  warehouses: [['wh-open', 'Open work'], ['wh-kpis', 'By warehouse']],
   metrics: [['mt-quality', 'Order quality'], ['mt-month', 'By due month'], ['mt-lines', 'Lines to act on']],
   shipping: [['ship-status', 'Status'], ['ship-list', 'Shipments'], ['ship-cross', 'Cross-border']],
   search: [['search-lines', 'Order lines'], ['search-more', 'Other matches']],
@@ -94,8 +94,8 @@ test('every page but Order Health is a few named groups; each group is labelled 
     assert.doesNotMatch(h, /class="section-title"/, `${tab}: an old section heading is left`);
     assert.doesNotMatch(h, /NaN|undefined|\[object Object\]/, tab);
   }
-  // Order Health is the layout stream's page: this stream leaves its sections alone.
-  assert.match(open(page, 'weekly'), /class="section-title"/);
+  // Order Health uses the same group titles (no old section heading left either).
+  assert.doesNotMatch(open(page, 'weekly'), /class="section-title"/);
   assert.deepEqual(page.errors, []);
 });
 
@@ -125,25 +125,25 @@ test('the numbers on the cards are the same numbers the pages computed before', 
   assert.match(h, new RegExp(`Late / missed commit</span>\\s*<div class="kpi-row"><span class="kpi-value hero crit"[^>]*>\\${po.late}</span><span class="kpi-unit">${po.lateLines} lines</span>`));
   assert.match(text(h), new RegExp(`Unconfirmed ${po.unconf} `));
   assert.match(text(h), new RegExp(`All open POs ${po.open} \\${po.openValue}`));
-  assert.match(h, new RegExp(`<span class="count-badge bad">Late / missed commit · ${po.lateLines} lines · `));
+  assert.match(h, new RegExp(`<span class="count-badge bad">Late / missed commit · ${po.lateLines} lines? · `));
   // Build Risk: the newest week's four totals and its row count.
   h = open(page, 'buildrisk');
   const br = page.run('(()=>{const b=currentMetrics().buildRisk.snapshots[0];return {ctb:b.totalClearToBuild,risk:b.totalAtRisk,late:b.totalLate,value:money(b.matchedOpenValue),rows:b.rows.length};})()');
   assert.deepEqual([card(h, 'Clear to build'), card(h, 'At risk'), card(h, 'Late'), card(h, 'Matched SO value')], [String(br.ctb), String(br.risk), String(br.late), br.value]);
   assert.deepEqual([br.ctb, br.risk, br.late, br.rows], [11, 2, 1, 2]);
-  assert.match(h, new RegExp(`<strong class="ctb-rows">${br.rows}</strong> CTB report rows · 2 weeks loaded`));
+  assert.match(h, new RegExp(`<strong class="ctb-rows">${br.rows}</strong> CTB report lines · 2 weeks loaded`));
   // Supply Mix: four cards; the shortage and risk row counts moved under their quantities.
   h = open(page, 'supplydemand');
   const sd = page.run('(()=>{const s=currentMetrics().supplyDemand;return {d:s.demandQty,u:s.usableQty,sh:s.shortageQty,r:s.riskQty,shRows:s.shortageRows.length,rRows:s.riskRows.length};})()');
   assert.deepEqual([card(h, 'Demand qty'), card(h, 'Usable supply qty'), card(h, 'Shortage qty'), card(h, 'Supply risk qty')].map(Number), [sd.d, sd.u, sd.sh, sd.r]);
   assert.deepEqual([sd.d, sd.u, sd.r], [25, 27, 7]);
-  assert.match(h, new RegExp(`${sd.shRows} shortage rows?</span>`));
-  assert.match(h, new RegExp(`${sd.rRows} risk rows?</span>`));
+  assert.match(h, new RegExp(`${sd.shRows} shortage lines?</span>`));
+  assert.match(h, new RegExp(`${sd.rRows} risk lines?</span>`));
   // Supply / Demand: coverage cards for all warehouses.
   h = open(page, 'supplyweekly');
-  assert.equal(card(h, 'Shortage rows'), '1');
+  assert.equal(card(h, 'Shortage lines'), '1');
   assert.equal(card(h, 'Open demand'), '25');
-  assert.equal(card(h, 'Supply risk rows'), '1');
+  assert.equal(card(h, 'Supply risk lines'), '1');
   // Monthly: this month's open value; Metrics Timeline: the on-track rate.
   h = open(page, 'monthly');
   const thisMonth = page.run("money((currentMetrics().byMonth.find(g=>g.key===monthKey(reportToday()))||{openAmount:0}).openAmount)");
@@ -157,11 +157,11 @@ test('long lists open on request and always print: All open demand, the scenario
   const page = await loadedAll();
   let h = open(page, 'supplyweekly');
   const head = h.match(/<section class="pg-group[^"]*" aria-labelledby="pg-sd-all"[\s\S]*?<\/section>\s*<details/)[0];
-  assert.match(head, /<span class="count-badge">3 rows<\/span><div class="pg-group-tools"><button type="button" class="link-btn" data-focus-key="more-sd-all-group" data-table-key="sd-all-group" aria-expanded="false" data-tip="Show the 3 open demand rows\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Show all<\/button>/);
+  assert.match(head, /<span class="count-badge">3 lines<\/span><div class="pg-group-tools"><button type="button" class="link-btn" data-focus-key="more-sd-all-group" data-table-key="sd-all-group" aria-expanded="false" data-tip="Show the 3 open demand lines\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Show all<\/button>/);
   assert.doesNotMatch(h, /data-focus-key="info-sd-all"[\s\S]*?<table/);
   page.run("toggleTableMore('sd-all-group')");
   h = results(page);
-  assert.match(h, /aria-expanded="true" data-tip="Hide the open demand rows\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Hide<\/button>/);
+  assert.match(h, /aria-expanded="true" data-tip="Hide the open demand lines\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Hide<\/button>/);
   assert.match(h.slice(h.indexOf('aria-labelledby="pg-sd-all"')), /<table class="data-table"/);
   page.run("toggleTableMore('sd-all-group');printMode=true;renderResults()");
   h = results(page);
@@ -183,7 +183,7 @@ test('long lists open on request and always print: All open demand, the scenario
 test('page header: title, then the as-of line and Data check; the actions on the right; phones keep the full button names', async () => {
   const page = await loadedAll();
   const h = open(page, 'purchaseorders');
-  assert.match(h, /<div class="page-head-main"><h1 class="page-title" tabindex="-1">Purchase Orders<\/h1><div class="page-sub"><span class="page-meta"[^>]*>as of 2026-09-03 · \d+ open purchase order lines<\/span><\/div><\/div>\s*<div class="actions">/);
+  assert.match(h, /<div class="page-head-main"><h1 class="page-title" tabindex="-1">Purchase Orders<\/h1><div class="page-sub"><span class="page-meta"[^>]*>as of 2026-09-03 · \d+ open PO lines<\/span><\/div><\/div>\s*<div class="actions">/);
   assert.match(h, />Share<span class="btn-long"> snapshot<\/span><\/button>/);
   // The long part of a label is clipped, not display:none, so it stays in the button's accessible name.
   const phone = CSS.slice(CSS.indexOf('/* --- 2v2 (pages)'));
@@ -207,7 +207,7 @@ test('sidebar: clear group labels, the current page marked, page descriptions in
   assert.match(CSS, /\.nav-label\{padding:0 10px 8px;font-size:11px;font-weight:600;letter-spacing:\.06em;text-transform:uppercase\}/);
   assert.match(CSS, /\.nav-item\.active::before\{background:var\(--accent\)\}/);
   // The loaded-report card: file names, export date (what was loaded is in its tip), where the report is kept.
-  assert.match(s, /<div class="loaded-meta"><span data-tip="\d+ rows loaded: SO \+ PO \+ supply \/ demand \+ CTB\.">Export date 2026-09-03<\/span>/);
+  assert.match(s, /<div class="loaded-meta"><span data-tip="\d+ lines loaded: SO \+ PO \+ supply \/ demand \+ CTB\.">Export date 2026-09-03<\/span>/);
 });
 
 test('load screen: one drop area until a report is loaded, then the loaded report beside it; every page listed with what it shows', async () => {
@@ -247,7 +247,7 @@ test('supply rows (Supply Mix, Search): one Risk column with the flag, the risky
   const page = await loadedAll();
   page.run("setTab('supplydemand')");
   const h = results(page);
-  const table = h.match(/<h2>Supply risk rows<\/h2>[\s\S]*?<\/table>/)[0];
+  const table = h.match(/<h2>Supply risk lines<\/h2>[\s\S]*?<\/table>/)[0];
   assert.deepEqual([...table.matchAll(/<th\b[^>]*>([^<]+)<\/th>/g)].map((m) => m[1]), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
   assert.match(table, /<td data-tip="Risky PO supply: 5 unconfirmed, 2 late\."><span class="pill bad">PO Not Confirmed<\/span><span class="sub">7 qty<\/span><\/td>/);
   page.run("searchQuery='SPY-200';applyGlobalSearch()");
