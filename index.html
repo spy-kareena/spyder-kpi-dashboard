@@ -670,8 +670,6 @@ details.about p{margin:0}
 /* Upload */
 /* #upload-screen and #results-screen are shown and hidden inline, so section spacing is a sibling margin */
 #upload-screen>*+*,#results-screen>*+*{margin-top:32px}
-.upload-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
-.upload-intro p{margin:0;font-size:14px;color:var(--gray-600);line-height:1.55;max-width:640px}
 .privacy-pill{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;color:var(--good-text);background:var(--good-tint);border:1px solid var(--good-border);border-radius:var(--r-pill);padding:5px 12px;white-space:nowrap}
 .privacy-pill::before{content:"";width:6px;height:6px;border-radius:99px;background:var(--good)}
 .upload-shell{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px}
@@ -687,12 +685,6 @@ details.about p{margin:0}
 .upload-actions{display:flex;gap:8px;flex-wrap:wrap}
 .upload-chip{font-size:12.5px;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-700);border-radius:var(--r-pill);padding:5px 11px}
 .upload-side{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);padding:26px;display:grid;gap:16px;align-content:start;box-shadow:var(--sh-rest)}
-.upload-side h2{margin:0;font-size:15px;font-weight:600}
-.flow-step{display:grid;grid-template-columns:28px 1fr;gap:12px}
-.step-num{width:28px;height:28px;border-radius:99px;background:var(--accent-tint);color:var(--accent-strong);display:grid;place-items:center;font-size:12.5px;font-weight:600}
-.flow-step>div{display:grid;gap:3px}
-.flow-step strong{font-size:13.5px;font-weight:600}
-.flow-step span{font-size:13px;color:var(--gray-500);line-height:1.5}
 .upload-current{border-top:1px solid var(--gray-100);padding-top:14px;display:grid;gap:8px}
 .upload-current>span{font-size:12px;color:var(--gray-500)}
 .upload-current strong{font-size:13px;font-weight:500;word-break:break-word}
@@ -913,14 +905,8 @@ details.about>summary:hover{color:var(--gray-900)}
 .toast-item svg{flex:none;color:var(--good)}
 .toast.leaving .toast-item{opacity:0;transform:translateY(4px)}
 
-/* Sidebar: page descriptions under each page name on the load screen; "Show hints again" */
-.nav-item.has-desc{align-items:flex-start;white-space:normal}
-.nav-item.has-desc::before{margin-top:6px}
+/* Sidebar: "Show hints again" (page descriptions are tooltips; the load screen lists them, 2v2) */
 .nav-item::before{flex:none}
-.nav-item.has-desc:disabled{opacity:1}
-.nav-item.has-desc:disabled .nav-label-text{color:var(--gray-500)}
-.nav-label-text{display:block}
-.nav-desc{display:block;margin-top:2px;font-size:11.5px;font-weight:400;line-height:1.4;color:var(--gray-500)}
 .nav-plain{color:var(--gray-500);font-weight:500}
 .nav-plain::before{display:none}
 
@@ -939,9 +925,6 @@ details.about>summary:hover{color:var(--gray-900)}
 @keyframes streamAPop{from{opacity:0;transform:translateY(-3px)}}
 @keyframes streamAToast{from{opacity:0;transform:translateY(8px)}}
 @media (max-width:980px){
-  .nav-desc{display:none}
-  .nav-item.has-desc{align-items:center;white-space:nowrap}
-  .nav-item.has-desc::before{margin-top:0}
   .table>.sc-group-head{min-width:680px}
 }
 @media (max-width:640px){
@@ -1278,16 +1261,18 @@ button.ship-kpi{width:100%}
 .pg-group-head .info-btn{align-self:center;margin:-4px -4px}
 .pg-group-head .count-badge{align-self:center}
 .pg-group-tools{margin-left:auto;display:flex;align-items:center;gap:14px;align-self:center}
+/* Paper is about 990px wide, which would hit the 1180px two-column rule: print keeps the desktop columns */
+@media print{.grid-lead{grid-template-columns:1.5fr 1fr 1fr 1fr}.grid-4,.month-spot{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media print{.pg-group{break-inside:auto;page-break-inside:auto}.pg-group-head{break-after:avoid;page-break-after:avoid;margin-bottom:.05in}.pg-group-tools{display:none!important}}
 
 /* --- 2v2 (pages): quieter cards and badges, tidy header, sidebar and filter bars --- */
-.count-badge{border-color:transparent}
-/* Plain tags ("target 90%", "Sun–Thu") read as text, not as one more badge; real deltas keep their colour */
+/* Count badges without their outline; plain tags ("target 90%", "Sun–Thu") read as text, not as one more badge
+   (real deltas keep their colour) */
+.count-badge,.count-badge.bad,.count-badge.warn,.count-badge.good{border-color:transparent}
 .delta.flat{background:transparent;padding:2px 0;color:var(--gray-500)}
-.count-badge.bad,.count-badge.warn,.count-badge.good{border-color:transparent}
 /* Page header: title on top, as-of line and Data check under it; the actions (and a Big picture switch) on the right */
 .page-head{align-items:center;flex-wrap:wrap;gap:12px 24px}
-.page-head-main{flex-direction:column;align-items:flex-start;gap:4px;flex:1 1 320px}
+.page-head-main{flex-direction:column;align-items:flex-start;gap:4px;flex:1 1 240px}
 .page-sub{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}
 .page-lead{margin:2px 0 0;font-size:14px;color:var(--gray-600);line-height:1.55;max-width:640px}
 .page-head .actions{flex-wrap:wrap;justify-content:flex-end;align-items:center}
@@ -1295,9 +1280,12 @@ button.ship-kpi{width:100%}
 .filter-bar{padding:12px 18px;gap:10px 14px}
 .filter-reset{margin-left:auto}
 .filter-note+.filter-reset{margin-left:0}
-.filter-bar label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-600)}
+/* A label stays with its select when the bar wraps */
+.filter-pair{display:inline-flex;align-items:center;gap:10px;min-width:0}
+.filter-pair .select{min-width:0}
 /* Cards in one group row share a height; the two halves of a split row too */
 .grid-split.pg-even{align-items:stretch}
+.table.pg-collapsed>.card-head{padding-bottom:20px}
 .kpi-row+.kpi-amt{margin-top:-2px}
 /* Sidebar: clear group labels, roomy items, a bar marks the page you are on */
 .sidebar{gap:24px}
@@ -1321,7 +1309,7 @@ button.ship-kpi{width:100%}
 .upload-shell.single .upload-zone{min-height:240px;align-items:center;text-align:center;justify-content:center}
 .upload-shell.single .upload-copy{justify-items:center}
 .upload-shell.single .upload-actions{justify-content:center}
-.upload-side h2{font-size:14px}
+.upload-side{align-self:start}
 .upload-current{border-top:0;padding-top:0}
 .upload-side[hidden]{display:none}
 .upload-pages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
@@ -1339,11 +1327,23 @@ button.ship-kpi{width:100%}
   .btn .btn-long{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .card-head{flex-wrap:wrap;row-gap:4px}
   .card-head .section-sub{text-align:left}
+  /* The five scenario numbers: two to a row (the last one full width) instead of five squeezed columns */
+  .mini-strip.cols-5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mini-strip.cols-5>div:nth-child(odd){border-right:1px solid var(--gray-100)}
+  .mini-strip.cols-5>div:last-child:nth-child(odd){grid-column:1/-1;border-right:0;border-bottom:0}
   /* Small stat cards two to a row on phones */
-  .pg-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .pg-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .pg-stats .card{padding:14px 16px}
   .pg-stats .kpi-value{font-size:22px}
   .pg-stats .kpi-label{font-size:12.5px}
+  .filter-pair{flex:1 1 100%}
+  .filter-pair .select{flex:1;max-width:none}
+  .filter-pair .filter-label{flex:0 0 76px}
+  /* A lead card full width, the smaller cards beside each other */
+  .pg-lead{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pg-lead>:first-child,.pg-lead>:nth-child(4):last-child{grid-column:1/-1}
+  .pg-lead>.card:not(:first-child){padding:14px 16px}
+  .pg-lead>.card:not(:first-child) .kpi-value{font-size:22px}
 }
 /* Shipping status: five steps of one pipeline read as one strip, not five separate cards */
 .ship-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);box-shadow:var(--sh-rest);overflow:hidden}
@@ -1352,20 +1352,24 @@ button.ship-kpi{width:100%}
 .ship-kpis>.card.kpi:hover{background:var(--gray-50);box-shadow:none}
 .ship-kpis>.card.kpi.selected{background:var(--accent-tint);box-shadow:inset 0 -2px 0 var(--accent)}
 .ship-kpis>.card.kpi:focus-visible{outline-offset:-2px}
-.ship-add{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px}
-.ship-add{align-items:center}
+.ship-add{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .ship-add .ship-add-title{font-size:13px;font-weight:600;color:var(--gray-700);margin-right:6px}
+.ship-add label{display:inline-flex;align-items:center;gap:8px;font-size:12.5px}
 @media (max-width:640px){
   .ship-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .ship-kpis>.card.kpi{border-bottom:1px solid var(--gray-100);padding:14px 16px}
   .ship-kpis>.card.kpi:nth-child(2n){border-right:0}
   .ship-kpis>.card.kpi:last-child{border-bottom:0}
   .ship-kpis>.card.kpi:last-child:nth-child(odd){grid-column:1/-1}
+  .ship-add{align-items:flex-end}
+  .ship-add .ship-add-title{flex-basis:100%}
+  .ship-add label{display:grid;gap:4px}
 }
 @media print{.ship-kpis{border:1px solid var(--gray-300)!important}.ship-kpis>.card.kpi{border:0!important;border-right:1px solid var(--gray-200)!important;padding:.06in .1in}}
 /* Search: the cause line stays; its longer second line is in the tip */
 .search-results .oh-why-more{display:none}
 .data-table td.nowrap{white-space:nowrap}
+@media screen{.data-table .due-cell{white-space:nowrap}}
 .lines-table.search{min-width:1040px}
 .lines-table.po{min-width:1040px} /* 848px of fixed columns: Item / Description keeps about 200px */
 /* --- end 2v2 (pages) --- */
@@ -5150,27 +5154,29 @@ function pageGroupHtml(id,title,body,{info='',badge='',tools='',rise='',anchor='
   return `<section class="pg-group${rise?` rise ${rise}`:''}"${anchor?` id="${anchor}"`:''} aria-labelledby="pg-${id}" data-group="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-${id}">${esc(title)}</h2>${info?infoButton(info):''}${badge}${tools?`<div class="pg-group-tools">${tools}</div>`:''}</div>${body}</section>`;
 }
 // "Show more" for a long group: tableMore[key] keeps the choice; print always shows it.
-function groupMoreButton(key,count,noun){
+function groupMoreButton(key,count,noun,showLabel='Show all'){
   const open=!!tableMore[key];
-  return `<button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}" aria-expanded="${open?'true':'false'}"${tipAttr(open?`Hide the ${noun}.`:`Show the ${fmtNum(count)} ${noun}.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Hide':'Show all'}</button>`;
+  return `<button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}" aria-expanded="${open?'true':'false'}"${tipAttr(open?`Hide the ${noun}.`:`Show the ${fmtNum(count)} ${noun}.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Hide':showLabel}</button>`;
 }
+// Supply / demand rows (Supply Mix, Search). 2v2: the four risky-supply quantities are one Supply risk column (the
+// SAP flag, the risky quantity, and the breakdown in the cell's tip) so the table fits the page without scrolling.
 function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows.',info=''}){
-  const body=rows.map(r=>`<tr>
+  const body=rows.map(r=>{
+    const parts=[['unconfirmed',r.unconfirmedSupplyQty],['no commit',r.noCommitSupplyQty],['rescheduled',r.rescheduledSupplyQty],['late',r.lateSupplyQty]].filter(p=>p[1]>0);
+    const riskQty=parts.reduce((t,p)=>t+p[1],0);
+    return `<tr>
       <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'')}</td>
-      <td class="soft nowrap">${esc(r.warehouseName)}</td>
+      <td class="soft">${esc(r.warehouseName)}</td>
       <td><span class="m">${esc(r.itemCode)}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
       <td class="num">${fmtNum(r.demandOpenQty)}</td>
       <td class="num">${fmtNum(r.usableSupplyQty)}</td>
       <td class="num ${r.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.monthlyNetQty)}</td>
       <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
-      <td class="num soft">${fmtNum(r.unconfirmedSupplyQty)}</td>
-      <td class="num soft">${fmtNum(r.noCommitSupplyQty)}</td>
-      <td class="num soft">${fmtNum(r.rescheduledSupplyQty)}</td>
-      <td class="num soft">${fmtNum(r.lateSupplyQty)}</td>
-      <td><span class="pill ${!r.supplyRiskFlag||r.supplyRiskFlag==='OK'?'good':/rescheduled|so has no commit/i.test(r.supplyRiskFlag)?'warn':'bad'}">${esc(r.supplyRiskFlag||'OK')}</span></td>
-    </tr>`);
-  return renderTableCard({key,title,note,rows:body,limit,minWidth:980,empty,info,
-    head:[['Month'],['Warehouse'],['Item','','14%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Unconfirmed','num'],['No commit','num'],['Rescheduled','num'],['Late supply','num'],['Risk']]});
+      <td${parts.length?tipAttr(`Risky PO supply: ${parts.map(([l,q])=>`${fmtNum(q)} ${l}`).join(', ')}.`):''}><span class="pill ${!r.supplyRiskFlag||r.supplyRiskFlag==='OK'?'good':/rescheduled|so has no commit/i.test(r.supplyRiskFlag)?'warn':'bad'}">${esc(r.supplyRiskFlag||'OK')}</span>${riskQty?`<span class="sub">${fmtNum(riskQty)} qty</span>`:''}</td>
+    </tr>`;
+  });
+  return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,
+    head:[['Month'],['Warehouse','','16%'],['Item','','18%'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Risk','','18%']]});
 }
 // --- Screen switching and shared chart/table markup ---
 function showResults(){
@@ -5450,7 +5456,7 @@ function renderSidebar(){
   const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
   // Two short lines: export date and row count (what was loaded is in the tip), then where the report is kept.
   const meta=loaded
-    ? `<span${tipAttr(`${fmtNum(rowCount)} rows loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export ${esc(displayDate(reportAsOfDate))} · `:''}${fmtNum(rowCount)} rows</span>${kept?`<br>${kept}`:''}`
+    ? `<span${tipAttr(`${fmtNum(rowCount)} rows loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}`:`${fmtNum(rowCount)} rows`}</span>${kept?`<br>${kept}`:''}`
     : 'Add a SAP export to begin';
   // The shared-notes status and the initials button have their own row, which stays visible in the compact card
   // (980px and below hides the meta lines).
@@ -5645,6 +5651,14 @@ function renderShipTargetScenario(sd,today){
     </tr>`;
   };
   const calendarMax=sd.maxDayValue;
+  // The strip and the calendar sum the scenario up; its line list opens on request (always printed).
+  const linesNote=`${fmtNum(sd.openLines.length)} open lines booked by ${esc(displayDate(sd.target))}`;
+  const linesOpen=!!tableMore['monthly-scenario-lines']||printMode;
+  const linesToggle=sd.openLines.length&&!printMode?groupMoreButton('monthly-scenario-lines',sd.openLines.length,'scenario lines','Show lines'):'';
+  const scenarioLines=linesOpen?renderTableCard({key:'monthly-scenario',title:'Scenario lines',headExtra:`<div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div>`,
+      head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
+      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,empty:'No open lines are booked by this end date.'})
+    :`<section class="table pg-collapsed"><div class="card-head lg"><h2>Scenario lines</h2><div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div></div></section>`;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return pageGroupHtml('mo-scenario','Ship target scenario',`
     <div class="filter-bar inline-controls">
@@ -5673,9 +5687,7 @@ function renderShipTargetScenario(sd,today){
         }).join('')}
       </div></div>
     </div>`:`<div class="card"><p class="empty-note">Pick an end date on or after the start date to show the calendar.</p></div>`}
-    ${renderTableCard({key:'monthly-scenario',title:'Scenario lines',note:`${fmtNum(sd.openLines.length)} open lines booked by ${esc(displayDate(sd.target))}`,
-      head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,empty:'No open lines are booked by this end date.'})}`,{info:'mo-scenario',rise:'rise-4'});
+    ${scenarioLines}`,{info:'mo-scenario',rise:'rise-4'});
 }
 
 // Renders the active tab. Tab ids must stay in sync with the buttons below.
@@ -6434,13 +6446,13 @@ function renderResults(){
       const linkedBad=(poSelected==='late'||poSelected==='nocommit')&&linkedPoRows.length;
       html+=`
       <div class="filter-bar rise rise-1">
-        <span class="filter-label">Warehouse</span>${poSelect('po-warehouse-select','Warehouse','All warehouses',poWarehouseFilter,poWarehouseOptions.map(w=>({value:w,label:w})),'setPoWarehouseFilter')}
-        <span class="filter-label">Vendor</span>${poSelect('po-vendor-select','Vendor','All vendors',poVendorFilter,poVendorOptions,'setPoVendorFilter')}
+        <span class="filter-pair"><span class="filter-label">Warehouse</span>${poSelect('po-warehouse-select','Warehouse','All warehouses',poWarehouseFilter,poWarehouseOptions.map(w=>({value:w,label:w})),'setPoWarehouseFilter')}</span>
+        <span class="filter-pair"><span class="filter-label">Vendor</span>${poSelect('po-vendor-select','Vendor','All vendors',poVendorFilter,poVendorOptions,'setPoVendorFilter')}</span>
         <button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"${tipAttr('Show every warehouse and vendor again.')} onclick="resetPoFilters()">Reset</button>
       </div>
       <div class="print-only">Filters: ${esc(poFilterNote)}</div>
       ${pageGroupHtml('po-commitments','Supply commitments',`
-        <div class="grid-lead">
+        <div class="grid-lead pg-lead">
           ${poCard('late',poLateRows.length?'crit':'good','Late / missed commit',poLateRows,'Open PO lines past due or past their reschedule date',true,`Late / missed commit: ${money(poValue(poLateRows))} open on ${poLines(poLateRows)} (${fmtNum(poQty(poLateRows))} qty) past the original date with no reschedule, or past their reschedule date. Click to list them.`)}
           ${poCard('nocommit',poNoCommitRows.length?'crit':'good','No commit date',poNoCommitRows,'No valid commit date from the vendor',false,`No commit date: ${money(poValue(poNoCommitRows))} open on ${poLines(poNoCommitRows)} where the vendor has given no valid date (SAP shows 11/11/1111). Click to list them.`)}
           ${poCard('future',poFutureRescheduleRows.length?'warn':'good','Future reschedules',poFutureRescheduleRows,'Reschedule date still ahead',false,`Future reschedules: ${money(poValue(poFutureRescheduleRows))} open on ${poLines(poFutureRescheduleRows)} with a reschedule date still ahead. Click to list them.`)}
