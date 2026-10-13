@@ -1184,14 +1184,20 @@ button.ship-kpi{width:100%}
   --flag-0:#fecdca;--flag-1:#fda29b;--flag-2:#f97066;--flag-3:#d92d20;--flag-4:#912018}
 .cause-us{background:var(--cause-us)}.cause-them{background:var(--cause-them)}.cause-unknown{background:var(--cause-unknown)}.cause-neutral{background:var(--cause-neutral)}
 .cause-text-us{color:var(--cause-us)}.cause-text-them{color:var(--cause-them-text)}.cause-text-unknown,.cause-text-neutral{color:var(--gray-600)}
-.oh-tabbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px}
-/* Same look as Stream A's tabs list (.segmented): zinc track, white raised active tab */
-.oh-tabs{display:inline-flex;gap:2px;padding:3px;background:var(--gray-100);border-radius:var(--r-ctl);max-width:100%}
-.oh-tab{font:inherit;display:grid;gap:1px;min-width:0;text-align:left;border:0;border-radius:6px;background:transparent;color:var(--gray-600);padding:6px 14px;cursor:pointer;transition:background-color var(--dur),color var(--dur),box-shadow var(--dur)}
+/* 2v2: Leading / Lagging is the page's main switch: full width under the page head, each half its name and one
+   headline number. Same look as Stream A's tabs list (.segmented): zinc track, white raised active tab. */
+.oh-tabbar{display:block}
+.oh-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:4px;padding:4px;border-radius:var(--r-card);background:var(--gray-100)}
+.oh-tab{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;min-height:72px;text-align:left;border:0;border-radius:9px;background:transparent;color:var(--gray-600);padding:14px 22px;cursor:pointer;transition:background-color var(--dur),color var(--dur),box-shadow var(--dur)}
 .oh-tab:hover{color:var(--gray-900)}
-.oh-tab[aria-selected="true"]{background:#fff;color:var(--gray-900);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.02)}
-.oh-tab-title{font-size:13.5px;font-weight:600}
-.oh-tab-sub{font-size:12px;color:var(--gray-600)}
+.oh-tab[aria-selected="true"]{background:#fff;color:var(--gray-900);box-shadow:0 1px 3px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.04)}
+.oh-tab-text{display:grid;gap:2px;min-width:0}
+.oh-tab-title{font-size:17px;font-weight:600;letter-spacing:-.01em}
+.oh-tab-sub{font-size:12.5px;color:var(--gray-500)}
+.oh-tab-num{display:inline-flex;align-items:baseline;gap:6px;font-size:26px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;color:var(--gray-900);font-variant-numeric:tabular-nums}
+.oh-tab-num small{font-size:12px;font-weight:500;letter-spacing:0;color:var(--gray-500)}
+.oh-tab-num.crit{color:var(--crit)}.oh-tab-num.warn{color:var(--warn)}.oh-tab-num.good{color:var(--good)}
+.oh-tab[aria-selected="false"] .oh-tab-num{opacity:.6}
 .oh-drill{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .oh-drill-label{font-size:12px;color:var(--gray-600)}
 .oh-chip{display:inline-flex;align-items:center;gap:6px}
@@ -1246,7 +1252,10 @@ button.ship-kpi{width:100%}
 @media (max-width:1180px){.oh-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mini-strip.oh-states{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:980px){.oh-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){
-  .oh-tabs{display:flex;width:100%}.oh-tab{flex:1;padding:7px 10px}
+  .oh-tab{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:4px;padding:10px 12px;min-height:0}
+  .oh-tab-sub{display:none}
+  .oh-tab-title{font-size:15px}
+  .oh-tab-num{font-size:20px;gap:4px}
   .mini-strip.oh-states{grid-template-columns:minmax(0,1fr)}
   .mini-strip.oh-states>button{flex-direction:row;align-items:center;justify-content:space-between}.mini-strip.oh-states .ms-num{text-align:right}
   .oh-cause-grid{grid-template-columns:minmax(0,1fr)}
@@ -1278,6 +1287,86 @@ button.ship-kpi{width:100%}
 .ai-setup code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;margin-right:6px;overflow-wrap:anywhere}
 .ai-msg.note{align-self:stretch;max-width:none;padding:0 4px;background:none;border:0;font-size:12px;color:var(--gray-500);text-align:center}
 @media print{.ai-setup{display:none!important}}
+/* --- 2v2 page groups (contract; the pages stream owns the canonical copy at the end of this sheet, keep one) --- */
+:root{--space-group:40px;--space-in:20px}
+.pg-group+.pg-group{margin-top:var(--space-group)}
+.pg-group>*+*{margin-top:var(--space-in)}
+.pg-group-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.pg-group-title{margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-500)}
+@media (max-width:640px){:root{--space-group:28px;--space-in:14px}}
+@media print{:root{--space-group:.15in;--space-in:.08in}}
+/* --- 2v2 layout, Order Health: its groups, At risk by override, Show more (the switch is with the tab CSS above) ---
+   Same tokens (zinc, radii, shadows); this is hierarchy and whitespace. Under the page title: the switch, then the
+   controls (Big picture, filters, chart filter chips, hint) close together, then the groups a group apart. */
+#results-screen>.oh-tabbar+*,#results-screen>.oh-tabbar~.filter-bar,#results-screen>.oh-tabbar~.oh-drillbar,#results-screen>.oh-tabbar~.hint-card{margin-top:16px}
+#results-screen>.oh-panel,#results-screen>.oh-panel+.pg-group{margin-top:var(--space-group)}
+.pg-group-head .info-btn{align-self:center}
+.oh-group-tools{margin-left:auto;display:flex;align-items:center;gap:12px}
+.oh-drillbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+/* Why lines are at risk: its three cards share one height */
+.pg-group .oh-grid{align-items:stretch}
+/* Top offenders by owner rank only (no owner filter): plain rows */
+.waffle-row.static{cursor:default}.waffle-row.static:hover{background:none}
+/* At risk now: the At Risk card with its six override tiles under it, No commit date and Rescheduled beside them */
+.oh-risk{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px}
+.oh-risk-main{display:grid;gap:20px;align-content:start;min-width:0}
+.oh-risk-side{display:grid;grid-template-rows:repeat(2,minmax(0,1fr));gap:20px;min-width:0}
+.oh-risk-side>.kpi{align-content:center}
+.ovr{display:grid;gap:10px;min-width:0}
+.ovr-head{font-size:12.5px;font-weight:500;color:var(--gray-600)}
+.ovr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.ovr-tile{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;text-align:left;border:1px solid var(--gray-200);border-radius:10px;background:#fff;padding:12px 16px;cursor:pointer;color:var(--gray-900);box-shadow:var(--sh-rest);transition:border-color var(--dur),box-shadow var(--dur),background-color var(--dur)}
+.ovr-tile:hover{border-color:var(--gray-300);box-shadow:var(--sh-hover)}
+.ovr-tile.selected{border-color:var(--accent);background:var(--accent-tint);box-shadow:var(--sh-select)}
+.ovr-name{min-width:0;font-size:13px;font-weight:500;line-height:1.3;color:var(--gray-700);overflow-wrap:anywhere}
+.ovr-count{font-size:20px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.ovr-tile.zero{background:var(--gray-50);box-shadow:none}
+.ovr-tile.zero .ovr-name{color:var(--gray-500)}
+.ovr-tile.zero .ovr-count{color:var(--gray-500);font-weight:500}
+/* Show more: secondary detail, closed by default (print opens it) */
+details.oh-more{display:grid;gap:var(--space-in);min-width:0}
+details.oh-more>summary{list-style:none;cursor:pointer;justify-self:start;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-700);background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-btn);padding:7px 14px;box-shadow:var(--sh-rest);transition:background-color var(--dur)}
+details.oh-more>summary::-webkit-details-marker{display:none}
+details.oh-more>summary::before{content:"";width:6px;height:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform var(--dur)}
+details.oh-more[open]>summary::before{transform:translateY(1px) rotate(-135deg)}
+details.oh-more>summary:hover{background:var(--gray-100)}
+details.oh-more .oh-more-less,details.oh-more[open] .oh-more-show{display:none}
+details.oh-more[open] .oh-more-less{display:inline}
+.oh-more-body{display:grid;gap:var(--space-in);min-width:0}
+/* Narrower screens: the At Risk card and its tiles take the full width, No commit date and Rescheduled sit side by
+   side under them; the Coming due strip is two by two below 1320px (one column on a phone) */
+@media (max-width:1180px){
+  .oh-risk{grid-template-columns:minmax(0,1fr)}
+  .oh-risk-side{grid-template-rows:none;grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (min-width:641px) and (max-width:1320px){
+  .pg-group .mini-strip.cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pg-group .mini-strip.cols-4>*{border-right:1px solid var(--gray-100);border-bottom:0}
+  .pg-group .mini-strip.cols-4>*:nth-child(2n){border-right:0}
+  .pg-group .mini-strip.cols-4>*:nth-child(-n+2){border-bottom:1px solid var(--gray-100)}
+}
+@media (max-width:640px){
+  .oh-risk-side{gap:14px}
+  .ovr-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .ovr-tile{padding:10px 12px}
+  .ovr-name{font-size:12.5px}
+  .ovr-count{font-size:18px}
+}
+@media print{
+  details.oh-more>summary{display:none!important}
+  .oh-risk{grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:.1in}
+  .oh-risk-main,.oh-risk-side{gap:.1in}
+  .oh-risk-side{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr))}
+  .ovr-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:.06in}
+  .pg-group .mini-strip.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .pg-group .mini-strip.cols-4>button{flex-direction:column;align-items:flex-start;gap:4px;border-right:1px solid var(--gray-100);border-bottom:0}
+  .pg-group .mini-strip.cols-4>button:last-child{border-right:0}
+  .pg-group .mini-strip.cols-4 .ms-num{text-align:left}
+  .ovr-tile{padding:.04in .08in;box-shadow:none}
+  .ovr-count{font-size:11pt}
+  .pg-group-head{break-after:avoid;page-break-after:avoid}
+  .oh-group-tools{display:none!important}
+}
 /* --- Windows high contrast (forced colors) for the 2v1 widgets. That mode drops backgrounds and shadows, so a state
    shown only by them (the picked tab or row, how far a shipment has got) gets a system-colour border or fill, and
    marks whose colour is the information (waffle blocks, bar segments, legend swatches) keep the page's colours.
@@ -1296,6 +1385,8 @@ button.ship-kpi{width:100%}
   .ship-step.exception>i{background:CanvasText;border-color:CanvasText}
   .ship-step.exception>i::after{color:Canvas}
   .waffle>i,.split-bar>i,.oh-bar-track>i,.legend .sw{forced-color-adjust:none}
+  /* 2v2: a picked At risk by override tile gets a system-colour border */
+  .ovr-tile.selected{border:2px solid Highlight;padding:11px 15px}
 }
 </style>
 </head>
@@ -1412,6 +1503,8 @@ let activeTab = 'weekly';
 let weeklyWarehouseFilter = ['ALL'];
 let weeklyCustomerFilter = ['ALL'];
 let weeklySegmentFilter = ['ALL'];
+// 2v2: Order Health has no owner filter any more. This stays ['ALL'] on the page (an old snapshot's owner pick loads
+// as ALL); only the Ask AI / MCP tools set it for the length of one call (aiWithFilters), to answer by owner.
 let weeklyOwnerFilter = ['ALL'];
 let weeklyOrderTypeFilter = ['ALL'];
 let weeklyDepartmentFilter = ['ALL'];
@@ -1693,7 +1786,7 @@ async function loadEmbeddedSnapshot(){
     weeklyWarehouseFilter=data.weeklyWarehouseFilter||['ALL'];
     weeklyCustomerFilter=data.weeklyCustomerFilter||['ALL'];
     weeklySegmentFilter=data.weeklySegmentFilter||['ALL'];
-    weeklyOwnerFilter=data.weeklyOwnerFilter||['ALL'];
+    weeklyOwnerFilter=['ALL']; // 2v2: the owner filter is gone; an older snapshot's owner pick is ignored
     weeklyOrderTypeFilter=data.weeklyOrderTypeFilter||['ALL'];
     weeklyDepartmentFilter=data.weeklyDepartmentFilter||['ALL'];
     weeklyProjectFilter=data.weeklyProjectFilter||['ALL'];
@@ -2157,14 +2250,6 @@ function setWeeklySegmentFilter(v){
 }
 function setWeeklySegmentPreset(kind){
   weeklySegmentFilter=kind&&kind!=='ALL'?[kind]:['ALL'];
-  renderResults();
-}
-function setWeeklyOwnerFilter(v){
-  weeklyOwnerFilter=normalizeWeeklyWarehouseSelection(v);
-  renderResults();
-}
-function setWeeklyOwnerPreset(kind){
-  weeklyOwnerFilter=['ALL'];
   renderResults();
 }
 function setWeeklyOrderTypeFilter(v){
@@ -5588,6 +5673,26 @@ function renderShipTargetScenario(sd,today){
 // Renders the active tab. Tab ids must stay in sync with the buttons below.
 let lastRenderedTab='';
 let lastRenderedRows=null;
+// --- 2v2 layout, Order Health: page groups (the shared .pg-group markup) and Show more ---
+// The page is a few named groups: a small heading row (title, optional info button and tools), then its cards. Groups
+// sit further apart than the cards in them (--space-group / --space-in). Secondary detail goes in a Show more
+// disclosure (ohRenderMore) whose open state is kept in tableMore (redraws, snapshots); print opens it.
+function ohGroupOpen(id,title,{cls='',domId='',info='',tools='',tip=''}={}){
+  return `<section class="pg-group${cls?` ${cls}`:''}"${domId?` id="${domId}"`:''} aria-labelledby="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="${id}"${tipAttr(tip)}>${title}</h2>${info?infoButton(info):''}${tools?`<div class="oh-group-tools">${tools}</div>`:''}</div>`;
+}
+function ohRenderMore(key,what,body,tipText){
+  if(!body)return '';
+  const open=!!tableMore[`more-${key}`]||printMode;
+  return `<details class="oh-more"${open?' open':''} data-more="${esc(key)}" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="oh-more-show">Show more · ${esc(what)}</span><span class="oh-more-less">Show less</span></summary><div class="oh-more-body">${body}</div></details>`;
+}
+// Remembers a disclosure's state without a redraw (the browser has already opened or closed it).
+function ohSetMoreOpen(key,open){
+  const k=`more-${key}`;
+  if(!!tableMore[k]===!!open||printMode)return;
+  const next={...tableMore};
+  if(open)next[k]=true;else delete next[k];
+  tableMore=next;
+}
 function renderResults(){
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
@@ -5649,7 +5754,6 @@ function renderResults(){
       activePreset?(activePreset[0]==='ALL'?'All warehouses':activePreset[1]):customWarehouseLabel,
       weeklySegmentFilter.includes('ALL')?'all segments':pickLabel(weeklySegmentFilter,v=>v,'segments'),
       pickLabel(weeklyCustomerFilter,v=>weeklyCustomerOptionMap.get(v)||v,'customers'),
-      pickLabel(weeklyOwnerFilter,v=>v,'owners'),
       pickLabel(weeklyOrderTypeFilter,v=>v,'order types'),
       pickLabel(weeklyDepartmentFilter,v=>v,'departments'),
       pickLabel(weeklyProjectFilter,v=>v,'projects')
@@ -5663,6 +5767,9 @@ function renderResults(){
         ${options.map(o=>{const value=typeof o==='string'?o:o.value;const text=typeof o==='string'?o:o.label;return `<option value="${esc(value)}"${!multi&&current.includes(value)?' selected':''}>${esc(text)}</option>`;}).join('')}
       </select>`;
     };
+    // 2v2: the Leading / Lagging switch is the first thing in the page content; the Big picture (when on) follows it.
+    html+=ohRenderTabs(m);
+    html+=renderBigPicture('weekly',m);
     html+=`
     <div class="filter-bar rise rise-1">
       <div class="segmented" role="group" aria-label="Warehouse group">
@@ -5674,7 +5781,6 @@ function renderResults(){
       </div>
       <span class="break" aria-hidden="true"></span>
       ${filterSelect('weekly-customer-select','Customer','All Customers',weeklyCustomerFilter,weeklyCustomerOptions,'setWeeklyCustomerFilter')}
-      ${filterSelect('weekly-owner-select','Owner','All Owners',weeklyOwnerFilter,weeklyOwnerOptions,'setWeeklyOwnerFilter')}
       <button type="button" class="filter-more" data-focus-key="more-filters" onclick="toggleWeeklyMoreFilters()" aria-expanded="${moreOpen?'true':'false'}"${tipAttr(moreOpen?'Hide the extra filters (any filter you set stays on).':'Show the department, project, warehouse, segment and order type filters.')}>${moreOpen?'Fewer filters':'More filters'}</button>
       <span class="filter-extra"${moreOpen?'':' hidden'}>
         ${filterSelect('weekly-department-select','Department','All Departments',weeklyDepartmentFilter,weeklyDepartmentOptions,'setWeeklyDepartmentFilter')}
@@ -5687,10 +5793,11 @@ function renderResults(){
       <button type="button" class="link-btn" data-focus-key="filters-reset" onclick="resetWeeklyFilters()"${tipAttr('Clear every filter on this page.')}>Reset</button>
     </div>
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
+    html+=ohRenderDrillBar(); // the reason / cause / when-flagged / override filters picked from the charts
     html+=renderHint('weekly-cards','<strong>How this page works.</strong> Two tabs: <strong>Leading</strong> shows what needs action now (at-risk lines, why, since when, Us or Them) and <strong>Lagging</strong> shows how we performed (on-time delivery, fill rate, perfect orders, days late). Each card counts open sales-order lines for the filters above. Click a card to list its lines at the bottom of the page; click it again to clear. Rest the pointer on a card (Tab to it, or press and hold on a phone) for exactly what it counts, and use the ⓘ next to a section title for where its numbers come from.');
-    html+=ohRenderTabs()+ohPanelOpen('leading');
+    html+=ohPanelOpen('leading');
 
-    // ---------- Needs attention (leading indicators) ----------
+    // ---------- Leading tab ----------
     const newPastDue=pastDueNoReschedule.filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1&&d<=7;});
     const inOtherBucket=new Set([...pastDueNoReschedule,...noCommitRows,...activeRescheduleRows]);
     const urgentOnly=urgentRows.filter(r=>!inOtherBucket.has(r)).length;
@@ -5708,10 +5815,11 @@ function renderResults(){
         <span class="kpi-sub">${sub}</span>
       </button>`;
     const miniCell=(id,label,rows,sub,tipText)=>`<button type="button" class="${weeklyTileFilter===id?'selected':''}" ${tileAttrs(id)}${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${label}</span><span class="ms-sub">${sub}</span></div><div class="ms-num"><span class="ms-big">${fmtNum(rowDocCount(rows))} orders</span><span class="ms-amt">${money(rowOpenAmount(rows))}</span></div></button>`;
+    // ---------- At risk now: the At Risk card, its six override tiles, No commit date and Rescheduled ----------
     html+=`
-    <section class="section rise rise-2">
-      <div class="section-head"><h2 class="section-title">Needs attention</h2>${infoButton('oh-attention')}<span class="section-sub">leading indicators · click a card to see its lines</span><div class="section-tools"><button type="button" class="link-btn" data-focus-key="toggle-leading" onclick="toggleLeadingIndicators()" aria-expanded="${weeklyLeadingCollapsed?'false':'true'}"${tipAttr(weeklyLeadingCollapsed?'Show the Needs attention cards again.':'Hide the Needs attention cards (a list picked from them hides too).')}>${weeklyLeadingCollapsed?'Show':'Hide'}</button></div></div>
-      ${weeklyLeadingCollapsed?'':`<div class="grid-lead">
+    ${ohGroupOpen('oh-g-risk','At risk now',{cls:'rise rise-2',info:'oh-attention',tools:`<button type="button" class="link-btn" data-focus-key="toggle-leading" onclick="toggleLeadingIndicators()" aria-expanded="${weeklyLeadingCollapsed?'false':'true'}"${tipAttr(weeklyLeadingCollapsed?'Show the Leading cards again.':'Hide the Leading cards (a list picked from them hides too).')}>${weeklyLeadingCollapsed?'Show':'Hide'}</button>`})}
+      ${weeklyLeadingCollapsed?'':`<div class="oh-risk">
+      <div class="oh-risk-main">
         <button type="button" class="card kpi hero${selected('late')}" ${tileAttrs('late')}${tipAttr(`At risk: ${money(lateAmt)} open on ${ordersLines(lateTileRows)}: ${lateBreakdownText}. Counts lines past their original delivery date with no reschedule, lines with no commit date, lines with a reschedule date, and lines marked Urgent. Click to list them below.`)}>
           <div class="kpi-top"><span class="kpi-label"><span class="dot ${lateCount?'halo':'good'}"></span>At risk</span>${newPastDue.length?`<span class="pill bad"${tipAttr(`${fmtNum(newPastDue.length)} ${newPastDue.length===1?'line':'lines'} went past the original delivery date in the last 7 days.`)}>+${fmtNum(newPastDue.length)} new this week</span>`:''}</div>
           <div class="kpi-row"><span class="kpi-value hero ${lateCount?'crit':'good'}" data-count="${Math.round(lateAmt)}" data-fmt="money">${money(lateAmt)}</span><span class="kpi-unit">${fmtNum(rowDocCount(lateTileRows))} orders · ${fmtNum(lateTileRows.length)} lines</span></div>
@@ -5719,19 +5827,46 @@ function renderResults(){
           <div class="legend">${splitParts.map(([n,color,label])=>`<span><i class="sw" style="background:${color}"></i>${fmtNum(n)} ${label}</span>`).join('')}${urgentOnly?`<span>+ ${fmtNum(urgentOnly)} marked urgent</span>`:''}</div>
           ${ohHeroCause(m)}
         </button>
-        ${leadCard('nocommit',ncCount?'crit':'good','No commit date',noCommitRows,`${fmtNum(ncCount)} lines with no valid commit date`,`No commit date: ${money(ncAmt)} open on ${ordersLines(noCommitRows)} with no valid commit date (SAP shows 11/11/1111 or “no confirmed date”). Click to list them.`)}
-        ${leadCard('active',activeReschedCount?'warn':'good','Rescheduled',activeRescheduleRows,`${fmtNum(activeReschedCount)} lines with a reschedule date`,`Rescheduled: ${money(activeReschedAmt)} open on ${ordersLines(activeRescheduleRows)} that carry a reschedule date. Click to list them.`)}
-        ${leadCard('duethisweek','neutral','This week focus',dueThisWeekRows,`${fmtNum(dueThisWeekRows.length)} lines: at risk + due this week`,`This week focus: everything at risk plus open lines due this week (${shortDay(thisWeekStart)} to ${shortDay(thisWeekEnd)}): ${money(dueThisAmt)} on ${ordersLines(dueThisWeekRows)}. Click to list them.`)}
+        ${ohRenderOverrideTiles(m)}
       </div>
-      <div class="mini-strip cols-3">
-        ${miniCell('duenextweek','Due next week',dueNextWeekRows,`${fmtNum(dueNextWeekRows.length)} open lines due next week`,`Due next week (${shortDay(nextWeekStart)} to ${shortDay(nextWeekEnd)}): ${money(dueNextWeekAmt)} open on ${ordersLines(dueNextWeekRows)}. Click to list them.`)}
-        ${miniCell('duemonth','Due this month',notShippedThisMonthRows,`${fmtNum(notShippedThisMonthRows.length)} open lines due this month`,`Due this month: ${money(notShippedAmt)} open on ${ordersLines(notShippedThisMonthRows)} due in ${viewToday.toLocaleDateString('en-CA',{month:'long'})} with quantity still to ship. Click to list them.`)}
-        ${miniCell('allorders','All open orders',allOrderRows,`${fmtNum(allOrderRows.length)} open lines in this view`,`All open orders in this view: ${money(allOrdersAmt)} on ${ordersLines(allOrderRows)}. Click to list them.`)}
+      <div class="oh-risk-side">
+        ${leadCard('nocommit',ncCount?'crit':'good','No commit date',noCommitRows,ohN(ncCount,'line'),`No commit date: ${money(ncAmt)} open on ${ordersLines(noCommitRows)} with no valid commit date (SAP shows 11/11/1111 or “no confirmed date”). Click to list them.`)}
+        ${leadCard('active',activeReschedCount?'warn':'good','Rescheduled',activeRescheduleRows,ohN(activeReschedCount,'line'),`Rescheduled: ${money(activeReschedAmt)} open on ${ordersLines(activeRescheduleRows)} that carry a reschedule date. Click to list them.`)}
+      </div>
       </div>`}
+    </section>`;
+
+    // ---------- Coming due: this week, next week, this month, all open; open value by due week ----------
+    const {dueWeeks,pastDueOpenRows,dueMax}=cachedByFilter(m,`${ohKey}|due`,()=>{
+    const dueWeeks=weekWindows(thisWeekStart,8);
+    const pastDueOpenRows=[];
+    allOrderRows.filter(r=>r.isOpen&&hasOpenWork(r)).forEach(r=>{
+      const d=parseDate(r.effectiveDueDate||r.dueDate);
+      if(!d)return;
+      if(d<thisWeekStart){pastDueOpenRows.push(r);return;}
+      const w=dueWeeks.find(w=>d>=w.s&&d<=w.e);
+      if(w)w.rows.push(r);
+    });
+    const dueMax=Math.max(1,...dueWeeks.map(w=>rowOpenAmount(w.rows)));
+    return {dueWeeks,pastDueOpenRows,dueMax};
+    });
+    if(!weeklyLeadingCollapsed)html+=`
+    ${ohGroupOpen('oh-g-due','Coming due',{cls:'rise rise-3'})}
+      <div class="mini-strip cols-4">
+        ${miniCell('duethisweek','This week focus',dueThisWeekRows,ohN(dueThisWeekRows.length,'line'),`This week focus: everything at risk plus open lines due this week (${shortDay(thisWeekStart)} to ${shortDay(thisWeekEnd)}): ${money(dueThisAmt)} on ${ordersLines(dueThisWeekRows)}. Click to list them.`)}
+        ${miniCell('duenextweek','Due next week',dueNextWeekRows,ohN(dueNextWeekRows.length,'line'),`Due next week (${shortDay(nextWeekStart)} to ${shortDay(nextWeekEnd)}): ${money(dueNextWeekAmt)} open on ${ordersLines(dueNextWeekRows)}. Click to list them.`)}
+        ${miniCell('duemonth','Due this month',notShippedThisMonthRows,ohN(notShippedThisMonthRows.length,'line'),`Due this month: ${money(notShippedAmt)} open on ${ordersLines(notShippedThisMonthRows)} due in ${viewToday.toLocaleDateString('en-CA',{month:'long'})} with quantity still to ship. Click to list them.`)}
+        ${miniCell('allorders','All open orders',allOrderRows,ohN(allOrderRows.length,'line'),`All open orders in this view: ${money(allOrdersAmt)} on ${ordersLines(allOrderRows)}. Click to list them.`)}
+      </div>
+      <section class="card chart-card tight">
+        <div class="chart-head"><div class="title-row"><h2>What's due next</h2>${infoButton('oh-due')}</div><span class="section-sub">open value by due week · ${moneyShort(rowOpenAmount(pastDueOpenRows))} already past due</span></div>
+        <div class="col-chart">${dueWeeks.map((w,i)=>{const v=rowOpenAmount(w.rows);return `<div class="col"><span class="col-val">${moneyShort(v)}</span><div class="col-bar grow-h ${i===0?'fill-accent':'fill-soft'}" style="height:${Math.max(3,v/dueMax*62).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${fmtNum(w.rows.length)} open ${w.rows.length===1?'line':'lines'} · ${money(v)} due`)}></div></div>`;}).join('')}</div>
+        <div class="col-labels">${dueWeeks.map((w,i)=>`<span>${i===0?'This wk':esc(shortDay(w.s))}</span>`).join('')}</div>
+      </section>
     </section>`;
     html+=ohRenderLeading(m)+ohPanelClose()+ohPanelOpen('lagging');
 
-    // ---------- How we performed (lagging indicators) ----------
+    // ---------- Delivery performance (Lagging tab) ----------
     const series=cachedByFilter(m,`${ohKey}|series`,()=>monthlyRateSeries(shipRowsAll,reschedulePerf.closed,reschedulePerf.met));
     const otdTone=otd3Mo.scored.length?toneFor(otd3Mo.rate,90,75):'neutral';
     // No ordered qty in view (e.g. only a Clear To Build or supply file loaded): nothing to score, so "—" not a red 0%.
@@ -5745,8 +5880,7 @@ function renderResults(){
     });
     const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
     html+=`
-    <section class="section rise rise-3">
-      <div class="section-head"><h2 class="section-title">How we performed</h2>${infoButton('oh-performed')}<span class="section-sub">lagging indicators · last 12 months</span><div class="section-tools"><button type="button" class="link-btn" data-focus-key="toggle-lagging" onclick="toggleLaggingIndicators()" aria-expanded="${weeklyLaggingCollapsed?'false':'true'}"${tipAttr(weeklyLaggingCollapsed?'Show the How we performed cards again.':'Hide the How we performed cards (a list picked from them hides too).')}>${weeklyLaggingCollapsed?'Show':'Hide'}</button></div></div>
+    ${ohGroupOpen('oh-g-performance','Delivery performance',{cls:'rise rise-2',info:'oh-performed',tools:`<button type="button" class="link-btn" data-focus-key="toggle-lagging" onclick="toggleLaggingIndicators()" aria-expanded="${weeklyLaggingCollapsed?'false':'true'}"${tipAttr(weeklyLaggingCollapsed?'Show the Delivery performance cards again.':'Hide the Delivery performance cards (a list picked from them hides too).')}>${weeklyLaggingCollapsed?'Show':'Hide'}</button>`})}
       ${weeklyLaggingCollapsed?'':`<div class="grid-4">
         <button type="button" class="card kpi lag${selected('otd3mo')}" ${tileAttrs('otd3mo')}${tipAttr(withDeltaText(otd3Mo.scored.length?`On-time delivery, last 3 months: ${fmtNum(otd3Mo.rate)}%. ${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries (${money(otd3MoAmt)} shipped) went out on or before the line’s original delivery date. Target 90%. Click for early, on-time and late deliveries.`:'On-time delivery, last 3 months: no deliveries to score in this view. Click to list the lines.',series,'otd'))}>
           <div class="kpi-top"><span class="kpi-label">OTD · 3 mo</span>${renderDeltaPill(series,'otd')}</div>
@@ -5777,9 +5911,9 @@ function renderResults(){
           <span class="kpi-sub">${reschedulePerf.closed.length?`${fmtNum(reschedulePerf.met.length)} of ${fmtNum(reschedulePerf.closed.length)} rescheduled deliveries met commit`:'No rescheduled deliveries in this filter'}</span>
           ${ohLagSplit(m,'reschedhit')}
         </button>
-      </div>`}
+      </div>${ohRenderLagging(m)}`}
     </section>`;
-    html+=ohRenderLagging(m)+ohPanelClose();
+    html+=ohPanelClose();
 
     // ---------- Warehouse scorecard + top offenders + aging ----------
     const scorecard=cachedByFilter(m,`${ohKey}|scorecard`,()=>{
@@ -5853,7 +5987,8 @@ function renderResults(){
     });
 
     html+=`
-    <div class="grid-split rise rise-4">
+    ${ohGroupOpen('oh-g-where','Where the risk is',{cls:'rise rise-3'})}
+    <div class="grid-split">
       <section class="table" aria-label="Warehouse scorecard">
         <div class="card-head"><div class="title-row"><h2>Warehouse scorecard</h2>${infoButton('oh-scorecard')}</div><span class="section-sub">${focusedWarehouse?'click the row again to show all warehouses':'click a row to focus the page'}</span></div>
         <div class="thead sc-cols" aria-hidden="true"><div${tipAttr('Warehouse (the SAP Warehouse column), in two groups: CM SFG and all other warehouses.')}>Warehouse</div><div class="num"${tipAttr('Open value: what is still to ship on open lines.')}>Open</div><div class="num"${tipAttr('Open value of at-risk lines: past due with no reschedule, no commit date, rescheduled, or marked Urgent.')}>At risk</div><div class="num"${tipAttr('Lines at least a day past their original date with no reschedule or no commit date.')}>Past due</div><div class="num"${tipAttr('Deliveries in the last 3 months that shipped on or before the original date. Green 90% or more, amber 75% or more.')}>OTD 3 mo</div><div class="num"${tipAttr('Delivered or closed quantity as a share of ordered quantity. Green 90% or more, amber 70% or more.')}>Fill</div><div class="num"${tipAttr('Rescheduled deliveries in the last 12 months that shipped by their reschedule date. Green 90% or more, amber 75% or more.')}>Resched</div></div>
@@ -5874,27 +6009,7 @@ function renderResults(){
           <div class="legend aging">${aging.map(a=>`<span><i class="sw lg ${a.cls}"></i>${a.label} · <strong>${moneyShort(a.value)}</strong><span class="muted">${fmtNum(a.rows.length)} lines</span></span>`).join('')}</div>
         </section>
       </div>
-    </div>`;
-
-    // ---------- What's due next ----------
-    const {dueWeeks,pastDueOpenRows,dueMax}=cachedByFilter(m,`${ohKey}|due`,()=>{
-    const dueWeeks=weekWindows(thisWeekStart,8);
-    const pastDueOpenRows=[];
-    allOrderRows.filter(r=>r.isOpen&&hasOpenWork(r)).forEach(r=>{
-      const d=parseDate(r.effectiveDueDate||r.dueDate);
-      if(!d)return;
-      if(d<thisWeekStart){pastDueOpenRows.push(r);return;}
-      const w=dueWeeks.find(w=>d>=w.s&&d<=w.e);
-      if(w)w.rows.push(r);
-    });
-    const dueMax=Math.max(1,...dueWeeks.map(w=>rowOpenAmount(w.rows)));
-    return {dueWeeks,pastDueOpenRows,dueMax};
-    });
-    html+=`
-    <section class="card chart-card tight rise rise-5">
-      <div class="chart-head"><div class="title-row"><h2>What's due next</h2>${infoButton('oh-due')}</div><span class="section-sub">open value by due week · ${moneyShort(rowOpenAmount(pastDueOpenRows))} already past due</span></div>
-      <div class="col-chart">${dueWeeks.map((w,i)=>{const v=rowOpenAmount(w.rows);return `<div class="col"><span class="col-val">${moneyShort(v)}</span><div class="col-bar grow-h ${i===0?'fill-accent':'fill-soft'}" style="height:${Math.max(3,v/dueMax*62).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${fmtNum(w.rows.length)} open ${w.rows.length===1?'line':'lines'} · ${money(v)} due`)}></div></div>`;}).join('')}</div>
-      <div class="col-labels">${dueWeeks.map((w,i)=>`<span>${i===0?'This wk':esc(shortDay(w.s))}</span>`).join('')}</div>
+    </div>
     </section>`;
 
     // ---------- Linked lines for the selected card ----------
@@ -6198,10 +6313,9 @@ function renderResults(){
       ? `${fmtNum(linkedTileRows.length)} ${weeklyRescheduleFilter==='met'?'met':weeklyRescheduleFilter==='tolerance'?'2-day tolerance':weeklyRescheduleFilter==='missed'?'missed':weeklyRescheduleFilter==='openpast'?'still open':'rescheduled'} rows · ${money(linkedTileValue)}`
       : `${fmtNum(linkedTileRows.length)} rows · ${money(linkedTileValue)}`;
     const linkedBadgeClass=(weeklyTileFilter==='late'||weeklyTileFilter==='nocommit')&&linkedTileRows.length?'bad':weeklyTileFilter==='active'&&linkedTileRows.length?'warn':'';
-    html+=renderBigPicture('weekly',m); // Stream F: Big picture (Sankey) button / card, above the linked lines
     html+=weeklyTileFilter&&!hideLinkedTile?`
-    <section class="section rise rise-6" id="linked-lines">
-      <div class="section-head"><h2 class="section-title">Linked lines — ${esc(weeklyTileTitles[weeklyTileFilter]||'Selected KPI')}</h2>${infoButton('oh-linked')}<span class="count-badge ${linkedBadgeClass}">${esc(linkedTileSummary)}</span></div>
+    ${ohGroupOpen('oh-g-lines','Order lines',{cls:'rise rise-4',domId:'linked-lines'})}
+      <div class="section-head"><h3 class="section-title">Linked lines — ${esc(weeklyTileTitles[weeklyTileFilter]||'Selected KPI')}</h3>${infoButton('oh-linked')}<span class="count-badge ${linkedBadgeClass}">${esc(linkedTileSummary)}</span></div>
       ${renderFillWarehouseSummary(fillLineRows)}
       ${renderOtdDrillCards(rawLinkedTileRows)}
       ${renderOtdWarehouseSummary(rawLinkedTileRows)}
@@ -7456,11 +7570,11 @@ const WAREHOUSE_PRESET_TIPS={
 // dashboard: what the section shows, which SAP export fields feed it, and what clicking does.
 const INFO_SRC_SO='SAP KPI export (sales-order lines and their deliveries)';
 const SECTION_INFO={
-  'oh-attention':{title:'Needs attention',
+  'oh-attention':{title:'At risk now',
     what:'Leading indicators: open sales-order lines that need action now or soon. At risk counts lines past their original delivery date with no reschedule, lines with no commit date, lines with a reschedule date, and lines you marked Urgent. A line you mark Not At Risk leaves every card.',
     source:`${INFO_SRC_SO}: LineDueDate (original date), LineRescheduleDate and RescheduleDate (11/11/1111 means no commit), OpenQuantity and AmountLocal (open value), plus your override statuses.`,
     click:'Click a card to list its lines under Linked lines; click it again to clear the list.'},
-  'oh-performed':{title:'How we performed',
+  'oh-performed':{title:'Delivery performance',
     what:'Lagging indicators from shipped lines. OTD · 3 mo: deliveries in the last 3 months that shipped on or before the line’s original delivery date. Shipped this week: delivery lines dated Sunday to today. Fill rate: delivered or closed quantity as a share of ordered quantity. Reschedule hit · 12 mo: rescheduled deliveries that shipped on or before their reschedule date. The target for each rate is 90%.',
     source:`${INFO_SRC_SO}: delivery rows (DeliveryDocNumber, ClosedDate, AmountLocal) against the order line’s LineDueDate and LineRescheduleDate; Quantity and OpenQuantity for fill.`,
     click:'Click a card to list its lines; OTD and Reschedule hit also show early / on-time / late breakdown cards and a table by warehouse.'},
@@ -7470,8 +7584,8 @@ const SECTION_INFO={
     click:'Click a row to show only that warehouse on the whole page; click it again to show every warehouse.'},
   'oh-offenders':{title:'Top offenders',
     what:'The six customers, warehouses or document owners with the most at-risk open value in this view, or the six vendors with the most late purchase-order value.',
-    source:'At-risk lines from the Needs attention cards; vendors from the late lines on Purchase Orders (that page’s filters apply).',
-    click:'Pick Customers, Warehouses, Owners or Vendors to change the ranking. Each block is $20,000 of value, coloured by who it is waiting on (Us / Them); click a row to filter the page to it.'},
+    source:'At-risk lines from the At risk card; vendors from the late lines on Purchase Orders (that page’s filters apply).',
+    click:'Pick Customers, Warehouses, Owners or Vendors to change the ranking. Each block is $20,000 of value, coloured by who it is waiting on (Us / Them); click a customer, warehouse or vendor row to filter the page to it (owners are ranked only).'},
   'oh-aging':{title:'How late is the past-due work?',
     what:'Open value of lines past their original date with no reschedule or no commit date, split by days late: 1–7, 8–30, 31–90 and over 90. The 40 blocks share the total in proportion.',
     source:'LineDueDate against the export date (ExportDate), open value from AmountLocal.',
@@ -9938,7 +10052,8 @@ function lineReasons(r){
   const out=lineSapReasonIds(r).map(id=>OH_REASON_LABEL[id]);
   const status=ohOverrideStatus(r);
   if(status&&causeOfLabel(status)!=='neutral'){
-    const label=OH_OVERRIDE_REASON[status.toLowerCase()]||status;
+    // A status typed in another case in the export ("shipping delay") reads as the dropdown's own label.
+    const label=OH_OVERRIDE_REASON[status.toLowerCase()]||OVERRIDE_OPTIONS.find(o=>o&&o.toLowerCase()===status.toLowerCase())||status;
     if(!out.includes(label))out.push(label);
   }
   return out;
@@ -10104,26 +10219,39 @@ function ohPanelOpen(id){
   return `<div class="oh-panel" role="tabpanel" id="oh-panel-${id}" aria-labelledby="oh-tab-${id}"${weeklyView===id?'':' hidden'}>`;
 }
 function ohPanelClose(){return '</div>';}
-function ohRenderTabs(){
-  const tab=(id,title,sub,tip)=>{
+// 2v2: Leading / Lagging is the page's main switch: full width, right under the page title, each half with its
+// headline number (Leading: at-risk open value; Lagging: on-time delivery over the last 3 months), for the filters set.
+function ohRenderTabs(m){
+  const oh=m?orderHealthData(m):null;
+  const lead=oh?{text:moneyShort(oh.lateAmt),unit:'at risk',tone:oh.lateCount?'critical':'good',full:`${money(oh.lateAmt)} at risk on ${ohN(rowDocCount(oh.lateTileRows),'order')} (${ohN(oh.lateTileRows.length,'line')}).`}:null;
+  const otd=oh&&oh.otd3Mo;
+  const lag=oh?(otd.scored.length?{text:`${fmtNum(otd.rate)}%`,unit:'OTD · 3 mo',tone:toneFor(otd.rate,90,75),full:`On-time delivery, last 3 months: ${fmtNum(otd.rate)}% (${fmtNum(otd.early.length+otd.onTime.length)} of ${fmtNum(otd.scored.length)} deliveries).`}:{text:'—',unit:'OTD · 3 mo',tone:'neutral',full:'On-time delivery, last 3 months: no deliveries to score in this view.'}):null;
+  const tab=(id,title,sub,head,tip)=>{
     const on=weeklyView===id;
-    return `<button type="button" role="tab" class="oh-tab" id="oh-tab-${id}" aria-selected="${on}" aria-controls="oh-panel-${id}" tabindex="${on?0:-1}" onclick="setWeeklyView('${id}')" onkeydown="ohTabKey(event)" data-tip="${esc(tip)}"><span class="oh-tab-title">${title}</span><span class="oh-tab-sub">${sub}</span></button>`;
+    const num=head?`<span class="oh-tab-num ${TONE_CLASS[head.tone]||''}">${esc(head.text)}<small>${esc(head.unit)}</small></span>`:'';
+    return `<button type="button" role="tab" class="oh-tab" id="oh-tab-${id}" aria-selected="${on}" aria-controls="oh-panel-${id}" tabindex="${on?0:-1}" onclick="setWeeklyView('${id}')" onkeydown="ohTabKey(event)" data-tip="${esc(head?`${head.full} ${tip}`:tip)}"><span class="oh-tab-text"><span class="oh-tab-title">${title}</span><span class="oh-tab-sub">${sub}</span></span>${num}</button>`;
   };
-  return `<div class="oh-tabbar rise rise-1">
+  return `<div class="oh-tabbar rise">
     <div class="oh-tabs" role="tablist" aria-label="Order Health indicators">
-      ${tab('leading','Leading','what needs action now','Leading indicators: open orders that are at risk now, why, who they are waiting on, and how long they have been flagged. Use the arrow keys to switch tabs.')}
-      ${tab('lagging','Lagging','how we performed','Lagging indicators: how deliveries already went (on time, fill, reschedule hits, perfect orders, days late) and who caused the misses. Use the arrow keys to switch tabs.')}
+      ${tab('leading','Leading','What needs action now',lead,'Leading indicators: open orders that are at risk now, why, who they are waiting on, and how long they have been flagged. Use the arrow keys to switch tabs.')}
+      ${tab('lagging','Lagging','How we performed',lag,'Lagging indicators: how deliveries already went (on time, fill, reschedule hits, perfect orders, days late) and who caused the misses. Use the arrow keys to switch tabs.')}
     </div>
-    ${ohRenderDrillChips()}
   </div>`;
+}
+// The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
+function ohRenderDrillBar(){
+  const chips=ohRenderDrillChips();
+  return chips?`<div class="oh-drillbar">${chips}</div>`:'';
 }
 function ohRenderDrillChips(){
   if(!ohDrillActive())return '';
   const chip=(kind,label,value)=>`<button type="button" class="chip active oh-chip" data-kind="${kind}" onclick="clearWeeklyDrill(this.dataset.kind)" aria-label="${esc(`Remove filter ${label}: ${value}`)}" data-tip="${esc(`Showing only open lines where ${label.toLowerCase()} is ${value}. Click to remove this filter.`)}">${esc(label)}: ${esc(value)} <span class="oh-x" aria-hidden="true">×</span></button>`;
   const age=OH_AGE_BUCKETS.find(a=>a[0]===weeklyAgeFilter);
+  // A reason that is one of the At risk by override tiles shows as that tile (2v2).
+  const tile=!weeklyReasonMain&&OH_OVERRIDE_TILES.find(t=>t.status===weeklyReasonFilter);
   return `<div class="oh-drill" role="group" aria-label="Order Health chart filters">
     <span class="oh-drill-label">Filtered by</span>
-    ${weeklyReasonFilter?chip('reason',weeklyReasonMain?'Main reason':'Reason',weeklyReasonFilter):''}
+    ${weeklyReasonFilter?(tile?chip('reason','Override',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',weeklyReasonFilter)):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
     ${age?chip('age','When flagged',age[1]):''}
     <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove the reason, cause and when-flagged filters. The warehouse, segment and other filters stay.">Clear all</button>
@@ -10166,6 +10294,48 @@ function ohHeroCause(m){
   const parts=OH_CAUSES.filter(([c])=>t[c].lines);
   if(!parts.length)return '';
   return `<span class="oh-cause-line">${ohCauseBar(t)}<span class="legend oh-cause-legend">${parts.map(([c,label])=>`<span><i class="sw cause-${c}"></i>${label} ${money(t[c].value)}</span>`).join('')}</span></span>`;
+}
+// --- 2v2: At risk by override (six small tiles under the At Risk card) ---
+// Each tile counts the open At Risk lines (orderHealthData's lateTileRows: same filters and chart filters as the card)
+// whose override status is that one, and their open value. Clicking a tile is the Reason filter for that status
+// (lineReasons lists a line's override status as a reason), so the chip, Clear all, snapshots, the linked lines and
+// Search all work as for the Top reasons bars. While one tile's filter is on, the tiles count as if it were off, so
+// the other five keep their numbers instead of dropping to zero.
+const OH_OVERRIDE_TILES=[
+  ['Shipping Delay','Shipping Delay'],
+  ['QC Delay','QC Delay'],
+  ['R&D Hold','R&D Hold'],
+  ['Supplier Delay','Supplier Late'],
+  ['Supply Chain Delay','Supply Chain'],
+  ['Wait on Prod','Waiting on Production']
+].map(([label,status])=>({label,status}));
+function ohOverrideTileOn(status){return !weeklyReasonMain&&weeklyReasonFilter===status;}
+function ohOverrideTileData(m){
+  const facet=OH_OVERRIDE_TILES.some(t=>ohOverrideTileOn(t.status));
+  let risk;
+  if(facet){
+    const saved=[weeklyReasonFilter,weeklyReasonMain];
+    try{weeklyReasonFilter='';weeklyReasonMain=false;risk=orderHealthData(m).lateTileRows;}
+    finally{[weeklyReasonFilter,weeklyReasonMain]=saved;}
+  }else risk=orderHealthData(m).lateTileRows;
+  ohRowMemoFresh();
+  return OH_OVERRIDE_TILES.map(t=>{
+    const rows=risk.filter(r=>ohRowInfo(r).reasons.includes(t.status));
+    return {...t,rows,lines:rows.length,orders:rowDocCount(rows),value:rowOpenAmount(rows),on:ohOverrideTileOn(t.status)};
+  });
+}
+function setWeeklyOverrideTile(status){
+  if(!OH_OVERRIDE_TILES.some(t=>t.status===status))return;
+  setWeeklyReasonFilter(status);
+}
+function ohRenderOverrideTiles(m){
+  const tiles=ohOverrideTileData(m);
+  const cells=tiles.map(t=>{
+    const statusNote=t.label===t.status?'':` (override “${t.status}”)`;
+    const tip=`${t.label}${statusNote}: ${ohN(t.lines,'at-risk line')}, ${money(t.value)} open. ${t.on?'Click to show every line again.':'Click to list them.'}`;
+    return `<button type="button" class="ovr-tile${t.lines?'':' zero'}${t.on?' selected':''}" data-focus-key="ovr-${esc(t.status.replace(/\W+/g,'-').toLowerCase())}" data-status="${esc(t.status)}" onclick="setWeeklyOverrideTile(this.dataset.status)" aria-pressed="${t.on}" data-tip="${esc(tip)}"><span class="ovr-name">${esc(t.label)}</span><span class="ovr-count">${fmtNum(t.lines)}</span></button>`;
+  }).join('');
+  return `<div class="ovr"><span class="ovr-head" id="ovr-head">At risk by override</span><div class="ovr-grid" role="group" aria-labelledby="ovr-head">${cells}</div></div>`;
 }
 function ohRenderLeading(m){
   if(weeklyLeadingCollapsed)return '';
@@ -10221,10 +10391,11 @@ function ohRenderLeading(m){
       <div class="oh-cause-grid" role="group" aria-label="At-risk value by cause">${causeButtons}</div>
       <span class="oh-note">Cause = the one picked on the line, else its override, else the SAP signal. See About these numbers.</span>
     </section>`;
-  return `<section class="section rise rise-2 oh-leading" aria-labelledby="oh-why-title">
-      <div class="section-head"><h2 class="section-title" id="oh-why-title" data-tip="How the open lines split by state, the reasons behind the at-risk ones, how long they have been flagged and who they are waiting on. Click any bar or box to filter Order Health to it.">Why lines are at risk</h2><span class="section-sub">open order states, reasons, age and cause · click any part to filter</span></div>
-      <div class="oh-states-wrap">${stateBar}<div class="mini-strip cols-5 oh-states" role="group" aria-label="Open order states">${stateCells}</div></div>
+  // The open order states (every open line in exactly one) are secondary detail: under Show more.
+  const states=`<div class="oh-states-wrap">${stateBar}<div class="mini-strip cols-5 oh-states" role="group" aria-label="Open order states">${stateCells}</div></div>`;
+  return `${ohGroupOpen('oh-why-title','Why lines are at risk',{cls:'rise rise-3 oh-leading',tip:'How the open lines split by state, the reasons behind the at-risk ones, how long they have been flagged and who they are waiting on. Click any bar or box to filter Order Health to it.'})}
       <div class="oh-grid">${openCard}${whenCard}${causeCard}</div>
+      ${ohRenderMore('oh-states','open order states',states,'Show or hide every open line by state: on track, due this week, rescheduled, past due, no commit.')}
     </section>`;
 }
 
@@ -10458,8 +10629,7 @@ function setWeeklyOffenderFilter(view,key){
   if(view==='vendors'){poVendorFilter=[k];poTileFilter='late';poLinkedShowAll=false;setTab('purchaseorders');return;}
   if(view==='customers')weeklyCustomerFilter=toggle(weeklyCustomerFilter);
   else if(view==='warehouses')weeklyWarehouseFilter=toggle(weeklyWarehouseFilter);
-  else if(view==='owners')weeklyOwnerFilter=toggle(weeklyOwnerFilter);
-  else return;
+  else return; // owners rank only (2v2: no owner filter)
   renderResults();
 }
 function ohRenderWaffle(m,view,offenders,keyOf){
@@ -10468,7 +10638,9 @@ function ohRenderWaffle(m,view,offenders,keyOf){
   const info=vendors?null:ohLeadingData(m).info;
   const causeOf=r=>{const x=info&&info.get(r);return x?x.cause:lineCause(r);};
   if(!offenders.length)return `<div class="empty-note">${vendors?'No late purchase-order lines.':'Nothing at risk in this view.'}</div>`;
-  const current={customers:weeklyCustomerFilter,warehouses:weeklyWarehouseFilter,owners:weeklyOwnerFilter,vendors:poVendorFilter}[view]||['ALL'];
+  const current={customers:weeklyCustomerFilter,warehouses:weeklyWarehouseFilter,vendors:poVendorFilter}[view]||['ALL'];
+  // Owners are ranked but not a filter (2v2): their rows are plain, tipped rows instead of buttons.
+  const rankOnly=view==='owners';
   const noun={customers:'customer',warehouses:'warehouse',owners:'owner',vendors:'vendor'}[view]||'name';
   const rows=offenders.map((o,i)=>{
     const key=String(keyOf(o.rows[0]));
@@ -10477,10 +10649,14 @@ function ohRenderWaffle(m,view,offenders,keyOf){
     const on=current.length===1&&current[0]===key;
     const kinds=vendors?Array(b.blocks).fill('po'):[...Array(b.us).fill('us'),...Array(b.them).fill('them'),...Array(b.rest).fill('rest')];
     const split=t?` ${OH_CAUSES.filter(([c])=>t[c].value>0).map(([c,label])=>`${label} ${money(t[c].value)}`).join(' · ')}.`:'';
-    const tip=`${o.name}: ${money(o.value)} ${vendors?'late purchase-order value':'at-risk open value'} on ${ohN(o.rows.length,'line')}.${split} ${b.half?'Under $10,000, so it shows as a half block. ':''}${b.capped?`Over ${money(BLOCK_VALUE*OH_WAFFLE_MAX)}: the first ${OH_WAFFLE_MAX} blocks are shown. `:''}${vendors?'Click to open Purchase Orders for this vendor.':on?`Click to show every ${noun} again.`:`Click to show only this ${noun} on Order Health.`}`;
+    const tip=`${o.name}: ${money(o.value)} ${vendors?'late purchase-order value':'at-risk open value'} on ${ohN(o.rows.length,'line')}.${split} ${b.half?'Under $10,000, so it shows as a half block. ':''}${b.capped?`Over ${money(BLOCK_VALUE*OH_WAFFLE_MAX)}: the first ${OH_WAFFLE_MAX} blocks are shown. `:''}${rankOnly?'':vendors?'Click to open Purchase Orders for this vendor.':on?`Click to show every ${noun} again.`:`Click to show only this ${noun} on Order Health.`}`;
+    const inner=`<span class="rank-top"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(o.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(o.rows.length)} · </span><strong>${money(o.value)}</strong></span></span>
+        <span class="waffle" aria-hidden="true">${kinds.map((c,k)=>`<i class="pop wb-${c}${b.half?' half':''}" style="animation-delay:${Math.min(i*60+k*8,600)}ms"></i>`).join('')}${b.capped?'<span class="waffle-more">+</span>':''}</span>`;
+    if(rankOnly)return `<div class="waffle-row static" data-focus-key="offrow-${esc(key)}" data-tip="${esc(tip.trim())}">
+        ${inner}
+      </div>`;
     return `<button type="button" class="waffle-row${on?' selected':''}" data-focus-key="offrow-${esc(key)}" data-view="${view}" data-off="${esc(key)}" onclick="setWeeklyOffenderFilter(this.dataset.view,this.dataset.off)" aria-pressed="${on}" data-tip="${esc(tip)}">
-        <span class="rank-top"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(o.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(o.rows.length)} · </span><strong>${money(o.value)}</strong></span></span>
-        <span class="waffle" aria-hidden="true">${kinds.map((c,k)=>`<i class="pop wb-${c}${b.half?' half':''}" style="animation-delay:${Math.min(i*60+k*8,600)}ms"></i>`).join('')}${b.capped?'<span class="waffle-more">+</span>':''}</span>
+        ${inner}
       </button>`;
   }).join('');
   const legend=`<div class="legend oh-waffle-legend"><span>■ = $${BLOCK_VALUE/1000}k</span>${vendors?'':OH_CAUSES.filter(([c])=>c!=='neutral').map(([c,label])=>`<span><i class="sw lg ${c==='unknown'?'cause-unknown':`cause-${c}`}"></i>${label}</span>`).join('')}<span>half block = under $${BLOCK_VALUE/2000}k</span></div>`;
