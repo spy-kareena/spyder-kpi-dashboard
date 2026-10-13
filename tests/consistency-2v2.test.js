@@ -118,13 +118,14 @@ test('one group vocabulary: a summary first, breakdowns "By …", the list group
     for (const old of ['Linked PO lines', 'Orders to act on', 'Rows to check', 'Where the gaps are', 'Where the risk is', 'Why lines are at risk', 'Coming due', 'Performance by warehouse', 'Shortages by warehouse', 'Order lines', 'Supply at risk', 'All open demand']) {
       assert.ok(!t.includes(old), `${tab}: old name "${old}"`);
     }
-    // The list group's head: title, ⓘ, then the pill with a line count.
-    const head = h.match(/<div class="pg-group-head"><h2 class="pg-group-title" id="[^"]+"[^>]*>Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="([\w-]+)"[^>]*>[\s\S]*?<\/button><span class="count-badge[^"]*">([^<]+)<\/span>/);
+    // The list group's head: the title (its help as the tooltip, no ⓘ button), then the pill with a line count.
+    const head = h.match(/<div class="pg-group-head"><h2 class="pg-group-title" id="[^"]+" data-tip="([^"]+)">Lines to act on<\/h2><span class="count-badge[^"]*">([^<]+)<\/span>/);
     // (Supply Mix leaves its shortage and risk lines to Supply / Demand, so its groups are all "By …".)
     if (['weekly', 'purchaseorders', 'buildrisk', 'supplyweekly', 'metrics'].includes(tab)) {
-      assert.ok(head, `${tab}: Lines to act on with an ⓘ and a pill`);
+      assert.ok(head, `${tab}: Lines to act on with its help tip and a pill`);
       assert.match(head[2], /\b\d+ (?:[\w-]+ )?lines?\b/, `${tab}: ${head[2]}`);
-      assert.equal(page.run(`SECTION_INFO[${JSON.stringify(head[1])}].title`), 'Lines to act on', `${tab}: the ⓘ title is the group name`);
+      const key = page.run(`Object.keys(SECTION_INFO).find(k=>esc(sectionTipText(k))===${JSON.stringify(head[1])})`);
+      assert.equal(page.run(`SECTION_INFO[${JSON.stringify(key)}].title`), 'Lines to act on', `${tab}: the help is the group's own`);
       heads[tab + (view || '')] = head[2];
     }
   }
@@ -136,7 +137,7 @@ test('one group vocabulary: a summary first, breakdowns "By …", the list group
   const sd = open(page, 'supplyweekly');
   assert.deepEqual(titles(sd), ['Coverage', 'Lines to act on']);
   assert.equal(heads.supplyweekly, '2 lines');
-  assert.match(sd, />Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="sd-shortages"[^>]*>[\s\S]*?<\/button><span class="count-badge bad">2 lines<\/span>/);
+  assert.ok(sd.includes(`${page.run("sectionTip('sd-shortages')")}>Lines to act on</h2><span class="count-badge bad">2 lines</span>`));
   assert.equal(page.run("SECTION_INFO['sd-shortages'].title"), 'Lines to act on');
   assert.deepEqual(titles(open(page, 'supplydemand')), ['By month and warehouse', 'By item group']);
   assert.deepEqual(page.errors, []);

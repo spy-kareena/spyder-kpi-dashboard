@@ -1,4 +1,4 @@
-# Spyder KPI Dashboard 2v1 - IT Hosting Notes
+# Spyder KPI Dashboard 2v2 - IT Hosting Notes
 
 ## What this is
 
@@ -100,7 +100,7 @@ Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-d
 |---|---|---|---|
 | `report` | Compressed copy of the last loaded export files | Each upload (replaces the last one) | About 1.5 MB |
 | `overrides` | Notes, override statuses, Us / Them causes and "deleted" flags on order lines, each with the editor's name and the time of the edit; tracking numbers typed in on the Shipping page (`shipments`) | About 1 second after an edit stops (one write per batch of edits) | Capped at 2 MB |
-| `people` | The names people gave in the "Your name" dialog (`{name, firstSeen, lastSeen}`), offered to everyone as one-click choices | When a new name is added, or a name not seen for a day is used again (each browser sends its name at most once a day) | Capped at 300 names (the name seen longest ago gives way); a few KB |
+| `people` | The names people gave in the "Your name" dialog (`{name, firstSeen, lastSeen}`), offered to everyone as one-click choices | When a new name is added, or a name not seen for a day is used again (each browser sends its name at most once a day) | Capped at 300 names (the name seen longest ago gives way); names not seen for 180 days drop off, and the x beside a name in the dialog removes it (DELETE /api/people); a few KB |
 | `history` | For each of the last 52 weeks (one entry per week; a second upload in the same week is merged into it): the earliest export date loaded that week and the keys of the lines on the At Risk card in any of that week's uploads (SO number, line, item, warehouse). New uploads are merged into it | Each upload | Capped at 8 MB |
 | `history:first` | The same weeks with each line listed only under the first week it was at risk: what the page reads to show how long a line has been at risk ("first flagged"), so a line at risk all year is sent once instead of 52 times. Rebuilt from `history` on each upload | Each upload | Smaller than `history` |
 | `tracking:*` | Shipping page: `tracking:wanted` (tracking numbers the page sends), `tracking:index` (FedEx results), `tracking:token` (FedEx sign-in, expires on its own), `tracking:refresh` (the 10-minute Refresh limit) | Worker every 4 hours, Refresh now, page loads that change the list | Small |

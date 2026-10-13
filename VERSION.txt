@@ -130,3 +130,10 @@ Delay, QC Delay, R&D Hold, Supplier Delay, Supply Chain Delay, Wait on Prod) wit
 in every dropdown, chart, Search and Ask AI answer (stored values unchanged); the owner filter is removed; Top
 reasons no longer repeats the open order count. Every page is grouped into named sections with more space between
 them, and print is tidier (sections run on over pages, cards stay whole).
+2v2 design round: lighter order-line tables (one status chip with its timing and cause; they fit a 1366 px screen),
+and every table stacks as cards on a phone; one section vocabulary on every page (a summary first, "By ..." breakdowns,
+"Lines to act on" with a count pill) that says lines, not rows; Supply / Demand's short or at-risk lines are one table
+with a sub-heading per warehouse and a "Supply at risk only" chip (Supply Mix links there instead of repeating them);
+Build Risk shows each override as text with one Edit button and an Amount column; Monthly month cards line up and
+every number strip has one layout; the phone header fits one row; Order Health prints on 8 pages instead of 13.
+ⓘ buttons removed; section help is on the title's tooltip.

@@ -1,4 +1,4 @@
-# Owner checklist: put version 2v1 live
+# Owner checklist: put version 2v2 live
 
 For the owner, deploying from Kareena's Cloudflare account. Run the commands in a terminal in the dashboard folder (GitHub repo `spy-kareena/spyder-kpi-dashboard`) on a computer with Node.js 20 or newer. Sign in to Cloudflare once with `npx wrangler login` (as Kareena's account; `npx wrangler whoami` shows which account is signed in).
 

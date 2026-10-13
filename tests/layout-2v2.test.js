@@ -380,7 +380,7 @@ test('Order Health reads as a few named groups: Leading, Lagging, then the break
   const dueGroup = lead.slice(lead.indexOf('>By due date</h2>'), lead.indexOf('>By reason and cause</h2>'));
   assert.deepEqual([...dueGroup.matchAll(/data-focus-key="tile-([a-z]+)"/g)].map((x) => x[1]), ['duethisweek', 'duenextweek', 'duemonth', 'allorders']);
   assert.match(dueGroup, /<div class="mini-strip cols-4">/);
-  assert.match(dueGroup, /<h2>What's due next<\/h2>/);
+  assert.match(dueGroup, /<h2 data-tip="Open value due in each of the next 8 weeks\. Rest the pointer on a bar for its lines and value\.">What's due next<\/h2>/);
   // At risk now: the At Risk card with its tiles, and No commit date / Rescheduled beside them.
   const riskGroup = lead.slice(lead.indexOf('>At risk now</h2>'), lead.indexOf('>By due date</h2>'));
   assert.deepEqual([...riskGroup.matchAll(/data-focus-key="tile-([a-z]+)"/g)].map((x) => x[1]), ['late', 'nocommit', 'active']);
@@ -394,7 +394,7 @@ test('Order Health reads as a few named groups: Leading, Lagging, then the break
   assert.deepEqual([...lag.matchAll(/data-focus-key="tile-([a-z0-9]+)"/g)].map((x) => x[1]), ['otd3mo', 'shippedweek', 'fillrate', 'reschedhit', 'perfect', 'dayslate']);
   // Lines to act on: the group title, its ⓘ and a pill with the picked card, its line count and value (as on Purchase Orders).
   const lines = html(page).slice(html(page).indexOf('aria-labelledby="oh-g-lines"'));
-  assert.match(lines, /^aria-labelledby="oh-g-lines"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="oh-g-lines">Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="oh-linked"[^>]*>[\s\S]*?<\/button><span class="count-badge ">OTD · 3 mo · 4 delivered lines · \$[\d,]+<\/span><\/div>/);
+  assert.match(lines, /^aria-labelledby="oh-g-lines"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="oh-g-lines" data-tip="The lines behind the card you picked\. Click a heading to sort; tick lines to set an override or delete them\.">Lines to act on<\/h2><span class="count-badge ">OTD · 3 mo · 4 delivered lines · \$[\d,]+<\/span><\/div>/);
   assert.doesNotMatch(lines, /class="section-title"|Linked lines/);
   assert.match(html(page).match(/<section class="pg-group[^"]*" id="linked-lines"[^>]*>/)[0], /aria-labelledby="oh-g-lines"/);
   // The old Hide calls no longer hide anything.

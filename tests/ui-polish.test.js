@@ -75,7 +75,7 @@ test('every KPI card, chip, sortable heading and button on every page has a tool
   const drawn = new Set();
   eachView(page, (html, view) => {
     for (const k of ['class="row-override"', 'class="row-note"', 'class="sk-svg', 'class="ship-', '<summary', '<a href']) if (html.includes(k)) drawn.add(k);
-    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'info-btn', 'select', 'month-card', 'rate-card', 'hint-close', 'row-override', 'row-cause', 'row-note']);
+    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'select', 'month-card', 'rate-card', 'hint-close', 'row-override', 'row-cause', 'row-note']);
     // About toggles and links explain themselves too.
     tags.push(...[...html.matchAll(/<summary\b[^>]*>|<a\b[^>]*\shref="[^"]*"[^>]*>/g)].map((m) => m[0]));
     checked += tags.length;
@@ -122,20 +122,25 @@ test('tooltips stay short on every page: about 20 words, never a paragraph', asy
   assert.ok(checked > 1000, `checked ${checked} tips`);
 });
 
-test('section ⓘ buttons: every key has a short what and click text, opens one shared popover; About these numbers is 3-5 short bullets', async () => {
+test('section help sits on the section title (no ⓘ buttons): every text is two short sentences on its title; About these numbers is 3-5 short bullets', async () => {
   const page = await loadedAll();
-  const keys = new Set();
+  const info = page.run('Object.fromEntries(Object.keys(SECTION_INFO).map(k=>[k,{...SECTION_INFO[k],tip:sectionTipText(k)}]))');
+  const byTip = new Map(Object.entries(info).map(([k, i]) => [i.tip, k]));
+  const unesc = (t) => t.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const norm = (t) => t.replace(/[’']/g, "'");
   const sentences = (t) => t.split(/[.!?](?:\s|$)/).filter((x) => x.trim()).length;
+  const keys = new Set();
   eachView(page, (html, view) => {
-    const pageKeys = [...html.matchAll(/<button type="button" class="info-btn print-hide" data-info="([\w-]+)" data-focus-key="info-\1" aria-haspopup="dialog" aria-expanded="false" aria-controls="info-pop" aria-label="About ([^"]+)"/g)];
-    for (const [, key, title] of pageKeys) {
+    // The owner asked for no ⓘ buttons: none is drawn, and no empty title wrapper is left where one sat.
+    assert.doesNotMatch(html, /class="info-btn|data-info=|aria-controls="info-pop"|class="title-row"/, `${view}: an ⓘ button is left`);
+    for (const [, attrs, inner] of html.matchAll(/<h2\b([^>]*)>([\s\S]*?)<\/h2>/g)) {
+      const m = attrs.match(/data-tip="([^"]*)"/);
+      const key = m && byTip.get(unesc(m[1]));
+      if (!key) continue;
       keys.add(key);
-      const info = page.run(`SECTION_INFO[${JSON.stringify(key)}]`);
-      assert.ok(info && info.title && info.what && info.click, `${view}: ${key} has a definition and a click text`);
-      assert.equal(title, info.title.replace(/’/g, '’'));
-      // At most two short sentences: what the section shows, what clicking does.
-      assert.equal(sentences(info.what) + sentences(info.click), 2, `${view}: ${key} is two sentences`);
-      assert.ok(`${info.what} ${info.click}`.split(/\s+/).length <= 30, `${view}: ${key} is short`);
+      // The tip is on that section's own title (a dated title such as "Shipped and open value by month · 2026" too).
+      const text = unesc(inner.replace(/<[^>]+>/g, '')).trim();
+      assert.ok(norm(text).startsWith(norm(info[key].title)), `${view}: ${key} is on "${text}"`);
     }
     // Every page's About block is a short list: 3 to 5 bullets of at most 30 words.
     for (const [about] of html.matchAll(/<details class="about[^"]*"><summary[^>]*>About these numbers<\/summary>[\s\S]*?<\/details>/g)) {
@@ -144,21 +149,22 @@ test('section ⓘ buttons: every key has a short what and click text, opens one 
       for (const li of items) assert.ok(li.replace(/<[^>]+>/g, '').split(/\s+/).length <= 30, `${view}: ${li}`);
     }
   });
-  assert.ok(keys.size >= 35, `${keys.size} sections have an ⓘ`);
-  assert.deepEqual(Object.keys(page.run('SECTION_INFO')).filter((k) => !keys.has(k)), [], 'no unused section texts');
-  assert.match(HTML, /<div id="info-pop" class="info-pop" role="dialog" aria-labelledby="info-pop-title" tabindex="-1" hidden onkeydown="infoPopKey\(event\)"><\/div>/);
-  // Opening fills the popover with the texts (escaped) and marks the button expanded; closing puts focus back.
-  const btn = { dataset: { info: 'oh-scorecard' }, attrs: {}, isConnected: true, focused: false, setAttribute(k, v) { this.attrs[k] = v; }, getBoundingClientRect: () => ({ left: 10, top: 10, right: 30, bottom: 30, width: 20, height: 20 }), contains: () => false, focus() { this.focused = true; } };
-  page.ctx.innerWidth = 1200; page.ctx.innerHeight = 800;
-  const pop = page.els['info-pop'];
-  Object.assign(pop, { hidden: true, offsetWidth: 340, offsetHeight: 200, style: { setProperty() {} }, focus() {}, contains: () => false });
-  page.ctx.__btn = btn;
-  page.run('toggleInfo(__btn)');
-  assert.equal(pop.hidden, false);
-  assert.match(pop.innerHTML, /<h3 id="info-pop-title">Warehouse scorecard<\/h3>[\s\S]*<p>Open, at-risk and past-due value[^<]*<\/p><p>Click a row to show only that warehouse/);
-  assert.equal(btn.attrs['aria-expanded'], 'true');
-  page.run('toggleInfo(__btn)');
-  assert.deepEqual([pop.hidden, btn.attrs['aria-expanded'], btn.focused], [true, 'false', true]);
+  for (const [key, i] of Object.entries(info)) {
+    assert.ok(i.title && i.what && i.click, `${key} has a definition and a click text`);
+    // At most two short sentences: what the section shows, what clicking does.
+    assert.equal(sentences(i.what) + sentences(i.click), 2, `${key} is two sentences`);
+    assert.equal(i.tip, `${i.what} ${i.click}`);
+    assert.ok(i.tip.split(/\s+/).length <= 30, `${key} is short`);
+  }
+  assert.ok(keys.size >= 35, `${keys.size} section titles carry their help`);
+  assert.deepEqual(Object.keys(info).filter((k) => !keys.has(k)), [], 'every section text is on a title');
+  // The popover, its script and its styles are gone; the help cursor marks a titled heading with a tip.
+  assert.doesNotMatch(HTML, /id="info-pop"|class="info-pop|\.info-btn|\.info-pop|\.title-row|function (infoButton|toggleInfo|openInfo|closeInfo|infoPopKey)\b|INFO_ICON|syncInfoPop|queuePlaceInfo/);
+  assert.match(CSS, /\nh2\[data-tip\]\{cursor:help\}\n/);
+  assert.equal(page.run("sectionTip('')"), '');
+  assert.equal(page.run("sectionTip('no-such-section')"), '');
+  assert.equal(page.run("sectionTip('oh-scorecard')"), ' data-tip="Open, at-risk and past-due value and delivery rates per warehouse. Click a row to show only that warehouse; click it again for all."');
+  assert.deepEqual(page.errors, []);
 });
 
 test('tip(el,text) sets data-tip and a hidden description for screen readers; empty text removes both', () => {
@@ -267,6 +273,13 @@ test('tipped headings, column headings and static cards become tab stops; table 
   assert.match(HTML, /<div class="day-chart" data-tip-notab /);
   assert.ok(CSS.includes('.sr-only[data-tip-copy]{left:0;top:0}'), 'copies never widen the page');
   assert.ok(CSS.includes('.thead>div:last-of-type,.trow>div:last-of-type{padding-right:24px}'), 'a row\'s copy does not take the last-cell padding');
+  // A section title carrying its help (no ⓘ button any more) is a tab stop and is described by its tip.
+  const title = h('h2', { class: 'pg-group-title', 'data-tip': 'Open value per warehouse. Click a row to filter.' }, 'By warehouse');
+  h('div', { class: 'pg-group-head' }, '', [title]);
+  page.ctx.__title = title;
+  page.run('wireTip(__title)');
+  assert.deepEqual(tab(title), ['0', true], 'a section title');
+  assert.match(title.getAttribute('aria-describedby'), /^tipd-\d+$/);
   // An element that sets its own tabindex keeps it.
   const own = h('h2', { 'data-tip': 'x y z', tabindex: '-1' }, 'Title');
   page.ctx.__own = own;
@@ -649,7 +662,7 @@ test('Windows high contrast: picked tabs and rows, the shipment strip and the wa
   assert.match(fc, /\.ship-step\.done>i\{background:Highlight;border-color:Highlight\}/);
   assert.match(fc, /\.ship-step\.current>i\{background:Canvas;border-color:Highlight;outline:2px solid Highlight;/);
   assert.match(fc, /\.waffle>i,\.split-bar>i,\.oh-bar-track>i,\.legend \.sw\{forced-color-adjust:none\}/);
-  assert.match(CSS, /@media \(forced-colors:active\)\{\.tip-layer,\.info-pop,\.toast-item\{border:1px solid CanvasText\}\}/);
+  assert.match(CSS, /@media \(forced-colors:active\)\{\.tip-layer,\.toast-item\{border:1px solid CanvasText\}\}/);
 });
 
 test('Top offenders: four choices fit a phone card; the waffle blocks stand out from the card (3:1)', () => {
@@ -681,8 +694,8 @@ test('shadcn look: zinc tokens, 12/8/8 radii, one focus ring, Inter with a fallb
   assert.ok(!/\.(btn|kpi|drill):hover\{[^}]*transform:(?!none)/.test(CSS), 'no movement on hover');
   assert.match(CSS, /@media \(prefers-reduced-motion:reduce\)\{\s*\*,\*::before,\*::after\{animation-duration:\.01ms!important;[^}]*transition-duration:\.01ms!important\}/);
   // Stream A's print block (other blocks may follow it in the stylesheet)
-  const print = CSS.slice(CSS.lastIndexOf('@media print{', CSS.indexOf('#tip-layer,#info-pop,#toast')));
-  assert.match(print, /#tip-layer,#info-pop,#toast,#tip-descs,\.info-btn,\.hint-card,\.nav-desc\{display:none!important\}/);
+  const print = CSS.slice(CSS.lastIndexOf('@media print{', CSS.indexOf('#tip-layer,#toast')));
+  assert.match(print, /#tip-layer,#toast,#tip-descs,\.hint-card,\.nav-desc\{display:none!important\}/);
   assert.match(print, /\.grid-lead,\.grid-4,\.grid-5,\.grid-2,\.grid-split,\.month-spot,\.drill-grid,\.grid-split>\.stack\{gap:\.1in\}/);
   assert.match(HTML, /<div id="tip-layer" class="tip-layer" aria-hidden="true" hidden><span class="tip-text"><\/span><span class="tip-arrow"><\/span><\/div>/);
   assert.match(HTML, /<div id="tip-descs" hidden><\/div>/);

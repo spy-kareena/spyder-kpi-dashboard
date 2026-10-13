@@ -894,7 +894,7 @@ button.trow.po-wh-cols{font-size:13px}
 #results-screen:not(.entering) .rise,#results-screen:not(.entering) .grow-w,#results-screen:not(.entering) .grow-h,#results-screen:not(.entering) .pop,#results-screen:not(.entering) .fade-row,#results-screen:not(.entering) .draw{animation:none}
 #results-screen:not(.entering) .draw{stroke-dashoffset:0}
 @media print{.draw{stroke-dashoffset:0!important}.lines-table{table-layout:auto}.print-only{display:block!important;font-size:9pt;color:var(--gray-600)}}
-/* --- Stream A: tooltips, section info popovers, hints, toast, page descriptions, scorecard groups --- */
+/* --- Stream A: tooltips (section help on the titles), hints, toast, page descriptions, scorecard groups --- */
 /* Tooltip bubble: one shared element (#tip-layer) placed next to the element with data-tip by the page script */
 .tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:normal;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
 .tip-layer[data-side="bottom"]{transform:translateY(-2px)}
@@ -907,27 +907,13 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer[data-side="right"] .tip-arrow{left:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-text{position:relative}
 /* Windows high-contrast mode drops backgrounds: keep the bubble's edge */
-@media (forced-colors:active){.tip-layer,.info-pop,.toast-item{border:1px solid CanvasText}}
+@media (forced-colors:active){.tip-layer,.toast-item{border:1px solid CanvasText}}
 /* A long press shows the tip on touch screens, so it should not also open the phone's link / copy menu */
 [data-tip]{-webkit-touch-callout:none}
 
-/* Section ⓘ button and its popover */
-.info-btn{display:inline-grid;place-items:center;width:22px;height:22px;padding:0;margin:0 -2px;border:0;border-radius:6px;background:transparent;color:var(--gray-500);cursor:pointer;flex:none;align-self:center;transition:background-color var(--dur),color var(--dur)}
-.info-btn:hover,.info-btn[aria-expanded="true"]{background:var(--gray-100);color:var(--gray-900)}
-.title-row{display:flex;align-items:center;gap:6px;min-width:0}
+/* Section help is the title's tooltip (no ⓘ button): a titled heading with a tip shows the help cursor */
+h2[data-tip]{cursor:help}
 .list-head{flex-wrap:wrap;row-gap:4px}
-.info-pop{position:fixed;left:0;top:0;z-index:65;width:340px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);box-shadow:var(--sh-pop);padding:14px 16px 16px;font-size:12.5px;line-height:1.55;color:var(--gray-700)}
-.info-pop[hidden]{display:none}
-.info-pop:focus{outline:none}
-.info-pop:focus-visible{box-shadow:var(--sh-pop),0 0 0 2px var(--accent-ring)}
-.info-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.info-pop h3{margin:0;font-size:13.5px;font-weight:600;letter-spacing:-.01em;color:var(--gray-900)}
-.info-pop p{margin:6px 0 0}
-.info-pop dl{margin:10px 0 0;display:grid;gap:2px}
-.info-pop dt{font-size:12px;font-weight:600;color:var(--gray-900);margin-top:6px}
-.info-pop dd{margin:0}
-.info-close{font:inherit;font-size:18px;line-height:1;width:26px;height:26px;flex:none;border:0;background:none;color:var(--gray-500);cursor:pointer;border-radius:6px;margin:-5px -8px 0 0}
-.info-close:hover{background:var(--gray-100);color:var(--gray-900)}
 .about-src{color:var(--gray-500)}
 details.about>summary{transition:color var(--dur)}
 details.about>summary:hover{color:var(--gray-900)}
@@ -961,10 +947,8 @@ details.about>summary:hover{color:var(--gray-900)}
 .trow.sc-subtotal>div{padding-top:10px;padding-bottom:10px}
 
 @media (prefers-reduced-motion:no-preference){
-  .info-pop:not([hidden]){animation:streamAPop .15s var(--ease)}
   .toast-item{animation:streamAToast .2s var(--ease)}
 }
-@keyframes streamAPop{from{opacity:0;transform:translateY(-3px)}}
 @keyframes streamAToast{from{opacity:0;transform:translateY(8px)}}
 @media (max-width:980px){
   .table>.sc-group-head{min-width:680px}
@@ -980,9 +964,9 @@ details.about>summary:hover{color:var(--gray-900)}
   .page-head .actions{flex-wrap:wrap;flex-shrink:1;min-width:0}
   .page-head .actions .btn{padding:7px 11px;font-size:12.5px}
 }
-/* Print keeps the compact spacing of earlier versions; no tooltips, popovers, hints or toasts on paper */
+/* Print keeps the compact spacing of earlier versions; no tooltips, hints or toasts on paper */
 @media print{
-  #tip-layer,#info-pop,#toast,#tip-descs,.info-btn,.hint-card,.nav-desc{display:none!important}
+  #tip-layer,#toast,#tip-descs,.hint-card,.nav-desc{display:none!important}
   #upload-screen>*+*,#results-screen>*+*{margin-top:.14in}
   .section{gap:.08in}
   .grid-lead,.grid-4,.grid-5,.grid-2,.grid-split,.month-spot,.drill-grid,.grid-split>.stack{gap:.1in}
@@ -1385,7 +1369,7 @@ details.oh-more[open] .oh-more-less{display:inline}
 /* --- Windows high contrast (forced colors) for the 2v1 widgets. That mode drops backgrounds and shadows, so a state
    shown only by them (the picked tab or row, how far a shipment has got) gets a system-colour border or fill, and
    marks whose colour is the information (waffle blocks, bar segments, legend swatches) keep the page's colours.
-   Last in the sheet so it wins over the rules above; the tooltip, popover and toast borders are with Stream A's CSS. */
+   Last in the sheet so it wins over the rules above; the tooltip and toast borders are with Stream A's CSS. */
 @media (forced-colors:active){
   .oh-tab,.segmented button,.waffle-row,.oh-bar-row{border:2px solid Canvas}
   .oh-tab[aria-selected="true"],.segmented button.active,.segmented button.pick,.waffle-row.selected,.oh-bar-row.selected{border-color:Highlight}
@@ -1418,7 +1402,6 @@ details.oh-more[open] .oh-more-less{display:inline}
 /* The title sits close to its own cards (12px), further from the group above (--space-group) */
 .pg-group>.pg-group-head+*{margin-top:0}
 .pg-group-head{flex-wrap:wrap;row-gap:6px;min-height:22px}
-.pg-group-head .info-btn{align-self:center;margin:-4px -4px}
 .pg-group-head .count-badge{align-self:center}
 .pg-group-tools{margin-left:auto;display:flex;align-items:center;gap:14px;align-self:center}
 /* Paper is about 990px wide, which would hit the 1180px two-column rule: print keeps the desktop columns */
@@ -1684,6 +1667,20 @@ details.oh-more[open] .oh-more-less{display:inline}
 /* Open ship calendar: the first day's label ("Oct 1") starts at its column instead of being cut off on the left */
 .day-col:first-child>span{align-self:flex-start}
 /* --- end 2v2 design fixes (D3) --- */
+/* --- 2v2 final gate --- */
+/* The filter bar's divider runs edge to edge (it was 100% wide, pulled 18px left, so it stopped 36px short) */
+.filter-bar .break{flex-basis:calc(100% + 36px)}
+/* A table's first heading (Doc #, Month, Warehouse, CM) stays on one line */
+.data-table>thead th:first-child{white-space:nowrap}
+@media (max-width:640px){
+  /* Supply / Demand phone cards: each warehouse sub-heading is a grey band between its lines */
+  .data-table.cards>tbody>tr.grp-row,.data-table.cards>tbody>tr.grp-row:hover{display:block;padding:10px 18px;background:var(--gray-50)}
+  .data-table.cards tr.grp-row>td{background:transparent}
+  /* Build Risk phone cards: the override on the left, its Edit button at the right of the same line */
+  .data-table.cards td.ovr-cell{grid-column:1/2}
+  .data-table.cards td.c-edit{grid-column:2/3;justify-self:end;align-self:end;width:auto}
+}
+/* --- end 2v2 final gate --- */
 </style>
 </head>
 <body>
@@ -1769,10 +1766,9 @@ details.oh-more[open] .oh-more-less{display:inline}
   </aside>
   </main>
 </div>
-<!-- Stream A: shared layers: the tooltip bubble, the section info popover, the toast (a polite status region) and
+<!-- Stream A: shared layers: the tooltip bubble, the toast (a polite status region) and
      the hidden tooltip texts that aria-describedby points at. Filled by the page script. -->
 <div id="tip-layer" class="tip-layer" aria-hidden="true" hidden><span class="tip-text"></span><span class="tip-arrow"></span></div>
-<div id="info-pop" class="info-pop" role="dialog" aria-labelledby="info-pop-title" tabindex="-1" hidden onkeydown="infoPopKey(event)"></div>
 <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="tip-descs" hidden></div>
 <script id="kpi-app">
@@ -4699,7 +4695,7 @@ function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,m
   if(cards)shown=shown.map(row=>labelTableCells(row,head));
   rows=all;
   return `<section class="table ${className}">
-    <div class="card-head lg">${info?`<div class="title-row"><h2>${title}</h2>${infoButton(info)}</div>`:`<h2>${title}</h2>`}${headExtra||`<span class="section-sub">${note}</span>`}</div>
+    <div class="card-head lg"><h2${sectionTip(info)}>${title}</h2>${headExtra||`<span class="section-sub">${note}</span>`}</div>
     <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table${cards?' cards':''}" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
@@ -5499,11 +5495,12 @@ function renderRankRows(items,{empty='Nothing to show.'}={}){
 function renderStatCard(label,value,sub,tone='',dot='',tipText=''){
   return `<div class="card kpi static"${tipAttr(tipText)}><span class="kpi-label">${dot?`<span class="dot ${dot}"></span>`:''}${esc(label)}</span><span class="kpi-value${tone?` ${tone}`:''}">${esc(value)}</span>${sub?`<span class="kpi-sub">${sub}</span>`:''}</div>`;
 }
-// 2v2 page groups: a page is a few named groups (CSS .pg-group). id makes the heading id (pg-<id>); info adds the
-// section ⓘ; badge sits after the title; tools go to the right (Back, Show more). Animations stay per group.
+// 2v2 page groups: a page is a few named groups (CSS .pg-group). id makes the heading id (pg-<id>); info puts that
+// section's help (SECTION_INFO) on the title's tooltip; badge sits after the title; tools go to the right (Back,
+// Show more). Animations stay per group.
 function pageGroupHtml(id,title,body,{info='',badge='',tools='',rise='',anchor=''}={}){
   if(!body)return '';
-  return `<section class="pg-group${rise?` rise ${rise}`:''}"${anchor?` id="${anchor}"`:''} aria-labelledby="pg-${id}" data-group="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-${id}">${esc(title)}</h2>${info?infoButton(info):''}${badge}${tools?`<div class="pg-group-tools">${tools}</div>`:''}</div>${body}</section>`;
+  return `<section class="pg-group${rise?` rise ${rise}`:''}"${anchor?` id="${anchor}"`:''} aria-labelledby="pg-${id}" data-group="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-${id}"${sectionTip(info)}>${esc(title)}</h2>${badge}${tools?`<div class="pg-group-tools">${tools}</div>`:''}</div>${body}</section>`;
 }
 // "Show more" for a long group: tableMore[key] keeps the choice; print always shows it.
 function groupMoreButton(key,count,noun,showLabel='Show all'){
@@ -6100,7 +6097,7 @@ function renderShipTargetScenario(sd,today){
       ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Still open by target: ${fmtNum(sd.stillOpenByTarget.length)} booked lines not yet shipped, ${money(rowOpenAmount(sd.stillOpenByTarget))}.`)}
     </div>
     ${sd.forward?`<div class="card chart-card tight">
-      <div class="chart-head"><div class="title-row"><h2>Open ship calendar</h2>${infoButton('mo-calendar')}</div><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
+      <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
         ${sd.days.map(d=>{
           const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
@@ -6116,12 +6113,12 @@ function renderShipTargetScenario(sd,today){
 let lastRenderedTab='';
 let lastRenderedRows=null;
 // --- 2v2 layout, Order Health: page groups (the shared .pg-group markup) and Show more ---
-// The page is a few named groups: a small heading row (title, optional info button and tools), then its cards. Groups
+// The page is a few named groups: a small heading row (title with its help tooltip, tools), then its cards. Groups
 // sit further apart than the cards in them (--space-group / --space-in). Secondary detail goes in a Show more
 // disclosure (ohRenderMore) whose open state is kept in tableMore (redraws, snapshots); print opens it.
 // badge: a count pill after the title, as pageGroupHtml draws it ("Lines to act on" on every page).
 function ohGroupOpen(id,title,{cls='',domId='',info='',tools='',tip='',badge=''}={}){
-  return `<section class="pg-group${cls?` ${cls}`:''}"${domId?` id="${domId}"`:''} aria-labelledby="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="${id}"${tipAttr(tip)}>${title}</h2>${info?infoButton(info):''}${badge}${tools?`<div class="oh-group-tools">${tools}</div>`:''}</div>`;
+  return `<section class="pg-group${cls?` ${cls}`:''}"${domId?` id="${domId}"`:''} aria-labelledby="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="${id}"${tip?tipAttr(tip):sectionTip(info)}>${title}</h2>${badge}${tools?`<div class="oh-group-tools">${tools}</div>`:''}</div>`;
 }
 function ohRenderMore(key,what,body,tipText){
   if(!body)return '';
@@ -6312,7 +6309,7 @@ function renderResults(){
         ${miniCell('allorders','All open orders',allOrderRows,ohN(allOrderRows.length,'line'),`All open orders: ${money(allOrdersAmt)} on ${ordersLines(allOrderRows)}; click to list them.`)}
       </div>
       <section class="card chart-card tight">
-        <div class="chart-head"><div class="title-row"><h2>What's due next</h2>${infoButton('oh-due')}</div><span class="section-sub">${moneyShort(rowOpenAmount(pastDueOpenRows))} already past due</span></div>
+        <div class="chart-head"><h2${sectionTip('oh-due')}>What's due next</h2><span class="section-sub">${moneyShort(rowOpenAmount(pastDueOpenRows))} already past due</span></div>
         <div class="col-chart">${dueWeeks.map((w,i)=>{const v=rowOpenAmount(w.rows);return `<div class="col"><span class="col-val">${moneyShort(v)}</span><div class="col-bar grow-h ${i===0?'fill-accent':'fill-soft'}" style="height:${Math.max(3,v/dueMax*62).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${fmtNum(w.rows.length)} open ${w.rows.length===1?'line':'lines'} · ${money(v)} due`)}></div></div>`;}).join('')}</div>
         <div class="col-labels">${dueWeeks.map((w,i)=>`<span>${i===0?'This wk':esc(shortDay(w.s))}</span>`).join('')}</div>
       </section>
@@ -6443,7 +6440,7 @@ function renderResults(){
     ${ohGroupOpen('oh-g-where','By warehouse and customer',{cls:'rise rise-3'})}
     <div class="grid-split">
       <section class="table" aria-label="Warehouse scorecard">
-        <div class="card-head"><div class="title-row"><h2>Warehouse scorecard</h2>${infoButton('oh-scorecard')}</div></div>
+        <div class="card-head"><h2${sectionTip('oh-scorecard')}>Warehouse scorecard</h2></div>
         <div class="thead sc-cols" aria-hidden="true"><div${tipAttr('Warehouse, grouped CM SFG and all others.')}>Warehouse</div><div class="num"${tipAttr('Open value: what is still to ship on open lines.')}>Open</div><div class="num"${tipAttr('Open value of at-risk lines.')}>At risk</div><div class="num"${tipAttr('Lines past their original date with no reschedule or no commit date.')}>Past due</div><div class="num"${tipAttr('Deliveries (3 months) shipped by the original date; green 90%+, amber 75%+.')}>OTD 3 mo</div><div class="num"${tipAttr('Delivered or closed share of ordered quantity; green 90%+, amber 70%+.')}>Fill</div><div class="num"${tipAttr('Rescheduled deliveries (12 months) shipped by their reschedule date; green 90%+, amber 75%+.')}>Resched</div></div>
         ${scGroups.map(grp=>`<div class="sc-group-head" role="heading" aria-level="3" data-group="${grp.id}">${esc(grp.label)}<span class="muted">${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>
         ${grp.shown.map(scRow).join('')}
@@ -6452,12 +6449,12 @@ function renderResults(){
       </section>
       <div class="stack">
         <section class="card list-card">
-          <div class="list-head"><div class="title-row"><h2>Top offenders</h2>${infoButton('oh-offenders')}</div><span class="section-sub">${offView==='vendors'?`Late PO value, ${poWarehouseFilter.includes('ALL')?'all warehouses':'PO tab filters'}`:''}</span></div>
+          <div class="list-head"><h2${sectionTip('oh-offenders')}>Top offenders</h2><span class="section-sub">${offView==='vendors'?`Late PO value, ${poWarehouseFilter.includes('ALL')?'all warehouses':'PO tab filters'}`:''}</span></div>
           <div class="segmented full" role="group" aria-label="Rank by">${[['customers','Customers','Rank customers by at-risk open value.'],['warehouses','Warehouses','Rank warehouses by at-risk open value.'],['owners','Owners','Rank document owners by at-risk open value.'],['vendors','Vendors','Rank vendors by late PO value (Purchase Orders filters apply).']].map(([id,label,t])=>`<button type="button" class="${offView===id?'active':''}" data-focus-key="off-${id}" onclick="setWeeklyOffenderView('${id}')" aria-pressed="${offView===id?'true':'false'}"${tipAttr(t)}>${label}</button>`).join('')}</div>
           ${ohRenderWaffle(m,offView,offenders,offSource.key)}
         </section>
         <section class="card list-card">
-          <div class="list-head"><div class="title-row"><h2>How late is the past-due work?</h2>${infoButton('oh-aging')}</div><span class="section-sub">${agingTotal?`1 block ≈ ${moneyShort(agingTotal/BLOCKS)}`:'nothing past due'}</span></div>
+          <div class="list-head"><h2${sectionTip('oh-aging')}>How late is the past-due work?</h2><span class="section-sub">${agingTotal?`1 block ≈ ${moneyShort(agingTotal/BLOCKS)}`:'nothing past due'}</span></div>
           <div class="tracker" role="img" aria-label="${esc(aging.map(a=>`${a.label}: ${money(a.value)} across ${a.rows.length} lines`).join('; '))}">${blocks.map((a,i)=>`<i class="pop ${a?a.cls:'age-0'}" style="animation-delay:${i*18}ms"${tipAttr(a?`${a.label} past due: ${money(a.value)} across ${fmtNum(a.rows.length)} ${a.rows.length===1?'line':'lines'}`:'Nothing past due')}></i>`).join('')}</div>
           <div class="legend aging">${aging.map(a=>`<span><i class="sw lg ${a.cls}"></i>${a.label} · <strong>${moneyShort(a.value)}</strong><span class="muted">${fmtNum(a.rows.length)} lines</span></span>`).join('')}</div>
         </section>
@@ -6954,7 +6951,7 @@ function renderResults(){
         </div>`,{info:'po-receiving',rise:'rise-3'})}
       ${pageGroupHtml('po-where','By warehouse and vendor',`<div class="grid-split pg-even">
         <section class="table" aria-label="Open PO value by warehouse">
-          <div class="card-head lg"><div class="title-row"><h2>Open PO value by warehouse</h2>${infoButton('po-warehouse')}</div></div>
+          <div class="card-head lg"><h2${sectionTip('po-warehouse')}>Open PO value by warehouse</h2></div>
           <div class="thead po-wh-cols" aria-hidden="true"><div${tipAttr('Receiving warehouse.')}>Warehouse</div><div class="num"${tipAttr('Open PO lines.')}>Lines</div><div${tipAttr('Value still to receive on open PO lines.')}>Open value</div><div class="num"${tipAttr('Lines past their original or reschedule date.')}>Late</div><div class="num"${tipAttr('Lines with no valid commit date from the vendor.')}>No commit</div><div class="num"${tipAttr('Lines with a reschedule date still ahead.')}>Future</div></div>
           ${poGroupsShown.map(g=>{const t=`${g.key}: ${money(g.openValue)} open on ${fmtNum(g.rows.length)} PO ${g.rows.length===1?'line':'lines'}, ${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.futureRows)} future; ${focusedPoWarehouse===g.key?'click to show all.':'click to filter.'}`;return `<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(t)}"${tipAttr(t)}>
             <div class="name m">${esc(g.key)}</div>
@@ -6967,7 +6964,7 @@ function renderResults(){
           ${poGroups.length>8?`<div class="tfoot"><span>${fmtNum(poGroupsShown.length)} of ${fmtNum(poGroups.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open value.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`:''}
         </section>
         <section class="card list-card roomy">
-          <div class="list-head"><div class="title-row"><h2>Late value by vendor</h2>${infoButton('po-vendors')}</div></div>
+          <div class="list-head"><h2${sectionTip('po-vendors')}>Late value by vendor</h2></div>
           <div class="rank-list roomy">${topVendors.map((v,i)=>`<button type="button" class="rank-item${focusedVendor===v.code?' selected':''}" data-focus-key="povendor-${esc(v.code)}" data-vendor="${esc(v.code)}" onclick="setPoVendorRow(this.dataset.vendor)" aria-pressed="${focusedVendor===v.code?'true':'false'}"${tipAttr(`${v.name}: ${money(v.value)} late across ${fmtNum(v.rows.length)} PO ${v.rows.length===1?'line':'lines'}; ${focusedVendor===v.code?'click to show all.':'click to filter.'}`)}><div class="rank-top lg"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(v.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(v.rows.length)} · </span><strong>${money(v.value)}</strong></span></div><div class="rank-track"><i class="grow-w" style="width:${(v.value/vendorMax*100).toFixed(1)}%;background:var(--crit);animation-delay:${i*50}ms"></i></div></button>`).join('')||'<div class="empty-note">No late purchase-order lines in this view.</div>'}</div>
         </section>
       </div>`,{rise:'rise-4'})}
@@ -7216,7 +7213,7 @@ function renderResults(){
       <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data, ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
     </section>
     <section class="card chart-card">
-      <div class="chart-head"><div class="card-head-text"><div class="title-row"><h2>Shipped and open value by month · ${thisYear}</h2>${infoButton('mo-chart')}</div></div>
+      <div class="chart-head"><div class="card-head-text"><h2${sectionTip('mo-chart')}>Shipped and open value by month · ${thisYear}</h2></div>
         <div class="legend chart"><span><i class="sw lg" style="background:var(--accent)"></i>Shipped</span><span><i class="sw lg" style="background:var(--crit-soft)"></i>Open, past month</span><span><i class="sw lg" style="background:var(--accent-border)"></i>Open, current / upcoming</span></div></div>
       <div class="pair-chart">${yearGroups.map((g,i)=>{const past=g.key<thisMk,current=g.key===thisMk;return `<div class="pair-col${current?' current':''}"><i class="grow-h" style="height:${barH(g.closedAmount)};background:var(--accent);animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.closedAmount)} shipped`)}></i><i class="grow-h" style="height:${barH(g.openAmount)};background:${past?'var(--crit-soft)':'var(--accent-border)'};animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.openAmount)} open${past?' (late: this month has passed)':''}`)}></i></div>`;}).join('')}</div>
       <div class="pair-labels">${yearGroups.map(g=>`<span class="${g.key===thisMk?'current':''}">${esc(shortMonth(parseDate(`${g.key}-01`)))} '${String(thisYear).slice(2)}</span>`).join('')}</div>
@@ -7289,12 +7286,12 @@ function renderResults(){
     ${pageGroupHtml('mt-month','By due month',`
     <div class="grid-2">
       <div class="card chart-card tight">
-        <div class="chart-head"><div class="title-row"><h2>Open value by due month</h2>${infoButton('mt-open-month')}</div></div>
+        <div class="chart-head"><h2${sectionTip('mt-open-month')}>Open value by due month</h2></div>
         <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
         <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
       </div>
       <div class="card chart-card tight">
-        <div class="chart-head"><div class="title-row"><h2>At-risk lines by due month</h2>${infoButton('mt-risk-month')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--crit-dark)"></i>No commit</span><span><i class="sw" style="background:var(--warn-fill)"></i>Rescheduled</span></span></div>
+        <div class="chart-head"><h2${sectionTip('mt-risk-month')}>At-risk lines by due month</h2><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--crit-dark)"></i>No commit</span><span><i class="sw" style="background:var(--warn-fill)"></i>Rescheduled</span></span></div>
         <div class="col-chart tall">${mt.map((g,i)=>{const total=g.lateRows+g.noCommitRows+g.rescheduledRows;const part=n=>total?`${(n/total*100).toFixed(2)}%`:'0';return `<div class="col"><span class="col-val">${total?fmtNum(total):'—'}</span><div class="col-bar stack-bar grow-h" style="height:${(total/riskMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`)}><i style="height:${part(g.lateRows)};background:var(--crit)"></i><i style="height:${part(g.noCommitRows)};background:var(--crit-dark)"></i><i style="height:${part(g.rescheduledRows)};background:var(--warn-fill)"></i></div></div>`;}).join('')}</div>
         <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
       </div>
@@ -7342,16 +7339,16 @@ function renderResults(){
     ${pageGroupHtml('wh-open','Open work',`
     <div class="grid-2">
       <div class="card list-card roomy">
-        <div class="list-head"><div class="title-row"><h2>Open value by warehouse</h2>${infoButton('wh-open')}</div><span class="section-sub">top 8</span></div>
+        <div class="list-head"><h2${sectionTip('wh-open')}>Open value by warehouse</h2><span class="section-sub">top 8</span></div>
         <div class="rank-rows">${topOpen.map((g,i)=>`<div class="rank-row"${tipAttr(`${g.key}: ${money(g.activeOpenValue)} open on ${fmtNum(g.activeCount)} ${g.activeCount===1?'line':'lines'}`)}><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${(g.activeOpenValue/openMax*100).toFixed(1)}%;background:var(--accent);animation-delay:${i*50}ms"></i></div></div><span class="rv">${moneyShort(g.activeOpenValue)}</span></div>`).join('')||'<div class="empty-note">No open lines.</div>'}</div>
       </div>
       <div class="card list-card roomy">
-        <div class="list-head"><div class="title-row"><h2>On-track rate by warehouse</h2>${infoButton('wh-ontrack')}</div><span class="section-sub">lowest first</span></div>
+        <div class="list-head"><h2${sectionTip('wh-ontrack')}>On-track rate by warehouse</h2><span class="section-sub">lowest first</span></div>
         <div class="rank-rows">${lowOnTrack.map((g,i)=>{const tone=toneFor(g.otdRate,90,75);return `<div class="rank-row" title="${esc(`${g.key} · ${fmtNum(g.onTrackRows.length)} on-track of ${fmtNum(g.activeCount)} open lines`)}"><span class="rank-name">${esc(g.key)}</span><div class="hbar"><div class="fill"><i class="grow-w" style="width:${g.otdRate}%;background:${TONE_COLOR[tone]};animation-delay:${i*50}ms"></i></div><span class="target" style="left:90%"></span></div><span class="rv ${TONE_CLASS[tone]}-text">${fmtNum(g.otdRate)}%</span></div>`;}).join('')||'<div class="empty-note">No warehouse has 5 or more open lines.</div>'}</div>
       </div>
     </div>
     <section class="table">
-      <div class="card-head lg"><div class="card-head-text"><div class="title-row"><h2>Open value by warehouse and due month</h2>${infoButton('wh-heat')}</div></div>${heatShown.some(x=>months.some(mo=>(byWarehouseMonth.get(`${x.w}|||${mo}`)||{}).lateRows))?'<span class="legend heat-key"><span><i class="heat-key-late" aria-hidden="true">●</i>late lines</span></span>':''}</div>
+      <div class="card-head lg"><div class="card-head-text"><h2${sectionTip('wh-heat')}>Open value by warehouse and due month</h2></div>${heatShown.some(x=>months.some(mo=>(byWarehouseMonth.get(`${x.w}|||${mo}`)||{}).lateRows))?'<span class="legend heat-key"><span><i class="heat-key-late" aria-hidden="true">●</i>late lines</span></span>':''}</div>
       <div class="heat-scroll" role="table" aria-label="Open value by warehouse and due month">
         <div class="heat-grid head" role="row" style="${heatCols}"><div role="columnheader">Warehouse</div>${months.map(mo=>`<div role="columnheader">${esc(mo==='No Date'?'No date':monthLabel(mo))}</div>`).join('')}</div>
         ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
@@ -7383,11 +7380,11 @@ function renderResults(){
       ${renderBigPicture('supplydemand',m)}
       ${pageGroupHtml('mix-gaps','By month and warehouse',`<div class="grid-2">
         <div class="card list-card roomy">
-          <div class="list-head"><div class="title-row"><h2>Net qty by month</h2>${infoButton('mix-net')}</div></div>
+          <div class="list-head"><h2${sectionTip('mix-net')}>Net qty by month</h2></div>
           ${renderRankRows(sd.byMonth.map(g=>({label:monthLabel(g.key)||g.key,value:g.monthlyNetQty,text:`${g.monthlyNetQty>0?'+':''}${fmtNum(g.monthlyNetQty)}`,color:g.monthlyNetQty<0?'var(--crit)':'var(--good)',tone:g.monthlyNetQty<0?'crit':'good',sub:`${fmtNum(g.monthlyShortageRows)} short · ${fmtNum(g.riskRows)} at risk`})),{empty:'No months in the snapshot.'})}
         </div>
         <div class="card list-card roomy">
-          <div class="list-head"><div class="title-row"><h2>Demand by warehouse</h2>${infoButton('mix-demand')}</div><span class="section-sub">top 12 by demand value</span></div>
+          <div class="list-head"><h2${sectionTip('mix-demand')}>Demand by warehouse</h2><span class="section-sub">top 12 by demand value</span></div>
           ${renderRankRows(sd.byWarehouse.slice(0,12).map(g=>({label:g.key,value:g.demandValue,text:moneyShort(g.demandValue),color:g.cumulativeShortageRows?'var(--crit)':g.riskRows?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(g.demandQty)} demand · ${fmtNum(g.usableQty)} supply${g.cumulativeShortageRows?` · ${fmtNum(g.cumulativeShortageRows)} short`:''}`})),{empty:'No warehouse demand.'})}
         </div>
       </div>`,{rise:'rise-1',
@@ -7440,7 +7437,7 @@ function renderResults(){
         ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the report’s CM warehouses and due months.`)}
       </div>`,{rise:'rise-1'})}
       ${pageGroupHtml('br-buckets','By CM and month',`<section class="card list-card roomy">
-        <div class="list-head"><div class="title-row"><h2>Sales order demand in CTB buckets</h2>${infoButton('br-demand')}</div><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--good)"></i>Clear</span></span></div>
+        <div class="list-head"><h2${sectionTip('br-demand')}>Sales order demand in CTB buckets</h2><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--good)"></i>Clear</span></span></div>
         ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--good)',sub:`${ohN(r.matchedRows.length,'SO line')} · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
       </section>
       ${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',
@@ -7507,7 +7504,7 @@ function focusSelector(node){
   return '';
 }
 
-// --- Stream A: tooltips, section info popovers, first-visit hints, toasts and the tip / info texts ---
+// --- Stream A: tooltips, section help on the titles, first-visit hints, toasts and the tip / help texts ---
 // Keep this block above the start-up calls at the end of the script: the sidebar and the pages read its constants.
 //
 // Tooltips. Any element can carry data-tip="plain-English text" (numbers written in full, e.g. $1,721,806). One
@@ -7680,7 +7677,7 @@ function queueHideTip(ms){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
   tipState.hideTimer=setTimeout(hideTip,ms);
 }
-// Places a fixed-position floating box (tooltip or info popover) next to its anchor: preferred side first, then the
+// Places a fixed-position floating box (the tooltip) next to its anchor: preferred side first, then the
 // opposite side, then whichever has room; clamped inside the window (both ways). The arrow keeps pointing at the anchor.
 function placeFloating(box,anchor,want,gap,align='center'){
   const r=anchor.getBoundingClientRect();
@@ -7796,94 +7793,18 @@ if(document.addEventListener){
   document.addEventListener('scroll',()=>{
     // A bubble already showing would be left behind; one still waiting is placed when it shows.
     if(tipState.el){const timer=tipState.timer,next=tipState.pending;tipState.timer=0;hideTip();tipState.timer=timer;tipState.pending=next;}
-    queuePlaceInfo();
   },true);
 }
-if(typeof window.addEventListener==='function')window.addEventListener('resize',()=>{hideTip();queuePlaceInfo();});
+if(typeof window.addEventListener==='function')window.addEventListener('resize',()=>hideTip());
 
-// Section info popovers: the ⓘ button next to a section title opens a small panel with what the section shows
-// and what clicking does. The texts live in SECTION_INFO below; each page's short "About these numbers" list is
-// ABOUT_NOTES.
-const INFO_ICON='<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4" stroke-linecap="round"/><circle cx="8" cy="4.9" r=".85" fill="currentColor" stroke="none"/></svg>';
-let infoState={key:'',trigger:null};
-function infoButton(key){
-  const i=SECTION_INFO[key];
-  if(!i)return '';
-  return `<button type="button" class="info-btn print-hide" data-info="${esc(key)}" data-focus-key="info-${esc(key)}" aria-haspopup="dialog" aria-expanded="false" aria-controls="info-pop" aria-label="About ${esc(i.title)}"${tipAttr('What this shows and what clicking does')} onclick="toggleInfo(this)">${INFO_ICON}</button>`;
+// Section help: each section's short text (SECTION_INFO below: what it shows, what clicking does) is the tooltip of
+// its title (group, card or chart heading). A titled heading with a tip is a Tab stop and its tip is read out (wireTip),
+// so the help needs no button of its own. Each page's short "About these numbers" list is ABOUT_NOTES.
+function sectionTipText(key){
+  const i=key&&SECTION_INFO[key];
+  return i?[i.what,i.click].filter(Boolean).join(' '):'';
 }
-function infoPop(){return document.getElementById('info-pop');}
-function isInfoOpen(){const p=infoPop();return !!(p&&!p.hidden&&infoState.key);}
-function toggleInfo(btn){
-  const key=btn&&btn.dataset?btn.dataset.info:'';
-  if(isInfoOpen()&&infoState.key===key){closeInfo(true);return;}
-  openInfo(btn,key);
-}
-function openInfo(btn,key){
-  const pop=infoPop(),i=SECTION_INFO[key];
-  if(!pop||!i||!btn)return;
-  hideTip();
-  if(infoState.trigger&&infoState.trigger!==btn&&infoState.trigger.setAttribute)infoState.trigger.setAttribute('aria-expanded','false');
-  pop.innerHTML=`<div class="info-head"><h3 id="info-pop-title">${esc(i.title)}</h3><button type="button" class="info-close" aria-label="Close" onclick="closeInfo(true)">×</button></div>
-    <p>${esc(i.what)}</p>${i.click?`<p>${esc(i.click)}</p>`:''}`;
-  pop.hidden=false;
-  infoState={key,trigger:btn};
-  btn.setAttribute('aria-expanded','true');
-  placeInfo();
-  if(pop.focus)pop.focus({preventScroll:true});
-}
-function closeInfo(refocus){
-  const pop=infoPop();
-  const t=infoState.trigger;
-  infoState={key:'',trigger:null};
-  if(!pop||pop.hidden)return;
-  pop.hidden=true;
-  if(t&&t.setAttribute)t.setAttribute('aria-expanded','false');
-  if(refocus&&t&&t.isConnected&&t.focus)t.focus({preventScroll:true});
-}
-let placeInfoQueued=false;
-function queuePlaceInfo(){
-  if(placeInfoQueued||!isInfoOpen())return;
-  placeInfoQueued=true;
-  (window.requestAnimationFrame||setTimeout)(()=>{placeInfoQueued=false;if(isInfoOpen())placeInfo();});
-}
-function placeInfo(){
-  const pop=infoPop(),t=infoState.trigger;
-  if(!pop||!t||!t.isConnected){closeInfo(false);return;}
-  placeFloating(pop,t,'bottom',8,'start');
-}
-// A redraw replaces the ⓘ button; keep the popover on the new one, or close it when that section is gone.
-function syncInfoPop(){
-  if(!isInfoOpen()||infoState.trigger.isConnected)return;
-  const again=document.querySelector(`[data-focus-key="info-${String(infoState.key).replace(/["\\]/g,'\\$&')}"]`);
-  if(!again){closeInfo(false);return;}
-  infoState.trigger=again;
-  again.setAttribute('aria-expanded','true');
-  placeInfo();
-}
-function infoPopKey(e){
-  const pop=infoPop();
-  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeInfo(true);return;}
-  if(e.key!=='Tab'||!pop)return;
-  // Tab past the last control (or Shift+Tab before the first) goes back to the page next to the ⓘ button.
-  const items=[...pop.querySelectorAll('button,a[href]')];
-  const active=document.activeElement;
-  if(e.shiftKey&&(active===pop||active===items[0])){e.preventDefault();closeInfo(true);}
-  else if(!e.shiftKey&&active===items[items.length-1])closeInfo(true);
-}
-if(document.addEventListener){
-  document.addEventListener('pointerdown',e=>{
-    if(!isInfoOpen())return;
-    const pop=infoPop(),t=infoState.trigger;
-    if(pop.contains(e.target)||(t&&t.contains&&t.contains(e.target)))return;
-    closeInfo(false);
-  },true);
-  document.addEventListener('focusin',e=>{
-    if(!isInfoOpen())return;
-    const pop=infoPop(),t=infoState.trigger;
-    if(pop.contains(e.target)||e.target===t)return;
-    closeInfo(false);
-  });
-}
+function sectionTip(key){return tipAttr(sectionTipText(key));}
 // The "About these numbers" (or "About this chart") toggle, with its tip; every page's About block uses it.
 function aboutSummary(label='About these numbers',tipText='Show what the numbers on this page mean.'){
   return `<summary${tipAttr(tipText)}>${esc(label)}</summary>`;
@@ -7993,7 +7914,8 @@ const WAREHOUSE_PRESET_TIPS={
   LACOMBE:'Show only the Spyder Lacombe warehouse.'
 };
 
-// Section texts for the ⓘ popovers: what the section shows, and what clicking does (one short sentence each).
+// Section help, shown as the section title's tooltip: what the section shows, and what clicking does (one short
+// sentence each; sectionTip).
 const SECTION_INFO={
   'oh-attention':{title:'At risk now',
     what:'Open sales-order lines that need action now or soon.',
@@ -8279,13 +8201,11 @@ function columnTip(tableKey,label){
   return COLUMN_TIPS[`${tableKey}|${label}`]||COLUMN_TIPS[label]||'';
 }
 
-// Start-up: a shared snapshot file is a copy of this page, so clear any bubble, popover or toast it was saved with;
+// Start-up: a shared snapshot file is a copy of this page, so clear any bubble or toast it was saved with;
 // then wire the tooltips after every redraw.
 function initStreamAUi(){
   const layer=tipLayer();
   if(layer){layer.hidden=true;if(layer.classList)layer.classList.remove('open');}
-  const pop=infoPop();
-  if(pop){pop.hidden=true;pop.innerHTML='';}
   const toast=document.getElementById('toast');
   if(toast)toast.innerHTML='';
   const descs=document.getElementById('tip-descs');
@@ -8294,13 +8214,13 @@ function initStreamAUi(){
   if(typeof MutationObserver==='function'&&document.body&&document.body.nodeType===1){
     let queued=false;
     // Its own layers, and the count-up numbers changing frame by frame, need no rewiring.
-    const own=n=>n&&n.closest&&n.closest('#tip-descs,#tip-layer,#toast,#info-pop,[data-count]');
+    const own=n=>n&&n.closest&&n.closest('#tip-descs,#tip-layer,#toast,[data-count]');
     // The tip layer moving into a dialog and back (showTip / hideTip) is not a redraw either.
     const layerMove=m=>[...m.addedNodes,...m.removedNodes].every(n=>n.id==='tip-layer');
     new MutationObserver(list=>{
       if(queued||list.every(m=>own(m.target)||layerMove(m)))return;
       queued=true;
-      Promise.resolve().then(()=>{queued=false;wireTips();syncInfoPop();if(tipState.el&&!tipState.el.isConnected)hideTip();});
+      Promise.resolve().then(()=>{queued=false;wireTips();if(tipState.el&&!tipState.el.isConnected)hideTip();});
     }).observe(document.body,{childList:true,subtree:true});
   }
   wireTips();

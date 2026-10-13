@@ -90,7 +90,7 @@ test('every page but Order Health is a few named groups; each group is labelled 
   const page = await loadedAll();
   for (const [tab, groups] of Object.entries(PAGE_GROUPS)) {
     const h = open(page, tab);
-    const found = [...h.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]+")? aria-labelledby="pg-([\w-]+)" data-group="\1"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-\1">([^<]+)<\/h2>/g)].map((m) => [m[1], m[2]]);
+    const found = [...h.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]+")? aria-labelledby="pg-([\w-]+)" data-group="\1"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-\1"(?: data-tip="[^"]+")?>([^<]+)<\/h2>/g)].map((m) => [m[1], m[2]]);
     assert.deepEqual(found, groups, tab);
     // Nothing else on the page uses the old section headings: the group titles replaced them.
     assert.doesNotMatch(h, /class="section-title"/, `${tab}: an old section heading is left`);
@@ -283,8 +283,8 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
   let h = open(page, 'supplyweekly');
   const group = () => { const x = results(page); return x.slice(x.indexOf('aria-labelledby="pg-sd-shortages"'), x.indexOf('<h2>All open lines</h2>')); };
   // One table (no card per warehouse with its own header row), the lines short or with risky supply; the group is
-  // "Lines to act on" with its ⓘ and the line count in the pill (the card head keeps only the chip).
-  assert.match(group(), /^aria-labelledby="pg-sd-shortages" data-group="sd-shortages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-sd-shortages">Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="sd-shortages"[^>]*>[\s\S]*?<\/button><span class="count-badge bad">2 lines<\/span><\/div>/);
+  // "Lines to act on" with its help as the title's tip and the line count in the pill (the card head keeps only the chip).
+  assert.match(group(), /^aria-labelledby="pg-sd-shortages" data-group="sd-shortages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-sd-shortages" data-tip="Lines short of usable open PO supply, or whose PO supply is at risk, by warehouse\. Supply at risk only lists the risky-supply lines; All open lines lists every line\.">Lines to act on<\/h2><span class="count-badge bad">2 lines<\/span><\/div>/);
   assert.equal((group().match(/<table class="data-table cards"/g) || []).length, 1);
   assert.equal((group().match(/<thead>/g) || []).length, 1);
   assert.match(group(), /<section class="table sd-rows">\s*<div class="card-head lg"><h2>Short or at risk<\/h2><div class="inline-controls"><button type="button" class="chip" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="false" data-tip="[^"]+" onclick="toggleTableMore\(this\.dataset\.tableKey\)">Supply at risk only · 1<\/button><\/div><\/div>/);
@@ -376,6 +376,24 @@ test('Monthly: month cards line up (short labels on one row, values under them),
   // Open ship calendar: the first day's label starts at its column (it was cut off on the left).
   assert.match(CSS, /\.day-col:first-child>span\{align-self:flex-start\}/);
   assert.deepEqual(page.errors, []);
+});
+
+test('final gate: the filter divider runs edge to edge, first headings stay on one line, phone cards band the warehouse sub-headings and keep Edit beside the override', () => {
+  const gate = CSS.slice(CSS.indexOf('/* --- 2v2 final gate --- */'), CSS.indexOf('/* --- end 2v2 final gate --- */'));
+  // The divider is pulled 18px past each side of the bar's 18px padding, so it needs those 36px back.
+  assert.match(CSS, /\.filter-bar\{display:flex;[^}]*padding:14px 18px;/);
+  assert.match(CSS, /\.filter-bar \.break\{flex-basis:100%;height:1px;background:var\(--gray-100\);margin:0 -18px\}/);
+  assert.match(gate, /\.filter-bar \.break\{flex-basis:calc\(100% \+ 36px\)\}/);
+  assert.match(gate, /\.data-table>thead th:first-child\{white-space:nowrap\}/);
+  const phone = gate.match(/@media \(max-width:640px\)\{[\s\S]*?\n\}/)[0];
+  assert.match(phone, /\.data-table\.cards>tbody>tr\.grp-row,\.data-table\.cards>tbody>tr\.grp-row:hover\{display:block;padding:10px 18px;background:var\(--gray-50\)\}/);
+  assert.match(phone, /\.data-table\.cards tr\.grp-row>td\{background:transparent\}/);
+  assert.match(phone, /\.data-table\.cards td\.ovr-cell\{grid-column:1\/2\}/);
+  // (width:auto: the desktop 1% width would leave the button hanging off the card's right edge)
+  assert.match(phone, /\.data-table\.cards td\.c-edit\{grid-column:2\/3;justify-self:end;align-self:end;width:auto\}/);
+  assert.match(CSS, /\.editable-rows \.c-edit\{width:1%;white-space:nowrap\}/);
+  // After D1's card rules, so they win over the full-width edit place.
+  assert.ok(CSS.indexOf('/* --- 2v2 final gate --- */') > CSS.indexOf('.data-table.cards td[data-card=item],.data-table.cards td[data-card=edit]{grid-column:1/-1}'));
 });
 
 run();
