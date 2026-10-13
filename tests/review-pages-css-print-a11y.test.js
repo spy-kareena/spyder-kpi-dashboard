@@ -54,7 +54,7 @@ test('scorecard and PO warehouse rows name each value by its column; header rows
   assert.doesNotMatch(m, /class="trow (?:sc|po-wh)-cols[^"]*"[^>]*aria-label="[^"]*\$[\d.]+[KM]\b/, 'no short money in a row name');
 });
 
-test('heat map is an ARIA table; cells are focusable with their breakdown as text; badge has no aria-label', async () => {
+test('heat map is an ARIA table; cells are focusable with their breakdown as text (and tip); badge has no aria-label; the legend names it', async () => {
   const page = await loaded(MIX);
   page.run('setTab("warehouses")');
   const m = html(page);
@@ -62,7 +62,7 @@ test('heat map is an ARIA table; cells are focusable with their breakdown as tex
   assert.match(m, /class="heat-grid head" role="row"[^>]*><div role="columnheader">Warehouse<\/div><div role="columnheader">/);
   assert.match(m, /class="heat-grid row" role="row"[^>]*><div class="heat-name" role="rowheader"/);
   const cells = m.match(/<div class="heat-slot"[^>]*>/g);
-  for (const c of cells) assert.match(c, /role="cell"( tabindex="0")? data-tip="[^"]+" onfocus="showHeatDetail\(this\.dataset\.tip\)"/);
+  for (const c of cells) assert.match(c, /role="cell"( tabindex="0")? data-tip="[^"]+">/);
   // Cells with lines are Tab stops; empty cells ("nothing open") are not.
   assert.deepEqual(cells.map((c) => [/tabindex/.test(c), /nothing open/.test(c)]).filter(([t, empty]) => t === empty), []);
   assert.ok(cells.filter((c) => /tabindex/.test(c)).length >= 2);
@@ -70,9 +70,12 @@ test('heat map is an ARIA table; cells are focusable with their breakdown as tex
   assert.ok(!/late-badge" aria-label/.test(m), 'no aria-label on the generic badge span');
   assert.match(m, /<span class="late-badge" aria-hidden="true">1<\/span>/);
   assert.ok(!/heat-cell[^>]*title=/.test(m));
-  assert.match(m, /<p class="heat-detail print-hide" id="wh-heat-detail" aria-hidden="true">/);
-  page.run("showHeatDetail('A · Sep 2026: $1 open')");
-  assert.equal(page.els['wh-heat-detail'].textContent, 'A · Sep 2026: $1 open');
+  // The breakdown is each cell's tip (hover or focus): no "Hover a cell" line under the grid repeats it.
+  assert.doesNotMatch(m, /wh-heat-detail|heat-detail|Hover a cell|showHeatDetail/);
+  assert.doesNotMatch(HTML, /function showHeatDetail/);
+  // The red badge is named in the card head; it sits inside the cell's corner, not over the cell edge.
+  assert.match(m, /<span class="legend heat-key"><span><i class="heat-key-late" aria-hidden="true">●<\/i>late lines<\/span><\/span><\/div>/);
+  assert.match(CSS, /\.heat-cell \.late-badge\{top:3px;right:3px;/);
   assert.match(CSS, /\.ai-sr,\.sr-only\{position:absolute/);
   assert.match(CSS, /\.heat-slot:focus-visible \.heat-cell\{outline:2px solid var\(--accent\)/);
 });
@@ -149,12 +152,14 @@ const printCss = () => {
   return out.join('\n');
 };
 
-test('print hides the Build Risk override / note controls; the print-only text copies remain', async () => {
+test('print: Build Risk rows print the override, cause and note as text; the Edit button and the editor stay off paper', async () => {
   const page = await loaded();
-  const table = page.run("renderRowsTable(parsedRows,{key:'t',title:'T',editable:true})");
-  assert.match(table, /class="table editable-rows"/);
-  assert.match(table, /class="row-override[^"]*"[\s\S]*?<span class="print-only">/);
-  assert.match(table, /class="row-note[^"]*"[\s\S]*?<span class="print-only">/);
+  const row = page.run("(()=>{const r=parsedRows[0];r.overrideStatus='Hold';r.overrideCause='them';r.overrideNotes='Customer asked';return renderRowsTable([r],{key:'t',title:'T',editable:true});})()");
+  assert.match(row, /class="table editable-rows"/);
+  assert.match(row, /<span class="ovr-text">Hold<\/span><span class="cause-tag them">Them<\/span><\/span><span class="ovr-note" title="Customer asked">Customer asked<\/span>/);
+  assert.match(row, /<td class="c-edit print-hide" data-card="edit"><button type="button" class="note-btn has-note"/);
+  assert.match(printCss(), /\.ovr-note\{white-space:normal;max-width:none\}/);
+  assert.match(printCss(), /tr\.note-editor-row\{display:none!important\}/);
   assert.match(printCss(), /\.editable-rows \.row-override,\.editable-rows \.row-note\{display:none!important\}/);
 });
 

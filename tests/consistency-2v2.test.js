@@ -120,7 +120,8 @@ test('one group vocabulary: a summary first, breakdowns "By …", the list group
     }
     // The list group's head: title, ⓘ, then the pill with a line count.
     const head = h.match(/<div class="pg-group-head"><h2 class="pg-group-title" id="[^"]+"[^>]*>Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="([\w-]+)"[^>]*>[\s\S]*?<\/button><span class="count-badge[^"]*">([^<]+)<\/span>/);
-    if (['weekly', 'purchaseorders', 'buildrisk', 'supplydemand', 'metrics'].includes(tab)) {
+    // (Supply Mix leaves its shortage and risk lines to Supply / Demand, so its groups are all "By …".)
+    if (['weekly', 'purchaseorders', 'buildrisk', 'supplyweekly', 'metrics'].includes(tab)) {
       assert.ok(head, `${tab}: Lines to act on with an ⓘ and a pill`);
       assert.match(head[2], /\b\d+ (?:[\w-]+ )?lines?\b/, `${tab}: ${head[2]}`);
       assert.equal(page.run(`SECTION_INFO[${JSON.stringify(head[1])}].title`), 'Lines to act on', `${tab}: the ⓘ title is the group name`);
@@ -131,11 +132,13 @@ test('one group vocabulary: a summary first, breakdowns "By …", the list group
   assert.match(heads.weeklyleading, /^At risk · 3 lines · \$[\d,]+$/);
   assert.match(heads.weeklylagging, /^OTD · 3 mo · \d+ delivered lines? · \$[\d,]+$/);
   assert.match(heads.purchaseorders, /^Late \/ missed commit · 1 line · 10 open qty · \$[\d,]+$/);
-  // Supply / Demand: its two lists to act on carry the name too.
+  // Supply / Demand: one list to act on (short or at-risk lines, warehouse sub-headings), All open lines folded in it.
   const sd = open(page, 'supplyweekly');
-  assert.deepEqual(titles(sd), ['Coverage', 'Lines to act on · Shortages', 'Lines to act on · Supply risk', 'All open lines']);
-  assert.match(sd, />Lines to act on · Shortages<\/h2><button type="button" class="info-btn print-hide" data-info="sd-shortages"[^>]*>[\s\S]*?<\/button><span class="count-badge bad">1 line<\/span>/);
-  assert.equal(page.run("SECTION_INFO['sd-shortages'].title"), 'Lines to act on · Shortages');
+  assert.deepEqual(titles(sd), ['Coverage', 'Lines to act on']);
+  assert.equal(heads.supplyweekly, '2 lines');
+  assert.match(sd, />Lines to act on<\/h2><button type="button" class="info-btn print-hide" data-info="sd-shortages"[^>]*>[\s\S]*?<\/button><span class="count-badge bad">2 lines<\/span>/);
+  assert.equal(page.run("SECTION_INFO['sd-shortages'].title"), 'Lines to act on');
+  assert.deepEqual(titles(open(page, 'supplydemand')), ['By month and warehouse', 'By item group']);
   assert.deepEqual(page.errors, []);
 });
 

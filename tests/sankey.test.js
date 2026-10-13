@@ -512,9 +512,9 @@ async function supplyPage(rows = SD) {
 
 test('Supply Mix: open demand value adds up, bands are coloured by coverage, a warehouse click narrows the chart', async () => {
   const page = await supplyPage();
-  // The card is the first thing under the page head, above the KPI cards.
+  // The card is the first thing under the page head, above the page's groups.
   const top = html(page);
-  assert.ok(top.indexOf('id="sankey-supplydemand"') > top.indexOf('class="page-head') && top.indexOf('id="sankey-supplydemand"') < top.indexOf('class="grid-4 pg-stats'));
+  assert.ok(top.indexOf('id="sankey-supplydemand"') > top.indexOf('class="page-head') && top.indexOf('id="sankey-supplydemand"') < top.indexOf('aria-labelledby="pg-mix-gaps"'));
   assert.match(top, /<\/div>\n  <\/div>\n      <section class="card sk-card rise" id="sankey-supplydemand"/);
   let [f] = flows(page, 'supplydemand');
   assert.equal(f.total, page.run('currentMetrics().supplyDemand.demandValue'));
@@ -531,7 +531,8 @@ test('Supply Mix: open demand value adds up, bands are coloured by coverage, a w
   assert.match(h, /<div class="sk-filter"><span>Showing <strong>CM - DSM<\/strong> only \(shared with Supply \/ Demand\)\.<\/span>/);
   assert.match(h, /onclick="setTab\('supplyweekly'\)">Open Supply \/ Demand<\/button>/);
   // The page's own cards are not narrowed (Supply Mix has no warehouse filter of its own).
-  assert.match(h, /Demand qty<\/span><span class="kpi-value">17</);
+  const gaps = h.slice(h.indexOf('aria-labelledby="pg-mix-gaps"'));
+  for (const w of ['CM - DSM', 'Spyder - Lacombe']) assert.match(gaps, new RegExp(`<span class="rank-name">${w}<span class="rank-sub">`));
   page.run("setTab('supplyweekly')");
   assert.match(html(page), /<option value="CM - DSM" selected>CM - DSM<\/option>/, 'Supply / Demand opens on the same warehouse');
   page.run("setTab('supplydemand');sankeyNodeClick('supplydemand','demand','0:CM - DSM')");

@@ -101,8 +101,12 @@ test('phones: order lines, PO lines, Search rows, Build Risk rows and supply row
   assert.match(rows, /<table class="data-table cards"/);
   assert.match(rows, /<td class="strong" data-label="Doc #" data-card="key">100<\/td>/);
   assert.match(rows, /<td class="num strong" data-label="Amount" data-card="amt">\$1,000<\/td>/);
-  assert.match(rows, /<td class="override-cell" data-label="Override" data-card="edit">/);
+  // (Build Risk's override reads as text with one Edit button; both take the full card width at the end.)
+  assert.match(rows, /<td class="ovr-cell" data-label="Override" data-card="edit">/);
+  assert.match(rows, /<td class="c-edit print-hide" data-card="edit"><button type="button" class="note-btn"/);
   assert.equal(page.run("labelTableCells('<tr><td colspan=\"3\">None</td><td class=\"x\">7</td></tr>',[['A'],['B','num','','amt']])"), '<tr><td colspan="3">None</td><td class="x" data-label="B" data-card="amt">7</td></tr>');
+  // A column with no name (Build Risk's Edit button) gets its card place but no empty label.
+  assert.equal(page.run("labelTableCells('<tr><td>1</td><td class=\"c-edit\">E</td></tr>',[['A'],['','print-hide','','edit']])"), '<tr><td data-label="A">1</td><td class="c-edit" data-card="edit">E</td></tr>');
   assert.deepEqual(page.errors, []);
 });
 
