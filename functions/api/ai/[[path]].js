@@ -46,7 +46,8 @@ const AI_DAILY_DEFAULT = 300;
 const SESSION_COOKIE = '__Host-spyder_kpi_session'; // set by functions/_middleware.js
 
 // Per provider: where to call, which secret holds the key, which models may be used, and what the data terms
-// mean in plain English (shown in the panel next to the consent tick).
+// mean in plain English, in one or two short sentences (shown in the panel above the consent tick, which says what
+// is sent).
 const PROVIDERS = [
   {
     id: 'anthropic', name: 'Claude (Anthropic)', short: 'Claude', tier: 'paid', dialect: 'anthropic', secret: 'ANTHROPIC_API_KEY',
@@ -57,7 +58,7 @@ const PROVIDERS = [
     labels: { 'claude-opus-5-5': 'Claude Opus 5.5 (most capable)', 'claude-sonnet-5-5': 'Claude Sonnet 5.5 (faster, about half the cost)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (fastest, lowest cost)' },
     fallbackModels: ['claude-opus-5-5', 'claude-sonnet-5-5'],
     termsUrl: 'https://www.anthropic.com/legal/commercial-terms',
-    dataNotice: 'Paid service, billed to the Anthropic account that owns the key on this site. Your question and the dashboard data needed to answer it (order lines, customers, vendors, values, notes) are sent to Anthropic. Under Anthropic\'s commercial terms, data sent through its paid API is not used to train its models; Anthropic keeps it for a limited time for safety and abuse checks.',
+    dataNotice: 'Billed to Spyder Controls. Anthropic does not train on this data and keeps it for a limited time for safety checks.',
   },
   {
     id: 'openai', name: 'ChatGPT (OpenAI)', short: 'ChatGPT', tier: 'paid', dialect: 'openai', secret: 'OPENAI_API_KEY',
@@ -66,7 +67,7 @@ const PROVIDERS = [
     // Newer models in these families appear automatically when OpenAI lists them (no dated snapshots, no pro tier).
     family: /^gpt-(4\.1|[5-9](\.\d+)?)(-mini|-nano)?$/,
     termsUrl: 'https://openai.com/policies/business-terms/',
-    dataNotice: 'Paid service, billed to the OpenAI account that owns the key on this site. Your question and the dashboard data needed to answer it (order lines, customers, vendors, values, notes) are sent to OpenAI. OpenAI says data sent through its API is not used to train its models by default; it may keep it for up to 30 days to check for abuse.',
+    dataNotice: 'Billed to Spyder Controls. OpenAI does not train on this data by default and may keep it up to 30 days for abuse checks.',
   },
   {
     id: 'groq', name: 'Groq', short: 'Groq', tier: 'free', dialect: 'openai', secret: 'GROQ_API_KEY',
@@ -75,14 +76,14 @@ const PROVIDERS = [
     family: /^(openai\/gpt-oss-\d+b|llama-3\.3-70b-versatile|llama-3\.1-8b-instant|meta-llama\/llama-4-[\w.-]+|moonshotai\/kimi-k2[\w.-]*|qwen\/qwen3-[\w.-]+)$/,
     exclude: /guard|whisper|tts|playai|safeguard/i,
     termsUrl: 'https://groq.com/privacy-policy/',
-    dataNotice: 'Free tier with tight limits per minute and per day, so long questions may be refused until the limit resets. Your question and the dashboard data needed to answer it (order lines, customers, vendors, values, notes) are sent to Groq, which runs open models. Groq says it does not use API data to train models, but free-tier terms can change, and the models are not made by Groq. Use it only for data your company allows to leave the business.',
+    dataNotice: 'Free, with tight limits. Groq says it does not train on this data, but free terms can change: send only data Spyder Controls may share.',
   },
   {
     id: 'openrouter', name: 'OpenRouter (free models)', short: 'OpenRouter', tier: 'free', dialect: 'openai', secret: 'OPENROUTER_API_KEY',
     base: 'https://openrouter.ai/api/v1', maxTokensField: 'max_tokens', maxOutput: 4096, freeOnly: true,
     models: ['meta-llama/llama-3.3-70b-instruct:free', 'openai/gpt-oss-20b:free', 'deepseek/deepseek-chat-v3.1:free', 'qwen/qwen3-coder:free', 'mistralai/mistral-small-3.2-24b-instruct:free'],
     termsUrl: 'https://openrouter.ai/privacy',
-    dataNotice: 'Free models only (nothing is billed). OpenRouter passes your question and the dashboard data needed to answer it (order lines, customers, vendors, values, notes) to an outside company that hosts the model. Many free hosts keep prompts and may use them to train models or publish them. Treat anything you send as public: use it only for data your company is happy to share.',
+    dataNotice: 'Free models. The outside providers that host them may keep, train on or publish what you send: treat it as public.',
   },
 ];
 const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
