@@ -364,12 +364,12 @@ test('a tip queued on focus is dropped when focus moves on before it shows (no s
   assert.equal(rig.layer.hidden, true);
 });
 
-test('a tip for a control in the modal initials dialog is drawn inside the dialog (top layer); one Esc closes both', async () => {
+test('a tip for a control in the modal Your name dialog is drawn inside the dialog (top layer); one Esc closes both', async () => {
   const page = loadPage();
   const rig = tipRig(page);
   const dialog = rig.node({ tagName: 'DIALOG' });
   rig.body.appendChild(dialog);
-  const save = rig.control('Save your initials in this browser.', dialog);
+  const save = rig.control('Save this name for your notes.', dialog);
   rig.focus(null, save);
   await wait(300);
   assert.equal(rig.layer.hidden, false);
@@ -384,7 +384,7 @@ test('a tip for a control in the modal initials dialog is drawn inside the dialo
   assert.equal(rig.layer.parentNode, rig.body);
   // Closing the dialog sends the layer home before the dialog is removed (else every later tip is gone with it).
   assert.match(HTML, /d\.addEventListener\('close',\(\)=>\{[^}]*?hideTip\(\);[\s\S]*?d\.remove\(\);/);
-  assert.match(HTML, /<input id="editor-initials"[^\n]*\$\{tipAttr\('Your initials are shown next to the notes, overrides and causes you save\.'\)\}>/);
+  assert.match(HTML, /<input id="editor-name"[^\n]*\$\{tipAttr\('Not in the list\? Type your name\.'\)\}>/);
 });
 
 test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast status region', async () => {

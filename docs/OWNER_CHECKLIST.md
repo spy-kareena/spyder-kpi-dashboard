@@ -67,7 +67,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
 
 8. **After deploy, on https://spyder-kpi-dashboard.pages.dev:**
    - Sign in (the sign-in page shows the logo). Upload the export and the Clear To Build workbook; the sidebar says "Saved for everyone who signs in".
-   - Add a note on a line (type your initials when asked); the sidebar says "Notes shared · last edit ...".
+   - Add a note on a line (pick or type your name when asked); the sidebar says "Notes shared · last edit ...". In the second browser below, your name is listed in the "Your name" dialog.
    - Open the site in a second browser (or a private window) and sign in: the same report opens without uploading, with your note on the line.
    - Ask AI: for each provider with a key, tick its box in Settings and ask one question, such as "What is at risk right now?". The answer should match the At risk card. Providers without a key show "(not set up)".
    - Shipping: click **Refresh now** (if the Pages project has the FedEx keys) or wait for the next 4-hour check; the header then says "Updated ... ago" and rows show FedEx statuses. The Worker's Logs show "checked N tracking numbers".

@@ -1,6 +1,7 @@
 // The page side of shared notes (1v7): overrides, notes, Us / Them causes and deleted lines set in one browser show in
 // every other browser on the hosted site (functions/api/notes.js); hosts without it keep them in the browser only.
-// Also the editor-initials dialog, the cause controls, and the at-risk history ("first flagged").
+// Also the Your name dialog (names saved for everyone, functions/api/people.js), the cause controls, and the at-risk
+// history ("first flagged").
 // Run with `node tests/shared-notes.test.js`. Fixtures are synthetic (no SAP data); no network (fetch is mocked).
 'use strict';
 const assert = require('node:assert/strict');
@@ -53,13 +54,15 @@ function fakeSite() {
       return new Response('<!doctype html><title>Error</title>', { status: site.failKind, headers: { 'content-type': 'text/html' } });
     }
     if (site.mode === 'static') return new Response('<!doctype html><title>Not found</title>', { status: 404, headers: { 'content-type': 'text/html' } });
-    const name = { '/api/report': 'report', '/api/notes': 'notes', '/api/history': 'history' }[url];
+    if (url === '/api/people' && site.peopleDown) throw new TypeError('Failed to fetch');
+    const name = { '/api/report': 'report', '/api/notes': 'notes', '/api/history': 'history', '/api/people': 'people' }[url];
     const fn = await handler(name);
     // A browser sends Origin with every PATCH / PUT; the page's own origin here.
     const headers = { ...(init.headers || {}), ...(method === 'GET' ? {} : { Origin: ORIGIN }) };
     return fn({ request: new Request(ORIGIN + url, { method, body: init.body, headers }), env, params: {} });
   };
   site.doc = async () => JSON.parse((await env.REPORT_STORE.get('overrides', { type: 'text' })) || '{"rows":{},"shipments":{}}');
+  site.people = async () => JSON.parse((await env.REPORT_STORE.get('people', { type: 'text' })) || '{"people":[]}');
   site.history = async () => JSON.parse((await env.REPORT_STORE.get('history', { type: 'text' })) || '{"weeks":[]}');
   site.patches = () => site.calls.filter((c) => c === 'PATCH /api/notes').length;
   return site;
@@ -122,7 +125,7 @@ const atRiskCount = (page) => page.run('orderHealthData(currentMetrics()).lateTi
 
 test('an override, note and cause set in one browser show in another browser, with who and when', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   assert.equal(a.run('sharedNotes.state'), 'shared');
@@ -131,7 +134,7 @@ test('an override, note and cause set in one browser show in another browser, wi
   edit(a, '900', 'status', 'Not At Risk');
   edit(a, '900', 'notes', 'Customer agreed to Oct 20');
   edit(a, '900', 'cause', 'them');
-  const entry = { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', by: 'KK', at: '2026-10-08T15:00:00.000Z' };
+  const entry = { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', by: 'Kareena', at: '2026-10-08T15:00:00.000Z' };
   assert.deepEqual(saved(a)[k], entry);
   await sendNow(a);
   assert.equal(site.patches(), 1);
@@ -141,8 +144,8 @@ test('an override, note and cause set in one browser show in another browser, wi
   const b = await openHosted(site);
   assert.deepEqual(line(b, '900'), { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', deleted: false });
   assert.equal(atRiskCount(b), 1, 'Not At Risk from the other browser takes the line off At Risk');
-  assert.match(sidebar(b), /Notes shared · last edit KK Oct 8/);
-  assert.match(sidebar(b), /data-tip="Notes, overrides, Us \/ Them causes and deleted lines are saved on the server[^"]*Last edit by KK on Oct 8, 2026/);
+  assert.match(sidebar(b), /Notes shared · last edit Kareena · Oct 8/);
+  assert.match(sidebar(b), /data-tip="Notes, overrides and causes are saved for everyone who signs in\. Last edit by Kareena: Oct 8, 2026/);
   // The copy is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(saved(b)[k], entry);
   // Opening the page costs one read; nothing newer here, so nothing is sent back.
@@ -151,7 +154,7 @@ test('an override, note and cause set in one browser show in another browser, wi
 
 test('changes go out 800 ms after the last change to a line, many lines in one request', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   await settle(a);
@@ -175,7 +178,7 @@ test('changes go out 800 ms after the last change to a line, many lines in one r
   assert.equal(site.patches(), 3);
   assert.equal(Object.keys(site.bodies[2].rows).length, a.run('linkedListKeys.length'));
   // While the request is out the sidebar says so; afterwards it names the last edit.
-  assert.match(sidebar(a), /Notes shared · last edit KK/);
+  assert.match(sidebar(a), /Notes shared · last edit Kareena · /);
 });
 
 test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a busy or failed save is sent again', async () => {
@@ -189,7 +192,7 @@ test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a bu
     lastPut[k] = Date.now();
     return realPut(k, v);
   };
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   await settle(a);
@@ -240,10 +243,10 @@ test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a bu
 
 test('the newer edit wins when two people change the same line', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Aaron' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
-  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   const k = keyOf(a, '900');
   clock(a, '2026-10-08T15:00:00Z');
   edit(a, '900', 'notes', 'A: older note');
@@ -254,7 +257,7 @@ test('the newer edit wins when two people change the same line', async () => {
   assert.equal((await site.doc()).rows[k].notes, 'B: newer note');
   // The older browser takes the newer note from the server's reply, on screen and in its own storage.
   assert.equal(line(a, '900').notes, 'B: newer note');
-  assert.equal(saved(a)[k].by, 'KK');
+  assert.equal(saved(a)[k].by, 'Kareena');
   clock(a, '2026-10-08T15:10:00Z');
   edit(a, '900', 'notes', 'A: newest');
   await sendNow(a);
@@ -268,10 +271,10 @@ test('a computer clock an hour fast does not keep overwriting newer notes; with 
   Date.now = () => serverNow;
   try {
     const site = fakeSite();
-    const fast = await openBrowser(site, { storage: { spyderKpiEditor: 'FF' } });
+    const fast = await openBrowser(site, { storage: { spyderKpiEditorName: 'Fran' } });
     await upload(fast);
     await fast.ctx.syncSharedNotes();
-    const ok = await openHosted(site, { storage: { spyderKpiEditor: 'OK' } });
+    const ok = await openHosted(site, { storage: { spyderKpiEditorName: 'Olu' } });
     const k = keyOf(fast, '900');
     clock(fast, '2026-10-08T13:00:00Z');
     edit(fast, '900', 'notes', 'old note from the fast-clock PC');
@@ -294,12 +297,12 @@ test('a computer clock an hour fast does not keep overwriting newer notes; with 
     assert.equal((await site.doc()).rows[k].notes, 'NEWER note from OK');
     assert.equal(line(fast, '900').notes, 'NEWER note from OK');
     // A line edited again while its save was out keeps the newer local edit (sent next) rather than the reply.
-    fast.run(`adoptSharedReply({rows:{${JSON.stringify(k)}:{notes:'server copy',by:'FF',at:'2026-10-08T12:00:00.000Z'}}},{rows:{}})`);
+    fast.run(`adoptSharedReply({rows:{${JSON.stringify(k)}:{notes:'server copy',by:'Fran',at:'2026-10-08T12:00:00.000Z'}}},{rows:{}})`);
     assert.equal(line(fast, '900').notes, 'NEWER note from OK', 'a key that was not in this send is left alone');
 
     // With the server's Date header, a browser an hour slow stamps its edits in server time, so they win as they should.
     const dated = { ...site, fetch: async (url, init) => { const res = await site.fetch(url, init); const h = new Headers(res.headers); h.set('date', new Date(serverNow).toUTCString()); return new Response(await res.arrayBuffer(), { status: res.status, headers: h }); } };
-    const slow = await openHosted(dated, { storage: { spyderKpiEditor: 'SL' } });
+    const slow = await openHosted(dated, { storage: { spyderKpiEditorName: 'Sam' } });
     clock(slow, '2026-10-08T11:07:00Z');
     serverNow = Date.parse('2026-10-08T12:07:00Z');
     slow.run('sharedNotes.syncedAt=0');
@@ -323,10 +326,10 @@ test('a computer clock an hour fast does not keep overwriting newer notes; with 
 test('a save at another Cloudflare location that read a stale copy (KV, up to 60 s) is caught by the re-read a minute later', async () => {
   const site = fakeSite();
   const kv = site.env.REPORT_STORE;
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Aaron' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
-  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   const k900 = keyOf(a, '900');
   const k901 = keyOf(a, '901');
   // What B's Cloudflare location still reads for up to a minute: the notes before A's save.
@@ -373,11 +376,11 @@ test('a save at another Cloudflare location that read a stale copy (KV, up to 60
 
 test('a page left open reads other people\'s edits again when it comes back into view (at most once a minute)', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Aaron' } });
   await upload(a);
   clock(a, '2026-10-08T15:00:00Z');
   await a.ctx.syncSharedNotes();
-  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   clock(b, '2026-10-08T15:20:00Z');
   edit(b, '900', 'notes', 'Board arrives Monday');
   await sendNow(b);
@@ -396,19 +399,19 @@ test('a page left open reads other people\'s edits again when it comes back into
   edit(a, '900', 'status', 'Hold');
   await sendNow(a);
   const k = keyOf(a, '900');
-  assert.deepEqual((({ status, notes, by }) => ({ status, notes, by }))((await site.doc()).rows[k]), { status: 'Hold', notes: 'Board arrives Monday', by: 'AJ' });
+  assert.deepEqual((({ status, notes, by }) => ({ status, notes, by }))((await site.doc()).rows[k]), { status: 'Hold', notes: 'Board arrives Monday', by: 'Aaron' });
 });
 
 test('clearing a line and restoring deleted lines reach the other browsers too', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   clock(a, '2026-10-08T15:00:00Z');
   edit(a, '900', 'notes', 'temporary');
   a.run(`setRowOverrides([${JSON.stringify(keyOf(a, '901'))}],'deleted',true)`);
   await sendNow(a);
-  const bStorage = { spyderKpiEditor: 'QQ' };
+  const bStorage = { spyderKpiEditorName: 'Quinn' };
   const b = await openHosted(site, { storage: bStorage });
   assert.equal(line(b, '900').notes, 'temporary');
   assert.equal(line(b, '901').deleted, true);
@@ -425,7 +428,7 @@ test('clearing a line and restoring deleted lines reach the other browsers too',
   await tick(0); // markers are written once per batch of changes
   assert.ok(JSON.parse(a.storage.spyderKpiNotesClearedV1)[k900], 'marker kept until the server has it');
   await sendNow(a);
-  assert.deepEqual((await site.doc()).rows[k900], { by: 'KK', at: '2026-10-08T16:00:00.000Z' });
+  assert.deepEqual((await site.doc()).rows[k900], { by: 'Kareena', at: '2026-10-08T16:00:00.000Z' });
   assert.deepEqual(JSON.parse(a.storage.spyderKpiNotesClearedV1), {}, 'marker dropped once the server has it');
 
   // b opens again later: its older copies are dropped.
@@ -470,7 +473,7 @@ test('a static host (no /api/notes) keeps notes in this browser only, as before'
   assert.equal(saved(page)[keyOf(page, '901')].status, 'Hold');
   assert.equal(page.storage.spyderKpiNotesClearedV1 || '{}', '{}', 'no cleared-line markers without a server');
   assert.match(sidebar(page), /Notes saved in this browser only/);
-  assert.doesNotMatch(sidebar(page), /initials/);
+  assert.doesNotMatch(sidebar(page), /Change name|Add your name/);
   let asked = '';
   page.ctx.confirm = (m) => { asked = m; return true; };
   page.run(`toggleLinkedRow(${JSON.stringify(keyOf(page, '900'))},true);deleteLinkedSelection()`);
@@ -479,7 +482,7 @@ test('a static host (no /api/notes) keeps notes in this browser only, as before'
 
 test('when the server cannot be reached, changes stay here and are shared the next time the page opens', async () => {
   const site = fakeSite();
-  const first = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const first = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(first);
   await first.ctx.syncSharedNotes();
   clock(first, '2026-10-08T15:00:00Z');
@@ -487,7 +490,7 @@ test('when the server cannot be reached, changes stay here and are shared the ne
   await sendNow(first);
 
   site.mode = 'down';
-  const storage = { spyderKpiEditor: 'KK' };
+  const storage = { spyderKpiEditorName: 'Kareena' };
   const page = await openBrowser(site, { storage });
   await page.ctx.restoreSavedReport();
   await page.ctx.handleFiles([kpi()]);
@@ -497,7 +500,7 @@ test('when the server cannot be reached, changes stay here and are shared the ne
   clock(page, '2026-10-08T16:00:00Z');
   edit(page, '900', 'notes', 'typed offline');
   // 901's note came from the server earlier in this browser's life: pretend it is here, then clear it offline.
-  page.run(`rowOverrides[${JSON.stringify(keyOf(page, '901'))}]={notes:'to be cleared',by:'KK',at:'2026-10-08T15:00:00.000Z'};allLoadedRows.forEach(applyRowOverride)`);
+  page.run(`rowOverrides[${JSON.stringify(keyOf(page, '901'))}]={notes:'to be cleared',by:'Kareena',at:'2026-10-08T15:00:00.000Z'};allLoadedRows.forEach(applyRowOverride)`);
   edit(page, '901', 'notes', '');
   assert.equal(saved(page)[keyOf(page, '900')].notes, 'typed offline');
   await tick(0);
@@ -507,13 +510,13 @@ test('when the server cannot be reached, changes stay here and are shared the ne
   const again = await openHosted(site, { storage });
   const doc = await site.doc();
   assert.equal(doc.rows[keyOf(again, '900')].notes, 'typed offline');
-  assert.deepEqual(doc.rows[keyOf(again, '901')], { by: 'KK', at: '2026-10-08T16:00:00.000Z' });
+  assert.deepEqual(doc.rows[keyOf(again, '901')], { by: 'Kareena', at: '2026-10-08T16:00:00.000Z' });
   assert.equal(line(again, '901').notes, '');
 });
 
 test('a shared snapshot never reads or writes shared notes, and carries the merged notes and first-flagged dates', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   edit(a, '900', 'notes', 'shared note');
@@ -540,10 +543,12 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
   await snap.run('loadEmbeddedSnapshot()');
   await snap.ctx.syncSharedNotes();
   await snap.ctx.loadAtRiskHistory();
+  // Nor for names: the name question and the shared list of names stay out of a snapshot.
+  await snap.run('peopleOnOpen();askEditorName(true);loadPeople().then(()=>postEditorName("Kareena"))');
   snap.run(`updateRowOverride(${JSON.stringify(k)},'notes','edited in the snapshot')`);
   await tick(900);
   assert.deepEqual(snapCalls, [], 'no requests from a snapshot');
-  assert.ok(site.calls.slice(before).every((c) => !/\/api\/(notes|history)/.test(c)), 'no shared-notes or history requests while the snapshot is open');
+  assert.ok(site.calls.slice(before).every((c) => !/\/api\/(notes|history|people)/.test(c)), 'no shared-notes, history or names requests while the snapshot is open');
   assert.deepEqual(snap.storage, {});
   assert.equal(snap.run('firstFlagged')[k], '2026-09-03');
   assert.equal(snap.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideCause`), 'us');
@@ -615,67 +620,118 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   assert.equal(saved(page)[keyOf(page, '901')].status, 'Hold');
 });
 
-// A stand-in for <dialog>: records listeners; close(value) fires 'close' like the browser.
+// A stand-in for <dialog>: records listeners; close(value) fires 'close' like the browser. Setting innerHTML reads the
+// New name box, the saved-name buttons and what is hidden, as a browser would.
 function fakeDialog() {
   const listeners = {};
-  const field = (id) => ({ id, value: '', textContent: '', focus() {} });
-  const input = field('editor-initials');
+  const on = (name) => (t, fn) => { listeners[`${name}:${t}`] = fn; };
+  const unesc = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const field = (id) => ({ id, value: '', textContent: '', hidden: false, focus() {}, addEventListener: on(id) });
+  const input = field('editor-name');
   const error = field('editor-error');
-  const form = { addEventListener: (t, fn) => { listeners[`form:${t}`] = fn; } };
-  const skip = { addEventListener: (t, fn) => { listeners[`skip:${t}`] = fn; } };
+  const people = field('editor-people');
+  const filter = field('editor-filter');
+  const chipList = () => [...chips.innerHTML.matchAll(/<button type="button" class="editor-chip" data-name="([^"]*)"[^>]*>/g)].map((m) => ({ dataset: { name: unesc(m[1]) }, focus() {} }));
+  const chips = { id: 'editor-chips', innerHTML: '', addEventListener: on('chips'), querySelector: () => chipList()[0] || null, querySelectorAll: () => chipList(), contains: () => false };
+  const form = { addEventListener: on('form') };
+  const skip = { addEventListener: on('skip') };
+  let html = '';
   const d = {
-    opened: 0, removed: false, returnValue: '', innerHTML: '', attrs: {},
+    opened: 0, removed: false, returnValue: '', attrs: {},
+    get innerHTML() { return html; },
+    set innerHTML(v) {
+      html = v;
+      input.value = unesc(/ value="([^"]*)"/.exec(v.match(/<input id="editor-name"[^>]*>/)[0])[1]);
+      people.hidden = /id="editor-people" hidden>/.test(v);
+      filter.hidden = /<input type="search" id="editor-filter"[^>]* hidden>/.test(v);
+      chips.innerHTML = v.match(/id="editor-chips"[^>]*>([\s\S]*?)<\/div>/)[1];
+    },
     setAttribute(k, v) { this.attrs[k] = v; },
-    querySelector: (s) => ({ form, '#editor-initials': input, '#editor-error': error, '[data-editor-skip]': skip }[s]),
+    querySelector: (s) => ({ form, '#editor-name': input, '#editor-error': error, '[data-editor-skip]': skip, '#editor-people': people, '#editor-filter': filter, '#editor-chips': chips }[s]),
     addEventListener: (t, fn) => { listeners[t] = fn; },
-    showModal() { this.opened++; input.value = /value="([^"]*)"/.exec(this.innerHTML.match(/<input[^>]*>/)[0])[1]; },
+    showModal() { this.opened++; },
     close(v) { if (v !== undefined) this.returnValue = v; listeners.close(); },
     remove() { this.removed = true; },
     // Save: the form submits with the Save button; a submit that is not prevented closes with its value.
     submit(value) { let prevented = false; listeners['form:submit']({ submitter: { value }, preventDefault() { prevented = true; } }); if (!prevented) this.close(value); return prevented; },
     skip() { listeners['skip:click'](); },
-    input, error,
+    // The saved names shown (as buttons), and the one marked as this browser's name.
+    names: () => chipList().map((c) => c.dataset.name),
+    current: () => unesc((chips.innerHTML.match(/data-name="([^"]*)" aria-current="true"/) || ['', ''])[1]),
+    pick(name) { listeners['chips:click']({ target: { closest: (s) => (s === '[data-name]' ? { dataset: { name } } : null) } }); },
+    find(text) { filter.value = text; listeners['editor-filter:input'](); },
+    findEnter() { const e = { key: 'Enter', defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } }; listeners['editor-filter:keydown'](e); return e.defaultPrevented; },
+    input, error, people, filter, chips,
   };
   return d;
 }
-
-test('editor initials are asked once, in a dialog, and stamped on the edits', async () => {
-  const site = fakeSite();
-  const page = await openBrowser(site);
+// Names already in the shared list (Workers KV key 'people'), the first seen most recently.
+async function seedPeople(site, names, newest = Date.UTC(2026, 9, 7)) {
+  const people = names.map((name, i) => ({ name, firstSeen: new Date(Date.UTC(2026, 0, 1)).toISOString(), lastSeen: new Date(newest - i * 3600000).toISOString() }));
+  await site.env.REPORT_STORE.put('people', JSON.stringify({ v: 1, people }));
+}
+function catchDialogs(page) {
   const dialogs = [];
   const create = page.ctx.document.createElement;
   page.ctx.document.createElement = (tag) => (tag === 'dialog' ? (dialogs.push(fakeDialog()), dialogs[dialogs.length - 1]) : create(tag));
+  return dialogs;
+}
+const peopleCalls = (site, method = '') => site.calls.filter((c) => c.endsWith(' /api/people') && (!method || c.startsWith(`${method} `))).length;
+
+test('Your name is asked once, in a dialog: names saved for everyone are one click, a new name is added for everyone, edits carry it', async () => {
+  const site = fakeSite();
+  await seedPeople(site, ['Jamie Cole', 'Kareena']);
+  const page = await openBrowser(site);
+  const dialogs = catchDialogs(page);
   await upload(page);
   await page.ctx.syncSharedNotes();
+  await tick(10);
+  // No name in this browser yet: the saved names are read when the page opens, so they are ready for the question.
+  assert.equal(peopleCalls(site, 'GET'), 1);
+  assert.deepEqual(page.run('sharedPeople.map(p=>p.name)'), ['Jamie Cole', 'Kareena']);
   edit(page, '900', 'notes', 'first note');
   await tick(5);
   assert.equal(dialogs.length, 1);
   const d = dialogs[0];
   assert.equal(d.opened, 1);
   assert.equal(d.attrs['aria-labelledby'], 'editor-dialog-title');
-  assert.match(d.innerHTML, /<h2 id="editor-dialog-title">Your initials<\/h2>/);
-  assert.match(d.innerHTML, /<label for="editor-initials">/);
-  assert.match(d.innerHTML, /aria-describedby="editor-error"/);
-  assert.equal((d.innerHTML.match(/<button type="(submit|button)"[^>]*data-tip="[^"]+"/g) || []).length, 2, 'Save and Not now carry tips');
-  // Nothing is sent while the question is open, so the edit goes out with the initials.
+  // With saved names it opens on its title (a stray Enter picks no one; no phone keyboard over the list).
+  assert.match(d.innerHTML, /<h2 id="editor-dialog-title" tabindex="-1" autofocus>Your name<\/h2>\s*<p id="editor-dialog-desc">Shown with the notes you save\.<\/p>/);
+  assert.match(d.innerHTML, /<label for="editor-name">New name<\/label>/);
+  assert.match(d.innerHTML, /<input id="editor-name" name="name" maxlength="40" autocomplete="name"[^>]*aria-describedby="editor-error"/);
+  assert.doesNotMatch(d.innerHTML.match(/<input id="editor-name"[^>]*>/)[0], /autofocus/);
+  assert.match(d.innerHTML, /<input type="search" id="editor-filter"[^>]* data-tip="Type part of your name\."/);
+  assert.equal((d.chips.innerHTML.match(/class="editor-chip"[^>]* data-tip="Use this name\."/g) || []).length, 2, 'each saved name carries a tip');
+  assert.doesNotMatch(d.innerHTML, /initials|company/i);
+  assert.equal((d.innerHTML.match(/<button type="(submit|button)" (value="save" )?class="btn[^"]*"[^>]*data-tip="[^"]+"/g) || []).length, 2, 'Save and Not now carry tips');
+  // The saved names, the most recently seen first; no Find box for a short list.
+  assert.deepEqual(d.names(), ['Jamie Cole', 'Kareena']);
+  assert.match(d.innerHTML, /<div class="editor-chips" id="editor-chips" role="group" aria-labelledby="editor-people-label">/);
+  assert.deepEqual([d.people.hidden, d.filter.hidden], [false, true]);
+  assert.equal(d.input.value, '');
+  // Nothing is sent while the question is open, so the edit goes out with the name.
   await page.run('flushSharedNotes({all:true})');
   assert.equal(site.patches(), 0);
-  d.input.value = '!!';
-  assert.equal(d.submit('save'), true, 'bad initials are refused');
-  assert.match(d.error.textContent, /1 to 4 letters/);
-  d.input.value = 'k.k';
-  assert.equal(d.submit('save'), false);
+  d.input.value = 'K2!';
+  assert.equal(d.submit('save'), true, 'a name with digits or symbols is refused');
+  assert.match(d.error.textContent, /1 to 40 letters/);
+  d.pick('Kareena');
   assert.equal(d.removed, true);
-  assert.equal(page.storage.spyderKpiEditor, 'KK');
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena');
   await sendNow(page);
   const k = keyOf(page, '900');
-  assert.equal((await site.doc()).rows[k].by, 'KK');
-  assert.equal(saved(page)[k].by, 'KK');
-  // Asked once: later edits do not ask again; the sidebar button changes the initials.
+  assert.equal((await site.doc()).rows[k].by, 'Kareena');
+  assert.equal(saved(page)[k].by, 'Kareena');
+  // Picking a saved name marks it as seen for everyone (it moves to the top of the list).
+  assert.equal(peopleCalls(site, 'POST'), 1);
+  assert.deepEqual((await site.people()).people.map((p) => p.name), ['Kareena', 'Jamie Cole']);
+  assert.equal(JSON.parse(page.storage.spyderKpiNameSeenV1).name, 'Kareena');
+  // Asked once: later edits do not ask again; the sidebar names the last editor and the button changes the name.
   edit(page, '901', 'notes', 'second');
   await tick(5);
   assert.equal(dialogs.length, 1);
-  assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorInitials\(true\)" data-tip="[^"]+">Your initials: KK<\/button>/);
+  assert.match(sidebar(page), /Notes shared · last edit Kareena · Sep \d+/);
+  assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName\(true\)" data-tip="Your notes show “Kareena”\. Click to change it\.">Change name<\/button>/);
   // The status and the button have their own row, outside .loaded-meta (hidden at 980px and below), which stays
   // visible under the file name and buttons in the compact card.
   assert.match(sidebar(page), /<div class="loaded-meta">(?:(?!<\/div>)[\s\S])*<\/div><div class="loaded-notes"><span class="notes-sync" data-tip="[^"]+">Notes shared[^<]*<\/span><br><button type="button" class="link-btn notes-editor-btn"/);
@@ -684,30 +740,215 @@ test('editor initials are asked once, in a dialog, and stamped on the edits', as
   assert.match(compact, /\.loaded-card \.loaded-label,\.loaded-card \.loaded-meta\{display:none\}/);
   assert.match(compact, /\.loaded-card \.loaded-notes\{grid-row:2;grid-column:1\/-1\}/);
   assert.doesNotMatch(compact, /loaded-notes\{[^}]*display:none/);
-  page.run('askEditorInitials(true)');
+
+  // Change name: the box holds the name and its button is marked; Esc keeps it.
+  page.run('askEditorName(true)');
   await tick(5);
   assert.equal(dialogs.length, 2);
-  assert.equal(dialogs[1].input.value, 'KK');
-  dialogs[1].close(''); // Esc keeps the initials
-  assert.equal(page.storage.spyderKpiEditor, 'KK');
+  assert.equal(dialogs[1].input.value, 'Kareena');
+  assert.equal(dialogs[1].current(), 'Kareena');
+  dialogs[1].close('');
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena');
+  // A new name (spaces collapsed, a curly apostrophe made straight) is saved here and added for everyone.
+  page.run('askEditorName(true)');
+  await tick(5);
+  dialogs[2].input.value = '  Zoë   O’Brien-Smith ';
+  assert.equal(dialogs[2].submit('save'), false);
+  await tick(10);
+  assert.equal(page.storage.spyderKpiEditorName, "Zoë O'Brien-Smith");
+  assert.deepEqual((await site.people()).people.map((p) => p.name), ["Zoë O'Brien-Smith", 'Kareena', 'Jamie Cole']);
+  assert.match(sidebar(page), /Change name/);
+  // A saved name typed in other capitals keeps the saved spelling (one person in the list).
+  page.run('askEditorName(true)');
+  await tick(5);
+  dialogs[3].input.value = 'jamie cole';
+  dialogs[3].submit('save');
+  await tick(10);
+  assert.equal(page.storage.spyderKpiEditorName, 'Jamie Cole');
+  assert.equal((await site.people()).people.length, 3);
+  clock(page, '2026-09-24T11:00:00Z');
+  edit(page, '901', 'notes', 'by Jamie');
+  await sendNow(page);
+  assert.equal((await site.doc()).rows[keyOf(page, '901')].by, 'Jamie Cole');
+  assert.deepEqual(page.errors, []);
 
-  // Not now: never asked again in this browser, edits go out without initials.
+  // Not now: never asked again in this browser, edits go out without a name.
   const other = await openBrowser(site);
-  const more = [];
-  other.ctx.document.createElement = (tag) => (tag === 'dialog' ? (more.push(fakeDialog()), more[more.length - 1]) : create(tag));
+  const more = catchDialogs(other);
   await other.ctx.restoreSavedReport();
   await other.ctx.syncSharedNotes();
   other.run(`toggleRowNote(${JSON.stringify(k)})`);
   await tick(5);
   assert.equal(more.length, 1, 'opening a note editor asks before the first edit');
   more[0].skip();
-  assert.equal(other.storage.spyderKpiEditor, '');
-  edit(other, '902', 'notes', 'no initials');
+  assert.equal(other.storage.spyderKpiEditorName, '');
+  edit(other, '902', 'notes', 'no name');
   await tick(5);
   assert.equal(more.length, 1);
   await sendNow(other);
   assert.equal((await site.doc()).rows[keyOf(other, '902')].by, '');
-  assert.match(sidebar(other), />Add your initials<\/button>/);
+  assert.match(sidebar(other), /data-tip="Add your name to the notes you save\.">Add your name<\/button>/);
+});
+
+test('Your name: a long list shows the 12 names seen most recently, Find your name narrows it and Enter picks the first match', async () => {
+  const site = fakeSite();
+  const names = Array.from({ length: 20 }, (_, i) => `Person ${String.fromCharCode(65 + i)}`);
+  names[15] = 'Kareena Kapoor';
+  await seedPeople(site, names);
+  const page = await openBrowser(site, { storage: { spyderKpiEditorName: 'Person B' } });
+  const dialogs = catchDialogs(page);
+  await upload(page);
+  await page.ctx.syncSharedNotes();
+  page.run('askEditorName(true)');
+  await tick(20);
+  const d = dialogs[0];
+  // The list is read again when the dialog opens (this browser has a name, so it was not read on page open).
+  assert.equal(peopleCalls(site, 'GET'), 1);
+  assert.equal(d.filter.hidden, false, 'Find your name shows for more than 12 names');
+  // This browser's name was sent when the page opened (first time today), so it is the most recently seen.
+  assert.deepEqual(d.names(), ['Person B', ...names.filter((n) => n !== 'Person B')].slice(0, 12));
+  assert.equal(d.current(), 'Person B');
+  d.find('kapoor');
+  assert.deepEqual(d.names(), ['Kareena Kapoor']);
+  d.find('nobody');
+  assert.deepEqual(d.names(), []);
+  assert.match(d.chips.innerHTML, /No match\. Type it below as a new name\./);
+  // Enter with nothing typed picks no one (the first name is someone else's) and does not submit the form.
+  d.find('  ');
+  assert.equal(d.findEnter(), true);
+  assert.equal(d.removed, false, 'a stray Enter in an empty Find box picks no name');
+  assert.equal(page.storage.spyderKpiEditorName, 'Person B');
+  d.find('kareena');
+  assert.equal(d.findEnter(), true, 'Enter in the Find box does not submit the form');
+  assert.equal(d.removed, true);
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena Kapoor');
+});
+
+test('Your name: initials saved before 2v2 are stamped until the name is given, fill the New name box, and the name is asked once', async () => {
+  const site = fakeSite();
+  const page = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const dialogs = catchDialogs(page);
+  await upload(page);
+  await page.ctx.syncSharedNotes();
+  edit(page, '900', 'notes', 'before the name');
+  await tick(5);
+  const k = keyOf(page, '900');
+  assert.equal(page.run(`rowOverrides[${JSON.stringify(k)}].by`), 'KK', 'the old initials until the name is given');
+  assert.equal(dialogs.length, 1, 'asked although initials were saved');
+  assert.equal(dialogs[0].input.value, 'KK', 'the initials fill the New name box');
+  assert.equal(dialogs[0].people.hidden, true, 'no saved names yet');
+  assert.match(dialogs[0].innerHTML, /<input id="editor-name"[^>]* autofocus/);
+  assert.match(dialogs[0].innerHTML, /<h2 id="editor-dialog-title">/, 'no saved names: the New name box has the focus, not the title');
+  dialogs[0].input.value = 'Kareena Kapoor';
+  dialogs[0].submit('save');
+  await tick(10);
+  assert.equal(page.storage.spyderKpiEditorName, 'Kareena Kapoor');
+  assert.equal(page.storage.spyderKpiEditor, undefined, 'the initials are no longer kept');
+  await sendNow(page);
+  assert.equal((await site.doc()).rows[k].by, 'Kareena Kapoor', 'the edit made while asked carries the name');
+  assert.deepEqual((await site.people()).people.map((p) => p.name), ['Kareena Kapoor']);
+  edit(page, '901', 'notes', 'after');
+  await tick(5);
+  assert.equal(dialogs.length, 1);
+  // Not now to the initials question before 2v2 is kept: not asked again by itself; the sidebar offers it.
+  const reads = peopleCalls(site, 'GET');
+  const skipped = await openBrowser(site, { storage: { spyderKpiEditor: '' } });
+  const none = catchDialogs(skipped);
+  await skipped.ctx.restoreSavedReport();
+  await skipped.ctx.syncSharedNotes();
+  edit(skipped, '902', 'notes', 'x');
+  await tick(5);
+  assert.equal(none.length, 0);
+  assert.match(sidebar(skipped), />Add your name<\/button>/);
+  assert.equal(peopleCalls(site, 'GET'), reads, 'the browser that answered before reads no names on open');
+});
+
+test('the name is sent to the shared list at most once a day when the page opens; offline, a static host and a failed save stay quiet', async () => {
+  const site = fakeSite();
+  await seedPeople(site, ['Kareena']);
+  // Typed in other capitals in an earlier version of this page: the saved spelling is taken.
+  const storage = { spyderKpiEditorName: 'kareena' };
+  await openHosted(site, { storage });
+  await tick(10);
+  assert.equal(peopleCalls(site, 'POST'), 1);
+  assert.equal(peopleCalls(site, 'GET'), 0, 'a browser with a name reads no names on open');
+  assert.equal(storage.spyderKpiEditorName, 'Kareena');
+  const seen = JSON.parse(storage.spyderKpiNameSeenV1);
+  assert.equal(seen.name, 'Kareena');
+  assert.equal((await site.people()).people.length, 1);
+  // The same browser again the same day: nothing sent.
+  await openHosted(site, { storage });
+  await tick(10);
+  assert.equal(peopleCalls(site, 'POST'), 1);
+  // A day later: sent again.
+  storage.spyderKpiNameSeenV1 = JSON.stringify({ ...seen, at: seen.at - 25 * 3600000 });
+  await openHosted(site, { storage });
+  await tick(10);
+  assert.equal(peopleCalls(site, 'POST'), 2);
+  // The server cannot be reached for names: no error, and it is tried again on the next open.
+  const flaky = fakeSite();
+  flaky.peopleDown = true;
+  const fs2 = { spyderKpiEditorName: 'Aaron' };
+  const p = await openHosted(flaky, { storage: fs2 });
+  await tick(10);
+  assert.equal(peopleCalls(flaky, 'POST'), 1);
+  assert.equal(fs2.spyderKpiNameSeenV1, undefined);
+  assert.equal(fs2.spyderKpiEditorName, 'Aaron');
+  assert.deepEqual(p.errors, []);
+  flaky.peopleDown = false;
+  await openHosted(flaky, { storage: fs2 });
+  await tick(10);
+  assert.equal(peopleCalls(flaky, 'POST'), 2);
+  assert.deepEqual((await flaky.people()).people.map((x) => x.name), ['Aaron']);
+  // A static host and a server that is down: no requests for names, the name stays in this browser, no errors.
+  for (const mode of ['static', 'down']) {
+    const s = fakeSite();
+    s.mode = mode;
+    const st = { spyderKpiEditorName: 'Kareena' };
+    const page = await openBrowser(s, { storage: st });
+    await upload(page);
+    await page.ctx.syncSharedNotes();
+    page.run('askEditorName()');
+    await tick(10);
+    assert.equal(peopleCalls(s), 0, mode);
+    assert.equal(st.spyderKpiEditorName, 'Kareena');
+    edit(page, '900', 'notes', 'kept here');
+    assert.equal(saved(page)[keyOf(page, '900')].by, 'Kareena', 'edits here still carry the name');
+    assert.deepEqual(page.errors, [], mode);
+  }
+});
+
+test('every name shown is escaped (saved names, the last editor, this browser); a stored value that is not a name is asked again', async () => {
+  const site = fakeSite();
+  await seedPeople(site, ["Zoë O'Brien-Smith", 'Kareena']);
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
+  await upload(a);
+  await a.ctx.syncSharedNotes();
+  // A note saved by a page before 2v2, when the server took any text of up to 16 characters as initials.
+  const k = keyOf(a, '900');
+  await site.env.REPORT_STORE.put('overrides', JSON.stringify({ v: 1, rows: { [k]: { notes: 'old', by: '"><svg/onload=1>', at: '2026-09-01T10:00:00.000Z' } }, shipments: {}, savedAt: '' }));
+  // This browser's name was edited by hand into something that is not a name: it counts as never asked.
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: '<img src=x onerror=alert(1)>' } });
+  const full = sidebar(b);
+  const bar = full.slice(full.indexOf('<div class="loaded-notes">'));
+  assert.match(bar, /last edit &quot;&gt;&lt;svg\/onload=1&gt; · Sep 1/);
+  assert.match(bar, /data-tip="[^"]*Last edit by &quot;&gt;&lt;svg\/onload=1&gt;:/);
+  assert.ok(!/<svg|<img/.test(bar), 'no markup from a stored name');
+  assert.match(bar, />Add your name<\/button>/);
+  assert.equal(b.run('readEditor()'), null);
+  const dialogs = catchDialogs(b);
+  edit(b, '901', 'notes', 'new');
+  await tick(10);
+  assert.equal(dialogs.length, 1, 'asked, as the stored value is not a name');
+  const d = dialogs[0];
+  assert.match(d.chips.innerHTML, /data-name="Zoë O&#39;Brien-Smith"[^>]*>Zoë O&#39;Brien-Smith<\/button>/);
+  assert.doesNotMatch(d.innerHTML, /<img|onerror=alert/, 'the bad stored value is not put in the New name box');
+  assert.equal(b.run(`rowOverrides[${JSON.stringify(keyOf(b, '901'))}].by`), '', 'nor stamped on the edit');
+  d.pick("Zoë O'Brien-Smith");
+  await tick(10);
+  assert.equal(b.storage.spyderKpiEditorName, "Zoë O'Brien-Smith");
+  assert.match(sidebar(b), /data-tip="Your notes show “Zoë O&#39;Brien-Smith”\. Click to change it\.">Change name<\/button>/);
+  assert.deepEqual(b.errors, []);
 });
 
 test('at-risk history: each upload records its At Risk lines (all filters off) and firstFlagged gives the first week', async () => {
@@ -775,12 +1016,12 @@ test('without shared storage there is no history: firstFlagged stays empty (ever
 
 test('Shipping page helpers: manual tracking numbers are saved here and shared like notes', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   clock(a, '2026-10-08T15:00:00Z');
   assert.equal(a.run("sharedNotesPatchShipments({'m-900':{order:'900',number:'7712 3456 7890',carrier:'FedEx'},'bad/id':{order:'1',number:'2'}})"), 1);
-  assert.deepEqual(a.run('getSharedShipments()'), { 'm-900': { order: '900', number: '7712 3456 7890', carrier: 'FedEx', by: 'KK', at: '2026-10-08T15:00:00.000Z' } });
+  assert.deepEqual(a.run('getSharedShipments()'), { 'm-900': { order: '900', number: '7712 3456 7890', carrier: 'FedEx', by: 'Kareena', at: '2026-10-08T15:00:00.000Z' } });
   await sendNow(a);
   assert.equal((await site.doc()).shipments['m-900'].number, '7712 3456 7890');
   const b = await openHosted(site);
@@ -795,10 +1036,10 @@ test('Shipping page helpers: manual tracking numbers are saved here and shared l
 
 test('search finds a line by a tracking number someone else added by hand as soon as it arrives with the shared notes', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
-  const b = await openHosted(site, { storage: { spyderKpiEditor: 'QQ' } });
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: 'Quinn' } });
   b.run("onGlobalSearchInput('770012345678');applyGlobalSearch()");
   const found = () => b.run('globalSearchResults(currentMetrics()).rows.map(x=>x.r.documentNumber)');
   assert.deepEqual(found(), []);
@@ -829,7 +1070,7 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
   assert.equal(check(500, 'text/html', '<html>error</html>'), false);
 
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   clock(a, '2026-10-08T15:00:00Z');
@@ -850,7 +1091,7 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
   // The page is reloaded before the retry: the marker goes out with the merge and the note stays cleared.
   a.run('clearTimeout(notesRetryTimer);notesRetryTimer=null;clearTimeout(notesPatchGate);notesPatchGate=null;notesReady.clear()');
   const again = await openHosted(site, { storage: a.storage });
-  assert.deepEqual((await site.doc()).rows[k], { by: 'KK', at: '2026-10-08T16:00:00.000Z' });
+  assert.deepEqual((await site.doc()).rows[k], { by: 'Kareena', at: '2026-10-08T16:00:00.000Z' });
   assert.equal(line(again, '900').notes, '');
 
   // Reading the notes: a 503 error page is "not reachable now" (tried again when the page comes back into view).
@@ -858,7 +1099,7 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
   const flaky = { ...site, fetch: (url, init = {}) => (url === '/api/notes' && !init.method && failGets-- > 0
     ? Promise.resolve(new Response('<html>Service unavailable</html>', { status: 503, headers: { 'content-type': 'text/html' } }))
     : site.fetch(url, init)) };
-  const b = await openBrowser(flaky, { storage: { spyderKpiEditor: 'QQ' } });
+  const b = await openBrowser(flaky, { storage: { spyderKpiEditorName: 'Quinn' } });
   await upload(b);
   await b.ctx.syncSharedNotes();
   assert.equal(b.run('sharedNotes.state'), 'offline');
@@ -885,7 +1126,7 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
   await c.ctx.syncSharedNotes();
   assert.equal(c.run('sharedNotes.state'), 'local');
   const site2 = fakeSite();
-  const d = await openBrowser(site2, { storage: { spyderKpiEditor: 'KK' } });
+  const d = await openBrowser(site2, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(d);
   await d.ctx.syncSharedNotes();
   site2.failPatches = 1; site2.failKind = 405;
@@ -898,7 +1139,7 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
 
 test('a save the server refuses (sign-in expired) stays listed after a later save works, and the next read sends it', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   await settle(a);
@@ -947,10 +1188,10 @@ test('a save the server refuses (sign-in expired) stays listed after a later sav
 
 test('two different edits with the same time end up the same everywhere: the server keeps the first, every browser takes it', async () => {
   const site = fakeSite();
-  const a = await openBrowser(site, { storage: { spyderKpiEditor: 'AJ' } });
+  const a = await openBrowser(site, { storage: { spyderKpiEditorName: 'Aaron' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
-  const b = await openHosted(site, { storage: { spyderKpiEditor: 'KK' } });
+  const b = await openHosted(site, { storage: { spyderKpiEditorName: 'Kareena' } });
   const k = keyOf(a, '900');
   const T = '2026-10-08T15:00:00Z';
   clock(a, T); clock(b, T);
@@ -961,14 +1202,14 @@ test('two different edits with the same time end up the same everywhere: the ser
   assert.equal((await site.doc()).rows[k].status, 'Hold', 'the server keeps the entry it stored first');
   assert.equal(line(b, '900').status, 'Hold', 'B takes the server copy from the reply');
   assert.equal(saved(b)[k].status, 'Hold');
-  assert.equal(saved(b)[k].by, 'AJ');
+  assert.equal(saved(b)[k].by, 'Aaron');
   // Through a read: C holds its own copy with the same time (and a hand-added tracking number), the server's wins.
   a.run("sharedNotesPatchShipments({'m-900':{order:'900',number:'770012345678',carrier:'FedEx'}})");
   await sendNow(a);
   const storage = {
-    spyderKpiEditor: 'CC',
-    spyderKpiRowOverridesV1: JSON.stringify({ [k]: { status: 'Customer hold', by: 'CC', at: '2026-10-08T15:00:00.000Z' } }),
-    spyderKpiShipmentsV1: JSON.stringify({ 'm-900': { order: '900', number: '770099999999', carrier: 'FedEx', by: 'CC', at: '2026-10-08T15:00:00.000Z' } }),
+    spyderKpiEditorName: 'Casey',
+    spyderKpiRowOverridesV1: JSON.stringify({ [k]: { status: 'Customer hold', by: 'Casey', at: '2026-10-08T15:00:00.000Z' } }),
+    spyderKpiShipmentsV1: JSON.stringify({ 'm-900': { order: '900', number: '770099999999', carrier: 'FedEx', by: 'Casey', at: '2026-10-08T15:00:00.000Z' } }),
   };
   const before = site.patches();
   const c = await openHosted(site, { storage });
@@ -991,13 +1232,13 @@ test('a save sent while the page is hidden or closed (keepalive) stays under the
     if (init.keepalive && bytes > 65536) throw new TypeError('Failed to fetch');
     return site.fetch(url, init);
   } };
-  const a = await openBrowser(browser, { storage: { spyderKpiEditor: 'KK' } });
+  const a = await openBrowser(browser, { storage: { spyderKpiEditorName: 'Kareena' } });
   await upload(a);
   await a.ctx.syncSharedNotes();
   await settle(a);
   // A bulk action on 450 lines (non-ASCII notes count 2 to 3 bytes a character), then the tab is hidden within the
   // 800 ms wait.
-  a.run(`for(let i=0;i<450;i++){const k='T|'+(10000+i)+'|1';rowOverrides[k]={status:'Hold',notes:'Délai fournisseur – 供应商延迟 – en attente de pièces '+i,by:'KK',at:'2026-10-08T15:00:00.000Z'};queueSharedNote('rows',k);}`);
+  a.run(`for(let i=0;i<450;i++){const k='T|'+(10000+i)+'|1';rowOverrides[k]={status:'Hold',notes:'Délai fournisseur – 供应商延迟 – en attente de pièces '+i,by:'Kareena',at:'2026-10-08T15:00:00.000Z'};queueSharedNote('rows',k);}`);
   await a.run('flushSharedNotes({all:true,keepalive:true})');
   assert.equal(sends.length, 1);
   assert.equal(sends[0].keepalive, true);

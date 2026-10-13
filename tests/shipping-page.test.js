@@ -341,20 +341,21 @@ test('Add tracking #: saved in this browser when there is no server (the shared 
 });
 
 // The hosted site with both Pages Functions over one KV namespace: /api/shipping (Stream E) and /api/notes (Stream B,
-// which keeps the hand-added numbers in the 'overrides' document under shipments:{[number]:{number,order,by,at}}).
+// which keeps the hand-added numbers in the 'overrides' document under shipments:{[number]:{number,order,by,at}}),
+// plus /api/people (the editor names, sent once a day when the page opens).
 async function hostedSiteWithNotes() {
   const site = await hostedSite();
-  const notes = (await import('../functions/api/notes.js')).onRequest;
+  const fns = { '/api/notes': (await import('../functions/api/notes.js')).onRequest, '/api/people': (await import('../functions/api/people.js')).onRequest };
   const shipping = site.fetch;
   site.fetch = async (url, init = {}) => {
-    if (url !== '/api/notes') return shipping(url, init);
+    if (!fns[url]) return shipping(url, init);
     site.calls.push(`${init.method || 'GET'} ${url}`);
-    return notes({ request: new Request(ORIGIN + url, { ...init, headers: { ...(init.headers || {}), Origin: ORIGIN } }), env: site.env, params: {} });
+    return fns[url]({ request: new Request(ORIGIN + url, { ...init, headers: { ...(init.headers || {}), Origin: ORIGIN } }), env: site.env, params: {} });
   };
   return site;
 }
-async function notesBrowser(site, initials, today = TODAY) {
-  const page = loadPage({ today, storage: { spyderKpiEditor: initials } });
+async function notesBrowser(site, name, today = TODAY) {
+  const page = loadPage({ today, storage: { spyderKpiEditorName: name } });
   Object.assign(page.ctx, { fetch: site.fetch, location: { href: ORIGIN + '/', protocol: 'https:' } });
   await upload(page, [exportFile()]);
   await page.ctx.syncSharedNotes();
@@ -367,7 +368,7 @@ test('Add tracking # round-trips through the shared notes store (/api/notes): ev
   const site = await hostedSiteWithNotes();
   // Page clocks are pinned; both days are in the past so /api/notes keeps each edit's own time (it moves a time ahead
   // of the server's clock back to now), and the second browser's edit is the newer one.
-  const a = await notesBrowser(site, 'KK', '2026-10-07');
+  const a = await notesBrowser(site, 'Kareena', '2026-10-07');
   assert.equal(a.run('sharedNotes.state'), 'shared');
   assert.match(html(a), /everyone who signs in sees it/);
   field(a, 'ship-add-number').value = '1234 5678 91';
@@ -382,12 +383,12 @@ test('Add tracking # round-trips through the shared notes store (/api/notes): ev
   const entry = stored.shipments['1234567891'];
   assert.equal(entry.number, '1234567891');
   assert.equal(entry.order, '600');
-  assert.equal(entry.by, 'KK');
+  assert.equal(entry.by, 'Kareena');
   assert.ok(Date.parse(entry.at) > 0);
   assert.equal(entry.deleted, undefined);
 
   // A second browser (its own storage, the next day) gets it from the server, with its order lines.
-  const b = await notesBrowser(site, 'JC', '2026-10-08');
+  const b = await notesBrowser(site, 'Jamie Cole', '2026-10-08');
   assert.ok(listed(b).includes('1234567891'), 'the other browser lists the number');
   assert.match(html(b), /class="ship-num">1234567891<\/span><span class="ship-sub">[^<]*SO 600 · added by hand</);
   await b.run('shippingSync()');

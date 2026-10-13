@@ -11,7 +11,8 @@
  *         are left out of the reply and counted in `skipped`, for the page to send again.
  *         500 when the stored notes cannot be read (nothing is written); 429 with Retry-After when Workers KV is
  *         busy (one write per second to the key), so the page sends the batch again.
- * Row entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}. `by` is the editor's initials, `at` the
+ * Row entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}. `by` is the editor's name (the same rules as
+ * functions/api/people.js: up to 40 letters, spaces and . ' -; initials saved before 2v2 are still taken), `at` the
  * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause or deleted flag
  * records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
  * dropped on every save). When storage runs full (2 MB), the entries edited longest ago go (`pruned` in the reply).
@@ -41,6 +42,12 @@ const SHIPMENT_ID_RE = /^[A-Za-z0-9._:-]{1,100}$/;
 const TEXT_RE = /^[^\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]*$/;
 const RESERVED = new Set(['__proto__', 'constructor', 'prototype']);
 const CAUSES = new Set(['us', 'them', '']);
+// The editor's name (by): 1 to 40 characters, letters (any language), spaces and . ' - with at least one letter, as in
+// functions/api/people.js. Initials saved by pages before 2v2 (letters and digits, up to 16) are still taken.
+const NAME_MAX = 40;
+const NAME_RE = /^[\p{L}\p{M} .'-]+$/u;
+const HAS_LETTER_RE = /\p{L}/u;
+const OLD_INITIALS_RE = /^[\p{L}\p{N}]{1,16}$/u;
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -156,8 +163,8 @@ function stamp(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { error: 'Each change must be an object.' };
   const at = typeof raw.at === 'string' && raw.at.length <= 40 ? Date.parse(raw.at) : NaN;
   if (!Number.isFinite(at) || at < Date.UTC(2000, 0, 1)) return { error: 'Each change needs the time it was made (at).' };
-  const by = raw.by === undefined ? '' : raw.by;
-  if (!text(by, 16)) return { error: 'Initials (by) must be text of at most 16 characters.' };
+  const by = raw.by === undefined ? '' : editorName(raw.by);
+  if (by === null) return { error: `The editor's name (by) must be up to ${NAME_MAX} letters, spaces and . ' - only.` };
   return { by, at };
 }
 
@@ -183,6 +190,15 @@ function shipmentEntry(raw) {
   if (raw.carrier !== undefined) { if (!text(raw.carrier, 40)) return { error: 'Carrier must be text of at most 40 characters.' }; entry.carrier = raw.carrier; }
   if (raw.deleted !== undefined) { if (typeof raw.deleted !== 'boolean') return { error: 'deleted must be true or false.' }; if (raw.deleted) entry.deleted = true; }
   return { ...entry, by: head.by, at: head.at };
+}
+
+// The name as stored (trimmed, spaces collapsed, curly apostrophes made straight), '' for none, null when refused.
+function editorName(v) {
+  if (typeof v !== 'string' || v.length > NAME_MAX * 4) return null;
+  if (OLD_INITIALS_RE.test(v)) return v;
+  const s = v.normalize('NFC').replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  return s.length <= NAME_MAX && NAME_RE.test(s) && HAS_LETTER_RE.test(s) ? s : null;
 }
 
 function text(v, max) {
