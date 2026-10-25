@@ -112,6 +112,25 @@ test('manual tracking numbers (shipments) merge the same way', async () => {
   assert.equal((await call({ method: 'PATCH', env, body: { shipments: { 'bad id/1': { order: '1', number: '2', at: T(3) } } } })).status, 400);
 });
 
+test('manual shipment status (2v4): status, statusDate and note are kept, checked and merged by time', async () => {
+  const env = { REPORT_STORE: kv() };
+  const key = 'st:1Z999AA10123456784';
+  let res = await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '603', number: '1Z999AA10123456784', status: 'delayed', statusDate: '2026-10-07', note: 'Held at the border', by: 'Kareena', at: T(1) } } } });
+  assert.equal(res.status, 200);
+  assert.deepEqual((await stored(env)).shipments[key], { order: '603', number: '1Z999AA10123456784', status: 'delayed', statusDate: '2026-10-07', note: 'Held at the border', by: 'Kareena', at: T(1) });
+  // Newer wins (the whole entry), older is ignored; a blank status and date are allowed (cleared).
+  await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '603', number: '1Z999AA10123456784', status: 'delivered', statusDate: '2026-10-08', note: '', by: 'Jamie Cole', at: T(3) } } } });
+  await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '603', number: '1Z999AA10123456784', status: 'transit', at: T(2) } } } });
+  assert.equal((await stored(env)).shipments[key].status, 'delivered');
+  res = await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '', number: '1Z999AA10123456784', status: '', statusDate: '', at: T(4) } } } });
+  assert.equal(res.status, 200);
+  for (const bad of [{ status: 'lost' }, { status: 1 }, { statusDate: '10/08/2026' }, { statusDate: '2026-13-01' }, { statusDate: 20261008 }, { note: 'x'.repeat(201) }, { note: 'bell\u0007' }, { note: 5 }]) {
+    const r = await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '', number: '1', ...bad, at: T(5) } } } });
+    assert.equal(r.status, 400, JSON.stringify(bad));
+  }
+  assert.equal((await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '', number: '1', note: 'x'.repeat(200), status: 'shipped', statusDate: '2026-02-28', at: T(5) } } } })).status, 200);
+});
+
 test('only the dashboard page itself can change the notes', async () => {
   const env = { REPORT_STORE: kv() };
   const body = { rows: { [KEY_A]: { notes: 'x', at: T(1) } } };

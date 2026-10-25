@@ -1,205 +1,117 @@
-# Shipping page: live FedEx tracking
+# Shipping page: checked by hand
 
-The **Shipping** page (sidebar, Sales) shows where each recent FedEx shipment is, parcel (FedEx Ground, Express,
-International) and FedEx Freight LTL: what is late, what is stuck and what is held at customs, without opening
-fedex.com for each order.
+The **Shipping** page (sidebar, Sales) lists recent shipments from SAP delivery tickets, for **every carrier** (FedEx,
+FedEx Freight, UPS, Purolator, Canpar, DHL, Loomis, Day & Ross…). Nobody's tracking system is called from the page:
+each shipment has a **Check** link to its public tracking page, and whoever looks it up records what they saw
+(Shipped, In transit, Delayed or Delivered, with a date and a short note). Everyone who signs in sees those statuses,
+and the page's cards come from them.
+
+Until the first real status is saved, the page shows **demo data** (12 made-up shipments) so you can see how it looks.
 
 ## What the page shows
 
-- **Header:** "Updated 12 min ago · next check 4:00 PM": when FedEx was last asked, and the next scheduled check
-  (every 4 hours). **Refresh now** asks FedEx right away (at most once every 10 minutes for everyone).
-- **Cards:** In transit, Out for delivery, Delivered this week, Exceptions, In customs. Click a card to list only those
-  shipments; click it again to list all.
-- **Add tracking #:** a FedEx tracking number (or FedEx Freight PRO number) and, optionally, its sales order, for
-  shipments whose SAP delivery has no tracking number yet.
-- **Shipments:** one row per tracking number with a 6-step strip: Label created → Picked up → In transit → Customs →
-  Out for delivery → Delivered. The strip is filled up to the newest FedEx scan. A red **!** marks an exception or a
-  customs hold at that step. The Customs step is dashed for shipments that stay in Canada. On the right: the status
-  and the FedEx estimate against the promised date ("ETA Oct 12 · 2 days late"). Click a row (or press Enter) for
-  the delivery's order lines, the last scan, any customs scans and a link to fedex.com.
-- **Cross-border:** shipments to an address outside Canada, or with customs scans: In clearance, Clearance delay or
-  Released, and how many days customs has had it.
-- **About these numbers** at the bottom of the page sums up the rules below.
+- **Bar:** "Checked by hand · statuses shared with everyone" (on the hosted site) or "kept in this browser" (a file or
+  a static web server), and the **Show demo data / Show real shipments** switch.
+- **Demo data banner** (demo mode only): a yellow "Demo data" note saying the shipments are made up.
+- **Status cards** (click one to list only those shipments, click again for all):
+  - **In transit**: marked Shipped or In transit.
+  - **Delayed**: marked Delayed.
+  - **Delivered this week**: marked Delivered with a date since Monday.
+  - **Not checked in 2+ days**: not delivered, and nobody has saved a status for 2 days or more (or ever). This is
+    the "go and check these" list.
+- **Shipments:** one row per tracking number with a 3-step strip, Shipped → In transit → Delivered, filled up to the
+  saved status. **Delayed** turns the middle step red with a **!**. On the right: the status and when it was last
+  checked ("Checked 3 h ago"), or for a delivered one its date against the promised date ("Oct 8 · 1 day late").
+  Delayed ones are listed first, then the ones not checked for 2+ days, delivered ones last.
+  - **Check** (next to each row): opens `https://www.aftership.com/track/<tracking number>` in a new tab. AfterShip
+    works out the carrier from the number, so the same link works for FedEx, UPS, Purolator, Canpar, DHL and most
+    others. A number AfterShip does not recognise can still be looked up on the carrier's own site.
+  - Click a row (or press Enter) for its details: the saved status and note, who checked and when, the promised and
+    SAP ship dates, carrier and ship method, ship-to country, the delivery's order lines, and **Update status**.
+- **Update status:** pick **Shipped** (left Spyder Controls), **In transit**, **Delayed** or **Delivered**, a date
+  (the delivery date for Delivered, else the day you checked; today by default) and an optional note up to 200
+  characters ("Held at customs, invoice missing"), then **Save**. Saving again, even with nothing changed, marks the
+  shipment as checked now.
+- **Add tracking #:** a tracking number (any carrier) and, optionally, its sales order, for a shipment whose SAP
+  delivery has no tracking number yet. Listed for 45 days.
+- **Cross-border:** shipments to an address outside Canada, with their status, last check and note.
+- **About these numbers** at the bottom sums up the rules.
 
-Every number, card, button and column has a short plain-English tooltip.
+Every card, button, link and column has a short plain-English tooltip. **Search** (the box under the logo) finds
+tracking numbers, typed with or without spaces.
 
-**Search** (the box under the logo) also finds tracking numbers, typed with or without spaces.
-
-## Where the tracking numbers come from
+## Where the shipments come from
 
 1. **The KPI export.** The KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`) adds four
    columns to every delivery row:
-   - `TrackingNumber`: the delivery's tracking number in SAP (`ODLN.TrackNo`, the **Tracking No.** field on the
-     delivery's Logistics tab). One field can hold several numbers separated by commas; the delivery's value is then
-     shared between them, so the "worth" totals on the cards count it once. Text with no digit ("Customer Pickup",
-     "Will Call") is not a tracking number and is ignored.
-   - `ShipMethod`: the delivery's shipping type (`OSHP`), for example "FedEx Ground" or "FedEx Freight LTL". A
-     delivery whose shipping type names another carrier (UPS, Purolator, Canpar, DHL, Loomis, Canada Post, Dicom,
-     Day & Ross, Manitoulin), and any UPS "1Z…" number, is left off the page and never sent to FedEx; the page says
-     how many were left off. A blank or other shipping type (for example "Customer pickup - prepaid") is still
-     tracked at FedEx.
-   - `ShipToCountry`: the country of the ship-to address on the business partner (`CRD1`, address type S).
+   - `TrackingNumber`: the delivery's tracking number (`ODLN.TrackNo`, **Tracking No.** on the delivery's Logistics
+     tab). One field can hold several numbers separated by commas; the delivery's value is then shared between them,
+     so the "worth" totals on the cards count it once. Text with no digit ("Customer Pickup", "Will Call") is ignored.
+   - `ShipMethod`: the delivery's shipping type (`OSHP`), shown as the carrier ("UPS Standard" → UPS).
+   - `ShipToCountry`: the ship-to country (`CRD1`, address type S); anything other than CA is cross-border.
    - `ShipDate`: the delivery date.
 
-   **Re-run the updated query in SAP** and load the new export to bring them in. Older exports still load; the page
-   says the column is missing and you can add numbers by hand.
-2. **Add tracking #** on the page. On the hosted site these are shared with everyone who signs in (saved with the
-   shared notes); on a site without shared storage, in the browser that added them.
+   Sales deliveries that **shipped in the 30 days before the export date** are listed. Re-run the updated query in
+   SAP and load the new export to bring the columns in; older exports still load and the page says the column is
+   missing.
+2. **Add tracking #** on the page (45 days).
 
-Which shipments are tracked:
+## Where the statuses are kept
 
-- Sales deliveries that **shipped in the 30 days before the export date**, until **7 days after FedEx delivered them**.
-- Numbers **added by hand**, for **45 days**.
-- At most 500 numbers from the export (newest first) and 200 added by hand. Of those, up to 600 that are not
-  delivered yet are checked with FedEx, hand-added numbers first (delivered ones are not asked again, so they never
-  take a place).
+Statuses go into the same shared notes store as line notes and overrides (`functions/api/notes.js`, Workers KV key
+`overrides`, map `shipments`):
 
-## How it works
+- A hand-added number: id = the tracking number, `{order, number, deleted?, by, at}`.
+- A manual status: id = `st:<tracking number>`,
+  `{order, number, status: 'shipped'|'transit'|'delayed'|'delivered', statusDate: 'YYYY-MM-DD', note, by, at}`.
 
-```
- Dashboard page ── PUT the list / GET results / POST Refresh now ──> /api/shipping (Pages Function)
-                                                                         │
-                                                Workers KV (REPORT_STORE): tracking:wanted, tracking:index
-                                                                         │
- spyder-shipping-poller (Worker, every 4 hours) ── reads the list, asks FedEx, saves results ──┘
-                                     │
-                                     └──> FedEx Track API (apis.fedex.com), 30 numbers per call
-```
+Each id is merged on its own (the newest edit wins), so two people updating different shipments never overwrite each
+other. On the hosted site everyone who signs in sees them within about a minute; on a static host (IIS, a file share)
+or from a file they stay in that browser (`localStorage` `spyderKpiShipmentsV1`) and are sent the next time the page
+opens on the hosted site. A **Share snapshot** carries the statuses on screen (read-only, no form).
 
-- When a report is loaded on the hosted site, the page sends its list of tracking numbers to `/api/shipping` (only
-  when the list changed). A browser with an older export open never replaces a newer export's list.
-- The scheduled Worker in `workers/shipping-poller` asks FedEx about every listed shipment that is not delivered yet,
-  every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 UTC), and saves the results.
-- The page reads the saved results. **Refresh now** makes the site ask FedEx immediately.
-- The FedEx code is in one place, `shared/fedex.mjs`, used by both the Worker and the Pages Function.
-- Only tracking numbers are sent to FedEx. Customer names, order values and the export never leave the dashboard.
+## Demo data
 
-Opened from a file, from IIS or another web server, or as a **Share snapshot**, the page lists the export's tracking
-numbers without live status, and says so. A snapshot keeps the statuses on screen when it was saved.
+- **On by default** while nobody has saved a real status; once one exists it is off by default for everyone.
+- **Show demo data / Show real shipments** switches it for you (remembered in this browser only).
+- 12 made-up shipments, built in the page, covering every stage: shipped, in transit, delayed (one weather hold, one
+  held at customs), delivered this week and last week, never checked, and checked more than 2 days ago, including
+  cross-border ones to the US and Mexico. Customers are fake ("Demo RV Co", "Demo Marine Supply"…) and tracking numbers
+  start with `DEMO`.
+- Statuses set on demo shipments stay on the page until you reload; they are never saved or shared. Demo shipments
+  never appear in Search, Order Health, other pages, Ask AI or the shared report.
 
-## One-time setup (owner / IT)
+## The FedEx API module (kept, not used)
 
-You need: the Cloudflare account that hosts the dashboard (with the `REPORT_STORE` KV namespace already set up for the
-shared report, see [IT_HOSTING_README.md](IT_HOSTING_README.md) and [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md)), the FedEx account you ship with, and Node.js 20 or newer
-for the `npx wrangler` commands.
+Earlier versions asked FedEx for live statuses. That code is **still in the repo but unused and not deployed**; the
+Shipping page never calls it:
 
-### 1. Re-run the SAP query
+- `shared/fedex.mjs` (Track API client and status reader),
+- `functions/api/shipping.js` (`GET`/`PUT`/`POST /api/shipping`; deployed with the other Pages Functions but idle, as
+  no page calls it),
+- `workers/shipping-poller/` (the 4-hourly Worker; do not deploy it).
 
-Update the saved query in SAP with `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`, run it, export
-to Excel and load the file (New file). Make sure the shipping team fills **Tracking No.** on deliveries.
-
-### 2. FedEx developer project (free)
-
-1. Go to **developer.fedex.com** and sign in with Spyder Controls' fedex.com user.
-2. Create an **API project** and add the **Track API** to it. Accept the terms.
-3. FedEx shows **test** keys first (an **API key** and a **Secret key**). They only work against the FedEx sandbox,
-   which knows test tracking numbers, not real shipments.
-4. To track real shipments, ask for **production** keys for the project (FedEx asks for your FedEx account number).
-   The production **API key** is `FEDEX_CLIENT_ID`, the production **Secret key** is `FEDEX_CLIENT_SECRET`.
-
-The Track API has no charge with a FedEx account.
-
-### 3. Deploy the poller Worker
-
-In a terminal, in the `workers/shipping-poller` folder of this repo:
-
-```
-npx wrangler login                      # once, as the Cloudflare account that hosts the dashboard
-npx wrangler kv namespace list          # copy the id of the REPORT_STORE namespace (spyder-kpi-report)
-```
-
-Open `workers/shipping-poller/wrangler.toml` and replace `REPLACE_WITH_REPORT_STORE_NAMESPACE_ID` with that id. Then:
-
-```
-npx wrangler secret put FEDEX_CLIENT_ID       # paste the production API key
-npx wrangler secret put FEDEX_CLIENT_SECRET   # paste the production Secret key
-npx wrangler deploy
-```
-
-Cloudflare now runs it every 4 hours: **Workers & Pages → spyder-shipping-poller → Settings → Trigger events** shows
-the schedule, and **Logs** shows each run ("checked 42 tracking numbers (17 asked FedEx)").
-
-### 4. Optional: "Refresh now" on the site
-
-The scheduled checks only need step 3. For the **Refresh now** button, give the Pages project the same keys:
-
-```
-npx wrangler pages secret put FEDEX_CLIENT_ID --project-name spyder-kpi-dashboard
-npx wrangler pages secret put FEDEX_CLIENT_SECRET --project-name spyder-kpi-dashboard
-```
-
-then redeploy the site (Deployments → latest → Retry deployment). Without them the button says it is not set up;
-everything else works.
-
-### Testing with FedEx sandbox keys
-
-Set `FEDEX_API_BASE` to `https://apis-sandbox.fedex.com` where the test keys are used: uncomment the `[vars]` lines in
-`workers/shipping-poller/wrangler.toml` (then `npx wrangler deploy`), and/or for the Pages project run
-`npx wrangler pages secret put FEDEX_API_BASE --project-name spyder-kpi-dashboard` (a secret works here; a plain
-variable typed into the Cloudflare dashboard is replaced by the repo's `wrangler.toml` on the next deploy). Remove it
-when you switch to production keys, so the default `https://apis.fedex.com` is used.
+Its tests (`tests/fedex.test.mjs`, `tests/shipping-api.test.mjs`, `tests/shipping-worker.test.mjs`) keep passing so it
+can be turned back on later. That would need a FedEx developer project with Track API production keys
+(`FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`) as Worker secrets, the `REPORT_STORE` namespace id in
+`workers/shipping-poller/wrangler.toml`, `npx wrangler deploy` from that folder (Node.js 20 or newer), and page code to
+read `/api/shipping` again. It only covers FedEx; the manual flow covers every carrier and has no keys or limits.
 
 ## Checking that it works
 
-1. Load an export from the updated query on the hosted site and open **Shipping**.
-2. Before the first check the header says "Not checked yet · next check …". After the next run (or **Refresh now**)
-   it says "Updated … ago", and the rows show FedEx statuses.
-3. To see what is stored: `npx wrangler kv key get tracking:index --namespace-id <id> --remote` (the results) and
-   `tracking:wanted` (the list the page sent).
-
-## Limits and costs
-
-- **How many per check:** up to 600 numbers still moving are tracked (from up to 500 from the export and 200 added by
-  hand, hand-added first; delivered ones do not count), but each check (the 4-hourly run and each Refresh now) asks
-  FedEx about **at most 60** of them: first those never checked (hand-added before the export's), then those checked
-  longest ago. The others keep their last status until their turn, so a long list takes
-  several checks to go round (300 shipments still moving: 5 checks, about 20 hours). Delivered shipments are not
-  asked again.
-- **Why 60:** the Cloudflare **Workers Free** plan allows 10 ms of CPU per run, and reading FedEx's detailed answers
-  takes about 1 ms per 10 numbers. **Workers Paid** ($5 a month, up to 30 seconds of CPU per run) removes that limit:
-  in `workers/shipping-poller/wrangler.toml` uncomment `[vars]` with `FEDEX_MAX_PER_RUN = "600"` and the `[limits]`
-  lines, then `npx wrangler deploy`, so every check asks about the whole list. For Refresh now on the site, add the
-  same `FEDEX_MAX_PER_RUN` to the Pages project (`npx wrangler pages secret put FEDEX_MAX_PER_RUN --project-name
-  spyder-kpi-dashboard`).
-- **FedEx:** up to 30 tracking numbers per Track API call, so a check is 2 calls (20 with `FEDEX_MAX_PER_RUN = "600"`),
-  6 times a day, plus Refresh now (at most 6 times an hour). This is far below FedEx's per-project limits; see **Rate
-  limits** in the FedEx developer portal if the volume grows a lot.
-- **Cloudflare free plan:** the Worker runs 6 times a day (the free plan allows 100,000 requests a day). Workers KV
-  allows 1,000 writes a day: each check writes the results and a FedEx sign-in token (about 12 writes a day), a changed
-  tracking list is one write, and each Refresh now is up to four.
-- Statuses of delivered shipments are kept for 45 days after delivery, then dropped.
-- If a check is stopped part-way (FedEx refuses a new sign-in after the first call), the statuses that came back are
-  still saved. If the shared storage cannot be read, nothing is written and the next check tries again.
+1. Open **Shipping** on the hosted site after loading an export from the updated query. With no statuses yet you see
+   the **Demo data** banner; click **Show real shipments**.
+2. Click **Check** on a row: AfterShip opens in a new tab.
+3. Open the row, set **In transit** with a note and **Save**. The In transit card goes up by one, and the toast says
+   "saved for everyone".
+4. Open the page in another browser (or another person's computer): the same status shows, and demo data is off.
 
 ## Troubleshooting
 
 | What you see | What to do |
 |---|---|
-| "This export has no TrackingNumber column" | Re-run the updated SAP query (step 1) and load the new export. |
-| "Live FedEx tracking needs the hosted dashboard" | The page was opened from a file or a server without the Cloudflare functions. Use https://spyder-kpi-dashboard.pages.dev. |
-| "This site has no shared storage (REPORT_STORE)" | Put the KV namespace id in the repo's `wrangler.toml`, uncomment the binding and redeploy (IT_HOSTING_README.md, OWNER_CHECKLIST.md). |
-| "Not checked yet" for hours | The Worker is not deployed, has no keys, or has the wrong KV id. Check its Logs. |
-| "The last FedEx check … failed: FedEx refused the API key…" | Wrong keys, test keys used against production (or the reverse), or the project lacks the Track API. Fix the secrets (step 3) and wait for the next check. |
-| A row says "Not found at FedEx" | FedEx does not know that number yet (label not scanned) or it has a typo. Check it on fedex.com. |
-| Refresh now is greyed out | It works once every 10 minutes for everyone (1 minute after a try that failed), or the Pages project has no FedEx keys (step 4). |
-| Some rows show older statuses than others | Each check asks FedEx about 60 shipments at most, stalest first (see **Limits and costs**). They catch up over the next checks. |
-
-## For IT: the API
-
-`functions/api/shipping.js`, behind the same sign-in as the page. Responses are JSON with `cache-control: no-store`;
-the FedEx keys and sign-in token are never returned.
-
-- `GET /api/shipping` → `{configured, fedex, polledAt, statuses, errors, lastError, wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule}`.
-  `503 {configured:false}` without the `REPORT_STORE` binding.
-- `PUT /api/shipping` with `{asOf:"YYYY-MM-DD", export:[numbers], manual:[numbers]}` (same-origin only, 64 KB) → saves the
-  list when it changed. A list from an older export keeps the newer export's numbers. `asOf` must be a real date at
-  most two days ahead (`400` otherwise); `500` when the stored list cannot be read (nothing is changed).
-- `POST /api/shipping` (same-origin only) → asks FedEx now about up to 60 shipments still moving, stalest first, and
-  returns `{polledAt, statuses, errors, count, polled, waiting, refreshAfter}` (`waiting`: left for the next checks).
-  `429` with `Retry-After` within 10 minutes of the last refresh, `503` without the FedEx secrets or when the shared
-  storage cannot be read, `502` when FedEx refuses or cannot be reached (the last results stay). After a failed try
-  the reply's `refreshAfter` is 1 minute later, not 10.
-
-KV keys in `REPORT_STORE`: `tracking:wanted`, `tracking:index`, `tracking:token` (expires on its own) and
-`tracking:refresh` (the 10-minute limit, 1 minute while a check runs or after one failed; expires on its own). To start over:
-`npx wrangler kv key delete tracking:index --namespace-id <id> --remote`.
+| "This export has no TrackingNumber column" | Re-run the updated SAP query and load the new export. |
+| Only demo shipments | Nobody has saved a real status yet. Click **Show real shipments**. |
+| "statuses kept in this browser" | The page was opened from a file or a server without the Cloudflare functions, or shared storage (`REPORT_STORE`) is not set up. Use https://spyder-kpi-dashboard.pages.dev (IT_HOSTING_README.md). |
+| AfterShip says it cannot find the number | The label may not be scanned yet, or the number has a typo. Try the carrier's own site. |
+| A status saved on one computer is missing on another | Wait a minute and reload: the store re-reads changes about a minute after each save. |

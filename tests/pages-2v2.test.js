@@ -102,7 +102,7 @@ test('every page but Order Health is a few named groups; each group is labelled 
   assert.deepEqual(page.errors, []);
 });
 
-test('at most four cards in a row: stat rows are four-column grids, Shipping\'s five steps are one strip', async () => {
+test('at most four cards in a row: stat rows are four-column grids, Shipping\'s four counts are one strip', async () => {
   const page = await loadedAll();
   for (const tab of Object.keys(PAGE_GROUPS)) assert.doesNotMatch(open(page, tab), /class="grid-5\b/, tab);
   assert.match(CSS, /\.grid-4\{display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
@@ -113,7 +113,7 @@ test('at most four cards in a row: stat rows are four-column grids, Shipping\'s 
   }
   const ship = open(page, 'shipping');
   assert.match(ship, /<div class="ship-kpis" role="group" aria-label="Shipment status">/);
-  assert.equal((ship.match(/class="card kpi ship-kpi/g) || []).length, 5);
+  assert.equal((ship.match(/class="card kpi ship-kpi/g) || []).length, 4);
   assert.match(CSS, /\.ship-kpis>\.card\.kpi\{border:0;border-right:1px solid var\(--gray-100\);border-radius:0;box-shadow:none;/);
   // Paper (about 990px wide) keeps the desktop columns instead of the 1180px two-column rule.
   assert.match(CSS, /@media print\{\.grid-lead\{grid-template-columns:1\.5fr 1fr 1fr 1fr\}\.grid-4,\.month-spot\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)\}/);

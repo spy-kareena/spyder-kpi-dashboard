@@ -529,7 +529,7 @@ test('first-visit hints say what the Order Health tabs are and where Shipping ge
   const hint = (html, id) => (html.match(new RegExp(`data-hint="${id}">([\\s\\S]*?)</div>`)) || [])[1] || '';
   assert.match(hint(results(page), 'weekly-cards'), /<strong>Leading<\/strong> shows what needs action now[\s\S]*<strong>Lagging<\/strong> shows how we performed/);
   page.run("setTab('shipping')");
-  assert.match(hint(results(page), 'shipping'), /an SAP delivery with a FedEx tracking number/);
+  assert.match(hint(results(page), 'shipping'), /an SAP delivery with a tracking number: click <strong>Check<\/strong>/);
   // Every first-visit hint is one short sentence.
   for (const id of ['weekly-cards', 'shipping']) {
     page.run(`setTab(${JSON.stringify(id === 'shipping' ? 'shipping' : 'weekly')})`);

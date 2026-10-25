@@ -6,8 +6,8 @@ A browser dashboard for SAP B1 KPI exports: users upload Excel/CSV exports and t
 
 There are two ways to host it:
 
-- **Cloudflare Pages (the live site, https://spyder-kpi-dashboard.pages.dev):** adds a sign-in page, one shared report and shared notes for everyone who signs in, the at-risk history, Ask AI and live FedEx tracking. These use the Pages Functions in `functions/`, one Workers KV namespace and a small scheduled Worker. Settings are listed under "Cloudflare settings at a glance" below; the owner's step-by-step list is [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md).
-- **IIS or any other static web server:** serve the folder as it is. It needs no database, application server, Node, Python or internet access. Reports and notes stay in each browser, and Ask AI and live FedEx status are not available.
+- **Cloudflare Pages (the live site, https://spyder-kpi-dashboard.pages.dev):** adds a sign-in page, one shared report and shared notes for everyone who signs in, the at-risk history, Ask AI and shared Shipping statuses (checked by hand). These use the Pages Functions in `functions/` and one Workers KV namespace. Settings are listed under "Cloudflare settings at a glance" below; the owner's step-by-step list is [OWNER_CHECKLIST.md](OWNER_CHECKLIST.md).
+- **IIS or any other static web server:** serve the folder as it is. It needs no database, application server, Node, Python or internet access. Reports, notes and Shipping statuses stay in each browser, and Ask AI is not available.
 
 ## Files
 
@@ -18,9 +18,8 @@ There are two ways to host it:
 - `VERSION.txt` - package/version marker
 - `wrangler.toml` - Cloudflare Pages settings (project name, the `REPORT_STORE` KV binding); secrets are not kept in it
 - `docs/` - guides: user quick start, this file, the owner checklist, Ask AI, MCP connector, Shipping
-- `functions/` - Cloudflare Pages Functions: the sign-in gate, shared storage (`functions/api/report.js` the last report, `functions/api/notes.js` notes / overrides / causes, `functions/api/people.js` the editors' names, `functions/api/history.js` at-risk history), live shipping (`functions/api/shipping.js`) and the Ask AI proxy for Claude, ChatGPT, Groq and OpenRouter (`functions/api/ai/`)
-- `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker
-- `workers/shipping-poller/` - optional Cloudflare Worker that checks FedEx every 4 hours for the Shipping page (its own `wrangler.toml` and README); see `docs/SHIPPING.md`
+- `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker (kept, unused since 2v4)
+- `workers/shipping-poller/` - Cloudflare Worker that checked FedEx every 4 hours (its own `wrangler.toml` and README); kept in the repo but **not deployed** since 2v4, see `docs/SHIPPING.md`
 - `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node.js 20 or newer) to connect Claude or other AI apps; see `docs/MCP.md`
 - `web.config` - optional IIS static hosting config
 
@@ -57,22 +56,22 @@ The binding lives in the repo's `wrangler.toml`, which Cloudflare Pages reads on
 2. In `wrangler.toml`, put the id in place of `REPLACE_WITH_REPORT_STORE_NAMESPACE_ID` and remove the `# ` in front of the three lines that start with `[[kv_namespaces]]`. Put the same id in `workers/shipping-poller/wrangler.toml`.
 3. Commit and push to `main` (Pages builds from GitHub), or deploy by hand with `npx wrangler pages deploy . --project-name spyder-kpi-dashboard`. The sidebar then says "Saved for everyone who signs in" after an upload.
 
-`/api/report`, `/api/notes`, `/api/people` and `/api/history` sit behind the same sign-in as the page; only a signed-in page on the same site can change what is stored (requests from another site are refused). The same binding turns on shared notes, saved names and the at-risk history; nothing else needs setting up. The namespace also holds the Shipping page's FedEx results (keys starting with `tracking:`, see below).
+`/api/report`, `/api/notes`, `/api/people` and `/api/history` sit behind the same sign-in as the page; only a signed-in page on the same site can change what is stored (requests from another site are refused). The same binding turns on shared notes, saved names and the at-risk history; nothing else needs setting up. Shipping statuses set by hand are saved with the notes (key `overrides`), so they need nothing else either.
 
-### Live shipping (FedEx, optional)
+### Shipping (checked by hand; FedEx API not deployed)
 
-The **Shipping** page shows FedEx statuses for recent deliveries. It needs the shared storage above, a FedEx developer
-project with the Track API, and the scheduled Worker in `workers/shipping-poller` (every 4 hours, `crons = ["0 */4 * * *"]`).
-Full steps: [SHIPPING.md](SHIPPING.md). In short:
+Since 2v4 the **Shipping** page does not call any tracking API. It lists recent SAP deliveries for every carrier with a
+**Check** link to AfterShip's public tracking page (`https://www.aftership.com/track/<number>`, opened in a new tab), and
+people record the status by hand. Statuses are saved through `/api/notes` in the `overrides` key (map `shipments`, ids
+`st:<tracking number>`), so the shared storage above is all it needs; on IIS or another static host they stay in each
+browser. Until a real status exists the page shows clearly labelled demo data. Details: [SHIPPING.md](SHIPPING.md).
 
-1. In `workers/shipping-poller/wrangler.toml`, set the `REPORT_STORE` namespace id (the same namespace as above).
-2. In that folder: `npx wrangler secret put FEDEX_CLIENT_ID`, `npx wrangler secret put FEDEX_CLIENT_SECRET`, then `npx wrangler deploy`.
-3. Optional, for the page's **Refresh now** button: `npx wrangler pages secret put FEDEX_CLIENT_ID --project-name spyder-kpi-dashboard` and the same for `FEDEX_CLIENT_SECRET`, then redeploy.
-4. Sandbox (test) keys only: set `FEDEX_API_BASE` to `https://apis-sandbox.fedex.com`: uncomment the `[vars]` lines in the Worker's `wrangler.toml`, and for the Pages project run `npx wrangler pages secret put FEDEX_API_BASE --project-name spyder-kpi-dashboard` (a plain dashboard variable would be replaced by `wrangler.toml` on the next deploy).
-
-KV keys used: `tracking:wanted` (the list the page sends), `tracking:index` (FedEx results), `tracking:token` (the FedEx
-sign-in, expires on its own) and `tracking:refresh` (the 10-minute Refresh limit). Only tracking numbers are sent to
-FedEx. On IIS or another static host the Shipping page lists the tracking numbers from the export without live status.
+The earlier FedEx code is kept in the repo but unused: `shared/fedex.mjs`, `functions/api/shipping.js` (deployed with
+the other functions, idle because no page calls it) and the scheduled Worker in `workers/shipping-poller`
+(`crons = ["0 */4 * * *"]`), which should **not** be deployed. No `FEDEX_*` secrets are needed. If FedEx tracking is ever
+turned back on, the Worker needs the `REPORT_STORE` namespace id in its `wrangler.toml`, `npx wrangler secret put
+FEDEX_CLIENT_ID` / `FEDEX_CLIENT_SECRET` and `npx wrangler deploy` (plus page code to read `/api/shipping` again); it
+would use the KV keys `tracking:wanted`, `tracking:index`, `tracking:token` and `tracking:refresh`.
 
 The SAP KPI query must be re-run once with the updated `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`
 so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipDate` on delivery rows.
@@ -87,10 +86,10 @@ so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipD
 | `OPENAI_API_KEY` | Pages secret | Optional | Ask AI with ChatGPT (paid) |
 | `GROQ_API_KEY` | Pages secret | Optional | Ask AI with Groq (free tier) |
 | `OPENROUTER_API_KEY` | Pages secret | Optional | Ask AI with OpenRouter's free models |
-| `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` | Worker secrets in `workers/shipping-poller`; also Pages secrets for **Refresh now** | Optional | FedEx Track API keys for the Shipping page |
-| `FEDEX_API_BASE` | Worker `[vars]` / Pages secret | Only with FedEx sandbox keys | `https://apis-sandbox.fedex.com` |
-| `REPORT_STORE` | KV binding in `wrangler.toml` and `workers/shipping-poller/wrangler.toml` (same namespace, `spyder-kpi-report`) | Recommended | Shared report, notes, at-risk history and FedEx results (keys below) |
-| Worker cron | `workers/shipping-poller/wrangler.toml`: `crons = ["0 */4 * * *"]` | With live shipping | Checks FedEx every 4 hours (00:00, 04:00, ... 20:00 UTC) |
+| `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` | Worker secrets in `workers/shipping-poller` (not deployed) | Not used since 2v4 | FedEx Track API keys for the dormant FedEx module; the Shipping page is checked by hand |
+| `FEDEX_API_BASE` | Worker `[vars]` / Pages secret | Not used since 2v4 | `https://apis-sandbox.fedex.com` for FedEx sandbox keys |
+| `REPORT_STORE` | KV binding in `wrangler.toml` and `workers/shipping-poller/wrangler.toml` (same namespace, `spyder-kpi-report`) | Recommended | Shared report, notes, Shipping statuses and at-risk history (keys below) |
+| Worker cron | `workers/shipping-poller/wrangler.toml`: `crons = ["0 */4 * * *"]` | Not used (Worker not deployed since 2v4) | Would check FedEx every 4 hours (00:00, 04:00, ... 20:00 UTC) |
 
 Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard` (or Workers & Pages > **spyder-kpi-dashboard** > Settings > Variables and Secrets, type **Secret**), then redeploy. Worker secrets: `npx wrangler secret put <NAME>` in `workers/shipping-poller`. The repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy: use the **Secret** type for everything above.
 
@@ -99,11 +98,11 @@ Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-d
 | Key | What it holds | Written | Size |
 |---|---|---|---|
 | `report` | Compressed copy of the last loaded export files | Each upload (replaces the last one) | About 1.5 MB |
-| `overrides` | Notes, override statuses, Us / Them causes and "deleted" flags on order lines, each with the editor's name and the time of the edit; tracking numbers typed in on the Shipping page (`shipments`) | About 1 second after an edit stops (one write per batch of edits) | Capped at 2 MB |
+| `overrides` | Notes, override statuses, Us / Them causes and "deleted" flags on order lines, each with the editor's name and the time of the edit; tracking numbers typed in on the Shipping page and the statuses set there by hand (`shipments`, status ids `st:<number>`) | About 1 second after an edit stops (one write per batch of edits) | Capped at 2 MB |
 | `people` | The names people gave in the "Your name" dialog (`{name, firstSeen, lastSeen}`), offered to everyone as one-click choices | When a new name is added, or a name not seen for a day is used again (each browser sends its name at most once a day) | Capped at 300 names (the name seen longest ago gives way); names not seen for 180 days drop off, and the x beside a name in the dialog removes it (DELETE /api/people); a few KB |
 | `history` | For each of the last 52 weeks (one entry per week; a second upload in the same week is merged into it): the earliest export date loaded that week and the keys of the lines on the At Risk card in any of that week's uploads (SO number, line, item, warehouse). New uploads are merged into it | Each upload | Capped at 8 MB |
 | `history:first` | The same weeks with each line listed only under the first week it was at risk: what the page reads to show how long a line has been at risk ("first flagged"), so a line at risk all year is sent once instead of 52 times. Rebuilt from `history` on each upload | Each upload | Smaller than `history` |
-| `tracking:*` | Shipping page: `tracking:wanted` (tracking numbers the page sends), `tracking:index` (FedEx results), `tracking:token` (FedEx sign-in, expires on its own), `tracking:refresh` (the 10-minute Refresh limit) | Worker every 4 hours, Refresh now, page loads that change the list | Small |
+| `tracking:*` | Dormant FedEx module: `tracking:wanted` (tracking numbers the page sends), `tracking:index` (FedEx results), `tracking:token` (FedEx sign-in, expires on its own), `tracking:refresh` (the 10-minute Refresh limit) | Not written since 2v4 (the page no longer calls `/api/shipping`); old keys can be deleted | Small |
 | `ai:day:<provider>:<date>` | Ask AI request counts for a paid provider that day (the site's daily cap, `AI_DAILY_REQUESTS`) and per signed-in browser for the current minute (an id derived from the session cookie, not the cookie) | Each Ask AI request to Claude or ChatGPT | A few hundred bytes; expires after 2 days |
 
 A line key looks like `Sales Order|1234|5678|0|SPY-100|Spyder - Lacombe`. Notes are free text typed by users, so treat the namespace like the SAP export itself. The name is what each person picks or types the first time they edit a note (kept in their browser as `spyderKpiEditorName`, and in the `people` list for everyone): 1 to 40 letters (any language), spaces and . ' - only. Names are not checked against accounts, since the site has one shared password. Initials saved before 2v2 (`spyderKpiEditor`) are still shown on older edits; each browser asks for the name once.
@@ -149,10 +148,10 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
   Set each with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`. The keys never reach the browser: the page calls `/api/ai/status` and `/api/ai/chat`, which sit behind the same sign-in gate, accept chat requests only from the dashboard page itself, cap each request at 1 MB and allow only listed models. Set a monthly spend limit on the paid accounts. IIS and other static hosts have no proxy, so Ask AI is not available there (users can connect Claude Desktop instead, see `docs/MCP.md`).
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
-- Restrict access to internal users only. On Cloudflare Pages with `REPORT_STORE` bound, the last uploaded export, the shared notes, the at-risk history and the Shipping page's FedEx results are stored in Workers KV and readable by anyone with the dashboard password; otherwise uploaded KPI data and notes never reach the server. The page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.
+- Restrict access to internal users only. On Cloudflare Pages with `REPORT_STORE` bound, the last uploaded export, the shared notes, the at-risk history and the Shipping statuses are stored in Workers KV and readable by anyone with the dashboard password; otherwise uploaded KPI data and notes never reach the server. The page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.
 - Cloudflare Pages: only the sign-in page logo, `/assets/spyder-logo.jpg`, is served without signing in (an exact path in `functions/_middleware.js`). Every other path, including any other name under `/assets/`, needs a session; this matters because Cloudflare Pages answers a missing file with `index.html`. To make another file public, add its exact path to `PUBLIC_PATHS` there, and never put anything private in it.
 - The page loads the Inter font from Google Fonts (fonts.googleapis.com, fonts.gstatic.com), as the sign-in page does. Without internet access both fall back to the system font; nothing else is loaded from outside.
-- FedEx keys (`FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`) live only as Worker / Pages secrets; they and the FedEx sign-in token are never sent to the browser. `/api/shipping` is behind the sign-in; changing the tracking list or asking FedEx now is accepted only from the dashboard page itself (same origin), and Refresh now is limited to once per 10 minutes for the whole site.
+- The Shipping page sends nothing to any carrier or tracking service; its **Check** links only open AfterShip's public page in the viewer's own browser tab. The dormant FedEx module's keys (`FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`), if ever set, live only as Worker / Pages secrets; they and the FedEx sign-in token are never sent to the browser. `/api/shipping` is behind the sign-in; changing the tracking list or asking FedEx now is accepted only from the dashboard page itself (same origin), and Refresh now is limited to once per 10 minutes for the whole site.
 - Cloudflare Pages: set `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32+ random characters) as Pages secrets for Production and Preview. Both are required; the site returns a "not configured" error until both are set. Changing either signs everyone out. Failed sign-ins are delayed by one second; for stronger protection put the project behind Cloudflare Access, or add a rate-limiting rule matching the path `/login` with method POST (and redirect `<project>.pages.dev` to the custom domain so the rule cannot be bypassed).
 - IIS: this package does not configure authentication, because the IIS authentication sections are locked by default and a web.config that sets them would fail on a default install. To require Windows sign-in, install the Windows Authentication role service, then in IIS Manager for this site disable Anonymous Authentication, enable Windows Authentication, and add an Authorization rule for the allowed AD group. The included web.config hides the `functions`, `shared`, `workers` and `tests` folders (server code that IIS does not run).
 

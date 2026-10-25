@@ -19,7 +19,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
 
    `SESSION_SECRET` is 32 or more random characters (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` makes one). Changing it signs everyone out.
 
-3. **Turn on shared storage (one KV namespace, bound as `REPORT_STORE`).** It holds the shared report, notes, at-risk history and FedEx results.
+3. **Turn on shared storage (one KV namespace, bound as `REPORT_STORE`).** It holds the shared report, notes (including Shipping statuses) and at-risk history.
 
    ```
    npx wrangler kv namespace create spyder-kpi-report
@@ -43,18 +43,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - OpenRouter: decide on Settings > Privacy. Free models only work if the account allows providers that may train on or publish prompts; otherwise OpenRouter models say they "could not be used with this account's privacy settings". Treat anything sent to OpenRouter as public.
    - Redeploy (push, or Deployments > latest > Retry deployment) so new secrets take effect. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
-5. **Set up live FedEx tracking.**
-   - At developer.fedex.com, sign in with Spyder Controls' fedex.com user, create an API project with the **Track API** and ask for **production** keys (FedEx asks for the account number). The API key is `FEDEX_CLIENT_ID`, the Secret key is `FEDEX_CLIENT_SECRET`.
-   - In the `workers/shipping-poller` folder (after step 3):
-
-     ```
-     npx wrangler secret put FEDEX_CLIENT_ID
-     npx wrangler secret put FEDEX_CLIENT_SECRET
-     npx wrangler deploy
-     ```
-
-     Workers & Pages > **spyder-shipping-poller** > Settings > Trigger events should show `0 */4 * * *` (every 4 hours).
-   - Optional, for the **Refresh now** button: put the same two keys on the Pages project (`npx wrangler pages secret put FEDEX_CLIENT_ID --project-name spyder-kpi-dashboard`, the same for `FEDEX_CLIENT_SECRET`) and redeploy. Details: [SHIPPING.md](SHIPPING.md).
+5. **Shipping needs no setup (FedEx tracking is off since 2v4).** The Shipping page is checked by hand: a **Check** link per shipment opens AfterShip, and statuses are saved with the shared notes (step 3). Do **not** deploy `workers/shipping-poller`, and skip the `FEDEX_CLIENT_ID` / `FEDEX_CLIENT_SECRET` secrets; that code stays in the repo unused. Details: [SHIPPING.md](SHIPPING.md).
 
 6. **Re-run the updated SQL in SAP.** Replace the saved KPI query with `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql` (it adds `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipDate` to delivery rows), run it and Export to Excel. The supply / demand query is unchanged. Ask the shipping team to fill **Tracking No.** on deliveries.
 
@@ -62,7 +51,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - With the same export as last time, the Order Health **At risk** card still shows **62 orders / 124 lines / $836,876**.
    - With the new export: on the **Leading** tab the open order states (On track, Due this week, Rescheduled, Past due, No commit) add up to **All open**.
    - **Big picture** on Order Health: each column (including the middle status column) adds up to **All open**, the at-risk status boxes add up to the **At risk** card, and the at-risk chart totals the At risk value. On Build Risk the three middle boxes (Clear to build, At risk, Late) match the cards above.
-   - The **Shipping** page lists the tracking numbers from the new export (live status comes after deploy).
+   - The **Shipping** page shows **Demo data**; **Show real shipments** lists the tracking numbers from the new export, each with a **Check** link.
    - The MCP connector still reads it: `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"` prints the overview with the same at-risk numbers.
 
 8. **After deploy, on https://spyder-kpi-dashboard.pages.dev:**
@@ -70,6 +59,6 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - Add a note on a line (pick or type your name when asked); the sidebar says "Notes shared · last edit ...". In the second browser below, your name is listed in the "Your name" dialog.
    - Open the site in a second browser (or a private window) and sign in: the same report opens without uploading, with your note on the line.
    - Ask AI: for each provider with a key, tick its box in Settings and ask one question, such as "What is at risk right now?". The answer should match the At risk card. Providers without a key show "(not set up)".
-   - Shipping: click **Refresh now** (if the Pages project has the FedEx keys) or wait for the next 4-hour check; the header then says "Updated ... ago" and rows show FedEx statuses. The Worker's Logs show "checked N tracking numbers".
+   - Shipping: click **Show real shipments**, open a row, set **In transit** and **Save**; the toast says "saved for everyone", and the second browser shows the same status (with demo data off).
 
 If something does not work, the troubleshooting tables in [SHIPPING.md](SHIPPING.md), [AI_ASSISTANT.md](AI_ASSISTANT.md) and [IT_HOSTING_README.md](IT_HOSTING_README.md) list messages and fixes.
