@@ -3802,7 +3802,8 @@ function normalizeRows(raw){
     const row={
       exportDate:pick(mapped,['exportdate']),
       sourceType:sourceFromDocType(pick(mapped,['sourcetype','doctype'])),
-      docEntry:pick(mapped,['docentry','internalnumber']),
+      // SAP's Excel export titles DocEntry "Internal Number" on sales documents and "Numerator" on purchase documents.
+      docEntry:pick(mapped,['docentry','internalnumber','numerator']),
       documentNumber:pick(mapped,['documentnumber','sodocnum','ponumber','docnum']),
       lineNumber:pick(mapped,['linenumber','linenum','line']),
       customerPONumber:pick(mapped,['customerponumber','numatcard','custpo','customerpo','custref','customerref']),

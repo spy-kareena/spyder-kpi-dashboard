@@ -22,6 +22,18 @@ test('SAP UTF-16 export: every row kept, quotes literal, numbers and dates read'
   assert.equal(got[2].due, '2026-08-01');
 });
 
+test('purchase exports titled "Numerator" keep the order ID (DocEntry), like "Internal Number" on sales exports', async () => {
+  // SAP's Excel export names DocEntry "Internal Number" on sales documents and "Numerator" on purchase documents.
+  const headers = SAP_HEADERS.map((h) => (h === 'Internal Number' ? 'Numerator' : h));
+  const po = sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '33023', 'Internal Number': '27723' });
+  const row = Object.fromEntries(headers.map((h) => [h, h === 'Numerator' ? po['Internal Number'] : po[h]]));
+  const page = loadPage();
+  await upload(page, [{ name: 'po lines.xls', bytes: utf16Tsv(headers, [row]) }]);
+  assert.equal(page.run('allLoadedRows.length'), 1);
+  assert.equal(page.run('allLoadedRows[0].docEntry'), '27723');
+  assert.match(page.run('rowKey(allLoadedRows[0])'), /^Purchase Order\|27723\|33023\|/);
+});
+
 test('CSV: quoted commas, doubled quotes, and embedded line breaks', async () => {
   const page = loadPage();
   const csv = 'SourceType,DocumentNumber,CustomerVendorName,DueDate,Quantity,OpenQuantity,AmountLocal,Status\r\n'

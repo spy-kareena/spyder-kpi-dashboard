@@ -137,3 +137,6 @@ with a sub-heading per warehouse and a "Supply at risk only" chip (Supply Mix li
 Build Risk shows each override as text with one Edit button and an Amount column; Monthly month cards line up and
 every number strip has one layout; the phone header fits one row; Order Health prints on 8 pages instead of 13.
 ⓘ buttons removed; section help is on the title's tooltip.
+
+2v2.1: Purchase Order and PO Receipt exports whose order ID column SAP titles "Numerator" (instead of
+"Internal Number") keep that ID, so notes, overrides and causes saved on PO lines still attach.
