@@ -6,7 +6,8 @@ each shipment has a **Check** link to its public tracking page, and whoever look
 (Shipped, In transit, Delayed or Delivered, with a date and a short note). Everyone who signs in sees those statuses,
 and the page's cards come from them.
 
-Until the first real status is saved, the page shows **demo data** (12 made-up shipments) so you can see how it looks.
+For now the page opens on **demo data** (12 made-up shipments) so you can see how it looks; **Show real shipments**
+switches to the real list.
 
 ## What the page shows
 
@@ -72,7 +73,8 @@ opens on the hosted site. A **Share snapshot** carries the statuses on screen (r
 
 ## Demo data
 
-- **On by default** while nobody has saved a real status; once one exists it is off by default for everyone.
+- **On by default for everyone**, even after real statuses are saved, until the owner asks to remove it
+  (`SHIP_DEMO_DEFAULT` in `index.html`).
 - **Show demo data / Show real shipments** switches it for you (remembered in this browser only).
 - 12 made-up shipments, built in the page, covering every stage: shipped, in transit, delayed (one weather hold, one
   held at customs), delivered this week and last week, never checked, and checked more than 2 days ago, including
@@ -104,7 +106,7 @@ read `/api/shipping` again. It only covers FedEx; the manual flow covers every c
 2. Click **Check** on a row: AfterShip opens in a new tab.
 3. Open the row, set **In transit** with a note and **Save**. The In transit card goes up by one, and the toast says
    "saved for everyone".
-4. Open the page in another browser (or another person's computer): the same status shows, and demo data is off.
+4. Open the page in another browser (or another person's computer): click **Show real shipments**; the same status shows.
 
 ## Troubleshooting
 

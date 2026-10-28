@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 2v2
+Version: 2v2.1
 Package date: 2026-10-13
 
 Main file: index.html
@@ -140,3 +140,8 @@ every number strip has one layout; the phone header fits one row; Order Health p
 
 2v2.1: Purchase Order and PO Receipt exports whose order ID column SAP titles "Numerator" (instead of
 "Internal Number") keep that ID, so notes, overrides and causes saved on PO lines still attach.
+Shipping is checked by hand: recent SAP deliveries for every carrier, each with a Check link to its AfterShip
+tracking page and a manual status (Shipped / In transit / Delayed / Delivered, with a date and note) saved in the
+shared notes for everyone. No tracking API is called (the FedEx module and poller Worker stay in the repo, unused).
+Demo data (12 made-up shipments, clearly labelled, with a Show real shipments switch) is on by default until the
+owner asks to remove it (SHIP_DEMO_DEFAULT in index.html).

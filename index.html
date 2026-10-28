@@ -9742,7 +9742,9 @@ const SHIP_HOME_COUNTRY='CA';      // shipments leave Canada
 const SHIP_LIST_LIMIT=40;
 const SHIP_DAY=24*60*60*1000;
 const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // the shared notes store's own copy in this browser
-const SHIP_DEMO_KEY='spyderKpiShipDemo';         // this viewer's Demo data choice: '1' on, '0' off, none = automatic
+// Demo shipments show by default, even once real statuses exist; set to false (or remove) when the owner asks.
+const SHIP_DEMO_DEFAULT=true;
+const SHIP_DEMO_KEY='spyderKpiShipDemo';         // this viewer's Demo data choice: '1' on, '0' off, none = SHIP_DEMO_DEFAULT
 const shipTrackUrl=n=>`https://www.aftership.com/track/${encodeURIComponent(n)}`;
 // rowsRef: the rows the view was reset for; snapshotManual / snapshotDemo: what a shared snapshot carried;
 // demoEdits: statuses set on demo shipments (this page only, never saved).
@@ -9768,7 +9770,7 @@ function shipSplit(v){
   });
   return [...new Set(pieces.map(shipClean).filter(Boolean))];
 }
-// True on a hosted page (http/https, not a snapshot); the Logican sheet reader uses it too.
+// True on a hosted page (http/https, not a snapshot).
 function shippingApiPossible(){
   try{return typeof fetch==='function'&&!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));}catch(e){return false;}
 }
@@ -10042,7 +10044,7 @@ function shippingDemoStored(){
 function shippingDemoOn(){
   if(isSnapshotView)return !!shippingState.snapshotDemo;
   const pick=shippingDemoStored();
-  return pick===null?!shippingHasRealStatuses():pick;
+  return pick===null?(SHIP_DEMO_DEFAULT||!shippingHasRealStatuses()):pick;
 }
 function setShippingDemo(on){
   shippingDemoChoice=!!on;

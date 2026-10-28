@@ -179,8 +179,10 @@ test('cards filter the list; Not checked in 2+ days counts statuses saved 2 or m
     [`st:${N.delivered}`]: { order: '604', number: N.delivered, status: 'delivered', statusDate: '2026-10-03', note: '', by: 'Ann', at: at('2026-10-03') },
     [`st:${N.usa}`]: { order: '601', number: N.usa, status: 'delayed', statusDate: '', note: 'customs', by: 'Ann', at: at('2026-10-01'), deleted: true },
   }) };
-  // Real statuses exist, so demo data is off by default.
+  // Demo data stays on by default even when real statuses exist (SHIP_DEMO_DEFAULT); the toggle shows the real list.
   const page = await shipPage({ real: false, storage });
+  assert.equal(page.run('shippingDemoOn()'), true);
+  page.run('setShippingDemo(false)');
   assert.equal(page.run('shippingDemoOn()'), false);
   assert.deepEqual(['transit', 'delayed', 'delivered', 'stale'].map((id) => card(page, id)), ['2', '0', '0', '4']);
   assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.parcel, N.usa, N.ups, N.puro].sort());
@@ -205,9 +207,10 @@ test('a manual status round-trips through the shared notes store (/api/notes): e
   const stored = site.kv.json('overrides').shipments[`st:${N.ups}`];
   assert.deepEqual({ ...stored, at: 'x' }, { order: '603', number: N.ups, status: 'delayed', statusDate: '2026-10-07', note: 'Held at the border', by: 'Kareena', at: 'x' });
 
-  // A second browser (its own storage, the next day): demo off on its own (a real status exists), the status shows.
+  // A second browser (its own storage, the next day): demo on by default; Show real shipments shows the shared status.
   const b = await notesBrowser(site, 'Jamie Cole', '2026-10-08', { real: false });
-  assert.equal(b.run('shippingDemoOn()'), false);
+  assert.equal(b.run('shippingDemoOn()'), true);
+  b.run('setShippingDemo(false)');
   assert.equal(card(b, 'delayed'), '1');
   assert.match(html(b), /<span class="status-chip bad">Delayed<\/span>/);
   setStatus(b, N.ups, 'delivered', '2026-10-08', '');

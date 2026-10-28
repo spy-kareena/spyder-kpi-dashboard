@@ -64,7 +64,7 @@ Since 2v4 the **Shipping** page does not call any tracking API. It lists recent 
 **Check** link to AfterShip's public tracking page (`https://www.aftership.com/track/<number>`, opened in a new tab), and
 people record the status by hand. Statuses are saved through `/api/notes` in the `overrides` key (map `shipments`, ids
 `st:<tracking number>`), so the shared storage above is all it needs; on IIS or another static host they stay in each
-browser. Until a real status exists the page shows clearly labelled demo data. Details: [SHIPPING.md](SHIPPING.md).
+browser. For now the page opens on clearly labelled demo data (`SHIP_DEMO_DEFAULT`). Details: [SHIPPING.md](SHIPPING.md).
 
 The earlier FedEx code is kept in the repo but unused: `shared/fedex.mjs`, `functions/api/shipping.js` (deployed with
 the other functions, idle because no page calls it) and the scheduled Worker in `workers/shipping-poller`

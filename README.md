@@ -17,7 +17,7 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 | Monthly | Sales | Shipped and open sales-order value by month, year over year, and a ship target scenario |
 | Warehouse Timeline | Sales | Open value, late lines and on-track rate by warehouse and due month |
 | Metrics Timeline | Sales | Order quality rates (on-track, perfect order, backorder, partial ship) and risk by due month |
-| Shipping | Sales | Recent deliveries for every carrier, checked by hand: a Check link to each tracking page and a shared manual status (demo data until real statuses exist) |
+| Shipping | Sales | Recent deliveries for every carrier, checked by hand: a Check link to each tracking page and a shared manual status (demo data shown by default until the owner asks to remove it) |
 | Purchase Orders | Supply | Late, unconfirmed and no-commit PO lines, receiving performance and late value by vendor |
 | Supply / Demand | Supply | Open sales-order demand against open PO supply by warehouse and month: shortages and risky supply (needs the supply / demand snapshot) |
 | Supply Mix | Supply | Net quantity by month, demand by warehouse, risk by item group, and **Big picture** (needs the supply / demand snapshot) |
