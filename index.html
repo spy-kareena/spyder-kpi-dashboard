@@ -2041,6 +2041,163 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 
 /* ===== Area markers: each page agent edits only inside its own pair (empty on purpose) ===== */
 /* 2v6:oh-leading */
+/* Order Health, Leading: At risk, Status & top reasons, Open lines by due week, Customers at risk, When flagged, Date changes, Lines */
+.ohl-card{position:relative;padding-bottom:24px}
+.ohl-card .empty-note{padding:6px 0;font-size:12.5px;color:var(--dz-ink-4)}
+.ohl-card .dz-card-head{align-items:center}
+.ohl-crit{color:var(--dz-risk)}
+.ohl-good{color:var(--dz-teal)}
+.ohl-note{font-size:12px;color:var(--dz-ink-4)}
+.ohl-foot-note{margin-top:16px}
+button.ohl-chipbtn{border:0;font:inherit;font-size:12px;font-weight:500;line-height:1.2;cursor:pointer}
+button.ohl-chipbtn:hover{filter:brightness(.97)}
+button.ohl-chipbtn.sel{box-shadow:0 0 0 2px rgba(225,29,72,.3)}
+.ohl-hero-row{margin-top:10px}
+.ohl-hero{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:12px}
+.ohl-hero .dz-big{letter-spacing:-.03em}
+.ohl-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+@media (max-width:1290px){.ohl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px) and (min-width:641px){.ohl-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.ohl-stat{display:block;width:100%}
+.ohl-stat.sel,.ohl-stat.sel:hover{background:#fff;border-color:rgba(99,102,241,.45)}
+.ohl-stat-l{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dz-ink-4)}
+.ohl-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
+.ohl-stat-v{display:block;margin-top:4px;font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.ohl-stat-v.zero{color:var(--dz-ink-5)}
+.ohl-stat-s{display:block;margin-top:1px;font-size:11.5px;color:var(--dz-ink-4)}
+.ohl-sec{margin-top:20px;padding-top:16px;border-top:1px solid rgba(15,23,42,.1)}
+.ohl-sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ohl-sec-title{font-size:14px;font-weight:600}
+.ohl-sec-sub{margin-top:16px;font-size:13px;font-weight:600}
+.ohl-wh{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;width:100%;margin-top:10px;border:0;background:var(--dz-risk-bg);border-radius:14px;padding:12px 14px;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.ohl-wh:hover{background:#ffe8eb}
+.ohl-wh.sel{box-shadow:inset 0 0 0 2px rgba(225,29,72,.3)}
+.ohl-wh-main{min-width:0}
+.ohl-wh-name{display:block;font-size:15px;font-weight:600}
+.ohl-wh-sub{display:block;margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
+.ohl-figs{display:flex;gap:18px;flex-wrap:wrap}
+.ohl-fig-l{font-size:11.5px;color:var(--dz-ink-4)}
+.ohl-fig-v{font-size:22px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.ohl-fig-v.sm{margin-top:3px;font-size:16px;font-weight:500;color:var(--dz-ink-3)}
+.ohl-bars{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.ohl-bars-lg{gap:12px;margin-top:14px}
+.ohl-sec .ohl-bars-lg{margin-top:12px}
+.dz-barrow.ohl-bar130{grid-template-columns:130px minmax(0,1fr) 28px}
+.dz-barrow.ohl-status{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) 88px}
+.ohl-status .dz-barrow-name{font-size:13.5px;font-weight:500;color:var(--dz-ink-1)}
+.ohl-status .dz-barrow-sub{font-size:12px}
+.ohl-status .dz-barrow-n{font-size:15px}
+.ohl-status.crit .dz-barrow-n{color:var(--dz-risk-text)}
+.ohl-status.zero .dz-barrow-n{color:var(--dz-ink-5)}
+.ohl-status.zero .dz-barrow-fill{display:none}
+.ohl-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px}
+.ohl-tile{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;border:1px solid var(--dz-line-6);border-radius:12px;background:transparent;padding:9px 12px;font:inherit;text-align:left;color:var(--dz-ink-1);cursor:pointer}
+.ohl-tile:hover{background:rgba(255,255,255,.7)}
+.ohl-tile.sel{background:#fff;border-color:rgba(99,102,241,.45)}
+.ohl-tile-l{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--dz-ink-4)}
+.ohl-tile-n{flex:none;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.ohl-tile.zero{color:var(--dz-ink-5)}
+.ohl-chart{position:relative;height:190px;margin-top:56px}
+.ohl-chart svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ohl-pt{position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;border:3px solid var(--dz-indigo);transform:translate(-50%,-50%)}
+.ohl-peak{position:absolute;left:clamp(84px,var(--x),calc(100% - 84px));transform:translate(-50%,calc(-100% - 14px));background:var(--dz-ink-1);color:#fff;font-size:12px;font-weight:500;border-radius:999px;padding:6px 12px;white-space:nowrap;pointer-events:none}
+.ohl-weeks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));margin-top:14px;font-size:11px;color:var(--dz-ink-4);text-align:center}
+.ohl-weeks span{white-space:nowrap}
+.ohl-card .ohl-empty{margin-top:24px}
+.ohl-list{display:flex;flex-direction:column;gap:12px;margin-top:16px}
+button.ohl-cust,button.ohl-age{width:calc(100% + 16px);margin:-6px -8px;padding:6px 8px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:13px;text-align:left;color:inherit;cursor:pointer}
+button.ohl-cust:hover,button.ohl-age:hover{background:rgba(255,255,255,.7)}
+button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
+.ohl-cust{display:block}
+.ohl-cust-top{display:flex;justify-content:space-between;gap:10px}
+.ohl-cust-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ohl-rank{margin-right:8px;color:var(--dz-ink-5)}
+.ohl-cust-n{flex:none;font-weight:600;font-variant-numeric:tabular-nums}
+.ohl-cust-bar{display:flex;align-items:center;gap:8px;margin-top:5px}
+.ohl-track{display:block;flex:1;height:5px;border-radius:3px;background:var(--dz-line-6);overflow:hidden}
+.ohl-track>i{display:block;height:100%;min-width:2px;border-radius:3px;background:var(--dz-indigo);transform-origin:left}
+.ohl-cust-amt{font-size:11.5px;color:var(--dz-ink-4);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.ohl-age{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l n" "t n";gap:5px 10px;align-items:center}
+.ohl-age-l{grid-area:l;color:var(--dz-ink-2)}
+.ohl-age-n{grid-area:n;align-self:center;font-weight:600;font-variant-numeric:tabular-nums}
+.ohl-age .ohl-track{grid-area:t;height:6px}
+.ohl-age .ohl-track>i{background:var(--dz-teal)}
+.ohl-age.zero .ohl-track>i{display:none}
+.ohl-age.zero .ohl-age-n{color:var(--dz-ink-5)}
+.ohl-age.zero .ohl-age-l{color:var(--dz-ink-4)}
+.ohl-dc .dz-card-head .dz-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ohl-dc-meta{font-size:12.5px;color:var(--dz-ink-4)}
+.ohl-dc-table{--cols:minmax(0,1.4fr) 84px 64px minmax(0,1.5fr) minmax(0,1.2fr);--gap:14px;margin-top:12px}
+.ohl-dc-row.sel{background:var(--dz-indigo-bg)}
+.ohl-dc-cust{min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.ohl-dc-lines,.ohl-dc-worst{min-width:0}
+.ohl-dc-slip{font-weight:600;color:var(--dz-risk-text)}
+.ohl-dc-tags{display:flex;gap:6px;flex-wrap:wrap}
+.ohl-dc .dz-cell-sub{margin-top:2px}
+.ohl-lines-wrap{display:flex;flex-direction:column;gap:16px}
+.ohl-lines-card{padding-bottom:18px}
+.ohl-lines-head{gap:10px 12px}
+.ohl-lines-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ohl-lines-tools{display:flex;gap:8px;flex-wrap:wrap}
+.ohl-search{width:210px}
+.ohl-sort{min-width:140px;font-weight:500}
+.ohl-bulk{margin:12px 0 0;justify-content:flex-start;gap:8px 10px;border-radius:14px;background:var(--dz-indigo-bg);padding:8px 14px;font-size:12.5px}
+.ohl-scroll{margin-top:12px;scrollbar-width:thin}
+.ohl-card table.lines-table.so.ohl-lines{min-width:1000px;font-size:13px}
+.ohl-card table.ohl-lines th{padding:10px 8px;border-bottom:1px solid var(--dz-line-8);background:transparent;font-size:11.5px;font-weight:400;color:var(--dz-ink-4)}
+.ohl-card table.ohl-lines td{padding:13px 8px;border-bottom:1px solid var(--dz-line-5);font-size:13px;color:var(--dz-ink-1)}
+.ohl-card table.lines-table.so.ohl-lines tr>:first-child{padding-left:0}
+.ohl-card table.lines-table.so.ohl-lines tr>:last-child{padding-right:0}
+.ohl-card table.ohl-lines tbody tr.line-row:last-child td{border-bottom:0}
+.ohl-card table.ohl-lines tbody tr.line-row:hover,.ohl-card table.ohl-lines tbody tr.line-row.editing{background:rgba(255,255,255,.55)}
+.ohl-card table.ohl-lines tbody tr.line-row.selected{background:var(--dz-indigo-bg)}
+.ohl-card table.ohl-lines .th-sort{font-size:11.5px}
+.ohl-card table.ohl-lines .th-sort:hover{color:var(--dz-ink-2)}
+.ohl-card table.ohl-lines th[aria-sort] .th-sort{color:var(--dz-indigo-deep);font-weight:500}
+.ohl-card table.ohl-lines .row-check{accent-color:var(--dz-indigo)}
+.ohl-card table.ohl-lines .c-doc{font-size:13px;font-weight:600}
+.ohl-card table.ohl-lines .c-name{color:var(--dz-ink-2)}
+.ohl-card table.ohl-lines .c-wh{color:var(--dz-ink-3)}
+.ohl-card table.ohl-lines .c-item strong{font-size:13px}
+.ohl-card table.ohl-lines .c-item .desc{margin-top:2px;font-size:12px;color:var(--dz-ink-4);-webkit-line-clamp:1}
+.ohl-card table.ohl-lines .c-date{font-size:13px;font-weight:400;color:var(--dz-ink-3)}
+.ohl-card table.ohl-lines .c-qty{font-size:13px;font-weight:600;color:var(--dz-ink-1)}
+.ohl-card table.ohl-lines .c-val{font-size:13px;font-weight:600}
+.ohl-card table.ohl-lines .c-status{display:block}
+.ohl-card table.ohl-lines .c-status .dz-cell-sub{margin-top:4px;font-size:12px}
+.ohl-card table.ohl-lines .c-status .oh-why{margin-top:3px;font-size:11.5px;font-weight:500}
+.ohl-card table.ohl-lines .note-btn{border-color:var(--dz-line-8);font-weight:500}
+.ohl-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--dz-ink-4)}
+.ohl-card .ohl-more{font-size:12.5px;font-weight:500;color:var(--dz-indigo-link)}
+.ohl-card .ohl-more:hover{color:var(--dz-indigo-hover);text-decoration:underline}
+@media (max-width:640px){
+  .ohl-card{padding-bottom:20px}
+  .ohl-search{width:100%;flex:1 1 100%}
+  .ohl-sort{flex:1 1 100%}
+  .ohl-lines-tools{width:100%}
+  .ohl-card .lines-table>tbody>tr.line-row{padding:14px 0}
+  .ohl-card .lines-table.so>thead th.c-check{padding:10px 0!important}
+  .ohl-card .lines-table .note-editor,.ohl-card .lines-table.so .note-editor{padding:10px 0 14px}
+  .ohl-card .lines-table.so.ohl-lines{min-width:0}
+  .ohl-card table.ohl-lines td{padding:0}
+  .ohl-card table.ohl-lines .c-status .dz-cell-sub{display:inline;margin-left:6px}
+  .ohl-dc-table{--cols:minmax(0,1fr) auto}
+  .ohl-dc-th{display:none}
+  .ohl-dc-table .dz-tr{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"c s" "l l" "w w" "t t";gap:6px 12px;align-items:start;padding:12px 0}
+  .ohl-dc-cust{grid-area:c}
+  .ohl-dc-slip{grid-area:s}
+  .ohl-dc-lines{grid-area:l}
+  .ohl-dc-lines .dz-cell-sub{display:inline;margin-left:6px}
+  .ohl-dc-lines .dz-cell-sub::before{content:"· "}
+  .ohl-dc-worst{grid-area:w}
+  .ohl-dc-tags{grid-area:t}
+}
+@media print{
+  .ohl-lines-card{break-inside:auto;page-break-inside:auto}
+  .ohl-lines-tools{display:none}
+  .ohl-card table.lines-table.so.ohl-lines{min-width:0}
+  .ohl-chart{height:140px;margin-top:40px}
+}
 /* 2v6:end oh-leading */
 
 /* 2v6:oh-lagging */
@@ -6893,11 +7050,11 @@ function renderResults(){
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
     html+=ohRenderDrillBar(); // the reason / cause / when-flagged / override filters picked from the charts
     html+=renderBigPicture('weekly',m);
-    html+=renderHint('weekly-cards','Open orders by state on top, then <strong>At risk</strong> and <strong>On track</strong> (2-day tolerance); <strong>Lagging</strong> is further down. Click a card to list its lines.');
+    html+=renderHint('weekly-cards','<strong>Leading</strong> shows what needs action now; <strong>Lagging</strong> shows how we performed. Click a number to list its lines.');
     html+=ohPanelOpen('leading');
 
-    // ---------- Leading tab (2v4 oh): At risk, then On track, both over the next month ----------
-    if(ohViewShown('leading')&&!weeklyLeadingCollapsed)html+=ohRenderStates(m)+ohRenderAtRisk(m)+ohRenderOnTrack(m);
+    // ---------- Leading tab (2v6 oh-leading): the cards on the 6-column grid; the Lines card joins the grid below ----------
+    if(ohViewShown('leading')&&!weeklyLeadingCollapsed)html+=ohlRenderLeading(m);
     html+=ohPanelClose()+ohPanelOpen('lagging');
 
     // ---------- Lagging view (2v6): Monthly and Quarterly cards, then the Top offenders ----------
@@ -6959,12 +7116,22 @@ function renderResults(){
       }).sort((a,b)=>a.fillRate-b.fillRate||b.openQty-a.openQty);
       return summaryTable(['Warehouse','Fill rate','Filled qty','Open qty','Open value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.fillRate,90,70)}</td><td class="num">${fmtNum(g.filledQty)}</td><td class="num">${fmtNum(g.openQty)}</td><td class="num strong">${money(g.openValue)}</td></tr>`));
     };
-    const renderTileLineTable=(rows)=>{
-      // The selection only ever holds lines of this list (every row of the card, not just the ones shown).
+    // 2v6 oh-leading: the Lines card (design "Lines": title, count chip, search and sort pills, the table, Showing X of N).
+    const renderTileLineTable=(tileRows)=>{
+      // The search box narrows the list; the selection only ever holds lines of the list (every row, not just the ones shown).
+      const ohlQ=ohlLineQuery.trim().toLowerCase();
+      const rows=ohlQ?tileRows.filter(r=>ohlLineMatches(r,ohlQ)):tileRows;
       const listKeys=new Set(rows.map(rowKey));
       linkedListKeys=[...listKeys];
       linkedSelection.forEach(k=>{if(!listKeys.has(k))linkedSelection.delete(k);});
-      if(!rows.length)return `<div class="card"><p class="empty-note">No lines for this card with the current filters.</p></div>`;
+      const ohlTone=ohlTileTone(weeklyTileFilter,tileRows.length);
+      const ohlState=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);
+      const ohlTitle=ohlState?ohlState[2]:(weeklyTileTitles[weeklyTileFilter]||OH_TILE_TITLES[weeklyTileFilter]||'');
+      const ohlHead=(sortHtml='')=>`<div class="dz-card-head ohl-lines-head">
+          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The order lines behind the card or number you picked; click a column heading to sort, tick lines to set an override on several at once.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}</div>
+          <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Narrow this list to lines whose order, customer, warehouse or item contains your words.')}>${sortHtml}</div>
+        </div>`;
+      if(!rows.length)return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">${ohlHead()}<p class="empty-note">${ohlQ?'No lines match your search.':'No lines for this card with the current filters.'}</p></section>`;
       const showLateDetail=weeklyTileFilter==='late';
       const showScheduleChange=weeklyTileFilter==='active';
       const showOtd=weeklyTileFilter==='otd3mo'||OH_LAGGING_EXTRA_TILES.includes(weeklyTileFilter);
@@ -7019,7 +7186,7 @@ function renderResults(){
       // Reschedule cell: 0 commit date, 1 No commit date, 2 No reschedule, 3 On schedule (also its sort order).
       const rescheduleKind=r=>hasRealDate(rescheduleOf(r))?0:isNoCommitLine(r)?1:weeklyTileFilter==='late'||/late|past due|missed|still open past/i.test(linkedStatus(r))?2:3;
       const timeOf=v=>{const d=parseDate(v);return d?d.getTime():null;};
-      const dateHeader=showOtd||showShippedWeek?'Delivery date':showScheduleChange||showReschedulePerf||showLateDetail?'Original delivery':'Due date';
+      const dateHeader=showOtd||showShippedWeek?'Delivery date':showScheduleChange||showReschedulePerf||showLateDetail?'Original due':'Due date';
       const qtyHeader=showOtd||showShippedWeek?'Shipped':showReschedulePerf?'Qty':'Open';
       const sortCols=[
         ['doc','SO #',r=>String(r.documentNumber||'')],
@@ -7075,7 +7242,7 @@ function renderResults(){
       const allSelected=selectedCount>0&&selectedCount===listKeys.size;
       // indeterminate has no HTML attribute; set it once this redraw is in the page.
       if(selectedCount&&!allSelected)Promise.resolve().then(()=>{const box=document.getElementById('linked-select-all');if(box)box.indeterminate=true;});
-      const bulkBar=selectedCount?`<div class="bulk-actions" role="group" aria-label="Selected lines">
+      const bulkBar=selectedCount?`<div class="bulk-actions ohl-bulk" role="group" aria-label="Selected lines">
           <span class="bulk-count">${fmtNum(selectedCount)} selected</span>
           <label>Override <select id="linked-bulk-status" class="select"${tipAttr('The override to set on the selected lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}</select></label>
           <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply"${tipAttr(`Set the chosen override on the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'}.`)} onclick="applyLinkedOverride()">Apply</button>
@@ -7085,7 +7252,7 @@ function renderResults(){
         </div>`:'';
       // What each column shows, for its heading's tooltip.
       const sortTips={doc:'Sales order number.',customer:'Customer name.',warehouse:'Warehouse the line ships from.',item:'Item code and description.',
-        date:`${dateHeader==='Delivery date'?'Date the line was delivered.':dateHeader==='Original delivery'?'The line’s original delivery date, before any reschedule.':'The date the line is due now (its reschedule date when it has one).'} Point at a date for its lead time.`,
+        date:`${dateHeader==='Delivery date'?'Date the line was delivered.':dateHeader==='Original due'?'The line’s original delivery date, before any reschedule.':'The date the line is due now (its reschedule date when it has one).'} Point at a date for its lead time.`,
         qty:qtyHeader==='Shipped'?'Quantity delivered.':qtyHeader==='Qty'?'Quantity on the line (open quantity for open lines).':'Quantity still to ship.',
         value:showOtd||showShippedWeek?'Value shipped.':'Open value for open lines, line value for closed ones.',
         status:'Why the line is listed, with its timing.',
@@ -7094,10 +7261,12 @@ function renderResults(){
         const on=sortCol&&sortCol[0]===id;
         return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort, again to reverse.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
       };
-      return `<div class="table">
-        <div class="table-tools linked-tools"><label>Sort lines <select id="weekly-line-sort" class="select"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${esc(l)}</option>`).join('')}</select></label>${bulkBar}</div>
-        <div class="table-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so">
-          <colgroup><col class="col-check" style="width:40px"><col style="width:60px"><col style="width:100px"><col style="width:92px"><col><col style="width:86px"><col style="width:50px"><col style="width:78px"><col style="width:176px"><col style="width:120px"><col class="col-notes" style="width:106px"></colgroup>
+      const sortHtml=`<select id="weekly-line-sort" class="dz-pillinput ohl-sort" aria-label="Sort lines"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${sortCol&&v===weeklyLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
+      return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">
+        ${ohlHead(sortHtml)}
+        ${bulkBar}
+        <div class="table-scroll ohl-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so ohl-lines">
+          <colgroup><col class="col-check" style="width:34px"><col style="width:66px"><col style="width:13%"><col style="width:11%"><col><col style="width:94px"><col style="width:54px"><col style="width:84px"><col style="width:176px"><col style="width:118px"><col class="col-notes" style="width:92px"></colgroup>
           <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines in this list, not only those shown.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
             const rowValue=cellValue(r);
@@ -7128,11 +7297,13 @@ function renderResults(){
               ? (scheduleDelta===null?'Needs LineRescheduleDate':timingDeltaText(scheduleDelta,'schedule'))
               : timingTextForRow(r);
             const statusClass=/late|past due|no commit|missed|still open past|urgent/i.test(status)?'bad':/planned|resched|risk|due|tolerance|shipping delay|open reschedule|watch/i.test(status)?'warn':'good';
+            // Design chips: Late / No commit red, Missed Reschedule indigo, Planned grey, the rest amber or teal as before.
+            const ohlStatusTone=/missed reschedule/i.test(status)?'indigo':/^planned$/i.test(status)?'':statusClass==='bad'?'red':statusClass==='warn'?'amber':'teal';
             const rescheduleLabel=[
-              `<span class="badge warn">↻ ${esc(displayDate(reschedule))}</span>`,
-              '<span class="badge bad">No commit date</span>',
-              '<span class="badge bad">No reschedule</span>',
-              '<span class="badge good">On schedule</span>'
+              dzChip(displayDate(reschedule)||'—',''),
+              dzChip('No commit date','red'),
+              dzChip('No reschedule','red'),
+              dzChip('On schedule','teal')
             ][rescheduleKind(r)];
             const noteOpen=isNoteEditorVisible(r);
             const key=rowKey(r);
@@ -7142,18 +7313,18 @@ function renderResults(){
               <td class="c-doc">${esc(r.documentNumber||'—')}</td>
               <td class="c-name" title="${esc(r.name||'')}"><span class="clip">${esc(r.name||'—')}</span></td>
               <td class="c-wh" title="${esc(rowWarehouse(r)||'')}"><span class="clip">${esc(rowWarehouse(r)||'—')}</span></td>
-              <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
+              <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc"${String(r.itemDescription||'').length>70?tipAttr(String(r.itemDescription).substring(0,200)):''}>${esc((r.itemDescription||'').substring(0,160))}</span></td>
               <td class="c-date" data-label="${esc(dateHeader)}">${orderLeadTime==='—'?esc(displayDate(cellDate(r))||'—'):`<span${tipAttr(`Lead time ${orderLeadTime} (order date to original delivery).`)}>${esc(displayDate(cellDate(r))||'—')}</span>`}</td>
               <td class="num c-qty" data-label="${esc(qtyHeader)}">${fmtNum(rowQty)}</td>
               <td class="num c-val">${money(rowValue)}</td>
-              <td class="c-st"><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${ohLineWhy(r)}${renderPrintOverride(r)}</div></td>
+              <td class="c-st"><div class="c-status">${dzChip(status,ohlStatusTone)}<span class="dz-cell-sub timing">${esc(timing)}</span>${ohLineWhy(r)}${renderPrintOverride(r)}</div></td>
               <td class="c-resched">${rescheduleLabel}</td>
               <td class="c-notes print-hide">${renderNoteButton(r)}</td>
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show up to 80'}</button>`:''}</div>
-      </div>`;
+        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
+      </section>`;
     };
     // 2v4 oh: the cards on the page are At risk and On track (next month), OTD and Fill rate.
     const ohLead=ohAtRiskData(m);
@@ -7175,6 +7346,10 @@ function renderResults(){
       nocommit:'No commit date',
       active:'Rescheduled'
     };
+    // 2v6 oh-leading: the open-order state tiles (st-*) and All open list their lines too; with no card picked the Leading
+    // view lists the at-risk lines, so the Lines card is always there (a Lagging card picked earlier gives way to it).
+    Object.assign(weeklyTileRows,ohlTileRows(m,allOrderRows));
+    if(weeklyView==='leading'&&(!weeklyTileFilter||OH_LAGGING_TILES.has(weeklyTileFilter)))weeklyTileFilter='late';
     if(weeklyTileFilter&&!weeklyTileRows[weeklyTileFilter])weeklyTileFilter='';
     const rawLinkedTileRows=weeklyTileFilter?(weeklyTileRows[weeklyTileFilter]||[]):[];
     const laggingTileIds=OH_LAGGING_TILES;
@@ -7196,17 +7371,19 @@ function renderResults(){
       : weeklyTileFilter==='reschedhit'
       ? `${fmtNum(linkedTileRows.length)} ${weeklyRescheduleFilter==='met'?'met':weeklyRescheduleFilter==='tolerance'?'2-day tolerance':weeklyRescheduleFilter==='missed'?'missed':weeklyRescheduleFilter==='openpast'?'still open':'rescheduled'} ${linkedLines}`
       : `${fmtNum(linkedTileRows.length)} ${linkedLines}`;
-    const linkedBadgeClass=(weeklyTileFilter==='late'||weeklyTileFilter==='nocommit')&&linkedTileRows.length?'bad':weeklyTileFilter==='active'&&linkedTileRows.length?'warn':'';
-    html+=weeklyTileFilter&&!hideLinkedTile?`
-    ${ohGroupOpen('oh-g-lines','Lines to act on',{cls:'rise rise-4',domId:'linked-lines',info:'oh-linked',
-      badge:`<span class="count-badge ${linkedBadgeClass}">${esc(weeklyTileTitles[weeklyTileFilter]||'Selected card')} · ${esc(linkedTileSummary)}</span>`})}
+    // 2v6 oh-leading: one Lines card. In the Leading view it takes the place the Leading cards left for it (the last card of
+    // their grid); for a Lagging card it stands under the Lagging cards, below that card's own summaries.
+    const ohlLinesHtml=weeklyTileFilter&&!hideLinkedTile?renderTileLineTable(linkedTileRows):'';
+    const ohlLinesInGrid=weeklyView==='leading'&&html.includes(OHL_LINES_MARK);
+    html=html.replace(OHL_LINES_MARK,()=>ohlLinesInGrid?ohlLinesHtml:'');
+    if(ohlLinesHtml&&!ohlLinesInGrid)html+=`<div class="ohl-lines-wrap rise rise-4">
       ${renderFillWarehouseSummary(fillLineRows)}
       ${renderOtdDrillCards(rawLinkedTileRows)}
       ${renderOtdWarehouseSummary(rawLinkedTileRows)}
       ${renderRescheduleDrillCards(rawLinkedTileRows)}
       ${renderRescheduleWarehouseSummary(rawLinkedTileRows)}
-      ${renderTileLineTable(linkedTileRows)}
-    </section>`:'';
+      <div class="dz-grid">${ohlLinesHtml}</div>
+    </div>`;
     html+=ohAboutHtml(aboutSections(['oh-attention','oh-ontrack','oh-performed','oh-defaulting','oh-linked']));
   }
   // Purchase Orders: vendor/warehouse filters and open PO risk tiles.
@@ -11585,7 +11762,7 @@ const OH_STATES=[
   ['pastdue','past_due','Past due','#f04438','Open lines past their original date with no reschedule, or past their commit date.'],
   ['nocommit','no_commit','No commit','var(--crit-text)','Open lines with no commit date (SAP 1111-11-11).']
 ];
-const OH_TILE_TITLES={'st-ontrack':'On track','st-duethisweek':'Due this week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past due','st-nocommit':'No commit','perfect':'Not perfect · 12 mo','dayslate':'Late deliveries · 3 mo'};
+const OH_TILE_TITLES={'st-ontrack':'On track','st-duethisweek':'Due this week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past due','st-nocommit':'No commit','allopen':'All open orders','perfect':'Not perfect · 12 mo','dayslate':'Late deliveries · 3 mo'};
 
 // --- Cause engine ---
 // "1 line", "3 lines": a count with its noun.
@@ -11955,20 +12132,6 @@ function ohRenderOverrideTiles(m){
     return `<button type="button" class="ovr-tile${t.lines?'':' zero'}${t.on?' selected':''}" data-focus-key="ovr-${esc(t.status.replace(/\W+/g,'-').toLowerCase())}" data-status="${esc(t.status)}" onclick="setWeeklyOverrideTile(this.dataset.status)" aria-pressed="${t.on}" data-tip="${esc(tip)}"><span class="ovr-name">${esc(t.label)}</span><span class="ovr-num"><span class="ovr-count">${ohN(t.lines,'line')}</span><span class="ovr-amt">${moneyShort(t.value)}</span></span></button>`;
   }).join('');
   return `<div class="ovr"><span class="ovr-head" id="ovr-head">At risk by override</span><div class="ovr-grid" role="group" aria-labelledby="ovr-head">${cells}</div></div>`;
-}
-// Open order states (every open line in exactly one): On track, Due this week, Rescheduled, Past due, No commit; at the top.
-function ohRenderStates(m){
-  const oh=orderHealthData(m);
-  const d=ohLeadingData(m,oh);
-  // One clean line: each state's colour, name, order count and open value (lines in the tip).
-  const cells=d.states.map(s=>{
-    const id=`st-${s.id}`,on=weeklyTileFilter===id;
-    const tip=`${s.label}: ${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open; ${on?'click to show all.':'click to list them.'}`;
-    return `<button type="button" class="oh-line-cell${on?' selected':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}" data-tip="${esc(tip)}"><i class="sw lg" style="background:${s.color}"></i><span class="oh-line-label">${esc(s.label)}</span><strong class="oh-line-num">${fmtNum(s.orders)}</strong><span class="oh-line-amt">${moneyShort(s.value)}</span></button>`;
-  }).join('');
-  return `${ohGroupOpen('oh-states-title','Open orders',{cls:'rise rise-1',tip:'Every open line in exactly one state (counts are orders); click a state to list its lines.'})}
-      <div class="card oh-line" role="group" aria-label="Open order states">${cells}</div>
-    </section>`;
 }
 function ohRenderLeading(m){
   if(weeklyLeadingCollapsed)return '';
@@ -12598,138 +12761,268 @@ function ohTopWarehouse(rows){
   const top=list[0];
   return {...top,share:total>0?Math.round(top.value/total*100):0,total,warehouses:list.length,next:list[1]||null};
 }
-function ohPctText(p){return p===null?'—':`${fmtNum(p)}%`;}
-// Reason chip icons: 24px stroke paths (same style as the page's other inline icons), matched on the reason's name.
-const REASON_ICONS=[
-  [/past due/i,'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'],
-  [/no commit/i,'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M10 14l4 4M14 14l-4 4"/>'],
-  [/missed commit/i,'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 16h6"/>'],
-  [/resched/i,'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15h6M13 13l2 2-2 2"/>'],
-  [/commit late|logican|cm /i,'<path d="M3 21V9l6 4V9l6 4V5h6v16z"/><path d="M7 17h2M12 17h2M17 17h1"/>'],
-  [/urgent/i,'<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>'],
-  [/close short/i,'<circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="M8.5 8.5 20 19M8.5 15.5 20 5"/>'],
-  [/short ship/i,'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M9 16h6"/>'],
-  [/hold/i,'<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>'],
-  [/shipping/i,'<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>'],
-  [/qc|quality/i,'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>'],
-  [/supply chain/i,'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'],
-  [/supplier/i,'<path d="M3 12l4-4 4 2 4-2 6 6-4 4-3-3-3 3-4-2z"/>'],
-  [/waiting on po|\bpo\b/i,'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>'],
-  [/prod/i,'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/>'],
-  [/partial|coverage/i,'<circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/>']
-];
-function reasonIcon(label){
-  const hit=REASON_ICONS.find(([re])=>re.test(label));
-  return `<svg class="rsn-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${hit?hit[1]:'<circle cx="12" cy="12" r="3"/>'}</svg>`;
+// --- 2v6 oh-leading: the Leading view in the Claude Design layout ("Order Health 2b") ---
+// Every number comes from the calculations that were already here (orderHealthData, ohLeadingData, ohAtRiskData,
+// ohReasonTileData, ohFlagAges, ohTopWarehouse, soDateChangeImpact, rowDocCount, rowOpenAmount); only layout and copy
+// are new. Cards on the 6-column grid: At risk (3) + Status & top reasons (3); Open lines by due week, Customers at
+// risk and When flagged (2 each); Date changes (6, only when a date moved); then the Lines card (6), which renderResults
+// draws where OHL_LINES_MARK is (it needs the linked-lines list). Headlines are order counts; "$ · N lines" is secondary.
+const OHL_LINES_MARK='<!--ohl-lines-->';
+const OHL_COLOR={ontrack:'#0f766e',duethisweek:'#6366f1',rescheduled:'#f59e0b',pastdue:'#e11d48',nocommit:'#94a3b8'};
+const OHL_RED='#e11d48',OHL_SLATE='#cbd5e1';
+let ohlLineQuery='',ohlQueryTimer=0;
+// The Lines card's search box: remembered at once, the list redraws when typing pauses (focus and caret survive a redraw).
+function ohlSetQuery(v){
+  ohlLineQuery=String(v||'');
+  clearTimeout(ohlQueryTimer);
+  ohlQueryTimer=setTimeout(()=>{weeklyLinkedShowAll=false;renderResults();},220);
 }
-function ohRenderAtRisk(m){
-  const d=ohAtRiskData(m);
+// Every word typed has to be in the line's order number, customer, warehouse, item code or description.
+function ohlLineMatches(r,q){
+  const hay=[r.documentNumber,rowCustomerLabel(r),r.name,rowWarehouse(r),r.itemCode,r.itemDescription].join(' ').toLowerCase();
+  return q.split(/\s+/).every(w=>!w||hay.includes(w));
+}
+// The Lines chip: red for the at-risk views, amber for rescheduled, indigo for due this week, teal for on track.
+function ohlTileTone(id,n){
+  if(!n)return '';
+  return {late:'red',nocommit:'red','st-pastdue':'red','st-nocommit':'red',active:'amber','st-rescheduled':'amber','st-duethisweek':'indigo',ontrack:'teal','st-ontrack':'teal'}[id]||'';
+}
+// Lines behind the state tiles (st-*) and All open, for the Lines card (merged into renderResults' weeklyTileRows).
+function ohlTileRows(m,allRows){
+  const out={allopen:allRows};
+  ohLeadingData(m).states.forEach(s=>{out[`st-${s.id}`]=s.rows;});
+  return out;
+}
+// At-risk lines as they would be with the picked reason (or when-flagged) filter off, so the other bars keep their
+// numbers while one is picked (ohReasonTileData does the same for the reason tiles).
+function ohlRiskWithout(m,kind){
+  const picked=kind==='age'?!!weeklyAgeFilter:!!weeklyReasonFilter;
+  if(!picked)return ohAtRiskData(m).risk;
+  const saved=[weeklyReasonFilter,weeklyReasonMain,weeklyAgeFilter];
+  try{
+    if(kind==='age')weeklyAgeFilter='';else{weeklyReasonFilter='';weeklyReasonMain=false;}
+    return ohAtRiskData(m).risk;
+  }finally{[weeklyReasonFilter,weeklyReasonMain,weeklyAgeFilter]=saved;}
+}
+// Reasons of the at-risk lines (a line can have several), most orders first.
+function ohlReasons(m){
+  const risk=ohlRiskWithout(m,'reason');
+  ohRowMemoFresh();
+  const by=new Map();
+  risk.forEach(r=>ohRowInfo(r).reasons.forEach(label=>{if(!by.has(label))by.set(label,[]);by.get(label).push(r);}));
+  return [...by].map(([label,rows])=>({label,rows,orders:rowDocCount(rows),lines:rows.length,value:rowOpenAmount(rows),on:!weeklyReasonMain&&weeklyReasonFilter===label}))
+    .sort((a,b)=>b.orders-a.orders||b.value-a.value||a.label.localeCompare(b.label));
+}
+const ohlMoney=rows=>`${money(rowOpenAmount(rows))} · ${ohN(rows.length,'line')}`;
+const ohlWhName=n=>String(n||'').replace(/ - /g,' · ');
+
+function ohlRenderLeading(m){
+  const oh=orderHealthData(m);
+  const c={m,oh,lead:ohLeadingData(m,oh),d:ohAtRiskData(m)};
+  return `<div class="dz-grid ohl-grid">
+    ${ohlAtRiskCard(c)}
+    ${ohlStatusCard(c)}
+    ${ohlDueCard(c)}
+    ${ohlCustomersCard(c)}
+    ${ohlFlaggedCard(c)}
+    ${ohlDateChangesCard(c)}
+    ${OHL_LINES_MARK}
+  </div>`;
+}
+
+// At risk: the order count, the four open-order states, the most affected warehouse with its production issues, and the
+// override tiles. Every number is for the next-month at-risk lines (ohAtRiskData), as the card was before.
+function ohlAtRiskCard(c){
+  const {m,oh,lead,d}=c;
   const sel=id=>weeklyTileFilter===id;
-  const endText=shortDay(d.end);
-  const orders=rowDocCount(d.risk),riskAmt=rowOpenAmount(d.risk);
-  const toneCls=TONE_CLASS[d.tone]||'neutral';
-  const meterMax=Math.max(20,AT_RISK_TARGET*4);
-  const pctTip=d.riskPct===null?'At risk %: nothing open is due in the next month.':`At risk ${fmtNum(d.riskPct)}% of the ${money(d.total)} open and due by ${endText}; the target is under ${AT_RISK_TARGET}%.`;
-  const hero=`<button type="button" class="card kpi hero oh24-hero${sel('late')?' selected':''}" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${endText}: ${money(riskAmt)} open on ${ohN(orders,'order')} (${ohN(d.risk.length,'line')}); click to list them below.`)}>
-      <div class="kpi-top"><span class="kpi-label"><span class="dot ${d.risk.length?'halo':'good'}"></span>At risk</span><span class="kpi-tag">due by ${esc(endText)}</span></div>
-      <div class="kpi-row"><span class="kpi-value hero ${d.risk.length?'crit':'good'}" data-count="${Math.round(riskAmt)}" data-fmt="money">${money(riskAmt)}</span><span class="kpi-unit">${ohN(orders,'order')} · ${ohN(d.risk.length,'line')}</span></div>
-      <div class="oh24-target"${tipAttr(pctTip)}>
-        <span class="oh24-pct ${toneCls}">${ohPctText(d.riskPct)}</span>
-        <span class="oh24-target-text">of next-month value<br><span class="muted">target under ${AT_RISK_TARGET}%</span></span>
-        <span class="oh24-meter" aria-hidden="true"><i class="fill-${toneCls}" style="width:${Math.min(100,(d.riskPct||0)/meterMax*100).toFixed(1)}%"></i><span class="target" style="left:${(AT_RISK_TARGET/meterMax*100).toFixed(1)}%"></span></span>
-      </div>
-    </button>`;
-  // Reason tiles: zero tiles stay hidden until Show all reasons.
-  const tiles=ohReasonTileData(m);
-  // Every reason shows, in two even lines (empty ones dimmed).
-  const shown=tiles;
-  // Packed chips: icon, name, lines and value; the ones with lines first (largest value first), empty ones small and dim.
-  const dateReasons=new Set(OH_REASON_TILES.slice(0,5).map(t=>t.reason));
-  const ordered=[...shown.filter(t=>t.lines||t.on).sort((x,y)=>y.value-x.value),...shown.filter(t=>!t.lines&&!t.on)];
-  const tileHtml=ordered.map(t=>{
-    const tip=`${t.label}: ${ohN(t.lines,'at-risk line')}, ${money(t.value)} open; ${t.on?'click to show all.':'click to list them.'}`;
-    const tone=!t.lines?'zero':dateReasons.has(t.reason)?'crit':'warn';
-    return `<button type="button" class="rsn-chip ${tone}${t.on?' selected':''}" data-focus-key="rsn-${esc(t.reason.replace(/\W+/g,'-').toLowerCase())}" data-reason="${esc(t.reason)}" onclick="setWeeklyReasonTile(this.dataset.reason)" aria-pressed="${t.on}"${tipAttr(tip)}>${reasonIcon(t.label)}<span class="rsn-name">${esc(t.label)}</span><strong class="rsn-num">${fmtNum(t.lines)}</strong>${t.lines?`<span class="rsn-amt">${moneyShort(t.value)}</span>`:''}</button>`;
+  const risk=d.risk,orders=rowDocCount(risk),lines=risk.length;
+  const fresh=ohFlagAges(risk)[0];
+  const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) at risk for the first time in this week's upload; click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
+  const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${shortDay(d.end)}: ${ohN(orders,'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(risk))} open; click to list the lines.`)}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span></button>`;
+  const stateRows=id=>lead.states.find(s=>s.id===id).rows;
+  const stat=(id,label,color,rows)=>{
+    const on=sel(id),n=rowDocCount(rows);
+    return `<button type="button" class="dz-stat ohl-stat${on?' sel':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}"${tipAttr(`${label}: ${ohN(n,'order')}, ${ohN(rows.length,'line')}, ${money(rowOpenAmount(rows))} open; ${on?'click to show the at-risk lines again.':'click to list the lines.'}`)}><span class="ohl-stat-l"><i class="ohl-dot" style="background:${color}"></i>${esc(label)}</span><span class="ohl-stat-v${n?'':' zero'}">${esc(ohN(n,'order'))}</span><span class="ohl-stat-s">${esc(ohlMoney(rows))}</span></button>`;
+  };
+  const stats=`<div class="ohl-stats" role="group" aria-label="Open orders">
+      ${stat('st-rescheduled','Rescheduled',OHL_COLOR.rescheduled,stateRows('rescheduled'))}
+      ${stat('st-nocommit','No commit',OHL_COLOR.nocommit,stateRows('nocommit'))}
+      ${stat('st-duethisweek','Due this week',OHL_COLOR.duethisweek,stateRows('duethisweek'))}
+      ${stat('allopen','All open',OHL_COLOR.ontrack,oh.allOrderRows)}
+    </div>`;
+  // The override tiles' lines (ohReasonTileData counts them with the picked reason off), in the owner's tile order.
+  const rtiles=ohReasonTileData(m);
+  const ovr=OH_OVERRIDE_TILES.map(o=>rtiles.find(t=>t.reason===o.status)).filter(Boolean);
+  const top=ohTopWarehouse(risk);
+  let whHtml='';
+  if(top){
+    const pastDue=top.rows.filter(r=>{const b=weeklyRiskBucket(r);return b==='late'||b==='missed';}).length;
+    const otd=otdStats(oh.otdLast3MonthRows.filter(r=>rowWarehouse(r)===top.name));
+    const focused=weeklyWarehouseFilter.length===1&&weeklyWarehouseFilter[0]===top.name;
+    const fig=(label,value,small,tone)=>`<div><div class="ohl-fig-l">${label}</div><div class="ohl-fig-v${small?' sm':''}${tone?` ${tone}`:''}">${esc(value)}</div></div>`;
+    const panel=`<button type="button" class="ohl-wh${focused?' sel':''}" data-focus-key="oh-top-wh" data-wh="${esc(top.name)}" onclick="setWeeklyOffenderFilter('warehouses',this.dataset.wh)" aria-pressed="${focused}"${tipAttr(`${top.name}: ${ohN(top.lines,'at-risk line')} of ${fmtNum(lines)}, ${money(top.value)} open, ${fmtNum(top.share)}% of the at-risk value; ${focused?'click to show every warehouse.':'click to show only this warehouse.'}`)}>
+        <span class="ohl-wh-main"><span class="ohl-wh-name">${esc(ohlWhName(top.name))}</span><span class="ohl-wh-sub">${fmtNum(top.lines)} of ${fmtNum(lines)} at-risk lines</span></span>
+        <span class="ohl-figs">${fig('At-risk lines',fmtNum(top.lines),false,'ohl-crit')}${fig('Past due',fmtNum(pastDue),false)}${fig('Value',moneyShort(top.value),true)}${fig('OTD 3 mo',otd.scored.length?`${fmtNum(otd.rate)}%`:'—',true)}</span>
+      </button>`;
+    // Production issues at this warehouse: the override tiles' lines (ohReasonTileData), this warehouse only, orders first.
+    const issues=ovr.map(t=>{const rows=t.rows.filter(r=>rowWarehouse(r)===top.name);return {t,rows,orders:rowDocCount(rows)};})
+      .filter(x=>x.rows.length).sort((a,b)=>b.orders-a.orders||b.rows.length-a.rows.length);
+    const maxIssue=Math.max(1,...issues.map(x=>x.orders));
+    const issueRows=issues.map((x,i)=>dzBarRow({label:x.t.label,value:x.orders,max:maxIssue,color:i===0?OHL_RED:OHL_SLATE,num:fmtNum(x.orders),cls:'ohl-bar130',i,
+      onclick:`setWeeklyOverrideTile(${dzJs(x.t.reason)})`,selected:x.t.on,attrs:` data-focus-key="ovr-${esc(x.t.reason.replace(/\W+/g,'-').toLowerCase())}"`,
+      tip:`${x.t.label} at ${top.name}: ${ohN(x.orders,'order')}, ${ohlMoney(x.rows)}; ${x.t.on?'click to show all.':'click to list the at-risk lines with this override.'}`})).join('');
+    whHtml=`<div class="ohl-sec">
+        <div class="ohl-sec-title">Most affected warehouse</div>
+        ${panel}
+        <div class="ohl-sec-sub">Production issues at ${esc(ohlWhName(top.name).replace(/^Spyder · /,''))}</div>
+        ${issueRows?`<div class="ohl-bars" role="group" aria-label="${esc(`Production issues at ${top.name}`)}">${issueRows}</div>`:'<div class="empty-note">No production issues set on this warehouse’s at-risk lines.</div>'}
+      </div>`;
+  }
+  // By override, all warehouses: one small tile per override status (orders; zero tiles are greyed).
+  const ovrCells=ovr.map(t=>{
+    const n=rowDocCount(t.rows);
+    return `<button type="button" class="ohl-tile${n?'':' zero'}${t.on?' sel':''}" data-focus-key="ovr-tile-${esc(t.reason.replace(/\W+/g,'-').toLowerCase())}" onclick="setWeeklyOverrideTile(${esc(dzJs(t.reason))})" aria-pressed="${t.on}"${tipAttr(`${t.label}: ${ohN(n,'order')}, ${ohlMoney(t.rows)} at risk; ${t.on?'click to show all.':'click to list them.'}`)}><span class="ohl-tile-l">${esc(t.label)}</span><span class="ohl-tile-n">${fmtNum(n)}</span></button>`;
   }).join('');
-  const reasons=`<div class="oh24-reasons rsn-row" role="group" aria-labelledby="oh24-reasons-head"><span class="rsn-head" id="oh24-reasons-head"${tipAttr('Why the next-month lines are at risk; a line can have several reasons. Click one to list its lines.')}>Reasons</span>${tileHtml||'<span class="empty-note">No reasons set on the at-risk lines.</span>'}</div>`;
-  // Kit health (Logican sheet), one line.
-  const kit=ohKitHealth(d.risk);
-  const kitHtml=kit?`<div class="oh24-kit"${tipAttr(`Of ${ohN(kit.lines,'at-risk line')} built by Logican: ${fmtNum(kit.clean.length)} with every work order clear to build, ${fmtNum(kit.blocked.length)} short or on hold, ${fmtNum(kit.unknown.length)} not marked on the sheet.`)}><span class="oh24-kit-label">Kit health · Logican</span><span class="oh24-kit-part good-text">${fmtNum(kit.clean.length)} clean</span><span class="oh24-kit-part${kit.blocked.length?' crit-text':''}">${fmtNum(kit.blocked.length)} short or hold</span>${kit.unknown.length?`<span class="oh24-kit-part muted">${fmtNum(kit.unknown.length)} not marked</span>`:''}</div>`:'';
-  // When flagged: line counts.
-  const flagColors=['var(--flag-0)','var(--flag-1)','var(--flag-2)','var(--flag-3)','var(--flag-4)'];
-  const ages=ohFlagAges(d.risk);
-  const maxAge=Math.max(1,...ages.map(a=>a.lines));
-  const ageRows=ages.map((a,i)=>{
-    const on=weeklyAgeFilter===a.id;
-    const tip=`${a.label}: ${ohN(a.lines,'at-risk line')}, ${money(a.value)} open; ${on?'click to show all.':'click to filter.'}`;
-    return `<button type="button" class="oh-bar-row${on?' selected':''}" data-focus-key="oh-age-${a.id}" data-age="${a.id}" onclick="setWeeklyAgeFilter(this.dataset.age)" aria-pressed="${on}"${tipAttr(tip)}><span class="oh-bar-name">${esc(a.label)}</span><span class="oh-bar-track" aria-hidden="true"><i class="grow-w" style="width:${(a.lines/maxAge*100).toFixed(1)}%;background:${flagColors[i]};animation-delay:${i*50}ms"></i></span><span class="oh-bar-val">${fmtNum(a.lines)}</span></button>`;
-  }).join('');
-  const whenCard=`<section class="card list-card oh-card oh24-when" aria-labelledby="oh-when-title">
-      <div class="list-head"><h2 id="oh-when-title"${tipAttr('At-risk lines by whole weeks since each was first at risk in an upload.')}>When flagged</h2><span class="section-sub">lines</span></div>
-      <div class="oh-bars" role="group" aria-label="At-risk lines by weeks since first flagged">${ageRows}</div>
-      ${ohFirstFlagged()?'':'<span class="oh-note">No upload history yet, so every line counts as new.</span>'}
-    </section>`;
-  // Top problem warehouse.
-  const top=ohTopWarehouse(d.risk);
-  const focused=weeklyWarehouseFilter.length===1&&top&&weeklyWarehouseFilter[0]===top.name;
-  const whCard=top?`<button type="button" class="card list-card oh24-wh${focused?' selected':''}" data-focus-key="oh-top-wh" data-wh="${esc(top.name)}" onclick="setWeeklyOffenderFilter('warehouses',this.dataset.wh)" aria-pressed="${focused}"${tipAttr(`${top.name}: ${money(top.value)} at risk on ${ohN(top.lines,'line')}, ${fmtNum(top.share)}% of the at-risk value; ${focused?'click to show every warehouse.':'click to show only this warehouse.'}`)}>
-      <span class="kpi-label">Top problem warehouse</span>
-      <span class="oh24-wh-name">${esc(top.name)}</span>
-      <span class="oh24-wh-num"><strong>${money(top.value)}</strong><span class="muted">${ohN(top.lines,'line')} · ${fmtNum(top.share)}% of at risk</span></span>
-      <span class="oh24-share" aria-hidden="true"><i style="width:${top.share}%"></i></span>
-    </button>`:`<section class="card list-card oh24-wh"><span class="kpi-label">Top problem warehouse</span><span class="empty-note">Nothing at risk in the next month.</span></section>`;
-  // Minimal At risk: one card. The headline and top warehouse on one line, the reasons that have lines as packed chips,
-  // then date changes one customer per line. Flagged weeks and kit health stay out of it (in the tips / Date changes).
-  const live=ordered.filter(t=>t.lines||t.on);
-  const dc=typeof soDateChangeImpact==='function'?soDateChangeImpact(m):null;
-  const dcT=dc&&dc.totals;
-  const chip=(n,k,label)=>n?`<span class="ar-tag ${k}">${fmtNum(n)} ${label}</span>`:'';
-  const curCust=weeklyCustomerFilter;
-  const dcRows=dc?dc.customers.slice(0,DC_SHOW_CUSTOMERS).map(c=>{
-    const on=curCust.length===1&&curCust[0]===c.key;
-    const w=c.lines[0];
-    return `<button type="button" class="ar-dc-row${on?' selected':''}" data-focus-key="dc-${esc(c.key)}" data-off="${esc(c.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(`${c.customer}: ${ohN(c.lines.length,'line')}, ${money(c.value)} moved later; worst SO ${w.order} ${w.item||''} due ${cmShort(w.due)}, now ${cmShort(w.expected)} (${w.source}${w.status?` ${w.status}`:''}${w.comment?`: ${w.comment}`:''}); click to ${on?'show all':'filter'}.`)}><span class="ar-dc-name">${esc(c.customer)}</span><span class="ar-dc-meta">${ohN(c.lines.length,'line')} · ${moneyShort(c.value)} · +${fmtNum(c.worstSlip)}d</span><span class="ar-dc-tags">${chip(c.ready,'good','ready')}${chip(c.blocked,'bad','blocked')}</span></button>`;
-  }).join(''):'';
-  const more=dc&&dc.customers.length>DC_SHOW_CUSTOMERS?`<span class="ar-more">+${fmtNum(dc.customers.length-DC_SHOW_CUSTOMERS)} more customers</span>`:'';
-  return `${ohGroupOpen('oh-g-risk','At risk',{cls:'rise rise-2',info:'oh-attention'})}
-      <div class="card ar-card">
-        <div class="ar-head">
-          <button type="button" class="ar-total${sel('late')?' selected':''}" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${endText}: ${money(riskAmt)} open on ${ohN(orders,'order')} (${ohN(d.risk.length,'line')}). ${pctTip} Click to list them.`)}>
-            <strong class="ar-amt ${d.risk.length?'crit':'good'}">${money(riskAmt)}</strong>
-            <span class="ar-pct ${toneCls}">${ohPctText(d.riskPct)}</span><span class="ar-muted">of next month · target &lt;${AT_RISK_TARGET}%</span>
-          </button>
-          ${top?`<button type="button" class="ar-wh${focused?' selected':''}" data-focus-key="oh-top-wh" data-wh="${esc(top.name)}" onclick="setWeeklyOffenderFilter('warehouses',this.dataset.wh)" aria-pressed="${focused}"${tipAttr(`Top problem warehouse: ${top.name}, ${money(top.value)} at risk on ${ohN(top.lines,'line')} (${fmtNum(top.share)}% of at risk); click to ${focused?'show all':'filter'}.`)}><span class="ar-muted">Top warehouse</span> <strong>${esc(top.name)}</strong> <span class="ar-muted">${moneyShort(top.value)}</span></button>`:''}
-        </div>
-        ${live.length?`<div class="ar-reasons rsn-row" role="group" aria-label="At-risk reasons">${live.map(t=>{
-          const tip=`${t.label}: ${ohN(t.lines,'at-risk line')}, ${money(t.value)} open; ${t.on?'click to show all.':'click to list them.'}`;
-          const tone=dateReasons.has(t.reason)?'crit':'warn';
-          return `<button type="button" class="rsn-chip ${tone}${t.on?' selected':''}" data-focus-key="rsn-${esc(t.reason.replace(/\W+/g,'-').toLowerCase())}" data-reason="${esc(t.reason)}" onclick="setWeeklyReasonTile(this.dataset.reason)" aria-pressed="${t.on}"${tipAttr(tip)}>${reasonIcon(t.label)}<span class="rsn-name">${esc(t.label)}</span><strong class="rsn-num">${fmtNum(t.lines)}</strong><span class="rsn-amt">${moneyShort(t.value)}</span></button>`;
-        }).join('')}</div>`:''}
-        ${dcT&&dcT.lines?`<div class="ar-dc">
-          <div class="ar-dc-head"><span class="ar-dc-title"${tipAttr('Open sales-order lines whose expected date moved more than 2 days past due (SAP reschedule or Logican commit), and whether Logican can build them: ready (clear to build) or blocked (short or on hold).')}>Date changes</span><span class="ar-muted">${ohN(dcT.lines,'line')} · ${moneyShort(dcT.value)}</span>${chip(dcT.ready,'good','ready')}${chip(dcT.blocked,'bad','blocked')}</div>
-          ${dcRows}${more}
-        </div>`:''}
-      </div>
-    </section>`;
+  const none=!ovr.some(t=>t.lines);
+  const ovrHtml=`<div class="ohl-sec">
+      <div class="ohl-sec-head"><span class="ohl-sec-title">By override · all warehouses</span>${none?'<span class="ohl-note">none set this week</span>':''}</div>
+      <div class="ohl-tiles" role="group" aria-label="At-risk orders by override">${ovrCells}</div>
+    </div>`;
+  return dzCard({title:'At risk',sm:true,meta:newChip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
+    tip:`Open sales-order lines due by ${shortDay(d.end)} that need action: past due, no commit date, rescheduled, urgent. Click a number to list its lines.`,
+    body:`<div class="ohl-hero-row">${hero}</div>${stats}${whHtml}${ovrHtml}`});
 }
-function ohRenderOnTrack(m){
-  const d=ohAtRiskData(m);
-  const on=weeklyTileFilter==='ontrack';
-  const amt=rowOpenAmount(d.ontrack);
-  const tone=d.onTrackPct===null?'neutral':d.onTrackPct>=100-AT_RISK_TARGET?'good':d.onTrackPct>=100-AT_RISK_TARGET*2?'warning':'critical';
-  const tip=`On track, due by ${shortDay(d.end)}: ${ohN(d.ontrack.length,'line')} (${ohN(rowDocCount(d.ontrack),'order')}), ${money(amt)}, expected to ship within ${ON_TRACK_TOLERANCE_DAYS} days of the due date; click to list them.`;
-  return `${ohGroupOpen('oh-g-ontrack','On track',{cls:'rise rise-3',info:'oh-ontrack'})}
-      <button type="button" class="card kpi oh24-ontrack${on?' selected':''}" data-focus-key="tile-ontrack" onclick="setWeeklyTileFilter('ontrack')" aria-pressed="${on}"${tipAttr(tip)}>
-        <div class="oh24-on-main">
-          <span class="kpi-label"><span class="dot good"></span>On track · next month</span>
-          <div class="kpi-row tight"><span class="kpi-value" data-count="${d.ontrack.length}">${fmtNum(d.ontrack.length)}</span><span class="kpi-unit">${d.ontrack.length===1?'line':'lines'} · ${money(amt)}</span></div>
-        </div>
-        <div class="oh24-on-side">
-          <span class="oh24-pct ${TONE_CLASS[tone]}">${ohPctText(d.onTrackPct)}</span>
-          <span class="kpi-sub">of next-month value, expected by the due date + ${ON_TRACK_TOLERANCE_DAYS} days</span>
-        </div>
-      </button>
-    </section>`;
+
+// Status & top reasons: the five states of every open order, then the reasons behind the at-risk lines, as bars with the
+// order count at the end (a line can have several reasons).
+function ohlStatusCard(c){
+  const {m,lead}=c;
+  const maxS=Math.max(1,...lead.states.map(s=>s.orders));
+  const statusRows=lead.states.map((s,i)=>{
+    const id=`st-${s.id}`,on=weeklyTileFilter===id;
+    return dzBarRow({label:s.label,sub:ohlMoney(s.rows),value:s.orders,max:maxS,color:OHL_COLOR[s.id],num:ohN(s.orders,'order'),i,
+      cls:`ohl-status${s.orders?'':' zero'}${s.id==='pastdue'&&s.orders?' crit':''}`,onclick:`setWeeklyTileFilter('${id}')`,selected:on,attrs:` data-focus-key="status-${id}"`,
+      tip:`${s.label}: ${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open. ${s.help} ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`});
+  }).join('');
+  const reasons=ohlReasons(m).slice(0,5);
+  const maxR=Math.max(1,...reasons.map(r=>r.orders));
+  const reasonRows=reasons.map((r,i)=>dzBarRow({label:overrideLabel(r.label),value:r.orders,max:maxR,color:i===0?OHL_RED:OHL_SLATE,num:fmtNum(r.orders),i:i+lead.states.length,
+    cls:'ohl-status',onclick:`setWeeklyReasonFilter(${dzJs(r.label)})`,selected:r.on,attrs:` data-focus-key="oh-reason-${esc(r.label)}"`,
+    tip:`${overrideLabel(r.label)}: ${ohN(r.orders,'order')}, ${ohlMoney(r.rows)} at risk; ${r.on?'click to show all.':'click to list them.'}`})).join('');
+  return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:1"',
+    tip:'Every open order in exactly one state, then the top reasons behind the at-risk lines. Click a bar to list its lines.',
+    body:`<div class="ohl-bars ohl-bars-lg" role="group" aria-label="Open orders by state">${statusRows}</div>
+      <div class="ohl-sec"><div class="ohl-sec-title">Top reasons</div>
+        ${reasonRows?`<div class="ohl-bars ohl-bars-lg" role="group" aria-label="Top at-risk reasons by orders">${reasonRows}</div>`:'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
+        <div class="ohl-note ohl-foot-note">A line can have several reasons.</div>
+      </div>`});
+}
+
+// Open lines by due week: line counts (not dollars) for this week and the seven after it. A line is in the week its
+// date falls (its reschedule date when it has one); the lines already past due are the chip, not a bar.
+function ohlDueCard(c){
+  const {oh,lead}=c;
+  const past=lead.states.find(s=>s.id==='pastdue').rows;
+  const pastSet=new Set(past);
+  const weeks=weekWindows(oh.thisWeekStart,8);
+  oh.allOrderRows.forEach(r=>{
+    if(!r.isOpen||pastSet.has(r))return;
+    const d=parseDate(r.effectiveDueDate||r.dueDate);
+    if(!d)return;
+    const w=weeks.find(x=>d>=x.s&&d<=x.e);
+    if(w)w.rows.push(r);
+  });
+  const counts=weeks.map(w=>w.rows.length),n=weeks.length;
+  const max=Math.max(1,...counts),peak=counts.indexOf(Math.max(...counts));
+  const W=800,H=190;
+  const pts=counts.map((v,i)=>[Math.round((i+.5)/n*W),Math.round(H-10-v/max*(H-44))]);
+  const line=pts.map((p,i)=>`${i?'L':'M'}${p[0]} ${p[1]}`).join(' ');
+  const area=`${line} L${pts[n-1][0]} ${H} L${pts[0][0]} ${H} Z`;
+  const wkText=(w,i)=>i?shortDay(w.s):'this week';
+  const total=counts.reduce((a,b)=>a+b,0);
+  const dots=pts.map((p,i)=>`<span class="ohl-pt" style="left:${(p[0]/W*100).toFixed(2)}%;top:${(p[1]/H*100).toFixed(2)}%"${tipAttr(`${i?`Week of ${wkText(weeks[i],i)}`:'This week'}: ${ohN(counts[i],'open line')} due, ${money(rowOpenAmount(weeks[i].rows))}.`)}></span>`).join('');
+  const pill=total?`<span class="ohl-peak" style="--x:${(pts[peak][0]/W*100).toFixed(2)}%;top:${(pts[peak][1]/H*100).toFixed(2)}%">${fmtNum(counts[peak])} ${counts[peak]===1?'line':'lines'} peak · ${esc(peak?shortDay(weeks[peak].s):'this week')}</span>`:'';
+  const labels=weeks.map((w,i)=>`<span>${i%2?'':i?`${w.s.getMonth()+1}/${w.s.getDate()}`:'Now'}</span>`).join('');
+  const chip=past.length?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyTileFilter==='st-pastdue'?' sel':''}" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter('st-pastdue')" aria-pressed="${weeklyTileFilter==='st-pastdue'}"${tipAttr(`${ohN(past.length,'open line')} (${ohN(rowDocCount(past),'order')}, ${money(rowOpenAmount(past))}) already past due; click to list them.`)}>${fmtNum(past.length)} ${past.length===1?'line':'lines'} already past due</button>`:'';
+  const summary=weeks.map((w,i)=>`${wkText(w,i)}: ${counts[i]}`).join(', ');
+  return dzCard({title:'Open lines by due week',meta:chip,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:2"',
+    tip:'Open lines by the week they are due (this week and the next seven); lines already past due are the red chip.',
+    body:total?`<div class="ohl-chart" role="img" aria-label="${esc(`Open lines due by week, ${summary}`)}">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ohlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366f1" stop-opacity=".35"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#ohlG)"/><path d="${line}" fill="none" stroke="#6366f1" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
+        ${dots}${pill}
+      </div>
+      <div class="ohl-weeks" aria-hidden="true">${labels}</div>`:'<div class="empty-note ohl-empty">No open lines are due in the next eight weeks.</div>'});
+}
+
+// Customers at risk: orders first, with the value and lines under a thin bar. Click filters Order Health to the customer.
+function ohlCustomersCard(c){
+  const {d}=c;
+  const by=new Map();
+  d.risk.forEach(r=>{const k=rowCustomer(r);if(!by.has(k))by.set(k,{key:k,name:rowCustomerLabel(r),rows:[]});by.get(k).rows.push(r);});
+  const list=[...by.values()].map(x=>({...x,orders:rowDocCount(x.rows),value:rowOpenAmount(x.rows)}))
+    .sort((a,b)=>b.orders-a.orders||b.value-a.value||a.name.localeCompare(b.name)).slice(0,6);
+  const max=Math.max(1,...list.map(x=>x.orders));
+  const cur=weeklyCustomerFilter;
+  const rows=list.map((x,i)=>{
+    const on=cur.length===1&&cur[0]===x.key;
+    return `<button type="button" class="ohl-cust${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(`${x.name}: ${ohN(x.orders,'order')}, ${ohlMoney(x.rows)} at risk; ${on?'click to show every customer.':'click to filter to this customer.'}`)}>
+      <span class="ohl-cust-top"><span class="ohl-cust-name"><span class="ohl-rank">${String(i+1).padStart(2,'0')}</span>${esc(x.name)}</span><span class="ohl-cust-n">${esc(ohN(x.orders,'order'))}</span></span>
+      <span class="ohl-cust-bar"><span class="ohl-track"><i class="dz-grow" style="width:${Math.max(x.orders/max*100,2).toFixed(1)}%;--i:${i}"></i></span><span class="ohl-cust-amt">${esc(ohlMoney(x.rows))}</span></span>
+    </button>`;
+  }).join('');
+  return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:3"',
+    tip:'The customers with the most at-risk orders; click one to filter Order Health to it.',
+    body:rows?`<div class="ohl-list" role="group" aria-label="Customers at risk">${rows}</div>`:'<div class="empty-note">Nothing at risk in this view.</div>'});
+}
+
+// When flagged: at-risk lines by whole weeks since each was first at risk in an upload (teal bars, line counts).
+function ohlFlaggedCard(c){
+  const {m}=c;
+  const ages=ohFlagAges(ohlRiskWithout(m,'age'));
+  const max=Math.max(1,...ages.map(a=>a.lines));
+  const rows=ages.map((a,i)=>{
+    const on=weeklyAgeFilter===a.id;
+    return `<button type="button" class="ohl-age${a.lines?'':' zero'}${on?' sel':''}" data-focus-key="oh-age-${a.id}" data-age="${a.id}" onclick="setWeeklyAgeFilter(this.dataset.age)" aria-pressed="${on}"${tipAttr(`${a.label}: ${ohN(a.lines,'at-risk line')} (${ohN(a.orders,'order')}), ${money(a.value)} open; ${on?'click to show all.':'click to filter.'}`)}>
+      <span class="ohl-age-l">${esc(a.label)}</span><span class="ohl-age-n">${esc(ohN(a.lines,'line'))}</span>
+      <span class="ohl-track thin"><i class="dz-grow" style="width:${(a.lines/max*100).toFixed(1)}%;--i:${i}"></i></span>
+    </button>`;
+  }).join('');
+  return dzCard({title:'When flagged',sm:true,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:4"',
+    tip:'At-risk lines by whole weeks since each was first at risk in an upload; click a row to filter.',
+    body:`<div class="ohl-list" role="group" aria-label="At-risk lines by weeks since first flagged">${rows}</div>${ohFirstFlagged()?'':'<div class="ohl-note ohl-foot-note">No upload history yet, so every line counts as new.</div>'}`});
+}
+
+// Date changes: customers whose open sales-order lines slipped more than 2 days past due (SAP reschedule or Logican
+// commit) and whether Logican can build them (ready / blocked). Only drawn when a date moved. Click filters to a customer.
+function ohlDateChangesCard(c){
+  const dc=soDateChangeImpact(c.m),t=dc.totals;
+  if(!t.lines)return '';
+  const cur=weeklyCustomerFilter;
+  const words=(s,n=30)=>{const w=s.split(/\s+/);return w.length>n?`${w.slice(0,n-1).join(' ')}…`:s;};
+  const lineText=l=>`SO ${l.order} ${l.item||'no item'} due ${cmShort(l.due)}, now ${cmShort(l.expected)} (${l.source}${l.status?` ${l.status}`:''}${l.comment?`: ${l.comment}`:''})`;
+  const tags=(o,k)=>`${o.ready?dzChip(`${fmtNum(o.ready)} ready`,'teal'):''}${o.blocked?dzChip(`${fmtNum(o.blocked)} blocked`,'red'):''}${o.unknown&&k?dzChip(`${fmtNum(o.unknown)} unknown`,''):''}`;
+  const row=(cu,i)=>{
+    const on=cur.length===1&&cur[0]===cu.key;
+    const w=cu.lines[0],blocked=cu.lines.find(l=>l.deliverable==='blocked');
+    const tip=words(`${cu.customer}: ${ohN(cu.lines.length,'line')}, ${money(cu.value)}, moved later; worst ${lineText(w)}${blocked&&blocked!==w?`; blocked ${lineText(blocked)}`:''}; click to ${on?'show all':'filter'}.`);
+    return `<button type="button" class="dz-tr ohl-dc-row${on?' sel':''}" data-focus-key="dc-${esc(cu.key)}" data-off="${esc(cu.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(tip)}>
+      <span class="ohl-dc-cust">${esc(cu.customer)}</span>
+      <span class="ohl-dc-lines">${esc(ohN(cu.lines.length,'line'))}<span class="dz-cell-sub">${esc(moneyShort(cu.value))}</span></span>
+      <span class="dz-num ohl-dc-slip">+${fmtNum(cu.worstSlip)}d</span>
+      <span class="ohl-dc-worst">SO ${esc(w.order)} · ${esc(w.item||'no item')}<span class="dz-cell-sub">${esc(cmShort(w.due))} → ${esc(cmShort(w.expected))} · ${esc(w.source)}</span></span>
+      <span class="ohl-dc-tags">${tags(cu,true)}</span>
+    </button>`;
+  };
+  const shown=dc.customers.slice(0,DC_SHOW_CUSTOMERS),rest=dc.customers.slice(DC_SHOW_CUSTOMERS);
+  const open=!!tableMore['ohl-datechange']||printMode;
+  const more=rest.length?`<div class="ohl-foot"><span>${open?`Showing all ${fmtNum(dc.customers.length)} customers`:`Showing ${fmtNum(shown.length)} of ${fmtNum(dc.customers.length)} customers`}</span><button type="button" class="link-btn ohl-more print-hide" data-focus-key="more-ohl-datechange" data-table-key="ohl-datechange" aria-expanded="${open}"${tipAttr(open?'Show the first customers only.':`Show the other ${ohN(rest.length,'customer')} with later dates.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show more →'}</button></div>`:'';
+  const meta=`<span class="ohl-dc-meta">${esc(ohN(t.lines,'line'))} · ${esc(ohN(t.customers,'customer'))} · ${esc(money(t.value))}</span>${tags(t,true)}`;
+  return dzCard({title:'Date changes',sm:true,meta,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
+    tip:'Open sales-order lines whose expected date moved more than 2 days past due (SAP reschedule or Logican commit), and whether Logican can build them: ready (clear to build) or blocked (short or on hold).',
+    body:`<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
+        <div class="dz-th ohl-dc-th"><span>Customer</span><span>Lines</span><span class="dz-num">Slip</span><span>Worst line</span><span>What we can deliver</span></div>
+        ${(open?dc.customers:shown).map(row).join('')}
+      </div>${more}`});
 }
 // Lagging: Warehouse defaulting comes from the Warehouse page's helper (renderWarehouseDefaulting) when it is there.
 function ohRenderWarehouseDefaulting(m){
