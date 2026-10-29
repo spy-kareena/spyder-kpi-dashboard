@@ -165,7 +165,7 @@ function loginPage(failed, status) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--fg:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.08);--accent:#6366f1;--ring:rgba(99,102,241,.22);--crit:#be123c;--crit-bg:#fff1f2;
+    :root{--fg:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.08);--accent:#5468ff;--ring:rgba(84,104,255,.22);--crit:#e0244f;--crit-bg:#fdeef1;
       --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
     html{background:#eaf1fd}
@@ -178,9 +178,9 @@ function loginPage(failed, status) {
     form{display:grid;gap:8px;margin-top:26px}
     label{font-size:13px;font-weight:500;color:var(--muted)}
     input{width:100%;height:44px;border:1px solid var(--line);border-radius:999px;padding:0 18px;font:inherit;font-size:16px;color:var(--fg);background:rgba(255,255,255,.85);transition:border-color .15s,box-shadow .15s}
-    input:focus{outline:none;border-color:rgba(99,102,241,.55);background:#fff;box-shadow:0 0 0 3px var(--ring)}
-    input[aria-invalid="true"]{border-color:rgba(225,29,72,.5)}
-    input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(225,29,72,.18)}
+    input:focus{outline:none;border-color:rgba(84,104,255,.55);background:#fff;box-shadow:0 0 0 3px var(--ring)}
+    input[aria-invalid="true"]{border-color:rgba(255,61,104,.5)}
+    input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(255,61,104,.18)}
     .error{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--crit);padding:0 6px}
     .error svg{flex:none;width:16px;height:16px;margin-top:1px}
     button{margin-top:10px;height:44px;width:100%;border:1px solid transparent;border-radius:999px;background:var(--fg);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}

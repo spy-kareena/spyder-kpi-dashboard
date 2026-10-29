@@ -166,3 +166,11 @@ in the header and on the sign-in page (assets/spyder-logo.png replaces the .jpg)
 new one) and "Comment" (ready-made comments or Custom comment); the Notes column shows the note's last line and who wrote
 it. The At risk card shows, quietly, the share of orders due in the next month that are at risk. The Most affected
 warehouse is highlighted in soft amber. Card titles Capitalize Each Word.
+2v6.2: Settings page (avatar menu > Settings; saved in this browser): your name, at-risk target, on-track tolerance,
+look-ahead window, lines shown, opening view, the ready-made note comments, Shipping demo default, data status, Ask AI
+provider. Upload files button in the header and drop-anywhere for several files at once; an Import report that says,
+per file, what was read, what went wrong and how to fix it; "Fix with Claude" sends a file's header row and first 5 rows
+(only after a click and consent) to Claude through the site's AI proxy, which suggests a column mapping that is applied
+before the normal parser reads the file (needs ANTHROPIC_API_KEY on the hosted site). Line tables fold with a chevron;
+"About these numbers" is a round info button at the bottom right. Brighter colours with muted highlight tints; the
+Most affected warehouse is light yellow.
