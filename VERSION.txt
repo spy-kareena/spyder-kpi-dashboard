@@ -174,3 +174,4 @@ per file, what was read, what went wrong and how to fix it; "Fix with Claude" se
 before the normal parser reads the file (needs ANTHROPIC_API_KEY on the hosted site). Line tables fold with a chevron;
 "About these numbers" is a round info button at the bottom right. Brighter colours with muted highlight tints; the
 Most affected warehouse is light yellow.
+Line lists start collapsed; open one with its chevron (remembered per page in this browser).

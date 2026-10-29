@@ -12651,10 +12651,10 @@ function dzDecorateIcons(root){
 
 // --- Collapsible line tables and the About panel (2v6.2) ---
 // Every list of lines (Order Health Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments, Search lines)
-// gets a chevron before its title that folds the card to its header; the choice is kept per page and table in this
-// browser (spyderKpiCollapsed). Applied after each draw (renderResults), like the tile icons.
+// gets a chevron before its title that folds the card to its header. Lists start folded; the ones opened are kept per
+// page and table in this browser (spyderKpiOpenLines). Applied after each draw (renderResults), like the tile icons.
 const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head';
-const DZ_COLLAPSE_KEY='spyderKpiCollapsed';
+const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
 function dzCollapsedMap(){
   try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
 }
@@ -12667,7 +12667,7 @@ function dzDecorateCollapse(root){
     const title=head.querySelector('.dz-title');
     const name=String(title?title.textContent:'Lines').trim();
     const key=`${activeTab}:${name.toLowerCase()}`;
-    const closed=!!saved[key];
+    const closed=!saved[key];
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='dz-collapse-btn print-hide';
@@ -12691,7 +12691,7 @@ function dzToggleCollapse(btn){
   const name=String((card.querySelector('.dz-title')||{}).textContent||'Lines').trim();
   btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
   const map=dzCollapsedMap();
-  if(closed)map[btn.dataset.collapseKey]=true;else delete map[btn.dataset.collapseKey];
+  if(closed)delete map[btn.dataset.collapseKey];else map[btn.dataset.collapseKey]=true;
   try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
 }
 // The About panel closes on a click outside it or on Escape (it is a <details>, so it opens and closes on its own).
