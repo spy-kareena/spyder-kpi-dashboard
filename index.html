@@ -2376,6 +2376,361 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end supply */
 
 /* 2v6:misc-pages */
+/* Agent 6: pages the handoff left out (load screen, Forecast, Connect an AI, Search), global overlays and notes (Data check,
+   snapshot note, Ask AI panel, "Your name" dialog, hints, toasts, tooltips, focus rings), and the shell polish (phone menus,
+   header date contrast, tablet header, print). Same language as the handoff: gradient page, glass cards (radius 24), pills,
+   indigo / teal / red / amber chips. Classes here start with misc-. */
+:root{--tip-bg:#0f172a}
+a.dz-btn,a.dz-btn:hover{color:var(--dz-ink-1);text-decoration:none}
+a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
+:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+
+/* ---------- Load screen ---------- */
+.misc-uphead{align-items:flex-end;gap:10px 24px}
+.misc-uphead-main{display:grid;gap:4px;flex:1 1 280px;min-width:0}
+.misc-uphead .page-lead{margin:0;max-width:none;font-size:14px;line-height:1.5;color:var(--dz-ink-4)}
+.misc-uphead-side{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+#upload-screen .page-meta{font-size:13px;color:var(--dz-ink-4);white-space:normal}
+#upload-screen .privacy-pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:4px 10px;background:var(--dz-teal-bg);color:var(--dz-teal);font-size:12px;font-weight:500;line-height:1.2}
+#upload-screen .privacy-pill::before{width:6px;height:6px;background:var(--dz-teal)}
+#upload-hint:empty{display:none}
+#upload-screen .upload-shell{gap:16px}
+#upload-screen .upload-zone,#upload-screen .upload-shell.single .upload-zone{min-height:260px;padding:44px 32px;gap:22px;align-items:center;justify-content:center;text-align:center;border:1.5px dashed rgba(99,102,241,.32);border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card);transition:border-color .2s,background-color .2s,box-shadow .2s}
+#upload-screen .upload-zone:hover{border-color:rgba(99,102,241,.6);background:var(--dz-glass-80)}
+#upload-screen .upload-zone.drag{border-color:var(--dz-indigo);background:var(--dz-indigo-bg);box-shadow:0 0 0 4px rgba(99,102,241,.14)}
+#upload-screen .upload-zone:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-color:var(--dz-indigo);box-shadow:var(--dz-sh-card)}
+#upload-screen .upload-copy,#upload-screen .upload-shell.single .upload-copy{display:grid;justify-items:center;gap:8px}
+#upload-screen .upload-icon{width:52px;height:52px;border-radius:50%;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);margin:0 0 8px}
+#upload-screen .upload-icon svg{width:22px;height:22px}
+#upload-screen .upload-zone:hover .upload-icon{transform:none}
+#upload-screen .upload-zone h2{font-size:20px;font-weight:600;letter-spacing:-.01em;color:var(--dz-ink-1)}
+#upload-screen .upload-zone p{font-size:14px;line-height:1.5;color:var(--dz-ink-4)}
+#upload-screen .upload-actions,#upload-screen .upload-shell.single .upload-actions{justify-content:center;gap:8px}
+#upload-screen .upload-chip{border:0;border-radius:999px;padding:4px 10px;background:var(--dz-fill-1);color:var(--dz-ink-3);font-size:12px;font-weight:500;line-height:1.2}
+#upload-screen .upload-side{padding:24px 26px;border:1px solid #fff;border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card)}
+#upload-screen .upload-current{gap:10px}
+#upload-screen .upload-current>span{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:var(--dz-ink-4)}
+#upload-screen .upload-current strong{font-size:13.5px;font-weight:600;line-height:1.45;color:var(--dz-ink-1);overflow-wrap:anywhere}
+#upload-screen .upload-current .dz-btn{justify-self:start;margin-top:4px}
+#upload-screen .live-dot{box-shadow:0 0 0 3px var(--dz-teal-bg);background:var(--dz-teal)}
+.misc-pages .upload-pages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 40px;margin-top:18px}
+.misc-pg-col h3{margin:0 0 12px;font-size:12px;font-weight:500;color:var(--dz-ink-4)}
+.misc-pg-col ul{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.misc-pg-col li{display:grid;gap:1px}
+.misc-pg-col li strong{font-size:14px;font-weight:600;color:var(--dz-ink-1)}
+.misc-pg-col li span{font-size:12.5px;line-height:1.45;color:var(--dz-ink-4)}
+#upload-error.error-box{padding:12px 18px;border:1px solid rgba(225,29,72,.16);border-radius:18px;background:var(--dz-risk-bg);color:var(--dz-risk-text);font-size:13px;line-height:1.5}
+@media (max-width:900px){#upload-screen .upload-shell{grid-template-columns:minmax(0,1fr)}.misc-pages .upload-pages{gap:18px 28px}}
+@media (max-width:640px){
+  #upload-screen .upload-zone,#upload-screen .upload-shell.single .upload-zone{min-height:0;padding:30px 20px}
+  .misc-uphead-side{justify-content:flex-start}
+  .misc-pages .upload-pages{grid-template-columns:minmax(0,1fr);gap:20px}
+}
+/* Reading screen: a glass card and soft glass blocks */
+#loading-screen{padding-top:0}
+#loading-screen .reading{min-height:150px;border:1px solid #fff;border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card)}
+#loading-screen p{font-size:14px;color:var(--dz-ink-4)}
+#loading-screen .dots>span{background:var(--dz-indigo)}
+.loading-skeleton{margin-top:16px;gap:16px}
+#loading-screen .skeleton{border:1px solid #fff;border-radius:var(--dz-r-card);background:linear-gradient(100deg,rgba(255,255,255,.4) 40%,rgba(255,255,255,.75) 50%,rgba(255,255,255,.4) 60%);background-size:200% 100%}
+@media (prefers-reduced-motion:reduce){#loading-screen .skeleton,#loading-screen .dots>span{animation:none}}
+
+/* ---------- Shared: steps, empty state, "needs a file" ---------- */
+.misc-steps{list-style:none;margin:0;padding:0;display:grid;gap:12px;align-content:start}
+.misc-step{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:start;font-size:13.5px;line-height:1.55;color:var(--dz-ink-2)}
+.misc-step-no{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font-size:12px;font-weight:600}
+.misc-step-text{padding-top:2px;min-width:0}
+.misc-step-text a{color:var(--dz-indigo-link)}
+.misc-step-text a:hover{color:var(--dz-indigo-hover)}
+.misc-step-text code{display:block;margin-top:5px;padding:3px 8px;border-radius:8px;background:var(--dz-fill-1);color:var(--dz-ink-3);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;overflow-wrap:anywhere}
+.misc-empty{display:grid;justify-items:center;gap:6px;padding:56px 24px;text-align:center}
+.misc-empty-ico{display:grid;place-items:center;width:48px;height:48px;margin-bottom:8px;border-radius:50%;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.misc-empty-ico svg{width:22px;height:22px}
+.misc-empty .dz-sub{max-width:440px;line-height:1.55}
+.misc-empty-actions{margin-top:14px}
+.misc-need{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px;padding:36px 40px}
+.misc-need-main{display:grid;gap:16px;align-content:start;justify-items:start}
+.misc-need-title{margin:0;font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.25;text-wrap:pretty}
+.misc-need-body{margin:0;max-width:520px;font-size:14px;line-height:1.6;color:var(--dz-ink-4)}
+.misc-need-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.misc-need-side{display:grid;gap:14px;align-content:start;padding-left:40px;border-left:1px solid var(--dz-line-6)}
+.misc-need-eyebrow{font-size:12.5px;color:var(--dz-ink-4)}
+.misc-need-side ul{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.misc-need-side li{display:grid;gap:2px}
+.misc-need-side li strong{font-size:14px;font-weight:600}
+.misc-need-side li span{font-size:12.5px;line-height:1.45;color:var(--dz-ink-4)}
+@media (max-width:900px){.misc-need{grid-template-columns:minmax(0,1fr);gap:24px;padding:26px 22px}.misc-need-side{padding:20px 0 0;border-left:0;border-top:1px solid var(--dz-line-6)}}
+
+/* ---------- Forecast ---------- */
+.misc-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.misc-tile{min-width:0;padding:18px 20px;border:1px solid #fff;border-radius:22px;background:var(--dz-glass-75);box-shadow:var(--dz-sh-card)}
+.misc-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
+.misc-dot{flex:none;width:8px;height:8px;border-radius:50%}
+.misc-tile-v{margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums}
+.misc-tile-s{margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
+.misc-fc-legend{display:inline-flex;align-items:center;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--dz-ink-4)}
+.misc-fc-legend>span{display:inline-flex;align-items:center;gap:6px}
+.misc-fc-legend .sw{display:inline-block;width:10px;height:10px;border-radius:3px;background:#c7d2fe}
+.misc-fc-legend .sw.line{width:16px;height:0;border-top:2px solid var(--dz-ink-1);border-radius:0;background:none}
+.misc-fc-legend .sw.line.dash{border-top:2px dashed var(--dz-amber)}
+.misc-fc-plot{position:relative;height:200px;margin-top:26px;border-bottom:1px solid var(--dz-line-8);background:linear-gradient(var(--dz-line-5) 1px,transparent 1px) 0 0/100% 25%}
+.misc-fc-bars{position:absolute;inset:0;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;align-items:end}
+.misc-fc-col{display:flex;align-items:flex-end;justify-content:center;height:100%;padding:0 16%;cursor:default}
+.misc-fc-col>i{display:block;width:100%;min-height:1px;border-radius:6px 6px 0 0;background:#c7d2fe}
+.misc-fc-col>i.now{background:var(--dz-indigo)}
+.misc-fc-col:hover>i{background:#a5b4fc}
+.misc-fc-col:hover>i.now{background:var(--dz-indigo-link)}
+.misc-fc-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.misc-fc-lines polyline{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.misc-fc-lines .so{stroke:var(--dz-ink-1)}
+.misc-fc-lines .po{stroke:var(--dz-amber);stroke-dasharray:6 4}
+.misc-fc-max{position:absolute;top:-20px;left:0;font-size:11.5px;color:var(--dz-ink-4)}
+.misc-fc-months{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;margin-top:8px;font-size:12px;color:var(--dz-ink-4);text-align:center}
+.misc-fc-table{--cols:minmax(0,2.2fr) 150px 92px 92px 112px 92px;--gap:14px;margin-top:12px}
+.misc-fc-table .dz-th,.misc-fc-table .dz-tr{min-width:640px}
+.misc-sm{display:none}
+.misc-fc-item{min-width:0}
+.misc-fc-item strong{font-weight:600}
+.misc-fc-item .dz-cell-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.misc-b{font-weight:600}
+.misc-soft{color:var(--dz-ink-4)}
+.misc-fc-mo{min-width:0}
+.misc-fc-spark{display:inline-flex;align-items:flex-end;gap:2px;height:22px}
+.misc-fc-spark>i{display:block;width:5px;border-radius:2px 2px 0 0;background:#c7d2fe}
+.misc-fc-spark>i.over{background:#fda4af}
+.misc-more{display:flex;justify-content:space-between;align-items:center;padding:12px 0 6px;font-size:12px;color:var(--dz-ink-4)}
+.misc-more .link-btn{color:var(--dz-indigo-link);font-weight:500;font-size:12.5px}
+.misc-none{margin:0;padding:18px 0;font-size:13px;color:var(--dz-ink-4)}
+.misc-fc-items .dz-meta{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
+.misc-about details.about{padding:14px 22px;border:1px solid #fff;border-radius:18px;background:var(--dz-glass-60);color:var(--dz-ink-3)}
+.misc-about details.about>summary{font-weight:500;color:var(--dz-ink-3)}
+.misc-about details.about>summary:hover{color:var(--dz-ink-1)}
+@media (max-width:640px){
+  .misc-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .misc-tile{padding:14px 16px;border-radius:18px}
+  .misc-tile-v{font-size:24px}
+  .misc-fc-plot{height:150px}
+  .misc-fc-col{padding:0 8%}
+  .misc-fc-months{font-size:9.5px}
+  .misc-fc-mo{display:none}
+  .misc-fc-table{--cols:minmax(0,1fr) 52px 48px 52px 56px;--gap:6px}
+  .misc-fc-table .dz-th,.misc-fc-table .dz-tr{min-width:0}
+  .misc-fc-table .dz-chip{padding:2px 6px}
+  .misc-lg{display:none}
+  .misc-sm{display:inline}
+}
+
+/* ---------- Connect an AI ---------- */
+.misc-intro{margin:0;max-width:640px;font-size:14px;line-height:1.55;color:var(--dz-ink-4)}
+.misc-connect{align-items:stretch}
+.misc-opt{display:flex;flex-direction:column;gap:14px;padding-bottom:22px}
+.misc-opt-sub{margin:0;font-size:13.5px;line-height:1.55;color:var(--dz-ink-3)}
+.misc-opt-sub strong{font-weight:600;color:var(--dz-ink-1)}
+.misc-opt-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:4px}
+.misc-tiers{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.misc-tiers li{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:start;padding:12px 14px;border:1px solid var(--dz-line-6);border-radius:var(--dz-r-stat);background:var(--dz-glass-60)}
+.misc-tiers .dz-chip{justify-content:center}
+.misc-tier-text{display:grid;gap:2px;font-size:12.5px;line-height:1.5;color:var(--dz-ink-4)}
+.misc-tier-text strong{font-size:13.5px;font-weight:600;color:var(--dz-ink-1)}
+.misc-opt2{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:22px;align-items:start}
+.misc-code{min-width:0;overflow:hidden;border:1px solid var(--dz-line-6);border-radius:var(--dz-r-stat);background:rgba(15,23,42,.04)}
+.misc-code-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 14px;border-bottom:1px solid var(--dz-line-6)}
+.misc-code-file{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--dz-ink-3);overflow-wrap:anywhere}
+.misc-code-copy{display:flex;align-items:center;gap:10px;margin-left:auto}
+.misc-code-copy .dz-btn{height:28px;padding:0 12px;font-size:12px}
+.misc-code-status{font-size:12px;color:var(--dz-teal)}
+.misc-code pre{margin:0;max-height:260px;padding:14px 16px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.6;color:var(--dz-ink-2);white-space:pre}
+.misc-code pre:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:-2px}
+.misc-privacy{display:flex;align-items:flex-start;gap:10px;margin:0;font-size:13px;line-height:1.55;color:var(--dz-ink-4)}
+.misc-privacy svg{flex:none;width:16px;height:16px;margin-top:2px}
+@media (max-width:760px){.misc-opt2{grid-template-columns:minmax(0,1fr);gap:18px}}
+
+/* ---------- Search ---------- */
+.misc-search{display:flex;flex-direction:column;gap:16px}
+.misc-back{display:flex}
+.misc-head-l{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+.misc-flat>.dz-card-head{align-items:center;margin-bottom:6px}
+.misc-flat .table{overflow:visible;border:0;border-radius:0;background:none;box-shadow:none}
+.misc-flat .table>.card-head{padding:0 0 10px;align-items:baseline}
+.misc-flat .card-head h2{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--dz-ink-1)}
+.misc-flat .section-sub{font-size:12.5px;color:var(--dz-ink-4)}
+.misc-flat .lines-table,.misc-flat .data-table{font-size:13px}
+.misc-flat .lines-table th,.misc-flat .data-table th,.misc-flat .lines-table.search th,.misc-flat .lines-table.so th{padding:10px 8px;border-top:0;border-bottom:1px solid var(--dz-line-8);background:none;font-size:11.5px;font-weight:400;color:var(--dz-ink-4)}
+.misc-flat .lines-table td,.misc-flat .data-table td,.misc-flat .lines-table.search td{padding:13px 8px;border-bottom:1px solid var(--dz-line-5);font-size:13px}
+.misc-flat .lines-table tr>:first-child,.misc-flat .data-table tr>:first-child,.misc-flat .lines-table.search tr>:first-child{padding-left:0}
+.misc-flat .lines-table tr>:last-child,.misc-flat .data-table tr>:last-child,.misc-flat .lines-table.search tr>:last-child{padding-right:0}
+.misc-flat .lines-table tbody tr.line-row:hover,.misc-flat .data-table tbody tr:hover{background:rgba(255,255,255,.55)}
+.misc-flat .lines-table tbody tr.line-row.editing{background:rgba(255,255,255,.55)}
+.misc-flat .lines-table .c-doc,.misc-flat .lines-table .c-date,.misc-flat .lines-table .c-val{font-size:13px}
+.misc-flat .lines-table .c-name{color:var(--dz-ink-2)}
+.misc-flat .lines-table .c-wh,.misc-flat .lines-table .c-type,.misc-flat .lines-table .c-item .desc,.misc-flat .lines-table .sub,.misc-flat .data-table .sub,.misc-flat .data-table .item-desc{color:var(--dz-ink-4)}
+.misc-flat .lines-table .c-qty{font-size:13px;color:var(--dz-ink-1)}
+.misc-flat .data-table .soft{color:var(--dz-ink-3)}
+.misc-flat .status-chip,.misc-flat .pill{padding:3px 10px;background:var(--dz-fill-1);color:var(--dz-ink-3);font-size:12px;font-weight:500}
+.misc-flat .status-chip.bad,.misc-flat .pill.bad{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.misc-flat .status-chip.warn,.misc-flat .pill.warn{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
+.misc-flat .status-chip.good,.misc-flat .pill.good{background:var(--dz-teal-bg);color:var(--dz-teal)}
+.misc-flat .tfoot{padding:12px 0 0;background:none;font-size:12px;color:var(--dz-ink-4)}
+.misc-flat .tfoot .link-btn,.misc-flat .link-btn{color:var(--dz-indigo-link);font-weight:500;font-size:12.5px}
+@media (max-width:640px){
+  /* Phones draw each line as a small card (legacy rules): keep their rows, drop my cell borders, line up with the card's edge */
+  .misc-flat .lines-table>tbody>tr.line-row>td{border:0}
+  .misc-flat .lines-table>tbody>tr.line-row{padding-left:0;padding-right:0}
+  .misc-flat>.dz-card-head{gap:10px}
+}
+.search-results mark{padding:0 2px;border-radius:4px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);box-shadow:inset 0 0 0 1px rgba(99,102,241,.22)}
+
+/* ---------- Notes next to the page title: Data check and the shared-snapshot note ---------- */
+details.data-check>summary{padding:4px 10px;border:0;background:var(--dz-amber-bg);color:var(--dz-amber-text);font-size:12px;font-weight:500;line-height:1.2}
+details.data-check>summary:hover,details.data-check[open]>summary{background:#fde68a}
+.data-check-pop{top:calc(100% + 8px);margin-top:0;z-index:60;width:420px;padding:14px 16px;border:1px solid var(--dz-line-6);border-radius:var(--dz-r-menu);background:#fff;box-shadow:var(--dz-sh-menu);color:var(--dz-ink-3);font-size:12.5px;line-height:1.55}
+.data-check-pop strong{font-weight:600;color:var(--dz-ink-1)}
+.data-check-pop ul{margin-top:8px;color:var(--dz-ink-3)}
+.data-check-pop .btn{height:30px;padding:0 14px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:12px;font-weight:500}
+.data-check-pop .btn:hover{background:var(--dz-fill-1)}
+.data-check-pop .link-btn{color:var(--dz-indigo-link);font-weight:500}
+.snapshot-note{padding:4px 10px;border:0;box-shadow:inset 0 0 0 1px rgba(99,102,241,.2);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font-size:12px;font-weight:500;line-height:1.2}
+.snapshot-download-box{padding:12px 18px;border:1px solid rgba(15,118,110,.18);border-radius:18px;background:var(--dz-teal-bg-2);color:var(--dz-teal);font-size:12.5px}
+.snapshot-download-box .btn{height:30px;padding:0 14px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:12px;font-weight:500}
+
+/* ---------- Hints, toast, tooltip ---------- */
+.hint-card{align-items:center;gap:12px;padding:12px 14px 12px 18px;border:1px solid #fff;border-radius:18px;background:rgba(238,242,255,.75);color:var(--dz-ink-3);font-size:13px;line-height:1.5}
+.hint-ico{margin-top:0;color:var(--dz-indigo)}
+.hint-body strong{font-weight:600;color:var(--dz-ink-1)}
+.hint-close{width:28px;height:28px;margin:0 -4px 0 0;border-radius:50%;color:var(--dz-ink-4)}
+.hint-close:hover{background:rgba(255,255,255,.85);color:var(--dz-ink-1)}
+.toast-item{padding:11px 16px;border:0;border-radius:14px;background:var(--dz-ink-1);box-shadow:var(--dz-sh-menu);color:#fff;font-size:13px;font-weight:500}
+.toast-item svg{color:#5eead4}
+.tip-layer{padding:7px 11px;border-radius:10px;box-shadow:var(--dz-sh-menu);font-weight:400}
+@media (max-width:640px){.toast{right:16px;left:16px;bottom:16px;max-width:none}}
+
+/* ---------- Ask AI panel: a floating glass sheet ---------- */
+.ai-panel{top:12px;right:12px;bottom:12px;height:auto;width:420px;max-width:calc(100vw - 24px);overflow:hidden;border:1px solid var(--dz-line-6);border-radius:var(--dz-r-card);background:#fff;box-shadow:var(--dz-sh-menu);color:var(--dz-ink-1)}
+.ai-head{gap:10px;padding:18px 20px 12px;border-bottom:1px solid var(--dz-line-6)}
+.ai-head h2{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.ai-mode{color:var(--dz-ink-4)}
+.ai-panel .link-btn{color:var(--dz-indigo-link);font-size:12.5px;font-weight:500}
+.ai-close{display:grid;place-items:center;width:30px;height:30px;padding:0;border-radius:50%;color:var(--dz-ink-4)}
+.ai-close:hover{background:var(--dz-fill-1);color:var(--dz-ink-1)}
+.ai-settings,.ai-setup{padding:16px 20px 22px}
+.ai-settings p,.ai-setup p{color:var(--dz-ink-3)}
+.ai-field{color:var(--dz-ink-4)}
+.ai-panel .select{padding:7px 32px 7px 14px;border:1px solid var(--dz-line-8);border-radius:999px;background-color:var(--dz-glass-80);color:var(--dz-ink-1)}
+.ai-panel .btn{height:34px;padding:0 16px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:13px;font-weight:500}
+.ai-panel .btn:hover{background:var(--dz-fill-1)}
+.ai-panel .btn-primary{border-color:var(--dz-ink-1);background:var(--dz-ink-1);color:#fff}
+.ai-panel .btn-primary:hover{background:var(--dz-ink-2)}
+.ai-notice{padding:12px 14px;border:0;border-radius:var(--dz-r-stat);background:var(--dz-amber-bg)}
+.ai-notice p{color:var(--dz-amber-text)}
+.ai-notice a{color:var(--dz-indigo-link)}
+.ai-tier.paid{border-color:transparent;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.ai-tier.free{border-color:transparent;background:#fff;color:var(--dz-amber-text)}
+.ai-check{color:var(--dz-ink-2)}
+.ai-check input{accent-color:var(--dz-indigo)}
+.ai-setup h3{font-size:15px}
+.ai-setup code,.ai-msg code{background:var(--dz-fill-1)}
+.ai-log{padding:16px 20px}
+.ai-empty,.ai-foot,.ai-status,.ai-tools{color:var(--dz-ink-4)}
+.ai-msg{padding:10px 14px;border-radius:18px}
+.ai-msg.user{border:0;border-bottom-right-radius:6px;background:var(--dz-ink-1);color:#fff}
+.ai-msg.user code{background:rgba(255,255,255,.18);color:#fff}
+.ai-msg.model{border:1px solid var(--dz-line-6);border-bottom-left-radius:6px;background:#fff}
+.ai-msg.error{border-color:rgba(225,29,72,.2);background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.ai-msg.pending{color:var(--dz-ink-4)}
+.ai-msg.note{background:none;color:var(--dz-ink-4)}
+.ai-msg th{color:var(--dz-ink-4)}
+.ai-msg th,.ai-msg td{border-bottom-color:var(--dz-line-6)}
+.ai-chips{padding:0 20px 10px}
+.ai-chips .chip{padding:6px 12px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-2);font-size:12.5px;font-weight:500}
+.ai-chips .chip:hover{border-color:rgba(99,102,241,.35);background:#fff}
+.ai-compose{padding:12px 20px 16px;border-top:1px solid var(--dz-line-6)}
+.ai-compose textarea{padding:10px 14px;border:1px solid var(--dz-line-8);border-radius:16px;background:var(--dz-glass-80)}
+.ai-compose textarea:focus{outline:none;border-color:rgba(99,102,241,.5);box-shadow:0 0 0 3px rgba(99,102,241,.16)}
+@media (max-width:640px){.ai-panel{top:8px;right:8px;bottom:8px;left:8px;width:auto;max-width:none;border-radius:20px}}
+
+/* ---------- "Your name" dialog ---------- */
+.editor-dialog{width:min(400px,calc(100vw - 32px));padding:24px 26px;border:1px solid #fff;border-radius:var(--dz-r-card);background:rgba(255,255,255,.97);box-shadow:var(--dz-sh-menu),0 30px 80px rgba(15,23,42,.16);color:var(--dz-ink-1);font-family:var(--font)}
+.editor-dialog::backdrop{background:rgba(15,23,42,.32);backdrop-filter:blur(3px)}
+.editor-form{gap:12px}
+.editor-form h2{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--dz-ink-1)}
+.editor-form p{color:var(--dz-ink-4)}
+.editor-form label,.editor-form .editor-sub{font-size:12.5px;font-weight:500;color:var(--dz-ink-4)}
+.editor-form input{height:42px;padding:0 16px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-1)}
+.editor-form input:focus{outline:none;border-color:rgba(99,102,241,.5);background:#fff;box-shadow:0 0 0 3px rgba(99,102,241,.16)}
+.editor-pick{border-color:var(--dz-line-8)}
+.editor-pick:hover{border-color:rgba(99,102,241,.35)}
+.editor-pick:has(.editor-chip[aria-current="true"]){border-color:rgba(99,102,241,.35)}
+.editor-chip[aria-current="true"]{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.editor-chip:focus-visible,.editor-chip-x:focus-visible{outline-color:var(--dz-indigo)}
+.editor-form .editor-error{color:var(--dz-risk-text)}
+.editor-actions .btn{height:36px;padding:0 18px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:13px;font-weight:500}
+.editor-actions .btn:hover{background:var(--dz-fill-1)}
+.editor-actions .btn-primary{border-color:var(--dz-ink-1);background:var(--dz-ink-1);color:#fff}
+.editor-actions .btn-primary:hover{background:var(--dz-ink-2)}
+
+/* ---------- Shell polish ---------- */
+/* The export date is a button: #64748b gives 4.6:1 on the page gradient (#94a3b8 was 2.3:1) */
+.hdr-date,.hdr-date.none,.hdr-date.none:hover{color:var(--dz-ink-4)}
+.hdr-date:hover,.hdr-date[aria-expanded="true"]{color:var(--dz-ink-1)}
+.hdr-search input::placeholder{color:var(--dz-ink-4)}
+/* Tablet: up to 1100px the links and the tools share one row with tighter gaps, and the export date steps aside while the
+   search box is open; up to 900px the header takes the phone's two rows (logo and tools, then the links) so no link is cut */
+@media (max-width:1100px) and (min-width:761px){
+  .app-header{gap:16px}
+  .hdr-nav,.hdr-center{gap:16px}
+  .hdr-search.open input{width:150px}
+  .app-header.searching .hdr-date{display:none}
+}
+@media (max-width:900px) and (min-width:761px){
+  .app-header{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"logo right" "center center";gap:2px 12px;min-height:0}
+  .hdr-logo{grid-area:logo}
+  .hdr-right{grid-area:right}
+  .hdr-center{grid-area:center;justify-content:flex-start;gap:20px}
+  .hdr-nav{gap:20px;flex:0 1 auto}
+  .app-header.searching .hdr-logo{display:none}
+  .app-header.searching{grid-template-areas:"right right" "center center"}
+  .app-header.searching .hdr-right{justify-self:stretch}
+  .app-header.searching .hdr-search{flex:1}
+  .app-header.searching .hdr-search.open input{width:auto;flex:1}
+  .hdr-supply .dz-menu{left:auto;right:0}
+}
+/* Phone: an open filter or avatar menu is as wide as the screen, sits above everything and scrolls inside itself, so it never
+   covers a pill row it does not own (the pills it hides come back when it closes) */
+@media (max-width:640px){
+  .dz-filters .dz-menuwrap{position:static}
+  .dz-filters .dz-menu{left:0!important;right:0!important;min-width:0;width:auto;max-height:min(320px,55vh);transform:none!important}
+  .dz-menu.dz-scroll{max-height:min(320px,55vh)}
+}
+
+/* ---------- Print: header, filter row and menus are gone; the active page prints flat on white ---------- */
+@media print{
+  html,body,.app-shell,.main,#app-main{background:#fff!important}
+  .dz-card,.misc-tile,.misc-empty,.hint-card{background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
+  .dz-card,.misc-tile{border:1px solid var(--gray-300)!important;border-radius:6px!important}
+  .dz-card{padding:.1in .12in}
+  .dz-tr,.dz-th,tr,.misc-step,.misc-tiers li{break-inside:avoid;page-break-inside:avoid}
+  .dz-table{overflow:visible}
+  .misc-fc-table .dz-th,.misc-fc-table .dz-tr{min-width:0}
+  .misc-fc-mo{display:block}
+  .misc-fc-table{--cols:minmax(0,2.2fr) 1.2fr .8fr .8fr 1fr .8fr}
+  .misc-tiles{grid-template-columns:repeat(4,minmax(0,1fr));gap:.1in}
+  .misc-tile{padding:.08in .1in}
+  .misc-tile-v{font-size:16pt}
+  .misc-fc-plot{height:140px}
+  .misc-opt,.misc-fc-chart{break-inside:avoid}
+  .misc-opt2{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
+  .misc-code pre{max-height:none;overflow:visible;white-space:pre-wrap}
+  /* Table cards run on over pages (their rows stay whole) instead of jumping to a fresh page as one block */
+  .dz-card.misc-flat,.dz-card.misc-fc-items{break-inside:auto;page-break-inside:auto}
+  .misc-flat .table,.misc-flat .table-scroll{break-inside:auto;page-break-inside:auto;overflow:visible}
+  .misc-flat .table{border:0!important;border-radius:0!important}
+  .misc-flat .lines-table.search,.misc-flat .lines-table.search tbody{min-width:0!important;width:100%}
+  .misc-flat thead{display:table-header-group}
+  .dz-card>.dz-card-head,.misc-flat>.dz-card-head{break-after:avoid;page-break-after:avoid}
+  .misc-need-actions,.dz-pagehead .dz-btn,.toast,.ai-panel{display:none!important}
+  .misc-about details.about{background:#fff}
+  .misc-fc-col>i,.misc-fc-spark>i,.dz-chip,.snapshot-note{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 /* 2v6:end misc-pages */
 </style>
 </head>
@@ -2385,16 +2740,16 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
   <header class="app-header" id="app-header"></header>
   <main class="main" id="app-main">
   <div id="upload-screen">
-    <div class="page-head rise">
-      <div class="page-head-main"><h1 class="page-title">Load KPI export</h1><p class="page-lead">Load SAP exports into one offline summary.</p><div class="page-sub"><span class="page-meta" id="upload-current-meta"></span></div></div>
-      <div class="actions"><span class="privacy-pill" data-tip="Files are read in this browser; the hosted site also keeps the last report for everyone who signs in.">Read in your browser</span></div>
+    <div class="dz-pagehead misc-uphead rise">
+      <div class="page-head-main misc-uphead-main"><h1 class="dz-h1 page-title">Load KPI export</h1><p class="dz-sub page-lead">Load SAP exports into one offline summary.</p></div>
+      <div class="actions misc-uphead-side"><span class="page-meta" id="upload-current-meta"></span><span class="privacy-pill" data-tip="Files are read in this browser; the hosted site also keeps the last report for everyone who signs in.">Read in your browser</span></div>
     </div>
     <div id="upload-hint" class="rise rise-1"></div>
     <div class="upload-shell single rise rise-2" id="upload-shell">
       <label id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Add KPI export files" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click();}" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="handleFiles([...this.files])">
         <div class="upload-copy">
-          <div class="upload-icon" aria-hidden="true">+</div>
+          <div class="upload-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg></div>
           <h2>Add KPI export files</h2>
           <p>Drop files here or click to browse.</p>
         </div>
@@ -2412,7 +2767,7 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
       </aside>
     </div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
-    <section class="pg-group rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
+    <section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
   </div>
   <div id="loading-screen" style="display:none"><div class="reading" role="status" aria-live="polite"><p id="loading-msg">Reading KPI export…</p><div class="dots" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="loading-skeleton" aria-hidden="true"><div class="skeleton" style="height:150px"></div><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:320px"></div></div></div>
   <div id="results-screen" style="display:none"></div>
@@ -6184,34 +6539,36 @@ const CONNECT_SNIPPETS={
   'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2)
 };
 function renderConnectPage(){
-  const doc=(href,label,tip)=>`<a class="btn" href="${href}" target="_blank" rel="noopener"${tipAttr(tip)}>${label}</a>`;
-  const step=(n,text)=>`<div class="step"><span class="step-no">${n}</span><span class="step-text">${text}</span></div>`;
-  // Wide screens: text and actions on the left, details on the right; narrow: text, details, then actions.
-  const option=(n,title,sub,main,side,actions)=>`<section class="card connect-opt rise rise-${n}" aria-labelledby="connect-opt-${n}">
-    <div class="connect-main"><div class="connect-head"><h2 class="connect-title" id="connect-opt-${n}"><span class="connect-no">Option ${n}<span class="sr-only">:</span></span> ${title}</h2><p class="connect-sub">${sub}</p></div>${main}</div>
-    <div class="connect-side">${side}</div>
-    <div class="connect-actions print-hide">${actions}</div>
-  </section>`;
-  const tier=(cls,label,names,note)=>`<li><span class="ai-tier ${cls}">${label}</span><span><strong>${names}</strong><span class="connect-tier-note">${note}</span></span></li>`;
-  return `<p class="connect-intro rise">Ask an AI about the export in plain English, such as “What is at risk this week?”.</p>
-  <div class="connect-grid">
-  ${option(1,'Ask AI in this dashboard','Nothing to install',
-    `<p class="connect-text">Click <strong>Ask AI</strong> at the top of any page, pick a provider in <strong>Settings</strong> and tick its consent box.</p>`,
-    `<ul class="connect-tiers">
-      ${tier('paid','Paid','Claude and ChatGPT','Billed to Spyder Controls. Not used to train models.')}
-      ${tier('free','Free','Groq and OpenRouter','Tight limits. May keep or publish what you send.')}
-    </ul>`,
-    `<button type="button" class="btn btn-primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Open the Ask AI panel; nothing is sent until you allow a provider." onclick="aiToggle(true)">Open Ask AI</button>${doc('docs/AI_ASSISTANT.md','Ask AI guide','Providers, costs and data terms (docs/AI_ASSISTANT.md).')}`)}
-  ${option(2,'Your own AI app','Claude Desktop below; other apps: see Setup guide.',
-    `<div class="steps connect-steps">
-      ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
-      ${step(2,'Get the dashboard folder from IT.')}
-      ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
-    </div>`,
-    `<div class="connect-code"><div class="connect-code-head"><span class="connect-file">claude_desktop_config.json</span><div class="connect-copy print-hide"><span class="connect-status" id="connect-desktop-status" role="status"></span><button type="button" class="btn btn-sm" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>`,
-    doc('docs/MCP.md','Setup guide','Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).'))}
+  const doc=(href,label,tip)=>`<a class="dz-btn" href="${href}" target="_blank" rel="noopener"${tipAttr(tip)}>${label}</a>`;
+  const step=(n,text)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${n}</span><span class="misc-step-text">${text}</span></li>`;
+  const tier=(tone,label,names,note)=>`<li><span class="dz-chip ${tone}">${label}</span><span class="misc-tier-text"><strong>${names}</strong><span>${note}</span></span></li>`;
+  // 2v6: two glass cards. Option 1 (narrow) is the panel in this dashboard; Option 2 (wide) holds the steps and the config to copy.
+  return `<p class="misc-intro rise">Ask an AI about the export in plain English, such as “What is at risk this week?”.</p>
+  <div class="dz-grid misc-connect">
+    <section class="dz-card dz-span-2 misc-opt rise rise-1" aria-labelledby="connect-opt-1">
+      <div class="dz-card-head"><h2 class="dz-title" id="connect-opt-1">Ask AI in this dashboard</h2><span class="dz-meta">Option 1<span class="sr-only">:</span></span></div>
+      <p class="misc-opt-sub">Nothing to install. Click <strong>Ask AI</strong> at the top of any page, pick a provider in <strong>Settings</strong> and tick its consent box.</p>
+      <ul class="misc-tiers">
+        ${tier('indigo','Paid','Claude and ChatGPT','Billed to Spyder Controls. Not used to train models.')}
+        ${tier('amber','Free','Groq and OpenRouter','Tight limits. May keep or publish what you send.')}
+      </ul>
+      <div class="misc-opt-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Open the Ask AI panel; nothing is sent until you allow a provider." onclick="aiToggle(true)">Open Ask AI</button>${doc('docs/AI_ASSISTANT.md','Ask AI guide','Providers, costs and data terms (docs/AI_ASSISTANT.md).')}</div>
+    </section>
+    <section class="dz-card dz-span-4 misc-opt rise rise-2" aria-labelledby="connect-opt-2">
+      <div class="dz-card-head"><h2 class="dz-title" id="connect-opt-2">Your own AI app</h2><span class="dz-meta">Option 2<span class="sr-only">:</span></span></div>
+      <p class="misc-opt-sub">Claude Desktop below; other apps: see Setup guide.</p>
+      <div class="misc-opt2">
+        <ol class="misc-steps">
+          ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
+          ${step(2,'Get the dashboard folder from IT.')}
+          ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
+        </ol>
+        <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">claude_desktop_config.json</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
+      </div>
+      <div class="misc-opt-actions print-hide">${doc('docs/MCP.md','Setup guide','Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).')}</div>
+    </section>
   </div>
-  <p class="connect-privacy rise rise-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI provider receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
+  <p class="misc-privacy rise rise-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI provider receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
 }
 function copyConnectSnippet(btn){
   const id=btn.dataset.copy,text=CONNECT_SNIPPETS[id],status=document.getElementById(`${id}-status`);
@@ -6351,13 +6708,13 @@ function renderUploadState(){
   if(!box)return;
   box.hidden=!loaded;
   const names=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'Loaded export');
-  box.innerHTML=loaded?`<span>Currently loaded</span><strong>${esc(names)}${asOf?` · export date ${esc(asOf)}`:''}</strong><button type="button" class="btn"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
+  box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
 }
 // Load screen: every page by sidebar group, with its one-line description (PAGE_TIPS, the same text as its tooltip).
 function renderUploadPages(){
   const box=document.getElementById('upload-pages');
   if(!box)return;
-  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="card"><h3>${esc(group)}</h3><ul>${items.map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
+  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="misc-pg-col"><h3>${esc(group)}</h3><ul>${items.map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
 }
 function showUploadError(msg){
   const el=document.getElementById('upload-error');
@@ -6487,9 +6844,10 @@ function searchTimingRepeats(timing,texts){
   return !!t&&texts.some(x=>{const n=norm(x);return !!n&&(n.includes(t)||t.includes(n));});
 }
 function renderGlobalSearchPage(m){
-  const back=`<button type="button" class="link-btn"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Order Health')}</button>`;
+  const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Order Health')}</button>`;
   const s=globalSearchResults(m);
-  if(s.q.length<2)return `<section class="card rise"><p class="empty-note">Type at least 2 characters to search.</p>${back}</section>`;
+  if(s.q.length<2)return miscEmpty('Type at least 2 characters','Search covers order lines, supply / demand and Clear To Build.',back);
+  if(!s.total)return miscEmpty(`No matches for “${s.q}”`,'Try fewer words, an item code, an SO or PO number, a customer or a tracking number.',back);
   const hl=searchHighlighter(s.terms);
   const matched=v=>s.terms.some(t=>String(v||'').toLowerCase().includes(t));
   const has=v=>String(v??'').trim()!=='';
@@ -6535,8 +6893,20 @@ function renderGlobalSearchPage(m){
       </table></div>
       ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
     </div>`;
-  return `<div class="search-results">${pageGroupHtml('search-lines','Order lines',lines,{rise:'rise-1',tools:back,
-      badge:`<span class="count-badge"${tipAttr('Open lines first, then closed lines, newest first; Esc in the search box goes back.')}>${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span>`})}${pageGroupHtml('search-more','Other matches',supplyTable+ctbTable,{rise:'rise-2'})}</div>`;
+  // 2v6: one glass card per kind of match (Order lines, Supply / demand, Clear To Build); a kind with no match is left out.
+  // The legacy table cards inside are flattened by .misc-flat so they sit in the glass card without a second frame.
+  const linesCard=s.rows.length?`<section class="dz-card misc-flat misc-search-lines rise rise-1" aria-labelledby="pg-search-lines" data-group="search-lines">
+      <div class="dz-card-head"><div class="misc-head-l"><h2 class="dz-title" id="pg-search-lines">Order lines</h2><span class="dz-chip"${tipAttr('Open lines first, then closed lines, newest first; Esc in the search box goes back.')}>${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span></div>${back}</div>
+      ${lines}
+    </section>`:'';
+  const otherCard=(html,i)=>html?`<div class="dz-card misc-flat rise rise-${i}">${html}</div>`:'';
+  const other=otherCard(s.supply.length?supplyTable:'',2)+otherCard(s.ctb.length?ctbTable:'',3);
+  // With no order lines the Back button sits on the first card instead.
+  return `<div class="misc-search search-results">${linesCard||(other?`<div class="misc-back print-hide">${back}</div>`:'')}${other}</div>`;
+}
+// A quiet empty state: a glass card with an icon, one line of what happened, one line of what to try, and the action.
+function miscEmpty(title,sub,actions=''){
+  return `<section class="dz-card misc-empty rise" role="status"><span class="misc-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><h2 class="dz-title sm">${esc(title)}</h2><p class="dz-sub">${esc(sub)}</p>${actions?`<div class="misc-empty-actions">${actions}</div>`:''}</section>`;
 }
 // Redraws rebuild the sidebar and the page; put focus, typed text and the caret back on the same control.
 function captureFocus(root){
@@ -12316,52 +12686,85 @@ function forecastData(m){
   forecastMemo={m,v:cmState.version,data};
   return data;
 }
+// Empty state for a page that needs a file (Forecast uses it; works for any NEEDS_FILE kind): what it needs, the steps,
+// and what the page will show once it has it.
+function miscNeedsFile(kind){
+  const k=NEEDS_FILE[kind];
+  const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
+  const steps=isSnapshotView?'':`<ol class="misc-steps">${k.steps.map(([text,code],i)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${i+1}</span><span class="misc-step-text">${esc(text)}${code?`<code>${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
+  const add=isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`;
+  const back=kind==='weekly'?'':`<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Order Health page.')}>Back to Order Health</button>`;
+  return `<section class="dz-card misc-need dz-fade" aria-labelledby="misc-need-title">
+    <div class="misc-need-main">
+      ${dzChip(k.tag,'amber')}
+      <h2 class="misc-need-title" id="misc-need-title">${esc(k.title)}</h2>
+      <p class="misc-need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>
+      ${steps}
+      <div class="misc-need-actions print-hide">${add}${back}</div>
+    </div>
+    <div class="misc-need-side" aria-hidden="true">
+      <span class="misc-need-eyebrow">What this page will show</span>
+      <ul>${k.preview.map(([title,desc])=>`<li><strong>${esc(title)}</strong><span>${esc(desc)}</span></li>`).join('')}</ul>
+    </div>
+  </section>`;
+}
 // Bars: forecast; lines: open sales orders and open PO / CM supply, all on one quantity scale. Each month's column has
-// a tip with the three numbers; the table below has the same numbers by item.
+// a tip with the three numbers; the table below has the same numbers by item. (2v6: a glass card, no ⓘ, light bars.)
 function renderForecastChart(f){
   const max=Math.max(1,...f.totals.fc,...f.totals.so,...f.totals.po);
   const W=1200,H=100,pt=(arr)=>arr.map((v,i)=>`${((i+.5)/arr.length*W).toFixed(1)},${(H-v/max*H).toFixed(1)}`).join(' ');
   const cols=f.months.map((k,i)=>{
     const t=`${monthLabel(k)}: forecast ${fmtNum(f.totals.fc[i])}, open sales orders ${fmtNum(f.totals.so[i])}, open PO / CM ${fmtNum(f.totals.po[i])}${i===0?' (past due counts here)':''}.`;
-    return `<div class="fc-col"${tipAttr(t)}><i class="grow-h" style="height:${(f.totals.fc[i]/max*100).toFixed(1)}%;animation-delay:${i*30}ms"></i></div>`;
+    return `<div class="misc-fc-col"${tipAttr(t)}><i class="dz-fade${i===0?' now':''}" style="height:${(f.totals.fc[i]/max*100).toFixed(1)}%;--i:${i}"></i></div>`;
   }).join('');
-  return `<section class="card fc-chart" aria-label="Forecast against open orders by month">
-    <div class="list-head"><h2${sectionTip('fc-month')}>Forecast against open orders</h2><span class="legend"><span><i class="sw" style="background:var(--accent-mid)"></i>Forecast</span><span><i class="sw line" style="background:var(--gray-900)"></i>Open sales orders</span><span><i class="sw line dash" style="background:var(--warn)"></i>Open PO / CM</span></span></div>
-    <div class="fc-plot"><div class="fc-bars">${cols}</div>
-      <svg class="fc-lines" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><polyline class="fc-so" points="${pt(f.totals.so)}"/><polyline class="fc-po" points="${pt(f.totals.po)}"/></svg>
-      <span class="fc-max">${fmtNum(max)}</span></div>
-    <div class="fc-months" aria-hidden="true">${f.months.map(k=>`<span>${esc(monthLabel(k).replace(/ \d{4}$/,''))}</span>`).join('')}</div>
-    <p class="sr-only">${f.months.map((k,i)=>`${monthLabel(k)}: forecast ${fmtNum(f.totals.fc[i])}, open sales orders ${fmtNum(f.totals.so[i])}, open PO / CM ${fmtNum(f.totals.po[i])}.`).join(' ')}</p>
-  </section>`;
+  const legend=`<span class="misc-fc-legend"><span><i class="sw bar"></i>Forecast</span><span><i class="sw line"></i>Open sales orders</span><span><i class="sw line dash"></i>Open PO / CM</span></span>`;
+  const body=`<div class="misc-fc-plot"><div class="misc-fc-bars">${cols}</div>
+      <svg class="misc-fc-lines" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true" focusable="false"><polyline class="so" points="${pt(f.totals.so)}"/><polyline class="po" points="${pt(f.totals.po)}"/></svg>
+      <span class="misc-fc-max">${fmtNum(max)}</span></div>
+    <div class="misc-fc-months" aria-hidden="true">${f.months.map(k=>`<span>${esc(monthLabel(k).replace(/ \d{4}$/,''))}</span>`).join('')}</div>
+    <p class="sr-only">${f.months.map((k,i)=>`${monthLabel(k)}: forecast ${fmtNum(f.totals.fc[i])}, open sales orders ${fmtNum(f.totals.so[i])}, open PO / CM ${fmtNum(f.totals.po[i])}.`).join(' ')}</p>`;
+  return dzCard({title:'Forecast against open orders',meta:legend,span:6,cls:'misc-fc-chart',tip:sectionTipText('fc-month'),body,attrs:' aria-label="Forecast against open orders by month"'});
 }
 function renderForecastPage(m){
   const f=forecastData(m);
-  if(!f||!f.months.length)return renderNeedsFile('forecast');
+  if(!f||!f.months.length)return miscNeedsFile('forecast');
   const fcT=f.items.reduce((s,g)=>s+g.fcTotal,0),soT=f.items.reduce((s,g)=>s+g.soTotal,0),poT=f.items.reduce((s,g)=>s+g.poTotal,0);
   const above=f.items.filter(g=>g.over>0);
   const range=`${monthLabel(f.months[0])} – ${monthLabel(f.months[11])}`;
   const src=cmTab('forecast');
   const unmatchedTip=f.unmatched.length?`Not matched to a SAP item: ${f.unmatched.slice(0,8).map(u=>u.label).join(', ')}${f.unmatched.length>8?', …':''}.`:'Every forecast line with quantity matched a SAP item.';
-  const spark=g=>{const mx=Math.max(1,...g.fc,...g.so);return `<span class="fc-spark" aria-hidden="true">${g.fc.map((v,i)=>`<i style="height:${Math.max(v||g.so[i]>v?3:0,v/mx*22).toFixed(1)}px"${g.so[i]>v?' class="over"':''}></i>`).join('')}</span>`;};
-  const rows=f.items.map(g=>{
+  const tile=(label,value,sub,dot,tone,tipText)=>`<div class="misc-tile"${tipAttr(tipText)}><div class="misc-tile-l"><span class="misc-dot" style="background:${dot}"></span>${esc(label)}</div><div class="misc-tile-v"${tone?` style="color:${tone}"`:''}>${esc(value)}</div><div class="misc-tile-s">${esc(sub)}</div></div>`;
+  const tiles=`<div class="misc-tiles dz-fade" aria-label="Forecast totals, next 12 months">
+    ${tile('Forecast',fmtNum(fcT),range,'#6366f1','',`Forecast: ${fmtNum(fcT)} qty for ${fmtNum(f.items.length)} SAP items, ${range}.`)}
+    ${tile('Open sales orders',fmtNum(soT),'same items, due by then','#0f172a','',`Open sales orders: ${fmtNum(soT)} qty of the same items due by ${monthLabel(f.months[11])}, past due included.`)}
+    ${tile('Open PO / CM',fmtNum(poT),'expected by then','#f59e0b','',`Open PO / CM: ${fmtNum(poT)} qty on open purchase orders for these items expected by ${monthLabel(f.months[11])}.`)}
+    ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'#e11d48':'#0f766e',above.length?'#be123c':'',`Items over forecast: ${fmtNum(above.length)} items with more on open sales orders than forecast in at least one month.`)}
+  </div>`;
+  const spark=g=>{const mx=Math.max(1,...g.fc,...g.so);return `<span class="misc-fc-spark" aria-hidden="true">${g.fc.map((v,i)=>`<i style="height:${Math.max(v||g.so[i]>v?3:0,v/mx*22).toFixed(1)}px"${g.so[i]>v?' class="over"':''}></i>`).join('')}</span>`;};
+  const open=!!tableMore['fc-items']||printMode;
+  const limit=20,shown=open?f.items:f.items.slice(0,limit);
+  const heads=[['Item'],['Months','misc-fc-mo'],['Forecast','dz-num'],['Open SO','dz-num'],['Open PO / CM','dz-num','PO / CM'],['Gap','dz-num']];
+  const rows=shown.map((g,i)=>{
     const peak=g.fc.indexOf(Math.max(...g.fc));
-    return `<tr><td><span class="m">${esc(g.code)}</span><span class="item-desc">${esc(g.desc||g.labels.join(', '))}</span></td>
-      <td>${spark(g)}<span class="sub muted">peak ${esc(monthLabel(f.months[peak]))}</span></td>
-      <td class="num strong">${fmtNum(g.fcTotal)}</td><td class="num">${fmtNum(g.soTotal)}</td><td class="num">${fmtNum(g.poTotal)}</td>
-      <td class="num ${g.gap>0?'crit-strong':'soft'}">${g.gap>0?`+${fmtNum(g.gap)}`:fmtNum(g.gap)}</td></tr>`;
-  });
-  return `
-    ${pageGroupHtml('fc-summary','Next 12 months',`<div class="grid-4 pg-stats">
-      ${renderStatCard('Forecast',fmtNum(fcT),range,'','neutral',`Forecast: ${fmtNum(fcT)} qty for ${fmtNum(f.items.length)} SAP items, ${range}.`)}
-      ${renderStatCard('Open sales orders',fmtNum(soT),'same items, due by then','','neutral',`Open sales orders: ${fmtNum(soT)} qty of the same items due by ${monthLabel(f.months[11])}, past due included.`)}
-      ${renderStatCard('Open PO / CM',fmtNum(poT),'expected by then','','neutral',`Open PO / CM: ${fmtNum(poT)} qty on open purchase orders for these items expected by ${monthLabel(f.months[11])}.`)}
-      ${renderStatCard('Orders over forecast',fmtNum(above.length),`items · ${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'warn':'good',above.length?'warn':'good',`Orders over forecast: ${fmtNum(above.length)} items with more on open sales orders than forecast in at least one month.`)}
-    </div>`,{info:'fc-summary',rise:'rise-1'})}
-    ${pageGroupHtml('fc-month','By month',renderForecastChart(f),{rise:'rise-2'})}
-    ${pageGroupHtml('fc-items','By item',renderTableCard({key:'fc-items',info:'fc-items',title:'Forecast by item',note:`${fmtNum(f.items.length)} items · <span${tipAttr(unmatchedTip)}>${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} not matched</span>${src&&src.source==='file'?' · from file':''}`,
-      head:[['Item'],['Months','','130px'],['Forecast','num'],['Open SO','num'],['Open PO / CM','num'],['Gap','num']],rows,limit:20,minWidth:720,cards:true,empty:'No forecast lines with quantity in the next 12 months match a SAP item.'}),{rise:'rise-3',
-      badge:`<span class="count-badge${above.length?' warn':''}">${fmtNum(above.length)} over forecast</span>`})}
-    ${renderAbout(['fc-summary','fc-month','fc-items'])}`;
+    return `<div class="dz-tr dz-fade" style="--i:${Math.min(i,10)}">
+      <span class="misc-fc-item"><strong>${esc(g.code)}</strong><span class="dz-cell-sub">${esc(g.desc||g.labels.join(', '))}</span></span>
+      <span class="misc-fc-mo">${spark(g)}<span class="dz-cell-sub">peak ${esc(monthLabel(f.months[peak]))}</span></span>
+      <span class="dz-num misc-b">${fmtNum(g.fcTotal)}</span><span class="dz-num">${fmtNum(g.soTotal)}</span><span class="dz-num">${fmtNum(g.poTotal)}</span>
+      <span class="dz-num">${g.gap>0?`<span class="dz-chip red">+${fmtNum(g.gap)}</span>`:`<span class="misc-soft">${fmtNum(g.gap)}</span>`}</span>
+    </div>`;
+  }).join('');
+  const more=f.items.length>limit?`<div class="misc-more print-hide"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(f.items.length)}</span><button type="button" class="link-btn" data-focus-key="more-fc-items" data-table-key="fc-items"${tipAttr(open?`Show only the first ${fmtNum(limit)} items.`:`Show all ${fmtNum(f.items.length)} items of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:'';
+  const table=`<div class="dz-table misc-fc-table" role="region" tabindex="0" aria-label="Forecast by item">
+      <div class="dz-th">${heads.map(([label,cls,short])=>`<span${cls?` class="${cls}"`:''}${tipAttr(columnTip('fc-items',label))}>${short?`<span class="misc-lg">${label}</span><span class="misc-sm">${short}</span>`:label}</span>`).join('')}</div>
+      ${rows||'<p class="misc-none">No forecast lines with quantity in the next 12 months match a SAP item.</p>'}
+    </div>${more}`;
+  const meta=`${above.length?dzChip(`${fmtNum(above.length)} over forecast`,'amber'):dzChip('None over forecast','teal')} <span${tipAttr(unmatchedTip)}>${fmtNum(f.items.length)} items · ${fmtNum(f.unmatched.length)} not matched${src&&src.source==='file'?' · from file':''}</span>`;
+  return `${tiles}
+    <div class="dz-grid">
+      ${renderForecastChart(f)}
+      ${dzCard({title:'Forecast by item',meta,span:6,cls:'misc-fc-items',tip:sectionTipText('fc-items'),body:table})}
+    </div>
+    <div class="misc-about">${renderAbout(['fc-summary','fc-month','fc-items'])}</div>`;
 }
 
 // Who a late line is waiting on. Us = Spyder (production, quality, supply, planning); Them = the customer or the carrier.

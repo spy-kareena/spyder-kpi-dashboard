@@ -148,8 +148,9 @@ function withSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
-// The sign-in page uses the dashboard's look (zinc neutrals, Inter with a system-font fallback, the blue accent) and
-// the logo from assets/ (served without a session above). A wrong password shows an inline error under the field.
+// The sign-in page uses the dashboard's look (the page gradient, a glass card, Outfit with a system-font fallback, pill
+// controls in the ink colour) and the logo from assets/ (served without a session above). A wrong password shows an
+// inline error under the field.
 function loginPage(failed, status) {
   const error = !failed ? '' : status === 400
     ? 'The sign-in form could not be read. Try again.'
@@ -162,31 +163,34 @@ function loginPage(failed, status) {
   <title>Sign in · Spyder KPI Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--fg:#18181b;--muted:#5f5f69;--border:#e4e4e7;--input:#71717a;--bg:#fafafa;--accent:#1570ef;--accent-strong:#175cd3;--ring:rgba(21,112,239,.35);--crit:#b42318;--crit-tint:#fef3f2;--crit-border:#fecdca;
-      --font:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+    :root{--fg:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.08);--accent:#6366f1;--ring:rgba(99,102,241,.22);--crit:#be123c;--crit-bg:#fff1f2;
+      --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased}
-    .card{width:100%;max-width:400px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:32px 28px 28px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
-    .logo{display:block;width:150px;height:29px;object-fit:cover;object-position:center;margin:0 0 28px -2px}
-    h1{font-size:22px;font-weight:600;letter-spacing:-.02em;line-height:1.25}
-    .lead{margin-top:6px;font-size:14px;color:var(--muted);line-height:1.55}
-    form{display:grid;gap:8px;margin-top:24px}
-    label{font-size:13px;font-weight:500;color:var(--fg)}
-    input{width:100%;height:40px;border:1px solid var(--input);border-radius:8px;padding:0 12px;font:inherit;font-size:16px;color:var(--fg);background:#fff;transition:border-color .15s,box-shadow .15s}
-    input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--ring)}
-    input[aria-invalid="true"]{border-color:var(--crit)}
-    input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(180,35,24,.25)}
-    .error{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--crit)}
+    html{background:#eef4ff}
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:linear-gradient(135deg,#eef4ff 0%,#fdf2f8 55%,#f0fdfa 100%);color:var(--fg);-webkit-font-smoothing:antialiased}
+    .card{width:100%;max-width:400px;background:rgba(255,255,255,.75);border:1px solid #fff;border-radius:24px;padding:34px 30px 30px;box-shadow:0 10px 40px rgba(15,23,42,.06)}
+    /* The logo file is black on white: multiply lets the page gradient show through the white */
+    .logo{display:block;width:150px;height:29px;object-fit:cover;object-position:center;margin:0 0 28px -2px;mix-blend-mode:multiply}
+    h1{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
+    .lead{margin-top:8px;font-size:14px;color:var(--muted);line-height:1.55}
+    form{display:grid;gap:8px;margin-top:26px}
+    label{font-size:13px;font-weight:500;color:var(--muted)}
+    input{width:100%;height:44px;border:1px solid var(--line);border-radius:999px;padding:0 18px;font:inherit;font-size:16px;color:var(--fg);background:rgba(255,255,255,.85);transition:border-color .15s,box-shadow .15s}
+    input:focus{outline:none;border-color:rgba(99,102,241,.55);background:#fff;box-shadow:0 0 0 3px var(--ring)}
+    input[aria-invalid="true"]{border-color:rgba(225,29,72,.5)}
+    input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px rgba(225,29,72,.18)}
+    .error{display:flex;gap:6px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--crit);padding:0 6px}
     .error svg{flex:none;width:16px;height:16px;margin-top:1px}
-    button{margin-top:8px;height:40px;width:100%;border:1px solid transparent;border-radius:8px;background:var(--accent);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
-    button:hover{background:var(--accent-strong)}
+    button{margin-top:10px;height:44px;width:100%;border:1px solid transparent;border-radius:999px;background:var(--fg);color:#fff;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+    button:hover{background:#334155}
     button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     /* Windows high contrast drops backgrounds and shadows: the transparent border draws the button's edge, and the
        focused box gets an outline in place of its shadow ring. */
     @media (forced-colors:active){input:focus{outline:2px solid Highlight;outline-offset:1px}}
     .foot{font-size:12px;color:var(--muted)}
+    @media (max-width:420px){.card{padding:28px 22px 24px;border-radius:20px}}
     @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   </style>
 </head>
