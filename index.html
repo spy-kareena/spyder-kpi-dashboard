@@ -2198,6 +2198,29 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .ohl-note-by{display:grid;gap:1px;margin-top:6px;max-width:160px;font-size:11.5px;line-height:1.3;text-align:left}
 .ohl-note-t{color:var(--dz-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ohl-note-w{color:var(--dz-ink-5)}
+/* Customers at risk by supply source */
+.ohl-sup-sum{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ohl-sup-pill{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:999px;background:var(--dz-fill-1);font-size:12.5px;color:var(--dz-ink-3)}
+.ohl-sup-pill i{width:8px;height:8px;border-radius:50%;flex:none}
+.ohl-sup-pill b{font-weight:600;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.ohl-sup-table{margin-top:14px}
+.ohl-sup-row{display:grid;grid-template-columns:minmax(0,2.2fr) repeat(4,minmax(64px,.6fr)) minmax(90px,1.1fr);gap:12px;align-items:center;width:100%;padding:10px 6px;border:0;border-top:1px solid var(--dz-line-6);background:none;font:inherit;font-size:13px;color:inherit;text-align:left;cursor:pointer;border-radius:10px}
+.ohl-sup-row:hover{background:rgba(255,255,255,.7)}
+.ohl-sup-row.sel{background:var(--dz-indigo-bg)}
+.ohl-sup-th{cursor:default;border-top:0;padding-top:4px;padding-bottom:6px;font-size:11.5px;color:var(--dz-ink-4)}
+.ohl-sup-th:hover{background:none}
+.ohl-sup-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-2)}
+.ohl-sup-n{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+.ohl-sup-th .ohl-sup-n{font-weight:400}
+.ohl-sup-n.zero{color:var(--dz-ink-6);font-weight:400}
+.ohl-sup-n.quiet{color:var(--dz-ink-4);font-weight:500}
+.ohl-sup-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--dz-line-6)}
+.ohl-sup-bar i{display:block;height:100%}
+.ohl-sup-foot{display:flex;justify-content:flex-end;margin-top:10px;font-size:12.5px}
+@media (max-width:760px){
+  .ohl-sup-row{grid-template-columns:minmax(0,1fr) repeat(4,40px);gap:6px;font-size:12.5px}
+  .ohl-sup-row>.ohl-sup-bar,.ohl-sup-th>span:last-child{display:none}
+}
 /* 2v6:end oh-leading */
 
 /* 2v6:oh-lagging */
@@ -16065,6 +16088,7 @@ function ohlRenderLeading(m){
     ${ohlDueCard(c)}
     ${ohlCustomersCard(c)}
     ${ohlFlaggedCard(c)}
+    ${ohlSupplyCard(c)}
     ${ohlDateChangesCard(c)}
     ${OHL_LINES_MARK}
   </div>`;
@@ -16235,6 +16259,102 @@ function ohlFlaggedCard(c){
   return dzCard({title:'When flagged',sm:true,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:4"',
     tip:'At-risk lines by whole weeks since each was first at risk in an upload; click a row to filter.',
     body:`<div class="ohl-list" role="group" aria-label="At-risk lines by weeks since first flagged">${rows}</div>${ohFirstFlagged()?'':'<div class="ohl-note ohl-foot-note">No upload history yet, so every line counts as new.</div>'}`});
+}
+
+// Customers at risk by supply source: every at-risk sales line in the look-ahead window is traced to where its item's
+// supply comes from and counted under the first source in trouble: the CM sheet (Logican short, on hold, or committing
+// after the line is due), an open vendor PO for the item (late, no commit date, or expected after the line is due), or
+// stock (the supply / demand snapshot is short in or before the due month). Lines whose supply is fine are "Not supply"
+// (at risk for their own dates or overrides). One row per customer, orders first; a click filters to the customer.
+const OHL_SUPPLY_SOURCES=[['cm','CM sheet','var(--dz-indigo)'],['po','Vendor PO','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
+const OHL_SUPPLY_SHOWN=8;
+let ohlSupplyAll=false;
+function ohlToggleSupplyAll(){ohlSupplyAll=!ohlSupplyAll;renderResults();}
+// Open purchase-order lines by item that are not on the Logican sheet (those are the CM's own build).
+function ohlPoByItem(){
+  const by=new Map();
+  allLoadedRows.forEach(r=>{
+    if(!/purchase order/i.test(String(r.sourceType||''))||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
+    if(typeof cmLineInfo==='function'&&cmLineInfo(r))return;
+    const item=String(r.itemCode||'').trim().toUpperCase();
+    if(!item)return;
+    if(!by.has(item))by.set(item,[]);
+    by.get(item).push(r);
+  });
+  return by;
+}
+function ohlSupplySource(r,poBy,today){
+  const item=String(r.itemCode||'').trim().toUpperCase();
+  const due=parseDate(r.effectiveDueDate||ohOriginalDue(r));
+  const cm=item&&typeof dcItemSupply==='function'?dcItemSupply(item):null;
+  if(cm&&(cm.status==='Short'||cm.status==='Hold'||ohCmLate(r))){
+    const what=cm.status==='Short'||cm.status==='Hold'?`Logican ${cm.status.toLowerCase()}`:'Logican commit after due';
+    return {id:'cm',text:`${what}${cm.commit?`, commit ${cmShort(cm.commit)}`:''}${cm.comment?` (${cm.comment})`:''}`};
+  }
+  const bad=(item?poBy.get(item)||[]:[]).map(p=>{
+    const exp=parseDate(cmPoDue(p));
+    const nc=isNoCommitDate(p.lineRescheduleDate)||isNoCommitDate(p.rescheduleDate)||!!p.noCommitDate;
+    return {p,exp,why:nc?'no commit date':exp&&exp<today?`late since ${cmShort(exp)}`:exp&&due&&exp>due?`expected ${cmShort(exp)}, after due`:''};
+  }).filter(x=>x.why);
+  if(bad.length){
+    const x=bad[0];
+    return {id:'po',text:`PO ${x.p.documentNumber||'—'} ${poVendorLabel(x.p)}: ${x.why}`};
+  }
+  if(ohHasShortage(r))return {id:'stock',text:`short at ${rowWarehouse(r)} (supply / demand snapshot)`};
+  return {id:'none',text:''};
+}
+function ohlSupplyData(m){
+  return cachedByFilter(m,`ohlsup|${weeklyFilterKey()}|${ohStamp()}|${cmState.version}`,()=>{
+    const risk=ohAtRiskData(m).risk.filter(ohIsSalesRow);
+    const poBy=ohlPoByItem(),today=reportToday();
+    const ids=OHL_SUPPLY_SOURCES.map(x=>x[0]);
+    const blank=()=>Object.fromEntries(ids.map(id=>[id,new Set()]));
+    const by=new Map(),tot=blank();
+    risk.forEach(r=>{
+      const src=ohlSupplySource(r,poBy,today);
+      const key=rowCustomer(r),doc=String(r.documentNumber||'');
+      if(!by.has(key))by.set(key,{key,label:rowCustomerLabel(r),orders:blank(),all:new Set(),value:0,notes:Object.fromEntries(ids.map(id=>[id,[]]))});
+      const c=by.get(key);
+      c.orders[src.id].add(doc);c.all.add(doc);c.value+=openLineValue(r);tot[src.id].add(doc);
+      if(src.text&&c.notes[src.id].length<4)c.notes[src.id].push(`SO ${doc} ${r.itemCode||''}: ${src.text}`);
+    });
+    const supplyOrders=c=>new Set([...c.orders.cm,...c.orders.po,...c.orders.stock]).size;
+    const customers=[...by.values()].map(c=>({...c,supply:supplyOrders(c)}))
+      .sort((a,b)=>b.supply-a.supply||b.all.size-a.all.size||b.value-a.value||a.label.localeCompare(b.label));
+    const hasSources=!!((typeof cmIndex==='function'&&cmIndex()&&cmIndex().supply.size)||poBy.size||supplyDemandRows.length);
+    return {customers,tot,hasSources,withSupply:customers.filter(c=>c.supply>0).length};
+  });
+}
+function ohlSupplyCard(c){
+  const {m}=c;
+  const d=ohlSupplyData(m);
+  if(!d.customers.length)return '';
+  const head=`<div class="ohl-sup-sum" role="list">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>`<span class="ohl-sup-pill" role="listitem"${tipAttr(id==='none'?'At-risk orders whose supply looks fine: they are at risk for their own dates or overrides.':`At-risk orders whose ${label==='CM sheet'?'CM (Logican sheet) build':label==='Vendor PO'?'vendor purchase order':'stock'} is in trouble.`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(d.tot[id].size)}</b></span>`).join('')}</div>`;
+  if(!d.hasSources)return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
+    body:`${head}<div class="empty-note">Load the Logican sheet, purchase-order lines or the supply / demand snapshot to see which supply source puts each customer's orders at risk.</div>`});
+  const list=ohlSupplyAll?d.customers:d.customers.filter(x=>x.supply>0).slice(0,OHL_SUPPLY_SHOWN);
+  const cur=weeklyCustomerFilter;
+  const rows=list.map((x,i)=>{
+    const on=cur.length===1&&cur[0]===x.key;
+    const total=Math.max(1,x.all.size);
+    const cells=OHL_SUPPLY_SOURCES.map(([id,label])=>{
+      const n=x.orders[id].size;
+      const tip=n?`${label}: ${ohN(n,'order')}${x.notes[id].length?`; ${x.notes[id].join('; ')}`:''}`:`${label}: none`;
+      return `<span class="ohl-sup-n${n?'':' zero'}${id==='none'?' quiet':''}"${tipAttr(tip)}>${n?fmtNum(n):'—'}</span>`;
+    }).join('');
+    const bar=OHL_SUPPLY_SOURCES.map(([id,,color])=>{const n=x.orders[id].size;return n?`<i style="width:${(n/total*100).toFixed(1)}%;background:${color}"></i>`:'';}).join('');
+    return `<button type="button" class="ohl-sup-row dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="ohl-sup-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(`${x.label}: ${ohN(x.all.size,'at-risk order')} (${money(x.value)} open), ${ohN(x.supply,'order')} held up by supply; click to ${on?'show all':'filter to this customer'}.`)}>
+      <span class="ohl-sup-name">${esc(x.label)}</span>${cells}<span class="ohl-sup-bar" aria-hidden="true">${bar}</span>
+    </button>`;
+  }).join('');
+  const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
+  return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
+    meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonLabel())}`,
+    tip:'Each at-risk sales order is traced to the supply of its item: the CM sheet (Logican short, on hold or committing after the due date), an open vendor PO (late, no commit date or expected after the due date), or stock short in the supply / demand snapshot. Numbers are orders; hover a number for the lines behind it; click a customer to filter.',
+    body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
+      <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>
+      ${rows||'<div class="empty-note">No customer has an at-risk order held up by supply.</div>'}
+    </div>${more?`<div class="ohl-sup-foot">${more}</div>`:''}`});
 }
 
 // Date changes: customers whose open sales-order lines slipped more than 2 days past due (SAP reschedule or Logican

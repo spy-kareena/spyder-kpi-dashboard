@@ -175,3 +175,8 @@ before the normal parser reads the file (needs ANTHROPIC_API_KEY on the hosted s
 "About these numbers" is a round info button at the bottom right. Brighter colours with muted highlight tints; the
 Most affected warehouse is light yellow.
 Line lists start collapsed; open one with its chevron (remembered per page in this browser).
+2v6.3: Order Health (Leading) has "Customers At Risk By Supply Source": each at-risk sales order in the look-ahead window
+is traced to its item's supply: the CM sheet (Logican short, on hold, or committing after the due date), an open
+vendor PO (late, no commit date, or expected after the due date) or stock short in the supply / demand snapshot. Orders
+whose supply is fine show as "Not supply". One row per customer (orders), hover a number for the lines and sources,
+click a customer to filter the page.
