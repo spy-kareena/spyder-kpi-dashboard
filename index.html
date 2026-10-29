@@ -2219,6 +2219,82 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
   .ohg-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 /* 2v6:end oh-lagging */
+/* 2v6:settings */
+/* The Settings page (stg*): one glass card per group on the shared .dz-grid (two per row, one on phones). Each setting
+   is a row: label and help at the left, its control at the right (pill select, small number box, segmented pill,
+   switch). Also the avatar menu's gear item and the At risk card's target chip. */
+.stg-menu-item .stg-menu-l{display:flex;align-items:center;gap:9px}
+.stg-menu-ico{width:15px;height:15px;flex:none;color:var(--dz-ink-4)}
+.stg-ro{margin:0 0 14px;padding:10px 16px;border-radius:14px;background:var(--dz-amber-bg,#fef3c7);color:var(--dz-amber-text,#92400e);font-size:13px}
+.stg-grid{margin-top:6px;align-items:start}
+.stg-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.stg-card{display:flex;flex-direction:column}
+.stg-title{display:flex;align-items:center;gap:9px}
+.stg-rows{display:flex;flex-direction:column;flex:1;margin-top:6px}
+.stg-row{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;padding:12px 0;border-top:1px solid var(--dz-line-6)}
+.stg-row:first-child{border-top:0;padding-top:4px}
+.stg-row-top{align-items:flex-start}
+.stg-l{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 210px}
+.stg-label{font-size:13.5px;font-weight:500;color:var(--dz-ink-1)}
+.stg-help{font-size:12px;line-height:1.45;color:var(--dz-ink-4)}
+.stg-ctl{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 1 auto;min-width:0}
+.stg-select{min-width:150px;max-width:240px}
+.stg-num-wrap{display:inline-flex;align-items:center;gap:7px}
+.stg-num{width:76px;text-align:right;font-variant-numeric:tabular-nums;padding:0 10px 0 12px}
+.stg-unit{min-width:30px;font-size:12.5px;color:var(--dz-ink-4)}
+.stg-seg button{min-width:44px}
+.stg-switch{position:relative;flex:none;width:42px;height:24px;border-radius:999px;border:0;padding:0;background:var(--dz-ink-5);cursor:pointer;transition:background-color .15s ease}
+.stg-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.25);transition:transform .15s ease}
+.stg-switch[aria-checked="true"]{background:var(--dz-indigo)}
+.stg-switch[aria-checked="true"] .stg-thumb{transform:translateX(18px)}
+.stg-switch:hover{background:var(--dz-ink-4)}
+.stg-switch[aria-checked="true"]:hover{background:var(--dz-indigo-deep)}
+.stg-switch:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.stg-card :disabled{cursor:not-allowed;opacity:.55}
+.stg-now{margin:10px 0 0;font-size:12.5px;line-height:1.5;color:var(--dz-ink-4)}
+.stg-rows>.stg-now:first-child{margin-top:2px}
+.stg-list{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:396px;overflow-y:auto}
+.stg-item{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px;padding:4px 6px 4px 14px;border-radius:12px;background:var(--dz-glass-60);border:1px solid var(--dz-line-6);font-size:13px;color:var(--dz-ink-2)}
+.stg-item-t{min-width:0;overflow-wrap:anywhere}
+.stg-x{flex:none;width:28px;height:28px;border-radius:999px;border:0;background:transparent;color:var(--dz-ink-4);font-size:17px;line-height:1;cursor:pointer}
+.stg-x:hover{background:var(--dz-risk-bg,#fee2e2);color:var(--dz-risk-text,#b91c1c)}
+.stg-x:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.stg-empty{font-size:12.5px;color:var(--dz-ink-4);padding:8px 0}
+.stg-add{display:flex;gap:8px;margin-top:12px}
+.stg-add .dz-pillinput{flex:1;min-width:0}
+.stg-list-foot{margin-top:8px}
+.stg-link{font-size:12.5px}
+.stg-dl{margin:2px 0 0;display:flex;flex-direction:column}
+.stg-kv{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid var(--dz-line-6);font-size:13px}
+.stg-kv:first-child{border-top:0;padding-top:2px}
+.stg-kv dt{color:var(--dz-ink-4)}
+.stg-kv dd{margin:0;color:var(--dz-ink-1);min-width:0;overflow-wrap:anywhere;line-height:1.5}
+.stg-file{display:flex;justify-content:space-between;gap:10px}
+.stg-file+.stg-file{margin-top:3px}
+.stg-file-n{min-width:0;overflow-wrap:anywhere}
+.stg-file-c{flex:none;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.stg-chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.stg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:14px}
+.stg-foot{display:flex;justify-content:flex-end;margin-top:14px}
+.stg-foot .link-btn:disabled{opacity:.45;cursor:default}
+.ohl-hero-target{flex-basis:100%;margin-top:-4px}
+.ohl-hero-target .dz-chip{font-size:11.5px}
+@media (prefers-reduced-motion:reduce){.stg-switch,.stg-thumb{transition:none}}
+@media (forced-colors:active){.stg-switch{border:1px solid ButtonText;background:Canvas}.stg-thumb{background:ButtonText}.stg-switch[aria-checked="true"]{background:Highlight}}
+@media (max-width:640px){
+  .stg-row{flex-wrap:wrap}
+  .stg-ctl{flex:1 1 100%;justify-content:flex-start}
+  .stg-select{max-width:none;flex:1}
+  .stg-kv{grid-template-columns:minmax(0,1fr);gap:2px}
+  .stg-kv dt{font-size:12px}
+}
+@media print{
+  .stg-card{break-inside:avoid}
+  .stg-list{max-height:none;overflow:visible}
+  .stg-item{background:none}
+  .stg-ro{background:none;border:1px solid var(--gray-300)}
+}
+/* 2v6:end settings */
 
 /* 2v6:monthly-wh-metrics */
 /* Monthly, Warehouse Timeline and Metrics Timeline. Cards, pills, bar rows and chips are the shared dz-* ones; these are
@@ -3501,7 +3577,7 @@ async function exportShareSnapshot(){
     // When each line was first at risk (from the shared at-risk history), for the lines in this export.
     firstFlagged:Object.fromEntries(Object.entries(firstFlagged).filter(([k])=>rowKeys.has(k))),
     // A snapshot saved from Search opens on the page the search started from; one saved from the help page on Order Health.
-    activeTab:activeTab==='search'?searchPrevTab:activeTab==='connect'?'weekly':activeTab,
+    activeTab:activeTab==='search'?searchPrevTab:activeTab==='connect'||activeTab==='settings'?'weekly':activeTab,
     weeklyWarehouseFilter,
     weeklyCustomerFilter,
     weeklySegmentFilter,
@@ -4027,8 +4103,11 @@ function renderNoteButton(r,label=''){
 }
 // Ready-made comments for the note editor (sales lines and purchase-order lines); "Custom comment" leaves the note
 // box for your own words, and anything typed there is saved as it is.
-const NOTE_COMMENTS_SO=['Waiting on parts from supplier','Waiting on CM build date','Customer asked to move the date','Expedite requested','Ready to ship, waiting on paperwork','QC hold, checking with quality','Shipped, waiting for SAP to close','Following up with the CM','New date confirmed with customer'];
-const NOTE_COMMENTS_PO=['Vendor confirmed a new date','Chasing the vendor for a date','Partly received, rest to follow','Expedite requested','Price or quantity issue with vendor','Waiting on vendor paperwork','Following up with the CM'];
+// The lists below are the defaults; Settings (stg*) can edit them per browser, so the pickers read the let copies.
+const NOTE_COMMENTS_SO_DEFAULT=['Waiting on parts from supplier','Waiting on CM build date','Customer asked to move the date','Expedite requested','Ready to ship, waiting on paperwork','QC hold, checking with quality','Shipped, waiting for SAP to close','Following up with the CM','New date confirmed with customer'];
+const NOTE_COMMENTS_PO_DEFAULT=['Vendor confirmed a new date','Chasing the vendor for a date','Partly received, rest to follow','Expedite requested','Price or quantity issue with vendor','Waiting on vendor paperwork','Following up with the CM'];
+let NOTE_COMMENTS_SO=stgValue('noteCommentsSo');
+let NOTE_COMMENTS_PO=stgValue('noteCommentsPo');
 let notePeopleAsked=false;
 // Who is writing: the names saved for everyone (the same list as the Your name dialog) plus "Add a new name".
 // Picking one makes it this browser's editor name, so the note is stamped with it.
@@ -4720,9 +4799,10 @@ function hasOpenWork(r){
 }
 // --- 2v4 oh: Order Health targets ---
 // At risk target: under 5 % of the next month's open value (green under 5, amber 5 to 10, red over 10).
-const AT_RISK_TARGET=5;
+// Both numbers are the defaults; Settings can change them per browser (stgValue, re-read by stgSync on a change).
+let AT_RISK_TARGET=stgValue('atRiskTarget');
 // A line up to 2 days past its date (original or reschedule) is still on track, as OTD scores deliveries (otdStats).
-const ON_TRACK_TOLERANCE_DAYS=2;
+let ON_TRACK_TOLERANCE_DAYS=stgValue('toleranceDays');
 // The same 2 days decide a late shipment (warehouseLateByPeriod) and a date change that matters (soDateChangeImpact).
 // --- end 2v4 oh ---
 function weeklyRiskBucket(r){
@@ -7607,6 +7687,334 @@ function supBuildRisk(m){
     ${renderAbout(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}</div>`;
 }
 
+// ===== 2v6 settings (stg*): the Settings page and this browser's settings store =====
+// Settings are kept in localStorage 'spyderKpiSettings' as JSON {key: value}. Only the keys in stgSpec() are read
+// (others are left alone), and a value that fails its check counts as the default, as does a store that cannot be
+// read. A value equal to its default is not stored, so "Reset to defaults" only removes keys.
+// Declarations further up read the store while the page loads (AT_RISK_TARGET, ON_TRACK_TOLERANCE_DAYS,
+// NOTE_COMMENTS_SO / _PO, SHIP_DEMO_DEFAULT, weeklyView), before this block runs: the functions they call are
+// function declarations (hoisted) and stgMemo is a var, so nothing there is in a let / const's dead zone.
+// A change rebuilds what depends on it: the target, the tolerance and the window feed getMetrics' risk buckets and
+// every page cache (cachedByFilter, ohRowMemo are keyed on the metrics object), so invalidateMetrics() + renderResults()
+// recompute them from the loaded rows, the same rows a file load leaves behind (no reload, nothing read again).
+var stgMemo; // the parsed store; undefined = not read yet (or changed in another tab)
+function stgKey(){return 'spyderKpiSettings';}
+function stgSpec(){
+  const num=(lo,hi)=>v=>Number.isInteger(v)&&v>=lo&&v<=hi?v:undefined;
+  const oneOf=list=>v=>list.includes(v)?v:undefined;
+  const list=v=>Array.isArray(v)?stgCleanList(v):undefined;
+  return {
+    atRiskTarget:{def:()=>5,check:num(1,50)},
+    toleranceDays:{def:()=>2,check:num(0,14)},
+    horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
+    linesShown:{def:()=>20,check:oneOf([10,20,50])},
+    openingView:{def:()=>'leading',check:oneOf(['leading','lagging'])},
+    noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
+    noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
+    shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined}
+  };
+}
+// Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
+function stgCleanList(v){
+  const seen=new Set();
+  return v.map(x=>typeof x==='string'?x.replace(/\s+/g,' ').trim().slice(0,120):'')
+    .filter(x=>x&&!seen.has(x.toLowerCase())&&seen.add(x.toLowerCase())).slice(0,30);
+}
+function stgStore(){
+  if(stgMemo===undefined){
+    stgMemo={};
+    try{
+      const v=JSON.parse(localStorage.getItem(stgKey())||'{}');
+      if(v&&typeof v==='object'&&!Array.isArray(v))stgMemo=v;
+    }catch(err){/* unreadable or blocked: the defaults */}
+  }
+  return stgMemo;
+}
+function stgValue(key){
+  const s=stgSpec()[key];
+  if(!s)return undefined;
+  const store=stgStore();
+  if(Object.prototype.hasOwnProperty.call(store,key)){const v=s.check(store[key]);if(v!==undefined)return v;}
+  return s.def();
+}
+function stgIsDefault(key){const s=stgSpec()[key];return !s||JSON.stringify(stgValue(key))===JSON.stringify(s.def());}
+// The At risk / On track window (ohHorizonEnd): 2 weeks, 1 month (the default), 6 weeks or 2 months from the report date.
+const STG_HORIZONS=[['w2','2 weeks','next 2 weeks'],['m1','1 month','next month'],['w6','6 weeks','next 6 weeks'],['m2','2 months','next 2 months']];
+function stgHorizonEnd(today){
+  const h=stgValue('horizon');
+  if(h==='m1'||h==='m2')return addMonths(today,h==='m2'?2:1);
+  const e=new Date(today);e.setDate(e.getDate()+(h==='w2'?14:42));
+  return e;
+}
+function stgHorizonLabel(){return {w2:'next 2 weeks',m1:'next month',w6:'next 6 weeks',m2:'next 2 months'}[stgValue('horizon')]||'next month';}
+// The let copies the rest of the page reads.
+function stgSync(){
+  AT_RISK_TARGET=stgValue('atRiskTarget');
+  ON_TRACK_TOLERANCE_DAYS=stgValue('toleranceDays');
+  NOTE_COMMENTS_SO=stgValue('noteCommentsSo');
+  NOTE_COMMENTS_PO=stgValue('noteCommentsPo');
+  SHIP_DEMO_DEFAULT=stgValue('shipDemoDefault');
+}
+const STG_CALC_KEYS=['atRiskTarget','toleranceDays','horizon'];
+function stgWrite(next){
+  stgMemo=next;
+  try{
+    if(Object.keys(next).length)localStorage.setItem(stgKey(),JSON.stringify(next));
+    else localStorage.removeItem(stgKey());
+    return true;
+  }catch(err){return false;}
+}
+// Saves one setting (the default removes it), then redraws what it changes. false when it was not taken.
+function stgSet(key,value){
+  if(isSnapshotView)return false;
+  const s=stgSpec()[key];
+  const v=s?s.check(value):undefined;
+  if(v===undefined)return false;
+  if(JSON.stringify(v)===JSON.stringify(stgValue(key)))return true;
+  const next={...stgStore()};
+  if(JSON.stringify(v)===JSON.stringify(s.def()))delete next[key];else next[key]=v;
+  const saved=stgWrite(next);
+  stgAfterChange([key]);
+  showToast(saved?'Saved':'Changed for now: this browser does not keep settings');
+  return true;
+}
+function stgAfterChange(keys){
+  stgSync();
+  if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
+  // The Shipping page's own Show demo data / Show real shipments choice gives way to the new default.
+  if(keys.includes('shipDemoDefault')&&typeof SHIP_DEMO_KEY==='string'){
+    shippingDemoChoice=null;
+    try{localStorage.removeItem(SHIP_DEMO_KEY);}catch(err){/* the choice stays */}
+  }
+  const results=document.getElementById('results-screen');
+  if(results&&results.style.display==='block')renderResults();else renderSidebar();
+}
+function stgResetAll(){
+  if(isSnapshotView)return;
+  const keys=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k));
+  if(!keys.length)return;
+  if(typeof confirm==='function'&&!confirm('Put every setting back to its default?'))return;
+  const next={...stgStore()};
+  Object.keys(stgSpec()).forEach(k=>delete next[k]);
+  const saved=stgWrite(next);
+  stgAfterChange(keys);
+  showToast(saved?'Settings back to their defaults':'Defaults for now: this browser does not keep settings');
+}
+// Settings changed in another tab of this browser apply here too.
+// Only the settings that really changed are passed on (so the Shipping page's own demo choice is not dropped for an
+// unrelated change).
+window.addEventListener('storage',e=>{
+  if(e.key!==null&&e.key!==stgKey())return;
+  const before=Object.fromEntries(Object.keys(stgSpec()).map(k=>[k,JSON.stringify(stgValue(k))]));
+  stgMemo=undefined;
+  const keys=Object.keys(before).filter(k=>JSON.stringify(stgValue(k))!==before[k]);
+  if(keys.length)stgAfterChange(keys);
+});
+
+// --- Controls ---
+let stgNotesKind='so';  // the comment list shown on the Notes card: 'so' | 'po'
+let stgPeopleAsked=false,stgAiAsked=false;
+function stgNumChange(input,key,lo,hi){
+  const text=String(input.value).trim(),v=text===''?NaN:Number(text);
+  if(!Number.isInteger(v)||v<lo||v>hi){
+    input.value=String(stgValue(key));
+    showToast(`Use a whole number from ${lo} to ${hi}`);
+    return;
+  }
+  stgSet(key,v);
+}
+// Your name: the same path as the note editor's name picker (pickNoteName); Add a new name opens the Your name dialog,
+// and the page is drawn again when it closes.
+function stgPickName(sel){
+  if(sel.value==='__new'){
+    sel.value=readEditor()||'';
+    askEditorName(true);
+    setTimeout(()=>{
+      const d=document.getElementById('editor-dialog');
+      if(d)d.addEventListener('close',()=>setTimeout(()=>{if(activeTab==='settings')renderResults();},0));
+    },0);
+    return;
+  }
+  pickNoteName(sel);
+  if(activeTab==='settings')renderResults();
+}
+function stgListKey(kind){return kind==='po'?'noteCommentsPo':'noteCommentsSo';}
+function stgAddComment(kind,form){
+  const input=form.querySelector('input');
+  const text=String(input&&input.value||'').replace(/\s+/g,' ').trim();
+  if(!text){if(input)input.focus();return;}
+  const list=stgValue(stgListKey(kind));
+  if(list.some(c=>c.toLowerCase()===text.toLowerCase())){showToast('That comment is already in the list');return;}
+  if(list.length>=30){showToast('The list holds 30 comments: remove one first');return;}
+  input.value=''; // the redraw puts the box back with what it held
+  stgSet(stgListKey(kind),[...list,text]);
+}
+function stgRemoveComment(kind,i){
+  const list=stgValue(stgListKey(kind));
+  if(i<0||i>=list.length)return;
+  stgSet(stgListKey(kind),list.filter((c,k)=>k!==i));
+}
+function stgResetList(kind){stgSet(stgListKey(kind),stgSpec()[stgListKey(kind)].def());}
+function stgSetNotesKind(kind){stgNotesKind=kind==='po'?'po':'so';renderResults();}
+function stgAiProvider(id){
+  if(isSnapshotView)return;
+  const before=aiState.provider;
+  aiSetProvider(id);
+  if(aiState.provider!==before)showToast('Saved');
+  renderResults();
+}
+function stgAiModel(id){
+  if(isSnapshotView)return;
+  const before=aiState.model;
+  aiSetModel(id);
+  if(aiState.model!==before)showToast('Saved');
+  renderResults();
+}
+function stgOpenAi(){aiToggle(true);aiShowSettings(true);}
+function stgVersion(){
+  const m=document.querySelector('meta[name="app-version"]');
+  return String(m&&m.getAttribute('content')||'').trim()||'2v6';
+}
+// The avatar menu's Settings item (above Connect an AI); it opens before any export is loaded, like Connect an AI.
+function stgMenuItem(){
+  const gear='<svg class="stg-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+  return `<button type="button" role="menuitem" class="dz-menu-item stg-menu-item" data-focus-key="hdr-menu-settings" onclick="dzMenuClose(true);setTab('settings')"${tipAttr('Targets, windows, comment lists and more, saved in this browser.')}><span class="stg-menu-l">${gear}<span>Settings</span></span></button>`;
+}
+
+// --- The page ---
+const STG_AI_ICON='<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>';
+function stgCard({id,title,icon,color,body,changed=false,i=0,meta=''}){
+  const svg=icon==='ai'?`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${STG_AI_ICON}</svg>`:dzIconSvg(icon);
+  return `<section class="dz-card stg-card dz-fade" style="--i:${i}" aria-labelledby="stg-h-${id}">
+    <div class="dz-card-head"><h2 class="dz-title sm stg-title" id="stg-h-${id}"><span class="dz-ico" style="--ico:${color}" aria-hidden="true">${svg}</span>${esc(title)}</h2>${meta||(changed?`<span class="dz-meta">${dzChip('Changed','indigo')}</span>`:'')}</div>
+    <div class="stg-rows">${body}</div></section>`;
+}
+// One setting: label and a short help line at the left, the control at the right. labelFor ties the label to an input.
+function stgRow(label,help,control,{labelFor='',cls=''}={}){
+  const l=labelFor?`<label class="stg-label" for="${labelFor}">${esc(label)}</label>`:`<span class="stg-label">${esc(label)}</span>`;
+  return `<div class="stg-row${cls?` ${cls}`:''}"><div class="stg-l">${l}${help?`<span class="stg-help">${help}</span>`:''}</div><div class="stg-ctl">${control}</div></div>`;
+}
+function stgSelect(id,key,options,current,onchange,{dis='',label=''}={}){
+  return `<select class="dz-pillinput stg-select" id="${id}" data-focus-key="${id}" onchange="${esc(onchange)}"${label?` aria-label="${esc(label)}"`:''}${dis}>${options.map(([v,t])=>`<option value="${esc(v)}"${String(v)===String(current)?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
+}
+function stgNum(id,key,lo,hi,unit,dis){
+  return `<span class="stg-num-wrap"><input type="number" class="dz-pillinput stg-num" id="${id}" data-focus-key="${id}" min="${lo}" max="${hi}" step="1" inputmode="numeric" value="${esc(stgValue(key))}" onchange="stgNumChange(this,'${key}',${lo},${hi})" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"${tipAttr(`A whole number from ${lo} to ${hi}.`)}${dis}><span class="stg-unit" aria-hidden="true">${esc(unit)}</span></span>`;
+}
+function stgSwitch(id,label,on,onclick,dis){
+  return `<button type="button" role="switch" class="stg-switch" id="${id}" data-focus-key="${id}" aria-checked="${on?'true':'false'}" aria-label="${esc(label)}" onclick="${esc(onclick)}"${dis}><span class="stg-thumb" aria-hidden="true"></span></button>`;
+}
+function stgProfileCard(dis,i){
+  if(!stgPeopleAsked&&!sharedPeople.length&&typeof canSharePeople==='function'&&canSharePeople()){
+    stgPeopleAsked=true;
+    loadPeople().then(ok=>{if(ok&&sharedPeople.length&&activeTab==='settings')renderResults();});
+  }
+  const current=readEditor()||'';
+  const names=[...new Set([current,...sharedPeople.map(p=>p.name)].filter(Boolean))];
+  const opts=`${current?'':'<option value="" selected disabled>Pick your name</option>'}${names.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('')}<option value="__new">Add a new name…</option>`;
+  const select=`<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName(this)"${tipAttr(isSnapshotView?'Names are not saved from a shared snapshot.':'Pick a saved name or add a new one; it is stamped on the notes you save.')}${dis}>${opts}</select>`;
+  const where=canSharePeople()?'Pick yours from the names saved for everyone, or add one.':'Shown with the notes you save.';
+  return stgCard({id:'profile',title:'Profile',icon:'users',color:'#6366f1',i,
+    meta:`<span class="dz-meta">${esc(current||'No name set')}</span>`,
+    body:stgRow('Your name',esc(where),select,{labelFor:'stg-name'})});
+}
+function stgOrderHealthCard(dis,i){
+  const keys=['atRiskTarget','toleranceDays','horizon','linesShown','openingView'];
+  const seg=(key,items,label)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`stgSet('${key}',${JSON.stringify(v).replace(/"/g,"'")})`,attrs:dis})),{label,cls:'stg-seg'});
+  const body=[
+    stgRow('At-risk target',`Share of open value at risk; amber up to twice it, red above. Default 5%.`,stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
+    stgRow('On-track tolerance',`Days late a line still counts as on track (At risk, late shipments, date changes). Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
+    stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
+    stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
+    stgRow('Opening view',`Order Health opens on it, and after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
+  ].join('');
+  return stgCard({id:'oh',title:'Order Health',icon:'target',color:'#dc2626',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+}
+function stgNotesCard(dis,i){
+  const kind=stgNotesKind,key=stgListKey(kind),list=stgValue(key),what=kind==='po'?'purchase-order':'sales-order';
+  const tabs=dzSeg([
+    {label:'Sales orders',on:kind==='so',key:'stg-notes-so',onclick:"stgSetNotesKind('so')"},
+    {label:'Purchase orders',on:kind==='po',key:'stg-notes-po',onclick:"stgSetNotesKind('po')"}
+  ],{label:'Comment list',cls:'stg-seg'});
+  const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr('Remove this comment from the picker.')}${dis}>×</button></li>`).join('');
+  const add=isSnapshotView?'':`<form class="stg-add print-hide" onsubmit="event.preventDefault();stgAddComment('${kind}',this)"><input type="text" class="dz-pillinput" maxlength="120" placeholder="Add a comment" aria-label="${esc(`New ${what} comment`)}" data-focus-key="stg-add-${kind}" autocomplete="off"><button type="submit" class="dz-btn" data-focus-key="stg-add-btn-${kind}">Add</button></form>`;
+  const reset=!stgIsDefault(key)&&!isSnapshotView?`<button type="button" class="link-btn stg-link print-hide" data-focus-key="stg-reset-${kind}" onclick="stgResetList('${kind}')"${tipAttr(`Put back the ${fmtNum(stgSpec()[key].def().length)} ready-made ${what} comments.`)}>Reset list</button>`:'';
+  const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span><span class="stg-help">The note editor's Comment picker, for ${kind==='po'?'purchase-order':'sales-order'} lines.</span></div><div class="stg-ctl">${tabs}</div></div>
+    <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">No ready-made comments: the picker offers Custom comment only.</li>'}</ul>
+    ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
+  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#d97706',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
+}
+function stgShippingCard(dis,i){
+  const on=stgValue('shipDemoDefault');
+  const now=typeof shippingDemoOn==='function'?shippingDemoOn():on;
+  const body=stgRow('Show demo shipments',`Made-up shipments on the Shipping page. Off: only until a real status is set. Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
+    +`<p class="stg-now">Shipping page now shows ${now?'demo data':'real shipments'}${hasLoadedData()?'':' once an export is loaded'}.</p>`;
+  return stgCard({id:'ship',title:'Shipping',icon:'truck',color:'#0f766e',i,changed:!stgIsDefault('shipDemoDefault'),body});
+}
+function stgDataCard(i){
+  const loaded=hasLoadedData();
+  const kv=(k,v)=>`<div class="stg-kv"><dt>${esc(k)}</dt><dd>${v}</dd></div>`;
+  const files=loadedFiles.map(f=>{
+    const read=fileReadCache.get(f),rows=read&&read.rows;
+    const n=rows?(rows.cmSheet?`Logican sheet · ${ohN(rows.cmSheet.length,'tab')}`:ohN(rows.length,'row')):'';
+    return `<span class="stg-file"><span class="stg-file-n">${esc(f.name)}</span>${n?`<span class="stg-file-c">${esc(n)}</span>`:''}</span>`;
+  }).join('');
+  const so=allLoadedRows.filter(r=>!/purchase order/i.test(String(r.sourceType||''))).length,po=allLoadedRows.length-so;
+  const lines=[so?ohN(so,'sales line'):'',po?ohN(po,'PO line'):'',supplyDemandRows.length?ohN(supplyDemandRows.length,'supply / demand line'):'',buildRiskRows.length?ohN(buildRiskRows.length,'CTB line'):''].filter(Boolean).join(' · ');
+  const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+  const kept=isSnapshotView?`Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}`
+    :{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||(loaded?'Saved in this browser only':'—');
+  const notes=loaded?sharedNotesSidebarLine():'';
+  const cm=loaded?cmSidebarLine():'';
+  const body=loaded?`<dl class="stg-dl">
+      ${kv('Files',files||esc(isSnapshotView?'Shared snapshot':'Loaded export'))}
+      ${kv('Lines',esc(lines||'—'))}
+      ${kv('Export date',esc(reportAsOfDate?displayDate(reportAsOfDate):'Not in the export (today is used)'))}
+      ${kv('Report',kept)}
+      ${notes?kv('Notes',notes):''}
+      ${cm?kv('Logican',cm):''}
+    </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
+  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report with a new export; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
+  return stgCard({id:'data',title:'Data',icon:'layers',color:'#4f46e5',i,meta:'<span class="dz-meta">Read only</span>',body:body+actions});
+}
+function stgAiCard(dis,i){
+  const st=aiState.status;
+  let body;
+  if(isSnapshotView)body=`<p class="stg-now">Ask AI is not used from a shared snapshot.</p>`;
+  else if(!aiHosted()&&!(st&&st.hosted))body=`<p class="stg-now">Available on the hosted site.</p>`;
+  else if(!st&&!aiState.statusError){
+    if(!stgAiAsked){stgAiAsked=true;aiCheckStatus().then(()=>{if(activeTab==='settings')renderResults();});}
+    body=`<p class="stg-now">Checking this site…</p>`;
+  }else if(aiState.statusError)body=`<p class="stg-now warn-text">${esc(aiState.statusError)}</p>`;
+  else if(!aiConfigured().length)body=`<p class="stg-now">No AI provider is set up on this site yet; IT adds the keys (docs/AI_ASSISTANT.md).</p>`;
+  else{
+    const p=aiCurrent(),list=aiConfigured();
+    const allowed=p&&aiConsented(p.id);
+    body=stgRow('Provider',allowed?'Allowed on this browser.':'Not allowed yet: tick its box in Ask AI settings.',stgSelect('stg-ai-provider','',list.map(x=>[x.id,x.name]),aiState.provider,'stgAiProvider(this.value)',{dis}),{labelFor:'stg-ai-provider'})
+      +(p?stgRow('Model','A new model starts a new chat.',stgSelect('stg-ai-model','',p.models.map(id=>[id,aiModelLabel(p,id)]),aiState.model,'stgAiModel(this.value)',{dis}),{labelFor:'stg-ai-model'}):'')
+      +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
+  }
+  const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Open the Ask AI panel on its settings: provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
+  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#7c3aed',i,body:body+open});
+}
+function stgAboutCard(i){
+  const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length;
+  const body=`<dl class="stg-dl">
+      <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
+      <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
+    </dl><p class="stg-now">Settings are saved in this browser only.</p>`;
+  return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
+}
+function stgRenderPage(){
+  const ro=isSnapshotView,dis=ro?' disabled':'';
+  const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
+  const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
+  // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one.
+  const left=[stgProfileCard(dis,0),stgOrderHealthCard(dis,2),stgDataCard(4)].join('');
+  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgAiCard(dis,5),stgAboutCard(6)].join('');
+  const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
+  return `${note}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
+}
+// ===== end 2v6 settings =====
 // Help page: the two ways to ask an AI about the export: Ask AI here, or the MCP connector in mcp/ for Claude
 // Desktop and other AI apps. It works before any file is loaded. Details: docs/AI_ASSISTANT.md and docs/MCP.md.
 const CONNECT_SNIPPETS={
@@ -8006,9 +8414,9 @@ function hasLoadedData(){
 const NAV_GROUPS=[
   ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
-  ['Help',[['connect','Connect an AI']]]
+  ['Help',[['connect','Connect an AI'],['settings','Settings','Targets, windows and comment lists, saved in this browser.']]]
 ];
-const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',connect:'Connect an AI'};
+const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',connect:'Connect an AI',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
 // Every page builds its cards, chips, bar rows, filter pills and segmented switches with the helpers below and styles
 // them with the .dz-* classes ("2v6 foundation" in the style block). All of them return HTML strings; text arguments
@@ -8258,6 +8666,7 @@ function renderSidebar(){
   const avatar=`<div class="dz-menuwrap hdr-menuwrap${avOpen?' open':''}" data-dzmenu="hdr-avatar"><button type="button" class="hdr-avatar" id="hdr-avatar-btn" aria-haspopup="menu" aria-expanded="${avOpen}" aria-label="${esc(name?`Profile menu for ${name}`:'Profile menu')}" onclick="dzMenuToggle('hdr-avatar',event)">${initials?esc(initials):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'}</button><div class="dz-menu dz-menu-r" role="menu" aria-label="Profile menu"${avOpen?'':' hidden'}><div class="hdr-who"><strong>${esc(name||'No name set')}</strong>${name?'shown with your notes':'add it to show it with your notes'}</div><div class="dz-menu-sep" role="separator"></div>${
     item('hdr-menu-share','Share snapshot','exportShareSnapshot()','Save an .html copy of the data and notes to send; anyone with the file sees all of it.',!canShare)
   }${item('hdr-menu-name',name?'Change name':'Add your name','askEditorName(true)',isSnapshotView?'Names are not saved from a shared snapshot.':'The name shown with the notes you save.',isSnapshotView)
+  }${stgMenuItem()
   }${item('hdr-menu-connect','Connect an AI',"setTab('connect')",PAGE_TIPS.connect||'Set up Claude Desktop or another AI app to read your exports.',false)}</div></div>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
   const focus=captureFocus(el);
@@ -8281,7 +8690,7 @@ function renderSidebar(){
 }
 function setTab(t){
   // Connect an AI is a help page, so it opens before any export is loaded.
-  if(!hasLoadedData()&&t!=='connect')return;
+  if(!hasLoadedData()&&t!=='connect'&&t!=='settings')return;
   dzOpenMenu=''; // a page change closes the open menu
   const changed=activeTab!==t;
   // Going to any other page ends the search, so the box does not keep showing an old query.
@@ -8539,6 +8948,7 @@ function renderResults(){
   const asOfShort=displayDate(reportAsOfDate||reportToday());
   const loaded=hasLoadedData();
   const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
+    : activeTab==='settings'?'Saved in this browser'
     : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='shipping'?shippingHeadMeta()
     // Each page counts what it is about: PO lines, supply / demand lines, or open sales-order lines; Build Risk shows
@@ -8560,7 +8970,7 @@ function renderResults(){
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Share snapshot,
   // Ask AI and Export PDF live in the header now. Connect an AI is a help page: no Data check there.
-  const isConnect=activeTab==='connect';
+  const isConnect=activeTab==='connect'||activeTab==='settings';
   const showTitle=activeTab!=='weekly';
   const headNotes=`${isConnect?'':renderDataQualityNote()}${snapshotTag}`;
   const headRight=loaded?(showTitle?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
@@ -8822,7 +9232,9 @@ function renderResults(){
         return defaultSort(a,b);
       });
       // Print lists every line (the screen caps stay for speed).
-      const shown=printMode?sorted:sorted.slice(0,weeklyLinkedShowAll?80:20);
+      // The first count is Settings' "Lines shown" (20 by default); Show more lists up to 80 (4x when more are shown).
+      const linesFirst=stgValue('linesShown'),linesAll=Math.max(80,linesFirst*4);
+      const shown=printMode?sorted:sorted.slice(0,weeklyLinkedShowAll?linesAll:linesFirst);
       const sortOptions=[['default','Default'],['warehouse','Warehouse'],['customer','Customer'],['owner','Document Owner'],['date','Date'],['status','Status'],['value','Value high to low']];
       const arrow=sortDir>0?'↑':'↓';
       // While a header sort is on, the select shows it as an extra choice so the other choices still switch back.
@@ -8911,7 +9323,7 @@ function renderResults(){
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>80?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?'Show the first 20 lines only.':'Show up to 80 lines; Export PDF prints every line.')} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
+        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines only.`:`Show up to ${linesAll} lines; Export PDF prints every line.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
       </section>`;
     };
     // 2v4 oh: the cards on the page are At risk and On track (next month), OTD and Fill rate.
@@ -8927,8 +9339,8 @@ function renderResults(){
     };
     // The picked card's name in the Lines to act on pill, as its card writes it (Purchase Orders does the same).
     const weeklyTileTitles={
-      late:'At risk · next month',
-      ontrack:'On track · next month',
+      late:`At risk · ${stgHorizonLabel()}`,
+      ontrack:`On track · ${stgHorizonLabel()}`,
       fillrate:'Fill rate',
       otd3mo:'OTD · 3 mo',
       nocommit:'No commit date',
@@ -8981,6 +9393,7 @@ function renderResults(){
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
   if(activeTab==='connect')html+=renderConnectPage();
+  if(activeTab==='settings')html+=stgRenderPage();
   if(activeTab==='forecast')html+=renderForecastPage(m);
   // A new report resets the Shipping page's view (filter, open rows).
   shippingWatchRows();
@@ -12575,7 +12988,8 @@ function shippingDemoStored(){
 }
 // On by default until anyone has set a real status; this viewer's toggle wins (kept in this browser).
 // Demo shipments show by default, even once real statuses exist; set to false (or remove) when the owner asks.
-const SHIP_DEMO_DEFAULT=true;
+// The default is true; Settings (Shipping) can set it per browser.
+let SHIP_DEMO_DEFAULT=stgValue('shipDemoDefault');
 function shippingDemoOn(){
   if(isSnapshotView)return !!shippingState.snapshotDemo;
   const pick=shippingDemoStored();
@@ -13116,8 +13530,9 @@ function renderShipAddForm(shared){
 // which the line was at risk (filled from /api/history). Either may be missing: then the rules below decide the cause
 // and every at-risk line counts as new this week.
 
-// Which tab Order Health shows, and the three filters set from its charts ('' = off).
-let weeklyView='leading';
+// Which tab Order Health shows, and the three filters set from its charts ('' = off). It opens on Leading unless
+// Settings picked Lagging (stgValue('openingView')).
+let weeklyView=stgValue('openingView');
 let weeklyReasonFilter='';
 // true when the reason filter came from a Big picture reason box: it then keeps only the at-risk lines whose FIRST
 // reason is that one (the box counts each line under its first reason, so its flows add up), not every line that
@@ -14683,7 +15098,8 @@ function ohRenderWaffle(m,view,offenders,keyOf){
 // - At risk: everything else, plus lines with no commit date and lines marked Urgent.
 // At risk % = at-risk open value / next-month open value, against AT_RISK_TARGET. The % ignores the chart filters
 // (reason / cause / when flagged), so picking a reason tile does not change the target reading.
-function ohHorizonEnd(){const e=addMonths(reportToday(),1);e.setHours(23,59,59,999);return e;}
+// The window is one month by default; Settings can make it 2 weeks, 6 weeks or 2 months (stgHorizonEnd).
+function ohHorizonEnd(){const e=stgHorizonEnd(reportToday());e.setHours(23,59,59,999);return e;}
 // The earliest Logican commit for a sales line's item, when every open Logican PO line building it has one (ohCmLate).
 function ohCmCommit(r){
   if(!ohIsSalesRow(r))return '';
@@ -14886,7 +15302,10 @@ function ohlAtRiskCard(c){
   const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) at risk for the first time in this week's upload; click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
   // The share of orders due in the next month that are at risk: small and quiet, for the manager's review.
   const dueOrders=rowDocCount(d.all),riskPct=dueOrders?Math.round(orders/dueOrders*100):null;
-  const riskPctHtml=riskPct===null?'':`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the next month</span>`;
+  // The target (Settings, 5% by default) is on the at-risk share of the open value: green under it, amber up to twice it.
+  const targetTone={good:'teal',warning:'amber',critical:'red'}[d.tone]||'';
+  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${dzChip(`Target under ${AT_RISK_TARGET}%${d.riskPct===null?'':` · ${d.riskPct}% of value`}`,targetTone)}</span>`;
+  const riskPctHtml=riskPct===null?targetHtml:`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span>${targetHtml}`;
   const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${shortDay(d.end)}: ${ohN(orders,'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(risk))} open; click to list the lines.`)}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
   const stat=(id,label,color,rows)=>{
@@ -15096,7 +15515,7 @@ function ohRestoreView(data){
   const flags=data.firstFlagged;
   ohSnapshotFlags=flags&&typeof flags==='object'&&!Array.isArray(flags)?Object.fromEntries(Object.entries(flags).filter(([,v])=>typeof v==='string')):null;
 }
-function ohResetView(){weeklyView='leading';weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';ohSnapshotFlags=null;}
+function ohResetView(){weeklyView=stgValue('openingView');weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';ohSnapshotFlags=null;}
 // sections: Stream A's About bullets for Order Health (aboutSections of the oh- keys, from ABOUT_NOTES.oh).
 function ohAboutHtml(sections=''){
   return `<details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${sections}</ul></div></details>`;
