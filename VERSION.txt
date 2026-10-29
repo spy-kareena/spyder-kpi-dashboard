@@ -180,3 +180,7 @@ is traced to its item's supply: the CM sheet (Logican short, on hold, or committ
 vendor PO (late, no commit date, or expected after the due date) or stock short in the supply / demand snapshot. Orders
 whose supply is fine show as "Not supply". One row per customer (orders), hover a number for the lines and sources,
 click a customer to filter the page.
+2v6.4: Settings page reviewed: a Pages card (line lists start folded or open; Import report only with problems or every
+load), Export / Import settings (a small JSON file, to move settings to another browser or share them; your name is not
+included), the real version on the About card, clearer Shipping demo wording, card colours on the new palette. Help texts
+(section tips and About these numbers) follow the target, tolerance and window set in Settings.

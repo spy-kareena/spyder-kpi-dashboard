@@ -9,6 +9,7 @@
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="app-version" content="2v6.4">
 <title>Spyder KPI Visualizer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5430,7 +5431,7 @@ function impFinish(imp,error){
       const box=document.getElementById('upload-error');
       if(box&&box.insertAdjacentHTML)box.insertAdjacentHTML('beforeend',` <button type="button" class="link-btn imp-errlink" data-focus-key="imp-errlink" onclick="impOpen()">See what to fix</button>`);
     }
-    if(r.tone==='teal'){
+    if(r.tone==='teal'&&!(typeof stgValue==='function'&&stgValue('importReport')==='always')){
       const fresh=r.files.filter(f=>!f.earlier).length;
       showToast(`${imp.adding&&r.files.length>fresh?'Added':'Loaded'} ${impCount(fresh,'file')}. No problems found.`);
       if(impState.open)impRender();
@@ -8449,7 +8450,9 @@ function stgSpec(){
     openingView:{def:()=>'leading',check:oneOf(['leading','lagging'])},
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
-    shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined}
+    shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
+    linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
+    importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
   };
 }
 // Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
@@ -8665,7 +8668,7 @@ function stgOrderHealthCard(dis,i){
     stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
     stgRow('Opening view',`Order Health opens on it, and after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
   ].join('');
-  return stgCard({id:'oh',title:'Order Health',icon:'target',color:'#dc2626',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+  return stgCard({id:'oh',title:'Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 function stgNotesCard(dis,i){
   const kind=stgNotesKind,key=stgListKey(kind),list=stgValue(key),what=kind==='po'?'purchase-order':'sales-order';
@@ -8679,12 +8682,12 @@ function stgNotesCard(dis,i){
   const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span><span class="stg-help">The note editor's Comment picker, for ${kind==='po'?'purchase-order':'sales-order'} lines.</span></div><div class="stg-ctl">${tabs}</div></div>
     <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">No ready-made comments: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
-  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#d97706',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
+  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
 }
 function stgShippingCard(dis,i){
   const on=stgValue('shipDemoDefault');
   const now=typeof shippingDemoOn==='function'?shippingDemoOn():on;
-  const body=stgRow('Show demo shipments',`Made-up shipments on the Shipping page. Off: only until a real status is set. Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
+  const body=stgRow('Show demo shipments',`On: the Shipping page opens on 12 made-up shipments. Off: it opens on your real shipments (the made-up ones show only while no shipment has a status yet). Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
     +`<p class="stg-now">Shipping page now shows ${now?'demo data':'real shipments'}${hasLoadedData()?'':' once an export is loaded'}.</p>`;
   return stgCard({id:'ship',title:'Shipping',icon:'truck',color:'#0fa08e',i,changed:!stgIsDefault('shipDemoDefault'),body});
 }
@@ -8732,14 +8735,63 @@ function stgAiCard(dis,i){
       +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
   }
   const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Open the Ask AI panel on its settings: provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
-  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#7c3aed',i,body:body+open});
+  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,body:body+open});
+}
+// Pages: how line lists open and when the Import report shows.
+function stgPagesCard(dis,i){
+  const seg=(key,items,label)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`stgSet('${key}','${v}')`,attrs:dis})),{label,cls:'stg-seg'});
+  const body=[
+    stgRow('Line lists start',`Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments. A list you open or fold keeps that choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
+    stgRow('Import report',`After files load: a short message when all is well, or the full report every time. Default only with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
+  ].join('');
+  return stgCard({id:'pages',title:'Pages',icon:'layers',color:'#0fa08e',i,changed:['linesStart','importReport'].some(k=>!stgIsDefault(k)),body});
+}
+// Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
+function stgExport(){
+  const data={app:'spyder-kpi-dashboard',kind:'settings',version:stgVersion(),settings:Object.fromEntries(Object.keys(stgSpec()).map(k=>[k,stgValue(k)]))};
+  try{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='spyder-kpi-settings.json';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    showToast('Settings saved to spyder-kpi-settings.json');
+  }catch(err){showToast('Could not save the settings file in this browser');}
+}
+function stgImportPick(){const el=document.getElementById('stg-import-file');if(el)el.click();}
+function stgImport(input){
+  const f=input.files&&input.files[0];
+  input.value='';
+  if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data=null;
+    try{data=JSON.parse(String(reader.result||''));}catch(err){data=null;}
+    const src=data&&typeof data==='object'&&data.settings&&typeof data.settings==='object'?data.settings:null;
+    if(!src||isSnapshotView){showToast('That file is not a Spyder KPI settings file');return;}
+    const spec=stgSpec(),next={...stgStore()},changed=[];
+    Object.keys(spec).forEach(k=>{
+      if(!Object.prototype.hasOwnProperty.call(src,k))return;
+      const v=spec[k].check(src[k]);
+      if(v===undefined)return;
+      if(JSON.stringify(v)!==JSON.stringify(stgValue(k)))changed.push(k);
+      if(JSON.stringify(v)===JSON.stringify(spec[k].def()))delete next[k];else next[k]=v;
+    });
+    if(!changed.length){showToast('Settings already match that file');return;}
+    const saved=stgWrite(next);
+    stgAfterChange(changed);
+    showToast(saved?`${fmtNum(changed.length)} ${changed.length===1?'setting':'settings'} loaded`:'Loaded for now: this browser does not keep settings');
+  };
+  reader.onerror=()=>showToast('Could not read that file');
+  reader.readAsText(f);
 }
 function stgAboutCard(i){
   const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length;
+  const move=isSnapshotView?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) as a small file, to load them in another browser or send them to a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`;
   const body=`<dl class="stg-dl">
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
       <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
-    </dl><p class="stg-now">Settings are saved in this browser only.</p>`;
+    </dl><p class="stg-now">Settings are saved in this browser only; Export and Import move them to another browser.</p>${move}`;
   return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
 }
 function stgRenderPage(){
@@ -8747,8 +8799,8 @@ function stgRenderPage(){
   const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
   const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
   // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one.
-  const left=[stgProfileCard(dis,0),stgOrderHealthCard(dis,2),stgDataCard(4)].join('');
-  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgAiCard(dis,5),stgAboutCard(6)].join('');
+  const left=[stgProfileCard(dis,0),stgOrderHealthCard(dis,2),stgPagesCard(dis,4),stgDataCard(6)].join('');
+  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgAiCard(dis,5),stgAboutCard(7)].join('');
   const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
   return `${note}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
 }
@@ -10827,7 +10879,17 @@ if(typeof window.addEventListener==='function')window.addEventListener('resize',
 // so the help needs no button of its own. Each page's short "About these numbers" list is ABOUT_NOTES.
 function sectionTipText(key){
   const i=key&&SECTION_INFO[key];
-  return i?[i.what,i.click].filter(Boolean).join(' '):'';
+  return i?stgText([i.what,i.click].filter(Boolean).join(' ')):'';
+}
+// Help texts are written for the default settings (2-day tolerance, 5% target, a one-month window); with other
+// settings the numbers in them follow (Settings page).
+function stgText(text){
+  const s=String(text||'');
+  if(typeof stgIsDefault!=='function'||(stgIsDefault('toleranceDays')&&stgIsDefault('atRiskTarget')&&stgIsDefault('horizon')))return s;
+  const t=ON_TRACK_TOLERANCE_DAYS,days=`${t} ${t===1?'day':'days'}`,h=stgHorizonLabel();
+  return s.replace(/over 2 days/g,`over ${days}`).replace(/plus 2 days/g,`plus ${days}`).replace(/more than 2 days/g,`more than ${days}`)
+    .replace(/under 5%/g,`under ${AT_RISK_TARGET}%`).replace(/Next-month lines/g,`Lines due in the ${h}`).replace(/next-month lines/g,`lines due in the ${h}`)
+    .replace(/next month’s lines/g,`lines due in the ${h}`).replace(/in the next month/g,`in the ${h}`);
 }
 function sectionTip(key){return tipAttr(sectionTipText(key));}
 // The "About these numbers" (or "About this chart") toggle, with its tip; every page's About block uses it.
@@ -10840,7 +10902,7 @@ function aboutSummary(label='About these numbers',tipText='Show what the numbers
 function aboutItems(items){return (items||[]).filter(Boolean).map(t=>`<li>${t}</li>`).join('');}
 // "About these numbers" bullets for the page the section keys belong to (ABOUT_NOTES, by key prefix).
 function aboutSections(keys){
-  return aboutItems(ABOUT_NOTES[String((keys&&keys[0])||'').split('-')[0]]);
+  return aboutItems((ABOUT_NOTES[String((keys&&keys[0])||'').split('-')[0]]||[]).map(stgText));
 }
 function renderAbout(keys,intro=''){
   return `<details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${intro}${aboutSections(keys)}</ul></div></details>`;
@@ -12684,13 +12746,16 @@ function dzCollapsedMap(){
 function dzDecorateCollapse(root){
   if(!root||!root.querySelectorAll)return;
   const saved=dzCollapsedMap();
+  const folded=typeof stgValue!=='function'||stgValue('linesStart')!=='open';
   root.querySelectorAll(DZ_COLLAPSE_HEADS).forEach(head=>{
     const card=head.parentElement;
     if(!card||head.querySelector('.dz-collapse-btn'))return;
     const title=head.querySelector('.dz-title');
     const name=String(title?title.textContent:'Lines').trim();
     const key=`${activeTab}:${name.toLowerCase()}`;
-    const closed=!saved[key];
+    // A list's own choice ('open' / 'closed'; true from 2v6.2 = open) wins over the Settings default.
+    const own=saved[key]===true?'open':saved[key];
+    const closed=own==='closed'||(own!=='open'&&folded);
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='dz-collapse-btn print-hide';
@@ -12714,7 +12779,7 @@ function dzToggleCollapse(btn){
   const name=String((card.querySelector('.dz-title')||{}).textContent||'Lines').trim();
   btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
   const map=dzCollapsedMap();
-  if(closed)delete map[btn.dataset.collapseKey];else map[btn.dataset.collapseKey]=true;
+  map[btn.dataset.collapseKey]=closed?'closed':'open';
   try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
 }
 // The About panel closes on a click outside it or on Escape (it is a <details>, so it opens and closes on its own).
@@ -16383,7 +16448,7 @@ function ohlDateChangesCard(c){
   const more=rest.length?`<div class="ohl-foot"><span>${open?`Showing all ${fmtNum(dc.customers.length)} customers`:`Showing ${fmtNum(shown.length)} of ${fmtNum(dc.customers.length)} customers`}</span><button type="button" class="link-btn ohl-more print-hide" data-focus-key="more-ohl-datechange" data-table-key="ohl-datechange" aria-expanded="${open}"${tipAttr(open?'Show the first customers only.':`Show the other ${ohN(rest.length,'customer')} with later dates.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show more →'}</button></div>`:'';
   const meta=`<span class="ohl-dc-meta">${esc(ohN(t.lines,'line'))} · ${esc(ohN(t.customers,'customer'))} · ${esc(money(t.value))}</span>${tags(t,true)}`;
   return dzCard({title:'Date changes',sm:true,meta,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
-    tip:'Open sales-order lines whose expected date moved more than 2 days past due (SAP reschedule or Logican commit), and whether Logican can build them: ready (clear to build) or blocked (short or on hold).',
+    tip:`Open sales-order lines whose expected date moved more than ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due (SAP reschedule or Logican commit), and whether Logican can build them: ready (clear to build) or blocked (short or on hold).`,
     body:`<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
         <div class="dz-th ohl-dc-th"><span>Customer</span><span>Lines</span><span class="dz-num">Slip</span><span>Worst line</span><span>What we can deliver</span></div>
         ${(open?dc.customers:shown).map(row).join('')}
