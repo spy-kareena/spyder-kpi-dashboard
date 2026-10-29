@@ -2050,6 +2050,214 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end monthly-wh-metrics */
 
 /* 2v6:shipping */
+/* Shipping (designs/Shipping.dc.html + shipping-map.html): filter row, demo banner, status tiles, delivery map, Shipments
+   table with the three-segment progress bar, Cross-border and Delayed lists. All names are shp-*; dz-* primitives
+   (dz-card, dz-seg, dz-filter, dz-btn, dz-pillinput, dz-prog, dz-th, dz-fade, dz-chip) come from the foundation. */
+.shp-checked{font-size:12.5px;color:var(--dz-ink-4)}
+.dz-btn.shp-pill,.dz-btn.shp-addbtn{height:38px;padding:0 16px}
+.dz-btn.shp-pill{background:var(--dz-glass-55);border-color:#fff;font-weight:400}
+.dz-btn.shp-pill:hover{background:var(--dz-glass-75)}
+.shp-demo,.shp-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;padding:10px 14px 10px 16px;border-radius:18px;background:var(--dz-glass-60);border:1px solid #fff;font-size:13px;line-height:1.45;color:var(--dz-ink-3)}
+.shp-demo-t{flex:1 1 260px;min-width:0}
+.shp-demo .dz-btn{height:32px;flex:none}
+
+/* Status tiles */
+.shp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+.shp-tile{min-width:0;display:block;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card)}
+.shp-tile:hover{background:rgba(255,255,255,.9)}
+.shp-tile.sel{background:#fff;border-color:rgba(99,102,241,.35)}
+.shp-tile:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.shp-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
+.shp-tile-l i{width:8px;height:8px;border-radius:50%;flex:none}
+.shp-tile-v{display:block;margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--dz-ink-1)}
+.shp-tile-s{display:block;margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
+
+/* Delivery map: land and routes are one SVG, dots / labels / hub are HTML at % positions of the same stage (the stage
+   keeps the view box's aspect ratio, so they stay the same size in pixels while the map scales down on a narrow screen).
+   The land runs on past the stage to the card edge (the card clips it). */
+.dz-card.shp-map{position:relative;padding:0;border-radius:28px;overflow:hidden;background:rgba(255,255,255,.45)}
+.shp-map-head{position:absolute;left:22px;top:18px;z-index:3;max-width:calc(100% - 44px);pointer-events:none}
+.shp-map-head .dz-meta{margin-top:2px}
+.shp-map-stage{position:relative;width:min(100%,calc(420px*var(--ar)));aspect-ratio:var(--ar);margin:0 auto}
+.shp-map-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;display:block}
+.shp-land-p{fill:#dfe6f2;stroke:#fff;stroke-width:.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.shp-borders{fill:none;stroke:#fff;stroke-width:.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.shp-route{fill:none;stroke:var(--dz-indigo);stroke-width:1.2;stroke-linecap:round;opacity:.5;vector-effect:non-scaling-stroke}
+.shp-route.late{stroke:var(--dz-risk);opacity:.55}
+.shp-route.done{stroke:var(--dz-teal);opacity:.3}
+.shp-lbl{position:absolute;z-index:1;transform:translate(-50%,-50%);font-size:11px;line-height:14px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 2px #fff}
+.shp-lbl.hub{font-weight:600}
+.shp-hub{position:absolute;z-index:1;width:22px;height:22px;margin:-11px 0 0 -11px;border:1.5px solid var(--dz-ink-1);border-radius:50%;box-sizing:border-box;pointer-events:none}
+.shp-hub::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--dz-ink-1)}
+.shp-dot{position:absolute;z-index:2;box-sizing:border-box;padding:0;border:2.5px solid var(--dz-indigo);border-radius:50%;background:#fff;cursor:pointer}
+.shp-dot::before{content:"";position:absolute;left:-7px;top:-7px;right:-7px;bottom:-7px;border-radius:50%}
+.shp-dot.late{border-color:var(--dz-risk)}
+.shp-dot.done{border-color:var(--dz-teal)}
+.shp-dot:hover,.shp-dot.sel{box-shadow:0 0 0 4px rgba(99,102,241,.2)}
+.shp-dot.late:hover,.shp-dot.late.sel{box-shadow:0 0 0 4px rgba(225,29,72,.2)}
+.shp-dot.done:hover,.shp-dot.done.sel{box-shadow:0 0 0 4px rgba(15,118,110,.2)}
+.shp-dot.sel{border-width:4px}
+.shp-dot:focus-visible{outline:2px solid var(--dz-ink-1);outline-offset:3px}
+.shp-map-foot{position:absolute;left:22px;right:22px;bottom:16px;z-index:3;display:flex;justify-content:space-between;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.shp-legend,.shp-pillnote{display:flex;gap:14px;font-size:12px;color:var(--dz-ink-3);background:var(--dz-glass-75);border-radius:999px;padding:6px 12px}
+.shp-legend{margin-left:auto;pointer-events:none}
+.shp-legend span{display:flex;align-items:center;gap:6px}
+.shp-legend i{width:9px;height:9px;border-radius:50%}
+/* Fade in on load (land, routes one after another, dots, labels); only when the page opens, never on a redraw */
+@media (prefers-reduced-motion:no-preference){
+  .shp-land{animation:shpMapIn .6s ease both}
+  .shp-route{animation:shpMapIn .9s ease both;animation-delay:calc(200ms + var(--i,0)*90ms)}
+  .shp-dot{animation:shpDotIn .45s ease backwards;animation-delay:calc(300ms + var(--i,0)*70ms)}
+  .shp-lbl,.shp-hub{animation:shpMapIn .5s ease backwards;animation-delay:.45s}
+}
+@keyframes shpMapIn{from{opacity:0}}
+@keyframes shpDotIn{from{opacity:0;transform:scale(.6)}}
+#results-screen:not(.entering) .shp-land,#results-screen:not(.entering) .shp-route,#results-screen:not(.entering) .shp-dot,#results-screen:not(.entering) .shp-lbl,#results-screen:not(.entering) .shp-hub{animation:none}
+
+/* Shipments table + side lists */
+.shp-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px;align-items:start}
+.dz-card.shp-main{grid-column:span 4}
+.shp-side{grid-column:span 2;display:flex;flex-direction:column;gap:16px;min-width:0}
+.dz-card.shp-ships{padding-bottom:14px}
+.shp-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.shp-search{flex:1 1 220px;max-width:340px}
+.shp-chipbtn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 12px;border:0;border-radius:999px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font:inherit;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap}
+.shp-chipbtn:hover{background:#e0e7ff}
+.shp-table{margin-top:6px;--cols:150px minmax(0,1fr) minmax(0,1.15fr) 118px 70px}
+.shp-row{border-bottom:1px solid var(--dz-line-5)}
+.shp-row:last-child{border-bottom:0}
+.shp-row.open{background:rgba(255,255,255,.5);margin:0 -14px;padding:0 14px;border-radius:14px;border-bottom-color:transparent}
+.shp-line{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:14px;align-items:center}
+.shp-head{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1.15fr) 118px;gap:14px;align-items:center;width:100%;min-width:0;padding:13px 0;border:0;background:transparent;font:inherit;font-size:13px;text-align:left;color:inherit;cursor:pointer}
+.shp-head:hover{background:rgba(255,255,255,.5)}
+.shp-head:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:-2px;border-radius:8px}
+.shp-trk,.shp-ord,.shp-eta,.shp-prog{display:block;min-width:0}
+.shp-trk b,.shp-ord b,.shp-eta b{display:block;font-weight:600;font-variant-numeric:tabular-nums}
+.shp-trk b{overflow-wrap:anywhere}
+.shp-ord b{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shp-trk em,.shp-ord em,.shp-eta em{display:block;margin-top:2px;font-style:normal;font-size:11.5px;color:var(--dz-ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shp-ord em{font-size:12px}
+.shp-eta{text-align:right}
+.shp-eta b.late{color:var(--dz-risk-text)}
+.shp-eta em.warn{color:var(--dz-amber-text)}
+.shp-prog-t{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+.shp-st{font-size:12px;font-weight:500;color:var(--dz-ink-2)}
+.shp-st.late{color:var(--dz-risk-text)}
+.shp-st.done{color:var(--dz-teal)}
+.shp-st.warn{color:var(--dz-amber-text)}
+.shp-stage{font-size:11.5px;color:var(--dz-ink-5);white-space:nowrap}
+.shp-go{display:flex;justify-content:flex-end}
+a.dz-btn.shp-check,a.dz-btn{text-decoration:none}
+a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
+.shp-none{margin:14px 0 6px;font-size:13px;color:var(--dz-ink-4)}
+.shp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0 4px;font-size:12.5px;color:var(--dz-ink-4)}
+.shp-more{border:0;background:transparent;padding:4px 0;font:inherit;font-size:13px;font-weight:500;color:var(--dz-indigo-link);cursor:pointer}
+.shp-more:hover{color:var(--dz-indigo-hover);text-decoration:underline}
+/* Open row: facts, note, status form, the delivery's order lines */
+.shp-detail{display:grid;gap:14px;padding:4px 0 16px}
+.shp-facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 18px}
+.shp-fact{min-width:0}
+.shp-fact span{display:block;font-size:11.5px;color:var(--dz-ink-4)}
+.shp-fact strong{display:block;margin-top:1px;font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.shp-alert{margin:0;padding:10px 14px;border-radius:14px;background:var(--dz-risk-bg);color:var(--dz-risk-text);font-size:12.5px;line-height:1.5}
+.shp-alert.calm{background:rgba(255,255,255,.7);color:var(--dz-ink-3)}
+.shp-update,.shp-add{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;padding:14px;border-radius:16px;background:rgba(255,255,255,.7);border:1px solid var(--dz-line-6)}
+.shp-add{margin-top:12px}
+.shp-update label,.shp-add label{display:grid;gap:4px;font-size:11.5px;color:var(--dz-ink-4)}
+.shp-update-t{flex-basis:100%;font-size:13px;font-weight:600;color:var(--dz-ink-1)}
+.shp-note-f{flex:1 1 220px}
+.shp-note-f .dz-pillinput{width:100%}
+.shp-msg{flex-basis:100%;font-size:12.5px;color:var(--dz-ink-3)}
+.shp-msg:empty{display:none}
+.shp-lines{overflow-x:auto;border:1px solid var(--dz-line-6);border-radius:14px;background:rgba(255,255,255,.7)}
+.shp-lines table{width:100%;min-width:620px;border-collapse:collapse;font-size:12.5px}
+.shp-lines th{padding:9px 12px;border-bottom:1px solid var(--dz-line-8);font-size:11.5px;font-weight:400;text-align:left;color:var(--dz-ink-4)}
+.shp-lines td{padding:9px 12px;border-bottom:1px solid var(--dz-line-5);vertical-align:top}
+.shp-lines tr:last-child td{border-bottom:0}
+.shp-lines .num{text-align:right;font-variant-numeric:tabular-nums}
+.shp-lines .strong{font-weight:600}
+.shp-lines .soft{color:var(--dz-ink-4)}
+.shp-lines .m{display:block;font-weight:500}
+.shp-lines .item-desc{display:block;font-size:12px;color:var(--dz-ink-4)}
+.shp-note-p{margin:0;font-size:12.5px;color:var(--dz-ink-4)}
+.shp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.dz-btn.shp-remove{color:var(--dz-risk-text)}
+/* Cross-border and Delayed */
+.dz-card.shp-side-card{padding:24px 26px}
+.shp-list{display:flex;flex-direction:column;margin-top:10px}
+.shp-li{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:11px 0;border:0;border-top:1px solid var(--dz-line-6);background:transparent;font:inherit;text-align:left;color:inherit;cursor:pointer}
+.shp-li:hover{background:rgba(255,255,255,.55)}
+.shp-li:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:-2px;border-radius:8px}
+.shp-li-l{display:block;min-width:0}
+.shp-li-l b,.shp-li-top b{display:block;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shp-li-l em{display:block;margin-top:2px;font-style:normal;font-size:12px;color:var(--dz-ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shp-li-r{flex:none;text-align:right}
+.shp-li-r b{display:block;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.shp-li-r b.late{color:var(--dz-risk-text)}
+.shp-li-r em{font-style:normal;font-size:11.5px;color:var(--dz-ink-4)}
+.shp-li.exc{display:block}
+.shp-li-top{display:flex;justify-content:space-between;gap:10px}
+.shp-li-top b{min-width:0}
+.shp-li-top em{flex:none;font-style:normal;font-size:12px;color:var(--dz-ink-4)}
+.shp-li-why{display:block;margin-top:3px;font-size:12.5px;color:var(--dz-risk-text)}
+.shp-li-why.none{color:var(--dz-ink-4)}
+.shp-more-n{margin:8px 0 0;font-size:12px;color:var(--dz-ink-4)}
+/* Nothing to list */
+.shp-empty{display:grid;justify-items:center;gap:6px;padding:26px 12px 20px;text-align:center}
+.shp-empty-ico{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--dz-indigo-bg);color:var(--dz-indigo)}
+.shp-empty-ico svg{width:24px;height:24px}
+.shp-empty-t{margin:6px 0 0;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.shp-empty-p{margin:0;max-width:460px;font-size:13px;line-height:1.5;color:var(--dz-ink-4)}
+.shp-empty-card .shp-add{margin:4px auto 8px;max-width:620px}
+
+/* Below ~1360px the map is narrower than its card, so the title goes above it instead of over the hub */
+@media (max-width:1360px){
+  .shp-map-head{position:relative;left:auto;top:auto;max-width:none;padding:18px 22px 6px}
+}
+@media (max-width:1180px){
+  .dz-card.shp-main,.shp-side{grid-column:span 6}
+  .shp-side{flex-direction:row}
+  .shp-side>*{flex:1 1 0;min-width:0}
+}
+@media (max-width:900px){
+  .shp-lbl.minor{display:none}
+  .shp-grid{grid-template-columns:minmax(0,1fr)}
+  .dz-card.shp-main,.shp-side{grid-column:auto}
+}
+@media (max-width:640px){
+  .shp-side{flex-direction:column}
+  .shp-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .shp-tile{padding:14px 16px;border-radius:18px}
+  .shp-tile-v{font-size:24px}
+  .dz-card.shp-map{border-radius:22px}
+  .shp-frow .shp-checked{order:5;flex-basis:100%}
+  .shp-frow .dz-filters{width:auto;flex:1 1 auto}
+  .shp-facts{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .shp-map-head{position:relative;left:auto;top:auto;max-width:none;padding:16px 18px 8px}
+  .shp-map-svg{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px);mask-image:linear-gradient(to bottom,transparent 0,#000 22px)}
+  .shp-map-foot{position:static;margin:4px 18px 14px;justify-content:flex-start}
+  .shp-legend{margin-left:0;padding:5px 12px}
+  .shp-lbl.minor{display:none}
+  .shp-map-stage{width:calc(var(--zoom,1)*100%);margin-left:var(--ml,0);overflow:hidden}
+  .dz-card.shp-side-card,.dz-card.shp-ships{padding:18px 18px 14px}
+  .shp-th{display:none}
+  .shp-search{max-width:none}
+  .shp-line{grid-template-columns:minmax(0,1fr)}
+  .shp-head{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"trk trk" "ord eta" "prog prog";gap:10px 12px;padding:12px 0}
+  .shp-trk{grid-area:trk;padding-right:76px}
+  .shp-ord{grid-area:ord}
+  .shp-eta{grid-area:eta}
+  .shp-prog{grid-area:prog}
+  .shp-go{position:absolute;right:0;top:9px}
+  .shp-row.open{margin:0 -10px;padding:0 10px}
+  .shp-update,.shp-add{padding:12px}
+  .shp-update label,.shp-add label{flex:1 1 140px}
+}
+@media print{
+  .dz-card.shp-map{break-inside:avoid;background:#fff}
+  .shp-row{break-inside:avoid}
+  .shp-tile{box-shadow:none;background:#fff}
+}
 /* 2v6:end shipping */
 
 /* 2v6:supply */
@@ -10354,6 +10562,10 @@ let shippingExpanded=new Set();
 let shippingExportCache={rows:null,list:[],byOrder:new Map()};
 let shippingSearchIndex=null;
 let shippingDemoChoice;
+// 2v6 view state (this page only, reset when a report loads or the demo switch is used): carrier and customer
+// filters, the destination picked on the map, the search text, and whether the Add tracking # form is open.
+let shipCarrierSel='',shipCustomerSel='',shipDestSel='',shipQuery='',shipAddOpen=false;
+function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';}
 
 // Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/fedex.mjs.
 // At least one digit: words typed into TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
@@ -10607,27 +10819,27 @@ function shippingRealList(now=Date.now()){
 }
 // --- Demo data: ~12 made-up shipments covering every stage (fake names and numbers, dates relative to today) ---
 // [number, customer, ship method, ship-to, shipped days ago, value, status, status days ago, checked hours ago, note,
-//  promised days after shipping]
+//  promised days after shipping, ship-to region (US state / CA province, shown on the map; '' = the country)]
 const SHIP_DEMO_ROWS=[
-  ['DEMO10000001','Demo RV Co','FedEx Ground','CA',1,4200,'shipped',1,3,'Picked up from the dock',4],
-  ['DEMO10000002','Demo Trailer Works','FedEx Freight LTL','CA',3,18500,'transit',2,5,'Two skids, at the Winnipeg terminal',5],
-  ['DEMO10000003','Demo Marine Supply','UPS Standard','US',4,7600,'transit',1,20,'Cleared customs at Blaine',6],
-  ['DEMO10000004','Demo Coach Builders','Purolator Ground','CA',5,3100,'delayed',1,4,'Weather hold in Thunder Bay',3],
-  ['DEMO10000005','Demo Off-Road Ltd','FedEx International Priority','US',6,12900,'delayed',2,26,'Held at customs: commercial invoice missing',4],
-  ['DEMO10000006','Demo Camper Parts','Canpar Ground','CA',3,2400,'delivered',0,2,'Signed by K. Lee',3],
-  ['DEMO10000007','Demo Fleet Services','FedEx Ground','CA',5,5800,'delivered',2,30,'Left at receiving',3],
-  ['DEMO10000008','Demo RV Co','DHL Express','MX',4,9300,'transit',3,74,'In Laredo, waiting to cross',5],
-  ['DEMO10000009','Demo Boat Works','FedEx Ground','CA',0,1650,'',0,0,'',3],
-  ['DEMO10000010','Demo Truck Bodies','UPS Ground','US',12,6700,'delivered',8,190,'Signed at receiving',6],
-  ['DEMO10000011','Demo Van Conversions','Day & Ross','CA',6,8800,'transit',4,98,'Expected Friday',5],
-  ['DEMO10000012','Demo Trailer Works','Loomis Express','CA',3,2950,'shipped',3,70,'',3],
+  ['DEMO10000001','Demo RV Co','FedEx Ground','CA',1,4200,'shipped',1,3,'Picked up from the dock',4,'CA-ON'],
+  ['DEMO10000002','Demo Trailer Works','FedEx Freight LTL','CA',3,18500,'transit',2,5,'Two skids, at the Winnipeg terminal',5,'CA-MB'],
+  ['DEMO10000003','Demo Marine Supply','UPS Standard','US',4,7600,'transit',1,20,'Cleared customs at Blaine',6,'US-WA'],
+  ['DEMO10000004','Demo Coach Builders','Purolator Ground','CA',5,3100,'delayed',1,4,'Weather hold in Thunder Bay',3,'CA-ON'],
+  ['DEMO10000005','Demo Off-Road Ltd','FedEx International Priority','US',6,12900,'delayed',2,26,'Held at customs: commercial invoice missing',4,'US-TX'],
+  ['DEMO10000006','Demo Camper Parts','Canpar Ground','CA',3,2400,'delivered',0,2,'Signed by K. Lee',3,'CA-BC'],
+  ['DEMO10000007','Demo Fleet Services','FedEx Ground','CA',5,5800,'delivered',2,30,'Left at receiving',3,'CA-QC'],
+  ['DEMO10000008','Demo RV Co','DHL Express','MX',4,9300,'transit',3,74,'In Laredo, waiting to cross',5,''],
+  ['DEMO10000009','Demo Boat Works','FedEx Ground','CA',0,1650,'',0,0,'',3,'CA-NB'],
+  ['DEMO10000010','Demo Truck Bodies','UPS Ground','US',12,6700,'delivered',8,190,'Signed at receiving',6,'US-IN'],
+  ['DEMO10000011','Demo Van Conversions','Day & Ross','CA',6,8800,'transit',4,98,'Expected Friday',5,'CA-SK'],
+  ['DEMO10000012','Demo Trailer Works','Loomis Express','CA',3,2950,'shipped',3,70,'',3,'CA-ON'],
 ];
 function shippingDemoList(now=Date.now()){
   const day=n=>{const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d;};
-  return SHIP_DEMO_ROWS.map(([number,customer,shipMethod,country,shipAgoDays,value,status,statusAgo,checkedH,note,promiseDays],i)=>{
+  return SHIP_DEMO_ROWS.map(([number,customer,shipMethod,country,shipAgoDays,value,status,statusAgo,checkedH,note,promiseDays,region],i)=>{
     const shipDate=day(shipAgoDays);
     const promised=new Date(shipDate);promised.setDate(promised.getDate()+promiseDays);
-    const base={number,source:'demo',demo:true,manual:null,rows:[],orders:new Set([String(90101+i)]),deliveries:new Set([String(70101+i)]),names:new Set([customer]),customer,shipMethod,country,shipDate,promised,value};
+    const base={number,source:'demo',demo:true,manual:null,rows:[],orders:new Set([String(90101+i)]),deliveries:new Set([String(70101+i)]),names:new Set([customer]),customer,shipMethod,country,region,shipDate,promised,value};
     const mark=shippingState.demoEdits[number]||(status?{status,statusDate:shipYmd(day(statusAgo)),note,by:'Demo user',at:new Date(now-checkedH*3600000).toISOString()}:null);
     return shippingDecorate(base,mark,now);
   });
@@ -10652,6 +10864,7 @@ function setShippingDemo(on){
   shippingDemoChoice=!!on;
   try{localStorage.setItem(SHIP_DEMO_KEY,on?'1':'0');}catch(e){}
   shippingFilter='';
+  shipResetView();
   shippingExpanded=new Set();
   renderResults();
 }
@@ -10674,6 +10887,7 @@ function shippingWatchRows(){
   shippingState.rowsRef=allLoadedRows;
   shippingExpanded=new Set();
   shippingFilter='';
+  shipResetView();
 }
 function setShippingFilter(id){
   shippingFilter=shippingFilter===id?'':String(id||'');
@@ -10690,8 +10904,9 @@ function openShipment(number){
   const n=shipClean(number);
   if(!n)return;
   shippingFilter='';
+  shipDestSel='';shipQuery='';
   shippingExpanded.add(n);
-  const i=shippingSortedList(shippingModel().list).findIndex(s=>s.number===n);
+  const i=shippingSortedList(shipFilteredList(shippingModel().list)).findIndex(s=>s.number===n);
   if(i>=SHIP_LIST_LIMIT)tableMore={...tableMore,'ship-list':true};
   renderResults();
   const head=document.querySelector(`[data-focus-key="ship-${n}"]`);
@@ -10715,56 +10930,264 @@ function shippingFromSnapshot(d){
 }
 
 // --- Rendering ---
+// 2v6 layout: filter row (carrier, customer, Add tracking #), demo banner, status tiles, delivery map, Shipments table
+// with the three-segment progress bar, and the Cross-border / Delayed lists. Data, manual statuses and Check links are
+// the 2v4 ones above; nothing here asks a carrier.
+
+// --- Delivery map ---
+// SHIP_MAP.land and .borders are the 110m Natural Earth land and interior country borders of the world-atlas package
+// (https://cdn.jsdelivr.net/npm/world-atlas@2), projected with d3's geoNaturalEarth1 (scale S, translate TX/TY, fitted
+// like designs/shipping-map.html on the box [-135,15] [20,62] [-60,25] in a 1140 x 420 stage) and written as relative
+// integer path data in tenths of a pixel (draw it with transform="scale(.1)"); Antarctica left out. Generated once by a
+// throwaway build script, not at run time: the app stays one offline file with no map library. shipNE() below is the
+// same projection for the destination dots.
+const SHIP_MAP={S:492.333,TX:1009.472,TY:539.955,W:1140,H:420,
+  land:'m5759 10047l100 49 96 20-14 41-59 4-43-29-9 33-45 26-72-10-55-24-71-12-97-45-82-44-123-93 60 18 110 55 96 29 19-38 1-56 47-34 50 10 37 38zm523 -228l62 38-11 29-80 24-38-29-44 38-43-38 63-49 61 20zm8428 -116l-103 5 13-44 20-35 10-17 34 26 60 11-3 16zm5384 -760l51 29 44-11 62-17 38 6-50 102-40 30-46 69-11-24-81 60-11-4-40-3-1-74 21-56 1-75 22-40zm1893 10l-7 36 71-35-3 37-23 36-51 40-87 63-57 35-3 41-53 1-80 32-56 56-99 86-80 38-50 25-61-2-23-28-69-6 11-31 79-63 142-85 54-16 71-33 88-45 69-44 72-64 40-22 40-48 73-40zm351 -412l0 91 34-59 19 24-27 65 40 29 43 7 59-34 30 11-62 76-52 51-52-2-34 27-17 37-20 16-55 46-72 59-75 35 3-23-21-12 85-71 6-48-53-34 21-32 68-30 50-67 29-56 4-58 10-15-14-36-14-77 2-62 30-6 14 48 42 22zm-28 -1219l-34 20-33-23-41-39-33-46-32-62-2-29 31 1 33 30 24 29 17 25 44 53zm943 -420l19 25-24 46-48 12-38-11 3-38 35-30 31 11zm137 -68l-52 22-52 18-1-33 41-17 24-5 50-27-10 42zm-26601 -42l15-4 0 42-5 4-10-42zm25705 34l-27 12-16-38 7-23zm-26 -133l-3 70-17-11-17 5-5-24 12-66zm-8660 -119l6 104 17 41-10 41-15 26-22-51-16 26 10 64-9 37-21 20-10 74-37 101-45 120-60 165-38 121-43 101-61 20-67 37-39-22-55-31-16-46 2-77-20-70-2-62 18-63 35-15 2-29 40-66 11-56-15-41-10-55-1-80 29-48 13-55 37-4 43-17 28-16 33-1 45-50 64-53 24-44-8-37 31 11 44-61 4-52 27-39 24 38 18 36zm6933 18l16 68 53-33 18 37 30 34-15 38 2 75 3 43 16 11 5 74-17 45 11 59 69 45 43 42 40 38-15 21 28 54 3 94 34-19 20 38 21-13-13 92 36 53 23 34 35 70-2 70-15 50-23 54 8 74-33 77-27 41-49 77-18 50-40 63-64 79-70 43-56 67-42 43-54 75-47 44-48 65-38 60-9 27-55 30-79 3-82 36-48 34-61 37-38-39-35-15 32-45-46 16-91 63-49-23-33-14-36-6-56-25-20-54 16-66 3-44-20-35-63-10 41-43 10-64-60 60-69 16 57-48 31-50 44-43 20-65-87 75-56 29-55 70-40-36 20-46-20-63-25-33 21-20-72-53-49-3-54-42-130 8-103 32-91 29-66-6-91 45-69 20-29 45-39 36-61 2-47 8-57-16-54 9-50 4-58 47-19-4-44 24-44 28-50-3-47 0-56-56-32-17 18-49 39-12 19-20 7-31 28-61 8-52-11-88 3-50 17-49-12-57 5-26-23-34 9-69-23-69-1-37 22 38-4-81 29 25 14 34 9-45-19-68-1-28-11-26 20-50 19-22 19-43 4-51 43-63-9 67 44-60 65-29 43-37 63-32 34-7 18 11 65-33 46-10 15-19 21-8 40 3 82-26 47-38 28-47 51-44 10-35 10-47 64-74 18 75 35-17-19-41 30-42 29 18 20-66 47-42 23-35 39-14 5-25 31 10 4-21 35-13 37-12 49 40 34 52 46 0 46 9-9-48 46-70 37-22-9-22 39-50 49-30 37 10 64-16 5-45-52-28 42-13 46 22 35 35 60 22 22-8 43 26 47-24 27 7 19-17 29 43-27 47-33 35-26 3 4 34-29 44-33 42 1 25 51 48 52 28 33 30 44 51 21 0 34 22 6 27 65 30 54-30 24-47 22-38 18-48 35-69-3-42 9-25 0-50 19-65 17-18-7-29 24-46 20-47 5-25 32-33 16 43-2 54 17 11-2 36 21 44-2 49zm1421 -285l17 30-52 0-21-54 42 21zm-3080 -21l-31 2-93-61 71-17 37 26 23 27zm2993 -32l-29 2-45-8-14-14 9-34 48 13 22 19zm65 -23l-14 16-46-75-9-52 25 0 19 69zm-2780 47l-65 19-8-11 10-29 37-53 76-35 11-20 66-19 52-3 24-11 28 11-30 23-81 38-65 25zm-471 -178l25 24 47-7 15 36-87 18-53 11-40 0 30-50 41-1zm373 0l-15 48-114 25-98-11 2-31 61-18 45 26 50-7zm2756 21l1 18-54-37-38-31-25-29 12-9 32 21 57 40zm-166 -85l-15 5-31-20-28-36 5-14 42 36zm-3648 -50l143 9 19-36 135 42 24 56 111 16 88 51-88 33-80-35-67 3-77-7-69-15-84-33-54-9-32 11-133-36-11-37-68-6 56-83 90 5 58 34 31 7zm1953 -48l-43 58-3-65 15-31 18-29 15 25zm1575 52l-21 9-30-34-29-55-11-66 11-8 6 26 22 19 32 55 33 30zm-282 -116l-40 7-13 24-43 21-39 20-40 0-59-25-41-24 8-27 66 13 41-7 14-41 11-3 4 46 43-6 23-30 44-31-6-51 45-1 14 14-4 48zm-1840 -175l-29 29-51-16-13-37 75-5zm242 -32l25 67-62-36-62-7-43 5-51-3 19-47 93-4zm1690 122l-25 23-11-51-16-33-33-29-41-37-53-25 21-21 40 24 25 19 30 21 29 36 27 28zm-1412 -290l18 140 76 52 65-92 87-52 67 0 63 30 55 31 80 17 128 59 136 50 49 44 39 44 9 51 120 53 15 46-69 9 12 58 61 57 39 92 43-3-7 38 56 15-25 16 75 37-11 25-50 6-16-22-63-10-73-13-52-55-37-48-31-76-94-38-65 25-49 28 3 64-61 30-40-14-77-4-59-71-75-17-20 24-95 3 38-71 49-24-12-94-32-73-141-73-61-7-109-80-23 42-30 8-15-32 1-38-56-42 82-31 53 1-6-23-109 0-29-51-66-16-31-43 101-21 38-28 120 35zm-666 -222l-59 86-56 16-72-17-125 5-66 12-10 65 66 78 41-40 140-29-7 40-32-13-33 51-67 33 68 111-14 30 63 100-4 57-41 25-28-30 40-71-75 34-18-24 12-34-52-51 8-84-51 26 3 101-3 124-48 13-30-26 25-79-9-84-31-1-22-59 33-57 12-68 38-131 15-35 64-65 58 26 95 12 86-4 73-63zm258 25l-3 75-39-8-11 52 30 46-21 10-29-54-23-111 14-69 24-32 7 48 44 7zm-1723 604l-83 2-59-72-93-71-31-53-54-70-36-65-56-121-66-72-22-75-28-67-69-55-40-74-58-48-81-96-8-44 48 4 116 16 69 85 60 59 42 36 73 93 76 1 64 60 44 72 57 40-30 70 42 30 27 2 12 61 25 48 55 8 35 55-22 107zm913 -665l86 80-89 11-25 59 3 78-72 59-4 87-33 132-10-31-86 39-28-53-53-5-37-28-89 32-26-42-49 4-62-9-9-117-37-24-35-74-11-75 8-81 44-57 55 30 58-17 13-73 32-16 89-19 51-68 35-55 28-33 62-47 54-60 34-68 30 0 41 44 5 37 51 24 64 26-4 34-50 5 15 42-54 29-39 79 57 82zm607 -570l12 58 8 48-20 79-33-88-32 44 28 64-19 40-91-50-25-63 20-41-50-41-21 36-35-3-52 48-14-25 24-73 45-24 37-33 30 39 55-24 9-38 52-2-11-68 65 42 10 43zm-3358 192l-65 20-38-69-19-124 26-141 54 48 38 61 41 90-7 90zm-10604 -339l-62 10-13-8 22-24 1-34 43-12 15 4zm13768 -15l-23 29-19 55-21 25-51-60 13-23 16-24 3-54 40-5-5 58 46-83zm-400 84l-92 82 32-61 49-53 39-60 30-86 20 71-44 47zm229 -223l48 26 47 0 3 37-31 36-44 27-7-41 0-44zm266 -24l32 97-60-23 5 29 24 54-33 19-10-61-23-5-17-52 44 7-5-33-53-66 71 2zm-305 -78l-10 74-38-43-46-66 64 3zm-88 -472l50 24 18-22 11 22-6 36 36 62-7 72-39 29-1 70 26 69 41 10 31-10 100 48-1 47 27 21-3 40-63-43-33-45-15 31-54-52-66 13-40-19-1-36 20-22-25-20-5 31-44-50-16-37-16-83 35 28-15-136 10-78zm-13764 24l-21 22-55-1-43 3-1-37 12-13 60 1 37 7zm-836 31l-24 14-40-14-39-31 12-20 31-6 17 3 49 8 36 21 10 23zm338 -174l62 13 11-14 57 0 41 22 20-2 9 31 41-2-5 26 32 3 33 32-31 36-33-19-34 3-24-4-15 16-29 5-9-21-26 13-35 59-18-13-1-25-47-15-36 6-44-6-36 16-37-27 10-28 66 12 55 7 29-20-30-37 5-34-45-13 19-24zm13451 103l-57 42-65-27-15-75 30-39 76-24 42 2 23 33-26 38zm-19561 -35l-14 15-15-13 8-24-4-32 6-9 16-15-1-17 7-8 5 2 24 15 11 7 9 12 11 30-3 5-33 19zm-5 -136l-26 7-8-19-6-7 0-5 9-8 24 9 16 13zm-37 -46l-5 9-39-2 9-11zm-62 -12l-6 5-4-2-25-3-4-19-2-4 23-12 4 6zm-108 -58l-11 9-20-16 5-6 14-9 16 2zm5835 -68l25 32 69-10 23 20 55 54 40 40 24-2 42 18-9 25 54 3 51 36-11 20-51 11-50 4-49-6-107 8 56-48-27-23-47-6-22-25-10-49-42 3-65-24-19-18-93-13-23-17 30-22-71-4-59 45-31 1-13 21-38 10-30-8 43-27 20-32 36-19 40-17 57-8 19-10 62 6 57 1zm170 -87l-19 5-11-51-23-25 25-55 21 3 14 73zm14492 85l-16 71-54-73-23-65 22-86 42-66 39 26 1 53zm-14473 -331l-82 15 1-33 35-7 47 3zm59 0l-23 62-11-11 8-46-26-35 2-9zm15080 -659l20 30-19 52-40-28-29 21 1 51-56-25-15-42 20-51 44 10 15-37zm-7082 -133l-44 37 7 17 3 7-69 35-36-11-19-35 33-3 4-1 9-21 50 1zm-765 -3l41 30 54-5 53 6 0 15 37-10-7 25-101 8 0-15-87-17zm-585 -219l-22 68 12 27-12 45-56-33-35-9-100-44 8-45 82 8 71-9zm-447 -257l43 61-6 114-31-5-28 29-26-23-6-105-18-49 38 4zm9214 352l5 69 31 44-10 61-73 41-122 5-62 99-60-33-29-65-115 19-67 41-83 2 96 64 6 148-34 37-46-34-10-79-54-25-50-60 57-27 16-54 54-45 28-60 129-26 83 18 7-154 65 41 64-87 24-33-7-106-59-98 2-54 64-16 99 120 32 70-23 87zm-9193 -434l-20 67-32-18-18-58 13-32 43-32zm9086 -173l58 18 27-36 70 96-88 23-13 86-139-59 12 94-75 1-54-85-2-66 70-5-46-118-19-67 131 89zm-13995 -203l45 11 63-2-42 35-26 5-76-36-9-28 33-26zm183 -216l-33 2-78-27-49-39 25-7 80 21 57 35zm-4094 50l-40 12-87-38-3-30-42-30 2-24-59-15 3-45 17-20 57 19 33 12 56 9 5 29 10 40 46 35zm4502 -183l-63 74 50-29 40 18-31 30 53 23 35-21 60 26-36 62 50-15-2 45 8 52-45 75-31 3-40-16 31-69-16-11-95 74-39-3 56-40-58-21-73 5-128-2-4-25 49-30-23-23 69-51 104-133 53-48 64-28 29 3-18 23zm-4818 -277l66-7-82 94 13 66-26 0-14-38 1-38-15-25 13-37 21-26zm17858 272l165 149-116-28 37 122 119 87 34 59-82-51-4 66-55-72-43-82-65-91-26-64-72-112-94-81-74-114 32-37-53-38 20-12 57 54 79 80 56 81zm-9814 -125l-117 49-91-13 56-86-29-84 90-64 49-38 54-4 66 51-36 56 9 59zm1241 -275l-33 66-70-46-11-34 91-27zm-10378 -122l-88 30-15-20 23-38 81-29 44-12 37 6 5 25zm9390 -122l-68 87 63-11 69 0-17 66-58 72 65 5 61 105 43 13 40 94 18 32 78 16-7 53-33 24 26 43-58 44-88-1-111 23-30-16-44 39-60-10-47 32-35-16 98-88 59-18-102-14-18-33 69-26-34-44 13-54 95 7 10-48-42-51-77-15-15-22 24-36-20-23-35 39-2-78-30-41 25-84 51-65 49 7zm-9966 -101l-50 12-26-15-15-21 73-14 42 8zm5376 -176l-44 41-23-7-5-23 6-6 35-23 23 2zm-137 -43l-92 43-42-2-2-21 63-36 82 1zm-5299 -83l20 15 46-8 26 20 49 11-14 8-63 16-27-17-8-13-58 4-6-7zm5226 -143l-7 34 36-12 23 20 51 26 55 24-14 36 47-6 29 26-65 24-83-19-15-34-81 41-106 39 4-45-85 8 72-38 41-60 60-70zm4142 -60l-18 49 61 52-82 58-176 52-53 14-77-11-163-24 63-34-123-38 107-14 0-23-120-17 47-49 90-11 84 51 94-41 71 21 99-40zm-3541 -52l-67 4 5-37 47-41 58-10 34 20-16 32-12 10zm7755 2107l45 61 33 5 26 23-56 7 0 67-7 30-22 20 9 43 32 64 69 18 56 44 102 15 105-23 3-20-24-62-6-90-59-30 7-59-47-5 2-73 68 21 56-27-61-52-29-49-51 22 5 63-32-56-8-21 10-36-19-30-85-29-46-77-41-22-8-28 67 9-10-63 54-14 62 13-7-83-23-53-66 4-62-20-69 37-58 18-21 50-62 14-50 88 77 82 4 58 93 101zm7228 -1943l-37 34-83-6 100 41 107 63 51 21 42 32 8 20-131-17-105 59-44 9-35 55-40 48 14 36-142-54-98 61-57-29-26 34-92-11 29 52-2 77 32 33 87 18 97 117-56 3 32 68 57 35-77 42 55 94-80 20 47 84-35 77-67-57-121-121-183-182-64-112 12-48-30-38 81-18 19-100 29-81 48-63-62-110-66 7 28 64-71 86-142-96-131 26-30 132 94 48-119 21-88 8-46-57-106-12-43 39-200-14-183 24-77 156-101 191 108 11 67 51 75 18 12-41 74 6 157 90 52 70 6 83 61 100 56 134-26 123 12 59-34 99-38 99-16 50-65 51-43 1-64-42-59 63 3 28-29-5-15 30-6 29 31 62-26 19-6 15-14 26-39 14-20 23 14 37-4 10 34 14 56 38 103 102 41 57 41 100-8 48-57 16-43 36-61 8-26-48-11-65-67-90 46-15-78-74-41-17-1 17-18 7-9-17-21-7-25-14 4-38 12-11-13-15-2-47-11-14-45-10-42-23-86 25-34 41-65 23 20-40-28-33 30-59-56-45-47 31-53 60-19 56-66 4-20 40 60 59 63 14 17 39 65 25 54-62 75 34 46 2 30 46-90 24-15 47-52 44-14 61 92 47 58 86 70 80 70 67 20 65-37 23 31 47 51 27 10 71 1 69-38 8-26 94-29 115-41 104-82 80-85 73-80 10-37 39-31-28-32 43-93 44-75 13-8 92-40 5-31-63 11-34-103-28-32 15-84 74-47 82-6 60 71 92 86 114 75 53 54 70 54 161 7 152-56 57-80 56-55 72-86 81-32-55 16-59-59-49-64-13-34-45-46-90-71-40-63 2 4-68-66 0 4 96-28 126-18 77 10 63 49 2 36 79 18 75 44 50 46 10 41 45 18 8 46 52 34 58 6 59-6 39 8 30 7 51 27 24 30 76-1 30-53 5-71-64-90-68-10-45-45-57-13-72-28-47 5-63-19-37-31-33-15-43-43-49-39-41-8 51-18-48 5-54 16-83-13-65 17-66-30-52-3-94-35-45-36-104-26-110-42-72-43 44-76 62-42-8-49-20 12-108-26-81-72-100 4-32-45-11-63-71-28-45-11-45-21-41-39-51-68-4 13 36-15 49-34-18-8 16-22-10-30-7-5 31-50-1-88 18 14 66-31 51-98 59-69 102-49 55-67 57 5 40-35 21-63 31-34 5-16 66 26 113 10 72-25 82 11 148-39 4-29 66 24 29-66 24-22 59-29 25-75-81-41-121-35-88-29-41-45-83-27-109-18-54-78-119-48-168-34-112-12-105-24-81-101 52-53-11-108-105 31-32-26-34-95-74-56-22-30-63-66-66-131 17-118 1-100 12-140-26-82-20-83-11-44-107-37-16-53 16-68 42-92-29-81-67-72-24-58-83-68-117-36 15-50-29-22 34-43-5 20 39-5 20 31 66 37 75 38 20 15 30 54 37 8 36-4 29 12 29 24 25 13 28 12 22-11-64 15-45 19-10 24 27 7 51-10 52 17 33 12-4 6 24 55-14 61 2 44 3 43-59 48-56 40-54 17-29 10 7-3 36-7 16 18 69 39 59 44 32 55 11 45 16 38 50 23 29 28 11 2 20-21 51-9 25-28 28-22 59-34-4-13 20-7 45 14 58-6 10-34 0-43 32-4 43-15 18-46-1-27 22 3 36-34 24-41-9-47 30-34 5-52 23-12 39 1 29-72 37-116 40-62 62-33 4-22-5-42 36-46 17-62 4-19 5-15 23-19 7-10 22-37-2-24 11-51-4-22-51 0-47-13-26-18-64-23-36 15-4-10-39 8-17-5-38-12-37-24-26-8-35-40-31-43-73-26-71-54-60-34-14-54-83-13-60 0-52-49-96-37-35-41-18-27-49 2-20-24-45-22-20-33-65-50-70-42-60-36 1 8-48 0-31 6-35-3-12-18 35-10 66-15 45-16 15-26-28-36-39-61-125-7 8 37 92 51 88 65 136 30 47 27 49 72 97-13 15 6 57 90 78 14 17 30 86-15 16 16 89 33 104 29 21 42 33 48 100 25 80 43 42 105 82 43 50 43 50 24 29 38 27 19 26-1 36-42 21 33 24 25 16 16 36 35 36 37 0 69-22 81-10 64-27 37-6 26-16 42-3 24-1 33-13 39-9 34-30 28 0 3 24-4 51 2 45-15 31-17 94-32 97-43 110-61 127-62 97-87 118-74 71-111 85-70 66-82 105-17 46-17 20-53 35-19 36-28 6-11 61-24 35-16 58-30 28-36 107 3 49 47 32 2 22-22 53 4 26-6 41 24 55 29 85 26 19 11 39-6 86 6 76-3 136 11 42-25 62-32 61-50 53-69 34-86 42-88 93-29 16-55 62-31 20-10 62 31 66 11 51-1 26 14-5-8 86-15 40 16 15-13 37-33 30-61 30-91 47-34 32 4 37 18 6-10 46-23 63-14 73-21 39-53 44-15 13-34 44-23 45-45 62-88 90-54 52-57 40-76 34-37 4-11 25-42-13-36 16-76-17-43 11-29-5-75 35-61 14-46 32-32 3-28-31-24-2-28-39-4 12-8-23 3-51-20-59 23-16 2-66-43-82-33-74-47-113-51-66-26-64-13-85-16-63-20-134 1-104-8-48-28-36-36-72-36-104-15-54-58-85-4-67-6-55 12-76 26-79 5-38 25-78 18-36 43-56 25-39 9-64-4-49-22-31-19-53-18-52 4-18 24-34-22-84-15-58-37-55 7-16-10-27-20-65-61-92-76-87-50-72-45-89 2-29 17-28 18-63 15-64-14-13 26-97 10-69-29-57-34-14-15-39-20-13 1-23-78 31-28-5-29 20-59-2-41-55-24-62-53-57-56 1-66 0-62 10-60 18-117 51-42 30-67 25-67-25-34 1-52-17-48 1-88 15-52 25-74 32-15-2-19 1-77-42-68-66-63-47-50-56-20-6-54-35-38-47-13-31-9-64-32-51-29-35-18-11-19-17-8-38-11-19-21-15-39-36-31-6-17-24 1-13-23-18-4-19-11-67 10-38-29-68-37-30 33-17 37-61 19-45-6-46 22-43 11-82-6-86-8-43 9-44-18-41-37-37 4-37 4-41 29-23 25-46-4-29 28-62 42-55 25-14 21-51 3-46 27-54 50-32 48-89 39-35 67-9 58-60 37-23 62-73-16-108 29-75 11-46 47-59 72-40 53-36 49-90 23-53 52 0 42 37 67-6 72 19 31 1 68-47 76-15 44-36 67-27 119-15 115-7 36 13 65-35 75 0 29 20 47-5 75-35 50 10-1 44 58-32 6 17-34 42 1 40 25 22-7 75-45 44 15 47 37 2 19 41 27 14 85 30 29-7 60 14 96 39 36 77 65 17 102 37 79 43 33-22 33-41-21-66 20-43 49-41 49-11 97 17 26 39 27 1 23 15 72 10 19 29 95-2 70 23 73 26 34 14 53-28 27-25 62-7 52 11 23 43 14-28 59 20 56 5 34-22 17-29-5-5 15-40 8-66 8-22 2-1 19-71 28-61 1-3-14-67 14-36-30-39 22-33-41 8-61-20-43 50-105 9-62-46-76-3-12 36-48 10-72-46-76 2-49-87-55-48 28-67-48-42 69-82 106-4 22-65 132 11 76-56 77-24 112-2 128 61 103 33 78-13 61 7 74-45 5-36-27-59-44-32-39-10-29-26-98-72-82-33-66-50 47-13 45-72-43-33 93-35-5-18-58 13-52 7-40 27-62 5-53 32 12 53 36 20 68-5-9 30-72 15-84 50-40-18 9-40-77-25 10-16 60-29-22-19-107-21-9-32-60 10-19 47-44 63 4 22-31 19-21-9-7 104-31 35-19 62 27 49 12 33 63 28-11 21-81 5-26 26-53 47-26-40-1-18-42-3-36-8-82 23 52 48-34 14-38 0-40-44-11 19 19 51 38 41-25 19 42 40 36 25 5 49-66-23 24 44-44 10 33 76-47 1-60-38-31-69-16-58-30-40-39-49-6-25-13-6-2-19-40-29-9-41 1-59 8-27-12-13-16-7-21-28-30-17-67-32-41-31-64-25-61-63 14-7-33-36-3-28-45-14-18 37-22-29 0-29 3-2 14-7-54-13-53 31 6 42-7 24 24 44 66 43 38 71 80 69 53 0 18 19-18 17 63 31 52 26 62 45 8 16-11 31-40-40-61-14-26 56 52 32-6 45-29 5-33 74-28 7-1-26 11-47 14-18-29-51-24-43-29-11-22-37-45-16-32-35-51-5-55-39-65-56-49-50-24-85-34-9-56-29-31 12-38 40-28 6-60 48-135-23-98 28-7 52 4 50-65 57-88 18-6 29-42 48-27 71 27 49-40 39-15 56-53 17-50 67-88 2-67-2-44 31-28 32-34-7-25-29-19-50-65-14-29 23-36-12-36 9 12-68-5-53-31-8-15-33 7-56 29-32 6-35 16-52-1-36-13-31-2-29 6-62-27-37 99-62 82 16 91-1 72 15 57-5 109 3 36-51 14-170-69-90-48-42-101-33-6-61 86-19 111 22-20-95 62 36 152-66 20-68 56-17 52-16 33-23 54-122 87-35 54 3 12-18 53-4 13 18 41-41-16-30-5-47-27-45-6-83 10-22 16-24 55-5 21-22 49-23 0 42-17 26 9 23 35 12-14 30-19-8-42 58 19 40 3 31 65 19 1 29 64-15 35-22 74 32 32 26 42-24 96-38 78-28 65 14 7 20 61 1 11-36 85-26-22-69-4-60 24-51 56-27 57 60 50-2 4-62 1-47-22 10-43-28-11-46 74-22 76-11 69 13 63-3 62-43-70-38-110 6-103 29-97 17-42-43-62-26 3-77-38-70 23-45 47-49 123-82 36-16-11-32-87-36-97 21-50 53 16 47-86 61-108 67-32 109 49 56 63 43-47 90-62 18-11 135-29 76-77-8-31 64-73 4-26-77-58-91-55-114-44-48-117 92-82 18-88-40-24-86-25-181 54-50 155-65 112-79 100-106 126-144 90-56 144-92 119-32 93 4 75-60 102 3 98-14 186 53-68 19 72 46 52-25 103 44 160 17 238 84 54 35 18 50-54 39-90 20-273-57-41 10 108 55 33 113 82 23 51 20-2-37-45-34 33-28 154 48 45-19-54-56 116-73 54 4 63 26 18-51-61-45 14-44-56-46 168 23 46 42-70 9 13 42 54 25 84-16-1-48 108-35 176-63 44 3-39 45 74 8 31-26 107-2 72-30 83 44 44-49-77-42 19-24 176 22 89 23 246 84 20-39-77-39-9-15-71-7 2-35-58-57-13-23 70-65 2-64 34-14 155 19 33 39-21 58 47 23 45 50 39 100 86 46 0 49-61 106 72 11 10-27 54-19-3-37 32-35-55-43 1-48-65-6-35-41 6-73-105-59 73-48-42-50 27-2 51 39 17 69 67 13-54-51 76-28 112-4 127 41-85-60-53-75 86-14 132 3 112-9-69-36 30-45 60-2 79-34 133-9 3-18 134-7 56 16 89-36 98 1-11-29 24-28 98-27 110 21-56 17 129 10 45 33 33-17 155 1 151 33 67 25 20 35-40 21-106 38-23 20 76 10 95 18 37-14 68 45 8-18 77-11 185 12 44 32 238 11-48-54 127 12 87 0 125 37 70 45-4 30 124 57 115 29-19-76 121 33 75-20 130 22 20-20 101 10-109-66 40-31 547 46 95 43 207 55 210-14 125 12 81 30 55 53 93 21 58-15 98-2 124 14 98-8 176 66 43-24-103-47-14-32 205 20 112-4 206 35 120 32 363 298zm-20834 -298l70 56 61 74-59 46 17 19 50-54 144 11 34 70-95 33-105 8-85 74-41 16-53-2-15-27-54-22 25-33-45-12-78 9-1-26 46-28-91 18-16 35-71 33 362-298zm4804 -11l-53 26-61-22-52 8-55-33 66-23 62-32 45 21 25 13 8 14zm15458 -151l34 26-57 3-40-23 31-30 32 24zm-20021 -24l-32 24 32-24zm0 0l11-3 47 1 53 20-17 10-80 17-79 5zm4871 147l-48 75 112-58 39 47-51 55 26 50 92-53 80-64 51-80 77 5 77 11 55 36-17 37-65 39 18 40-27 36-143 52-87 12-48-23-39 38-92 64-36 33-98 52-88 5-66 32-32 51-75 9-110 63-116 88-58 62-54 92 83 13-11 75-3 61 96-16 99 35 48 31 27 38 68 22 52 35 102 4 66 8-41 71-15 83 9 92 66 79 61-27 67-85 19-131-27-43 117-38 95-57 59-56 18-54-14-68-48-60 110-84 6-71 38-122 50-18 93 21 59 8 59-21 44 27 54 45 6 30 106 6-30 66-20 100 52 13 26 47 107-45 92-87 55-37 21 71 44 101 35 97-42 50 69 46 42 47 94 21 33 26 5 69 47 11 17 31-21 93-56 31-54 29-116 30-101 69-115 13-135-17-98-1-69 6-74 60-95 37-130 112-101 78 61-14 141-111 160-70 101-9 46 42-79 56-5 91 5 65 76 42 114-12 91-96-11 62 36 31-97 56-162 50-76 35-92 62-50-7 17-72 135-71-108 3-78 10 4 28-83 42-78 29-78 26-54 56-13 14-13 46 11 45 28 2 1-31 15 19-12 25-50 14-32-2-54 15-31 4-42 5-63 24 105-16 16 17-103 25-44 1 5-11-27 24 19 4-31 62-68 67 1-23-14-4-17-22 2 47 12 16-6 32-30 34-57 69-5-3 36-59-27-34 10-71-23 37 1 55-41-13 39 27-17 83 18 6 0 30-10 87-60 64-79 26-58 51-36 6-43 32-17 29-90 57-50 41-44 52-25 62 1 60 9 75 20 62-7 37 16 101-13 59-9 34-27 53-24 11-34-10-5-38-24-21-25-74-21-67-4-34 26-58-11-48-41-73-25-14-81 40-11-4-26-41-41-22-83 12-61-10-56 6-33 12 8 25-9 35 11 17-16 12-24-13-30 16-52-2-43-47-65 11-47-20-47 6-65 21-80 64-80 38-49 42-25 39-14 60-5 42 7 29 0 1-43 76-26 63-27 116-15 43 4 47 16 43 3 67 38 65 10 50 22 42 75 24 25 36 68-24 58-9 57-16 49-15 51-35 25-51 17-73 17-25 53-23 80-20 65 3 45-8 15 19-9 42-47 51-25 53 12 15-16 38-28 68-16-23-15 2-2 13 14 0-4 24-17 37 5 14-12 31 4 8-14 44-17 23-14 3-18 30 23 16 7-13 21 11 7 3 18-15 21-1 7 7 11-4 34 7 34-2 25-10 10-9 23 4 17 6 20-2 15-7 33 12 11 2 21 16 19 19 26 13 17 24-7 9-6 19 5 32-20 29-12 35-5 39 2 22-2 39-12 8-10 38 3 23-16 22 1 23 10 14 16 47 26 35 33 37 25 31-3 19 30 4 7-7 19 21 37-6 34-22 46-18 27-26 40 5-3 9 42 3 32 15 23 26 27 24 38 3 59-61 31-9 3-29 18-73 45-40 47-2 7-18 58 7 61-43 31-20 39-42 26 6 18 23-17 29-3 20-45 10 22 40-4 45-35 50 24 69 32-6 20-62-21-31 0-65 95-36-7-40 28-28 22 61 52 1 46 49 1 29 67 0 80-9 40 39 57 11 43-27 2-22 92-5 90-1-65 25 23 41 60 7 54 42 9 70 39-2 28 20 48 32 44 56 1 45 28 2 39 42 28 30 89 18 9-16 60-6 80 23 25 10 55 20 77 73 12 36 25-4 18 48 40 151 40 14 2 60-56 71 23 26 132 14 3 87 57-57 94 31 124 53 37 51-12 47 87-26 146 46 112-4 111 72 97 97 58 25 64 3 27 28 27 110 14 52-27 144-36 56-101 121-44 98-52 75-19 2-18 63 13 163-14 134-4 57-22 34-6 117-67 113-6 90-56 38-13 52-79 0-112 33-48 39-79 26-79 69-53 86-4 65 17 48-3 89-11 42-45 48-60 154-53 69-43 41-21 82-39 50-22 55-72 48-54-17-37 9-71-37-48 3-51-49 3 46 102 74 1 60 50 38 4 43-46 111-94 46-135 18-78-8 25 51 0 65 22 44-34 30-68 12-73-32-21 23 30 86 52 26 31-27 31 44-56 27-41 53 12 86-4 46-64 0-41 44-1 64 84 62 68 17-1 76-64 48-12 98-50 33-14 39 50 87 59 48-29-4-57-1-25 21-47 29 17 77-26 2-82-27-95-57-98-47-40-53 1-49-52-55-58-143 1-81 49-66-109-25 40-75-20-142 84 30-15-177-52-23 9 107-46-12-14-123-18-160 16-59-41-84-29-98 29-3 11-140 19-140 4-129-41-131 8-72-28-108 24-106-13-169-3-181-2-194-22-143-29-122-79-50-10-36-155-87-141-95-62-53-37-72 10-25-72-114-85-160-80-172-33-40-27-64-60-56-55-35 23-39-39-82 22-61 58-55 38-64-16-38-28 40-46-38 15-24-13-79 26-13 14-54 28-56-5-35 41-18 51-35-9-27 27-6-2-44 18-31 37-6 33-54 29-46-27-20 15-51-14-79 17-22-9-74-28-46-24-25-14-47 20-23-19-6-12-28-36-24-33 5-16 30-32 22-16 3-8 18 33 47-21 11-11 13-36 4-10-51-10 14-25-5-13-35-30-5-19-10-32 0-3 19-8-14-40-19-14-18 10-15-2-19-19-21-28-17-25-11-4-25-18-16 3 25-16 21-16-24-23-8-9-18 2-26 12-28-20-12 19-17-24-27-32-35-14-29-29-27-34-40 10-13 11 13 6-6-10-27-22-8-10 21-43-2-26-8-29-17-41-6-19-18-36-15-47-2-32-17-36-36-73-93-35-29-57-22-42 6-64 33-38 8-50-23-53-16-64-40-53-12-78-41-56-41-15-23-41-5-71-28-25-40-71-49-27-55-10-42 26-9-4-25 21-22 6-30-17-39 0-35-16-44-47-86-58-69-24-54-54-35-8-22 24-54-32-20-33-42-2-61-37-7-30-46-22-43 4-27-20-65-6-67 11-34-41-34-26 3-33-24-22 36-1 42-12 65 14 36 36 60 7 21 9 6 1 30 13-1 0 56 16 22 8 31 34 44 4 81 13 39 11 40-6 46 34 3 21 40 18 39-5 15-37 32-13 0-9-53-37-50-43-42-32-22 17-64 1-47-28-27-40-39-13 11-12-22-39-21-30-51 7-7 29 5 35-32 13-40-38-62-35-24-11-54-9-58-12-69-4-79 3-44-30-50-29-11 1-25-38-4-18-23-62-9-13-14 9-48-36-87-12-121 11-20-19-29-24-72 20-71-16-47 47-72 31-74 9-66 66-80 93-156 47-114 18-72 3-39 16-17 81 29-8 80 28-23 27-69 16-69-9 0-80-83-26-36-98-35 9-73 41-51-60-35 32-67-38-59 28-43-14-30-38-26 33-71-34-65 23-76-55-5-97-2-55-23-62-83-46-15-84-28-91 7-89-36-43-34-82 17-36 55-38 5-85 16-78 27-83 17 33-47 96-77 87-25 1-19-117 43-89 53-139 56 11 39-109 57-96 34-84 24-46 36-134 41-53 38-103 35-38-6-79 23-88 27-76 28-129 23 1-14 103-38 84-25 106-45 86-9 60-33 129-48 28-16 71-29 65-60 74-47-94 24-7-14-60 29-3-41-43 29 13-40-91 32-38 0 39-47 38-29-12-28-95 15-16-37-23-19 44-45-13-33 69-45 93-43 62-40 54-5 29 12 86-37 36 6 70-24 25-35-19-13 74-30-37 1-80 17-36 17-28-17-93 8-67-18 8-31-25-44 117-31 170-37 48 0-49 38 126-3 3-47-40-28 1-38-19-31-52-24 77-38 104-3 110-33 54-36 98-34 65-9 143-32 46 5 130-38 67 15 4 32 40-14 90 5-22 16 72 13 65-8 94 23 101 7 33 10 87-12 63 22 51 10 88 17 55 36 53 7 79-31 91-23 75 9 115-32 109-18 11 30 58-17 44-34 31 7 36 66 120-50-42 56 80-12 40-22 65 5 60 30 110 27 68 13 60-5 47 37-110 37 92 16 162-9 58-13 28 45 91-38-35-31 56-26 72-3 51-7 33 17 28 41 68-6 78 33 98-12 82 2 25-46 59-13 72 25-47 70 76-59 45 2 74-74-30-45-46-30 61-80 103-52 65 12 34 32 21 81-74 36zm-1117 -261l-56 33 140-21 46 36 93-36 30 23-12 70 52-30 21-73 56-10 45 11 38 29-20 69-22 51 67 36 76 34-29 32-97 6 16 28-39 27-95-11-83-20-69 4-126 25-179 13-81 5-3-35-61-20-57 9-22-58 44-8 97-12 77 3 83-13-94-17-125 6-78-1-6-27 154-29-87 1-80-19 94-53 63-28 185-43zm546 -21l-86 47-45-49 27-10 75-3zm1521 23l-6 19-58-2-58-1-66 9-13-4-37-38 19-25 28-4 120 7zm-556 -4l14 44 88-57 157-29 47 73-37 46 122-20 69-29 101 36 57 34-10 32 112-17 34 46 120 29 35 29 20 68-120 35 111 48 84 16 53 69 89 5-40 52-139 88-59-32-60-73-79 10-27 43 42 44 65 35 16 20 7 76-43 56-67-21-124-62 56 66 43 47-1 27-150-31-110-45-55-37 30-22-70-39-69-37-9 22-177 12-37-26 67-56 111-2 126-9-7-27 39-38 111-73 1-33-10-25-69-36-102-25 46-19-35-45-47-5-31-24-42 21-108 10-195-17-106-21-84-11-30-25 79-33-78-1 31-72 85-63 76-29 153-19zm-716 -48l53 14 104-8-2 20-76 34 60 30-56 64-111 28-50-6-18-28-95-55 19-22 105 9-24-46zm13288 44l-82 0-120-7-14-4 21-28 61-6 107 27zm-12954 31l-97 53-61-3 11-62 27-35 51-30 68-19 111 3 91 17-126 62zm-1584 98l-179 35-1-31-93-38 41-23 99-59 92-46-11-42 193-11 63 14 135 4 33 20 32 30-85 17-179 50-113 50zm14771 -259l-29 27-93-6-132-27-15-22 113 10zm-13096 7l-50 27-74-5-51-18 53-31 92-18 27 24zm12754 -40l19 51-200-2-71 16-157-44-25-47 55-12 143 3zm-12918 -77l14 31-27 34-66 51-94 7-48-11 34-40-92 5 42-52 56 2 99-22 71 3zm-543 34l-2 24 58-11 53 3-21 33-61 32-191 11-162 30-84 2 14-23 139-30-249 8-63-12 138-67 68-18 127 22 56 40 89 5-16-64 72-24 47 7zm8947 384l-31 6-186-9-28-32-108-20-23-38 51-16-18-38 84-60-54-9 103-61-29-31 103-36 153-43 169-13 76-24 97-9 53 26-23 21-169 34-146 32-135 65-50 68-56 68 35 60zm-8182 -443l41 21 103 0 28 22-32 25 50 15 21 16 70 3 74 6 95-15 112-6 83 5 40 26-6 28-46 18-90 15-63-8-162 10-112 2-81-9-127-22 11-38 20-33-30-30-103-8-43-20 43-28zm-1089 -36l-61 50-64 23-53 4-127 28-96 11-57-15 143-50 154-43 79 1zm1157 8l-25 2-94-4 2-19 104 1 26 12zm-841 -12l-116 19-55-21 64-21 82-6 63 10zm7020 -10l-110 27-95-15 32-17-35-21 104-13 26 25zm-6931 -48l-77 13-85-1 11-9 73-19 25 3zm680 35l-89 13-29-15 1-24 21-26 64 3 26 4 41 22zm-203 -17l-6 27-77-8-65-20-113-3 69-19-46-15 22-24 91 9 115 22zm10600 1l-268 25 12-84 35-7 42 4 168 36zm-4503 -88l177 47-124 25-20 47-44 12-16 55-63 2-118-40 44-23-80-19-107-54-45-49 135-22 31 22 72-1 16-21 74-2zm353 -43l106 21-66 33-146 8-153-10-12-17-73-2-61-27 152-17 76 14 46-18zm1289 -8l-63 8-43 4-2 10-54 10-62-14 19-19-113-2 93-11 75 0 19 16 21-14 42-10 82 13zm2560 102l-105 8-160-18-108-24-82-44-81-12 87-40 93-14 131 30 180 58zm-9552 -48l43 20-86 18-137 48-95 5-100-8-32-26 23-23 56-17-94 1-35-21-4-28 64-26 54-19 56-4-7-13 119-3 31 31 71 13 71 12zm1108 -199l126 5 98 6 75 15-14 14-140 25-129 11-55 13 108 0-146 35-95 17-124 49-113 10-42 13-160 7 65 8-44 11 19 31-65 22-94 18-43 26-87 19-4 15 92-2-10 16-169 40-125-19-163 11-72-8-97-4 18-32 109-15 13-47 35-4 116 28-37-42-73-12 62-25 104-15 34-22-50-24 7-31 136 2 34 7 98-22-106-7-180 4-68-21-16-23-40-17 12-20 86-10 59-2 107-9 96-20 57 2 35 16 71-30 74-8 94-6 150-2 20 6 149-9 101 3zm2012 -21l288 42-96 21-189 2-266 5 21 10 176-6 142 20 101-18 35 21-64 33 133-21 245-22 146 10 24 25-211 42-31 14-163 10 116 3-68 45-49 41-12 71 55 43-82 3-91 21 92 35 2 58-58 6 60 59-121 5 58 29-21 24-79 11-76 0 60 48-5 32-103-30-32 19 71 18 65 44 12 58-102 14-38-28-62-42 10 49-72 38 148 3 77 4-163 64-165 58-173 26-63 0-66 29-98 78-137 53-42 3-82 19-89 17-62 47-15 54-44 50-113 62 8 61-44 64-51 77-88 5-72-64-122-1-46-43-18-76-73-96-13-50 15-68-57-70 41-55-29-27 89-87 95-27 34-31 33-57-75 26-34 11-55 10-60-24 15-49 37-39 53-1 107 19-79-45-40-25-59 10-39-18 89-66-22-26-23-49-31-73-56-27 14-28-122-40-110-5-143 3-132 5-49-22-65-41 150-21 108-4-213-17-99-26 25-25 216-31 208-30 35-22-121-22 62-24 204-42 77-6 0-25 128-15 158-9 151-1 42 18 151-31 103 21 67 4 92 19-100-31 22-23 184-32 168 3 72-20 173-4z',
+  borders:'m13096 6293l-61 50-82 34-45-2-27 26-52 3-20 11-88-25-57 7-17-118-24-40-14-24-73-16-42-26-47-15-29-14-31-22-38-110-43-48-14-50 8-45-12-80 31-4 27-31 30-46 18-18 0-28-16-19-4-35 21-10 5-51-30-49 27-11 82 1 152-6 13 9 270 177 5 50 106 86m-4176 -2262l1 0 165-7 9-31 32-39 27-121 103-94 37-110 23-6 25-68 62-9 25 11 33 0 24-20 45-3-1-46 11 0 0 6-2 16-3 132-237-4-3 223-69 8-19 44 11 126-287 0-16 29m-7051 -2905l62-39 34-51-71-52 3-92 5-57-30-36-16-32 0-42-82 26-95 45-13-53-15-34-42-22-58-2 389-440 267-275m3441 1965l-30-48 33-116-23-24-49 14-15-22-70 64-40 66-35 39-32 13-23 4-13 21-124 0-103 1-35 16-90 61-11 7-31 34-63-1-66 1-35 13 5 17-1 26-4 9-102 43-75 13-93 46-17 0-19-13-4-13 4-8 24-31 47-47 36-51 11-74 11-78-56-40 13-15-6-10-18 0-9-14 4-20-16 9-17-3 7-8-13-8 2-23-42-27-43-28-53-33-50-30-69 23-22 1-73-22-58 11-53-26-62-13-44-5-15-15 9-46-23 1-14 32-137 0-225 0-224 0-198 0-198 0-195 0-201 0-64 0-196 0-187 0m1061 1998l-29 3-47-19-51-27-11-41-2-61-31-50-13-51-21-60-42-34-59 1-63 69-53-26-30-26-5-48-12-46-32-38-29-28-17-31-124 0-10 36-57 0-142 1-144-61-94-43 12-17-93 10-83 6m11606 -1197l-37-14-2-44-55-56-49 2-68-57 25-64-23-17 33-92 78 48-6-61 113-90 101-2 158 57 86 34 60-35 102-2 96 43 12-24 93 3 4-39-122-58 50-40-18-22 55-22-64-56 20-28 230-29 24-20 149-30 45-34 120 17 52 85 59-20 92 28 12 45 60-5 130-77-14 26 107 63 226 211 18-44 109 48 85-21 42 15 50 48 53 16 42 36 80-12 55 52-28 56-52 8 29 84-23 39-142-28 5 152-29 19-122 34 108 149-39 22 20 49-46-12-43-31-104-9-114-3-22 10-107-36-34 18 4 50-120-29-42 12-5 38-35 15-75 61-15 61-25 1-29-41-88-3-31-71-34 0-16-86-97-63-115 7-76 12-84-77-63-32-119-62-14-7-162 50 71 317-34 4-62-67-51-25-74 18-25 29m1253 -41l23 8-43 56 59 32 43-21 93 45-72 62-55-8-27 2-16-24 4-40-87 20-8 56-22 47-58-4-9 38 55 21 30 64-20 88-56-18-39 0-10-54-100-37-82-42-54-41-92-60-54-89-26-15-74 4-30-18-23-69-102-45-46 50-52 29 20 44-77 1m6671 4377l23-282 12-282m-1231 544l6 18-1 26m-1117 -987l13 58 52 49 48-18 48 6 43-44 36-7 71 24 61-18 36-121 28-30 22-98 86 0 65 14m-13068 5091l-39-2-68 0-64-183m-6 -28l-64-13-160-11-44-49-20-62-42 5-33-30-36-89 38-37 4-53-22-43 13-73-10-112-21-50 24-16-16-33-36-17 12-36-40-32-43-99 23-18-39-105-7-88 0-78 34-31-41-85-18-79 40-57-17-73 23-85-16-80-22-16-61-150 27-90-21-84 12-80 34-81 43-55-27-34 11-28-23-145 73-43 13-91-11-21 51-79 98 21 51 63 20-70 84 4 14 18 150 142 61 14 97 64 79 34 15 39-54 132 75 24 83 13 56-14 57-67 2-77 35-16 42 50 6 69-55 49-44 35-70 85-79 119-7 69-5 90 14 87-12 19 4 56m-1052 -1355l36-22 15-45 42 59 17 63 42 37-14 84 51 98 44 120 51-12m7191 -1250l-29-9-100 14-21 11-22 55 16 38-16 103-11 87 20 15 50 34 21-16 4 94-57-1-29-48-27-37-56-12-16-45-46 27-59-12-24-39-47-8-35 2-3-27-26-2-34-5-46 13-33-3-18 8 6-103-24-32-5-53 12-52-15-34-1-54-90 0 7-31-39 1-4 15-46 3-19 50-12 22-41-12-24 12-50 7-28-45-17-28-21-52-18-65-220-1-27 11-21-2-31 12m-10 -27l19-9 2-38 13-22 27-19 19 9 26-33 41 1 5 24 27 16 45-54 43-43 20-27-3-72 33-84 34-44 50-42 8-28 2-31 12-30-3-49 9-77 14-54 22-46 4-53 7-60 29-44 40-28 61 29 48 32 55 9 56 17 22-52 10-7 34 9 83-44 30 19 24-3 11-21 27-7 57 9 48 2 24-9 46 71 34 10 20-14 34 6 42-19 18 37 66 58-3 101 30 12-24 31-29 23-28 45-16 40-4 69-18 33 0 66-22 24-3 51-10 7-7 47 18 40 4 104m918 -244l-44-71-2-315 64-99 20-27 48-2 66-61 97-3 205-260 49-73 32-53-2-45-3-87-2-36 1-2m-1104 1071l-1-92 22-35 37-57 27-63-34-100-9-43-36-60 45-52 50-57 39 14 1 49 26 28 52 0 95 74 24 1 17-2 17 10 50 6 21-36 68-36 31 29 51 0m-299 -1220l-35 49-53 14-22 27-4 58-26 127 9 35-9 75-27 85-43 43-30 66-6 36-35 24-19 91 3 78-3-68-10-2 0-43-10-30-39-34-11-62 7-64-34-6-5 19-44 5 18 25 8 52-39 48-36 62-38 9-64-51-28 18-7 26-38 16-2 18-74 0-11-18-53-3-27 15-21-8-39-50-14-24-53 12-19 40-18 78-26 16-22 9 51 34-57-38-27-25-5-27 12-36-1-35-44-54-9-37 0-21-28-26-2-50-16-34-26 5 7-32 18-36-9-36 24-26-16-21 18-53 32-64 64 6-16-345 0-36 84-1-7-174 294 0 283 0 290 0m-994 944l-47 14-37 36-53 94-69 40-72-5-21 8 8 30-39 31-31 33-94 34-18-20-13-2-13 23-62 6 11-23-24-60-10-36-33-15-45-50 16-41 34 9 21-7 42 1-42-79 2-57-6-58-30-55 7-41-48-2-1-56-31-32 30-114 93-82 1-113 25-177 14-37-31-30-2-28-28-22-21-136 72-47 297 167 298 166m-7019 -12l1 48-9 33-20 15 16 26-4 24m6633 -3193l68 14 29 13-4 22 8 21-117 1-80-9m7682 1028l-17-15-22-43 34-3-42-101-56-73 41-30 90 15 0-83-30-93 7-31-10-76-94 25-38 33-101 0-73-79-113-60-131-27-73-82-54-51-46-36-92-84-75-30-112-24-84 2-70 15-28 41 47 19 28 46-21 27-8 88 21 37-63 53-96-32-75 7-49-28-44-9-65 59-80 14-50 21-89-14-61 1-61-43-84-40-72-11-77 11-54 15-110-35-43-62-87-22-64-9-89-35-26 86 49 50-37 58-104-21-67-3-61-39-69-1-68-26-82 39-95 72-64 15-23 7m-2427 631l-35 35-8 22-31-6-57-53-19-3-47-20-27-35-66-18-40 14-14-16-99-41-103-14-60-15-6 10m-167 -313l-4-37 30-24 64-6 5-28-23-47 19-44-5-25-102-27-38 1-48-39-48 13-87-29-2-17-29-36-53-4-9-26 13-17-49-47-66 8-20-4-13 19-25-3-24-53-20-28 12-7 52 2 22-18-22-21-46-15 2-15-29-15-49-53 11-22-13-39-65-19-32 10-12-20-69-21-28-47-11-40-33-18 23-25-30-75 36-46-11-14m-8 -81l112-100 48-45 15-39-99-53 15-50-64-57 26-65-84-86 42-56-98-49-2-52 45-7 90-29m483 1883l14-21 51 18 22 4 11 17 10 2m-726 -1867l14-51-79-29-82 25-18 53-49 33-64-18-74 4-69-39-31 19-35 3-1 49-109-12-11 41-55 0-32 53-49 83-81 106 24 26-18 31-59-2-33 73 11 103 42 39-13 92-48 55-24 45m494 7534l37-43 27 23 10 38 33 6 44 17 39-7 66-44 14-322 19 13 40 83-9 53 14 30 53-9 38-39 35-26 20-41 36-21 30 11 34 24 59 5 47-21 9-27 15-42 40-7 23-32 28-58 69-65 106-65 30 2 35 14 25-10 38 8 28 123 15 62-19 97 4 31-36-16-21 7-9 25-22 33-1 30 40 47 43-9 17-39 55 1m-291 193l-30-27-35 18-41 34-42 55 49 67 26-9 16-27 40-14 15-29 25-42-23-26m-8583 -4118l-14 1-33 53-13-11-9 4-1 13-68-1-69 0-6 49-34 0 24 29 25 20 6 19 11 6-5 29-95 0-44 71 9 16-11 21-5 25m2708 3884l45-10 82 68 26-3 82 56 63 48 49 60-25 41 27 49m-184 -700l9-50 4-52-5-47-28-16-26 14-27-4-13-34-15-79-16-26-52-24-28 17-79-17-7-118-26-48 21-18-12-50 17-38 7-68-22-54-42-25-11-34 7-50-142-4-36-101 21-1-3-38-17-25-6-50-45-26-47 1-32-25-51-17-32-33-84-14-85-78 2-58-11-33 5-65-97 14-37 33-64 35-15 26-38 2-55-7-42 15-34-10-3-132-58 51-66-2-31-46-49-5 14-37-45-53-34-78 19-16-2-37 44-25-9-46 18-31 4-40 84-59 61-16 9-13 68 4 30-238 1-37-12-50-33-31 0-63 42-15 16 9 2-33-43-9-1-54 146 2 25-30 20 28 14 51 15-11 41 46 58-6 14-26 56-20 31-15 9-36 54-25-4-18-63-8-10-54 4-58-33-23 14-8 55 12 59 21 22-20 54-14 85-32 28-33-10-25 39-3 17 20-10 38 25 13 16 40-21 30-13 74 19 44 5 40 45 41 37 4 9-17 23-4 34-15 25-23 41 7 18-3 41 7 7-17-13-18 8-25 30 8 36-9 42 18 33 18 23-23 17 3 10 25 36-6 29-33 23-64 46-79m-407 2109l-4-27-73-44-68-2-126 26-27 76 3 47-17 104m-551 -406l38-94-39-73 15-29-16-32 25-43-4-74-1-61 14-29-73-140m-832 -654l9 36-20 21 3 32 30-7 31 9 32 44 42-36 12-58 44-75 90-35 80-90 23-57-10-65 19-9 50 42 24 40 35 23 45 90 56 11 41-23 27 15 45-7 58 40-47 89 22 2 39 46m-414 -359l-33-21-36-28-22 13-63-12-18-37-14 1-75-49m87 -506l11-42 24 6 15-25-14-51 10-13m464 -269l-49 14-21 44-31 24-23 33-13 62-24 50 39 6 7 40 16 19 4 35-11 32 2 18 19 7 16 30 96-8 43 11 50 74 31-9 53 5 43-10 26 15-15 47-17 29-8 62 14 57 21 26 2 19-39 43 27 19 19 31 23 86m-1185 -604l5-17 7-17-2-16 12-10-15-13 2-35 29-8m-226 -132l12-11 47 23 18-11 23 7 11 18 21 6 19-19m-257 -177l23-4 11-20 11 0 3-43 17-2 16 1 18-24 20 18 9-11 15-10 28-24 3-18 7 1 12-21 8-2 11 13 14 4 18-11 18 0 27-12 12-11 25 1m-358 140l8-35-9-9-14-6-34 10-2-11-21-14-14-18-21-7 18-22-4-17 7-17 37-24 38-33m-157 173l4-13 27-22 15-9-3-11 18-5m50 -294l-9 69-18 98 22 0m2119 652l-61 51-7 32 24 32-19 16-47 14 0 40-20 24 48 65m270 -67l-14 78-46 23 4 20-15 45 32 63 24 0 9 49 45 75m199 -334l-41 75 5 59 29 51-14 38-7 39-20 36m4242 -4223l10 29 30 2 31 33 47 40 33-7 59 38 15 8 19-2 31 22 96 15-32 58-6 60-18 15-30-8 2 22-47 47 0 39 32-14 23 38-2 24 21 32-23 26 20 66 37 11-7 37m-300 105l-80 11-77-39-24 18-126-39-27-33m2281 5685l-44-39-56-13-19-55 1-31-31-9-79-96-21-50-14-16-26-69 82 9 24 10 25-2 43-56 67-71 27-7 9-30 44-35 56-12 4 33 62-2 33 18 15 22 35 6 37 28-5 110-17 60-6 65 10 26-11 51-11 8-23 63-83 98m-834 220l10-255 72-3 13-309 55-3 114-31 27 36 48-34 23 0 42-20 13 7m-997 -38l36-17 45-14 47 2 44 40 11-7 299-3 50 41 178 13 137-36 61-20 48 5 28 20 0 7m-3066 -2929l26-27 36 7 37-19 41-1 35 26 48 23 44 64 48 59 3 54 14 50 27 24 6 34-4 27-10 5-41-7-5 10-17 1-53-21-36-1-137-3-20 10-25-3-39 14m-11 -67l67 2 18-12 14-1 28-20 31 19 32 1 33-19-15-25-25 14-23 0-29-21-23 1-17 20-81 3m338 -89l25-16 14-51 23-2 51 25 42-18 29 6 11-19 297-1 17-61-13-11-32-375-31-376 111-2 245 191 246 189 18 41 46 25 34 14 1 56 82-9 1 200-40 58-6 54-66 13-101 8-27 31-47 3-48 1-19-17-40 12-69 36-15 27-57 39-11 23-31 17-35-11-21 21-11 59-59 72 1 30-20 36 4 51-30 12-18 11-11-37-22 10-12-2-14 26-58-1-20-13-10 8-23-25 4-26-9-10-16 8 3-28 16-22-30-36-9-24-16-20-15-2-18 12-24 12-21 19-32-7-20-22-12-3-20 11-12 1-4-32m229 -1301l269 211m497 1636l-18-60 3-199-15-18-3-42-26-31-23-25 10-46 25-10 15-37 37-9 16-26 25-25 26 0 57 50-3 29 17 51-14 35 8 23-36 54-23 26-14 55 2 55-4 140m875 -572l-21 5-2 27-14 2-51-95-18-3-57 48-58-25-40-5-21 12-44-2-43 37-38 2-90-45-35 21-38-1-28-33-75-33-79 11-19 18-11 50-21 35-5 78m-108 -25l1-59-85-20-3-42-41-56-10-40 6-42m286 -367l103-39 210-171 247-166 117 38 42 48 51-33m-31 902l30 35-8 16-3 28-62 67-19 56-10 45-16 19-14 61-40 35-11 44-17 35-7 36-51 29-42-35-28 1-44 51-22 1-35 83-19 62m505 -230l-37 88-18 15-5 68 8 36-6 26 36 45 6 31 28 45 34 28 3 39 8 25-5 47-59-20-61-23-94-4-10-4-44 11-45-12-36 6-121-2m-643 -316l-17-30-20-55-6-43 17-78-19-32-7-68 0-63-31-45 5-27 66 2m-281 520l4-34-33-75 20-97 32-73-20-123-10-66 2-49 129-4 33 7 24-15 34 7m-404 57l34 18 13 29 33 18 26-21 35-4 51 23m-366 457l6-72 7-10-2-35-31-36-24-6-22-23 17-39-8-42 4-25 12 0 5-38-6-16 7-12 28-11-18-69-17-36 6-29 15-7m-32 218l-21-2-15 35-21-1-15-18 5-35-31-53-19 10-16 2-21 5 1-32-11-23 2-25-16-36-20-31-60 0-17 16-21 2-13 19-9 24-40 38m-138 -186l34-42 22 2 20-15 16 0 12-11-6-29 9-9 1-30m164 503l18-28 4-25 34-47 35-40m2142 424l-47-5-51-14-45 46-39 80m635 -516l41 35 1 28 51 45 32 38 20 52 56 34 12 28m-1074 866l-28-29-23 14-30 38m-61 -92l57-48-28-57 26-22 50-11 7-38 39 42 66 3 23-40 10-58-8-68-36-51 33-100-19-17-56 7-21-45 6-38m-268 109l25-5 109 1-1-104m1598 995l34 38 17 74-13 23-17 71 12 72-25 30-25 80 38 23-227 71 4 62m-527 175l-47-54-47-71 10-276 155 1-6-30 12-33-12-40 9-42-7-27m790 51l-22 66 16 113 26-1 26 28 28 62 2 112-33 18-26 61-45-54-3-61 17-41-3-34-28-22-21 8-41-42m-144 1110l-3-39-8-39m-136 -1997l45 7 23-49 40 5m211 -3083l24 0 5-15 19-1 5 35-9 14 2 0-10 28-27-12-9 58 19 9-18 12-1 23 33-11 5 34-23 139-9-23-51-127m93 -298l32 4 15 34-35 33-12 48m-12 77l5 53-8 26m-1709 -144l-2 67-34 25-21 28-48 33 9 36-5 37-35 21-34-157-45-35-1-21-59-52-8-66 43-48 14-72-13-83 13-44m-1213 809l1-104 118-64 71-13 59-24 28-43 84-35 4-64 41-8 33-32 93-15 13-34-19-18-24-92-4-53-26-56m831 424l25 77 5 40-11 71 6 40-8 48 7 54-27 37 44 63 3 38 27 48 34-16 58 41 33 54m1662 -805l82 35 130-93 40 106-13 13-138 44 80 87-22 15-9 29-54 12-14 32-29 26-81-14m1553 288l17 30m18 69l-37 0 0 57 14 12-31 17 4 36-17 36 1 35-13 18-223-44-37-88-5-20m-17 -33l-20 6-24-17m-209 -331l-50 2-23-42-65-8 43-84 49 7m-688 -296l146-91 13-105-14-63 35-22 29-54 28-14 83 12 27 22 32-15 60 104 49 26 13 51-31 30-8 68 60 82 93 48 45 66-4 64 23 0 7 46 45 46m-135 72l-134-7-221-175-113-61-88-24m1134 1351l-29-61-68-143 213-87 32-175-40-61m3592 914l-29-105 40-72 93-16 72 12 65 34 26-60 70 32 24 58 2 104-118 67 38 52-78 7-61 35m-138 369l-23 36-48 10-8-45-63-37-13 15m-133 -300l28-90 34-80-37-80-3-40-14-48-57-69-23-44 24-16 17-75-37-58-56-63-47-76 29-16 19-94 52-4 36-38 39-20 36 27 13 52 50 4-3 92 13 78 70-52 24 15 43-2 10-30 57 5 66 71 17 86 70 75 7 74-19 39m-454 -534l10-32 53-56 10 20 40 2-30-99 36-13 55 69 47 79 91 1 41 75-43 23-16 31 97 52 77 103 58 77 64 60 27 62-2 86m-1187 -562l-16-70 28 13-9-62 33-21-14-37 11-29-13-91 60 20 19-71-4-43 25-73-12-50 80-60 55 16-18-54 22-16-13-33 41-7 36 52 36 21 17 66 12 72-53 73 11 103 74-14 33 80 49 17-8 72 60 33 35 16 49-25 9 36m56 -90l35-21 58 0 70-10 52-46 42 32 70 16-2 50 42 36 78 23m1003 -1486l-1 21-27 6-48 4-10 39-33-3-1 8m-212 -189l32-55 54-47 19-61 45 27 61 3-32-45 88-37 3-48 69 50m-1264 -637l2 64-4 84 35 34 32-10 73 13 34-32 68 28 91 59 8 30-58-10-91 12-35 24-22 56-87 33-46 45-77-17-42-8-10 55 36 33 23 29-35 29-29 45-67 31-101 3-98 30-62 46-41-27-82 0-121-52-73-13-86 12-148-19-74 2-59-51-60-79-46-10-101-53-96-12-85-14-38-37-12-100-73-68-107-32-73-44-41-59m999 2357l-62-138-20 0-2 56-48-45 14-50 31-5 20-74-45-15-67 2-71-12-18-61-35-4-65-38-14 59 61 46-40 33-10 32 49 23-3 53 36 65 23 72m-1543 -143l41-58 160 0-26-74-47-45-18-67-54-39 65-91 85 6 60-91 29-89 53-87-14-62 51-51-67-43-36-59-42-76 27-37 111 21 76-13 51-73 100 102 9 71 38 44 7 45-53-12 40 96 82 55 112 61-38 40-12 81 76 34 76 42 104 49 101 11 50 45 57 8 91 20 60-1 2-35-21-55-2-38 41-18 20 69 5 17 72 33 43-13 62 6 58-3-6-53-35-28 56-11 51-65 70-56 66 22 42-37 46 54-15 37 80 13m-595 84l34-65 34-22 56 20 38 2 37 24m-804 -211l25-20 63 26 84 57 43 13 33 42 59 17 66 38 85 20 86 8m-1885 244l14-101 98-45-12-40-37-14-12-77-75-38-37-53-42-46 127 45 69-13 45 11 12-19 51 7 87-36-10-74 31-49 53 0 4-25 52-11 28 8 23-24-13-53 20-52 40-22-39-58 68 3 13-32-10-33 27-37-17-43-25-37 33-38 70-18 78-10 32-16 39-10 61 41 36 67 124 35m-734 -144l24 11 44-28 28 17 13-40 42 2 8-13-1-35 23-30 43 20-2 26 22 4 11 73 34 29 20-19 29-8 34-39 50 6 72 1 19 24m-888 636l52-79-14-56-57-15-14-55-35-69 22-48-33-13 8-63 9-109 78 33 51-11 7-40 52-13 35-26-1-70 56-16 4-31 38 23 22 3m253 -250l-18 26-79-14 6 50 73-7 92 28 128-13 38 80 20-8 47 19 6 34 23 50m249 -427l-4 20-94 46-15 35-85 10-11 55-76-12-43 17-55 41 15 20-15 20m-797 328l-20-73-53-3-95-77-57-9-85-44-51-8-28 16-47-3-40 50-59 17m-638 2l-49-69 10-27-36-100 43-24 16 32 41 40 50 12 24-3 72-64 25-6 24 26-16 42 50 46 17-5m-860 217l16-19 17-19-2-48 25 17 74-25 39 17 58 0 76-33 38 1 78-13m245 -131l-36-50-2-14-31 1-24-24-14 3-31-25-55-22 0-42-16-30 93-14 18 23 29 15-11 21 42 30-15 28 33 23 33 14 11 60m-2054 -2469l82 36 97 51 20 115 24 29m662 1104l-55 5-17 18 2 42-27-8-58 4-20-20-22 15-27-12-51-2-75-20-66-6-50 1-33 23-31 3-5-37-24-38 36-17-3-33-22-31-7-37 62 1 65-31 9-46 48-26-11-37 37-14 63-31m217 907l-32-15-30 14-32-16 16-9 8-29 15-27-7-15 13-7 8 12 40 2 17-6-13-9 3-13-26-21-15-36-25-13 1-29-33-23-28-3-52-26-43 8-14 12-28 0-14 20-48 8-22 13-33-20-42-1-42-9-27 18-7-23-39-23 10-33 16-22 14 5-20-38 52-70 31-10 4-23-41-73m-40 209l-66-33-46 12-32-8-38 18-36-30-26 11-4-5-33-41-50-5-8-26-46-10-8 22-36-17 2-23-49-8-33-27-31-53 3-28-19-45-25-29 16-22-18-42m546 -47l34 9 18 25m5 503l-39 18-26 57-35 58-53 16-42-4-49 23-24 12-57-16-53-36-22-11-15-29-11-1m44 -107l-2 34-38 1 14 18-18 54-12 15-58 2-33 19-55-6-97-22-16-30-65 15-7 16-42-12-34-2-30-16 9-21-3-15 19-4 35 23 9-22 58 3 47-15 32 3 22 17 5-14-12-55 23-11 21-39 51 27 35-34 22-6 53 25 31-4 32 16-5 10 9 30 35 21 26 10 54-11 4-17 27-2 31-13 7 5 30-11 14-19 21-5 74 25 13-9m437 249l-17-38 3-37-7-37-44-51-26-35-23-25-21-9m174 385l-41-9-53-31-77 20-32 21-100-4-53-14-26 7-22-36-14-14 14-15-17-11-20 20-41-25-9-35-42-20-10-28-40-33m-27 -825l70-24 106 5 61-8 11 17 34 5 66 39m-161 -176l51-14 29 10 58 30 51 0m-725 521l-29 9-18-9-15 15-46 17-23 20-46 19 13 25 9 35 34 20 40 36m-259 114l-73-25-12 18-57-1m-89 -155l2-37-13-19 5-56-13-88 39 0 15-31 14-75-13-28m98 -122l49 11 40-12m1284 1092l-60-12-67 27 4 43-62 8-51-30-53 24-51-3-9-57-37-27 10-12-8-11 9-27 24-27-37-37-8-31 15-20m254 207l36 23-16 54-16 10m-398 103l29-42 2-28 21-12 0-23 44-8 25-18 37 1 10-15 13-3m1274 -17l72-4 73 43m-1668 -68l-6-27 26-43 6 16 18-7 16 23 17 9 7 31-6 29 12 37 30 21m-182 -434l19 33 23 24-23 32-32-19-47 1-59-14-31 2-14 18-25-20-12 36 36 40 16 26 33 32 28 19 28 36 62 33-6 14m-337 -259l47 3 11-14 24 14 26 1-1-23 22-9 5-34 51-23m-411 -33l-3 35-29 14-50-11-13 35-32 2-12-13-37 29-32 4-30-18m-85 -300l6-47 17-3m-181 -101l48 6 60-17 42 36 36 20m-1020 758l26-22 28-13 16 42 41 0 12-11 39 3 19 44-33 23-2 67-12 13-4 41-30 7 27 52-21 57 24 26-10 23-27 33 5 28m40 -1528l12 43-15 44 39-1 48 17m1320 616l-5 41 18 37m2150 372l15-14 55 25 38 5 7-10-41-47 16-12m5360 3244l36 45 14-30 36 3 2-55 2-43m-7505 -3738l8-19 29 2 22-9 1-8 12-4 3-19 15-4 9-15 19 0m1960 3186l-22 21-32-8-26-28-33-51-34-28-21-29-66-35-51-1-19-19-42 21-47-39-20 64-87-18m462 -167l30-28-9-36 17-43 31 22 20-7 85-2 14 8 72 9 28-4 20 29 34-15 46-91 66-39 210-33m-1433 -1399l-8-3-13 6-11-2-3 4-2-9-6-5-13-1-19 7-13-4m-476 1144l-16-320-18-310-25-70 15-54-14-38 23-41m844 2265l-46-94-34-20-14-35-39-42-46-6 25-50 39-2 11-26m612 -335l-24 39-24 40 7 24 2 27 42 1 17-6 18 15-16 31 30 48 28 42 30 30 247 103 63 0m-357 -300l-25 46m-908 1045l-44 26-18-8m92 -420l31-24 48 20 60-21 52 0 46-39m-1260 -3525l24 0-14 37 35 33-7 41-15 4-13 7-20 20-7 48m144 68l9 1 1-18 40-13 15-4 23-5 31-1m-54 6l-3-6 7-10 6-21-9 0-15-16-12-4-9-14-14-5-10-12-12 5-7 28-16 7 5-8-28-18-23-9-10-12-19-14m75 61l-11 19'};
+const SHIP_HUB={name:'Lacombe, AB',lon:-113.73,lat:52.47};
+// Where a destination dot goes: code|longitude|latitude|name. The SAP export carries only the ship-to country
+// (ShipToCountry), so a dot sits at a country marker point (the middle of its main market for the big ones); a US state
+// or Canadian province (key US-IN, CA-ON, set on the demo shipments) is used when a shipment carries one.
+const SHIP_PLACES=(()=>{
+  const m={};
+  ('US|-95.7|38.5|United States;CA|-97.1|49.9|Canada;MX|-102.5|23.6|Mexico;GB|-1.5|52.8|United Kingdom;IE|-8|53.2|Ireland;FR|2.5|46.6|France;DE|10.4|51.1|Germany;NL|5.6|52.2|Netherlands;BE|4.6|50.6|Belgium;LU|6.1|49.8|Luxembourg;CH|8.2|46.8|Switzerland;AT|14.1|47.6|Austria;IT|12.5|42.8|Italy;ES|-3.7|40.2|Spain;PT|-8|39.6|Portugal;SE|15.3|61.5|Sweden;NO|9|61|Norway;DK|9.5|56|Denmark;FI|26|63.5|Finland;IS|-19|64.9|Iceland;PL|19.4|52.1|Poland;CZ|15.5|49.8|Czechia;SK|19.5|48.7|Slovakia;HU|19.4|47.1|Hungary;RO|25|45.9|Romania;BG|25.2|42.7|Bulgaria;GR|22|39|Greece;HR|16|45.1|Croatia;SI|14.8|46.1|Slovenia;RS|20.8|44|Serbia;EE|25.5|58.7|Estonia;LV|24.9|56.9|Latvia;LT|23.9|55.3|Lithuania;UA|31.4|49|Ukraine;TR|35.2|39|Turkey;RU|37.6|55.7|Russia;CN|104|35|China;JP|138|36.5|Japan;KR|127.8|36.4|South Korea;TW|121|23.7|Taiwan;HK|114.2|22.3|Hong Kong;SG|103.8|1.35|Singapore;MY|102|4.2|Malaysia;TH|101|15|Thailand;VN|106|16|Vietnam;ID|113.9|-0.8|Indonesia;PH|122|12.9|Philippines;IN|78.9|22|India;PK|69.3|30.4|Pakistan;AU|134|-25.7|Australia;NZ|172.5|-41|New Zealand;AE|54|24|United Arab Emirates;SA|45|24|Saudi Arabia;IL|35|31.5|Israel;EG|30|26.8|Egypt;ZA|24.7|-29|South Africa;NG|8.1|9.6|Nigeria;KE|37.9|0.2|Kenya;MA|-6.3|31.8|Morocco;BR|-52|-10.8|Brazil;AR|-64|-34|Argentina;CL|-71|-33.5|Chile;CO|-73|4|Colombia;PE|-75|-9.2|Peru;EC|-78.4|-1.5|Ecuador;UY|-56|-32.8|Uruguay;VE|-66|7|Venezuela;CR|-84.2|9.9|Costa Rica;PA|-80|8.5|Panama;GT|-90.4|15.7|Guatemala;HN|-86.6|14.8|Honduras;SV|-88.9|13.7|El Salvador;NI|-85|12.9|Nicaragua;CU|-79|21.6|Cuba;DO|-70.5|18.9|Dominican Republic;JM|-77.3|18.1|Jamaica;PR|-66.5|18.2|Puerto Rico;BS|-77.4|24.7|Bahamas;'
+  +'US-AL|-86.8|32.8|Alabama;US-AK|-152|64|Alaska;US-AZ|-111.7|34.3|Arizona;US-AR|-92.4|34.9|Arkansas;US-CA|-119.7|37.2|California;US-CO|-105.5|39|Colorado;US-CT|-72.7|41.6|Connecticut;US-DE|-75.5|39|Delaware;US-DC|-77|38.9|Washington DC;US-FL|-81.6|28.6|Florida;US-GA|-83.4|32.7|Georgia;US-HI|-157.5|20.8|Hawaii;US-ID|-114.6|44.4|Idaho;US-IL|-89.2|40|Illinois;US-IN|-86.3|39.9|Indiana;US-IA|-93.5|42.1|Iowa;US-KS|-98.4|38.5|Kansas;US-KY|-85.3|37.5|Kentucky;US-LA|-92|31.1|Louisiana;US-ME|-69.2|45.3|Maine;US-MD|-76.8|39|Maryland;US-MA|-71.8|42.3|Massachusetts;US-MI|-84.6|44.3|Michigan;US-MN|-94.3|46.3|Minnesota;US-MS|-89.7|32.7|Mississippi;US-MO|-92.5|38.4|Missouri;US-MT|-109.6|47|Montana;US-NE|-99.8|41.5|Nebraska;US-NV|-116.6|39.3|Nevada;US-NH|-71.6|43.7|New Hampshire;US-NJ|-74.7|40.2|New Jersey;US-NM|-106.1|34.4|New Mexico;US-NY|-75.5|42.9|New York;US-NC|-79.4|35.5|North Carolina;US-ND|-100.5|47.4|North Dakota;US-OH|-82.8|40.3|Ohio;US-OK|-97.5|35.6|Oklahoma;US-OR|-120.6|43.9|Oregon;US-PA|-77.8|40.9|Pennsylvania;US-RI|-71.5|41.7|Rhode Island;US-SC|-80.9|33.9|South Carolina;US-SD|-100.2|44.4|South Dakota;US-TN|-86.3|35.8|Tennessee;US-TX|-99.3|31.5|Texas;US-UT|-111.7|39.3|Utah;US-VT|-72.7|44|Vermont;US-VA|-78.8|37.5|Virginia;US-WA|-120.5|47.4|Washington;US-WV|-80.6|38.6|West Virginia;US-WI|-89.9|44.6|Wisconsin;US-WY|-107.5|43|Wyoming;'
+  +'CA-AB|-113.5|53.5|Alberta;CA-BC|-123.1|49.3|British Columbia;CA-MB|-97.1|49.9|Manitoba;CA-NB|-66.6|46.1|New Brunswick;CA-NL|-52.7|47.6|Newfoundland and Labrador;CA-NS|-63.6|44.7|Nova Scotia;CA-NT|-114.4|62.5|Northwest Territories;CA-NU|-68.5|63.7|Nunavut;CA-ON|-79.4|43.7|Ontario;CA-PE|-63.1|46.2|Prince Edward Island;CA-QC|-73.6|45.5|Quebec;CA-SK|-104.6|50.4|Saskatchewan;CA-YT|-135.1|60.7|Yukon').split(';').forEach(e=>{const [k,lon,lat,name]=e.split('|');m[k]={lon:+lon,lat:+lat,name};});
+  return m;
+})();
+const SHIP_PLACE_ALIAS=(()=>{
+  const m={USA:'US',UK:'GB','UNITED STATES OF AMERICA':'US','GREAT BRITAIN':'GB',ENGLAND:'GB',KOREA:'KR','CZECH REPUBLIC':'CZ',HOLLAND:'NL'};
+  Object.keys(SHIP_PLACES).filter(k=>k.length===2).forEach(k=>{m[SHIP_PLACES[k].name.toUpperCase()]=k;});
+  return m;
+})();
+// d3.geoNaturalEarth1 (raw formula) at the scale and offset the land was drawn with: [lon, lat] in degrees -> stage px.
+function shipNE(lon,lat){
+  const l=lon*Math.PI/180,p=lat*Math.PI/180,p2=p*p,p4=p2*p2;
+  const x=l*(0.8707-0.131979*p2+p4*(-0.013791+p4*(0.003971*p2-0.001529*p4)));
+  const y=p*(1.007226+p2*(0.015085+p4*(-0.044475+0.028874*p2-0.005916*p4)));
+  return [SHIP_MAP.TX+SHIP_MAP.S*x,SHIP_MAP.TY-SHIP_MAP.S*y];
+}
+// The place key of a shipment: its US state / Canadian province when it has one for its country, else the country
+// ('' = no ship-to country, or one the table does not know).
+function shipPlaceKey(s){
+  const raw=String(s&&s.country||'').trim().toUpperCase().replace(/\./g,'');
+  const code=raw.length===2&&SHIP_PLACES[raw]?raw:SHIP_PLACE_ALIAS[raw]||'';
+  const region=String(s&&s.region||'').toUpperCase();
+  return code&&region&&region.startsWith(`${code}-`)&&SHIP_PLACES[region]?region:code;
+}
+function shipPlaceName(key){
+  const p=SHIP_PLACES[key];
+  if(!p)return '';
+  return key.length>2&&SHIP_PLACES[key.slice(0,2)]?`${p.name}, ${SHIP_PLACES[key.slice(0,2)].name}`:p.name;
+}
+// Shipments grouped by place; a place is delayed (red) if any of its shipments is, else on the way (indigo) while any
+// is not delivered, else delivered (teal).
+function shipMapPlaces(list){
+  const map=new Map();
+  let unplaced=0;
+  for(const s of list){
+    const key=shipPlaceKey(s);
+    if(!key){unplaced++;continue;}
+    let g=map.get(key);
+    if(!g){g={key,list:[],late:0,moving:0,done:0};map.set(key,g);}
+    g.list.push(s);
+    if(s.status==='delayed')g.late++;else if(s.status==='delivered')g.done++;else g.moving++;
+  }
+  const places=[...map.values()].map(g=>({...g,n:g.list.length,state:g.late?'late':g.moving?'moving':'done'}));
+  places.sort((a,b)=>b.n-a.n||a.key.localeCompare(b.key));
+  return {places,unplaced,placed:list.length-unplaced};
+}
+// A route from the hub: a great-circle arc lifted 4 degrees at its middle (like the design); across the date line one
+// gentle curve in the map plane.
+function shipArcPath(a,b){
+  const A=shipNE(a[0],a[1]),B=shipNE(b[0],b[1]),f=v=>Math.round(v*10)/10;
+  if(Math.hypot(B[0]-A[0],B[1]-A[1])<8)return '';
+  if(Math.abs(b[0]-a[0])>180){
+    const my=Math.min(A[1],B[1])-Math.hypot(B[0]-A[0],B[1]-A[1])*.2;
+    return `M${f(A[0])} ${f(A[1])}Q${f((A[0]+B[0])/2)} ${f(my)} ${f(B[0])} ${f(B[1])}`;
+  }
+  const r=Math.PI/180,vec=p=>[Math.cos(p[1]*r)*Math.cos(p[0]*r),Math.cos(p[1]*r)*Math.sin(p[0]*r),Math.sin(p[1]*r)];
+  const u=vec(a),w=vec(b),om=Math.acos(Math.max(-1,Math.min(1,u[0]*w[0]+u[1]*w[1]+u[2]*w[2]))),so=Math.sin(om)||1;
+  let d='';
+  for(let i=0;i<=16;i++){
+    const t=i/16,k0=Math.sin((1-t)*om)/so,k1=Math.sin(t*om)/so;
+    const x=k0*u[0]+k1*w[0],y=k0*u[1]+k1*w[1],z=k0*u[2]+k1*w[2];
+    const lon=Math.atan2(y,x)/r,lat=Math.asin(Math.max(-1,Math.min(1,z)))/r+Math.sin(t*Math.PI)*4;
+    const p=shipNE(lon,lat);
+    d+=`${i?'L':'M'}${f(p[0])} ${f(p[1])}`;
+  }
+  return d;
+}
+function shipDotTip(p,selected){
+  const parts=[p.late?`${p.late} delayed`:'',p.moving?`${p.moving} on the way`:'',p.done?`${p.done} delivered`:''].filter(Boolean).join(', ');
+  const names=[...new Set(p.list.map(s=>s.customer).filter(Boolean))];
+  const who=names.length?` · ${names.slice(0,3).join(', ')}${names.length>3?` +${names.length-3}`:''}`:'';
+  return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')} (${parts})${who}; ${selected?'click to show all destinations.':'click to list only these.'}`;
+}
+// The map card. Dots, labels and the hub are HTML laid over the SVG (land, borders, routes) at % positions of one
+// stage whose aspect ratio is the view box's, so they keep their pixel size while the map scales on a narrow screen.
+function renderShipMap(list){
+  const {places,unplaced,placed}=shipMapPlaces(list);
+  const hub=shipNE(SHIP_HUB.lon,SHIP_HUB.lat);
+  const dots=places.map(p=>{const c=SHIP_PLACES[p.key];return {p,c,xy:shipNE(c.lon,c.lat),d:2*(4+Math.sqrt(p.n)*1.3)+2.5};});
+  // The design's fixed view (North America and Europe), grown to hold a dot that falls outside it.
+  let x0=0,y0=0,x1=SHIP_MAP.W,y1=SHIP_MAP.H;
+  for(const {xy} of dots){x0=Math.min(x0,xy[0]-40);x1=Math.max(x1,xy[0]+40);y0=Math.min(y0,xy[1]-40);y1=Math.max(y1,xy[1]+40);}
+  const vw=x1-x0,vh=y1-y0;
+  const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;
+  // On a phone the stage is wider than the card (zoomed up to 2.2x, centred on the hub and the dots) so the dots
+  // are not squeezed together; the card clips the rest.
+  const xs=[hub[0],...dots.map(d=>d.xy[0])];
+  const bx0=Math.min(...xs)-90,bx1=Math.max(...xs)+90;
+  const zoom=Math.max(1,Math.min(2.2,vw/(bx1-bx0)));
+  const shift=Math.max(1-zoom,Math.min(0,.5-zoom*((bx0+bx1)/2-x0)/vw));
+  // Labels: above the dot, else below, right or left, whichever is free; a label that fits nowhere is left out (the
+  // dot's tip still names the place). The busiest few stay on a phone.
+  const taken=[[hub[0]-12,hub[1]-12,24,24]];
+  const free=r=>!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
+  const place=(cx,cy,rad,w)=>{
+    const h=14,c=[[cx-w/2,cy-rad-4-h],[cx-w/2,cy+rad+4],[cx+rad+4,cy-h/2],[cx-rad-4-w,cy-h/2]].map(([x,y])=>[x,y,w,h]).find(free);
+    if(c)taken.push(c);
+    return c?[c[0]+w/2,c[1]+h/2]:null;
+  };
+  const hubText='Spyder · Lacombe';
+  const hubLbl=place(hub[0],hub[1],11,hubText.length*6.3+6);
+  const labels=[];
+  dots.forEach(({p,xy,d},i)=>{taken.push([xy[0]-d/2,xy[1]-d/2,d,d]);});
+  dots.forEach(({p,c,xy,d},i)=>{
+    const text=c.name;
+    const pos=place(xy[0],xy[1],d/2,text.length*6.1+6);
+    if(pos)labels.push(`<span class="shp-lbl${i>=3&&shipDestSel!==p.key?' minor':''}" style="${at(pos)}">${esc(text)}</span>`);
+  });
+  const routes=dots.map(({p,c},i)=>{
+    const d=shipArcPath([SHIP_HUB.lon,SHIP_HUB.lat],[c.lon,c.lat]);
+    return d?`<path class="shp-route ${p.state}" style="--i:${i}" d="${d}"/>`:'';
+  }).join('');
+  const dotHtml=dots.map(({p,d},i)=>{
+    const sel=shipDestSel===p.key,tip=shipDotTip(p,sel);
+    const xy=dots[i].xy;
+    return `<button type="button" class="shp-dot ${p.state}${sel?' sel':''}" style="${at(xy)};width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;margin:${(-d/2).toFixed(2)}px 0 0 ${(-d/2).toFixed(2)}px;--i:${i}" data-focus-key="ship-dot-${esc(p.key)}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(`${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}`)}" onclick="shipPickDest('${esc(p.key)}')" data-tip="${esc(tip)}"></button>`;
+  }).join('');
+  const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
+  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('The SAP delivery has no ship-to country (or one this map does not know), so these shipments are in the table but not on the map.')}>${esc(`${shipPlural(unplaced,'shipment','shipments')} with no ship-to country`)}</span>`:'';
+  const legend=`<div class="shp-map-foot">${noPlace}<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div></div>`;
+  return `<section class="dz-card shp-map" aria-label="Where orders are headed">
+    <div class="shp-map-head"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div>
+    <div class="shp-map-stage" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%">
+      <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+        <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
+        <g class="shp-routes">${routes}</g>
+      </svg>
+      ${labels.join('')}
+      ${hubLbl?`<span class="shp-lbl hub" style="${at(hubLbl)}">${esc(hubText)}</span>`:''}
+      <span class="shp-hub" style="${at(hub)}" aria-hidden="true"></span>
+      ${dotHtml}
+    </div>
+    ${legend}
+  </section>`;
+}
+
+// --- Page pieces ---
 function shippingHeadMeta(){
   const model=shippingModel();
   return model.demo?`demo data · ${shipPlural(model.list.length,'made-up shipment','made-up shipments')}`
     :`as of ${displayDate(reportToday())} · ${shipPlural(model.list.length,'shipment','shipments')} with a tracking number`;
 }
-function shipStateLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'Not checked';}
-function shipStateTone(s){return s.status==='delayed'?'bad':s.status==='delivered'?'good':!s.status?'warn':'';}
+function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'Not checked';}
 function shipLateText(days){
   if(days===null||days===undefined)return '';
   return days>0?`${shipPlural(days,'day','days')} late`:days<0?`${shipPlural(-days,'day','days')} early`:'on time';
 }
-// The line under the status chip: delivered date against promised, else when it was last checked.
+// What the Check line says: delivered date against promised, else when it was last checked.
 function shipCheckedText(s,now=Date.now()){
   if(s.status==='delivered'&&s.deliveredDate){const late=shipLateText(s.lateDays);return {text:`${shipDateLabel(s.deliveredDate)}${late?` · ${late}`:''}`,tone:s.lateDays>0?'crit-text':s.lateDays!==null?'good-text':''};}
   if(s.checkedAt===null)return {text:'Never checked',tone:'warn-text'};
   return {text:`Checked ${shipAgo(now-s.checkedAt)}`,tone:s.stale?'warn-text':''};
 }
+function shipStateLabel(s){return shipStatusLabel(s);}
 // Delayed first, then not checked for 2+ days, then the furthest along; delivered last (newest first).
 function shippingSortedList(list){
   const rank=s=>s.status==='delayed'?0:s.status==='delivered'?9:s.stale?1:5-s.pos;
   return [...list].sort((a,b)=>rank(a)-rank(b)||((b.deliveredDate||b.shipDate||0)-(a.deliveredDate||a.shipDate||0))||a.number.localeCompare(b.number));
 }
-function renderShipStrip(s){
-  const steps=SHIP_STAGES.map(([,label],i)=>{
-    let cls=!s.status?(i===0?'current':'todo'):i<s.pos?'done':i===s.pos?'current':'todo';
-    if(i===s.pos&&s.marker)cls+=' exception';
-    return `<span class="ship-step ${cls}"><i></i><em>${esc(i===1&&s.marker?'Delayed':label)}</em></span>`;
-  }).join('');
-  return `<span class="ship-strip${s.status?'':' unknown'}" aria-hidden="true">${steps}</span>`;
+// The carrier and customer filters narrow the whole page (tiles, map, lists); the status tile, the map dot and the
+// search narrow the Shipments table only.
+function shipFilteredList(list){
+  return list.filter(s=>(!shipCarrierSel||shipCarrier(s)===shipCarrierSel)&&(!shipCustomerSel||s.customer===shipCustomerSel));
 }
-function renderShipCheck(s,cls='btn ship-check'){
+function shipGroups(list,now=Date.now()){
+  const {weekStart,weekEnd}=shippingWeek(now);
+  return {
+    transit:list.filter(s=>s.status==='shipped'||s.status==='transit'),
+    delayed:list.filter(s=>s.status==='delayed'),
+    delivered:list.filter(s=>s.status==='delivered'&&s.deliveredDate&&s.deliveredDate>=weekStart&&s.deliveredDate<weekEnd),
+    stale:list.filter(s=>s.stale),
+  };
+}
+function shipPickCarrier(c){shipCarrierSel=String(c||'');shipDestSel='';renderResults();}
+function shipPickCustomer(c){shipCustomerSel=String(c||'');shipDestSel='';renderResults();}
+function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');renderResults();}
+function shipSearch(v){shipQuery=String(v||'');renderResults();}
+function shipClearFilters(){shipResetView();shippingFilter='';renderResults();}
+function shipToggleAdd(){
+  shipAddOpen=!shipAddOpen;
+  renderResults();
+  if(shipAddOpen){const el=document.getElementById('ship-add-number');if(el&&el.focus)el.focus();}
+}
+// 12-digit FedEx numbers are written in groups of four, like the design.
+const shipFmtTrack=n=>/^\d{12}$/.test(n)?n.replace(/(\d{4})(?=\d)/g,'$1 '):n;
+function renderShipCheck(s,cls='dz-btn shp-check'){
   const tip=s.demo?`Demo number: opens AfterShip in a new tab, which will not find it.`:`Opens AfterShip’s public tracking page for ${s.number} (${shipCarrier(s)}) in a new tab; then set the status here.`;
   return `<a class="${cls}" href="${esc(shipTrackUrl(s.number))}" target="_blank" rel="noopener" data-focus-key="ship-check-${esc(s.number)}" data-tip="${esc(tip)}">Check</a>`;
 }
-function renderShipRow(s){
-  const n=s.number,open=shippingExpanded.has(n);
+// Tile: dot + label, the shipment count, then orders and value (a click lists just these in the table).
+function renderShipCard(id,label,group,color,tipLead,tone=''){
+  const count=group.length;
+  const value=group.reduce((sum,s)=>sum+(s.value||0),0);
+  const orders=new Set();
+  group.forEach(s=>s.orders.forEach(o=>orders.add(o)));
+  const selected=shippingFilter===id;
+  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')} ${tipLead}${value?`, worth ${money(value)}`:''}; ${selected?'click to show all.':'click to list only these.'}`;
+  const sub=[orders.size?shipPlural(orders.size,'order','orders'):'',value?moneyShort(value):''].filter(Boolean).join(' · ')||(count?'added by hand':'none right now');
+  const vcol=count&&tone==='red'?'var(--dz-risk-text)':count&&tone==='amber'?'var(--dz-amber-text)':'';
+  return `<button type="button" class="shp-tile${selected?' sel':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
+    <span class="shp-tile-l"><i style="background:${color}"></i>${esc(label)}</span>
+    <span class="shp-tile-v"${vcol?` style="color:${vcol}"`:''}>${fmtNum(count)}</span>
+    <span class="shp-tile-s">${esc(sub)}</span>
+  </button>`;
+}
+// ETA cell: delivered shipments show the delivery date over "promised ..."; the others the promised date (no carrier
+// ETA exists: statuses are set by hand) over when the status was last checked.
+function shipEta(s){
+  if(s.status==='delivered'){
+    return {top:s.deliveredDate?`Delivered ${shipDateLabel(s.deliveredDate)}`:'Delivered',topTone:s.lateDays>0?'late':'',sub:s.promised?`promised ${shipDateLabel(s.promised)}`:'',subTone:''};
+  }
   const when=shipCheckedText(s);
-  const docs=[s.orders.size?`SO ${[...s.orders].slice(0,3).join(', ')}${s.orders.size>3?'…':''}`:'',s.deliveries.size?`Delivery ${[...s.deliveries].slice(0,3).join(', ')}${s.deliveries.size>3?'…':''}`:'',s.manual?'added by hand':''].filter(Boolean);
-  const sub=[shipCarrier(s),s.customer,...docs].filter(Boolean).join(' · ');
+  return {top:s.promised?shipDateLabel(s.promised):'—',topTone:s.status==='delayed'?'late':'',sub:when.text,subTone:s.stale?'warn':''};
+}
+function renderShipRow(s,idx=0){
+  const n=s.number,open=shippingExpanded.has(n);
+  const eta=shipEta(s);
+  const orders=[...s.orders];
+  const orderTop=orders.length?`SO ${orders.slice(0,2).join(', ')}${orders.length>2?` +${orders.length-2}`:''}`:'No order';
+  const orderSub=s.customer||(s.manual?'added by hand':'');
+  const stage=s.status?s.pos+1:1;
+  const tone=s.status==='delayed'?'red':s.status==='delivered'?'teal':'';
+  const stTone=s.status==='delayed'?' late':s.status==='delivered'?' done':!s.status?' warn':'';
   const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:'Not checked yet.';
   const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}; click to ${open?'hide':'show'} the details and set the status.`;
-  return `<div class="ship-row${open?' open':''}${s.marker?' has-exception':''}">
-    <div class="ship-line">
-      <button type="button" class="ship-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
-        <span class="ship-id"><span class="ship-num">${esc(n)}</span><span class="ship-sub">${esc(sub)}</span></span>
-        ${renderShipStrip(s)}
-        <span class="ship-state"><span class="status-chip ${shipStateTone(s)}">${esc(shipStateLabel(s))}</span><span class="ship-eta ${when.tone}">${esc(when.text)}</span></span>
+  const i=Math.min(idx,14);
+  const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
+  return `<div class="shp-row${open?' open':''} dz-fade" style="--i:${i}">
+    <div class="shp-line">
+      <button type="button" class="shp-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
+        <span class="shp-trk"><b>${esc(shipFmtTrack(n))}</b><em>${esc(shipCarrier(s))}</em></span>
+        <span class="shp-ord"><b>${esc(orderTop)}</b><em>${esc(orderSub)}</em></span>
+        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span></span>
+        <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b><em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em></span>
         <span class="sr-only">${esc(stepText)}</span>
       </button>
-      <span class="ship-go print-hide">${renderShipCheck(s)}</span>
+      <span class="shp-go print-hide">${renderShipCheck(s)}</span>
     </div>
     ${open?renderShipDetail(s):''}
   </div>`;
@@ -10782,18 +11205,18 @@ function renderShipUpdateForm(s){
   const n=s.number,m=s.mark||{};
   const opts=SHIP_STATUS_OPTIONS.map(k=>`<option value="${k}"${(m.status||'')===k?' selected':''}>${esc(SHIP_STATUS_TEXT[k])}</option>`).join('');
   const where=s.demo?'demo only, not kept':shippingSharedStore()?'shared with everyone':'kept in this browser';
-  return `<form class="ship-update print-hide" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
-      <span class="ship-add-title" data-tip="${esc(`After checking the carrier’s page, record what it says (${where}).`)}">Update status</span>
-      <label>Status <select id="ship-st-${esc(n)}" data-tip="Shipped (left Spyder Controls), In transit, Delayed or Delivered.">${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
-      <label>Date <input id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}" data-tip="When it happened: the delivery date for Delivered, else the day you checked."></label>
-      <label class="ship-note-field">Note <input id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing" data-tip="A short note anyone can read (up to 200 characters)."></label>
-      <button type="submit" class="btn btn-primary" data-focus-key="ship-save-${esc(n)}" data-tip="${esc(`Save this status (${where}); saving again also marks it as checked now.`)}">Save</button>
-      <span id="ship-st-msg-${esc(n)}" class="filter-note" role="status"></span>
+  return `<form class="shp-update print-hide" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
+      <span class="shp-update-t"${tipAttr(`After checking the carrier’s page, record what it says (${where}).`)}>Update status</span>
+      <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${tipAttr('Shipped (left Spyder Controls), In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
+      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('When it happened: the delivery date for Delivered, else the day you checked.')}></label>
+      <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${tipAttr('A short note anyone can read (up to 200 characters).')}></label>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${tipAttr(`Save this status (${where}); saving again also marks it as checked now.`)}>Save</button>
+      <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status"></span>
     </form>`;
 }
 function renderShipDetail(s){
   const n=s.number,m=s.mark;
-  const fact=(label,value,tipText)=>value?`<div class="ship-fact" data-tip="${esc(tipText)}"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`:'';
+  const fact=(label,value,tipText)=>value?`<div class="shp-fact"${tipAttr(tipText)}><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`:'';
   const facts=[
     fact('Status',m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${s.status==='delivered'&&shipLateText(s.lateDays)?` · ${shipLateText(s.lateDays)}`:''}`:'Not checked yet','The status set by hand after checking the carrier’s page, and its date.'),
     fact('Last checked',m?[m.by,shipTimeLabel(m.at)].filter(Boolean).join(' · '):'','Who set the status and when.'),
@@ -10804,125 +11227,166 @@ function renderShipDetail(s){
     fact('Ship to',shipCountryName(s.dest),'Ship-to country in SAP.'),
     fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added this tracking number and when.'),
   ].join('');
-  const noteText=m&&m.note?`<p class="ship-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
+  const noteText=m&&m.note?`<p class="shp-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
   const rows=shippingLinkedRows(s).slice(0,60);
   const lineRow=r=>{
     const shipped=isShipmentRow(r)?shipDateLabel(r.shipDate||r.closeDate):'';
-    return `<tr><td class="strong">${esc(r.documentNumber||'—')}</td><td class="soft">${esc(r.lineNumber||'')}</td><td><span class="m">${esc(r.itemCode||'—')}</span><span class="item-desc">${esc(String(r.itemDescription||'').slice(0,120))}</span></td><td class="num">${fmtNum(r.quantity)}</td><td class="num">${money(r.amountLocal)}</td><td class="date soft">${esc(shipDateLabel(r.effectiveDueDate||r.lineDueDate||r.dueDate)||'—')}</td><td class="date soft">${esc(shipped||'—')}</td></tr>`;
+    return `<tr><td class="strong">${esc(r.documentNumber||'—')}</td><td class="soft">${esc(r.lineNumber||'')}</td><td><span class="m">${esc(r.itemCode||'—')}</span><span class="item-desc">${esc(String(r.itemDescription||'').slice(0,120))}</span></td><td class="num">${fmtNum(r.quantity)}</td><td class="num">${money(r.amountLocal)}</td><td class="soft">${esc(shipDateLabel(r.effectiveDueDate||r.lineDueDate||r.dueDate)||'—')}</td><td class="soft">${esc(shipped||'—')}</td></tr>`;
   };
-  const table=rows.length?`<div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`Order lines for ${s.number}`)}"><table class="data-table ship-lines"><thead><tr>
-      <th scope="col" data-tip="Sales order number in SAP.">SO #</th>
-      <th scope="col" data-tip="Line number on the sales order.">Line</th>
-      <th scope="col" data-tip="Item number and description.">Item / description</th>
-      <th scope="col" class="num" data-tip="${s.deliveries.size?'Quantity shipped on this delivery.':'Quantity ordered on the line.'}">Qty</th>
-      <th scope="col" class="num" data-tip="${s.deliveries.size?'Shipped value of the line.':'Open value of the line.'}">Value</th>
-      <th scope="col" data-tip="The line’s reschedule date, else its delivery date.">Promised</th>
-      <th scope="col" data-tip="The delivery date in SAP; blank until shipped.">Shipped</th>
+  const table=rows.length?`<div class="shp-lines" tabindex="0" role="region" aria-label="${esc(`Order lines for ${s.number}`)}"><table><thead><tr>
+      <th scope="col"${tipAttr('Sales order number in SAP.')}>SO #</th>
+      <th scope="col"${tipAttr('Line number on the sales order.')}>Line</th>
+      <th scope="col"${tipAttr('Item number and description.')}>Item / description</th>
+      <th scope="col" class="num"${tipAttr(s.deliveries.size?'Quantity shipped on this delivery.':'Quantity ordered on the line.')}>Qty</th>
+      <th scope="col" class="num"${tipAttr(s.deliveries.size?'Shipped value of the line.':'Open value of the line.')}>Value</th>
+      <th scope="col"${tipAttr('The line’s reschedule date, else its delivery date.')}>Promised</th>
+      <th scope="col"${tipAttr('The delivery date in SAP; blank until shipped.')}>Shipped</th>
     </tr></thead><tbody>${rows.map(lineRow).join('')}</tbody></table></div>`
-    :`<p class="empty-note">${s.demo?'A demo shipment: it has no order lines.':s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
-  const actions=`<div class="ship-actions print-hide">${renderShipCheck(s,'btn')}${s.manual&&!isSnapshotView?`<button type="button" class="btn btn-danger" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')" data-tip="Remove this number (only numbers added by hand can be removed).">Remove tracking #</button>`:''}</div>`;
-  return `<div class="ship-detail" id="ship-detail-${esc(n)}">
-    ${facts?`<div class="ship-facts">${facts}</div>`:''}
+    :`<p class="shp-note-p">${s.demo?'A demo shipment: it has no order lines.':s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
+  const actions=`<div class="shp-actions print-hide">${renderShipCheck(s,'dz-btn')}${s.manual&&!isSnapshotView?`<button type="button" class="dz-btn shp-remove" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')"${tipAttr('Remove this number (only numbers added by hand can be removed).')}>Remove tracking #</button>`:''}</div>`;
+  return `<div class="shp-detail" id="ship-detail-${esc(n)}">
+    ${facts?`<div class="shp-facts">${facts}</div>`:''}
     ${noteText}
     ${renderShipUpdateForm(s)}
     ${table}
     ${actions}
   </div>`;
 }
-function renderShipCard(id,label,group,dot,tipLead){
-  const count=group.length;
-  const value=group.reduce((sum,s)=>sum+(s.value||0),0);
-  const selected=shippingFilter===id;
-  const tone=!count?'neutral':id==='delayed'?'crit':id==='stale'?'warn':'neutral';
-  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')} ${tipLead}${value?`, worth ${money(value)}`:''}; ${selected?'click to show all.':'click to list only these.'}`;
-  return `<button type="button" class="card kpi ship-kpi${selected?' selected':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
-    <span class="kpi-label"><span class="dot ${dot}"></span>${esc(label)}</span>
-    <span class="kpi-value ${tone}">${fmtNum(count)}</span>
-    <span class="kpi-sub">${value?`${money(value)} shipped value`:count?'added by hand':'none right now'}</span>
-  </button>`;
+// Side list rows are buttons that open the shipment in the table.
+function shipSideRow(s,top,sub,right,tone,keyPrefix){
+  return `<button type="button" class="shp-li" data-focus-key="${keyPrefix}-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} with its status form in the Shipments table.`)}>
+    <span class="shp-li-l"><b>${esc(top)}</b><em>${esc(sub)}</em></span>${right}</button>`;
 }
+function renderShipCross(list,today){
+  const rows=shippingSortedList(list.filter(s=>s.crossBorder&&s.status!=='delivered')).sort((a,b)=>(a.status==='delayed'?0:1)-(b.status==='delayed'?0:1)||((a.shipDate||0)-(b.shipDate||0))).slice(0,5);
+  const all=list.filter(s=>s.crossBorder&&s.status!=='delivered').length;
+  const body=rows.length?`<div class="shp-list">${rows.map(s=>{
+      const days=s.shipDate?daysBetweenDates(s.shipDate,today):null;
+      const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
+      const right=`<span class="shp-li-r"><b${s.status==='delayed'?' class="late"':''}>${days===null?'—':esc(shipPlural(Math.max(0,days),'day','days'))}</b><em>${days===null?'no ship date':'since shipped'}</em></span>`;
+      return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'unknown'}`,right,'','ship-x');
+    }).join('')}</div>${all>rows.length?`<p class="shp-more-n">+ ${fmtNum(all-rows.length)} more in the table</p>`:''}`
+    :`<p class="shp-none">None right now.</p>`;
+  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card',body,tip:'Shipments to an address outside Canada that are not delivered yet: customer, order, destination, and the days since the delivery shipped. Delayed ones first.'});
+}
+function renderShipDelayed(list){
+  const rows=list.filter(s=>s.status==='delayed').sort((a,b)=>((b.mark&&b.mark.statusDate)||'').localeCompare((a.mark&&a.mark.statusDate)||'')||(b.checkedAt||0)-(a.checkedAt||0)).slice(0,4);
+  const all=list.filter(s=>s.status==='delayed').length;
+  const body=rows.length?`<div class="shp-list">${rows.map(s=>{
+      const note=s.mark&&s.mark.note;
+      const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
+      const when=s.mark&&s.mark.statusDate?shipDateLabel(s.mark.statusDate):s.checkedAt?shipDateLabel(new Date(s.checkedAt)):'';
+      return `<button type="button" class="shp-li exc" data-focus-key="ship-d-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} with its status form in the Shipments table.`)}>
+        <span class="shp-li-top"><b>${esc(so)}${s.customer?` · ${esc(s.customer)}`:''}</b><em>${esc(when)}</em></span>
+        <span class="shp-li-why${note?'':' none'}">${esc(note||'No note yet')}</span></button>`;
+    }).join('')}</div>${all>rows.length?`<p class="shp-more-n">+ ${fmtNum(all-rows.length)} more in the table</p>`:''}`
+    :`<p class="shp-none">None right now.</p>`;
+  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card',body,tip:'Shipments marked Delayed, newest first, with the note left with the status (for example a customs hold).'});
+}
+const SHIP_TRUCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5h12v9.5H2z"/><path d="M14 10h4.2l3.3 3.4V16H14z"/><circle cx="6.2" cy="17.6" r="1.9"/><circle cx="17.4" cy="17.6" r="1.9"/></svg>';
 function renderShippingPage(m){
   if(isSnapshotView&&shippingState.snapshotManual===null)shippingFromSnapshot(null);
   if(!isSnapshotView&&shippingState.snapshotManual!==null)Object.assign(shippingState,{snapshotManual:null,snapshotDemo:null});
   const model=shippingModel();
   const asOf=displayDate(model.today);
   const shared=shippingSharedStore();
+  const now=Date.now();
 
-  // Bar: how checking works, and the Demo data switch.
-  const realStatuses=!model.demo||isSnapshotView?0:shippingStatusEntries().size;
+  // Carriers and customers actually present (a carrier / customer that is gone is dropped from the filter).
+  const carrierCount=new Map(),customers=new Set();
+  model.list.forEach(s=>{const c=shipCarrier(s);carrierCount.set(c,(carrierCount.get(c)||0)+1);if(s.customer)customers.add(s.customer);});
+  const carriers=[...carrierCount.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).map(e=>e[0]);
+  if(shipCarrierSel&&!carrierCount.has(shipCarrierSel))shipCarrierSel='';
+  if(shipCustomerSel&&!customers.has(shipCustomerSel))shipCustomerSel='';
+  const customerList=[...customers].sort((a,b)=>a.localeCompare(b));
+  const fl=shipFilteredList(model.list);
+  const g=shipGroups(fl,now);
+  const anyFilter=!!(shipCarrierSel||shipCustomerSel||shipDestSel||shipQuery||shippingFilter);
+
+  // Filter row: carrier switch (or a menu when there are many), what "checked" means here, then customer, the demo
+  // switch and Add tracking #.
   const demoBtn=isSnapshotView?'':model.demo
-    ?`<button type="button" class="btn" data-focus-key="ship-demo" aria-pressed="true" onclick="setShippingDemo(false)" data-tip="Hide the made-up shipments and list the real deliveries from this export.">Show real shipments</button>`
-    :`<button type="button" class="btn" data-focus-key="ship-demo" aria-pressed="false" onclick="setShippingDemo(true)" data-tip="Show ${SHIP_DEMO_ROWS.length} made-up shipments to see how the page works; nothing real is changed.">Show demo data</button>`;
-  const bar=`<div class="ship-bar rise">
-      <span class="ship-updated" data-tip="${esc(`Nobody’s tracking system is asked: open Check, then set the status. Statuses are ${shared?'shared with everyone who signs in':'kept in this browser (shared on the hosted site)'}.`)}"><span class="live-dot off"></span>${esc(isSnapshotView?'Shared snapshot: statuses as they were when it was saved':`Checked by hand · statuses ${shared?'shared with everyone':'kept in this browser'}`)}</span>
-      ${demoBtn?`<div class="ship-tools print-hide">${demoBtn}</div>`:''}
-    </div>`;
-  const banner=model.demo?`<div class="ship-demo" role="note" aria-label="Demo data"><span class="ship-demo-tag">Demo data</span><span>${esc(`These ${model.list.length} shipments are made up (fake customers and tracking numbers) to show how the page works. Statuses set here are not kept.${realStatuses?` ${shipPlural(realStatuses,'real status has','real statuses have')} been saved.`:''}`)}</span></div>`:'';
+    ?`<button type="button" class="dz-btn" data-focus-key="ship-demo" aria-pressed="true" onclick="setShippingDemo(false)"${tipAttr('Hide the made-up shipments and list the real deliveries from this export.')}>Show real shipments</button>`
+    :`<button type="button" class="dz-btn shp-pill" data-focus-key="ship-demo" aria-pressed="false" onclick="setShippingDemo(true)"${tipAttr(`Show ${SHIP_DEMO_ROWS.length} made-up shipments to see how the page works; nothing real is changed.`)}>Show demo data</button>`;
+  const carrierItems=[{label:'All',on:!shipCarrierSel,onclick:"shipPickCarrier('')",key:'ship-car-all'},...carriers.map((c,k)=>({label:c,on:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`,key:`ship-car-${k}`}))];
+  const carrierCtl=carriers.length<2?'':carriers.length<=5
+    ?dzSeg(carrierItems,{label:'Carrier'})
+    :dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,options:[{label:'All',selected:!shipCarrierSel,onclick:"shipPickCarrier('')"},{sep:true},...carriers.map(c=>({label:c,selected:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`}))]});
+  const checkedTxt=isSnapshotView?'Shared snapshot: statuses as they were when it was saved':`Checked by hand · statuses ${shared?'shared with everyone':'kept in this browser'}`;
+  const checked=`<span class="shp-checked"${tipAttr(`Nobody’s tracking system is asked: open Check, then set the status. Statuses are ${shared?'shared with everyone who signs in':'kept in this browser (shared on the hosted site)'}.`)}>${esc(checkedTxt)}</span>`;
+  const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
+  const canAdd=!isSnapshotView&&!model.demo;
+  const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add tracking #</button>`:'';
+  const filterRow=`<div class="shp-frow">${dzFilterRow(`${carrierCtl}${checked}`,`${custPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again.'):''}`)}</div>`;
+
+  const realStatuses=!model.demo||isSnapshotView?0:shippingStatusEntries().size;
+  const banner=model.demo?`<div class="shp-demo" role="note" aria-label="Demo data"><span class="dz-chip amber">Demo data</span><span class="shp-demo-t">${esc(`These ${model.list.length} shipments are made up (fake customers and tracking numbers) to show how the page works. Statuses set here are not kept.${realStatuses?` ${shipPlural(realStatuses,'real status has','real statuses have')} been saved.`:''}`)}</span>${demoBtn}</div>`:'';
 
   // Notes: what this export can and cannot give.
   const notes=[];
-  if(!model.demo&&!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand below.']);
-  const notesHtml=notes.map(([tone,text])=>`<p class="ship-note${tone?` ${tone}`:''}">${esc(text)}</p>`).join('');
-
-  // KPI cards (click filters the list).
-  const g=model.groups;
-  const cards=`<div class="ship-kpis" role="group" aria-label="Shipment status">
-      ${renderShipCard('transit','In transit',g.transit,'accent','on the way: marked Shipped or In transit')}
-      ${renderShipCard('delayed','Delayed',g.delayed,'crit','marked Delayed')}
-      ${renderShipCard('delivered','Delivered this week',g.delivered,'good',`marked Delivered since Monday ${shipDateLabel(model.weekStart)}`)}
-      ${renderShipCard('stale','Not checked in 2+ days',g.stale,'warn',`not delivered and not checked for ${SHIP_STALE_DAYS} days or more (or never)`)}
-    </div>`;
-
-  // Add a tracking number by hand (real shipments only).
-  const addForm=isSnapshotView||model.demo?'':`<form class="filter-bar ship-add" onsubmit="return shippingAddManual(event)">
-      <span class="ship-add-title" data-tip="List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.">Add tracking #</span>
-      <label>Sales order # <input id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345" data-tip="The sales order it belongs to, so its lines show (optional)."></label>
-      <label>Tracking # <input id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678" data-tip="Any carrier’s tracking or PRO number; spaces and dashes are fine."></label>
-      <button type="submit" class="btn btn-primary" data-focus-key="ship-add" data-tip="Save this number; then use Check and set its status.">Add</button>
-      <span id="ship-add-status" class="filter-note" role="status"></span>
-    </form>`;
-
-  // Shipment list with the progress strip.
-  const match=g[shippingFilter];
-  const shown=shippingSortedList(match||model.list);
-  const more=!!tableMore['ship-list']||printMode;
-  const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
-  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'not checked in 2+ days'}[shippingFilter];
-  const listSub=filterName?`only shipments ${filterName}`:model.demo?'made-up demo shipments':`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
-  const empty=filterName?`No shipments ${filterName} right now.`:`No tracking numbers on deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${isSnapshotView?'':', and none added by hand'}.`;
-  const list=pageGroupHtml('ship-list','Shipments',`
-      <div class="ship-legend" aria-hidden="true">${SHIP_STAGES.map(([,label])=>esc(label)).join(' → ')}</div>
-      <div class="ship-list">${visible.map(renderShipRow).join('')||`<p class="empty-note ship-empty">${esc(empty)}</p>`}</div>
-      ${shown.length>SHIP_LIST_LIMIT?`<div class="tfoot ship-foot"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="link-btn" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)" data-tip="${more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`}">${more?'Show fewer':'Show all'}</button></div>`:''}
-      ${addForm}`,{rise:'rise-2',
-    badge:`<span class="count-badge" data-tip="${esc(`${shipPlural(shown.length,'shipment','shipments')} listed: ${listSub}`)}">${fmtNum(shown.length)}</span>${filterName?`<span class="section-sub">${esc(listSub)}</span>`:''}`,
-    tools:filterName?`<button type="button" class="link-btn" data-focus-key="ship-filter-clear" onclick="setShippingFilter('')" data-tip="Show every shipment again.">Show all shipments</button>`:''});
-
-  // Cross-border: shipped to an address outside Canada.
-  const crossRows=shippingSortedList(model.cross).map(s=>{
-    const when=shipCheckedText(s);
-    return `<tr><td class="m"><button type="button" class="link-btn ship-link" data-focus-key="ship-x-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')" data-tip="Show ${esc(s.number)} with its status form in the list above.">${esc(s.number)}</button></td><td>${esc(s.customer||'—')}</td><td class="soft">${esc(shipCountryName(s.dest)||'—')}</td><td><span class="status-chip ${shipStateTone(s)}">${esc(shipStateLabel(s))}</span><span class="sub">${esc(when.text)}</span></td><td class="soft">${esc(s.mark&&s.mark.note||'—')}</td></tr>`;
-  });
-  const cross=pageGroupHtml('ship-cross','Cross-border',`
-      <div class="table"><div class="table-scroll" tabindex="0" role="region" aria-label="Cross-border shipments"><table class="data-table ship-cross"><thead><tr>
-        <th scope="col" data-tip="Tracking number. Click one to open it in the list above.">Tracking #</th>
-        <th scope="col" data-tip="Customer on the SAP delivery or sales order.">Customer</th>
-        <th scope="col" data-tip="Ship-to country from SAP.">Ship to</th>
-        <th scope="col" data-tip="The status set by hand, and when it was last checked.">Status</th>
-        <th scope="col" data-tip="The note left with the status, for example a customs hold.">Note</th>
-      </tr></thead><tbody>${crossRows.join('')||`<tr><td colspan="5" class="soft">No cross-border shipments in this list.</td></tr>`}</tbody></table></div></div>`,{rise:'rise-3',
-    badge:`<span class="count-badge${model.cross.some(s=>s.status==='delayed')?' bad':''}" data-tip="${esc(`${shipPlural(model.cross.length,'shipment','shipments')} to an address outside Canada${model.cross.some(s=>s.status==='delayed')?`; ${fmtNum(model.cross.filter(s=>s.status==='delayed').length)} delayed`:''}`)}">${fmtNum(model.cross.length)}</span>`});
+  if(!model.demo&&!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand with Add tracking #.']);
+  const notesHtml=notes.map(([tone,text])=>`<p class="shp-note${tone?` ${tone}`:''}">${esc(text)}</p>`).join('');
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
       `Tracking numbers come from SAP deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)} (any carrier), or from <strong>Add tracking #</strong>.`,
       '<strong>Check</strong> opens AfterShip’s public tracking page in a new tab; nothing on this page asks a carrier.',
       `Statuses are set by hand (Shipped, In transit, Delayed, Delivered, with a date and note) and ${shared?'shared with everyone who signs in':'kept in this browser'}.`,
       `<strong>Not checked in 2+ days</strong>: not delivered, and nobody has saved a status for ${SHIP_STALE_DAYS} days or more.`,
+      'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.',
       '<strong>Demo data</strong> shows made-up shipments until real statuses exist; it never counts anywhere else.'
     ])}</ul></div></details>`;
   // First-visit hint (Stream A's renderHint, localStorage spyderKpiHints); not in a shared snapshot.
   const hint=isSnapshotView?'':renderHint('shipping','Each row is an SAP delivery with a tracking number: click <strong>Check</strong>, then open the row and set its status.');
-  return bar+banner+hint+notesHtml+pageGroupHtml('ship-status','Status',cards,{rise:'rise-1'})+list+cross+about;
+  const head=`${filterRow}${banner}${hint}${notesHtml}`;
+
+  // Nothing to list at all: one quiet card instead of empty tiles and an empty map.
+  if(!model.list.length){
+    const why=`No tracking numbers on deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${isSnapshotView?'':', and none added by hand'}.`;
+    const empty=dzCard({cls:'shp-empty-card',body:`<div class="shp-empty"><span class="shp-empty-ico">${SHIP_TRUCK}</span><h2 class="shp-empty-t">No shipments to show</h2><p class="shp-empty-p">${esc(why)}</p>${canAdd?`<p class="shp-empty-p">Use <strong>Add tracking #</strong> to list one by hand.</p>`:''}</div>${canAdd&&shipAddOpen?renderShipAddForm(shared):''}`});
+    return head+empty+about;
+  }
+
+  // Tiles (a click lists just these in the table).
+  const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
+      ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: marked Shipped or In transit')}
+      ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','marked Delayed','red')}
+      ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`marked Delivered since Monday ${shipDateLabel(model.weekStart)}`)}
+      ${renderShipCard('stale','Not checked in 2+ days',g.stale,'var(--dz-amber)',`not delivered and not checked for ${SHIP_STALE_DAYS} days or more (or never)`,'amber')}
+    </div>`;
+
+  // Shipments table: status tile, map dot and search narrow it; delayed first, delivered last.
+  const byStatus=shippingFilter&&g[shippingFilter]?g[shippingFilter]:fl;
+  const byDest=shipDestSel?byStatus.filter(s=>shipPlaceKey(s)===shipDestSel):byStatus;
+  const q=shipQuery.trim().toLowerCase(),qn=q.replace(/[\s-]+/g,'');
+  const matched=q?byDest.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byDest;
+  const shown=shippingSortedList(matched);
+  const more=!!tableMore['ship-list']||printMode;
+  const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
+  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'not checked in 2+ days'}[shippingFilter];
+  const emptyMsg=filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:'No shipments match these filters.';
+  const chip=(text,onclick,tip)=>`<button type="button" class="shp-chipbtn" data-focus-key="ship-chip-${esc(text)}" onclick="${esc(onclick)}"${tipAttr(tip)}>${esc(text)}<span aria-hidden="true">×</span></button>`;
+  const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):''}`;
+  const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
+  const listSub=model.demo?'made-up demo shipments':`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
+  const tableBody=`<div class="shp-tools print-hide">${search}${chips}</div>
+    ${canAdd&&shipAddOpen?renderShipAddForm(shared):''}
+    <div class="dz-table shp-table">
+      <div class="dz-th shp-th"><span>Tracking</span><span>Order</span><span>Progress</span><span class="dz-num"${tipAttr('Delivered shipments: the delivery date and the promised date. Others: the promised date from the order lines and when the status was last checked (statuses are set by hand, so there is no carrier ETA).')}>ETA</span><span class="sr-only">Check</span></div>
+      <div class="shp-rows">${visible.map(renderShipRow).join('')||`<p class="shp-none">${esc(emptyMsg)}</p>`}</div>
+    </div>
+    ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
+  const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then shipments not checked for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
+  const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
+  return head+tiles+renderShipMap(fl)+`<div class="shp-grid">${list}${side}</div>`+about;
+}
+// The Add tracking # form (real shipments only): sales order (optional) and the number.
+function renderShipAddForm(shared){
+  return `<form class="shp-add print-hide" onsubmit="return shippingAddManual(event)">
+      <label>Sales order # <input class="dz-pillinput" id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345"${tipAttr('The sales order it belongs to, so its lines show (optional).')}></label>
+      <label>Tracking # <input class="dz-pillinput" id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678"${tipAttr('Any carrier’s tracking or PRO number; spaces and dashes are fine.')}></label>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-add"${tipAttr(`Save this number for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}; then use Check and set its status.`)}>Add</button>
+      <span id="ship-add-status" class="shp-msg" role="status"></span>
+    </form>`;
 }
 // --- end 2v4 ship ---
 
