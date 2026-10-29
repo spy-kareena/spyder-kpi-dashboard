@@ -865,14 +865,6 @@ h2[data-tip]{cursor:help}
 details.about>summary{transition:color var(--dur)}
 details.about>summary:hover{color:var(--gray-900)}
 
-/* First-visit hints */
-.hint-card{display:flex;gap:10px;align-items:flex-start;background:var(--accent-tint);border:1px solid var(--accent-border);border-radius:var(--r-card);padding:12px 14px 12px 16px;font-size:13px;line-height:1.55;color:var(--gray-700)}
-.hint-ico{flex:none;color:var(--accent-strong);margin-top:2px}
-.hint-body{flex:1;min-width:0}
-.hint-body strong{color:var(--gray-900);font-weight:600}
-.hint-close{flex:none;font:inherit;font-size:18px;line-height:1;width:26px;height:26px;border:0;border-radius:6px;background:transparent;color:var(--gray-600);cursor:pointer;margin:-3px -4px 0 0;transition:background-color var(--dur),color var(--dur)}
-.hint-close:hover{background:rgba(0,0,0,.06);color:var(--gray-900)}
-#upload-hint:empty{display:none}
 
 /* Toast (bottom right; full width above the bottom edge on phones) */
 .toast{position:fixed;right:24px;bottom:24px;z-index:80;display:grid;gap:8px;max-width:min(380px,calc(100vw - 32px));pointer-events:none}
@@ -913,9 +905,9 @@ details.about>summary:hover{color:var(--gray-900)}
   .page-head .actions{flex-wrap:wrap;flex-shrink:1;min-width:0}
   .page-head .actions .btn{padding:7px 11px;font-size:12.5px}
 }
-/* Print keeps the compact spacing of earlier versions; no tooltips, hints or toasts on paper */
+/* Print keeps the compact spacing of earlier versions; no tooltips or toasts on paper */
 @media print{
-  #tip-layer,#toast,#tip-descs,.hint-card{display:none!important}
+  #tip-layer,#toast,#tip-descs{display:none!important}
   #upload-screen>*+*,#results-screen>*+*{margin-top:.14in}
   .section{gap:.08in}
   .grid-lead,.grid-4,.grid-5,.grid-2,.grid-split,.month-spot,.drill-grid,.grid-split>.stack{gap:.1in}
@@ -2885,7 +2877,6 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
 #upload-screen .page-meta{font-size:13px;color:var(--dz-ink-4);white-space:normal}
 #upload-screen .privacy-pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:4px 10px;background:var(--dz-teal-bg);color:var(--dz-teal);font-size:12px;font-weight:500;line-height:1.2}
 #upload-screen .privacy-pill::before{width:6px;height:6px;background:var(--dz-teal)}
-#upload-hint:empty{display:none}
 #upload-screen .upload-shell{gap:16px}
 #upload-screen .upload-zone,#upload-screen .upload-shell.single .upload-zone{min-height:260px;padding:44px 32px;gap:22px;align-items:center;justify-content:center;text-align:center;border:1.5px dashed rgba(99,102,241,.32);border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card);transition:border-color .2s,background-color .2s,box-shadow .2s}
 #upload-screen .upload-zone:hover{border-color:rgba(99,102,241,.6);background:var(--dz-glass-80)}
@@ -3085,12 +3076,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#fd
 .snapshot-download-box{padding:12px 18px;border:1px solid rgba(15,118,110,.18);border-radius:18px;background:var(--dz-teal-bg-2);color:var(--dz-teal);font-size:12.5px}
 .snapshot-download-box .btn{height:30px;padding:0 14px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:12px;font-weight:500}
 
-/* ---------- Hints, toast, tooltip ---------- */
-.hint-card{align-items:center;gap:12px;padding:12px 14px 12px 18px;border:1px solid #fff;border-radius:18px;background:rgba(238,242,255,.75);color:var(--dz-ink-3);font-size:13px;line-height:1.5}
-.hint-ico{margin-top:0;color:var(--dz-indigo)}
-.hint-body strong{font-weight:600;color:var(--dz-ink-1)}
-.hint-close{width:28px;height:28px;margin:0 -4px 0 0;border-radius:50%;color:var(--dz-ink-4)}
-.hint-close:hover{background:rgba(255,255,255,.85);color:var(--dz-ink-1)}
+/* ---------- Toast, tooltip ---------- */
 .toast-item{padding:11px 16px;border:0;border-radius:14px;background:var(--dz-ink-1);box-shadow:var(--dz-sh-menu);color:#fff;font-size:13px;font-weight:500}
 .toast-item svg{color:#5eead4}
 .tip-layer{padding:7px 11px;border-radius:10px;box-shadow:var(--dz-sh-menu);font-weight:400}
@@ -3197,7 +3183,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#fd
 /* ---------- Print: header, filter row and menus are gone; the active page prints flat on white ---------- */
 @media print{
   html,body,.app-shell,.main,#app-main{background:#fff!important}
-  .dz-card,.misc-tile,.misc-empty,.hint-card{background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
+  .dz-card,.misc-tile,.misc-empty{background:#fff!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;box-shadow:none!important}
   .dz-card,.misc-tile{border:1px solid var(--gray-300)!important;border-radius:6px!important}
   .dz-card{padding:.1in .12in}
   .dz-tr,.dz-th,tr,.misc-step,.misc-tiers li{break-inside:avoid;page-break-inside:avoid}
@@ -3236,7 +3222,6 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#fd
       <div class="page-head-main misc-uphead-main"><h1 class="dz-h1 page-title">Load KPI export</h1><p class="dz-sub page-lead">Load SAP exports into one offline summary.</p></div>
       <div class="actions misc-uphead-side"><span class="page-meta" id="upload-current-meta"></span><span class="privacy-pill" data-tip="Files are read in this browser; the hosted site also keeps the last report for everyone who signs in.">Read in your browser</span></div>
     </div>
-    <div id="upload-hint" class="rise rise-1"></div>
     <div class="upload-shell single rise rise-2" id="upload-shell">
       <label id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Add KPI export files" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click();}" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
         <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="handleFiles([...this.files])">
@@ -8193,7 +8178,6 @@ function renderSidebar(){
   const avatar=`<div class="dz-menuwrap hdr-menuwrap${avOpen?' open':''}" data-dzmenu="hdr-avatar"><button type="button" class="hdr-avatar" id="hdr-avatar-btn" aria-haspopup="menu" aria-expanded="${avOpen}" aria-label="${esc(name?`Profile menu for ${name}`:'Profile menu')}" onclick="dzMenuToggle('hdr-avatar',event)">${initials?esc(initials):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'}</button><div class="dz-menu dz-menu-r" role="menu" aria-label="Profile menu"${avOpen?'':' hidden'}><div class="hdr-who"><strong>${esc(name||'No name set')}</strong>${name?'shown with your notes':'add it to show it with your notes'}</div><div class="dz-menu-sep" role="separator"></div>${
     item('hdr-menu-share','Share snapshot','exportShareSnapshot()','Save an .html copy of the data and notes to send; anyone with the file sees all of it.',!canShare)
   }${item('hdr-menu-name',name?'Change name':'Add your name','askEditorName(true)',isSnapshotView?'Names are not saved from a shared snapshot.':'The name shown with the notes you save.',isSnapshotView)
-  }${item('hdr-menu-hints','Show hints again','resetHints()','Bring back the hints you dismissed.',false)
   }${item('hdr-menu-connect','Connect an AI',"setTab('connect')",PAGE_TIPS.connect||'Set up Claude Desktop or another AI app to read your exports.',false)}</div></div>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
   const focus=captureFocus(el);
@@ -8576,7 +8560,6 @@ function renderResults(){
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
     html+=ohRenderDrillBar(); // the reason / cause / when-flagged / override filters picked from the charts
     html+=renderBigPicture('weekly',m);
-    html+=renderHint('weekly-cards','<strong>Leading</strong> shows what needs action now; <strong>Lagging</strong> shows how we performed. Click a number to list its lines.');
     html+=ohPanelOpen('leading');
 
     // ---------- Leading tab (2v6 oh-leading): the cards on the 6-column grid; the Lines card joins the grid below ----------
@@ -9628,41 +9611,6 @@ function renderAbout(keys,intro=''){
   return `<details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${intro}${aboutSections(keys)}</ul></div></details>`;
 }
 
-// First-visit hints: short dismissable tips (localStorage spyderKpiHints, per browser). "Show hints again" in the
-// sidebar's Help group brings them back. Other pages can add their own with renderHint(id, html).
-const HINT_KEY='spyderKpiHints';
-function hintsSeen(){
-  try{const v=JSON.parse(localStorage.getItem(HINT_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}
-  catch(err){return {};}
-}
-function renderHint(id,html){
-  if(hintsSeen()[id])return '';
-  return `<div class="hint-card print-hide" role="note" aria-label="Hint" data-hint="${esc(id)}"><svg class="hint-ico" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 12.5h4M6.5 14.5h3M8 1.75a4.25 4.25 0 0 0-2.4 7.76c.5.35.9.9.9 1.5v.24h3v-.24c0-.6.4-1.15.9-1.5A4.25 4.25 0 0 0 8 1.75z"/></svg><div class="hint-body">${html}</div><button type="button" class="hint-close" data-hint-id="${esc(id)}" aria-label="Dismiss this hint"${tipAttr('Hide this hint; Show hints again (Help) brings it back.')} onclick="dismissHint(this.dataset.hintId)">×</button></div>`;
-}
-function dismissHint(id){
-  const seen=hintsSeen();
-  seen[id]=new Date().toISOString().slice(0,10);
-  try{localStorage.setItem(HINT_KEY,JSON.stringify(seen));}catch(err){}
-  const hadFocus=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('[data-hint]');
-  if(document.querySelectorAll)document.querySelectorAll('[data-hint]').forEach(n=>{if(n.dataset.hint===id&&n.remove)n.remove();});
-  // The pressed button is gone: keep keyboard focus on the page (its heading, or the upload area).
-  if(hadFocus){
-    const target=document.querySelector('#results-screen h1[tabindex="-1"]')||document.getElementById('upload-zone');
-    if(target&&target.focus&&target.offsetParent!==null)target.focus({preventScroll:true});
-  }
-}
-function resetHints(){
-  try{localStorage.removeItem(HINT_KEY);}catch(err){}
-  renderUploadHint();
-  const results=document.getElementById('results-screen');
-  if(results&&results.style.display==='block')renderResults();
-  showToast('Hints will show again on each page.');
-}
-function renderUploadHint(){
-  const box=document.getElementById('upload-hint');
-  if(box)box.innerHTML=renderHint('upload','<strong>Start here:</strong> drop the SAP KPI export (<strong>.xls</strong>) in the box below.');
-}
-
 // Toast: a short confirmation in the corner after bulk Apply, Delete, Restore and note saves; read out by screen
 // readers (#toast is a polite status region). Any page code can call showToast('…').
 let toastTimer=0,toastSeq=0;
@@ -10677,7 +10625,6 @@ function initStreamAUi(){
   if(toast)toast.innerHTML='';
   const descs=document.getElementById('tip-descs');
   if(descs)descs.innerHTML='';
-  renderUploadHint();
   if(typeof MutationObserver==='function'&&document.body&&document.body.nodeType===1){
     let queued=false;
     // Its own layers, and the count-up numbers changing frame by frame, need no rewiring.
@@ -12944,9 +12891,7 @@ function renderShippingPage(m){
       'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.',
       '<strong>Demo data</strong> shows made-up shipments until real statuses exist; it never counts anywhere else.'
     ])}</ul></div></details>`;
-  // First-visit hint (Stream A's renderHint, localStorage spyderKpiHints); not in a shared snapshot.
-  const hint=isSnapshotView?'':renderHint('shipping','Each row is an SAP delivery with a tracking number: click <strong>Check</strong>, then open the row and set its status.');
-  const head=`${filterRow}${banner}${hint}${notesHtml}`;
+  const head=`${filterRow}${banner}${notesHtml}`;
 
   // Nothing to list at all: one quiet card instead of empty tiles and an empty map.
   if(!model.list.length){

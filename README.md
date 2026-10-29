@@ -8,7 +8,7 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 
 1. Sign in and load the KPI export. SAP's "Export to Excel" `.xls` works as-is, as do `.csv` and `.xlsx`.
 2. **Add file** (the export-date popover in the header) loads a supply/demand snapshot or a Clear To Build report next to the KPI export. **New file** opens the load screen; the current report stays until a new file is read. If two exports of the same report have different export dates, only the newest is used and **Data check** names the file left out.
-3. Pick a page in the top menu (Order Health · Monthly · Warehouses · Metrics · Shipping · **Supply** ▾). Ask AI, Export PDF, search and your name are the icons at the right; Share snapshot, Change name, Show hints again and Connect an AI are in the avatar menu. Click a KPI card to list its lines. **Add note** on a line sets an override or a note.
+3. Pick a page in the top menu (Order Health · Monthly · Warehouses · Metrics · Shipping · **Supply** ▾). Ask AI, Export PDF, search and your name are the icons at the right; Share snapshot, Change name and Connect an AI are in the avatar menu. Click a KPI card to list its lines. **Add note** on a line sets an override or a note.
 4. Rest the pointer on any card, chart bar, column heading, filter or button (or Tab to it, or press and hold on a phone) for a short tip with the numbers in full. Rest on a section title the same way for what that section shows and what clicking does; **About these numbers** at the bottom of each page defines the key terms. First-visit hints close with ×; **Show hints again** (sidebar, Help) brings them back.
 
 | Page | Menu | What it shows |
@@ -77,7 +77,7 @@ The page uses the Inter font from Google Fonts and falls back to the system font
 
 - **Tooltips:** give any element `data-tip="plain-English text"`: one short sentence, about 20 words at most, amounts in full (e.g. $1,721,806). One shared bubble shows it on hover, keyboard focus and a long press; `data-tip-pos="bottom"` (or `left` / `right`) picks the preferred side. Screen readers get the text as a description automatically (not when the element's `aria-label` is the same text, so a row named by its tip is read once); for an element built in code use `tip(el, text)`. A control inside a modal `<dialog>` gets its bubble drawn inside that dialog, and Esc there closes both. Do not add tooltip CSS of your own. Wrap a wide table in `<div class="table-scroll" tabindex="0" role="region" aria-label="…">` so a keyboard can scroll it.
 - **Section help and About these numbers:** add the section's `what` and `click` texts (one short sentence each) to `SECTION_INFO` in `index.html` and put `sectionTip('<key>')` on its title (`<h2${sectionTip('<key>')}>`; `pageGroupHtml` and `renderTableCard` take it as `info`). The text is the title's tooltip: there is no ⓘ button. `renderAbout([...keys])` builds the page's About list from `ABOUT_NOTES` (3 to 5 short definitions per page, picked by the keys' prefix). Column heading tips live in `COLUMN_TIPS` (a `"<table key>|<heading>"` entry wins over the plain heading); a hand-built table header uses `tipAttr(columnTip('<table key>', label))`, so every heading has a tip.
-- **Toasts and hints:** `showToast('…')` shows a short confirmation (also read by screen readers). `renderHint('<id>', html)` returns a dismissable first-visit hint (stored in the browser under `spyderKpiHints`).
+- **Toasts:** `showToast('…')` shows a short confirmation (also read by screen readers).
 
 ## Tests
 
