@@ -157,3 +157,5 @@ Warehouses to watch moved to the Warehouse Timeline page. Shipping has an offlin
 a Cross-border / Delayed side list. New designs for the load screen, Forecast, Connect an AI, Search, Ask AI, dialogs,
 the sign-in page, print and phones. Big picture and Us vs Them stay hidden. Data, parsing and calculations are unchanged.
 Tests have not been updated for the new markup yet.
+Us / Them: the Cause control (note editor, Build Risk and Purchase Orders row editors, linked-lines bulk bar) and every
+Us / Them tag and wording are removed. Saved causes stay in the data and Ask AI keeps the cause numbers.
