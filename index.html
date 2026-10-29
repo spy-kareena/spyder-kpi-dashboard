@@ -2277,8 +2277,9 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:14px}
 .stg-foot{display:flex;justify-content:flex-end;margin-top:14px}
 .stg-foot .link-btn:disabled{opacity:.45;cursor:default}
-.ohl-hero-target{flex-basis:100%;margin-top:-4px}
-.ohl-hero-target .dz-chip{font-size:11.5px}
+.ohl-hero-quiet{flex-basis:100%;margin-top:2px;font-size:12px;color:var(--dz-ink-5);font-variant-numeric:tabular-nums}
+.ohl-hero-quiet .ohl-hero-pct{flex-basis:auto;margin:0}
+.ohl-hero-target{color:var(--dz-ink-5)}
 @media (prefers-reduced-motion:reduce){.stg-switch,.stg-thumb{transition:none}}
 @media (forced-colors:active){.stg-switch{border:1px solid ButtonText;background:Canvas}.stg-thumb{background:ButtonText}.stg-switch[aria-checked="true"]{background:Highlight}}
 @media (max-width:640px){
@@ -15387,9 +15388,8 @@ function ohlAtRiskCard(c){
   // The share of orders due in the next month that are at risk: small and quiet, for the manager's review.
   const dueOrders=rowDocCount(d.all),riskPct=dueOrders?Math.round(orders/dueOrders*100):null;
   // The target (Settings, 5% by default) is on the at-risk share of the open value: green under it, amber up to twice it.
-  const targetTone={good:'teal',warning:'amber',critical:'red'}[d.tone]||'';
-  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${dzChip(`Target under ${AT_RISK_TARGET}%${d.riskPct===null?'':` · ${d.riskPct}% of value`}`,targetTone)}</span>`;
-  const riskPctHtml=riskPct===null?targetHtml:`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span>${targetHtml}`;
+  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${d.riskPct===null?'':`${d.riskPct}% of value · `}target under ${AT_RISK_TARGET}%</span>`;
+  const riskPctHtml=`<span class="ohl-hero-quiet">${riskPct===null?'':`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span><span class="ohl-hero-dot" aria-hidden="true"> · </span>`}${targetHtml}</span>`;
   const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${shortDay(d.end)}: ${ohN(orders,'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(risk))} open; click to list the lines.`)}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
   const stat=(id,label,color,rows)=>{
