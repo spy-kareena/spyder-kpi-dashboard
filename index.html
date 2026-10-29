@@ -2063,6 +2063,8 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 .sup-page .dz-chip.amber{color:var(--dz-amber-text)}
 .sup-page .dz-chip.teal{color:var(--dz-teal)}
 .sup-anchor{scroll-margin-top:12px}
+.sup-page :focus-visible{outline-color:var(--dz-indigo)}
+.sup-tile:focus-visible,.sup-cmcard:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 
 /* Order tiles: a dot and label, the order count, then value and lines */
 .sup-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
@@ -2300,6 +2302,12 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .sup-tbl.sup-po td,.sup-tbl.sup-sd td,.sup-tbl.sup-br td,.sup-tbl.sup-groups td{display:block;padding:0;border:0;min-width:0;text-align:left}
   .sup-tbl td[data-label]::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:11px;font-weight:400;color:var(--dz-ink-4)}
   .sup-tbl td.num{text-align:left}
+  .sup-tbl td.sup-nolabel::before{display:none}
+  .sup-tbl.sup-sd td.sup-nolabel{font-size:14px}
+  .sup-cmcards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .sup-cmcard{padding:14px 14px 12px;border-radius:18px}
+  .sup-cmhead{flex-direction:column;gap:1px}
+  .sup-cmnums b{font-size:18px}
   .sup-tbl td.sup-item,.sup-tbl td.sup-status,.sup-tbl td.sup-ovr,.sup-tbl td.sup-act,.sup-tbl.sup-sd td:nth-child(2),.sup-tbl.sup-groups td:last-child{grid-column:1/-1}
   .sup-tbl td.sup-item::before,.sup-tbl td.sup-status::before{display:none}
   .sup-tbl td.sup-act{text-align:left}
@@ -3422,7 +3430,7 @@ function setSupplyWarehouseFilter(v){
   renderResults();
 }
 function setSupplyWarehousePreset(kind){
-  const options=[...document.querySelectorAll('#supply-warehouse-select option')].map(o=>o.value).filter(v=>v&&v!=='ALL');
+  const options=[...new Set(supplyDemandRows.map(supplyWarehouse))].filter(v=>v&&v!=='ALL'); // the warehouse pill is built from the same list
   let selected=[];
   if(kind==='CM')selected=options.filter(w=>/^CM - /i.test(w));
   else if(kind==='SFG')selected=options.filter(w=>/^CM SFG - /i.test(w));
@@ -6473,7 +6481,7 @@ function supSupplyDemand(m){
     const n=new Set(g.rows.map(r=>r.itemCode)).size;
     return `<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${esc(supWh(g.warehouse))}</b><span>${fmtNum(n)} ${n===1?'item':'items'}</span></td></tr>${vis.map(r=>{
       const st=supSdStatus(r),shortBy=r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
-      return `<tr class="sup-row"><td class="sup-strong" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply">${dzChip(st.label,st.tone)}${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
+      return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply">${dzChip(st.label,st.tone)}${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
     }).join('')}`;
   }).join('');
   const riskChip=`<button type="button" class="dz-pillinput sup-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show every short or at-risk line again.':'List only lines whose PO supply is unconfirmed, has no commit, is rescheduled or late.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
@@ -6588,10 +6596,10 @@ function supBuildRisk(m){
   // One card per CM: orders, the clear / at risk / late bar and counts. A click narrows the page to that CM.
   const cmCards=cms.map((c,i)=>{
     const t=Math.max(1,c.clear+c.risk+c.late),on=cmIn&&buildRiskCmFilter===c.id;
-    const seg=(v,col)=>v>0?`<span class="dz-grow" style="flex:${v};background:${col};--i:${i}"></span>`:'';
+    const seg=(v,col,k)=>v>0?`<span class="dz-grow" style="flex:${v};background:${col};--i:${k}"></span>`:'';
     return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.clear)} clear to build, ${fmtNum(c.risk)} at risk, ${fmtNum(c.late)} late of ${fmtNum(c.total)} orders in the ${brAll.label} report; ${on?'click to show every CM.':'click to show only this CM.'}`)}>
       <span class="sup-cmhead"><b>${esc(cmName(c.cm))}</b><span>${fmtNum(c.total)} ${c.total===1?'order':'orders'}</span></span>
-      <span class="sup-cmbar">${seg(c.clear,'var(--dz-teal)')}${seg(c.risk,'var(--dz-amber)')}${seg(c.late,'var(--dz-risk)')}</span>
+      <span class="sup-cmbar">${seg(c.clear,'var(--dz-teal)',0)}${seg(c.risk,'var(--dz-amber)',1)}${seg(c.late,'var(--dz-risk)',2)}</span>
       <span class="sup-cmnums"><span><b class="teal">${fmtNum(c.clear)}</b><i>clear</i></span><span><b class="amber">${fmtNum(c.risk)}</b><i>at risk</i></span><span><b class="red">${fmtNum(c.late)}</b><i>late</i></span></span></button>`;
   }).join('');
 
