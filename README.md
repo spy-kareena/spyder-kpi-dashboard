@@ -7,22 +7,22 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 ## Use
 
 1. Sign in and load the KPI export. SAP's "Export to Excel" `.xls` works as-is, as do `.csv` and `.xlsx`.
-2. **Add file** (bottom of the sidebar) loads a supply/demand snapshot or a Clear To Build report next to the KPI export. **New file** opens the load screen; the current report stays until a new file is read. If two exports of the same report have different export dates, only the newest is used and **Data check** names the file left out.
-3. Pick a page in the sidebar. Click a KPI card to list its lines. **Add note** on a line sets an override, the cause (**Us** or **Them**) or a note.
+2. **Add file** (the export-date popover in the header) loads a supply/demand snapshot or a Clear To Build report next to the KPI export. **New file** opens the load screen; the current report stays until a new file is read. If two exports of the same report have different export dates, only the newest is used and **Data check** names the file left out.
+3. Pick a page in the top menu (Order Health · Monthly · Warehouses · Metrics · Shipping · **Supply** ▾). Ask AI, Export PDF, search and your name are the icons at the right; Share snapshot, Change name, Show hints again and Connect an AI are in the avatar menu. Click a KPI card to list its lines. **Add note** on a line sets an override, the cause (**Us** or **Them**) or a note.
 4. Rest the pointer on any card, chart bar, column heading, filter or button (or Tab to it, or press and hold on a phone) for a short tip with the numbers in full. Rest on a section title the same way for what that section shows and what clicking does; **About these numbers** at the bottom of each page defines the key terms. First-visit hints close with ×; **Show hints again** (sidebar, Help) brings them back.
 
-| Page | Sidebar group | What it shows |
+| Page | Menu | What it shows |
 |---|---|---|
-| Order Health | Sales | At-risk sales orders, what is due next and on-time delivery, on two tabs (**Leading** and **Lagging**, switched at the top): Us / Them causes, six **At risk by override** tiles, top at-risk reasons, **When flagged**, warehouse scorecard, top offenders, linked lines and **Big picture** |
-| Monthly | Sales | Shipped and open sales-order value by month, year over year, and a ship target scenario |
-| Warehouse Timeline | Sales | Open value, late lines and on-track rate by warehouse and due month |
-| Metrics Timeline | Sales | Order quality rates (on-track, perfect order, backorder, partial ship) and risk by due month |
-| Shipping | Sales | Recent deliveries for every carrier, checked by hand: a Check link to each tracking page and a shared manual status (demo data shown by default until the owner asks to remove it) |
-| Purchase Orders | Supply | Late, unconfirmed and no-commit PO lines, receiving performance and late value by vendor |
-| Supply / Demand | Supply | Open sales-order demand against open PO supply by warehouse and month: shortages and risky supply (needs the supply / demand snapshot) |
-| Supply Mix | Supply | Net quantity by month, demand by warehouse, risk by item group, and **Big picture** (needs the supply / demand snapshot) |
-| Build Risk | Supply | The Clear To Build report matched to open sales orders by CM and month, and **Big picture** (needs the Clear To Build workbook) |
-| Connect an AI | Help | How to ask an AI about the export: **Ask AI** on the site, or Claude Desktop / Claude Code through the MCP connector |
+| Order Health | Top menu | **Leading** (what needs action now: at-risk orders with the most affected warehouse, production issues and override tiles, status and top reasons, open lines by due week, customers at risk, when flagged, date changes and what the CM can deliver, and the Lines table) and **Lagging** (monthly and quarterly on-time, fill rate, perfect order, days late, reschedule hit and late orders against the period before, and top offenders by warehouse and vendor), switched at the top |
+| Monthly | Top menu | Shipped and open sales-order value by month, year over year, and a ship target scenario |
+| Warehouses | Top menu | Open value, late lines and on-track rate by warehouse and due month, plus **Warehouses to watch** |
+| Metrics | Top menu | Order quality rates (on-track, perfect order, backorder, partial ship) and risk by due month |
+| Shipping | Top menu | Recent deliveries for every carrier, checked by hand: a Check link to each tracking page and a shared manual status (demo data shown by default until the owner asks to remove it) |
+| Purchase Orders | Supply ▾ | Late, unconfirmed and no-commit PO lines, receiving performance and late value by vendor |
+| Supply / Demand | Supply ▾ | Open sales-order demand against open PO supply by warehouse and month: shortages and risky supply (needs the supply / demand snapshot) |
+| Supply Mix | Supply ▾ | Net quantity by month, demand by warehouse, risk by item group, and **Big picture** (needs the supply / demand snapshot) |
+| Build Risk | Supply ▾ | The Clear To Build report matched to open sales orders by CM and month, and **Big picture** (needs the Clear To Build workbook) |
+| Connect an AI | Avatar menu | How to ask an AI about the export: **Ask AI** on the site, or Claude Desktop / Claude Code through the MCP connector |
 
 KPIs are calculated as of the export's `ExportDate`, so an older file or a shared snapshot keeps the numbers it had that day. Rows the export could not fully use (for example a due date typed as year 0202) are listed under the amber **Data check** pill next to the page title.
 

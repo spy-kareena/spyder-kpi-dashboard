@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 2v2.1
+Version: 2v6
 Package date: 2026-10-13
 
 Main file: index.html
@@ -145,3 +145,15 @@ tracking page and a manual status (Shipped / In transit / Delayed / Delivered, w
 shared notes for everyone. No tracking API is called (the FedEx module and poller Worker stay in the repo, unused).
 Demo data (12 made-up shipments, clearly labelled, with a Show real shipments switch) is on by default until the
 owner asks to remove it (SHIP_DEMO_DEFAULT in index.html).
+
+2v6: Claude Design redesign of every page. The left sidebar is now a centred top header (Order Health, Monthly,
+Warehouses, Metrics, Shipping, Supply menu; export date, search, Ask AI, Export PDF and the avatar menu on the right),
+on a soft gradient page with Outfit type, glass cards and pill filters. Order Health has the Leading | Lagging switch
+back: Leading shows At risk (orders first, most affected warehouse, production issues, override tiles), status and top
+reasons as bars, open lines by due week, customers at risk, when flagged, date changes (what we can deliver from the CM
+sheet) and the Lines table; Lagging shows Monthly and Quarterly cards (on time, fill rate, perfect order, average days
+late, reschedule hit, late orders, each against the period before) and top offenders by warehouse and vendor.
+Warehouses to watch moved to the Warehouse Timeline page. Shipping has an offline delivery map, a 3-step progress bar and
+a Cross-border / Delayed side list. New designs for the load screen, Forecast, Connect an AI, Search, Ask AI, dialogs,
+the sign-in page, print and phones. Big picture and Us vs Them stay hidden. Data, parsing and calculations are unchanged.
+Tests have not been updated for the new markup yet.

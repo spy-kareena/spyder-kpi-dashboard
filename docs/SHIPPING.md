@@ -1,6 +1,6 @@
 # Shipping page: checked by hand
 
-The **Shipping** page (sidebar, Sales) lists recent shipments from SAP delivery tickets, for **every carrier** (FedEx,
+The **Shipping** page (top menu) lists recent shipments from SAP delivery tickets, for **every carrier** (FedEx,
 FedEx Freight, UPS, Purolator, Canpar, DHL, Loomis, Day & Ross…). Nobody's tracking system is called from the page:
 each shipment has a **Check** link to its public tracking page, and whoever looks it up records what they saw
 (Shipped, In transit, Delayed or Delivered, with a date and a short note). Everyone who signs in sees those statuses,
