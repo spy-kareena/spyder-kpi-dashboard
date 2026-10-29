@@ -2047,6 +2047,152 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end oh-lagging */
 
 /* 2v6:monthly-wh-metrics */
+/* Monthly, Warehouse Timeline and Metrics Timeline. Cards, pills, bar rows and chips are the shared dz-* ones; these are
+   the page pieces the designs add (hero numbers, target bar, columns, heat map, KPI sparklines, the line chart). */
+.mwm-red{color:var(--dz-risk-text)}
+.mwm-soft{color:var(--dz-ink-3)}
+.mwm-mute{color:var(--dz-ink-5)}
+.mwm-lateN{color:var(--dz-risk-text);font-weight:500}
+.mwm-legend{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--dz-ink-4)}
+.mwm-legend>span{display:inline-flex;align-items:center;gap:6px}
+.mwm-sw{display:inline-block;width:12px;height:12px;border-radius:3px;flex:none}
+.mwm-line{display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--dz-indigo)}
+.mwm-line.dash{height:0;border-top:2px dashed var(--dz-teal);background:transparent;border-radius:0}
+.mwm-more{margin-top:22px}
+.mwm-more>summary{list-style:none;display:flex;align-items:center;justify-content:center;height:44px;border-radius:999px;background:var(--dz-glass-60);border:1px solid #fff;font-size:13px;font-weight:500;color:var(--dz-ink-3);cursor:pointer}
+.mwm-more>summary::-webkit-details-marker{display:none}
+.mwm-more>summary:hover{background:var(--dz-glass-80);color:var(--dz-ink-1)}
+.mwm-more .mwm-more-less,.mwm-more[open] .mwm-more-show{display:none}
+.mwm-more[open] .mwm-more-less{display:inline}
+.mwm-more-body{margin-top:22px;display:flex;flex-direction:column;gap:22px}
+@media print{.mwm-more>summary{display:none}}
+.mwm-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:var(--dz-ink-4)}
+/* Monthly: hero card, target bar, ship target card */
+.mwm-hero{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-top:10px}
+.mwm-bar{position:relative;height:10px;border-radius:5px;background:var(--dz-line-6);margin-top:18px}
+.mwm-bar-fill{display:block;height:100%;background:var(--dz-indigo);border-radius:5px;transform-origin:left}
+.mwm-bar-tick{position:absolute;top:-4px;width:2px;height:18px;margin-left:-2px;background:var(--dz-ink-1);border-radius:1px}
+.mwm-bar-l{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--dz-ink-4);margin-top:6px}
+.mwm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.mwm-stats .dz-stat-v{font-size:19px;letter-spacing:0}
+.mwm-note{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--dz-ink-3)}
+.mwm-closers{display:flex;flex-direction:column;margin-top:12px}
+.mwm-closer{display:grid;grid-template-columns:56px minmax(0,1fr) 76px 92px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--dz-line-6);font-size:13px}
+.mwm-closer-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-2)}
+.mwm-closer .dz-chip{font-size:12px;padding:3px 9px}
+.mwm-by{font-size:12px;color:var(--dz-ink-4)}
+.mwm-datebtn{height:26px;padding:0 10px;font-size:12px;margin-left:6px}
+.mwm-datebtn[aria-expanded="true"]{background:#fff;border-color:rgba(99,102,241,.45)}
+.mwm-dates{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:12px;font-size:12px;color:var(--dz-ink-4)}
+.mwm-dates label{display:inline-flex;align-items:center;gap:6px}
+.mwm-dates .dz-pillinput{height:32px;font-size:12.5px}
+/* Orders by month: twelve columns, the number on top of each */
+.mwm-cols{display:grid;grid-template-columns:repeat(var(--n,12),minmax(0,1fr));gap:10px;align-items:end;height:200px;margin-top:20px;border-bottom:1px solid rgba(15,23,42,.12)}
+.mwm-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.mwm-col-n{font-size:13px;font-weight:600;margin-bottom:4px;color:var(--dz-ink-2);font-variant-numeric:tabular-nums}
+.mwm-col-bar{display:block;width:70%;min-height:2px;background:var(--dz-ink-6);border-radius:6px 6px 0 0}
+.mwm-col.now .mwm-col-bar{background:var(--dz-indigo)}
+.mwm-col.now .mwm-col-n{color:var(--dz-indigo-deep)}
+.mwm-collabels{display:grid;grid-template-columns:repeat(var(--n,12),minmax(0,1fr));gap:10px;margin-top:8px;font-size:12px;color:var(--dz-ink-4);text-align:center}
+/* Tables of the three pages (a card holding a .dz-table: horizontal scroll inside the card on a phone) */
+.mwm-tablewrap{margin-top:12px}
+.mwm-table{min-width:640px}
+.mwm-table.wide{min-width:760px}
+.mwm-table .dz-tr{padding:11px 0}
+.mwm-table .strong{font-weight:600}
+.mwm-todate{font-size:11px;font-weight:400;color:var(--dz-ink-4);margin-left:4px}
+.mwm-cur{background:transparent}
+/* Warehouses to watch */
+.mwm-wrow{padding:10px 0}
+.mwm-wname{display:flex;align-items:center;gap:8px;min-width:0}
+.mwm-wtxt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mwm-badge{flex:none;font-size:11px;color:var(--dz-ink-4);background:rgba(15,23,42,.05);border-radius:999px;padding:2px 8px}
+button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
+.mwm-ghead{display:flex;align-items:baseline;gap:8px;padding:14px 0 6px;font-size:12px;font-weight:600;color:var(--dz-ink-3);border-bottom:1px solid var(--dz-line-5)}
+.mwm-ghead span{font-weight:400;color:var(--dz-ink-5)}
+.mwm-sub{background:rgba(15,23,42,.025);font-weight:600}
+.mwm-sub .mwm-wname{padding-left:0}
+.mwm-sub .mwm-wtxt{color:var(--dz-ink-3);font-weight:500}
+/* Warehouse heat map */
+.mwm-scroll{overflow-x:auto;margin-top:16px;scrollbar-width:thin}
+.mwm-heat{--mwm-name:200px;--mwm-col:40px}
+.mwm-heat-row{display:grid;grid-template-columns:var(--mwm-name) repeat(var(--n,8),minmax(0,1fr));gap:6px;align-items:center;margin-top:6px}
+.mwm-heat-rh{display:block;min-width:0;overflow:hidden}
+.mwm-heat-head span:first-child{color:transparent;font-size:0}
+.mwm-heat.dense .mwm-heat-cell{font-size:11px;border-radius:6px}
+.mwm-heat-head{margin-top:0;font-size:11.5px;color:var(--dz-ink-4);text-align:center;padding-bottom:6px}
+.mwm-heat-head span{white-space:nowrap;overflow:visible}
+.mwm-heat-name{border:0;background:transparent;padding:0;font:inherit;font-size:13px;color:var(--dz-ink-2);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;min-width:0}
+.mwm-heat-name:hover,.mwm-heat-name.sel{text-decoration:underline;color:var(--dz-ink-1)}
+.mwm-heat-cell{height:34px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.mwm-tlist{display:flex;flex-direction:column;margin-top:10px}
+.mwm-trow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--dz-line-6)}
+.mwm-trow-n{font-size:14px;font-weight:500}
+.mwm-trow-s{font-size:12px;color:var(--dz-ink-4);margin-top:2px}
+.mwm-trow-d{font-size:20px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mwm-trow-d.red{color:var(--dz-risk-text)}
+.mwm-trow-d.teal{color:var(--dz-teal)}
+/* Metrics: KPI cards with a sparkline, the on-time line, late orders by cause */
+.mwm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.mwm-kpi{min-width:0;background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:20px 22px;box-shadow:var(--dz-sh-card)}
+.mwm-kpi-l{font-size:13px;color:var(--dz-ink-4)}
+.mwm-kpi-v{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin-top:6px}
+.mwm-kpi-v>span:first-child{font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.mwm-kpi-d{font-size:12.5px;font-weight:600;color:var(--dz-ink-4)}
+.mwm-kpi-d.teal{color:var(--dz-teal)}
+.mwm-kpi-d.red{color:var(--dz-risk-text)}
+.mwm-spark{display:block;width:100%;height:36px;margin-top:12px;overflow:visible}
+.mwm-kpi-s{font-size:11.5px;color:var(--dz-ink-5);margin-top:6px}
+.mwm-plot-wrap{display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px;margin-top:24px}
+.mwm-plot-wrap+.mwm-plot-wrap{margin-top:8px}
+.mwm-yax{position:relative;height:200px;font-size:11.5px;color:var(--dz-ink-4)}
+.mwm-yax span{position:absolute;right:0;transform:translateY(-50%)}
+.mwm-plot{position:relative;height:200px}
+.mwm-grid{position:absolute;left:0;right:0;border-top:1px solid var(--dz-line-6)}
+.mwm-grid.base{border-top-color:rgba(15,23,42,.12)}
+.mwm-target{position:absolute;left:0;right:0;border-top:2px dashed var(--dz-teal)}
+.mwm-plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.mwm-pt{position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--dz-indigo);transform:translate(-50%,-50%);box-sizing:border-box}
+.mwm-pt-l{position:absolute;transform:translate(-50%,calc(-100% - 10px));font-size:11.5px;font-weight:600;color:var(--dz-ink-2);pointer-events:none;font-variant-numeric:tabular-nums}
+.mwm-xax{display:grid;grid-template-columns:repeat(var(--n,12),minmax(0,1fr));font-size:12px;color:var(--dz-ink-4);text-align:center}
+.mwm-cause-head{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.mwm-cause-n{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.mwm-cause-bars{margin-top:16px;gap:9px}
+@media (max-width:900px){
+  .mwm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mwm-kpi:last-child:nth-child(odd){grid-column:1 / -1}
+}
+@media (max-width:640px){
+  .mwm-kpis{gap:12px}
+  .mwm-kpi{padding:16px 16px}
+  .mwm-kpi-v>span:first-child{font-size:26px}
+  .mwm-stats{gap:8px}
+  .mwm-stats .dz-stat{padding:10px 10px}
+  .mwm-stats .dz-stat-v{font-size:16px}
+  .mwm-closer{grid-template-columns:48px minmax(0,1fr) 72px;row-gap:4px}
+  .mwm-closer .dz-num:last-child{grid-column:2 / -1;text-align:left}
+  .mwm-cols{gap:4px;height:170px}
+  .mwm-collabels{gap:4px;font-size:10px}
+  .mwm-col-n{font-size:10.5px}
+  .mwm-col-bar{width:78%}
+  .mwm-heat{--mwm-name:120px;--mwm-col:46px}
+  .mwm-heat-head{font-size:10px}
+  .mwm-table{min-width:0}
+  .mwm-table.wide{min-width:0}
+  .mwm-table .dz-th,.mwm-table .dz-tr{grid-template-columns:var(--cols-s,var(--cols))}
+  .mwm-hs,.mwm-badge{display:none}
+  .mwm-table .dz-tr{padding:10px 0}
+  .mwm-plot-wrap{grid-template-columns:34px minmax(0,1fr);gap:6px}
+  .mwm-pt-l{font-size:10px}
+  .mwm-xax{font-size:10px}
+  .mwm-trow-d{font-size:18px}
+}
+@media print{
+  .mwm-kpi{background:#fff;box-shadow:none;border:1px solid var(--gray-300);border-radius:6px;break-inside:avoid}
+  .mwm-kpis{gap:.1in}
+  .mwm-table{min-width:0}
+  .mwm-scroll{overflow:visible}
+}
 /* 2v6:end monthly-wh-metrics */
 
 /* 2v6:shipping */
@@ -6681,7 +6827,8 @@ function renderShippedByWarehouseCard(sd,today){
     head:[['Warehouse / CM'],['SO count','num'],['Lines','num'],['Qty shipped','num'],['Shipped value','','30%'],['OTD','num'],['Early','num'],['On time','num'],['Late','num']],
     rows,limit:9,minWidth:820,empty:'No shipped or closed sales order delivery lines in this range.'});
 }
-function renderShipTargetScenario(sd,today){
+// controls:false leaves out the date inputs (the Monthly page's ship target card carries them).
+function renderShipTargetScenario(sd,today,{controls=true}={}){
   const stat=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${esc(label)}</span><span class="ms-sub">${esc(sub)}</span></div><div class="ms-num"><span class="ms-big ${tone||''}">${esc(value)}</span></div></div>`;
   const lineRow=r=>{
     const originalDue=originalHeaderDate(r);
@@ -6711,14 +6858,14 @@ function renderShipTargetScenario(sd,today){
     :`<section class="table pg-collapsed"><div class="card-head lg"><h2>Scenario lines</h2><div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div></div></section>`;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return pageGroupHtml('mo-scenario','Ship target scenario',`
-    <div class="filter-bar inline-controls">
+    ${controls?`<div class="filter-bar inline-controls">
       <label>Start date <input type="date" id="ship-scenario-start"${tipAttr('First day of the scenario range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>End date <input type="date" id="ship-scenario-end"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
       <label>Calendar basis <select id="ship-scenario-basis" class="select"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)">
         <option value="effective"${sd.useEffective?' selected':''}>Include reschedule dates</option>
         <option value="original"${!sd.useEffective?' selected':''}>Original line delivery only</option>
       </select></label>
-    </div>
+    </div>`:''}
     <div class="mini-strip cols-5">
       ${stat('Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`Booked by target: ${fmtNum(sd.bookedByTarget.length)} lines due by ${displayDate(sd.target)}, worth ${money(sd.bookedValue)} (open plus shipped).`)}
       ${stat('% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${fmtNum(sd.shippedPct)}% of the booked value has shipped or closed: ${money(sd.shippedValue)} of ${money(sd.bookedValue)}.`)}
@@ -7540,7 +7687,8 @@ function renderResults(){
     shipScenarioStartDate=inputDateValue(scenarioStart);
     const scenarioTarget=parseDate(shipScenarioTargetDate)||defaultShipScenarioDate(today);
     shipScenarioTargetDate=inputDateValue(scenarioTarget);
-    const scenario=cachedByFilter(m,`scenario|${shipScenarioStartDate}|${shipScenarioTargetDate}|${shipScenarioDateBasis}`,()=>shipScenarioData(m.allRows,scenarioTarget,today));
+    // 2v6: the ship target numbers follow the Order Health filters shown in the filter row (the whole report when none is set).
+    const scenario=cachedByFilter(m,`scenario|${weeklyFilterKey()}|${shipScenarioStartDate}|${shipScenarioTargetDate}|${shipScenarioDateBasis}`,()=>shipScenarioData(mwmRows(m),scenarioTarget,today));
     const openOriginalRows=originalHeaderDisplay.flatMap(g=>g.rows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r))).sort((a,b)=>{
       const am=monthKey(originalHeaderDate(a))||'9999-99';
       const bm=monthKey(originalHeaderDate(b))||'9999-99';
@@ -7654,8 +7802,9 @@ function renderResults(){
     notes.push(`The ship target scenario uses ${scenario.scenarioDateLabel}.`);
     if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
 
-    html+=`
-    ${pageGroupHtml('mo-months','Month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
+    // 2v6: the design's cards come first (mwmRenderMonthly); what the page showed before is its Show more detail.
+    const legacy=`
+    ${pageGroupHtml('mo-months','Open and shipped, month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
     ${pageGroupHtml('mo-shipped','By delivery month',`
     <section class="mini-strip cols-3" aria-label="Shipped to date">
       <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${ohN(mtd.rows,'delivery line')} (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
@@ -7682,8 +7831,9 @@ function renderResults(){
       head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
       items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,empty:'Every line in these months has shipped.'})}
     `,{rise:'rise-3'})}
-    ${renderShipTargetScenario(scenario,today)}
+    ${renderShipTargetScenario(scenario,today,{controls:false})}
     <details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}${aboutItems(notes.map(esc))}</ul></div></details>`;
+    html+=mwmRenderMonthly(m,{scenario,today,legacy});
   }
   // Metrics Timeline: on-track, perfect-order, and month-by-month open value.
   if(activeTab==='metrics'){
@@ -7719,7 +7869,8 @@ function renderResults(){
       </tr>`;
     });
     const attention=uniqueRows([...m.attentionRows,...m.missingPriceRows]).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
-    html+=`
+    // 2v6: the design's KPI cards, on-time line and monthly table come first (mwmRenderMetrics); this is its Show more detail.
+    const legacy=`
     ${pageGroupHtml('mt-quality','Order quality',`
       <div class="grid-4">
         ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open lines'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or without a commit date.`)}
@@ -7752,6 +7903,7 @@ function renderResults(){
     ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',title:'Lines needing attention',note:'most overdue first',limit:10}),{info:'mt-attention',rise:'rise-3',
       badge:`<span class="count-badge${attention.length?' bad':''}">${ohN(attention.length,'line')}</span>`})}
     ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
+    html+=mwmRenderMetrics(m,legacy);
   }
   // Warehouse Timeline: open value, late, and no-commit by warehouse/month.
   if(activeTab==='warehouses'){
@@ -7787,9 +7939,9 @@ function renderResults(){
       </tr>`;
     });
     const pickLabel=whPick?(whPick.size===1?[...whPick][0]:`${fmtNum(whPick.size)} warehouses`):'';
-    html+=`
-    ${pageGroupHtml('wh-score','Summary',renderWarehouseScorecard(m),{rise:'rise-1',
-      tools:whPick?`<span class="filter-note"${tipAttr('The warehouse filter picked here or on Order Health narrows the heat map and the detail table; the scorecard and the late shipments list every warehouse.')}>Showing ${esc(pickLabel)}</span><button type="button" class="link-btn" data-focus-key="wh-show-all" onclick="setWeeklyScorecardWarehouse('')"${tipAttr('Show every warehouse on this page and on Order Health.')}>Show all warehouses</button>`:''})}
+    // 2v6: the design's heat map, getting worse / better and Warehouses to watch come first (mwmRenderWarehouses); the
+    // sections below are its Show more detail (the scorecard moved up into Warehouses to watch).
+    const legacy=`
     ${pageGroupHtml('wh-late','By late shipments',renderWarehouseDefaulting(m,{context:'wh'}),{rise:'rise-2'})}
     ${pageGroupHtml('wh-open','By due month',`
     <section class="table">
@@ -7811,6 +7963,7 @@ function renderResults(){
       head:[['Warehouse'],['Open lines','num'],['On-track (open)','','14%'],['Perfect order','','14%'],['Backorder','num'],['Partial ship','num'],['Open qty','num'],['Open value','num'],['Late','num'],['No commit','num'],['Rescheduled','num']],
       rows:summaryRows,limit:12,minWidth:1040}),{rise:'rise-3'})}
     ${renderAbout(['wh-scorecard','wh-late','wh-heat','wh-summary'])}`;
+    html+=mwmRenderWarehouses(m,legacy);
   }
   // Supply Mix: high-level demand vs usable supply charts.
   if(activeTab==='supplydemand'){
@@ -8349,18 +8502,21 @@ function whScoreRiskSets(rows){
   const urgent=rows.filter(r=>r.isOpen&&hasOpenWork(r)&&isManuallyUrgent(r));
   return {risk:uniqueRows([...urgent,...pastDue,...noCommit,...resched]),pastDue:uniqueRows([...pastDue,...noCommit])};
 }
-function warehouseScorecardData(m){
-  return cachedByFilter(m,'wh|scorecard',()=>{
+// filtered: true narrows every line to the Order Health filters (warehouse group, segment, customer, ...), as the
+// Warehouse Timeline page does; the default is the whole report.
+function warehouseScorecardData(m,filtered=false){
+  return cachedByFilter(m,filtered?`wh|scorecard|${weeklyFilterKey()}`:'wh|scorecard',()=>{
+    const src=filtered?{rows:filterWeeklyRows(m.rows),otd:filterWeeklyRows(m.otdLast3MonthRows),all:filterWeeklyRows(m.allRows)}:{rows:m.rows,otd:m.otdLast3MonthRows,all:m.allRows};
     const byWarehouse=new Map();
     const whGroup=name=>{if(!byWarehouse.has(name))byWarehouse.set(name,{name,open:[],risk:[],pastDue:0,otd:[],fill:[],all:[]});return byWarehouse.get(name);};
     const daysLate=r=>r.originalDaysPastDue??daysFromToday(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate);
-    const sets=whScoreRiskSets(m.rows);
-    m.rows.forEach(r=>whGroup(rowWarehouse(r)).open.push(r));
+    const sets=whScoreRiskSets(src.rows);
+    src.rows.forEach(r=>whGroup(rowWarehouse(r)).open.push(r));
     sets.risk.forEach(r=>whGroup(rowWarehouse(r)).risk.push(r));
     sets.pastDue.filter(r=>{const d=daysLate(r);return d!==null&&d!==undefined&&d>=1;}).forEach(r=>whGroup(rowWarehouse(r)).pastDue++);
-    m.otdLast3MonthRows.forEach(r=>whGroup(rowWarehouse(r)).otd.push(r));
-    m.allRows.filter(isOrderLineRow).forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).fill.push(r);});
-    m.allRows.forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).all.push(r);});
+    src.otd.forEach(r=>whGroup(rowWarehouse(r)).otd.push(r));
+    src.all.filter(isOrderLineRow).forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).fill.push(r);});
+    src.all.forEach(r=>{if(byWarehouse.has(rowWarehouse(r)))byWarehouse.get(rowWarehouse(r)).all.push(r);});
     return [...byWarehouse.values()].map(g=>{
       const otd=otdStats(g.otd);
       return {...g,openAmt:rowOpenAmount(g.open),riskAmt:rowOpenAmount(g.risk),otdN:otd.scored.length,otdRate:otd.scored.length?otd.rate:null};
@@ -8499,6 +8655,480 @@ function renderWarehouseDefaulting(m,opts={}){
     </section>`;
 }
 // --- end 2v4 wh ---
+
+// ===== 2v6 monthly-wh-metrics: Monthly, Warehouse Timeline and Metrics Timeline in the design layout =====
+// Each page is a filter row (a segmented switch plus dropdown pills that write the Order Health filter state, so a
+// warehouse, segment or customer picked on one page stays picked on the others) and a few glass cards. The detail the
+// pages had before sits under a Show more disclosure at the bottom. Every number comes from the same helpers as before
+// (otdStats, fillRateForRows, perfectOrderStats, rescheduleStats, groupByOriginalHeaderMonth, shipScenarioData,
+// warehouseScorecardData); this block only groups and lays them out. Orders first: the headline is the order count.
+let mwmMode='shipped';   // Monthly: 'shipped' (by delivery date) | 'booked' (by original delivery date)
+let mwmWhMetric='late';  // Warehouse Timeline heat map: 'late' (late orders) | 'otd' (on-time %)
+let mwmWeeks=8;          // Warehouse Timeline heat map: weeks shown (8 | 12 | 26)
+let mwmRange=12;         // Metrics: months shown (12 | 6 | 3)
+function mwmSetMode(v){mwmMode=v==='booked'?'booked':'shipped';renderResults();}
+function mwmSetWhMetric(v){mwmWhMetric=v==='otd'?'otd':'late';renderResults();}
+function mwmSetWeeks(v){mwmWeeks=[8,12,26].includes(+v)?+v:8;renderResults();}
+function mwmSetRange(v){mwmRange=[3,6,12].includes(+v)?+v:12;renderResults();}
+// Remembers a Show more disclosure's state without a redraw (the browser has already opened or closed it).
+function mwmSetMoreOpen(key,open){
+  const k=`more-${key}`;
+  if(!!tableMore[k]===!!open||printMode)return;
+  const next={...tableMore};
+  if(open)next[k]=true;else delete next[k];
+  tableMore=next;
+}
+function mwmMore(key,what,body,tipText){
+  if(!body)return '';
+  const open=!!tableMore[`more-${key}`]||printMode;
+  return `<details class="mwm-more"${open?' open':''} data-more="${esc(key)}" ontoggle="mwmSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="mwm-more-show">Show more · ${esc(what)}</span><span class="mwm-more-less">Show less</span></summary><div class="mwm-more-body">${body}</div></details>`;
+}
+function mwmPct(v){return v===null||v===undefined?'—':`${fmtNum(v)}%`;}
+// A rate as the designs colour it: 85 and up teal, below the floor red, otherwise slate; no data is grey.
+function mwmRateColor(v,floor=75){return v===null||v===undefined?'var(--dz-ink-5)':v>=85?'var(--dz-teal)':v>=floor?'var(--dz-ink-2)':'var(--dz-risk-text)';}
+function mwmWhName(w){return String(w).replace(/ - /g,' · ');}
+function mwmOrders(n){return `${fmtNum(n)} ${n===1?'order':'orders'}`;}
+function mwmSigned(n,unit=''){const a=Math.abs(n);return `${n>0?'+':n<0?'−':''}${fmtNum(a)}${unit}`;}
+// True while any Order Health filter is set; the page numbers then come from the filtered lines.
+function mwmFiltered(){
+  return [weeklyWarehouseFilter,weeklySegmentFilter,weeklyCustomerFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter].some(f=>!f.includes('ALL'));
+}
+function mwmRows(m){
+  return mwmFiltered()?cachedByFilter(m,`mwm|rows|${weeklyFilterKey()}`,()=>filterWeeklyRows(m.allRows)):m.allRows;
+}
+// A delivery shipped 1 or more days after its original date is a late order (the same miss the on-time rate counts).
+function mwmIsLate(r){const t=otdTiming(r);return !!t&&t.late>=1;}
+const MWM_WH_PRESETS=[['CM','CM Regular',/^CM - /i],['SFG','CM SFG',/^CM SFG - /i],['ALLCM','All CM',/^CM( SFG)? - /i],['LACOMBE','Lacombe',/^(Spyder - Lacombe$|Lacombe)/i]];
+// The filter row of the three pages: seg (left) and the pills (right). Warehouse (or Group, with groupPill), Segment, and
+// Customer when customer:true; Customer, Department, Project and Order type also show while one of them is set, so a
+// filter picked on Order Health can always be seen and cleared. extra is more pills (the Weeks pill).
+function mwmFilterRow(m,seg,{customer=false,groupPill=false,extra=''}={}){
+  const oh=orderHealthData(m);
+  const isAll=f=>f.includes('ALL');
+  const whAll=isAll(weeklyWarehouseFilter);
+  const names=oh.weeklyWarehouseOptions;
+  const sameSet=list=>!whAll&&list.length>0&&list.length===weeklyWarehouseFilter.length&&list.every(w=>weeklyWarehouseFilter.includes(w));
+  const custom=weeklyWarehouseFilter.length===1?mwmWhName(weeklyWarehouseFilter[0]):`${fmtNum(weeklyWarehouseFilter.length)} warehouses`;
+  const pill=(id,label,allText,current,options,setter,labelOf=v=>v)=>dzFilterPill({id:`mwm-${id}`,label,
+    value:isAll(current)?'All':current.length===1?labelOf(current[0]):`${fmtNum(current.length)} selected`,
+    set:!isAll(current),tip:`Show only the lines of one ${label.toLowerCase()}, or ${allText.toLowerCase()}.`,
+    options:[{label:allText,selected:isAll(current),onclick:`${setter}(['ALL'])`},...options.map(o=>{
+      const v=typeof o==='string'?o:o.value,t=typeof o==='string'?o:o.label;
+      return {label:t,selected:current.length===1&&current[0]===v,onclick:`${setter}([${dzJs(v)}])`};
+    })]});
+  let whPill;
+  if(groupPill){
+    const groups=[['Spyder',names.filter(w=>!/^CM( SFG)? - /i.test(w))],['CM',names.filter(w=>/^CM - /i.test(w))],['CM SFG',names.filter(w=>/^CM SFG - /i.test(w))]].filter(([,list])=>list.length);
+    const hit=groups.find(([,list])=>sameSet(list));
+    whPill=dzFilterPill({id:'mwm-group',label:'Group',value:whAll?'All':hit?hit[0]:custom,set:!whAll,
+      tip:'Show Spyder, CM or CM SFG warehouses, one warehouse, or all of them.',
+      options:[{label:'All',selected:whAll,onclick:"setWeeklyWarehouseFilter(['ALL'])"},
+        ...groups.map(([label,list])=>({label,selected:!!hit&&hit[0]===label,onclick:`setWeeklyWarehouseFilter(${JSON.stringify(list)})`})),
+        {sep:true},
+        ...names.map(w=>({label:mwmWhName(w),selected:!hit&&weeklyWarehouseFilter.length===1&&weeklyWarehouseFilter[0]===w,onclick:`setWeeklyWarehouseFilter([${dzJs(w)}])`}))]});
+  }else{
+    const presets=MWM_WH_PRESETS.map(([id,label,re])=>[id,label,sameSet(names.filter(w=>re.test(w)))]);
+    const active=presets.find(p=>p[2]);
+    whPill=dzFilterPill({id:'mwm-warehouse',label:'Warehouse',value:whAll?'All':active?active[1]:custom,set:!whAll,
+      tip:'Show one warehouse group or one warehouse, or every warehouse.',
+      options:[{label:'All warehouses',selected:whAll,onclick:"setWeeklyWarehouseFilter(['ALL'])"},
+        ...presets.map(([id,label,on])=>({label,selected:on,onclick:`setWeeklyWarehousePreset('${id}')`})),
+        {sep:true},
+        ...names.map(w=>({label:mwmWhName(w),selected:!active&&weeklyWarehouseFilter.length===1&&weeklyWarehouseFilter[0]===w,onclick:`setWeeklyWarehouseFilter([${dzJs(w)}])`}))]});
+  }
+  const custLabel=v=>oh.weeklyCustomerOptionMap.get(v)||v;
+  const optional=(show,id,label,allText,current,options,setter,labelOf)=>show||!isAll(current)?pill(id,label,allText,current,options,setter,labelOf):'';
+  const pills=whPill
+    +pill('segment','Segment','All segments',weeklySegmentFilter,oh.weeklySegmentOptions,'setWeeklySegmentFilter')
+    +optional(customer,'customer','Customer','All customers',weeklyCustomerFilter,oh.weeklyCustomerOptions,'setWeeklyCustomerFilter',custLabel)
+    +optional(false,'department','Department','All departments',weeklyDepartmentFilter,oh.weeklyDepartmentOptions,'setWeeklyDepartmentFilter')
+    +optional(false,'project','Project','All projects',weeklyProjectFilter,oh.weeklyProjectOptions,'setWeeklyProjectFilter')
+    +optional(false,'order-type','Order type','All order types',weeklyOrderTypeFilter,oh.weeklyOrderTypeOptions,'setWeeklyOrderTypeFilter')
+    +extra;
+  const pick=(filter,labelOf,noun)=>isAll(filter)?'':filter.length===1?labelOf(filter[0]):`${fmtNum(filter.length)} ${noun}`;
+  const note=[whAll?'All warehouses':custom,isAll(weeklySegmentFilter)?'all segments':pick(weeklySegmentFilter,v=>v,'segments'),pick(weeklyCustomerFilter,custLabel,'customers'),
+    pick(weeklyOrderTypeFilter,v=>v,'order types'),pick(weeklyDepartmentFilter,v=>v,'departments'),pick(weeklyProjectFilter,v=>v,'projects')].filter(Boolean).join(' · ');
+  return dzFilterRow(seg,pills,mwmFiltered()?dzClear('resetWeeklyFilters()','Clear every filter on this page.'):'')+`<div class="print-only">Filters: ${esc(note)}</div>`;
+}
+// A line (spark) of 12 values on a 120 x 36 box, scaled to its own low and high; months with nothing scored break the line.
+function mwmSpark(vals,color,label){
+  const real=vals.filter(v=>v!==null&&v!==undefined);
+  if(real.length<2)return '<svg class="mwm-spark" viewBox="0 0 120 36" aria-hidden="true"></svg>';
+  const lo=Math.min(...real),hi=Math.max(...real),r=hi-lo||1;
+  let d='',pen=false;
+  vals.forEach((v,i)=>{
+    if(v===null||v===undefined){pen=false;return;}
+    d+=`${pen?'L':'M'}${Math.round(i/(vals.length-1)*120)} ${Math.round(32-(v-lo)/r*28)} `;pen=true;
+  });
+  return `<svg class="mwm-spark" viewBox="0 0 120 36" preserveAspectRatio="none" role="img" aria-label="${esc(label)}"><path d="${d.trim()}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"></path></svg>`;
+}
+
+// ---------- Monthly ----------
+// Twelve months ending with the report month: per month the deliveries (shipped: by close date) and the lines booked to
+// ship in it (booked: by original delivery date, shipped or not), each with orders, value, lines, on-time rate and late orders.
+function mwmMonthlyData(m){
+  return cachedByFilter(m,`mwm|monthly|${weeklyFilterKey()}`,()=>{
+    const rows=mwmRows(m);
+    const months=trailingMonths(12);
+    const keyOf=d=>d?`${d.getFullYear()}-${d.getMonth()}`:'';
+    const index=new Map(months.map((d,i)=>[keyOf(d),i]));
+    const at=d=>d?(index.get(keyOf(d))??-1):-1;
+    const ship=rows.filter(isClosedPerformanceRow);
+    const shipBy=months.map(()=>[]);
+    ship.forEach(r=>{const i=at(parseDate(r.closeDate));if(i>=0)shipBy[i].push(r);});
+    const orig=mwmFiltered()?groupByOriginalHeaderMonth(rows,indexShipmentsByLine(rows)):m.byOriginalHeaderMonth;
+    const origBy=new Map(orig.map(g=>[g.key,g]));
+    const stat=rs=>{const o=otdStats(rs);return {orders:rowDocCount(rs),value:rowShippedAmount(rs),lines:rs.length,otd:o.scored.length?o.rate:null,late:rowDocCount(rs.filter(mwmIsLate))};};
+    const entries=months.map((d,i)=>{
+      const g=origBy.get(monthKey(d));
+      const lines=g?g.rows.filter(isOrderLineRow):[];
+      const deliveries=g?g.rows.filter(isShipmentRow):[];
+      const o=otdStats(deliveries);
+      const shippedValue=g?g.closedAmount:0,openValue=g?g.openAmount:0;
+      return {date:d,
+        shipped:stat(shipBy[i]),
+        booked:{orders:rowDocCount(lines),value:openValue+shippedValue,shippedValue,openValue,lines:lines.length,otd:o.scored.length?o.rate:null,late:rowDocCount(deliveries.filter(mwmIsLate))},
+        fill:lines.some(r=>num(r.quantity)>0)?fillRateForRows(lines):null};
+    });
+    // Month to date against the same days of the month before, once the delivery history reaches back that far.
+    const today=reportToday();
+    const cutoff=today.getDate();
+    const prevSame=stat(shipBy[10].filter(r=>parseDate(r.closeDate).getDate()<=cutoff));
+    const coverageStart=ship.reduce((min,r)=>{const x=parseDate(r.closeDate);return !min||x<min?x:min;},null);
+    return {entries,prevSame,momOk:!!coverageStart&&coverageStart<=months[10],today};
+  });
+}
+function mwmStatusChip(bucket){
+  return /^(late|past due)$/i.test(bucket)?['Past due','red',3]:/no commit/i.test(bucket)?['No commit','red',2]:/resched/i.test(bucket)?['Rescheduled','amber',1]:['Open','teal',0];
+}
+function mwmRenderMonthly(m,ctx){
+  const {scenario:sd,today,legacy}=ctx;
+  const d=mwmMonthlyData(m);
+  const booked=mwmMode==='booked';
+  const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders booked to ship in each month by their original delivery date, shipped or not.']]
+    .map(([id,label,tip])=>({label,on:mwmMode===id,onclick:`mwmSetMode('${id}')`,key:`mwm-mode-${id}`,tip})),{label:'Monthly view'});
+  const filterRow=mwmFilterRow(m,seg,{customer:true});
+  if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
+  const e=d.entries[11],p=d.entries[10];
+  const monthName=today.toLocaleDateString('en-US',{month:'long'});
+  const prevName=p.date.toLocaleDateString('en-US',{month:'long'});
+  const partial=today.getDate()<new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  const s=booked?e.booked:e.shipped;
+  const verb=booked?'booked':'shipped';
+  // Target = the value booked to ship this month by original delivery date (open plus shipped), the "% booked $ shipped" base.
+  const target=e.booked.value;
+  const done=booked?e.booked.shippedValue:e.shipped.value;
+  const pct=target>0?Math.round(done/target*100):null;
+  const chipTone=pct===null?'':pct>=90?'teal':pct>=70?'amber':'red';
+  const base=booked?p.booked.orders:(d.momOk?d.prevSame.orders:null);
+  const delta=base===null?null:s.orders-base;
+  const barW=target>0?Math.min(100,done/target*100):0;
+  const tick=target>0&&done>target?target/done*100:100;
+  const heroTip=`${monthName}${partial?' so far':''}: ${mwmOrders(s.orders)} ${verb}, ${money(s.value)} on ${ohN(s.lines,'line')}.${booked?' Booked means due to ship this month by the original delivery date.':''}`;
+  const heroCard=dzCard({title:partial?`${monthName} to date`:monthName,sm:true,span:3,cls:'dz-fade',
+    tip:`${monthName}${partial?' so far':''}, ${verb}.`,
+    meta:pct===null?'':dzChip(booked?`${pct}% shipped`:`${pct}% of target`,chipTone),
+    body:`<div class="mwm-hero"${tipAttr(heroTip)}><span class="dz-big sm">${mwmOrders(s.orders)}</span><span class="dz-sub">${moneyShort(s.value)} · ${ohN(s.lines,'line')} ${verb}</span></div>
+      <div class="mwm-bar" role="img" aria-label="${esc(target>0?`${moneyShort(done)} shipped of ${moneyShort(target)} booked for ${monthName}`:'Nothing booked this month')}"${tipAttr(target>0?`Target is the value booked to ship in ${monthName} by original delivery date, open plus shipped: ${money(target)}. ${money(done)} ${booked?'of it has shipped':'has shipped this month'}.`:'')}><span class="mwm-bar-fill dz-grow" style="width:${barW.toFixed(1)}%"></span>${target>0?`<span class="mwm-bar-tick" style="left:${tick.toFixed(1)}%"></span>`:''}</div>
+      <div class="mwm-bar-l"><span>${moneyShort(done)} shipped</span><span>${booked?'Booked':'Target'} ${moneyShort(target)}</span></div>
+      <div class="mwm-stats">
+        ${dzStat({label:`vs ${prevName}${!booked&&partial&&delta!==null?', same days':''}`,value:delta===null?'—':`${mwmSigned(delta)} ${Math.abs(delta)===1?'order':'orders'}`,tone:delta===null?'muted':'',
+          tip:delta===null?'The delivery history does not reach back to last month.':`${mwmOrders(s.orders)} ${verb} against ${mwmOrders(base)} ${booked?`booked for ${prevName}`:`shipped on the same days of ${prevName}`}.`})}
+        ${dzStat({label:'On time',value:mwmPct(s.otd),tip:'Deliveries shipped on or before their original delivery date.'})}
+        ${dzStat({label:'Shipped late',value:mwmOrders(s.late),tone:s.late?'red':'muted',tip:`Orders with a delivery shipped 1 or more days after its original date, ${verb==='booked'?'among the lines booked for this month':'among this month’s deliveries'}.`})}
+      </div>`});
+
+  // Ship target card: the scenario's range (this month unless changed), the booked orders, and the largest past-due ones.
+  const pdOrders=rowDocCount(sd.pastOriginalDue),pdValue=rowOpenAmount(sd.pastOriginalDue);
+  const inOrders=rowDocCount(sd.onTrackWindow),inValue=rowOpenAmount(sd.onTrackWindow);
+  const byDoc=new Map();
+  sd.pastOriginalDue.forEach(r=>{
+    const k=`${r.sourceType||''}-${r.documentNumber||''}`;
+    if(!byDoc.has(k))byDoc.set(k,{so:r.documentNumber,name:r.name,value:0,chip:mwmStatusChip('')});
+    const g=byDoc.get(k);
+    g.value+=openLineValue(r);
+    const c=mwmStatusChip(r.statusBucket);
+    if(c[2]>g.chip[2])g.chip=c;
+  });
+  const closers=[...byDoc.values()].sort((a,b)=>b.value-a.value).slice(0,5);
+  const datesOpen=!!tableMore['mwm-dates'];
+  const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
+  const dates=datesOpen?`<div class="mwm-dates">
+      <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End <input type="date" id="ship-scenario-end" class="dz-pillinput"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>Basis <select id="ship-scenario-basis" class="dz-pillinput"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)"><option value="effective"${sd.useEffective?' selected':''}>With reschedules</option><option value="original"${!sd.useEffective?' selected':''}>Original only</option></select></label>
+    </div>`:'';
+  const targetCard=dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,span:3,cls:'dz-fade',
+    tip:'The ship target range: lines due by the end date that are still open, and the past-due ones that would close the gap.',
+    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the start date, the end date or the date basis of this ship target.')}>Dates</button>`,
+    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
+      <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
+      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
+
+  // Orders by month, twelve columns; the report month is the indigo one.
+  const key=booked?'booked':'shipped';
+  const max=Math.max(1,...d.entries.map(x=>x[key].orders));
+  const monthText=(x,i)=>{const l=x.date.toLocaleDateString('en-US',{month:'short',year:'numeric'});return i===11&&partial?`${l} (to date)`:l;};
+  const chart=dzCard({title:`Orders ${verb} by month`,span:6,
+    meta:`<span class="mwm-legend"><span><i class="mwm-sw" style="background:var(--dz-indigo)"></i>This month</span><span><i class="mwm-sw" style="background:var(--dz-ink-6)"></i>Earlier</span></span>`,
+    body:`<div class="mwm-cols" data-tip-notab style="--n:12">${d.entries.map((x,i)=>`<div class="mwm-col dz-fade${i===11?' now':''}" style="--i:${i}"${tipAttr(`${monthText(x,i)}: ${mwmOrders(x[key].orders)} ${verb}, ${money(x[key].value)} on ${ohN(x[key].lines,'line')}.`)}><span class="mwm-col-n">${fmtNum(x[key].orders)}</span><span class="mwm-col-bar" style="height:${(x[key].orders/max*80).toFixed(1)}%"></span></div>`).join('')}</div>
+      <div class="mwm-collabels" style="--n:12">${d.entries.map(x=>`<span>${esc(shortMonth(x.date))}</span>`).join('')}</div>`});
+
+  // Month by month, newest first.
+  const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
+  const table=dzCard({title:'Month by month',span:6,
+    body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Deliveries on or before their original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Share of the ordered quantity delivered, for the lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders with a delivery 1 or more days after its original date.')}>Late orders</span></div>
+      ${[...d.entries].reverse().map((x,ri)=>{
+        const i=11-ri,v=x[key],cur=i===11;
+        const label=x.date.toLocaleDateString('en-US',{month:'short'})+(x.date.getMonth()===0||i===0?` ${x.date.getFullYear()}`:'');
+        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(label)}${cur&&partial?' <span class="mwm-todate">to date</span>':''}</span><b role="cell" class="dz-num">${fmtNum(v.orders)}</b><span role="cell" class="dz-num mwm-soft">${moneyShort(v.value)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${fmtNum(v.lines)}</span><b role="cell" class="dz-num" style="color:${mwmRateColor(v.otd)}">${mwmPct(v.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(x.fill)}</span><span role="cell" class="dz-num ${v.late?'mwm-lateN':'mwm-soft'}">${fmtNum(v.late)}</span></div>`;
+      }).join('')}
+    </div></div>`});
+
+  const more=mwmMore('mwm-monthly','year over year, original dates, items not shipped yet and the ship calendar',legacy,
+    'Year over year, the original delivery date summary, items not shipped yet, the ship target calendar and notes on the numbers. The ship target parts follow the filters; the rest covers the whole report.');
+  return `${filterRow}<div class="dz-grid">${heroCard}${targetCard}${chart}${table}</div>${more}`;
+}
+
+// ---------- Warehouse Timeline ----------
+// Per warehouse and week (Sunday to Saturday, newest last): deliveries shipped that week, how many orders were late, and the
+// on-time rate. The Order Health filters narrow the deliveries.
+function mwmWeekData(m,n){
+  return cachedByFilter(m,`mwm|weeks|${weeklyFilterKey()}|${n}`,()=>{
+    const today=reportToday();
+    const start=new Date(today);start.setDate(start.getDate()-start.getDay());start.setHours(0,0,0,0);
+    const wins=weekWindows(start,n,-1).reverse();
+    const from=wins[0].s;
+    const day=x=>Date.UTC(x.getFullYear(),x.getMonth(),x.getDate());
+    const ship=(mwmFiltered()?filterWeeklyRows(m.closedRows):m.closedRows).filter(isClosedPerformanceRow);
+    const byWh=new Map();
+    ship.forEach(r=>{
+      const dt=parseDate(r.closeDate);
+      if(!dt)return;
+      const i=Math.floor((day(dt)-day(from))/(7*864e5));
+      if(i<0||i>=n)return;
+      const name=rowWarehouse(r);
+      if(!byWh.has(name))byWh.set(name,wins.map(()=>[]));
+      byWh.get(name)[i].push(r);
+    });
+    const rows=[...byWh.entries()].map(([name,weeks])=>{
+      const cells=weeks.map(rs=>{const o=otdStats(rs);return {orders:rowDocCount(rs),late:rowDocCount(rs.filter(mwmIsLate)),otd:o.scored.length?o.rate:null,scored:o.scored.length};});
+      const all=otdStats(weeks.flat());
+      return {name,cells,lateTotal:cells.reduce((s,c)=>s+c.late,0),otdAll:all.scored.length?all.rate:null};
+    }).sort((a,b)=>b.lateTotal-a.lateTotal||(a.otdAll??101)-(b.otdAll??101)||a.name.localeCompare(b.name));
+    return {wins,rows,partial:today.getDay()!==6};
+  });
+}
+// The warehouse list with the two groups (everything but CM SFG, then CM SFG), each with its subtotal; sorted by at-risk value.
+function mwmWatchCard(m){
+  const sc=warehouseScorecardData(m,mwmFiltered());
+  const groups=scorecardGroups(sc,weeklyScorecardAll).sort((a,b)=>(a.id==='sfg')-(b.id==='sfg'));
+  const shown=groups.reduce((s,g)=>s+g.shown.length,0);
+  const focused=whFocusedWarehouse();
+  const rowTip=g=>`${g.name}: open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}, ${fmtNum(g.pastDue)} past due, OTD ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}; ${focused===g.name?'click to show all.':'click to filter.'}`;
+  const badgeOf=g=>/^CM SFG - /i.test(g.name)?'':/^CM - /i.test(g.name)?'CM':'Spyder';
+  const row=(g,i)=>`<button type="button" class="dz-tr mwm-wrow${focused===g.name?' sel':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===g.name?'true':'false'}" aria-label="${esc(rowTip(g))}"${tipAttr(rowTip(g))}>
+      <span class="mwm-wname"><span class="mwm-wtxt">${esc(mwmWhName(g.name))}</span>${badgeOf(g)?`<span class="mwm-badge">${badgeOf(g)}</span>`:''}</span>
+      <span class="dz-num mwm-soft">${moneyShort(g.openAmt)}</span>
+      <b class="dz-num${g.riskAmt?'':' mwm-mute'}">${g.riskAmt?moneyShort(g.riskAmt):'—'}</b>
+      <span class="dz-num ${g.pastDue?'mwm-soft':'mwm-mute'}">${g.pastDue?fmtNum(g.pastDue):'—'}</span>
+      <b class="dz-num" style="color:${mwmRateColor(g.otdRate,60)}">${mwmPct(g.otdRate)}</b>
+      <b class="dz-num mwm-hs" style="color:${mwmRateColor(g.fillRate,60)}">${mwmPct(g.fillRate)}</b>
+      <b class="dz-num mwm-hs" style="color:${mwmRateColor(g.hitRate,60)}">${mwmPct(g.hitRate)}</b>
+    </button>`;
+  const subtotal=grp=>{
+    const t=grp.subtotal;
+    const text=`${grp.label} subtotal (${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}): open ${money(t.openAmt)}, at risk ${money(t.riskAmt)}, ${fmtNum(t.pastDue)} ${t.pastDue===1?'line':'lines'} past due, OTD 3 mo ${rateLabel(t.otdRate)}`;
+    return `<div class="dz-tr mwm-sub" role="group" aria-label="${esc(text)}"${tipAttr(text)}><span class="mwm-wname" aria-hidden="true"><span class="mwm-wtxt">Subtotal</span></span><span class="dz-num" aria-hidden="true">${moneyShort(t.openAmt)}</span><b class="dz-num" aria-hidden="true">${t.riskAmt?moneyShort(t.riskAmt):'—'}</b><span class="dz-num" aria-hidden="true">${t.pastDue?fmtNum(t.pastDue):'—'}</span><b class="dz-num" style="color:${mwmRateColor(t.otdRate,60)}" aria-hidden="true">${mwmPct(t.otdRate)}</b><span class="mwm-hs" aria-hidden="true"></span><span class="mwm-hs" aria-hidden="true"></span></div>`;
+  };
+  const cols='minmax(0,2fr) repeat(6,minmax(0,.7fr))';
+  const body=groups.length?`<div class="dz-table mwm-tablewrap"><div class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,2.1fr) repeat(4,minmax(0,.8fr));--gap:10px">
+      <div class="dz-th"><span>Warehouse</span><span class="dz-num"${tipAttr('Open value: what is still to ship on open lines.')}>Open</span><span class="dz-num"${tipAttr('Open value of at-risk lines.')}>At risk</span><span class="dz-num"${tipAttr('Lines past their original date with no reschedule or no commit date.')}>Past due</span><span class="dz-num"${tipAttr('Deliveries (3 months) shipped by the original date; teal 85%+, red under 60%.')}>OTD 3 mo</span><span class="dz-num mwm-hs"${tipAttr('Delivered or closed share of ordered quantity.')}>Fill</span><span class="dz-num mwm-hs"${tipAttr('Rescheduled deliveries (12 months) shipped by their reschedule date.')}>Resched</span></div>
+      ${groups.map(grp=>`<div class="mwm-ghead" role="heading" aria-level="3">${esc(grp.label==='CM SFG'?'CM SFG':'Spyder and CM warehouses')}<span>${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>${grp.shown.map(row).join('')}${subtotal(grp)}`).join('')}
+    </div></div>
+    ${groups.some(g=>g.rows.length>9)?`<div class="mwm-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(sc.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show only the top 9 warehouses of each group.':'Show every warehouse in each group.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}`
+    :'<p class="empty-note">No open lines or recent deliveries in this report.</p>';
+  return dzCard({title:'Warehouses to watch',sm:true,span:6,meta:'sorted by at-risk value',tip:'Open value, at-risk value, past-due lines and the delivery rates of each warehouse; click a row to show only that warehouse.',body});
+}
+function mwmRenderWarehouses(m,legacy){
+  const late=mwmWhMetric==='late';
+  const n=mwmWeeks;
+  const seg=dzSeg([['late','Late orders','Orders shipped 1 or more days after their original delivery date, by week.'],['otd','On-time %','Deliveries shipped on or before their original delivery date, by week.']]
+    .map(([id,label,tip])=>({label,on:mwmWhMetric===id,onclick:`mwmSetWhMetric('${id}')`,key:`mwm-wh-${id}`,tip})),{label:'Heat map shows'});
+  const weeksPill=dzFilterPill({id:'mwm-weeks',label:'Weeks',value:`Last ${n}`,set:false,tip:'How many weeks the heat map covers.',
+    options:[8,12,26].map(k=>({label:`Last ${k}`,selected:n===k,onclick:`mwmSetWeeks(${k})`}))});
+  const filterRow=mwmFilterRow(m,seg,{groupPill:true,extra:weeksPill});
+  if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
+  const w=mwmWeekData(m,n);
+  const rows=late?w.rows.filter(r=>r.lateTotal>0):w.rows;
+  const heatOpen=!!tableMore['mwm-heat']||printMode;
+  const shown=heatOpen?rows:rows.slice(0,10);
+  const lateC=v=>v===0?['#f1f5f9','#94a3b8']:v<=2?['#ffe4e6','#be123c']:v<=5?['#fecdd3','#be123c']:v<=9?['#fb7185','#0f172a']:['#e11d48','#fff'];
+  const otdC=v=>v===null?['rgba(15,23,42,.03)','#cbd5e1']:v>=85?['#ccfbf1','#0f766e']:v>=70?['#f1f5f9','#334155']:v>=40?['#ffe4e6','#be123c']:['#fb7185','#0f172a'];
+  const legend=(late?[['0','#f1f5f9'],['1–5','#fecdd3'],['6–9','#fb7185'],['10+','#e11d48']]:[['85%+','#ccfbf1'],['70–84%','#f1f5f9'],['40–69%','#ffe4e6'],['under 40%','#fb7185']])
+    .map(([l,c])=>`<span><i class="mwm-sw" style="background:${c}"></i>${l}</span>`).join('');
+  const step=n>16?2:1;
+  const focused=whFocusedWarehouse();
+  const heatRows=shown.map((r,ri)=>`<div class="mwm-heat-row dz-fade" role="row" style="--i:${ri}"><span role="rowheader" class="mwm-heat-rh"><button type="button" class="mwm-heat-name${focused===r.name?' sel':''}" data-focus-key="heat-${esc(r.name)}" data-wh="${esc(r.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===r.name?'true':'false'}"${tipAttr(`${r.name}: ${ohN(r.lateTotal,'late order')} in the last ${n} weeks; ${focused===r.name?'click to show all.':'click to filter.'}`)}>${esc(mwmWhName(r.name))}</button></span>${r.cells.map((c,i)=>{
+      const [bg,fg]=late?lateC(c.late):otdC(c.otd);
+      const wk=w.wins[i];
+      const tip=`${r.name}, week of ${shortDay(wk.s)}${i===n-1&&w.partial?' (to date)':''}: ${c.orders?`${ohN(c.late,'late order')} of ${mwmOrders(c.orders)} shipped, ${mwmPct(c.otd)} on time`:'nothing shipped'}`;
+      return `<span class="mwm-heat-cell" role="cell" style="background:${bg};color:${fg}"${tipAttr(tip)}>${late?fmtNum(c.late):c.otd===null?'—':`${c.otd}%`}</span>`;
+    }).join('')}</div>`).join('');
+  const heat=dzCard({title:late?'Late orders by week':'On-time delivery by week',span:6,meta:`<span class="mwm-legend">${legend}</span>`,
+    body:rows.length?`<div class="mwm-scroll"><div class="mwm-heat${n>12?' dense':''}" role="table" aria-label="${late?'Late orders':'On-time delivery'} by warehouse and week" data-tip-notab style="--n:${n};min-width:calc(var(--mwm-name) + ${n}*var(--mwm-col))">
+        <div class="mwm-heat-row mwm-heat-head" role="row"><span role="columnheader">Warehouse</span>${w.wins.map((x,i)=>`<span role="columnheader" aria-label="Week of ${esc(shortDay(x.s))}">${i%step===0||i===n-1&&step===1?esc(shortDay(x.s)):''}</span>`).join('')}</div>${heatRows}
+      </div></div>
+      ${rows.length>10?`<div class="mwm-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(rows.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-mwm-heat" onclick="toggleTableMore('mwm-heat')"${tipAttr(heatOpen?'Show only the 10 warehouses with the most late orders.':`Show all ${fmtNum(rows.length)} warehouses.`)}>${heatOpen?'Show fewer':'Show all'}</button></div>`:''}`
+      :`<p class="empty-note">${late?`No late orders in the last ${n} weeks.`:`No deliveries in the last ${n} weeks.`}</p>`});
+  // Getting worse / better: the first week against the newest week of the window (the newest may still be filling).
+  const trend=w.rows.map(r=>{
+    // Late orders compare every week; on-time % only weeks with at least 2 scored deliveries (one delivery is 0 or 100 %).
+    const vals=r.cells.filter(c=>late||c.scored>=2).map(c=>late?c.late:c.otd).filter(v=>v!==null);
+    if(vals.length<2)return null;
+    const first=vals[0],last=vals[vals.length-1];
+    return {name:r.name,first,last,delta:last-first};
+  }).filter(Boolean);
+  const bad=x=>late?x.delta>0:x.delta<0;
+  const good=x=>late?x.delta<0:x.delta>0;
+  const weigh=x=>Math.abs(x.delta);
+  const worse=trend.filter(bad).sort((a,b)=>weigh(b)-weigh(a)||a.name.localeCompare(b.name)).slice(0,3);
+  const better=trend.filter(good).sort((a,b)=>weigh(b)-weigh(a)||a.name.localeCompare(b.name)).slice(0,3);
+  const trendRow=(x,tone)=>`<div class="mwm-trow dz-fade"><div><div class="mwm-trow-n">${esc(mwmWhName(x.name))}</div><div class="mwm-trow-s">${late?`${fmtNum(x.first)} → ${fmtNum(x.last)} late ${x.last===1?'order':'orders'} in ${n} weeks`:`${fmtNum(x.first)}% → ${fmtNum(x.last)}% on time in ${n} weeks`}</div></div><span class="mwm-trow-d ${tone}">${mwmSigned(x.delta,late?'':' pts')}</span></div>`;
+  const trendCard=(title,list,tone,none)=>dzCard({title,sm:true,span:3,tip:`The first week of the heat map against the newest week${w.partial?' (still in progress)':''}.`,body:`<div class="mwm-tlist">${list.map(x=>trendRow(x,tone)).join('')||`<p class="empty-note">${none}</p>`}</div>`});
+  return `${filterRow}<div class="dz-grid">${heat}${trendCard('Getting worse',worse,'red','No warehouse is getting worse.')}${trendCard('Getting better',better,'teal','No warehouse is getting better.')}${mwmWatchCard(m)}</div>${mwmMore('mwm-warehouses','open value by due month, late shipments and the KPI summary',legacy,'Open value by warehouse and due month, which warehouse is defaulting, and the warehouse KPI summary. A warehouse picked above narrows the heat map and the detail table.')}`;
+}
+
+// ---------- Metrics Timeline ----------
+// Twelve months ending with the report month, scored like the Order Health cards: on-time and reschedule hit rates over the
+// deliveries of the month, fill rate over the lines due that month, perfect order by the month of a line's last delivery,
+// average days late over the late deliveries, and the orders shipped and late.
+function mwmMetricsData(m){
+  return cachedByFilter(m,`mwm|metrics|${weeklyFilterKey()}|${typeof ohStamp==='function'?ohStamp():''}`,()=>{
+    const rows=mwmRows(m);
+    const months=trailingMonths(12);
+    const keyOf=d=>d?`${d.getFullYear()}-${d.getMonth()}`:'';
+    const index=new Map(months.map((d,i)=>[keyOf(d),i]));
+    const at=d=>d?(index.get(keyOf(d))??-1):-1;
+    const ship=rows.filter(isClosedPerformanceRow);
+    const shipBy=months.map(()=>[]);
+    ship.forEach(r=>{const i=at(parseDate(r.closeDate));if(i>=0)shipBy[i].push(r);});
+    const fillBy=months.map(()=>[]);
+    rows.forEach(r=>{if(!isOrderLineRow(r))return;const i=at(originalHeaderDate(r));if(i>=0)fillBy[i].push(r);});
+    // Perfect order: a completed line counts in the month of its last delivery.
+    const shipments=indexShipmentsByLine(rows);
+    const stats=perfectOrderStats(rows,shipments);
+    const perfectSet=new Set(stats.perfect);
+    const perfect=months.map(()=>({n:0,ok:0}));
+    stats.eligible.forEach(r=>{
+      const dates=(shipments.get(orderLineKey(r))||[]).map(x=>parseDate(x.closeDate)).filter(Boolean);
+      if(isShipmentRow(r)&&parseDate(r.closeDate))dates.push(parseDate(r.closeDate));
+      if(!dates.length)return;
+      const i=at(new Date(Math.max(...dates)));
+      if(i<0)return;
+      perfect[i].n++;if(perfectSet.has(r))perfect[i].ok++;
+    });
+    // Reschedule hit: scored over the last 12 months from today (the twelve months shown all lie inside that window).
+    const rs=rescheduleStats(rows);
+    const metSet=new Set(rs.met);
+    const hit=months.map(()=>({n:0,ok:0}));
+    rs.closed.forEach(r=>{const i=at(parseDate(r.closeDate));if(i<0)return;hit[i].n++;if(metSet.has(r))hit[i].ok++;});
+    const o=months.map((d,i)=>{
+      const rs2=shipBy[i];
+      const ots=otdStats(rs2);
+      const scored=rs2.map(r=>deliveryLateDays(r)).filter(x=>x!==null);
+      const lateDays=scored.filter(x=>x>=1);
+      return {date:d,
+        orders:rowDocCount(rs2),
+        lateOrders:rowDocCount(rs2.filter(mwmIsLate)),
+        otd:ots.scored.length?ots.rate:null,otdScored:ots.scored.length,
+        fill:fillBy[i].some(r=>num(r.quantity)>0)?fillRateForRows(fillBy[i]):null,
+        perfect:perfect[i].n?Math.round(perfect[i].ok/perfect[i].n*100):null,
+        days:scored.length?(lateDays.length?Math.round(lateDays.reduce((s,x)=>s+x,0)/lateDays.length*10)/10:0):null,
+        hit:hit[i].n?Math.round(hit[i].ok/hit[i].n*100):null};
+    });
+    // Why the newest month's late orders were late: each order under the first reason of its first late delivery.
+    const L=o[11].orders>0?11:10;
+    const lateRows=shipBy[L].filter(mwmIsLate);
+    if(typeof ohRowMemoFresh==='function')ohRowMemoFresh();
+    const reasonOf=r=>{const list=typeof ohRowInfo==='function'?ohRowInfo(r).reasons:lineReasons(r);return list.length?overrideLabel(list[0]):'No reason noted';};
+    const perOrder=new Map();
+    lateRows.forEach(r=>{const k=`${r.sourceType||''}-${r.documentNumber||''}`;if(!perOrder.has(k))perOrder.set(k,reasonOf(r));});
+    const counts=new Map();
+    perOrder.forEach(v=>counts.set(v,(counts.get(v)||0)+1));
+    const causes=[...counts.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+    return {months:o,L,causes,lateOrders:perOrder.size};
+  });
+}
+function mwmRenderMetrics(m,legacy){
+  const n=mwmRange;
+  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Show the last ${k} months.`})),{label:'Months shown'});
+  const filterRow=mwmFilterRow(m,seg);
+  if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
+  const x=mwmMetricsData(m);
+  const mo=x.months,L=x.L;
+  const slice=a=>a.slice(12-n);
+  const monthName=d=>d.toLocaleDateString('en-US',{month:'long'});
+  const prevShort=mo[L-1].date.toLocaleDateString('en-US',{month:'short'});
+  const defs=[
+    {k:'otd',label:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'Target 90%',tip:'Deliveries shipped on or before their original delivery date.'},
+    {k:'fill',label:'Fill rate',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-teal)',sub:'Of ordered quantity',tip:'Share of the ordered quantity delivered, for the lines due that month.'},
+    {k:'perfect',label:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'On time, complete, never rescheduled',tip:'Completed lines shipped complete, on time to their commit date and never rescheduled.'},
+    {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days after the original date, over the deliveries that shipped late.'},
+    {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Rescheduled deliveries shipped by their reschedule date.'}
+  ];
+  const kpis=defs.map((c,i)=>{
+    const series=mo.map(r=>r[c.k]);
+    const cur=series[L],prev=series[L-1];
+    const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
+    const goodMove=diff===null||diff===0?null:c.inv?diff<0:diff>0;
+    const dText=diff===null?'':`${mwmSigned(diff,c.unit)} vs ${prevShort}`;
+    const tip=`${c.label}, ${mo[L].date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}${cur===null?': nothing to score.':`: ${c.fmt(cur)}${diff===null?'':` (${dText})`}.`} ${c.tip}`;
+    return `<div class="mwm-kpi dz-fade" style="--i:${i}"${tipAttr(tip)}>
+      <div class="mwm-kpi-l">${c.label}</div>
+      <div class="mwm-kpi-v"><span>${cur===null?'—':c.fmt(cur)}</span>${dText?`<span class="mwm-kpi-d ${goodMove===null?'':goodMove?'teal':'red'}">${esc(dText)}</span>`:''}</div>
+      ${mwmSpark(slice(series),c.color,`${c.label}, last ${n} months`)}
+      <div class="mwm-kpi-s">${c.sub}</div>
+    </div>`;
+  }).join('');
+  // On-time line: 12 (or 6, 3) points on a 50 to 100 % scale (lower when a month needs it), with the 90 % target dashed.
+  const pts=slice(mo);
+  const real=pts.map(r=>r.otd).filter(v=>v!==null);
+  const lo=Math.min(50,Math.floor((real.length?Math.min(...real):50)/10)*10);
+  const yOf=v=>(100-v)/(100-lo)*100;
+  let path='',pen=false;
+  pts.forEach((r,i)=>{if(r.otd===null){pen=false;return;}path+=`${pen?'L':'M'}${Math.round((i+.5)/pts.length*1200)} ${Math.round(yOf(r.otd)*2)} `;pen=true;});
+  const dots=pts.map((r,i)=>{
+    if(r.otd===null)return '';
+    const px=((i+.5)/pts.length*100).toFixed(2),py=yOf(r.otd).toFixed(2);
+    const tip=`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${r.otd}% on time, ${ohN(r.otdScored,'delivery line')} scored, ${mwmOrders(r.lateOrders)} late.`;
+    return `<span class="mwm-pt" style="left:${px}%;top:${py}%"${tipAttr(tip)}></span><span class="mwm-pt-l" style="left:${px}%;top:${py}%">${r.otd}%</span>`;
+  }).join('');
+  const mid=Math.round((100+lo)/2);
+  const line=dzCard({title:'On-time delivery',span:4,
+    meta:`<span class="mwm-legend"><span><i class="mwm-line"></i>On time</span><span><i class="mwm-line dash"></i>Target 90%</span></span>`,
+    body:`<div class="mwm-plot-wrap"><div class="mwm-yax"><span style="top:0">100%</span><span style="top:50%">${mid}%</span><span style="top:100%">${lo}%</span></div>
+      <div class="mwm-plot" data-tip-notab><i class="mwm-grid" style="top:0"></i><i class="mwm-grid" style="top:50%"></i><i class="mwm-grid base" style="bottom:0"></i><i class="mwm-target" style="top:${yOf(90).toFixed(2)}%"></i>
+        <svg viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="${path.trim()}" fill="none" stroke="var(--dz-indigo)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>${dots}</div></div>
+      <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`});
+  const causeMax=Math.max(1,...x.causes.map(c=>c[1]));
+  const shownCauses=x.causes.length>6?[...x.causes.slice(0,5),['Other',x.causes.slice(5).reduce((s,c)=>s+c[1],0)]]:x.causes;
+  const causes=dzCard({title:'Late orders by cause',sm:true,span:2,tip:'Each late order under the first reason noted on its late delivery: a reason from SAP or the override status picked on the line.',
+    body:`<div class="mwm-cause-head"><span class="mwm-cause-n">${fmtNum(x.lateOrders)}</span><span class="dz-meta">late ${x.lateOrders===1?'order':'orders'} in ${esc(monthName(mo[x.L].date))}</span></div>
+      <div class="dz-bars mwm-cause-bars">${shownCauses.map(([label,c],i)=>dzBarRow({label,value:c,max:causeMax,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',i,tip:`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late.`})).join('')||'<p class="empty-note">No late orders.</p>'}</div>`});
+  const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
+  const table=dzCard({title:'Monthly metrics',span:6,
+    body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders with a delivery 1 or more days after its original date.')}>Late orders</span></div>
+      ${[...slice(mo)].reverse().map((r,ri)=>{
+        const cur=ri===0&&slice(mo).length&&r===mo[11];
+        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
+      }).join('')}
+    </div></div>`});
+  return `${filterRow}<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Order quality rates, open value and at-risk lines by due month, the metrics timeline and the lines needing attention. These cover the whole report.')}`;
+}
+// ===== end 2v6 monthly-wh-metrics JS =====
 
 // One-line description of each page: the sidebar tooltip, and shown under the page name on the load screen.
 const PAGE_TIPS={
