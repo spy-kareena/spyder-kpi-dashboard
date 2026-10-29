@@ -2581,6 +2581,290 @@ a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
 /* 2v6:end shipping */
 
 /* 2v6:supply */
+/* Purchase Orders, Supply / Demand, Supply Mix and Build Risk: glass cards on the page gradient (prefix sup-) */
+.sup-page{display:flex;flex-direction:column;gap:22px;min-width:0}
+.sup-page .red{color:var(--dz-risk-text)}
+.sup-page .amber{color:var(--dz-amber-text)}
+.sup-page .teal{color:var(--dz-teal)}
+.sup-page .muted{color:var(--dz-ink-5)}
+.sup-page .dz-chip.red{color:var(--dz-risk-text)}
+.sup-page .dz-chip.amber{color:var(--dz-amber-text)}
+.sup-page .dz-chip.teal{color:var(--dz-teal)}
+.sup-anchor{scroll-margin-top:12px}
+.sup-page :focus-visible{outline-color:var(--dz-indigo)}
+.sup-tile:focus-visible,.sup-cmcard:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+
+/* Order tiles: a dot and label, the order count, then value and lines */
+.sup-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}
+.sup-tile{min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;font:inherit;color:var(--dz-ink-1);background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card)}
+button.sup-tile{cursor:pointer}
+button.sup-tile:hover{background:var(--dz-glass-80)}
+.sup-tile.sel{background:#fff;border-color:rgba(99,102,241,.45)}
+.sup-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
+.sup-dot{display:block;width:8px;height:8px;border-radius:50%;flex:none}
+.sup-tile-v{margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}
+.sup-tile-s{margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
+.sup-more-views{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.sup-page button.dz-stat[aria-pressed="true"]{background:#fff;border-color:rgba(99,102,241,.45)}
+.sup-page .dz-stat-v{font-size:20px}
+
+/* Card pieces */
+.sup-bigrow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:10px}
+.sup-cardbody{margin-top:18px}
+.sup-bars{gap:11px}
+.sup-bars .dz-barrow{grid-template-columns:150px minmax(0,1fr) minmax(28px,auto)}
+.sup-bars .dz-barrow-sub{font-size:11.5px}
+.sup-unit{font-size:12px;font-weight:400;color:var(--dz-ink-4)}
+.sup-seg-sm{padding:3px;font-size:12.5px}
+.sup-seg-sm button{padding:4px 12px}
+.sup-empty{margin:16px 0 8px;font-size:13px;color:var(--dz-ink-4)}
+.sup-legend{display:inline-flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--dz-ink-4)}
+.sup-legend>span{display:inline-flex;align-items:center;gap:5px}
+.sup-legend i{display:block;width:12px;height:12px;border-radius:3px}
+.dz-card-head .sup-seg-sm{font-weight:500}
+
+/* Column charts (Received on time, Received by week, Builds by month) */
+.sup-cols{margin-top:18px}
+.sup-plot{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:14px;align-items:end;height:calc(var(--h) + 34px);border-bottom:1px solid rgba(15,23,42,.12)}
+.sup-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.sup-col-v{margin-bottom:4px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sup-col-bar{display:block;width:60%;border-radius:6px 6px 0 0}
+.sup-target{position:absolute;left:0;right:0;border-top:2px dashed var(--dz-teal);pointer-events:none}
+.sup-col-labels{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:14px;margin-top:8px;font-size:12px;color:var(--dz-ink-4);text-align:center}
+.sup-col-labels span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.sup-stack{display:flex;flex-direction:column;gap:2px;width:56%}
+.sup-stack>div{width:100%}
+.sup-cols[style*="--n:7"] .sup-plot,.sup-cols[style*="--n:8"] .sup-plot,.sup-cols[style*="--n:9"] .sup-plot,.sup-cols[style*="--n:10"] .sup-plot,.sup-cols[style*="--n:11"] .sup-plot,.sup-cols[style*="--n:12"] .sup-plot,.sup-cols[style*="--n:7"] .sup-col-labels,.sup-cols[style*="--n:8"] .sup-col-labels,.sup-cols[style*="--n:9"] .sup-col-labels,.sup-cols[style*="--n:10"] .sup-col-labels,.sup-cols[style*="--n:11"] .sup-col-labels,.sup-cols[style*="--n:12"] .sup-col-labels{gap:5px}
+.sup-cols[style*="--n:12"] .sup-col-v,.sup-cols[style*="--n:11"] .sup-col-v,.sup-cols[style*="--n:10"] .sup-col-v{font-size:11.5px}
+.sup-cols[style*="--n:12"] .sup-col-labels,.sup-cols[style*="--n:11"] .sup-col-labels,.sup-cols[style*="--n:10"] .sup-col-labels{font-size:10.5px}
+.sup-cols[style*="--n:12"] .sup-col-bar,.sup-cols[style*="--n:11"] .sup-col-bar,.sup-cols[style*="--n:10"] .sup-col-bar{width:70%}
+
+/* Table card: title + chip at the left, search and tools at the right */
+.sup-tcard{padding-bottom:14px}
+.sup-thead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.sup-ttitle{display:flex;align-items:center;gap:12px;min-width:0}
+.sup-ttitle .dz-chip{font-size:12.5px}
+.sup-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.sup-search{flex:1 1 200px;min-width:180px;max-width:260px}
+.sup-toggle[aria-pressed="true"]{background:#fff;border-color:rgba(99,102,241,.45)}
+.sup-tsub{margin-top:8px}
+.sup-scroll{overflow-x:auto;margin-top:12px;scrollbar-width:thin}
+.sup-scroll:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px;border-radius:6px}
+.sup-tbl{width:100%;min-width:var(--min,1000px);border-collapse:collapse;table-layout:fixed;font-size:13px;color:var(--dz-ink-1)}
+.sup-tbl th{padding:10px 12px 10px 0;font-size:11.5px;font-weight:400;text-align:left;color:var(--dz-ink-4);border-bottom:1px solid var(--dz-line-8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sup-tbl td{padding:12px 12px 12px 0;border-bottom:1px solid var(--dz-line-5);vertical-align:middle;min-width:0;background:transparent}
+.sup-tbl th:last-child,.sup-tbl td:last-child{padding-right:0}
+.sup-tbl th.num,.sup-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
+.sup-tbl .sup-strong{font-weight:600}
+.sup-tbl .sup-soft{color:var(--dz-ink-3)}
+.sup-tbl .sup-clip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-item strong{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-desc{display:block;margin-top:1px;font-size:12px;color:var(--dz-ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-sub{display:block;margin-top:3px;font-size:12px;color:var(--dz-ink-4);line-height:1.35}
+.sup-sub.red{color:var(--dz-risk-text)}
+.sup-cm-from{color:var(--dz-indigo-deep)}
+.sup-act{text-align:right;white-space:nowrap}
+.sup-po{--min:1120px}
+.sup-po .c-po{width:74px}.sup-po .c-ven{width:15%}.sup-po .c-wh{width:13%}.sup-po .c-date{width:104px}.sup-po .c-qty{width:78px}.sup-po .c-val{width:96px}.sup-po .c-st{width:200px}.sup-po .c-act{width:108px}
+.sup-sd{--min:940px}
+.sup-sd .c-item{width:15%}.sup-sd .c-mo{width:72px}.sup-sd .c-dem{width:112px}.sup-sd .c-sup{width:92px}.sup-sd .c-sh{width:86px}.sup-sd .c-st{width:190px}
+.sup-br{--min:1060px}
+.sup-br .c-so{width:72px}.sup-br .c-cust{width:15%}.sup-br .c-cm{width:14%}.sup-br .c-item{width:16%}.sup-br .c-date{width:112px}.sup-br .c-st{width:96px}.sup-br .c-amt{width:96px}
+.sup-groups{--min:820px}
+.sup-groups .c-n{width:110px}.sup-groups .c-cov{width:22%}.sup-groups .c-big{width:24%}
+.sup-ctb{--min:980px}
+.sup-ctb td,.sup-ctb th{padding-right:14px}
+.sup-grp td{padding:16px 0 6px;border-bottom:0}
+.sup-grp b{font-size:14px;font-weight:600}
+.sup-grp span{margin-left:10px;font-size:12px;color:var(--dz-ink-4)}
+.sup-grp+.sup-row td{border-top:1px solid var(--dz-line-5)}
+.sup-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 2px;font-size:12px;color:var(--dz-ink-4)}
+.sup-more{height:auto;padding:4px 0;font-size:12.5px}
+.sup-status .dz-chip{margin:0}
+.sup-ovr-in{display:flex;align-items:center;gap:10px;min-width:0}
+.sup-ovr-t{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-3)}
+.sup-ovr-b{flex:none}
+.sup-ovr .cause-tag{font-size:11.5px;font-weight:500;padding:1px 8px}
+
+/* The Logican bits inside a PO line: chip, commit date */
+.sup-page .cm-line{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+.sup-page .status-chip.cm{display:inline-flex;font-size:11.5px;font-weight:500;line-height:1.3;padding:2px 8px;border:0;border-radius:999px;background:var(--dz-fill-1);color:var(--dz-ink-3)}
+.sup-page .status-chip.cm.bad{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.sup-page .status-chip.cm.warn{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
+.sup-page .status-chip.cm.good{background:var(--dz-teal-bg);color:var(--dz-teal)}
+.sup-page .cm-line .timing{font-size:12px;color:var(--dz-ink-4)}
+.sup-page .cm-line .timing.crit-text{color:var(--dz-risk-text);font-weight:500}
+.sup-page .print-ovr{font-size:12px;color:var(--dz-indigo-deep)}
+
+/* Add note / Edit and the note editor */
+.sup-page .note-btn{height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(15,23,42,.1);background:#fff;font:inherit;font-size:12px;font-weight:400;color:var(--dz-ink-1);white-space:nowrap;cursor:pointer}
+.sup-page .note-btn:hover{background:var(--dz-fill-1)}
+.sup-page .note-btn.has-note{background:var(--dz-indigo-bg);border-color:rgba(99,102,241,.35);color:var(--dz-indigo-deep)}
+.sup-tbl tr.note-editor-row>td{padding:0;border-bottom:1px solid var(--dz-line-5)}
+.sup-page .note-editor{display:grid;grid-template-columns:220px minmax(0,1fr) auto;gap:12px;align-items:start;margin:0 0 12px;padding:14px 16px;background:var(--dz-glass-60);border:1px solid var(--dz-line-6);border-radius:16px}
+.sup-page .note-editor label{display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--dz-ink-4)}
+.sup-page .note-picks{display:grid;gap:8px;align-content:start}
+.sup-page .note-editor select,.sup-page .note-editor textarea{font:inherit;font-size:13px;color:var(--dz-ink-1);background-color:var(--dz-glass-80);border:1px solid var(--dz-line-8);border-radius:12px;padding:7px 10px}
+.sup-page .note-editor select{height:34px;border-radius:999px}
+.sup-page .note-editor textarea{min-height:76px;resize:vertical}
+.sup-page .note-editor select:focus,.sup-page .note-editor textarea:focus{outline:none;border-color:rgba(99,102,241,.45)}
+.sup-page .note-editor .note-done{align-self:end;height:34px;padding:0 18px;border-radius:999px;background:var(--dz-ink-1);border:1px solid var(--dz-ink-1);color:#fff;font:inherit;font-size:13px;font-weight:500;box-shadow:none;cursor:pointer}
+.sup-page .note-editor .note-done:hover{background:var(--dz-ink-2)}
+
+/* Heat maps (Short items by warehouse and month, Demand by item group and month) */
+.sup-heat{margin-top:16px}
+.sup-heat-in{display:flex;flex-direction:column;gap:6px}
+.sup-heat-row{display:grid;gap:6px;align-items:center}
+.sup-heat-head{font-size:11.5px;color:var(--dz-ink-4)}
+.sup-heat-head span{text-align:center}
+.sup-heat-head span:first-child{text-align:left}
+.sup-heat-head .num{text-align:right}
+.sup-heat-w{font-size:13px;color:var(--dz-ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-heat-c{height:36px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.sup-heat-row.tall .sup-heat-c{height:38px}
+.sup-heat-c[tabindex]:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.sup-heat-t{text-align:right;font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.sup-heatcard .dz-card-head{align-items:center}
+
+/* Supply / Demand coverage card */
+.sup-cover{display:flex;flex-direction:column}
+.sup-meters{display:flex;flex-direction:column;gap:14px;margin-top:22px}
+.sup-meter-h{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--dz-ink-2)}
+.sup-meter-h b{font-weight:600;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.sup-meter{display:block;height:12px;margin-top:6px;border-radius:6px;background:var(--dz-line-6);overflow:hidden}
+.sup-meter>i{display:block;height:100%;border-radius:6px;transform-origin:left}
+.sup-meter.thin{flex:1;height:6px;margin-top:0;border-radius:3px}
+.sup-meter-s{margin-top:4px;font-size:12px;color:var(--dz-ink-4)}
+.sup-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:20px}
+.sup-pair .dz-stat-v{font-size:20px}
+
+/* Supply Mix: warehouses with covered / short bars, item group coverage */
+.sup-stack-list{display:flex;flex-direction:column;gap:12px}
+.sup-whrow{display:grid;grid-template-columns:150px minmax(0,1fr) 40px;gap:12px;align-items:center;width:calc(100% + 16px);margin:-6px -8px;padding:6px 8px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:13px;text-align:left;color:inherit;cursor:pointer}
+.sup-whrow:hover{background:rgba(255,255,255,.7)}
+.sup-whrow.sel{background:var(--dz-indigo-bg)}
+.sup-whrow-l{color:var(--dz-ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-whrow-track{display:block;height:12px;min-width:0}
+.sup-whrow-bar{display:flex;gap:2px;height:12px}
+.sup-whrow-bar i{display:block;min-width:0;background:var(--dz-teal);border-radius:4px;transform-origin:left}
+.sup-whrow-bar i.short{background:#fb7185}
+.sup-whrow-n{font-size:15px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.sup-covcell{display:flex;align-items:center;gap:10px}
+.sup-covcell>span:last-child{min-width:34px;font-size:12.5px;color:var(--dz-ink-3);text-align:right}
+
+/* Build Risk: one card per CM, blocking list, details */
+.sup-cmcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.sup-cmcard{min-width:0;display:flex;flex-direction:column;align-items:stretch;text-align:left;font:inherit;color:var(--dz-ink-1);background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card);cursor:pointer}
+.sup-cmcard:hover{background:var(--dz-glass-80)}
+.sup-cmcard.sel{background:#fff;border-color:rgba(99,102,241,.45)}
+.sup-cmhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.sup-cmhead b{min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sup-cmhead span{flex:none;font-size:12px;color:var(--dz-ink-4)}
+.sup-cmbar{display:flex;gap:2px;height:10px;margin-top:12px;border-radius:5px;overflow:hidden}
+.sup-cmbar>span{display:block;min-width:0;transform-origin:left}
+.sup-cmnums{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+.sup-cmnums b{display:block;font-size:20px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.sup-cmnums i{display:block;margin-top:3px;font-style:normal;font-size:11px;color:var(--dz-ink-4)}
+.sup-cmnums b.amber{color:var(--dz-amber-text)}
+.sup-weeknote{margin-left:4px}
+.sup-weeknote strong{font-weight:600;color:var(--dz-ink-3)}
+.sup-static{cursor:default;color:var(--dz-ink-3)}
+.sup-static:hover{background:var(--dz-glass-55)}
+.sup-blocklist{display:flex;flex-direction:column;margin-top:10px}
+.sup-block{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--dz-line-6)}
+.sup-block-t{min-width:0}
+.sup-block-t b{display:block;font-size:13.5px;font-weight:600}
+.sup-block-t span{display:block;margin-top:2px;font-size:12px;color:var(--dz-ink-4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sup-block-t span.none{color:var(--dz-ink-5)}
+.sup-block-n{flex:none;text-align:right;font-size:12px;color:var(--dz-ink-4)}
+.sup-block-n b{font-size:18px;font-weight:600;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.sup-block-n b.red{color:var(--dz-risk-text)}
+.sup-detail{background:var(--dz-glass-60);border:1px solid #fff;border-radius:var(--dz-r-card);padding:16px 26px}
+.sup-detail>summary{cursor:pointer;font-size:13.5px;font-weight:500;color:var(--dz-ink-2)}
+.sup-detail>summary:hover{color:var(--dz-ink-1)}
+.sup-detail-less{display:none}
+.sup-detail[open] .sup-detail-show{display:none}
+.sup-detail[open] .sup-detail-less{display:inline}
+.sup-h3{margin:18px 0 0;font-size:14px;font-weight:600}
+.sup-h3 .dz-meta{margin-left:8px;font-weight:400}
+.sup-page details.about{background:var(--dz-glass-60);border:1px solid #fff;border-radius:var(--dz-r-menu);padding:14px 22px;color:var(--dz-ink-4)}
+.sup-page details.about>summary{color:var(--dz-ink-3)}
+
+/* Needs a file: what is missing, the steps with the SQL hint, the buttons, a quiet preview */
+.sup-need{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px;padding:30px 32px}
+.sup-need-title{margin:14px 0 0;font-size:24px;letter-spacing:-.02em}
+.sup-need-body{margin:10px 0 0;max-width:560px;font-size:14px;line-height:1.5;color:var(--dz-ink-3)}
+.sup-steps{display:flex;flex-direction:column;gap:12px;margin:22px 0 0;padding:0;list-style:none}
+.sup-steps li{display:flex;align-items:flex-start;gap:12px}
+.sup-step-n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--dz-fill-1);color:var(--dz-ink-3);font-size:12px;font-weight:600}
+.sup-step-t{min-width:0;padding-top:2px;font-size:13.5px;line-height:1.5;color:var(--dz-ink-2)}
+.sup-code{display:block;width:fit-content;max-width:100%;margin-top:6px;padding:5px 12px;border:1px solid var(--dz-line-8);border-radius:14px;background:var(--dz-glass-80);font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--dz-ink-3);overflow-wrap:anywhere}
+.sup-need-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.sup-need-preview{display:flex;flex-direction:column;gap:16px;padding:18px 20px;border:1px solid var(--dz-line-6);border-radius:20px;background:var(--dz-glass-60);align-self:start}
+.sup-need-cap{font-size:12px;color:var(--dz-ink-4)}
+.sup-need-item strong{display:block;font-size:13.5px;font-weight:600}
+.sup-need-item>span{display:block;margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
+.sup-skel{margin-top:8px;border-radius:12px;background:linear-gradient(90deg,var(--dz-fill-1),rgba(241,245,249,.45))}
+
+@media (max-width:1180px){
+  .sup-bars .dz-barrow{grid-template-columns:130px minmax(0,1fr) minmax(28px,auto)}
+}
+@media (max-width:900px){
+  .sup-need{grid-template-columns:minmax(0,1fr);gap:22px;padding:22px 20px}
+}
+/* Phones: the tables become cards, each cell with its column name above the value */
+@media (max-width:640px){
+  .sup-more-views{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sup-search{max-width:none;flex-basis:100%}
+  .sup-tools{width:100%}
+  .sup-tools .dz-pillinput:not(.sup-search){flex:1}
+  .sup-bars .dz-barrow{grid-template-columns:104px minmax(0,1fr) minmax(24px,auto);gap:10px}
+  .sup-whrow{grid-template-columns:104px minmax(0,1fr) 34px;gap:10px}
+  .sup-detail{padding:14px 18px}
+  .sup-need-title{font-size:21px}
+  .sup-scroll.sup-cardlist{overflow:visible}
+  .sup-tbl.sup-po,.sup-tbl.sup-sd,.sup-tbl.sup-br,.sup-tbl.sup-groups{min-width:0;display:block}
+  .sup-tbl.sup-po tbody,.sup-tbl.sup-sd tbody,.sup-tbl.sup-br tbody,.sup-tbl.sup-groups tbody{display:block}
+  .sup-tbl.sup-po thead,.sup-tbl.sup-sd thead,.sup-tbl.sup-br thead,.sup-tbl.sup-groups thead,.sup-tbl.sup-po colgroup,.sup-tbl.sup-sd colgroup,.sup-tbl.sup-br colgroup,.sup-tbl.sup-groups colgroup{display:none}
+  .sup-tbl.sup-po tr.sup-row,.sup-tbl.sup-sd tr.sup-row,.sup-tbl.sup-br tr.sup-row,.sup-tbl.sup-groups tr.sup-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px;padding:14px 0;border-bottom:1px solid var(--dz-line-5)}
+  .sup-tbl.sup-po td,.sup-tbl.sup-sd td,.sup-tbl.sup-br td,.sup-tbl.sup-groups td{display:block;padding:0;border:0;min-width:0;text-align:left}
+  .sup-tbl td[data-label]::before{content:attr(data-label);display:block;margin-bottom:2px;font-size:11px;font-weight:400;color:var(--dz-ink-4)}
+  .sup-tbl td.num{text-align:left}
+  .sup-tbl td.sup-nolabel::before{display:none}
+  .sup-tbl.sup-sd td.sup-nolabel{font-size:14px}
+  .sup-cmcards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .sup-cmcard{padding:14px 14px 12px;border-radius:18px}
+  .sup-cmhead{flex-direction:column;gap:1px}
+  .sup-cmnums b{font-size:18px}
+  .sup-tbl td.sup-item,.sup-tbl td.sup-status,.sup-tbl td.sup-ovr,.sup-tbl td.sup-act,.sup-tbl.sup-sd td:nth-child(2),.sup-tbl.sup-groups td:last-child{grid-column:1/-1}
+  .sup-tbl td.sup-item::before,.sup-tbl td.sup-status::before{display:none}
+  .sup-tbl td.sup-act{text-align:left}
+  .sup-tbl td.sup-act::before{display:none}
+  .sup-tbl .sup-clip{white-space:normal}
+  .sup-tbl.sup-sd td:first-child,.sup-tbl.sup-po td:first-child,.sup-tbl.sup-br td:first-child{font-size:14px}
+  .sup-tbl .sup-grp,.sup-tbl.sup-sd tr.sup-grp{display:block}
+  .sup-tbl .sup-grp td{display:block}
+  .sup-tbl tr.note-editor-row,.sup-tbl tr.note-editor-row>td{display:block}
+  .sup-page .note-editor{grid-template-columns:minmax(0,1fr);padding:12px}
+  .sup-tbl.sup-ctb{min-width:760px}
+}
+@media print{
+  .sup-page{gap:.14in}
+  .sup-tile,.sup-cmcard,.sup-detail,.sup-page details.about,.sup-need,.sup-need-preview{background:#fff;box-shadow:none;border:1px solid var(--gray-300);border-radius:6px}
+  .sup-tiles,.sup-cmcards{gap:.1in}
+  .sup-scroll{overflow:visible}
+  .sup-tbl{min-width:0!important;font-size:8pt;table-layout:auto}
+  .sup-tbl col{width:auto!important}
+  .sup-tbl .sup-clip,.sup-item strong,.sup-desc{white-space:normal;overflow:visible}
+  .sup-tbl td,.sup-tbl th{padding-top:4px;padding-bottom:4px}
+  .sup-tbl tr{break-inside:avoid;page-break-inside:avoid}
+  .sup-search,.sup-toggle,.sup-more,.sup-seg-sm{display:none!important}
+  .sup-detail>summary{display:none}
+  .sup-detail[open] .sup-detail-less{display:none}
+  .sup-heat-in{min-width:0!important}
+  .sup-col,.sup-cmcard,.sup-tile{animation:none!important}
+  .sup-plot{height:calc(var(--h) + 24px)}
+}
 /* 2v6:end supply */
 
 /* 2v6:misc-pages */
@@ -4029,7 +4313,7 @@ function setSupplyWarehouseFilter(v){
   renderResults();
 }
 function setSupplyWarehousePreset(kind){
-  const options=[...document.querySelectorAll('#supply-warehouse-select option')].map(o=>o.value).filter(v=>v&&v!=='ALL');
+  const options=[...new Set(supplyDemandRows.map(supplyWarehouse))].filter(v=>v&&v!=='ALL'); // the warehouse pill is built from the same list
   let selected=[];
   if(kind==='CM')selected=options.filter(w=>/^CM - /i.test(w));
   else if(kind==='SFG')selected=options.filter(w=>/^CM SFG - /i.test(w));
@@ -6741,6 +7025,523 @@ function renderNeedsFile(kind){
     </div>
   </section>`;
 }
+// ===== 2v6 supply group (sup*): Purchase Orders, Supply / Demand, Supply Mix and Build Risk in the glass-card look =====
+// Same numbers as before (poData, buildSupplyDemandSummary, buildRiskSummary, the Logican helpers); only the page layout
+// changed. View state that is not a data filter (the Open / Received switch, the grouping, searches, the item group,
+// the month count) is kept in tableMore under "sup-…" keys, so a redraw, a shared snapshot and a new report treat it
+// like the other view state.
+function supGet(key,def){const v=tableMore[`sup-${key}`];return v===undefined?def:v;}
+function supSet(key,val){tableMore={...tableMore,[`sup-${key}`]:val};renderResults();}
+let supSearchTimer=0;
+// A search box redraws the page once typing pauses; focus and the caret come back through its id.
+function supSearch(key,val){clearTimeout(supSearchTimer);supSearchTimer=setTimeout(()=>supSet(key,String(val||'')),180);}
+function supDocs(rows){return new Set(rows.map(r=>String(r.documentNumber??''))).size;}
+function supWh(w){return String(w).replace(/ - /g,' · ');}
+function supLines(n){return `${fmtNum(n)} ${n===1?'line':'lines'}`;}
+// "Sep 12", or "Jan 5 '27" when the year is not the report's year.
+function supDay(v){
+  const d=parseDate(v);
+  if(!d)return '';
+  const yr=d.getFullYear(),cur=reportToday().getFullYear();
+  return `${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}${yr!==cur?` '${String(yr).slice(2)}`:''}`;
+}
+function supTerms(q){return String(q||'').toLowerCase().split(/\s+/).filter(Boolean);}
+function supHit(terms,fields){if(!terms.length)return true;const s=fields.join(' ').toLowerCase();return terms.every(t=>s.includes(t));}
+function supSearchBox(key,placeholder){
+  return `<input type="search" id="sup-q-${key}" class="dz-pillinput sup-search" data-focus-key="sup-q-${key}" placeholder="${esc(placeholder)}" aria-label="${esc(placeholder)}" value="${esc(String(supGet(`${key}-q`,'')))}" oninput="supSearch('${key}-q',this.value)" autocomplete="off" spellcheck="false">`;
+}
+// Legend: [[colour, label], …] as small squares.
+function supLegend(items){
+  return `<span class="sup-legend">${items.map(([c,l])=>`<span><i style="background:${c}"></i>${esc(l)}</span>`).join('')}</span>`;
+}
+// A card with a count chip, the search box and tools in its head, then the body.
+function supTableCard({title,chip='',tip='',tools='',body,sub=''}){
+  return `<section class="dz-card sup-tcard dz-span-6"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"${tipAttr(tip)}>${esc(title)}</h2>${chip}</div><div class="sup-tools">${tools}</div></div>${sub?`<div class="dz-meta sup-tsub">${sub}</div>`:''}${body}</section>`;
+}
+// Column chart: items [{label,value,text,color,tip}]; bars scale to max (or the biggest value); target draws a dashed line.
+function supCols(items,{max=0,height=120,target=null}={}){
+  const mx=max||Math.max(1,...items.map(i=>i.value||0));
+  const line=target!==null?`<span class="sup-target" style="bottom:${(target/mx*height).toFixed(1)}px"></span>`:'';
+  return `<div class="sup-cols" style="--n:${items.length};--h:${height}px"><div class="sup-plot">${line}${items.map((it,i)=>`<div class="sup-col dz-fade" style="--i:${i}"${tipAttr(it.tip)}><span class="sup-col-v">${esc(it.text)}</span>${it.value===null?'':`<span class="sup-col-bar" style="height:${Math.max(it.value>0?3:0,it.value/mx*height).toFixed(1)}px;background:${it.color}"></span>`}</div>`).join('')}</div><div class="sup-col-labels">${items.map(it=>`<span>${esc(it.label)}</span>`).join('')}</div></div>`;
+}
+function supBar(html,suffix){return suffix?html.replace(/(<span class="dz-barrow-n">[^<]*)<\/span>/,`$1<span class="sup-unit"> ${esc(suffix)}</span></span>`):html;}
+// The "needs a file" card (Supply / Demand, Supply Mix, Build Risk, Purchase Orders without PO lines): what it needs,
+// the steps with the SQL query hint, the Add file button and a quiet preview of what the page will show.
+function supNeedsFile(kind){
+  const k=NEEDS_FILE[kind];
+  const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
+  const steps=isSnapshotView?'':`<ol class="sup-steps">${k.steps.map(([text,code],i)=>`<li><span class="sup-step-n">${i+1}</span><span class="sup-step-t">${esc(text)}${code?`<code class="sup-code">${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
+  const actions=`<div class="sup-need-actions">${isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Order Health page.')}>Back to Order Health</button></div>`;
+  return `<div class="sup-page"><section class="dz-card sup-need dz-fade" aria-labelledby="sup-need-title">
+    <div class="sup-need-main">${dzChip(k.tag,'amber')}<h2 class="dz-title sup-need-title" id="sup-need-title">${esc(k.title)}</h2><p class="sup-need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>${steps}${actions}</div>
+    <div class="sup-need-preview" aria-hidden="true"><span class="sup-need-cap">What this screen will show</span>${k.preview.map(([title,desc,h])=>`<div class="sup-need-item"><strong>${esc(title)}</strong><span>${esc(desc)}</span><div class="sup-skel" style="height:${Math.round(h*.6)}px"></div></div>`).join('')}</div>
+  </section></div>`;
+}
+// Warehouse pill shared by Supply / Demand and Supply Mix (both read supplyWarehouseFilter): All, the groups, each warehouse.
+function supWarehousePill(options){
+  const f=supplyWarehouseFilter,all=f.includes('ALL');
+  const presets=[['All CM',/^CM( SFG)? - /i],['CM Regular',/^CM - /i],['CM SFG',/^CM SFG - /i],['Lacombe',/lacombe/i]]
+    .map(([label,re])=>({label,list:options.filter(w=>re.test(w))})).filter(p=>p.list.length);
+  const same=list=>!all&&list.length===f.length&&list.every(w=>f.includes(w));
+  const hit=presets.find(p=>same(p.list));
+  return dzFilterPill({id:'sup-warehouse',label:'Warehouse',
+    value:all?'All':hit?hit.label:f.length===1?supWh(f[0]):`${fmtNum(f.length)} selected`,set:!all,
+    tip:'Show one warehouse group or one warehouse, or every warehouse; shared by Supply / Demand and Supply Mix.',
+    options:[{label:'All warehouses',selected:all,onclick:"setSupplyWarehouseFilter(['ALL'])"},
+      ...presets.map(p=>({label:p.label,selected:same(p.list),onclick:`setSupplyWarehouseFilter(${JSON.stringify(p.list)})`})),
+      {sep:true},
+      ...options.map(w=>({label:supWh(w),selected:!hit&&f.length===1&&f[0]===w,onclick:`setSupplyWarehouseFilter([${dzJs(w)}])`}))]});
+}
+function supWarehouseOptions(sd){
+  const options=[...new Set(sd.rows.map(supplyWarehouse))].sort((a,b)=>a.localeCompare(b));
+  supplyWarehouseFilter=normalizeWeeklyWarehouseSelection(supplyWarehouseFilter).filter(w=>w==='ALL'||options.includes(w));
+  if(!supplyWarehouseFilter.length)supplyWarehouseFilter=['ALL'];
+  return options;
+}
+function supGroup(r){return String(r.itemGroup||'').trim()||'No Item Group';}
+// The next n months in the snapshot, from the report month on (all of them when none is that late).
+function supMonths(rows,n){
+  const all=[...new Set(rows.map(r=>r.yearMonth).filter(Boolean))].sort();
+  const now=monthKey(reportToday());
+  const fut=all.filter(k=>k>=now);
+  return (fut.length?fut:all).slice(0,n);
+}
+function supMonthShort(key,first){
+  const label=monthLabel(key)||key,parts=String(label).split(' ');
+  return parts.length>1&&first&&parts[1]!==String(first).split(' ')[1]?`${parts[0]} '${parts[1].slice(2)}`:parts[0];
+}
+
+// ---------- Purchase Orders ----------
+function supPurchaseOrders(m){
+  if(!poSourceRows().length)return supNeedsFile('purchaseorders');
+  const {today,thisWeekStart,poWarehouseOptions,poVendorOptionMap,poVendorOptions,filteredPoOpen,poReceiptRows,realPoReschedule,poLateRows,poNoCommitRows,poFutureRescheduleRows,poDueThisMonthRows,poAllOpenRows,poUnconfirmedRows,poMissingPriceRows,poReceivedThisWeekRows,poOtd3Mo,poOtdAmt,poReceivedWeekAmt,poReschedulePerf,poReschedulePerfAmt,poFillRate,poDueThisWeekRows,poTileRows,poCmOn,poCmRows,poCmLateRows,poCmShortRows}=poData(m);
+  if(poTileFilter&&!poTileRows[poTileFilter])poTileFilter='';
+  // With no card picked the page shows the late lines, so the Late card is the selected one.
+  const sel=poTileFilter||'late';
+  const linked=poTileRows[sel]||[];
+  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet'};
+  const view=supGet('po-view','open')==='received'?'received':'open';
+  const value=rows=>rowOpenAmount(rows),qty=rows=>rowOpenQty(rows);
+  const vendorLabel=code=>{const label=poVendorOptionMap.get(code)||code;return label.replace(/^[^-]+ - /,'')||label;};
+  const vendorName=r=>String(r.name||'').trim()||poVendor(r);
+  const ordersN=n=>`${fmtNum(n)} ${n===1?'PO':'POs'}`;
+  const subOf=rows=>`${moneyShort(value(rows))} · ${supLines(rows.length)}`;
+  const tipOf=(label,rows,what)=>`${label}: ${ordersN(supDocs(rows))} on ${supLines(rows.length)}, ${money(value(rows))} open (${fmtNum(qty(rows))} qty) ${what}; click to list the lines.`;
+
+  // Filter row: Open | Received, then the Vendor and Warehouse pills (the same state and setters as before).
+  const whAll=poWarehouseFilter.includes('ALL'),venAll=poVendorFilter.includes('ALL');
+  const whPresets=[['Lacombe',/^(Spyder - Lacombe$|Lacombe)/i],['CM Regular',/^CM - /i],['CM SFG',/^CM SFG - /i],['All CM',/^CM( SFG)? - /i]]
+    .map(([label,re])=>({label,list:poWarehouseOptions.filter(w=>re.test(w))})).filter(p=>p.list.length);
+  const whSame=list=>!whAll&&list.length===poWarehouseFilter.length&&list.every(w=>poWarehouseFilter.includes(w));
+  const whHit=whPresets.find(p=>whSame(p.list));
+  const warehousePill=dzFilterPill({id:'po-warehouse',label:'Warehouse',value:whAll?'All':whHit?whHit.label:poWarehouseFilter.length===1?supWh(poWarehouseFilter[0]):`${fmtNum(poWarehouseFilter.length)} selected`,set:!whAll,
+    tip:'Show one warehouse group or one warehouse, or every warehouse.',
+    options:[{label:'All warehouses',selected:whAll,onclick:"setPoWarehouseFilter(['ALL'])"},...whPresets.map(p=>({label:p.label,selected:whSame(p.list),onclick:`setPoWarehouseFilter(${JSON.stringify(p.list)})`})),{sep:true},
+      ...poWarehouseOptions.map(w=>({label:supWh(w),selected:!whHit&&poWarehouseFilter.length===1&&poWarehouseFilter[0]===w,onclick:`setPoWarehouseFilter([${dzJs(w)}])`}))]});
+  const vendorPill=dzFilterPill({id:'po-vendor',label:'Vendor',value:venAll?'All':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} selected`,set:!venAll,
+    tip:'Show only the lines of one vendor, or every vendor.',
+    options:[{label:'All vendors',selected:venAll,onclick:"setPoVendorFilter(['ALL'])"},...poVendorOptions.map(o=>({label:vendorLabel(o.value),selected:poVendorFilter.length===1&&poVendorFilter[0]===o.value,onclick:`setPoVendorFilter([${dzJs(o.value)}])`}))]});
+  const seg=dzSeg([{label:'Open',on:view==='open',onclick:"supSet('po-view','open')",key:'po-view-open',tip:'Open purchase orders: commitments, the vendors that are late and the PO lines.'},
+    {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving performance: on time, received this week, fill rate and reschedule hit.'}],{label:'Purchase order view'});
+  const filterRow=dzFilterRow(seg,vendorPill+warehousePill,(!whAll||!venAll)?dzClear('resetPoFilters()','Show every warehouse and vendor again.'):'');
+  const filterNote=`${whAll?'All warehouses':whHit?whHit.label:poWarehouseFilter.length===1?poWarehouseFilter[0]:`${fmtNum(poWarehouseFilter.length)} warehouses`} · ${venAll?'all vendors':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} vendors`}`;
+
+  // Receiving: the 3-month on-time rate, six months of it as columns, the 12 receipt weeks.
+  const series=monthlyRateSeries(poReceiptRows,poReschedulePerf.closed,poReschedulePerf.met);
+  const scored=poOtd3Mo.scored.length;
+  const onTime=poOtd3Mo.early.length+poOtd3Mo.onTime.length;
+  const six=series.slice(-6);
+  const recvCard=span=>dzCard({title:'Received on time',sm:true,span,cls:'dz-fade',meta:'target 90%',tip:sectionTipText('po-receiving'),
+    body:`<div class="sup-bigrow"><span class="dz-big sm">${scored?`${fmtNum(poOtd3Mo.rate)}%`:'—'}</span><span class="dz-sub">${scored?`of ${fmtNum(scored)} PO ${scored===1?'line':'lines'} received in the last 3 months`:(poReceiptRows.length?'No receipts in the last 3 months for this filter':'Needs receipt close-date data')}</span></div>
+      ${supCols(six.map((s,i)=>({label:s.label,value:s.otd,text:s.otd===null?'—':`${s.otd}%`,color:i===six.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:s.otd===null?`${s.label}: no receipts scored`:`${s.label}: ${s.otd}% received on time`})),{max:100,height:120,target:90})}`});
+  const recvWeeks=weekWindows(thisWeekStart,12,-1).reverse();
+  poReceiptRows.forEach(r=>{const d=parseDate(r.closeDate);if(!d)return;const w=recvWeeks.find(w=>d>=w.s&&d<=w.e);if(w)w.rows.push(r);});
+  const weekCard=span=>dzCard({title:'Received by week',sm:true,span,cls:'dz-fade',meta:`${ordersN(supDocs(poReceivedThisWeekRows))} this week`,tip:sectionTipText('po-receiving'),
+    body:`<div class="sup-bigrow"><span class="dz-big sm">${fmtNum(supDocs(poReceivedThisWeekRows))}</span><span class="dz-sub">${poReceivedThisWeekRows.length?`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)} received this week`:'nothing received this week yet'}</span></div>
+      ${supCols(recvWeeks.map((w,i)=>({label:shortDay(w.s),value:supDocs(w.rows),text:fmtNum(supDocs(w.rows)),color:i===recvWeeks.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:`Week of ${shortDay(w.s)}: ${ordersN(supDocs(w.rows))}, ${supLines(w.rows.length)}, ${money(rowShippedAmount(w.rows))} received`})),{height:120})}`});
+
+  if(view==='received'){
+    const stat=(label,v,s,tone,tipText)=>`<div class="sup-tile static dz-fade"${tipAttr(tipText)}><span class="sup-tile-l">${esc(label)}</span><span class="sup-tile-v${tone?` ${tone}`:''}">${v}</span><span class="sup-tile-s">${esc(s)}</span></div>`;
+    const hitRate=poReschedulePerf.closed.length;
+    return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+      <div class="sup-tiles">
+        ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',`On-time receiving, 3 months: ${scored?`${fmtNum(poOtd3Mo.rate)}%, ${fmtNum(onTime)} of ${fmtNum(scored)} receipts (${money(poOtdAmt)}) by the original date`:'no receipts to score'}.`)}
+        ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received this week (Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}): ${ordersN(supDocs(poReceivedThisWeekRows))}, ${supLines(poReceivedThisWeekRows.length)}, ${money(poReceivedWeekAmt)}.`)}
+        ${stat('Fill rate',`${fmtNum(poFillRate)}%`,`${supLines(filteredPoOpen.length)} still open`,poFillRate>=90?'teal':poFillRate>=70?'amber':'red',`PO fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed, ${fmtNum(filteredPoOpen.length)} still open.`)}
+        ${stat('Reschedule hit · 12 mo',hitRate?`${fmtNum(poReschedulePerf.rate)}%`:'—',hitRate?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} met commit`:'no closed reschedules',hitRate?(poReschedulePerf.rate>=90?'teal':poReschedulePerf.rate>=75?'amber':'red'):'',hitRate?`PO reschedule hit rate, 12 months: ${fmtNum(poReschedulePerf.rate)}%, ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} rescheduled receipts on time (${money(poReschedulePerfAmt)} rescheduled).`:'PO reschedule hit rate: no rescheduled receipts in the last 12 months.')}
+      </div>
+      <div class="dz-grid">${recvCard(3)}${weekCard(3)}</div>
+      ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
+  }
+
+  // Open: the five order tiles, the other views, the vendors / warehouses card, the PO lines.
+  const tiles=[
+    ['allopen','var(--dz-teal)','Open POs',poAllOpenRows,'','open on purchase orders in view'],
+    ['late','var(--dz-risk)','Late / missed commit',poLateRows,'red','past their date'],
+    ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
+    ['duethisweek','var(--dz-indigo)','This week focus',poDueThisWeekRows,'','at risk or due this week'],
+    ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
+  const tileHtml=([id,dot,label,rows,tone,what],i)=>{
+    const n=supDocs(rows);
+    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipOf(label,rows,what))}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}</span><span class="sup-tile-s">${esc(subOf(rows))}</span></button>`;
+  };
+  const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
+    ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
+  const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('');
+
+  // Vendors with the most late POs, or open POs by warehouse (a click filters the page; again clears it).
+  const by=supGet('po-by','vendor')==='wh'?'wh':'vendor';
+  const focusedVendor=poVendorFilter.length===1&&!poVendorFilter.includes('ALL')?poVendorFilter[0]:'';
+  const focusedWh=poWarehouseFilter.length===1&&!poWarehouseFilter.includes('ALL')?poWarehouseFilter[0]:'';
+  const bySeg=dzSeg([{label:'Vendors',on:by==='vendor',onclick:"supSet('po-by','vendor')",key:'po-by-vendor'},{label:'Warehouses',on:by==='wh',onclick:"supSet('po-by','wh')",key:'po-by-wh'}],{label:'Group by',cls:'sup-seg-sm'});
+  let byBody,byTitle,byFoot='';
+  if(by==='vendor'){
+    const vg=new Map();
+    poLateRows.forEach(r=>{const k=poVendor(r);if(!vg.has(k))vg.set(k,{code:k,name:vendorName(r),rows:[]});vg.get(k).rows.push(r);});
+    const top=[...vg.values()].map(v=>({...v,n:supDocs(v.rows),value:value(v.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value).slice(0,8);
+    const mx=Math.max(1,...top.map(v=>v.n));
+    byTitle='Vendors with the most late POs';
+    byBody=top.length?`<div class="dz-bars sup-bars">${top.map((v,i)=>dzBarRow({label:v.name,value:v.n,max:mx,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(v.n),onclick:`setPoVendorRow(${dzJs(v.code)})`,selected:focusedVendor===v.code,attrs:` data-focus-key="povendor-${esc(v.code)}"`,i,
+      tip:`${v.name}: ${ordersN(v.n)} late on ${supLines(v.rows.length)}, ${money(v.value)}; ${focusedVendor===v.code?'click to show all.':'click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
+  }else{
+    const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value);
+    const shown=poWarehouseAll?wg:wg.slice(0,8);
+    const mx=Math.max(1,...wg.map(g=>g.n));
+    byTitle='Open POs by warehouse';
+    byBody=shown.length?`<div class="dz-bars sup-bars">${shown.map((g,i)=>dzBarRow({label:supWh(g.key),sub:`${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit`,value:g.n,max:mx,color:'var(--dz-indigo)',num:fmtNum(g.n),onclick:`setPoWarehouseRow(${dzJs(g.key)})`,selected:focusedWh===g.key,attrs:` data-focus-key="powh-${esc(g.key)}"`,i,
+      tip:`${g.key}: ${money(g.value)} open on ${ordersN(g.n)} (${supLines(g.rows.length)}), ${fmtNum(g.late)} late, ${fmtNum(g.nc)} no commit; ${focusedWh===g.key?'click to show all.':'click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
+    if(wg.length>8)byFoot=`<div class="sup-foot"><span>${fmtNum(shown.length)} of ${fmtNum(wg.length)} warehouses</span><button type="button" class="dz-clear sup-more" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open POs.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`;
+  }
+  const byCard=dzCard({title:byTitle,sm:true,span:3,cls:'dz-fade',meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});
+
+  // PO lines: the selected card's lines, a search box, the sort, Add note, show more.
+  const terms=supTerms(supGet('po-q',''));
+  const hits=terms.length?linked.filter(r=>supHit(terms,[r.documentNumber,r.name,r.code,r.itemCode,r.itemDescription,rowWarehouse(r),cmSearchText(r)])):linked;
+  const poLineStatus=r=>{
+    if(r.noCommitDate)return 'No Commit';
+    const reschedule=realPoReschedule(r);
+    if(reschedule)return daysFromToday(reschedule)>0?'Missed Commit':'Future Reschedule';
+    const originalDays=r.originalDaysPastDue??daysFromToday(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate);
+    if(originalDays>0)return 'Late';
+    return r.isUnconfirmed?'Unconfirmed':'Open';
+  };
+  const statusChip={Late:['Late','red'],'Missed Commit':['Missed commit','indigo'],'No Commit':['No commit',''],Unconfirmed:['Unconfirmed','amber'],'Future Reschedule':['Rescheduled','amber'],Open:['Open','teal']};
+  const defaultSort=(a,b)=>{
+    const ad=parseDate(a.effectiveDueDate||a.dueDate||a.lineDueDate)||new Date(8640000000000000);
+    const bd=parseDate(b.effectiveDueDate||b.dueDate||b.lineDueDate)||new Date(8640000000000000);
+    return ad-bd||String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||String(a.documentNumber).localeCompare(String(b.documentNumber));
+  };
+  const sorted=[...hits].sort((a,b)=>{
+    if(poLineSort==='warehouse')return String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||defaultSort(a,b);
+    if(poLineSort==='vendor')return String(poVendorLabel(a)).localeCompare(String(poVendorLabel(b)))||defaultSort(a,b);
+    if(poLineSort==='owner')return String(rowOwner(a)).localeCompare(String(rowOwner(b)))||defaultSort(a,b);
+    if(poLineSort==='status')return poLineStatus(a).localeCompare(poLineStatus(b))||defaultSort(a,b);
+    if(poLineSort==='value')return openLineValue(b)-openLineValue(a)||defaultSort(a,b);
+    return defaultSort(a,b);
+  });
+  const shownLines=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
+  const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
+  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>Sort: ${l}</option>`).join('')}</select>`;
+  const lineRow=(r,i)=>{
+    const reschedule=realPoReschedule(r);
+    const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
+    // No SAP reschedule date: the Logican commit date is the expected date (marked Logican).
+    const cmDate=reschedule?'':cmExpectedDate(r);
+    const dueDate=reschedule||cmDate||originalDue||r.effectiveDueDate;
+    const originalDays=r.originalDaysPastDue??daysFromToday(originalDue);
+    const rescheduleDays=daysFromToday(reschedule);
+    const status=poLineStatus(r);
+    const timing=r.noCommitDate
+      ?(originalDays===null?'Needs original due date':timingDeltaText(originalDays,'due'))
+      :reschedule?(rescheduleDays>0?timingDeltaText(rescheduleDays,'due'):timingDeltaText(daysBetweenDates(originalDue,reschedule),'schedule'))
+      :(originalDays===null?'Needs due date':timingDeltaText(originalDays,'due'));
+    const [label,tone]=statusChip[status]||[status,''];
+    return `<tr class="sup-row${isNoteEditorVisible(r)?' editing':''}${i<12?' dz-fade':''}"${i<12?` style="--i:${i}"`:''}>
+      <td class="sup-strong" data-label="PO #">${esc(r.documentNumber||'—')}</td>
+      <td class="sup-clip" data-label="Vendor" title="${esc(poVendorLabel(r))}">${esc(r.name||'—')}</td>
+      <td class="sup-item" data-label="Item"><strong>${esc(r.itemCode||'—')}</strong><span class="sup-desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
+      <td class="sup-clip" data-label="Warehouse" title="${esc(rowWarehouse(r)||'')}">${esc(supWh(rowWarehouse(r)||'—'))}</td>
+      <td data-label="Promised">${esc(supDay(dueDate)||'—')}${cmDate?`<span class="sup-sub sup-cm-from"${tipAttr(`Logican commit date; the PO is due ${displayDate(originalDue)||'with no date'} in SAP.`)}>Logican</span>`:''}</td>
+      <td class="num sup-strong" data-label="Open qty">${fmtNum(r.openQuantity)}</td>
+      <td class="num sup-strong" data-label="Value">${money(openLineValue(r))}</td>
+      <td class="sup-status" data-label="Status">${dzChip(label,tone)}<span class="sup-sub">${esc(timing)}</span>${reschedule?`<span class="sup-sub">↻ ${esc(supDay(reschedule))}</span>`:''}${cmStatusHtml(r)}${renderPrintOverride(r)}</td>
+      <td class="sup-act print-hide">${renderNoteButton(r)}</td>
+    </tr>${renderNoteEditorRow(r,9)}${renderPrintNoteRow(r,9)}`;
+  };
+  const colHead=[['PO #',''],['Vendor',''],['Item',''],['Warehouse',''],['Promised','','The reschedule date, else the Logican commit date, else the original due date.'],['Open qty','num','Quantity still to receive.'],['Value','num','Value still to receive.'],['Status','','Late, Missed commit, No commit, Rescheduled, Unconfirmed or Open, with the reschedule date (↻) when there is one.'],['','print-hide','Add note sets an override or a note on the line.']];
+  const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-act"></colgroup>
+    <thead><tr>${colHead.map(([l,cls,tp])=>`<th${cls?` class="${cls}"`:''}${tipAttr(tp||(l?columnTip('po',l):''))}>${esc(l)}</th>`).join('')}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
+    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
+    :`<p class="sup-empty">No PO lines found for this selection.</p>`;
+  const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate')&&sorted.length;
+  const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
+    sub:`${esc(titles[sel]||'Late / missed commit')} · ${supLines(sorted.length)} · ${fmtNum(qty(sorted))} open qty · ${money(value(sorted))}`,body:tbl});
+  const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
+
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+    <div class="sup-tiles">${tiles.map(tileHtml).join('')}</div>
+    <div class="dz-stats sup-more-views" role="group" aria-label="More purchase order views">${extraHtml}</div>
+    <div class="dz-grid">${recvCard(3)}${byCard}</div>
+    ${linesWrap}
+    ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
+}
+
+// ---------- Supply / Demand ----------
+// One status chip per supply line: short first, then the risky PO supply that is behind it (the quantities go under it).
+function supSdStatus(r){
+  const st=supplyRowStatus(r);
+  const short=r.isCumulativeShortage||r.isMonthlyShortage;
+  const [label,tone]=short?['Short','red']:r.lateSupplyQty>0?['Late PO','red']:r.noCommitSupplyQty>0?['No commit date','']:r.unconfirmedSupplyQty>0?['Unconfirmed','amber']:r.rescheduledSupplyQty>0?['Rescheduled','amber']:r.hasSupplyRisk?['Supply risk','amber']:r.hasDemandRisk?['SO no commit','']:['Covered','teal'];
+  return {label,tone,detail:st.detail,flag:st.flag};
+}
+function supSdFocus(kind){
+  tableMore={...tableMore,'sup-sd-view':'risk','sd-risk-only':kind==='risk'};
+  renderResults();
+}
+function supSupplyDemand(m){
+  const sd=m.supplyDemand;
+  if(!supplyDemandRows.length)return supNeedsFile('supplyweekly');
+  const options=supWarehouseOptions(sd);
+  const groups=[...new Set(sd.rows.map(supGroup))].sort((a,b)=>a.localeCompare(b));
+  let grp=String(supGet('sd-group',''));if(grp&&!groups.includes(grp))grp='';
+  const rowsW=filterSupplyRows(sd.rows);
+  const rows=grp?rowsW.filter(r=>supGroup(r)===grp):rowsW;
+  const shortageRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage);
+  const riskRows=rows.filter(r=>r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||b.demandOpenValue-a.demandOpenValue);
+  const demandRows=rows.filter(r=>r.demandOpenQty>0).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||supplyWarehouse(a).localeCompare(supplyWarehouse(b))||a.itemCode.localeCompare(b.itemCode));
+  const actRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage||r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
+  const demandQty=rows.reduce((s,r)=>s+r.demandOpenQty,0),demandValue=rows.reduce((s,r)=>s+r.demandOpenValue,0),usableQty=rows.reduce((s,r)=>s+r.usableSupplyQty,0);
+  const shortQty=supplyShortageQty(rows);
+  const hasOC=rows.some(r=>r.demandOrderCount>0);
+  const demandOrders=rows.reduce((s,r)=>s+r.demandOrderCount,0);
+  const itemKey=r=>`${r.itemCode}|${supplyWarehouse(r)}`;
+  const shortItems=new Set(shortageRows.map(itemKey)).size,riskItems=new Set(riskRows.map(itemKey)).size;
+  const cover=demandQty>0?Math.max(0,Math.min(100,Math.round((demandQty-shortQty)/demandQty*100))):null;
+  const view=supGet('sd-view','risk')==='all'?'all':'risk';
+  const riskOnly=!!tableMore['sd-risk-only'];
+
+  const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of usable open PO supply, or whose PO supply is at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view'});
+  const groupPill=dzFilterPill({id:'sup-sd-group',label:'Item group',value:grp||'All',set:!!grp,tip:'Show one item group, or every item group.',
+    options:[{label:'All item groups',selected:!grp,onclick:"supSet('sd-group','')"},...groups.map(g=>({label:g,selected:grp===g,onclick:`supSet('sd-group',${dzJs(g)})`}))]});
+  const anyFilter=!supplyWarehouseFilter.includes('ALL')||!!grp;
+  const filterRow=dzFilterRow(seg,supWarehousePill(options)+groupPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('sd-group','')",'Show every warehouse and item group again.'):'');
+  const warehouseNote=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
+
+  // Coverage card: share of demand with open PO supply, the two meters, the short and at-risk item counts.
+  const coverCard=`<section class="dz-card dz-span-2 sup-cover dz-fade"><h2 class="dz-title sm"${tipAttr(sectionTipText('sd-coverage'))}>Coverage</h2>
+    <div class="sup-bigrow"><span class="dz-big"${tipAttr(`Share of open demand covered by usable open PO supply, after each item and warehouse's worst running shortfall (${fmtNum(shortQty)} qty short of ${fmtNum(demandQty)}); stock on hand is not included.`)}>${cover===null?'—':`${cover}%`}</span><span class="dz-sub">of demand has open PO supply</span></div>
+    <div class="sup-meters">
+      <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}${hasOC?`, ${fmtNum(demandOrders)} orders counted once per item, warehouse and month`:''}.`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
+      <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}); stock on hand is not included.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">usable supply · stock on hand not included</div></div>
+    </div>
+    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list only those.`})}</div></section>`;
+
+  // Heat map: short items by warehouse and month.
+  const months=supMonths(rows,6);
+  const heatWh=[...new Set(rows.map(supplyWarehouse))];
+  const cellN=new Map();
+  shortageRows.forEach(r=>{const k=`${supplyWarehouse(r)}|${r.yearMonth}`;cellN.set(k,(cellN.get(k)||0)+1);});
+  const heat=heatWh.map(w=>({w,cells:months.map(mo=>cellN.get(`${w}|${mo}`)||0)})).map(h=>({...h,t:h.cells.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t||a.w.localeCompare(b.w));
+  const lc=n=>n===0?['#f1f5f9','#94a3b8']:n<=4?['#fecdd3','#be123c']:n<=9?['#fb7185','#0f172a']:['#e11d48','#fff'];
+  const cols=`grid-template-columns:minmax(120px,180px) repeat(${Math.max(1,months.length)},minmax(0,1fr))`;
+  const heatCard=`<section class="dz-card dz-span-4 sup-heatcard dz-fade" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm">Short items by warehouse and month</h2>${supLegend([['#f1f5f9','0'],['#fecdd3','1–4'],['#fb7185','5–9'],['#e11d48','10+']])}</div>
+    <div class="sup-scroll sup-heat"><div class="sup-heat-in" style="min-width:${150+months.length*70}px">
+      <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,monthLabel(months[0])))}</span>`).join('')}</div>
+      ${heat.map(h=>`<div class="sup-heat-row" style="${cols}"><span class="sup-heat-w" title="${esc(h.w)}">${esc(supWh(h.w))}</span>${h.cells.map((n,i)=>{const [bg,fg]=lc(n);const tp=`${h.w} · ${monthLabel(months[i])||months[i]}: ${n?`${fmtNum(n)} short ${n===1?'item':'items'}`:'no short items'}`;return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(tp)}"${n?' tabindex="0"':''}>${fmtNum(n)}</span>`;}).join('')}</div>`).join('')||'<p class="sup-empty">No warehouses in view.</p>'}
+    </div></div></section>`;
+
+  // The table: warehouse sub-headings, the lines; Short or at-risk items (default) or all open demand.
+  const terms=supTerms(supGet('sd-q',''));
+  const listAll=view==='all'?demandRows:(riskOnly?riskRows:actRows);
+  const list=terms.length?listAll.filter(r=>supHit(terms,[r.itemCode,r.itemDescription,r.itemGroup])):listAll;
+  const limit=20,open=!!tableMore['sd-rows']||printMode;
+  let left=open?Infinity:limit,shown=0;
+  const curLbl=monthLabel(monthKey(reportToday()));
+  const orderCell=r=>hasOC?`${fmtNum(r.demandOrderCount)} ${r.demandOrderCount===1?'order':'orders'}`:`${fmtNum(r.demandOpenQty)} qty`;
+  const groupsHtml=groupSupplyRowsByWarehouse(list).map(g=>{
+    if(left<=0)return '';
+    const vis=g.rows.slice(0,left);left-=vis.length;shown+=vis.length;
+    const n=new Set(g.rows.map(r=>r.itemCode)).size;
+    return `<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${esc(supWh(g.warehouse))}</b><span>${fmtNum(n)} ${n===1?'item':'items'}</span></td></tr>${vis.map(r=>{
+      const st=supSdStatus(r),shortBy=r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
+      return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply">${dzChip(st.label,st.tone)}${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
+    }).join('')}`;
+  }).join('');
+  const riskChip=`<button type="button" class="dz-pillinput sup-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show every short or at-risk line again.':'List only lines whose PO supply is unconfirmed, has no commit, is rescheduled or late.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
+  const nItems=new Set(list.map(itemKey)).size;
+  const chip=view==='all'?dzChip(supLines(list.length),''):dzChip(`${fmtNum(nItems)} ${nItems===1?'item':'items'}`,shortageRows.length?'red':'amber');
+  const table=list.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
+    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month; counted once per item, warehouse and month.':'Open demand quantity (the snapshot has no order counts).')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Usable supply: quantity on confirmed, committed open POs.')}>Supply qty</th><th class="num"${tipAttr('Quantity short: the running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the kind of risk on the PO supply behind it.')}>Supply</th></tr></thead><tbody>${groupsHtml}</tbody></table></div>
+    ${list.length>limit?`<div class="sup-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(list.length)} lines</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sd-rows" data-table-key="sd-rows"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(list.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
+    :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
+  const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table});
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}${riskOnly&&view==='risk'?' · supply at risk only':''}</div>
+    <div class="dz-grid">${coverCard}${heatCard}${tableCard}</div>
+    ${renderAbout(['sd-coverage','sd-shortages'])}</div>`;
+}
+
+// ---------- Supply Mix ----------
+function supSupplyMix(m){
+  const sd=m.supplyDemand;
+  if(!supplyDemandRows.length)return supNeedsFile('supplydemand');
+  const options=supWarehouseOptions(sd);
+  const rows=filterSupplyRows(sd.rows);
+  const n=[3,6,12].includes(Number(supGet('mix-months',6)))?Number(supGet('mix-months',6)):6;
+  const months=supMonths(rows,n);
+  const inM=rows.filter(r=>months.includes(r.yearMonth));
+  const by=supGet('mix-by','group')==='wh'?'wh':'group';
+  const hasOC=inM.some(r=>r.demandOrderCount>0);
+  const unit=hasOC?'orders':'qty';
+  const ord=r=>hasOC?r.demandOrderCount:r.demandOpenQty;
+  // A cell's coverage: demand met by usable open PO supply in the same month. Short orders weigh each row's orders by what is uncovered.
+  const agg=list=>{let dem=0,cov=0,orders=0,short=0,value=0;list.forEach(r=>{const d=r.demandOpenQty,c=Math.min(d,r.usableSupplyQty),o=ord(r);dem+=d;cov+=c;orders+=o;value+=r.demandOpenValue;if(d>0)short+=o*(1-c/d);});return {dem,cov,orders,short,value,pct:dem>0?cov/dem*100:100};};
+  const band=p=>p>=90?['#ccfbf1','#0f766e']:p>=60?['#fde68a','#92400e']:['#fb7185','#0f172a'];
+  const dimKey=by==='wh'?supplyWarehouse:supGroup;
+  const groupMap=(list,key)=>{const mp=new Map();list.forEach(r=>{const k=key(r);if(!mp.has(k))mp.set(k,[]);mp.get(k).push(r);});return mp;};
+  const dims=[...groupMap(inM,dimKey)].map(([k,list])=>({k,list,a:agg(list),cells:months.map(mo=>agg(list.filter(r=>r.yearMonth===mo)))})).sort((a,b)=>b.a.orders-a.a.orders);
+  const matrixAll=!!tableMore['sup-mix-matrix'];
+  const matrixShown=matrixAll||printMode?dims:dims.slice(0,12);
+  const label=k=>by==='wh'?supWh(k):k;
+
+  const seg=dzSeg([{label:'By item group',on:by==='group',onclick:"supSet('mix-by','group')",key:'mix-by-group'},{label:'By warehouse',on:by==='wh',onclick:"supSet('mix-by','wh')",key:'mix-by-wh'}],{label:'Group demand'});
+  const monthsPill=dzFilterPill({id:'sup-months',label:'Months',value:`Next ${n}`,set:n!==6,tip:'How many months of the snapshot to show.',
+    options:[6,3,12].map(v=>({label:`Next ${v}`,selected:n===v,onclick:`supSet('mix-months',${v})`}))});
+  const anyFilter=!supplyWarehouseFilter.includes('ALL')||n!==6;
+  const filterRow=dzFilterRow(seg,supWarehousePill(options)+monthsPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('mix-months',6)",'Show every warehouse and the next 6 months again.'):'');
+  const cols=`grid-template-columns:minmax(120px,190px) repeat(${Math.max(1,months.length)},minmax(0,1fr)) 80px`;
+  const first=monthLabel(months[0]);
+  const matrixCard=`<section class="dz-card dz-span-6 dz-fade"><div class="dz-card-head"><h2 class="dz-title"${tipAttr(sectionTipText('mix-net'))}>${by==='wh'?'Demand by warehouse and month':'Demand by item group and month'}</h2>${supLegend([['#ccfbf1','Covered'],['#fde68a','Partly covered'],['#fb7185','Short']])}</div>
+    <div class="dz-meta sup-tsub">Each cell is open demand in ${hasOC?'orders':'qty'}, coloured by open PO coverage.</div>
+    <div class="sup-scroll sup-heat"><div class="sup-heat-in" style="min-width:${260+months.length*80}px">
+      <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,first))}</span>`).join('')}<span class="num">Total</span></div>
+      ${matrixShown.map(d=>`<div class="sup-heat-row tall" style="${cols}"><span class="sup-heat-w" title="${esc(d.k)}">${esc(label(d.k))}</span>${d.cells.map((c,i)=>{const empty=!c.dem&&!c.orders;const [bg,fg]=empty?['#f1f5f9','#94a3b8']:band(c.pct);return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(`${d.k} · ${monthLabel(months[i])||months[i]}: ${empty?'no open demand':`${fmtNum(Math.round(c.orders))} ${unit}, ${Math.round(c.pct)}% covered, ${fmtNum(Math.round(c.short))} short`}`)}"${empty?'':' tabindex="0"'}>${empty?'—':fmtNum(Math.round(c.orders))}</span>`;}).join('')}<span class="sup-heat-t">${fmtNum(Math.round(d.a.orders))}</span></div>`).join('')||'<p class="sup-empty">No demand in these months.</p>'}
+    </div></div>
+    ${dims.length>12&&!printMode?`<div class="sup-foot"><span>Showing ${fmtNum(matrixShown.length)} of ${fmtNum(dims.length)}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sup-mix-matrix" data-table-key="sup-mix-matrix" onclick="toggleTableMore(this.dataset.tableKey)">${matrixAll?'Show fewer':'Show all'}</button></div>`:''}</section>`;
+
+  // Least covered (short orders) and demand by warehouse, covered against short.
+  const least=dims.map(d=>({k:d.k,s:Math.round(d.a.short)})).filter(d=>d.s>0).sort((a,b)=>b.s-a.s).slice(0,5);
+  const leastCard=dzCard({title:'Least covered',sm:true,span:3,cls:'dz-fade',tip:sectionTipText('mix-demand'),
+    body:`<div class="sup-cardbody">${least.length?`<div class="dz-bars sup-bars">${least.map((d,i)=>supBar(dzBarRow({label:label(d.k),value:d.s,max:least[0].s,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(d.s),i,tip:`${d.k}: about ${fmtNum(d.s)} ${unit} short of usable open PO supply.`}),'short')).join('')}</div>`:'<p class="sup-empty">Everything in view is covered.</p>'}</div>`});
+  const whDims=[...groupMap(inM,supplyWarehouse)].map(([k,list])=>({k,a:agg(list)})).sort((a,b)=>b.a.orders-a.a.orders).slice(0,8);
+  const whMax=Math.max(1,...whDims.map(d=>d.a.orders));
+  const whCard=dzCard({title:'Demand by warehouse',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Covered'],['#fb7185','Short']]),tip:sectionTipText('mix-demand'),
+    body:`<div class="sup-cardbody">${whDims.length?`<div class="sup-stack-list">${whDims.map((d,i)=>{const sh=Math.min(d.a.orders,Math.round(d.a.short)),cv=Math.max(0,d.a.orders-sh),w=d.a.orders/whMax*100;const on=supplyWarehouseFilter.length===1&&supplyWarehouseFilter[0]===d.k;
+      return `<button type="button" class="sup-whrow${on?' sel':''}" data-focus-key="mixwh-${esc(d.k)}" aria-pressed="${on?'true':'false'}" onclick="setSupplyWarehouseFilter(${esc(on?"['ALL']":`[${dzJs(d.k)}]`)})"${tipAttr(`${d.k}: ${fmtNum(d.a.orders)} ${unit}, about ${fmtNum(sh)} short; ${on?'click to show every warehouse.':'click to show only this warehouse.'}`)}><span class="sup-whrow-l">${esc(supWh(d.k))}</span><span class="sup-whrow-track"><span class="sup-whrow-bar" style="width:${w.toFixed(1)}%"><i class="dz-grow" style="flex:${cv};--i:${i}"></i><i class="dz-grow short" style="flex:${sh};--i:${i}"></i></span></span><span class="sup-whrow-n">${fmtNum(d.a.orders)}</span></button>`;}).join('')}</div>`:'<p class="sup-empty">No warehouse demand in these months.</p>'}</div>`});
+
+  // Item groups table: demand, value, coverage, short orders and the biggest shortage.
+  const worst=list=>{const mp=new Map();list.forEach(r=>{const k=`${r.itemCode}|${supplyWarehouse(r)}`;const v=mp.get(k)||{item:r.itemCode,short:0};v.short=Math.max(v.short,-Math.min(0,r.cumulativeNetQty));mp.set(k,v);});return [...mp.values()].sort((a,b)=>b.short-a.short)[0];};
+  const gdims=[...groupMap(inM,supGroup)].map(([k,list])=>({k,list,a:agg(list),w:worst(list)})).sort((a,b)=>b.a.orders-a.a.orders);
+  const gAll=!!tableMore['sup-mix-groups'];
+  const gShown=gAll||printMode?gdims:gdims.slice(0,12);
+  const covColor=p=>p>=90?'var(--dz-teal)':p>=75?'var(--dz-amber)':'var(--dz-risk)';
+  const gTable=gdims.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Item groups"><table class="sup-tbl sup-groups"><colgroup><col><col class="c-n"><col class="c-n"><col class="c-cov"><col class="c-n"><col class="c-big"></colgroup>
+    <thead><tr><th>Item group</th><th class="num"${tipAttr(hasOC?'Open sales orders in the months shown; counted once per item, warehouse and month.':'Open demand quantity in the months shown.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Open demand value in the months shown.')}>Value</th><th${tipAttr('Share of demand met by usable open PO supply in the same month.')}>Coverage</th><th class="num"${tipAttr('Orders left uncovered: each line’s orders weighed by the share of its demand with no usable supply.')}>${hasOC?'Short orders':'Short qty'}</th><th${tipAttr('The item with the biggest running shortfall in the group.')}>Biggest shortage</th></tr></thead>
+    <tbody>${gShown.map(d=>{const p=Math.round(d.a.pct),s=Math.round(d.a.short);return `<tr class="sup-row"><td class="sup-strong" data-label="Item group">${esc(d.k)}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${fmtNum(Math.round(d.a.orders))}</td><td class="num sup-soft" data-label="Value">${moneyShort(d.a.value)}</td><td data-label="Coverage"><span class="sup-covcell"><span class="sup-meter thin"><i style="width:${p}%;background:${covColor(p)}"></i></span><span>${p}%</span></span></td><td class="num sup-strong${s?' red':' muted'}" data-label="Short">${fmtNum(s)}</td><td class="sup-clip sup-soft" data-label="Biggest shortage">${d.w&&d.w.short>0?`${esc(d.w.item)} · ${fmtNum(d.w.short)} short`:'—'}</td></tr>`;}).join('')}</tbody></table></div>
+    ${gdims.length>12&&!printMode?`<div class="sup-foot"><span>Showing ${fmtNum(gShown.length)} of ${fmtNum(gdims.length)}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sup-mix-groups" data-table-key="sup-mix-groups" onclick="toggleTableMore(this.dataset.tableKey)">${gAll?'Show fewer':'Show all'}</button></div>`:''}`
+    :'<p class="sup-empty">No item groups in these months.</p>';
+  const groupsCard=dzCard({title:'Item groups',span:6,cls:'dz-fade',tip:sectionTipText('mix-groups'),body:gTable});
+  const warehouseNote=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)} · next ${n} months</div>
+    <div class="dz-grid">${matrixCard}${leastCard}${whCard}${groupsCard}</div>
+    ${renderAbout(['mix-net','mix-demand','mix-groups'])}</div>`;
+}
+
+// ---------- Build Risk ----------
+function supBuildRisk(m){
+  if(!buildRiskRows.length)return supNeedsFile('buildrisk');
+  // Every number below comes from the one report week picked here (newest by default).
+  const {snapshots,weeks,trend}=m.buildRisk;
+  const brAll=snapshots.find(s=>s.key===buildRiskSnapshot)||snapshots[0];
+  // A CM picked here (or in the old Big picture) narrows the week to that CM; the week picker and the CM cards use brAll.
+  const br=buildRiskCmView(brAll);
+  const cmMap=new Map();
+  brAll.rows.forEach(r=>{const k=ctbCmId(r);if(!cmMap.has(k))cmMap.set(k,{id:k,cm:r.cm,total:0,clear:0,risk:0,late:0});const g=cmMap.get(k);g.total+=r.total;g.clear+=r.clearToBuild;g.risk+=r.atRisk;g.late+=r.late;});
+  const cms=[...cmMap.values()].sort((a,b)=>b.total-a.total);
+  const cmName=c=>c==='Lacombe'?'Lacombe':`CM · ${c}`;
+  const cmSet=!!buildRiskCmFilter,cmIn=cmSet&&cmMap.has(buildRiskCmFilter);
+  const riskAll=uniqueRows(brAll.atRiskMatches.flatMap(r=>r.matchedRows));
+  const riskRows=uniqueRows(br.atRiskMatches.flatMap(r=>r.matchedRows));
+  const customers=[...new Set(riskAll.map(r=>String(r.name||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  let cust=String(supGet('br-cust',''));if(cust&&!customers.includes(cust))cust='';
+
+  // Filter row: Report week at the left; CM and Customer at the right.
+  const dated=snapshots.some(s=>s.dated);
+  const weekPill=dated?dzFilterPill({id:'sup-week',label:'Report week',value:brAll.label,align:'left',tip:'Pick which weekly Clear To Build sheet to show; weeks are never added together.',
+    options:snapshots.map(s=>({label:s.label,selected:s===brAll,onclick:`setBuildRiskSnapshot(${dzJs(s.key)})`}))}):`<span class="dz-filter sup-static">Clear To Build report</span>`;
+  const cmPill=dzFilterPill({id:'sup-cm',label:'CM',value:cmIn?(cmMap.get(buildRiskCmFilter).cm):'All',set:cmIn,tip:'Show one CM, or every CM.',
+    options:[{label:'All CMs',selected:!cmIn,onclick:"setBuildRiskCm('')"},...cms.map(c=>({label:c.cm,selected:cmIn&&buildRiskCmFilter===c.id,onclick:cmIn&&buildRiskCmFilter===c.id?'':`setBuildRiskCm(${dzJs(c.id)})`}))]});
+  const custPill=dzFilterPill({id:'sup-customer',label:'Customer',value:cust||'All',set:!!cust,tip:'Show only the orders of one customer in the list below; the counts above come from the Clear To Build report.',
+    options:[{label:'All customers',selected:!cust,onclick:"supSet('br-cust','')"},...customers.map(c=>({label:c,selected:cust===c,onclick:`supSet('br-cust',${dzJs(c)})`}))]});
+  const anyFilter=cmSet||!!cust;
+  const ctbNote=`<span class="dz-meta sup-weeknote"${tipAttr(`${ohN(br.rows.length,'CM / month line')} in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report ${br.rows.length===1?'line':'lines'}${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}${cmSet&&!cmIn?` · CM ${esc(buildRiskCmFilter)} is not in this week; showing every CM`:''}</span>`;
+  const filterRow=dzFilterRow(weekPill+ctbNote,cmPill+custPill,anyFilter?dzClear("setBuildRiskCm('');supSet('br-cust','')",'Show every CM and customer again.'):'');
+
+  // One card per CM: orders, the clear / at risk / late bar and counts. A click narrows the page to that CM.
+  const cmCards=cms.map((c,i)=>{
+    const t=Math.max(1,c.clear+c.risk+c.late),on=cmIn&&buildRiskCmFilter===c.id;
+    const seg=(v,col,k)=>v>0?`<span class="dz-grow" style="flex:${v};background:${col};--i:${k}"></span>`:'';
+    return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.clear)} clear to build, ${fmtNum(c.risk)} at risk, ${fmtNum(c.late)} late of ${fmtNum(c.total)} orders in the ${brAll.label} report; ${on?'click to show every CM.':'click to show only this CM.'}`)}>
+      <span class="sup-cmhead"><b>${esc(cmName(c.cm))}</b><span>${fmtNum(c.total)} ${c.total===1?'order':'orders'}</span></span>
+      <span class="sup-cmbar">${seg(c.clear,'var(--dz-teal)',0)}${seg(c.risk,'var(--dz-amber)',1)}${seg(c.late,'var(--dz-risk)',2)}</span>
+      <span class="sup-cmnums"><span><b class="teal">${fmtNum(c.clear)}</b><i>clear</i></span><span><b class="amber">${fmtNum(c.risk)}</b><i>at risk</i></span><span><b class="red">${fmtNum(c.late)}</b><i>late</i></span></span></button>`;
+  }).join('');
+
+  // Builds by month (stacked), from the CTB buckets of the week.
+  const mm=new Map();
+  br.matched.forEach(r=>{if(!r.monthKey)return;const g=mm.get(r.monthKey)||{key:r.monthKey,total:0,clear:0,risk:0,late:0};g.total+=r.total;g.clear+=r.clearToBuild;g.risk+=r.atRisk;g.late+=r.late;mm.set(r.monthKey,g);});
+  const monthList=[...mm.values()].sort((a,b)=>a.key.localeCompare(b.key)).slice(0,6);
+  const mMax=Math.max(1,...monthList.map(g=>Math.max(g.total,g.clear+g.risk+g.late)));
+  const firstM=monthLabel(monthList[0]&&monthList[0].key);
+  const stack=(v,col,r)=>v>0?`<div style="height:${Math.max(3,v/mMax*160).toFixed(1)}px;background:${col}${r?`;border-radius:6px 6px 0 0`:''}"></div>`:'';
+  const monthsCard=dzCard({title:'Builds by month',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Clear'],['var(--dz-amber)','At risk'],['var(--dz-risk)','Late']]),tip:sectionTipText('br-demand'),
+    body:monthList.length?`<div class="sup-cols sup-stackcols" style="--n:${monthList.length};--h:160px"><div class="sup-plot">${monthList.map((g,i)=>{const lateOnTop=g.late>0;return `<div class="sup-col dz-fade" style="--i:${i}"${tipAttr(`${monthLabel(g.key)}: ${fmtNum(g.total)} orders, ${fmtNum(g.clear)} clear to build, ${fmtNum(g.risk)} at risk, ${fmtNum(g.late)} late`)}><span class="sup-col-v">${fmtNum(g.total)}</span><span class="sup-stack">${stack(g.late,'var(--dz-risk)',true)}${stack(g.risk,'var(--dz-amber)',!lateOnTop)}${stack(g.clear,'var(--dz-teal)',!lateOnTop&&!g.risk)}</span></div>`;}).join('')}</div><div class="sup-col-labels">${monthList.map(g=>`<span>${esc(supMonthShort(g.key,firstM))}</span>`).join('')}</div></div>`:'<p class="sup-empty">No months in this report week.</p>'});
+
+  // What blocks builds: the report's own notes for each CM / month bucket that is at risk or late (the workbook has no part numbers).
+  const blocking=br.matched.filter(r=>r.atRisk+r.late>0).map(r=>({r,n:r.atRisk+r.late,note:String(r.notes||'').replace(/\s*\r?\n\s*/g,' · ').trim()})).sort((a,b)=>(b.note?1:0)-(a.note?1:0)||b.r.late-a.r.late||b.n-a.n).slice(0,5);
+  const blockCard=dzCard({title:'Blocking builds',sm:true,span:3,cls:'dz-fade',tip:'The CM and month buckets the report marks at risk or late, with the note the report carries for each; the workbook has no part numbers.',
+    body:blocking.length?`<div class="sup-blocklist">${blocking.map(({r,n,note},i)=>`<div class="sup-block"><div class="sup-block-t"><b>${esc(cmName(r.cm))} · ${esc(monthLabel(r.monthKey)||r.month)}</b><span class="${note?'':'none'}" title="${esc(note)}">${esc(note||'No note in the report')}</span></div><span class="sup-block-n"><b${i===0?' class="red"':''}>${fmtNum(n)}</b> ${n===1?'order':'orders'}</span></div>`).join('')}</div>`:'<p class="sup-empty">No CM / month bucket is at risk or late in this report week.</p>'});
+
+  // Orders at risk or late: the sales orders in the buckets the report marks at risk or late; Edit opens the override / note editor.
+  const terms=supTerms(supGet('br-q',''));
+  const all=riskRows.filter(r=>(!cust||String(r.name||'').trim()===cust)&&supHit(terms,[r.documentNumber,r.itemCode,r.itemDescription,r.name,rowWarehouse(r)]));
+  const cap=all.slice(0,60);
+  const open=!!tableMore['br-risk']||printMode;
+  const vis=open?cap:cap.slice(0,8);
+  const statusOf=s=>/late|past/i.test(s)?['Late','red']:/no commit/i.test(s)?['No commit','']:/resched/i.test(s)?['Rescheduled','amber']:/risk/i.test(s)?['At risk','amber']:[s||'Open',''];
+  const orderRow=(r,i)=>{
+    const effective=r.noCommitDate?'':(r.effectiveDueDate||r.dueDate);
+    const [sl,st]=statusOf(r.statusBucket),ovr=String(r.overrideStatus||'');
+    return `<tr class="sup-row${isNoteEditorVisible(r)?' editing':''}${i<12?' dz-fade':''}"${i<12?` style="--i:${i}"`:''}>
+      <td class="sup-strong" data-label="SO #">${esc(r.documentNumber)}</td>
+      <td class="sup-clip" data-label="Customer" title="${esc(r.name||'')}">${esc(r.name||'')}</td>
+      <td class="sup-clip sup-soft" data-label="CM" title="${esc(rowWarehouse(r))}">${esc(supWh(rowWarehouse(r)))}</td>
+      <td class="sup-item" data-label="Item"><strong>${esc(r.itemCode||'No item code')}</strong><span class="sup-desc">${esc(r.itemDescription||'')}</span></td>
+      <td class="sup-soft" data-label="Build date">${esc(r.noCommitDate?'No commit date':supDay(effective)||'—')}${r.dueText?`<span class="sup-sub${/overdue|late/i.test(r.dueText)?' red':''}">${esc(r.dueText)}</span>`:''}</td>
+      <td class="sup-status" data-label="Status">${dzChip(sl,st)}</td>
+      <td class="sup-ovr" data-label="Override"><div class="sup-ovr-in"><span class="sup-ovr-t">${ovr?esc(overrideLabel(ovr)):'<span class="muted">—</span>'}${r.overrideCause?` <span class="cause-tag ${esc(r.overrideCause)}">${esc(manualCauseLabel(r.overrideCause))}</span>`:''}${r.overrideNotes?`<span class="sup-sub" title="${esc(r.overrideNotes)}">${esc(r.overrideNotes)}</span>`:''}</span><span class="sup-ovr-b print-hide">${renderNoteButton(r,'Edit')}</span></div></td>
+      <td class="num sup-strong" data-label="Amount">${money(r.amountLocal)}</td>
+    </tr>${renderNoteEditorRow(r,8)}`;
+  };
+  const orders=all.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
+    <thead><tr><th>SO #</th><th>Customer</th><th>CM</th><th>Item</th><th${tipAttr('The effective due date: the reschedule date, else the original due date.')}>Build date</th><th>Status</th><th${tipAttr('Your override, its cause and note; Edit sets them.')}>Override</th><th class="num">Amount</th></tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
+    ${cap.length>8?`<div class="sup-foot"><span>Showing ${fmtNum(vis.length)} of ${fmtNum(cap.length)}${all.length>60?` · first 60 of ${fmtNum(all.length)} lines`:''}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-br-risk" data-table-key="br-risk"${tipAttr(open?'Show only the first 8 rows.':`Show all ${fmtNum(cap.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
+    :`<p class="sup-empty">${riskRows.length?'No orders match the search or the customer.':'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}</p>`;
+  const nOrders=supDocs(all);
+  const ordersCard=supTableCard({title:'Orders at risk or late',tip:sectionTipText('br-risk'),chip:dzChip(`${fmtNum(nOrders)} ${nOrders===1?'order':'orders'}`,nOrders?'red':''),tools:supSearchBox('br','Search order, item'),body:orders});
+
+  // CTB detail: the report's own CM / month lines and the CTB % trend, kept under Show more.
+  const tone=(part,total)=>!total?'':pct(part,total)>=90?'teal':pct(part,total)>=70?'amber':'red';
+  const detailOpen=!!tableMore['more-br-ctb']||printMode;
+  const ctbTable=`<h3 class="sup-h3"${tipAttr(sectionTipText('br-ctb'))}>Clear To Build by CM / month</h3><div class="sup-scroll" tabindex="0" role="region" aria-label="Clear To Build by CM / month"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th><th>Month</th><th class="num">Total</th><th class="num">Clear to build</th><th class="num">At risk</th><th class="num">Late</th><th class="num">Matched SO lines</th><th class="num">Matched open qty</th><th class="num">Matched open value</th><th>Notes</th></tr></thead><tbody>${br.matched.map(r=>`<tr class="sup-row"><td class="sup-strong">${esc(r.cm)}</td><td class="sup-soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${r.total?dzChip(`${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)`,tone(r.clearToBuild,r.total)):'—'}</td><td class="num${r.atRisk?' amber':' muted'}">${fmtNum(r.atRisk)}</td><td class="num${r.late?' red':' muted'}">${fmtNum(r.late)}</td><td class="num">${fmtNum(r.matchedRows.length)}</td><td class="num sup-soft">${fmtNum(r.matchedOpenQty)}</td><td class="num sup-strong">${money(r.matchedOpenValue)}</td><td class="sup-soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td></tr>`).join('')||'<tr><td colspan="10" class="sup-soft">No CM / month lines.</td></tr>'}</tbody></table></div>`;
+  const trendTable=weeks.length>1?`<h3 class="sup-h3"${tipAttr(sectionTipText('br-trend'))}>CTB % by CM <span class="dz-meta">last ${fmtNum(weeks.length)} report weeks, oldest first</span></h3><div class="sup-scroll" tabindex="0" role="region" aria-label="CTB % by CM"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th>${weeks.map(s=>`<th class="num">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>${trend.map(t=>`<tr class="sup-row"><td class="sup-strong">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>':`<td class="num">${dzChip(`${pct(c.clearToBuild,c.total)}%`,tone(c.clearToBuild,c.total))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+  const detail=`<details class="sup-detail"${detailOpen?' open':''} data-more="br-ctb" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-br-ctb"${tipAttr('The report’s CM / month lines with the matched sales orders, and the CTB % trend by CM.')}><span class="sup-detail-show">Show more · Clear To Build by CM and month</span><span class="sup-detail-less">Show less</span></summary><div class="sup-detail-body">${ctbTable}${trendTable}</div></details>`;
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(brAll.label)} report${cmIn?` · CM ${esc(cmMap.get(buildRiskCmFilter).cm)}`:''}${cust?` · ${esc(cust)}`:''}</div>
+    <div class="sup-cmcards">${cmCards}</div>
+    <div class="dz-grid">${monthsCard}${blockCard}${ordersCard}</div>
+    ${detail}
+    ${renderAbout(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}</div>`;
+}
+
 // Help page: the two ways to ask an AI about the export: Ask AI here, or the MCP connector in mcp/ for Claude
 // Desktop and other AI apps. It works before any file is loaded. Details: docs/AI_ASSISTANT.md and docs/MCP.md.
 const CONNECT_SNIPPETS={
@@ -8113,209 +8914,7 @@ function renderResults(){
   }
   // Purchase Orders: vendor/warehouse filters and open PO risk tiles.
   if(activeTab==='purchaseorders'){
-    const poRows=poSourceRows();
-    if(!poRows.length){
-      html+=renderNeedsFile('purchaseorders');
-    }else{
-      const {today,startOfWeek,endOfWeek,thisWeekStart,thisWeekEnd,thisMonthKey,inRange,poOpenRows,poWarehouseOptions,poVendorOptionMap,poVendorOptions,filteredPoOpen,filteredPoAll,poClosedRows,poReceiptRows,realPoReschedule,poLateRows,poNoCommitRows,poFutureRescheduleRows,poDueThisWeekDateRows,poDueThisMonthRows,poAllOpenRows,poUnconfirmedRows,poMissingPriceRows,poReceivedThisWeekRows,poLast3MonthsStart,poOtd3MonthRows,poOtd3Mo,poReschedulePerf,poReceivedWeekAmt,poOtdAmt,poLineRows,poFillRate,poOpenValue,poReschedulePerfAmt,poDueThisWeekRows,poTileRows,poTileTitles,poCmOn,poCmRows,poCmLateRows,poCmShortRows}=poData(m);
-      if(poTileFilter&&!poTileRows[poTileFilter])poTileFilter='';
-      // With no card picked the page shows the late lines, so the Late card is the selected one.
-      const poSelected=poTileFilter||'late';
-      const linkedPoRows=poTileRows[poSelected]||[];
-      const poLinkedTitles={late:'Late / missed commit',nocommit:'No commit date',future:'Future reschedules',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet'};
-      const poValue=rows=>rowOpenAmount(rows);
-      const poQty=rows=>rowOpenQty(rows);
-      const poTileAttrs=id=>`data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${poSelected===id?'true':'false'}"`;
-      const poVendorName=r=>String(r.name||'').trim()||poVendor(r);
-      const vendorLabelFor=code=>{const label=poVendorOptionMap.get(code)||code;return label.replace(/^[^-]+ - /,'')||label;};
-      const pickLabel=(filter,labelOf,noun)=>filter.includes('ALL')?'':filter.length===1?labelOf(filter[0]):`${fmtNum(filter.length)} ${noun}`;
-      const poFilterNote=`${pickLabel(poWarehouseFilter,v=>v,'warehouses')||'All warehouses'} · ${pickLabel(poVendorFilter,vendorLabelFor,'vendors')||'all vendors'}`;
-      const poSelect=(id,label,allLabel,current,options,setter)=>{
-        const multi=!current.includes('ALL')&&current.length>1;
-        return `<select id="${id}" class="select wide" aria-label="${esc(label)}"${tipAttr(`Show only one ${label.toLowerCase()}, or ${allLabel.toLowerCase()}.`)} onchange="${setter}([this.value])">
-          <option value="ALL"${current.includes('ALL')?' selected':''}>${esc(allLabel)}</option>
-          ${multi?`<option value="" selected disabled>${fmtNum(current.length)} ${esc(label.toLowerCase())}s selected</option>`:''}
-          ${options.map(o=>`<option value="${esc(o.value)}"${!multi&&current.includes(o.value)?' selected':''}>${esc(o.label)}</option>`).join('')}
-        </select>`;
-      };
-      // Same rules as the PO tiles: a future reschedule is not late even if the original date has passed.
-      const poLineStatus=r=>{
-        if(r.noCommitDate)return 'No Commit';
-        const reschedule=realPoReschedule(r);
-        if(reschedule)return daysFromToday(reschedule)>0?'Missed Commit':'Future Reschedule';
-        const originalDays=r.originalDaysPastDue??daysFromToday(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate);
-        if(originalDays>0)return 'Late';
-        return r.isUnconfirmed?'Unconfirmed':'Open';
-      };
-      const poLines=rows=>`${fmtNum(rows.length)} PO ${rows.length===1?'line':'lines'}`;
-      // Cards show the numbers; what each one counts is in its tooltip (sub is kept for callers, not drawn).
-      const poCard=(id,dot,label,rows,sub,hero,tipText)=>`<button type="button" class="card kpi${hero?' hero':''}${poSelected===id?' selected':''}" ${poTileAttrs(id)}${tipAttr(tipText)}>
-          <span class="kpi-label"><span class="dot ${dot}"></span>${label}</span>
-          <div class="kpi-row">${hero
-            ?`<span class="kpi-value hero ${rows.length?'crit':'good'}" data-count="${Math.round(poValue(rows))}" data-fmt="money">${money(poValue(rows))}</span><span class="kpi-unit">${fmtNum(rows.length)} lines</span>`
-            :`<span class="kpi-value" data-count="${rows.length}">${fmtNum(rows.length)}</span><span class="kpi-unit">lines</span>`}</div>
-          <span class="kpi-amt">${hero?`${fmtNum(poQty(rows))} open qty`:money(poValue(rows))}</span>
-        </button>`;
-      const poMini=(id,dot,label,rows,sub,tipText)=>`<button type="button" class="${poSelected===id?'selected':''}" ${poTileAttrs(id)}${tipAttr(tipText)}><div class="ms-text"><span class="ms-label"><span class="dot ${dot}"></span>${label}</span></div><div class="ms-num"><span class="ms-big lg">${fmtNum(rows.length)}</span><span class="ms-amt">${money(poValue(rows))}</span></div></button>`;
-
-      // Receiving performance: monthly series and 12 receipt weeks from the same receipt rows as the cards.
-      const poSeries=monthlyRateSeries(poReceiptRows,poReschedulePerf.closed,poReschedulePerf.met);
-      const poOtdTone=poOtd3Mo.scored.length?toneFor(poOtd3Mo.rate,90,75):'neutral';
-      const poFillTone=toneFor(poFillRate,90,70);
-      const poHitTone=poReschedulePerf.closed.length?toneFor(poReschedulePerf.rate,90,75):'neutral';
-      const recvWeeks=weekWindows(thisWeekStart,12,-1).reverse();
-      poReceiptRows.forEach(r=>{const d=parseDate(r.closeDate);if(!d)return;const w=recvWeeks.find(w=>d>=w.s&&d<=w.e);if(w)w.rows.push(r);});
-      const recvMax=Math.max(1,...recvWeeks.map(w=>rowShippedAmount(w.rows)));
-      const lastRecvWeek=recvWeeks[recvWeeks.length-2];
-
-      // Open PO value by warehouse and late value by vendor (click to filter).
-      const poGroups=groupBy(filteredPoOpen,rowWarehouse).map(g=>{
-        const late=g.rows.filter(r=>poLateRows.includes(r));
-        const nocommit=g.rows.filter(r=>poNoCommitRows.includes(r));
-        const future=g.rows.filter(r=>poFutureRescheduleRows.includes(r));
-        return {...g,lateRows:late.length,noCommitRows:nocommit.length,futureRows:future.length,openValue:rowOpenAmount(g.rows)};
-      }).sort((a,b)=>b.openValue-a.openValue);
-      const poGroupsShown=poWarehouseAll?poGroups:poGroups.slice(0,8);
-      const poGroupMax=Math.max(1,...poGroups.map(g=>g.openValue));
-      const focusedPoWarehouse=poWarehouseFilter.length===1&&!poWarehouseFilter.includes('ALL')?poWarehouseFilter[0]:'';
-      const focusedVendor=poVendorFilter.length===1&&!poVendorFilter.includes('ALL')?poVendorFilter[0]:'';
-      const vendorGroups=new Map();
-      poLateRows.forEach(r=>{const k=poVendor(r);if(!vendorGroups.has(k))vendorGroups.set(k,{code:k,name:poVendorName(r),rows:[]});vendorGroups.get(k).rows.push(r);});
-      const topVendors=[...vendorGroups.values()].map(v=>({...v,value:poValue(v.rows)})).sort((a,b)=>b.value-a.value||b.rows.length-a.rows.length).slice(0,8);
-      const vendorMax=Math.max(1,...topVendors.map(v=>v.value));
-
-      const renderPoTable=(rows)=>{
-        if(!rows.length)return `<div class="card"><p class="empty-note">No PO lines found for this selection.</p></div>`;
-        const defaultSort=(a,b)=>{
-          const ad=parseDate(a.effectiveDueDate||a.dueDate||a.lineDueDate)||new Date(8640000000000000);
-          const bd=parseDate(b.effectiveDueDate||b.dueDate||b.lineDueDate)||new Date(8640000000000000);
-          return ad-bd||String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||String(a.documentNumber).localeCompare(String(b.documentNumber));
-        };
-        const sorted=[...rows].sort((a,b)=>{
-          if(poLineSort==='warehouse')return String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||defaultSort(a,b);
-          if(poLineSort==='vendor')return String(poVendorLabel(a)).localeCompare(String(poVendorLabel(b)))||defaultSort(a,b);
-          if(poLineSort==='owner')return String(rowOwner(a)).localeCompare(String(rowOwner(b)))||defaultSort(a,b);
-          if(poLineSort==='status')return poLineStatus(a).localeCompare(poLineStatus(b))||defaultSort(a,b);
-          if(poLineSort==='value')return openLineValue(b)-openLineValue(a)||defaultSort(a,b);
-          return defaultSort(a,b);
-        });
-        const shown=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
-        const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
-        return `<div class="table">
-          <div class="table-tools"><label>Sort lines <select id="po-line-sort" class="select"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>${l}</option>`).join('')}</select></label></div>
-          <div class="table-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="lines-table po">
-            <colgroup><col style="width:64px"><col style="width:140px"><col style="width:124px"><col><col style="width:92px"><col style="width:72px"><col style="width:90px"><col style="width:156px"><col class="col-notes" style="width:110px"></colgroup>
-            <thead><tr>${['PO #','Vendor','Warehouse','Item / Description'].map(label=>`<th${tipAttr(columnTip('po',label))}>${label}</th>`).join('')}<th${tipAttr('The reschedule date, else the Logican commit date, else the original due date.')}>Due date</th><th class="num"${tipAttr('Quantity still to receive.')}>Qty open</th><th class="num"${tipAttr('Value still to receive.')}>Value</th><th${tipAttr('Late, Missed Commit, No Commit, Future Reschedule, Unconfirmed or Open, with the reschedule date (↻) when there is one.')}>Status</th><th class="print-hide"${tipAttr('Add note sets an override or a note on the line.')}>Notes</th></tr></thead>
-            <tbody>${shown.map((r,i)=>{
-              const reschedule=realPoReschedule(r);
-              const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
-              // No SAP reschedule date: the Logican commit date is the expected date (marked Logican).
-              const cmDate=reschedule?'':cmExpectedDate(r);
-              const dueDate=reschedule||cmDate||originalDue||r.effectiveDueDate;
-              const originalDays=r.originalDaysPastDue??daysFromToday(originalDue);
-              const rescheduleDays=daysFromToday(reschedule);
-              const status=poLineStatus(r);
-              const timing=r.noCommitDate
-                ? (originalDays===null?'Needs original due date':timingDeltaText(originalDays,'due'))
-                : reschedule
-                ? (rescheduleDays>0?timingDeltaText(rescheduleDays,'due'):timingDeltaText(daysBetweenDates(originalDue,reschedule),'schedule'))
-                : (originalDays===null?'Needs due date':timingDeltaText(originalDays,'due'));
-              const statusClass=/late|missed|no commit/i.test(status)?'bad':/future|reschedule|due today|due in/i.test(status)||status==='Open'?'warn':'good';
-              // The reschedule date sits under the status (the status already says late / no commit / not rescheduled).
-              const rescheduleLabel=reschedule?`<span class="timing">↻ ${esc(displayDate(reschedule))}</span>`:'';
-              const noteOpen=isNoteEditorVisible(r);
-              return `<tr class="line-row${noteOpen?' editing':''}${i<12?' fade-row':''}"${i<12?` style="animation-delay:${i*30}ms"`:''}>
-                <td class="c-doc">${esc(r.documentNumber||'—')}</td>
-                <td class="c-name" title="${esc(poVendorLabel(r))}"><span class="clip">${esc(r.name||'—')}</span></td>
-                <td class="c-wh" title="${esc(rowWarehouse(r)||'')}"><span class="clip">${esc(rowWarehouse(r)||'—')}</span></td>
-                <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
-                <td class="c-date" data-label="Due">${esc(displayDate(dueDate)||'—')}${cmDate?`<span class="timing cm-from"${tipAttr(`Logican commit date; the PO is due ${displayDate(originalDue)||'with no date'} in SAP.`)}>Logican</span>`:''}</td>
-                <td class="num c-qty" data-label="Qty open">${fmtNum(r.openQuantity)}</td>
-                <td class="num c-val">${money(openLineValue(r))}</td>
-                <td class="c-st"><div class="c-status"><span class="status-chip ${statusClass}">${esc(status)}</span><span class="timing">${esc(timing)}</span>${rescheduleLabel}${cmStatusHtml(r)}${renderPrintOverride(r)}</div></td>
-                <td class="c-notes print-hide">${renderNoteButton(r)}</td>
-              </tr>${renderNoteEditorRow(r,9)}${renderPrintNoteRow(r,9)}`;
-            }).join('')}</tbody>
-          </table></div>
-          <div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="link-btn" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>
-        </div>`;
-      };
-      const linkedBad=(poSelected==='late'||poSelected==='nocommit')&&linkedPoRows.length;
-      html+=`
-      <div class="filter-bar rise rise-1">
-        <span class="filter-pair"><span class="filter-label">Warehouse</span>${poSelect('po-warehouse-select','Warehouse','All warehouses',poWarehouseFilter,poWarehouseOptions.map(w=>({value:w,label:w})),'setPoWarehouseFilter')}</span>
-        <span class="filter-pair"><span class="filter-label">Vendor</span>${poSelect('po-vendor-select','Vendor','All vendors',poVendorFilter,poVendorOptions,'setPoVendorFilter')}</span>
-        <button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"${tipAttr('Show every warehouse and vendor again.')} onclick="resetPoFilters()">Reset</button>
-      </div>
-      <div class="print-only">Filters: ${esc(poFilterNote)}</div>
-      ${pageGroupHtml('po-commitments','Leading · Supply commitments',`
-        <div class="grid-lead pg-lead">
-          ${poCard('late',poLateRows.length?'crit':'good','Late / missed commit',poLateRows,'Past due or past their reschedule date',true,`Late / missed commit: ${money(poValue(poLateRows))} open on ${poLines(poLateRows)} (${fmtNum(poQty(poLateRows))} qty) past their date; click to list them.`)}
-          ${poCard('nocommit',poNoCommitRows.length?'crit':'good','No commit date',poNoCommitRows,'No valid commit date from the vendor',false,`No commit date: ${money(poValue(poNoCommitRows))} open on ${poLines(poNoCommitRows)} with no valid vendor date; click to list them.`)}
-          ${poCard('future',poFutureRescheduleRows.length?'warn':'good','Future reschedules',poFutureRescheduleRows,'Reschedule date still ahead',false,`Future reschedules: ${money(poValue(poFutureRescheduleRows))} open on ${poLines(poFutureRescheduleRows)} with a reschedule date ahead; click to list them.`)}
-          ${poCard('duethisweek','neutral','This week focus',poDueThisWeekRows,'PO risk plus lines due this week',false,`This week focus: PO risk plus lines due this week, ${money(poValue(poDueThisWeekRows))} on ${poLines(poDueThisWeekRows)}; click to list them.`)}
-        </div>
-        <div class="mini-strip cols-4">
-          ${poMini('duemonth','neutral','Due this month',poDueThisMonthRows,'open lines due this month',`Due this month: ${money(poValue(poDueThisMonthRows))} open on ${poLines(poDueThisMonthRows)} due in ${today.toLocaleDateString('en-CA',{month:'long'})}; click to list them.`)}
-          ${poMini('unconfirmed',poUnconfirmedRows.length?'warn':'good','Unconfirmed',poUnconfirmedRows,'vendor has not confirmed',`Unconfirmed: ${money(poValue(poUnconfirmedRows))} open on ${poLines(poUnconfirmedRows)} the vendor has not confirmed; click to list them.`)}
-          ${poMini('missingprice',poMissingPriceRows.length?'warn':'good','Missing price',poMissingPriceRows,'open lines with no price',`Missing price: ${poLines(poMissingPriceRows)} with no price in SAP; click to list them.`)}
-          ${poMini('allopen','neutral','All open POs',poAllOpenRows,'all open lines in view',`All open PO lines: ${money(poValue(poAllOpenRows))} on ${poLines(poAllOpenRows)}; click to list them.`)}
-        </div>
-        ${poCmOn?`<div class="mini-strip cols-3 cm-strip" role="group" aria-label="Logican sheet">
-          ${poMini('cmlate',poCmLateRows.length?'crit':'good','CM commit later than PO due',poCmLateRows,'',`CM commit later than PO due: ${money(poValue(poCmLateRows))} open on ${poLines(poCmLateRows)} whose Logican commit date is after the PO due date; click to list them.`)}
-          ${poMini('cmshort',poCmShortRows.length?'warn':'good','Short or on hold at Logican',poCmShortRows,'',`Short, on hold or hot at Logican: ${money(poValue(poCmShortRows))} open on ${poLines(poCmShortRows)}; click to list them.`)}
-          ${poMini('cmall','neutral','On the Logican sheet',poCmRows,'',`On the Logican sheet: ${money(poValue(poCmRows))} open on ${poLines(poCmRows)} matched to its Open Orders; click to list them.`)}
-        </div>`:''}`,{info:'po-commitments',rise:'rise-2'})}
-      ${pageGroupHtml('po-receiving','Lagging · Receiving performance',`
-        <div class="grid-4">
-          <div class="card kpi lag static"${tipAttr(withDeltaText(poOtd3Mo.scored.length?`On-time receiving, 3 months: ${fmtNum(poOtd3Mo.rate)}%, ${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts (${money(poOtdAmt)}) by the original date.`:`On-time receiving, 3 months: no receipts to score (receipts worth ${money(poOtdAmt)}).`,poSeries,'otd'))}>
-            <div class="kpi-top"><span class="kpi-label">On-time · 3 mo</span>${renderDeltaPill(poSeries,'otd')}</div>
-            <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[poOtdTone]}" data-count="${poOtd3Mo.rate}" data-fmt="pct">${poOtd3Mo.scored.length?`${fmtNum(poOtd3Mo.rate)}%`:'—'}</span><span class="kpi-unit">received on time</span></div>
-            ${renderSparkline(poSeries.map(s=>s.otd),poOtdTone,40)}
-            <span class="kpi-sub">${poOtd3Mo.scored.length?`${fmtNum(poOtd3Mo.early.length+poOtd3Mo.onTime.length)} of ${fmtNum(poOtd3Mo.scored.length)} receipts early/on time vs original date`:(poReceiptRows.length?'No receipts in the last 3 months for this filter':'Needs receipt close-date data')}</span>
-          </div>
-          <div class="card kpi lag static"${tipAttr(`Received this week (Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}): ${fmtNum(poReceivedThisWeekRows.length)} receipt ${poReceivedThisWeekRows.length===1?'line':'lines'} worth ${money(poReceivedWeekAmt)}.`)}>
-            <div class="kpi-top"><span class="kpi-label">Received this week</span><span class="delta flat">Sun–${esc(today.toLocaleDateString('en-CA',{weekday:'short'}))}</span></div>
-            <div class="kpi-row tight"><span class="kpi-value" data-count="${poReceivedThisWeekRows.length}">${fmtNum(poReceivedThisWeekRows.length)}</span><span class="kpi-unit">${poReceivedThisWeekRows.length===1?'line':'lines'} · ${moneyShort(poReceivedWeekAmt)}</span></div>
-            <div class="col-bars sm" aria-hidden="true">${recvWeeks.map((w,i)=>{const v=rowShippedAmount(w.rows);return `<i class="grow-h${i===recvWeeks.length-1?' now':''}" style="height:${Math.max(3,v/recvMax*40).toFixed(1)}px;animation-delay:${i*40}ms"${tipAttr(`Week of ${shortDay(w.s)}: ${ohN(w.rows.length,'receipt line')} · ${money(v)} received`)}></i>`;}).join('')}</div>
-            <span class="kpi-sub">${poReceiptRows.length?`Last week ${ohN(lastRecvWeek.rows.length,'line')} · ${money(rowShippedAmount(lastRecvWeek.rows))}`:'Needs receipt close-date data'}</span>
-          </div>
-          <button type="button" class="card kpi lag${poSelected==='allopen'?' selected':''}" data-focus-key="potile-fill" onclick="setPoTileFilter('allopen')"${tipAttr(`PO fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed, ${fmtNum(filteredPoOpen.length)} still open; click to list the open lines.`)}>
-            <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="delta flat">target 90%</span></div>
-            <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[poFillTone]}" data-count="${poFillRate}" data-fmt="pct">${fmtNum(poFillRate)}%</span><span class="kpi-unit">lines received</span></div>
-            <div class="bullet-wrap sm">${renderBullet(poFillRate,poFillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
-            <span class="kpi-sub">${fmtNum(filteredPoOpen.length)} lines still open</span>
-          </button>
-          <div class="card kpi lag static"${tipAttr(withDeltaText(poReschedulePerf.closed.length?`PO reschedule hit rate, 12 months: ${fmtNum(poReschedulePerf.rate)}%, ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(poReschedulePerf.closed.length)} rescheduled receipts on time (${money(poReschedulePerfAmt)} rescheduled).`:`PO reschedule hit rate: no rescheduled receipts in the last 12 months (rescheduled lines: ${money(poReschedulePerfAmt)}).`,poSeries,'hit'))}>
-            <div class="kpi-top"><span class="kpi-label">Reschedule hit · 12 mo</span>${renderDeltaPill(poSeries,'hit')}</div>
-            <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[poHitTone]}" data-count="${poReschedulePerf.rate}" data-fmt="pct">${poReschedulePerf.closed.length?`${fmtNum(poReschedulePerf.rate)}%`:'—'}</span><span class="kpi-unit">met commit</span></div>
-            ${renderSparkline(poSeries.map(s=>s.hit),poHitTone,40)}
-            <span class="kpi-sub">${poReschedulePerf.closed.length?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(poReschedulePerf.closed.length)} closed reschedules met commit`:'No closed reschedules in this filter'}</span>
-          </div>
-        </div>`,{info:'po-receiving',rise:'rise-3'})}
-      ${pageGroupHtml('po-where','By warehouse and vendor',`<div class="grid-split pg-even">
-        <section class="table" aria-label="Open PO value by warehouse">
-          <div class="card-head lg"><h2${sectionTip('po-warehouse')}>Open PO value by warehouse</h2></div>
-          <div class="thead po-wh-cols" aria-hidden="true"><div${tipAttr('Receiving warehouse.')}>Warehouse</div><div class="num"${tipAttr('Open PO lines.')}>Lines</div><div${tipAttr('Value still to receive on open PO lines.')}>Open value</div><div class="num"${tipAttr('Lines past their original or reschedule date.')}>Late</div><div class="num"${tipAttr('Lines with no valid commit date from the vendor.')}>No commit</div><div class="num"${tipAttr('Lines with a reschedule date still ahead.')}>Future</div></div>
-          ${poGroupsShown.map(g=>{const t=`${g.key}: ${money(g.openValue)} open on ${fmtNum(g.rows.length)} PO ${g.rows.length===1?'line':'lines'}, ${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.futureRows)} future; ${focusedPoWarehouse===g.key?'click to show all.':'click to filter.'}`;return `<button type="button" class="trow po-wh-cols${focusedPoWarehouse===g.key?' selected':''}" data-focus-key="powh-${esc(g.key)}" data-wh="${esc(g.key)}" onclick="setPoWarehouseRow(this.dataset.wh)" aria-pressed="${focusedPoWarehouse===g.key?'true':'false'}" aria-label="${esc(t)}"${tipAttr(t)}>
-            <div class="name m">${esc(g.key)}</div>
-            <div class="num soft-cell">${fmtNum(g.rows.length)}</div>
-            <div class="bar-cell xs"><div class="track"><i class="grow-w" style="width:${(g.openValue/poGroupMax*100).toFixed(1)}%"></i></div><span class="strong-cell">${moneyShort(g.openValue)}</span></div>
-            <div class="num ${g.lateRows?'risk-cell':'muted'}">${g.lateRows?fmtNum(g.lateRows):'—'}</div>
-            <div class="num ${g.noCommitRows?'risk-cell':'muted'}">${g.noCommitRows?fmtNum(g.noCommitRows):'—'}</div>
-            <div class="num ${g.futureRows?'warn-cell':'muted'}">${g.futureRows?fmtNum(g.futureRows):'—'}</div>
-          </button>`;}).join('')||'<div class="empty-note" style="padding:14px 22px">No open PO lines in this view.</div>'}
-          ${poGroups.length>8?`<div class="tfoot"><span>${fmtNum(poGroupsShown.length)} of ${fmtNum(poGroups.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open value.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`:''}
-        </section>
-        <section class="card list-card roomy">
-          <div class="list-head"><h2${sectionTip('po-vendors')}>Late value by vendor</h2></div>
-          <div class="rank-list roomy">${topVendors.map((v,i)=>`<button type="button" class="rank-item${focusedVendor===v.code?' selected':''}" data-focus-key="povendor-${esc(v.code)}" data-vendor="${esc(v.code)}" onclick="setPoVendorRow(this.dataset.vendor)" aria-pressed="${focusedVendor===v.code?'true':'false'}"${tipAttr(`${v.name}: ${money(v.value)} late across ${fmtNum(v.rows.length)} PO ${v.rows.length===1?'line':'lines'}; ${focusedVendor===v.code?'click to show all.':'click to filter.'}`)}><div class="rank-top lg"><span class="rank-left"><span class="rank-no">${String(i+1).padStart(2,'0')}</span><span class="rank-name">${esc(v.name)}</span></span><span class="rank-val"><span class="muted">${fmtNum(v.rows.length)} · </span><strong>${money(v.value)}</strong></span></div><div class="rank-track"><i class="grow-w" style="width:${(v.value/vendorMax*100).toFixed(1)}%;background:var(--crit);animation-delay:${i*50}ms"></i></div></button>`).join('')||'<div class="empty-note">No late purchase-order lines in this view.</div>'}</div>
-        </section>
-      </div>`,{rise:'rise-4'})}
-      ${pageGroupHtml('po-linked','Lines to act on',renderPoTable(linkedPoRows),{info:'po-linked',rise:'rise-5',anchor:'po-linked-lines',
-        badge:`<span class="count-badge ${linkedBad?'bad':''}">${esc(poLinkedTitles[poSelected]||poTileTitles[poSelected]||'Late / missed commit')} · ${fmtNum(linkedPoRows.length)} ${linkedPoRows.length===1?'line':'lines'} · ${fmtNum(poQty(linkedPoRows))} open qty · ${money(poValue(linkedPoRows))}</span>`})}
-      ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}`;
-    }
+    html+=supPurchaseOrders(m);
   }
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
@@ -8326,67 +8925,7 @@ function renderResults(){
   if(activeTab==='shipping')html+=renderShippingPage(m);
   // Supply / Demand detail: shortages and risk rows by warehouse.
   if(activeTab==='supplyweekly'){
-    const sd=m.supplyDemand;
-    if(!supplyDemandRows.length){
-      html+=renderNeedsFile('supplyweekly');
-    }else{
-      const supplyWarehouseOptions=[...new Set(sd.rows.map(supplyWarehouse))].sort((a,b)=>a.localeCompare(b));
-      supplyWarehouseFilter=normalizeWeeklyWarehouseSelection(supplyWarehouseFilter).filter(w=>w==='ALL'||supplyWarehouseOptions.includes(w));
-      if(!supplyWarehouseFilter.length)supplyWarehouseFilter=['ALL'];
-      const filteredSupplyRows=filterSupplyRows(sd.rows);
-      const shortageRows=filteredSupplyRows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
-      const riskRows=filteredSupplyRows.filter(r=>r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||b.demandOpenValue-a.demandOpenValue);
-      const demandRows=filteredSupplyRows.filter(r=>r.demandOpenQty>0).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||supplyWarehouse(a).localeCompare(supplyWarehouse(b))||a.itemCode.localeCompare(b.itemCode));
-      const demandQty=filteredSupplyRows.reduce((s,r)=>s+r.demandOpenQty,0);
-      const demandValue=filteredSupplyRows.reduce((s,r)=>s+r.demandOpenValue,0);
-      const usableQty=filteredSupplyRows.reduce((s,r)=>s+r.usableSupplyQty,0);
-      const noCommitQty=filteredSupplyRows.reduce((s,r)=>s+r.noCommitSupplyQty,0);
-      const lateQty=filteredSupplyRows.reduce((s,r)=>s+r.lateSupplyQty,0);
-      const isAll=supplyWarehouseFilter.includes('ALL');
-      const sameSet=pattern=>{const preset=supplyWarehouseOptions.filter(w=>pattern.test(w));return !isAll&&preset.length>0&&preset.length===supplyWarehouseFilter.length&&preset.every(w=>supplyWarehouseFilter.includes(w));};
-      const presets=[['ALL','All',isAll],['CM','CM Regular',sameSet(/^CM - /i)],['SFG','CM SFG',sameSet(/^CM SFG - /i)],['ALLCM','All CM',sameSet(/^CM( SFG)? - /i)]];
-      const activePreset=presets.find(p=>p[2]);
-      const selectedSupplyLabel=activePreset?(activePreset[0]==='ALL'?'All warehouses':activePreset[1]):supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
-      const multi=!isAll&&supplyWarehouseFilter.length>1;
-      // One table for the rows to act on (short or with risky supply), warehouse sub-heading rows in it like the
-      // Warehouse scorecard; "Supply at risk only" narrows it to the risky-supply rows. The chip and the Show all
-      // choices are kept with the view (tableMore), so a redraw, a snapshot and Reset treat them like other view state.
-      const riskOnly=!!tableMore['sd-risk-only'];
-      const actRows=filteredSupplyRows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage||r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
-      const listRows=riskOnly?riskRows:actRows;
-      const riskChip=`<button type="button" class="chip${riskOnly?' active':''}" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show every short or at-risk line again.':'List only lines whose PO supply is unconfirmed, has no commit, is rescheduled or late.')} onclick="toggleTableMore(this.dataset.tableKey)">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
-      html+=`
-      <div class="filter-bar rise rise-1">
-        <div class="segmented" role="group" aria-label="Warehouse group">${presets.map(([id,label,on])=>`<button type="button" class="${on?'active':''}" data-focus-key="supply-wh-${id}" onclick="setSupplyWarehousePreset('${id}')" aria-pressed="${on?'true':'false'}"${tipAttr(WAREHOUSE_PRESET_TIPS[id])}>${label}</button>`).join('')}</div>
-        <select id="supply-warehouse-select" class="select wide" aria-label="Warehouse"${tipAttr('Show only one warehouse, or all warehouses.')} onchange="setSupplyWarehouseFilter([this.value])">
-          <option value="ALL"${isAll?' selected':''}>All warehouses</option>
-          ${multi?`<option value="" selected disabled>${fmtNum(supplyWarehouseFilter.length)} warehouses selected</option>`:''}
-          ${supplyWarehouseOptions.map(w=>`<option value="${esc(w)}"${!multi&&supplyWarehouseFilter.includes(w)?' selected':''}>${esc(w)}</option>`).join('')}
-        </select>
-        <button type="button" class="link-btn filter-reset" data-focus-key="supply-reset"${tipAttr('Show every warehouse again.')} onclick="setSupplyWarehousePreset('ALL')">Reset</button>
-      </div>
-      <div class="print-only">Filters: ${esc(selectedSupplyLabel)}${riskOnly?' · supply at risk only':''}</div>
-      ${pageGroupHtml('sd-coverage','Coverage',`
-        <div class="grid-4 pg-stats">
-          ${renderStatCard(shortageRows.length?'Shortage lines':'No shortages',fmtNum(shortageRows.length),`${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short`,shortageRows.length?'crit':'good',shortageRows.length?'crit':'good',`${fmtNum(shortageRows.length)} warehouse / month ${shortageRows.length===1?'line':'lines'} short of usable open PO supply, ${fmtNum(supplyShortageQty(filteredSupplyRows))} qty short; stock on hand is not included.`)}
-          ${renderStatCard('Open demand',fmtNum(demandQty),`${money(demandValue)}`,'','neutral',`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}.`)}
-          ${renderStatCard('Usable supply',fmtNum(usableQty),'',usableQty>=demandQty?'good':'warn',usableQty>=demandQty?'good':'warn',`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}).`)}
-          ${renderStatCard('Supply risk lines',fmtNum(riskRows.length),`${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} risk qty`,riskRows.length?'warn':'good',riskRows.length?'warn':'good',`Supply risk: ${fmtNum(riskRows.length)} ${riskRows.length===1?'line':'lines'} (${fmtNum(filteredSupplyRows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty) of unconfirmed, no-commit, late or rescheduled PO supply.`)}
-        </div>
-        <div class="mini-strip cols-2">
-          <div${tipAttr(`No commit supply: ${fmtNum(noCommitQty)} qty on open purchase orders with no confirmed date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${noCommitQty?'crit':'good'}"></span>No commit supply</span></div><div class="ms-num"><span class="ms-big xl ${noCommitQty?'crit-text':''}">${fmtNum(noCommitQty)}</span></div></div>
-          <div${tipAttr(`Late supply: ${fmtNum(lateQty)} qty on open purchase orders already past their date.`)}><div class="ms-text"><span class="ms-label"><span class="dot ${lateQty?'crit':'good'}"></span>Late supply</span></div><div class="ms-num"><span class="ms-big xl ${lateQty?'crit-text':''}">${fmtNum(lateQty)}</span></div></div>
-        </div>`,{info:'sd-coverage',rise:'rise-2'})}
-      ${pageGroupHtml('sd-shortages','Lines to act on',`${renderSupplyRowsTable({key:'sd-rows',title:riskOnly?'Supply at risk':'Short or at risk',rows:listRows,limit:20,
-          headExtra:`<div class="inline-controls">${riskChip}</div>`,
-          empty:riskOnly?'No supply risk lines found for this warehouse selection.':'No shortages or supply risk found for this warehouse selection.'})}
-        ${tableMore['sd-all-group']||printMode?renderSupplyRowsTable({key:'sd-all',title:'All open lines',rows:demandRows,limit:Infinity,
-          headExtra:`<div class="inline-controls"><span class="section-sub">${fmtNum(demandRows.length)} ${demandRows.length===1?'line':'lines'}</span>${printMode?'':groupMoreButton('sd-all-group',demandRows.length,'open demand lines')}</div>`,
-          empty:'No open demand lines found for this warehouse selection.'})
-        :`<section class="table pg-collapsed"><div class="card-head lg"><h2>All open lines</h2><div class="inline-controls"><span class="section-sub">${fmtNum(demandRows.length)} ${demandRows.length===1?'line':'lines'}</span>${demandRows.length?groupMoreButton('sd-all-group',demandRows.length,'open demand lines'):''}</div></div></section>`}`,{info:'sd-shortages',rise:'rise-3',
-        badge:`<span class="count-badge ${listRows.some(r=>r.isMonthlyShortage||r.isCumulativeShortage)?'bad':listRows.length?'warn':'good'}">${fmtNum(listRows.length)} ${listRows.length===1?'line':'lines'}</span>`})}
-      ${renderAbout(['sd-coverage','sd-shortages'])}`;
-    }
+    html+=supSupplyDemand(m);
   }
   // Monthly: original line-delivery month, ship scenario, and YoY shipped value.
   if(activeTab==='monthly'){
@@ -8715,86 +9254,11 @@ function renderResults(){
   }
   // Supply Mix: high-level demand vs usable supply charts.
   if(activeTab==='supplydemand'){
-    const sd=m.supplyDemand;
-    if(!supplyDemandRows.length){
-      html+=renderNeedsFile('supplydemand');
-    }else{
-      const itemGroupRows=sd.byItemGroup.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${fmtNum(g.demandQty)}</td><td class="num">${fmtNum(g.usableQty)}</td><td class="num ${g.monthlyNetQty<0?'crit-strong':'good-soft'}">${fmtNum(g.monthlyNetQty)}</td><td class="num ${g.cumulativeShortageRows?'crit-strong':'muted'}">${fmtNum(g.cumulativeShortageRows)}</td><td class="num ${g.riskRows?'warn-soft':'muted'}">${fmtNum(g.riskRows)}</td><td class="num soft">${fmtNum(g.unconfirmedQty)}</td><td class="num soft">${fmtNum(g.noCommitQty)}</td><td class="num soft">${fmtNum(g.rescheduledQty)}</td><td class="num soft">${fmtNum(g.lateQty)}</td></tr>`);
-      // Big picture (Stream F) first, then the gaps by month and warehouse, then by item group. The totals and the
-      // shortage / risk lines are on Supply / Demand (one button away), so this page does not repeat them.
-      html+=`
-      ${renderBigPicture('supplydemand',m)}
-      ${pageGroupHtml('mix-gaps','By month and warehouse',`<div class="grid-2">
-        <div class="card list-card roomy">
-          <div class="list-head"><h2${sectionTip('mix-net')}>Net qty by month</h2></div>
-          ${renderRankRows(sd.byMonth.map(g=>({label:monthLabel(g.key)||g.key,value:g.monthlyNetQty,text:`${g.monthlyNetQty>0?'+':''}${fmtNum(g.monthlyNetQty)}`,color:g.monthlyNetQty<0?'var(--crit)':'var(--good)',tone:g.monthlyNetQty<0?'crit':'good',sub:`${fmtNum(g.monthlyShortageRows)} short · ${fmtNum(g.riskRows)} at risk`})),{empty:'No months in the snapshot.'})}
-        </div>
-        <div class="card list-card roomy">
-          <div class="list-head"><h2${sectionTip('mix-demand')}>Demand by warehouse</h2><span class="section-sub">top 12 by demand value</span></div>
-          ${renderRankRows(sd.byWarehouse.slice(0,12).map(g=>({label:g.key,value:g.demandValue,text:moneyShort(g.demandValue),color:g.cumulativeShortageRows?'var(--crit)':g.riskRows?'var(--warn-fill)':'var(--accent)',sub:`${fmtNum(g.demandQty)} demand · ${fmtNum(g.usableQty)} supply${g.cumulativeShortageRows?` · ${fmtNum(g.cumulativeShortageRows)} short`:''}`})),{empty:'No warehouse demand.'})}
-        </div>
-      </div>`,{rise:'rise-1',
-        tools:`<button type="button" class="link-btn" data-focus-key="mix-open-sd" onclick="setTab('supplyweekly')"${tipAttr(`The ${fmtNum(sd.shortageRows.length)} shortage and ${fmtNum(sd.riskRows.length)} supply-risk lines, with the totals, are on Supply / Demand.`)}>Lines on Supply / Demand</button>`})}
-      ${pageGroupHtml('mix-items','By item group',renderTableCard({key:'mix-groups',info:'mix-groups',title:'Supply risk by item group',
-        head:[['Item group'],['Demand qty','num'],['Usable supply','num'],['Net qty','num'],['Shortage lines','num'],['Risk lines','num'],['Unconfirmed qty','num'],['No commit qty','num'],['Rescheduled qty','num'],['Late qty','num']],
-        rows:itemGroupRows,limit:12,minWidth:980}),{rise:'rise-2'})}
-      <details class="about">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mix-net','mix-demand','mix-groups'])}${sankeyAbout('supplydemand')}</ul></div></details>`;
-    }
+    html+=supSupplyMix(m);
   }
   // Build Risk: Clear To Build report matched to open sales-order demand.
   if(activeTab==='buildrisk'){
-    if(!buildRiskRows.length){
-      html+=renderNeedsFile('buildrisk');
-    }else{
-      // Every number below comes from the one report week picked here (newest by default).
-      const {snapshots,weeks,trend}=m.buildRisk;
-      const brAll=snapshots.find(s=>s.key===buildRiskSnapshot)||snapshots[0];
-      // A CM picked in the Big picture narrows the week to that CM (buildRiskCmView, Stream F); the week picker uses brAll.
-      const br=buildRiskCmView(brAll);
-      const tone=(part,total)=>!total?'neutral':pct(part,total)>=90?'good':pct(part,total)>=70?'warn':'bad';
-      const ctbRows=br.matched.map(r=>`<tr>
-          <td class="m">${esc(r.cm)}</td>
-          <td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td>
-          <td class="num">${fmtNum(r.total)}</td>
-          <td class="num"><span class="pill ${tone(r.clearToBuild,r.total)}">${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)</span></td>
-          <td class="num ${r.atRisk?'warn-soft':'muted'}">${fmtNum(r.atRisk)}</td>
-          <td class="num ${r.late?'crit-strong':'muted'}">${fmtNum(r.late)}</td>
-          <td class="num">${fmtNum(r.matchedRows.length)}</td>
-          <td class="num soft">${fmtNum(r.matchedOpenQty)}</td>
-          <td class="num strong">${money(r.matchedOpenValue)}</td>
-          <td class="soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td>
-        </tr>`);
-      const riskRows=uniqueRows(br.atRiskMatches.flatMap(r=>r.matchedRows));
-      const trendRows=trend.map(t=>`<tr><td class="m">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>'
-        :`<td class="num"><span class="pill ${tone(c.clearToBuild,c.total)}" title="${esc(`${fmtNum(c.clearToBuild)} of ${fmtNum(c.total)} clear to build · ${fmtNum(c.atRisk)} at risk · ${fmtNum(c.late)} late`)}">${pct(c.clearToBuild,c.total)}%</span></td>`).join('')}</tr>`);
-      // The report week (and its row count) on top, then the Big picture (Stream F), the week's numbers, the
-      // CM / month buckets and the sales orders to act on.
-      const ctbRowsNote=`<span class="filter-note"${tipAttr(`${ohN(br.rows.length,'CM / month line')} in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report ${br.rows.length===1?'line':'lines'}${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}</span>`;
-      html+=`
-      <div class="filter-bar inline-controls rise">
-        ${snapshots.some(s=>s.dated)?`<label>Report week <select id="build-risk-snapshot" class="select"${tipAttr('Pick which weekly Clear To Build sheet to show; weeks are never added together.')} onchange="setBuildRiskSnapshot(this.value)">${snapshots.map(s=>`<option value="${esc(s.key)}"${s===brAll?' selected':''}>${esc(s.label)}</option>`).join('')}</select></label>`:'<span class="filter-label">Clear To Build report</span>'}
-        ${ctbRowsNote}
-      </div>
-      ${renderBigPicture('buildrisk',m)}
-      ${pageGroupHtml('br-week','This report week',`<div class="grid-4 pg-stats">
-        ${renderStatCard('Clear to build',fmtNum(br.totalClearToBuild),`${pct(br.totalClearToBuild,br.totalOrders)}% of ${fmtNum(br.totalOrders)} orders`,'good','good',`Clear to build: ${fmtNum(br.totalClearToBuild)} of ${fmtNum(br.totalOrders)} orders in the report (${pct(br.totalClearToBuild,br.totalOrders)}%) can be built now.`)}
-        ${renderStatCard('At risk',fmtNum(br.totalAtRisk),'',br.totalAtRisk?'warn':'good',br.totalAtRisk?'warn':'good',`At risk: ${fmtNum(br.totalAtRisk)} orders the Clear To Build report marks at risk.`)}
-        ${renderStatCard('Late',fmtNum(br.totalLate),'',br.totalLate?'crit':'good',br.totalLate?'crit':'good',`Late: ${fmtNum(br.totalLate)} orders the Clear To Build report marks late.`)}
-        ${renderStatCard('Matched SO value',money(br.matchedOpenValue),`${fmtNum(br.matchedOpenQty)} open qty`,'','neutral',`Matched sales orders: ${money(br.matchedOpenValue)} open (${fmtNum(br.matchedOpenQty)} qty) in the report’s CM warehouses and due months.`)}
-      </div>`,{rise:'rise-1'})}
-      ${pageGroupHtml('br-buckets','By CM and month',`<section class="card list-card roomy">
-        <div class="list-head"><h2${sectionTip('br-demand')}>Sales order demand in CTB buckets</h2><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--warn-fill)"></i>At risk</span><span><i class="sw" style="background:var(--good)"></i>Clear</span></span></div>
-        ${renderRankRows(br.matched.filter(r=>r.matchedRows.length||r.atRisk||r.late).map(r=>({label:`${r.cm} · ${monthLabel(r.monthKey)}`,value:r.matchedOpenValue,text:moneyShort(r.matchedOpenValue),color:r.late?'var(--crit)':r.atRisk?'var(--warn-fill)':'var(--good)',sub:`${ohN(r.matchedRows.length,'SO line')} · CTB ${fmtNum(r.clearToBuild)}/${fmtNum(r.total)} · at risk ${fmtNum(r.atRisk)} · late ${fmtNum(r.late)}`})),{empty:'No matching CM / month sales-order demand found.'})}
-      </section>
-      ${renderTableCard({key:'br-ctb',info:'br-ctb',title:'Clear To Build by CM / month',
-        head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Matched SO lines','num'],['Matched open qty','num'],['Matched open value','num'],['Notes','','22%']],
-        rows:ctbRows,limit:12,minWidth:1100})}
-      ${weeks.length>1?renderTableCard({key:'br-trend',info:'br-trend',title:'CTB % by CM',note:`last ${fmtNum(weeks.length)} report weeks, oldest first`,
-        head:[['CM'],...weeks.map(s=>[esc(s.label),'num'])],rows:trendRows,limit:12,minWidth:160+weeks.length*90}):''}`,{rise:'rise-2'})}
-      ${pageGroupHtml('br-orders','Lines to act on',renderRowsTable(riskRows.slice(0,60),{key:'br-risk',title:'Sales orders in risk buckets',note:riskRows.length>60?`first 60 of ${fmtNum(riskRows.length)} lines (latest-risk buckets first)`:'',limit:8,editable:true,empty:'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}),{info:'br-risk',rise:'rise-3',
-        badge:`<span class="count-badge${riskRows.length?' warn':''}">${ohN(riskRows.length,'line')}</span>`})}
-      <details class="about">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['br-demand','br-ctb',...(weeks.length>1?['br-trend']:[]),'br-risk'])}${sankeyAbout('buildrisk')}</ul></div></details>`;
-    }
+    html+=supBuildRisk(m);
   }
   // Redraws replace the whole results DOM; put focus and listbox scroll back so keyboard use keeps working.
   const focus=captureFocus(el);
