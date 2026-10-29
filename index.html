@@ -2579,6 +2579,96 @@ a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
   .shp-tile{box-shadow:none;background:#fff}
 }
 /* 2v6:end shipping */
+/* 2v6:import */
+/* Header Upload files button (dot after an import with warnings or errors), drop-anywhere overlay and the Import drawer
+   (prefix imp-; the drawer reuses the Ask AI sheet: .ai-panel, .ai-head, .ai-close) */
+.imp-hdr{position:relative}
+.imp-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px var(--dz-page-bg)}
+.imp-dot.amber{background:var(--dz-amber)}
+.imp-dot.red{background:var(--dz-risk)}
+.imp-red-text{color:var(--dz-risk-text)}
+.hdr-pop .imp-poplink{margin-top:8px}
+.error-box .imp-errlink{margin-left:6px;color:var(--dz-risk-text);font-size:inherit;text-decoration:underline}
+.imp-drop{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(234,241,253,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.imp-drop[hidden]{display:none}
+.imp-drop-box{pointer-events:none;display:grid;justify-items:center;gap:8px;width:min(560px,100%);padding:52px 28px;border:2px dashed rgba(99,102,241,.45);border-radius:var(--dz-r-card);background:rgba(255,255,255,.88);box-shadow:var(--dz-sh-menu);text-align:center;color:var(--dz-ink-1);font-family:var(--font)}
+.imp-drop-ico{display:grid;place-items:center;width:56px;height:56px;margin-bottom:6px;border-radius:18px;background:var(--dz-indigo-bg);color:var(--dz-indigo)}
+.imp-drop-ico svg{width:26px;height:26px}
+.imp-drop-box h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
+.imp-drop-box p{margin:0;font-size:13px;color:var(--dz-ink-4)}
+.imp-drop-box .imp-drop-types{font-size:12px;color:var(--dz-ink-5)}
+.ai-panel.imp-panel{z-index:59;width:460px;font-family:var(--font)}
+.imp-head h2:focus,.imp-head h2:focus-visible{outline:none}
+.imp-body{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-content:start;padding:16px 20px 20px}
+.imp-h3{margin:8px 0 0;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--dz-ink-4)}
+.imp-sum{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:18px;background:var(--dz-teal-bg-2);color:var(--dz-ink-2);font-size:12.5px;line-height:1.5}
+.imp-sum.amber{background:#fffbeb}
+.imp-sum.red{background:var(--dz-risk-bg)}
+.imp-sum p{margin:0}
+.imp-sum .imp-sum-t{margin-bottom:2px;font-size:15px;font-weight:600;color:var(--dz-ink-1)}
+.imp-sum .imp-of{font-size:13px;font-weight:500;color:var(--dz-ink-4)}
+.imp-sum .imp-sum-fix{margin-top:6px}
+.imp-sum-ico,.imp-ico{display:inline-grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px;color:var(--ico,#6366f1);background:color-mix(in srgb,var(--ico,#6366f1) 13%,transparent)}
+.imp-sum-ico svg,.imp-ico svg{width:15px;height:15px}
+.imp-file{padding:12px 14px;border:1px solid var(--dz-line-8);border-radius:18px;background:#fff}
+.imp-file.error{border-color:rgba(225,29,72,.22)}
+.imp-file.warn{border-color:rgba(245,158,11,.32)}
+.imp-file-head{display:flex;gap:10px;align-items:center;min-width:0}
+.imp-file-main{flex:1;min-width:0}
+.imp-name{margin:0;font-size:13.5px;font-weight:600;color:var(--dz-ink-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-meta{margin:1px 0 0;font-size:12px;color:var(--dz-ink-4);overflow-wrap:anywhere}
+.imp-mapped{display:flex;gap:6px;align-items:center;margin:8px 0 0;font-size:12px;color:var(--dz-indigo-deep);min-width:0}
+.imp-mapped span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-mapped svg{flex:none}
+.imp-issue{margin-top:10px;padding-top:10px;border-top:1px solid var(--dz-line-6);font-size:12.5px;line-height:1.5;color:var(--dz-ink-2);overflow-wrap:anywhere}
+.imp-issue p{margin:0}
+.imp-issue .imp-lbl{margin:0 0 2px;font-size:11.5px;font-weight:600;color:var(--dz-ink-4)}
+.imp-issue .imp-lbl:not(:first-child){margin-top:8px}
+.imp-fix{margin:0;padding-left:18px}
+.imp-fix li+li{margin-top:2px}
+.imp-ex{margin:6px 0 0;padding-left:18px;color:var(--dz-ink-3);font-size:12px}
+.imp-missing{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px!important}
+.imp-missing code,.imp-map code{padding:2px 8px;border-radius:999px;background:var(--dz-fill-1);color:var(--dz-ink-1);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+.imp-issue .imp-missing code{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.imp-issue.warn .imp-missing code{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
+.imp-issue.info .imp-missing code{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.imp-claude{margin-top:10px}
+.imp-claude-btn{height:32px;padding:0 14px;color:var(--dz-ink-3)}
+.imp-claude-btn.on{border-color:rgba(99,102,241,.35);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.imp-claude-btn.on:hover{background:#e0e7ff}
+.imp-claude-btn[aria-disabled="true"]{opacity:.7;cursor:default;background:#fff}
+.imp-claude-btn[aria-disabled="true"]:hover{background:#fff}
+.imp-box{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--dz-fill-1)}
+.imp-box.claude{background:var(--dz-indigo-bg)}
+.imp-box.bad{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.imp-claude-t{display:flex;gap:6px;align-items:center;color:var(--dz-indigo-deep)}
+.imp-claude-t b{font-weight:600}
+.imp-small{font-size:11.5px;color:var(--dz-ink-4)}
+.imp-small a{color:var(--dz-indigo-link)}
+.imp-check{font-size:12px}
+.imp-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.imp-actions .dz-btn{height:32px;padding:0 14px}
+.imp-busy{display:flex;gap:10px;align-items:center;color:var(--dz-ink-3)}
+.imp-busy .dots>span{width:6px;height:6px;background:var(--dz-indigo)}
+.imp-map{display:grid;gap:4px;padding:8px 10px;border-radius:12px;background:#fff}
+.imp-map-r{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr);gap:6px;align-items:center;font-size:12.5px;color:var(--dz-ink-2)}
+.imp-map-r>span{min-width:0;overflow-wrap:anywhere}
+.imp-map-h{font-size:11.5px;font-weight:600;color:var(--dz-ink-4)}
+.imp-arrow{color:var(--dz-indigo);text-align:center}
+.imp-note{margin:4px 0 0;font-size:12px;color:var(--dz-ink-4);text-align:center}
+.imp-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 16px;border-top:1px solid var(--dz-line-6)}
+.imp-foot .dz-btn svg{width:15px;height:15px}
+/* Phones: while the search pill is open it takes the upload button's room too (the export date already steps aside) */
+@media (max-width:760px){.app-header.searching .imp-hdr{display:none}}
+@media (max-width:640px){
+  .ai-panel.imp-panel{width:auto}
+  .imp-body{padding:14px 14px 18px}
+  .imp-foot{padding:10px 14px 14px}
+  .imp-foot .dz-btn{flex:1}
+}
+@media (prefers-reduced-motion:reduce){.imp-busy .dots>span{animation:none}}
+@media print{.imp-panel,.imp-drop{display:none!important}}
+/* 2v6:end import */
 
 /* 2v6:supply */
 /* Purchase Orders, Supply / Demand, Supply Mix and Build Risk: glass cards on the page gradient (prefix sup-) */
@@ -4952,9 +5042,12 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
   // Any failed load puts the previous state back: the report on hand (also when New file opened the upload
   // screen), or nothing on a first load, so a file that failed is never listed as loaded.
   const previous={reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles,cmFiles:cmState.files};
+  // What this run finds, for the Import report (impBegin / impFinish, in the block after isKpiExportHeaderSet).
+  const imp=impBegin(files,valid,{adding,restoring,hadReport,previousFiles:loadedFiles});
   const fail=message=>{
-    if(hadReport){showResults();alert(message);}
+    if(hadReport)showResults();
     else{showUploadError(message);showUpload();}
+    if(!impFinish(imp,message)&&hadReport)alert(message);
   };
   const skippedText=skipped.length?`${skipped.join(', ')}: only .xlsx, .xls, .csv, or .txt exports can be read (not PDF).`:'';
   if(!valid.length){fail(skippedText||'Please upload .xlsx, .xls, .csv, or .txt exports.');return;}
@@ -4962,13 +5055,14 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
   try{
     // Each file is read and classified once by its header row (every row of a sheet has the same columns).
     const entries=[];
+    imp.entries=entries;
     const noRows=[];
     exportHeaders=new Set();
     for(const file of valid){
       let read=fileReadCache.get(file);
       if(!read){
         try{read={rows:await readExportFile(file)};}
-        catch(err){throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
+        catch(err){imp.readError={file,message:err&&err.message||'could not be read'};throw new Error(`${file.name}: ${err&&err.message||'could not be read'}`);}
         fileReadCache.set(file,read);
       }
       const rows=read.rows;
@@ -4982,6 +5076,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
       ...leaveOutOlderExports(entries,'kpi',rows=>normalizeRows(rows).map(rowKey)),
       ...leaveOutOlderExports(entries,'sd',rows=>normalizeSupplyDemandRows(rows).map(r=>`${r.itemCode}|${r.warehouseCode||r.warehouseName}|${r.yearMonth}`))
     ];
+    imp.olderNotes=olderNotes;
     const allRaw=[];
     const allBuildRaw=[];
     const allSupplyDemandRaw=[];
@@ -5009,6 +5104,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
         const signatures=read.signatures||(read.signatures=rowSignatures(rows));
         raw=rows.filter((r,i)=>!seenRows.has(signatures[i]));
         duplicateRows+=rows.length-raw.length;
+        imp.dupes.push([file,rows.length-raw.length]);
         signatures.forEach(sig=>seenRows.add(sig));
       }
       (kind==='sd'?allSupplyDemandRaw:allRaw).push(...raw);
@@ -5048,6 +5144,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     document.getElementById('upload-error').style.display='none';
     showResults();
     if(!restoring){saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}
+    impFinish(imp);
   }catch(err){
     ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
     if(cmState.files!==previous.cmFiles){cmState.files=previous.cmFiles;cmChanged();}
@@ -5102,6 +5199,602 @@ function setIncludeNonInventory(value){
 function isKpiExportHeaderSet(headers){
   const has=names=>names.some(n=>headers.has(n));
   return has(['documentnumber','sodocnum','ponumber','docnum'])&&has(['sourcetype','doctype','ordertype','kpiarea','duedate','lineduedate','headerduedate']);
+}
+// --- Import report (2v6): the header's Upload files button, dropping files anywhere, a report per file (what
+// happened, how to fix it) and Fix with Claude for a file whose columns the app does not recognise. handleFiles
+// tells this block what it found on each run (impBegin / impFinish); the parsing rules stay as they are. Fix with
+// Claude only renames the header row of the rows already read and loads the result (as CSV) through handleFiles again.
+const IMP_ACCEPT='.xlsx,.xls,.csv,.txt,.tsv';
+const IMP_KPI_QUERY='queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql';
+// The files the app reads, with the headers each reader looks for ([header, normalized spellings it accepts, what it
+// holds]; the alias lists of normalizeRows, normalizeSupplyDemandRows, normalizeBuildRiskRows and CM_OPEN_COLS) and
+// what makes a file that kind (isKpiExportHeaderSet, isSupplyDemandRow, isBuildRiskRow, cmRecognize).
+const IMP_KINDS=[
+  {id:'kpi',label:'SAP KPI export',fields:[
+    ['ExportDate',['exportdate'],'date the export was run (the report date)'],
+    ['SourceType',['sourcetype','doctype'],'Sales Order or Purchase Order'],
+    ['DocumentNumber',['documentnumber','sodocnum','ponumber','docnum'],'SO or PO number'],
+    ['LineNumber',['linenumber','linenum','line'],'line number on the order'],
+    ['OrderType',['ordertype','documenttype','doctypecategory','ordertypename'],'order line, Sales Delivery or Purchase Receipt'],
+    ['KPIArea',['kpiarea'],'Sales Orders or Purchase Orders'],
+    ['DocumentDate',['documentdate'],'order date'],
+    ['DueDate',['duedate','soduedate','polinedate'],'order due date'],
+    ['HeaderDueDate',['headerduedate'],'order header due date'],
+    ['LineDueDate',['lineduedate','deliverydate','deldate','shipdate'],'line due / delivery date'],
+    ['RescheduleDate',['rescheduledate','sorescheduledate','porescheduledate'],'new promised date'],
+    ['ClosedDate',['closeddate','deliveryclosedate','actualclosedate','completiondate'],'date shipped or received'],
+    ['DeliveryDocNumber',['deliverydocnumber','deliverydocnum','delnumber','deliverynum'],'delivery or receipt number'],
+    ['CustomerVendorCode',['customervendorcode','bpcode','cardcode'],'customer or vendor code'],
+    ['CustomerVendorName',['customervendorname','bpname','customer','vendor'],'customer or vendor name'],
+    ['CustomerPONumber',['customerponumber','numatcard','custpo','customerpo','custref','customerref'],'customer PO number'],
+    ['DocumentOwner',['documentowner','owner','ownername','documentownername','salesemployee','salesemployeename','salesperson','slpname','salesrep','buyer','buyername'],'owner, sales rep or buyer'],
+    ['Item No.',['itemno','itemcode'],'item code'],
+    ['ItemDescription',['itemdescription','itemdesc','description'],'item description'],
+    ['ItemGroupName',['itemgroupname','itemgroup','itemgroupcode'],'item group'],
+    ['Warehouse',['warehouse','sowarehouse','destwarehouse'],'warehouse'],
+    ['Quantity',['quantity','orderedqty'],'ordered quantity'],
+    ['OpenQuantity',['openquantity','openqty'],'quantity still open'],
+    ['DeliveredQuantity',['deliveredquantity','deliveredqty','delivrdqty','shippedqty','closedqty','receivedqty','receiptqty'],'quantity shipped or received'],
+    ['AmountLocal',['amountlocal','doctotal','rowtotalfc'],'open value in local currency'],
+    ['Currency',['currency'],'currency code'],
+    ['Status',['status','docstatus'],'Open or Closed'],
+    ['Confirmed',['confirmed','soconfirmed','poconfirmed'],'Y or N'],
+    ['TrackingNumber',['trackingnumber','trackno','tracknumber','trackingno'],'carrier tracking number']
+  ],required:[['DocumentNumber',['documentnumber','sodocnum','ponumber','docnum']],['SourceType or LineDueDate',['sourcetype','doctype','ordertype','kpiarea','duedate','lineduedate','headerduedate']]]},
+  {id:'sd',label:'Supply / demand snapshot',fields:[
+    ['ExportDate',['exportdate'],'date the export was run'],
+    ['Item No.',['itemno','itemcode','itemnumber'],'item code'],
+    ['ItemDescription',['itemdescription','itemname','description'],'item description'],
+    ['ItemGroupName',['itemgroupname','itemgroup'],'item group'],
+    ['WarehouseCode',['warehousecode','whscode'],'warehouse code'],
+    ['WarehouseName',['warehousename','warehouse'],'warehouse name'],
+    ['YearMonth',['yearmonth'],'month, e.g. 2026-11'],
+    ['DemandOpenQty',['demandopenqty'],'open demand quantity'],
+    ['DemandNoCommitQty',['demandnocommitqty'],'demand with no commit date'],
+    ['DemandOpenValue',['demandopenvalue'],'open demand value'],
+    ['OnHandQty',['onhandqty'],'on hand'],
+    ['UsableSupplyQty',['usablesupplyqty'],'usable supply quantity'],
+    ['RescheduledSupplyQty',['rescheduledsupplyqty'],'rescheduled supply'],
+    ['UnconfirmedSupplyQty',['unconfirmedsupplyqty'],'unconfirmed supply'],
+    ['NoCommitSupplyQty',['nocommitsupplyqty'],'supply with no commit date'],
+    ['LateSupplyQty',['latesupplyqty'],'late supply'],
+    ['RiskSupplyQty',['risksupplyqty'],'risky supply'],
+    ['DemandOrderCount',['demandordercount'],'number of demand orders'],
+    ['MonthlyNetQty',['monthlynetqty'],'supply minus demand in the month'],
+    ['CumulativeNetQty',['cumulativenetqty'],'running net position'],
+    ['MonthlyCoverageStatus',['monthlycoveragestatus'],'OK or Short'],
+    ['CumulativeCoverageStatus',['cumulativecoveragestatus'],'OK or Short'],
+    ['SupplyRiskFlag',['supplyriskflag'],'supply risk text']
+  ],required:[['DemandOpenQty',['demandopenqty']],['UsableSupplyQty',['usablesupplyqty']],['MonthlyNetQty',['monthlynetqty']],['CumulativeNetQty',['cumulativenetqty']]]},
+  {id:'ctb',label:'Clear To Build',fields:[
+    ['CM',['cm'],'contract manufacturer'],['Month',['month'],'month name'],['Total',['total'],'orders in the month'],
+    ['Clear To Build',['cleartobuild'],'orders clear to build'],['At Risk',['atrisk'],'orders at risk'],['Late',['late'],'late orders'],
+    ['Closed',['closed'],'closed orders'],['% CTB',['ctb','percentctb'],'clear to build share'],['% Late Orders',['lateorders','percentlateorders'],'late share'],['Notes',['notes'],'notes']
+  ],required:[['CM',['cm']],['Month',['month']],['Clear To Build',['cleartobuild']],['At Risk or Late',['atrisk','late']]]},
+  {id:'logican-open',label:'Logican Open Orders',cm:true,fields:[
+    ['Spyder PO',[],'Spyder purchase order number'],['SO',[],'sales order'],['MAX WO #',[],'work order'],['Sub WO',[],'sub work order'],['Ship to',[],'ship-to'],
+    ['PART_ID',[],'Logican part id'],['Description',[],'part description'],['Spyder Req Date',[],'date Spyder asked for'],['Kit Date',[],'kit date'],
+    ['Logican Commit Date',[],'Ship 10/16 or TBA 11/13'],['PRIORITY',[],'HOT, HOLD'],['FA/DA SA/MT #',[],'FA / DA number'],['Required Qty',[],'quantity'],['Balance',[],'balance'],
+    ['Pack Slip #',[],'pack slip'],['WO Status',[],'CTB, SHORT'],['Problem Parts/Logican Comments',[],'Logican comments'],['Spyder Comments',[],'Spyder comments']
+  ],required:[['Spyder PO'],['PART_ID'],['Logican Commit Date or Spyder Req Date']]},
+  {id:'logican-forecast',label:'Logican Forecast',cm:true,fields:[
+    ['In-Active',[],'ticked when the line is not active'],['<month heading>',[],'one column per month, e.g. Nov 2026 or 2026-11']
+  ],required:[['six or more month columns'],['In-Active (or the word Forecast)']]}
+];
+const impKind=id=>IMP_KINDS.find(k=>k.id===id)||null;
+// One import run (set by handleFiles) and the report the panel shows; claude holds Fix with Claude state per file.
+const impState={report:null,busy:false,open:false,opener:'',drag:0,claude:new Map(),statusAsked:false};
+// Files made by Apply (renamed header row) -> what was renamed, so the report can say so.
+const impMapped=new WeakMap();
+function impBegin(files,valid,{adding=false,restoring=false,hadReport=false,previousFiles=[]}={}){
+  impState.busy=true;
+  return {files:files.filter(Boolean),valid,adding,restoring,hadReport,previousFiles,entries:[],olderNotes:[],dupes:[],readError:null,error:''};
+}
+// Called on every way out of handleFiles. Builds the report, refreshes the header dot and, for a load someone asked
+// for, opens the panel when something needs a look (a clean load only shows a toast). Returns whether it opened.
+function impFinish(imp,error){
+  impState.busy=false;
+  try{
+    imp.error=error||'';
+    impState.report=impBuildReport(imp);
+    impState.claude=new Map();
+    renderSidebar();
+    if(imp.restoring)return false;
+    const r=impState.report;
+    if(r.failed&&!r.hadReport){
+      const box=document.getElementById('upload-error');
+      if(box&&box.insertAdjacentHTML)box.insertAdjacentHTML('beforeend',` <button type="button" class="link-btn imp-errlink" data-focus-key="imp-errlink" onclick="impOpen()">See what to fix</button>`);
+    }
+    if(r.tone==='teal'){
+      const fresh=r.files.filter(f=>!f.earlier).length;
+      showToast(`${imp.adding&&r.files.length>fresh?'Added':'Loaded'} ${impCount(fresh,'file')}. No problems found.`);
+      if(impState.open)impRender();
+      return false;
+    }
+    return impOpen();
+  }catch(err){console.warn('Import report not shown:',err);return false;}
+}
+const impCount=(n,word)=>`${fmtNum(n)} ${word}${n===1?'':'s'}`;
+const impExt=name=>((String(name||'').match(/\.([a-z0-9]{1,6})$/i)||['',''])[1]).toLowerCase();
+function impDay(d){const x=d?parseDate(d):null;return x?x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';}
+const impCut=(v,n=60)=>{const s=String(v??'').replace(/\s+/g,' ').trim();return s.length>n?`${s.slice(0,n-1)}…`:s;};
+// The header row of rows already read ("__" keys are the reader's own tags and SheetJS's blank headers).
+function impHeaders(rows){return rows&&rows.length?Object.keys(rows[0]).filter(k=>!/^__/.test(k)):[];}
+// Fields of a kind found among these headers, the closest kind for an unrecognised file, and what a kind still needs.
+function impFieldOf(kind,header){
+  if(kind.id==='logican-open'){const h=cmHead(header);return kind.fields.find(([f])=>cmHead(f)===h)||null;}
+  if(kind.id==='logican-forecast'){if(/^in-?active$/i.test(String(header).trim()))return kind.fields[0];return cmMonthHeader(header)?['<month heading>']:null;}
+  const n=normalizeHeader(header);
+  return n?kind.fields.find(([f,aliases])=>normalizeHeader(f)===n||aliases.includes(n))||null:null;
+}
+function impClosest(headers){
+  let best=null;
+  IMP_KINDS.forEach(k=>{
+    const found=new Set(headers.map(h=>impFieldOf(k,h)).filter(Boolean).map(f=>f[0]));
+    const score=k.id==='logican-forecast'?(headers.filter(h=>cmMonthHeader(h)).length>=3?3:0):found.size;
+    if(score>0&&(!best||score>best.score))best={kind:k,score};
+  });
+  return best&&best.kind;
+}
+function impMissing(kindId,headers){
+  const k=impKind(kindId);
+  if(!k)return [];
+  if(k.id==='logican-open'){
+    const h=new Set(headers.map(cmHead)),out=[];
+    if(!h.has('spyder po'))out.push('Spyder PO');
+    if(!h.has('part_id'))out.push('PART_ID');
+    if(!h.has('logican commit date')&&!h.has('spyder req date'))out.push('Logican Commit Date or Spyder Req Date');
+    return out;
+  }
+  if(k.id==='logican-forecast'){
+    const months=headers.filter(h=>cmMonthHeader(h)).length,out=[];
+    if(months<6)out.push(`month columns (${months} of 6)`);
+    if(!headers.some(h=>/forecast|in-?active/i.test(h)))out.push('In-Active');
+    return out;
+  }
+  const set=new Set(headers.map(normalizeHeader));
+  return k.required.filter(([,aliases])=>!aliases.some(a=>set.has(a))).map(([label])=>label);
+}
+// What handleFiles would read a file with this header row as (the same checks, in the same order).
+function impClassify(headers,records){
+  const cm=/spyder po|forecast|in-?active/i.test([headers,...records].map(r=>r.join(' ')).join(' '))?cmRecognize([headers,...records]):'';
+  if(cm)return cm==='openOrders'?'logican-open':'logican-forecast';
+  const blank=Object.fromEntries(headers.map(h=>[h,'']));
+  if(isBuildRiskRow(blank))return 'ctb';
+  if(isSupplyDemandRow(blank))return 'sd';
+  return isKpiExportHeaderSet(new Set(headers.map(normalizeHeader)))?'kpi':'';
+}
+// Columns a recognised KPI export or snapshot lacks that the pages use, with what happens without them.
+const IMP_KPI_KEY=[
+  ['ExportDate',['exportdate'],'the report date falls back to today'],
+  ['SourceType',['sourcetype','doctype','kpiarea'],'every line counts as a sales order'],
+  ['LineDueDate',['lineduedate','deliverydate','deldate','shipdate','polinedate','duedate','headerduedate','soduedate'],'no line has a due date, so none can be late'],
+  ['CustomerVendorName',['customervendorname','bpname','customer','vendor'],'customers and vendors show as Unassigned'],
+  ['Item No.',['itemcode','itemno'],'items show blank'],
+  ['OpenQuantity',['openquantity','openqty'],'lines with a quantity count as closed'],
+  ['AmountLocal',['amountlocal','doctotal','rowtotalfc'],'values show as $0']
+];
+const IMP_SD_KEY=[['ExportDate',['exportdate'],'the report date falls back to today'],['YearMonth',['yearmonth'],'months show blank'],['Item No.',['itemcode','itemno','itemnumber'],'items show blank']];
+function impKeyGaps(kind,headers){
+  const list=kind==='kpi'?IMP_KPI_KEY:kind==='sd'?IMP_SD_KEY:[];
+  const set=new Set(headers.map(normalizeHeader));
+  return list.filter(([,aliases])=>!aliases.some(a=>set.has(a)));
+}
+const IMP_FIX_SOURCE={
+  kpi:()=>`Export it with the KPI query (${IMP_KPI_QUERY}); it has every column.`,
+  sd:()=>`Export it with the supply / demand query (${SUPPLY_QUERY}).`,
+  ctb:()=>'Use the Orders At Risk / Clear To Build workbook (.xlsx) as it comes.',
+  'logican-open':()=>'Download the Open Orders tab of the Logican sheet as .csv or .xlsx.',
+  'logican-forecast':()=>'Download the Forecast tab of the Logican sheet as .csv or .xlsx.'
+};
+// --- The report: one entry per file offered, plus checks across the report (dates, quarantine, Logican sheet) ---
+function impBuildReport(imp){
+  // The same File can be offered twice (it is then a duplicate): its n-th appearance goes with its n-th entry.
+  const nth=(list,file,n)=>list.filter(x=>(x.file||x[0])===file)[n];
+  const kpiDates=imp.entries.filter(e=>e.kind==='kpi'&&!e.leftOut).map(e=>({e,d:detectExportDate(e.rows)})).filter(x=>x.d);
+  const newestKpi=kpiDates.reduce((m,x)=>!m||x.d>m.d?x:m,null);
+  const files=imp.files.map((file,i)=>{
+    const seen=imp.files.slice(0,i).filter(o=>o===file).length;
+    const f={file,i,name:file.name,ext:impExt(file.name),kind:'',kindLabel:'',rows:null,rowWord:'row',status:'ok',issues:[],meta:'',headers:[],mapped:impMapped.get(file)||null,earlier:imp.adding&&imp.previousFiles.includes(file)};
+    const issue=(tone,what,fix,extra)=>{f.issues.push({tone,what,fix,...(extra||{})});if(tone==='error')f.status='error';else if(tone==='warn'&&f.status!=='error')f.status='warn';};
+    if(!imp.valid.includes(file)){
+      f.kindLabel='Not read';
+      const ctb=/clear|ctb|risk/i.test(file.name);
+      issue('error',`A .${f.ext||'file'} file cannot be read: only .xlsx, .xls, .csv, or .txt exports can be read (not PDF).`,
+        ctb?['Use the Orders At Risk / Clear To Build workbook (.xlsx); the PDF cannot be read.','Upload that workbook instead.']:['Export the same report from SAP to Excel (.xls or .xlsx) or CSV.','Upload that file instead.']);
+      return f;
+    }
+    if(imp.readError&&imp.readError.file===file){
+      f.kindLabel='Not read';
+      issue('error',`It could not be opened (${impCut(imp.readError.message,140)}). It may be damaged, password-protected or not really a spreadsheet.`,
+        ['Open it in Excel and save it again as .xlsx or .csv, without a password.','Upload the saved copy.']);
+      return f;
+    }
+    const read=fileReadCache.get(file);
+    if(!read){f.kindLabel='Not read';f.status='idle';f.meta='Not read: reading stopped at a file that could not be opened.';return f;}
+    const rows=read.rows;
+    if(rows.cmSheet){
+      f.kind='cm';
+      f.kindLabel=rows.cmSheet.map(t=>t.kind==='openOrders'?'Logican Open Orders':'Logican Forecast').join(' + ');
+      const t=rows.cmSheet[0];
+      if(t.kind==='openOrders'){const p=cmParseOpenOrders(t.records,reportToday());f.rows=p?p.orders.length:Math.max(0,t.records.length-1);f.rowWord='PO line';}
+      else{const p=cmParseForecast(t.records);f.rows=p?p.items.length:Math.max(0,t.records.length-1);f.rowWord='item';}
+    }else{
+      f.rows=rows.length;
+      f.headers=impHeaders(rows);
+    }
+    if(!rows.cmSheet&&!rows.length){
+      f.kindLabel='Empty';
+      issue('error','The file has no rows: it is empty or holds only a header row.',['Open it and check it has data; if not, run the SAP query again.','Export and upload it again.']);
+      return f;
+    }
+    const e=nth(imp.entries,file,seen);
+    if(!e){f.status='idle';f.meta='Not read: reading stopped before this file.';return f;}
+    f.kind=e.kind==='cm'?'cm':e.kind;
+    if(e.kind==='kpi'||e.kind==='sd'){const d=detectExportDate(rows);if(d)f.meta=`Exported ${impDay(d)}`;f.exportDate=d;}
+    if(!e.kind){
+      f.kindLabel='Not recognised';
+      const near=impClosest(f.headers);
+      const missing=near?impMissing(near.id,f.headers):[];
+      issue('error',near
+        ?`Its columns do not match any export the app reads. It looks closest to a ${near.label}, which needs these columns:`
+        :'None of its columns match an export the app reads (a SAP KPI export, supply / demand snapshot, Clear To Build or Logican sheet).',
+        near?[IMP_FIX_SOURCE[near.id](),'Or rename those columns in the file and upload it again, or let Claude match them below.']
+          :['Check it is the right file: the KPI query export, the supply / demand snapshot, the Clear To Build workbook or a Logican sheet tab.','If it is, let Claude match its columns below.'],
+        {missing,claude:true});
+      return f;
+    }
+    f.kindLabel=e.kind==='kpi'?'SAP KPI export':e.kind==='sd'?'Supply / demand snapshot':e.kind==='ctb'?'Clear To Build':f.kindLabel;
+    if(e.leftOut){
+      f.unused=true;f.meta=[f.meta,'left out'].filter(Boolean).join(' · ');
+      const note=imp.olderNotes.find(n=>n.startsWith(`Left out ${file.name} `))||`Left out ${file.name}: a newer export of the same lines is loaded.`;
+      issue('warn',`${note}`,['Nothing to do if you meant to use the newest export.','To use this one instead, load it on its own with New file.']);
+    }
+    const dup=(nth(imp.dupes,file,seen)||[])[1]||0;
+    if(dup&&dup>=rows.length){
+      f.unused=true;
+      const same=imp.files.slice(0,i).find(o=>o.name===file.name&&o.size===file.size);
+      issue('warn',same?`This file is already loaded (same name and size): its ${impCount(dup,'row')} were ignored, so they are not counted twice.`:`Every row (${fmtNum(dup)}) is already in another uploaded file, so it adds nothing; the rows are counted once.`,
+        ['Nothing to do: the report is unchanged.','To update the report, export a fresh file and use New file.']);
+    }else if(dup)issue('warn',`Ignored ${impCount(dup,'row')} that were already in another uploaded file.`,['Nothing to do: those rows are counted once.']);
+    if((e.kind==='kpi'||e.kind==='sd')&&!e.leftOut&&f.exportDate&&reportAsOfDate&&+f.exportDate<+parseDate(reportAsOfDate)){
+      const other=e.kind==='kpi'&&newestKpi?` from ${newestKpi.e.file.name}`:'';
+      issue('warn',`Exported ${impDay(f.exportDate)}, before the report date (${impDay(reportAsOfDate)}${other}). Both are counted, so its lines may be out of date.`,
+        ['Export both files again on the same day so the numbers line up.','Or load only the newest with New file.']);
+    }
+    // ExportDate only matters when no other file gives the report its date. After Fix with Claude the gaps are a note.
+    const gaps=impKeyGaps(e.kind,f.headers).filter(([h])=>h!=='ExportDate'||!reportAsOfDate);
+    if(gaps.length){
+      issue(f.mapped?'info':'warn',`${f.mapped?'Read with the column names Claude suggested':`Read as a ${f.kindLabel}`}, but some columns the pages use are missing: ${gaps.map(([h,,effect])=>`without ${h}, ${effect}`).join('; ')}.`,
+        f.mapped?[IMP_FIX_SOURCE[e.kind]()]:[IMP_FIX_SOURCE[e.kind](),'Or rename the columns in the file, or let Claude match them below.'],{missing:gaps.map(([h])=>h),claude:!f.mapped});
+    }
+    return f;
+  });
+  // A failed load leaves the report as it was: files of the report on screen stay loaded, new files read without a
+  // problem were not loaded either.
+  if(imp.error)files.forEach(f=>{if(f.status==='ok'&&!(imp.hadReport&&f.earlier)){f.status='idle';f.meta=[f.meta,'not loaded because of the problem above'].filter(Boolean).join(' · ');}});
+  const checks=[];
+  if(!imp.error){
+    const dates=(dataQualityIssues||[]).filter(x=>x.kind==='date');
+    if(dates.length)checks.push({tone:'warn',title:'Unreadable dates',what:`${impCount(dates.length,'row')} ${dates.length===1?'has a date':'have dates'} the app cannot read; ${dates.length===1?'it counts':'they count'} as missing. Dates outside 1990–2099 count as missing until fixed in SAP.`,
+      examples:dates.slice(0,3).map(x=>x.message),more:Math.max(0,dates.length-3),fix:['Correct those dates in SAP.','Export and upload the file again. Until then the lines load with the date missing.']});
+    if(excludedQuarantineRows)checks.push({tone:'info',title:'Quarantine rows',what:`${fmtNum(excludedQuarantineRows)} quarantine-warehouse rows excluded by design.`,fix:[]});
+    cmDataCheckParts().forEach(text=>checks.push({tone:'warn',title:'Logican sheet',what:`${text}.`,
+      fix:/commit/.test(text)?['In the Logican sheet, type commit dates as "Ship 10/16" or "TBA 11/13".','Download the tab again and upload it.']:['Check the Spyder PO numbers on the sheet match open SAP purchase orders.']}));
+  }
+  const errors=files.filter(f=>f.status==='error').length;
+  const warns=files.filter(f=>f.status==='warn').length+checks.filter(c=>c.tone==='warn').length;
+  const loaded=imp.error?0:files.filter(f=>(f.status==='ok'||f.status==='warn')&&!f.unused).length;
+  return {at:Date.now(),files,checks,failed:!!imp.error,error:imp.error,adding:imp.adding,hadReport:imp.hadReport,readError:imp.readError,
+    errors,warns,loaded,tone:imp.error||errors?'red':warns?'amber':'teal'};
+}
+
+// --- Header button, picker, drop anywhere ---
+const IMP_UPLOAD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>';
+function impHeaderButton(){
+  const r=impState.report,tone=r&&r.tone!=='teal'?r.tone:'';
+  const loaded=hasLoadedData();
+  const state=tone==='red'?' (the last import had errors)':tone==='amber'?' (the last import had warnings)':'';
+  const tip=`${loaded&&!isSnapshotView?'Add files to this report':'Load files'}: SAP KPI exports, the supply / demand snapshot, Clear To Build or the Logican sheet, several at once. You can also drop files anywhere on the page.${tone?' The dot: the last import needs a look (View import report, under the export date).':''}`;
+  return `<button type="button" class="hdr-icon imp-hdr" id="hdr-upload" data-focus-key="hdr-upload" aria-label="${esc(`Upload files${state}`)}" onclick="impPick()"${tipAttr(tip)}>${IMP_UPLOAD_SVG}${tone?`<span class="imp-dot ${tone}" aria-hidden="true"></span>`:''}</button>`;
+}
+// The export-date popover's link to the last report (with how many problems it had).
+function impPopoverLink(){
+  const r=impState.report;
+  if(!r)return '';
+  const n=[r.errors?impCount(r.errors,'error'):'',r.warns?impCount(r.warns,'warning'):''].filter(Boolean).join(', ');
+  return `<div class="hdr-pop-notes imp-poplink"><button type="button" class="link-btn" data-focus-key="sidebar-import" onclick="dzMenuClose(true);impOpen()"${tipAttr('What each file was read as, and what to fix.')}>View import report</button>${n?` · <span class="${r.tone==='red'?'imp-red-text':'warn-text'}">${esc(n)}</span>`:''}</div>`;
+}
+function impPick(){
+  if(impState.busy){showToast('Still reading the last files. Try again in a moment.');return;}
+  let input=document.getElementById('imp-file-input');
+  if(!input){
+    input=document.createElement('input');
+    input.type='file';input.id='imp-file-input';input.multiple=true;input.accept=IMP_ACCEPT;input.hidden=true;
+    input.setAttribute('aria-hidden','true');input.tabIndex=-1;
+    input.addEventListener('change',()=>{const files=[...(input.files||[])];input.value='';impAdd(files);});
+    document.body.appendChild(input);
+  }
+  input.value='';
+  input.click();
+}
+// Adds the files to the report on hand (the Add file path) or, with nothing loaded or in a shared snapshot, loads them.
+function impAdd(files){
+  files=(files||[]).filter(Boolean);
+  if(!files.length)return;
+  if(impState.busy){showToast('Still reading the last files. Try again in a moment.');return;}
+  if(impState.open)impClose(false);
+  if(isSnapshotView||!hasLoadedData())handleFiles(files);
+  else addFiles(files);
+}
+function impDropEl(){
+  let el=document.getElementById('imp-drop');
+  if(!el&&document.body){
+    el=document.createElement('div');
+    el.id='imp-drop';el.className='imp-drop';el.hidden=true;el.setAttribute('aria-hidden','true');
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function impShowDrop(on){
+  const el=impDropEl();
+  if(!el)return;
+  if(on){
+    const adding=hasLoadedData()&&!isSnapshotView;
+    el.innerHTML=`<div class="imp-drop-box"><span class="imp-drop-ico">${IMP_UPLOAD_SVG}</span><h2>Drop files to ${adding?'add them':'load them'}</h2><p>SAP KPI exports, supply / demand snapshot, Clear To Build, Logican sheet</p><p class="imp-drop-types">.xlsx, .xls, .csv, .txt or .tsv</p></div>`;
+  }
+  el.hidden=!on;
+}
+const impHasFiles=e=>{const t=e&&e.dataTransfer&&e.dataTransfer.types;return !!t&&[...t].includes('Files');};
+if(typeof window!=='undefined'&&window.addEventListener){
+  window.addEventListener('dragenter',e=>{if(!impHasFiles(e))return;e.preventDefault();impState.drag++;impShowDrop(true);});
+  window.addEventListener('dragover',e=>{if(!impHasFiles(e))return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';});
+  window.addEventListener('dragleave',e=>{if(!impHasFiles(e))return;impState.drag=Math.max(0,impState.drag-1);if(!impState.drag)impShowDrop(false);});
+  window.addEventListener('drop',e=>{
+    if(!impHasFiles(e))return;
+    impState.drag=0;impShowDrop(false);
+    // The load screen's own drop area already took it.
+    if(e.defaultPrevented)return;
+    e.preventDefault();
+    impAdd([...(e.dataTransfer.files||[])]);
+  });
+}
+
+// --- The panel (a drawer like Ask AI; outside #results-screen, so page redraws never touch it) ---
+function impPanel(){
+  let el=document.getElementById('imp-panel');
+  if(!el&&document.body){
+    el=document.createElement('aside');
+    el.id='imp-panel';el.className='ai-panel imp-panel';el.hidden=true;
+    el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','imp-title');
+    el.addEventListener('keydown',impPanelKey);
+    document.body.appendChild(el);
+  }
+  return el;
+}
+// Returns whether the panel is on screen (false where it cannot be drawn; a failed Add file then falls back to alert).
+function impOpen(){
+  if(!impState.report)return false;
+  const panel=impPanel();
+  if(!panel)return false;
+  if(typeof aiState!=='undefined'&&aiState.open)aiToggle(false);
+  if(!impState.open){const a=document.activeElement;impState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
+  impState.open=true;
+  panel.hidden=false;
+  impRender();
+  const t=document.getElementById('imp-title');
+  if(t&&t.focus)t.focus({preventScroll:true});
+  return typeof panel.getClientRects==='function'&&panel.getClientRects().length>0;
+}
+function impClose(refocus=true){
+  const panel=document.getElementById('imp-panel');
+  impState.open=false;
+  if(panel)panel.hidden=true;
+  impState.claude.forEach(s=>{if(s.controller)s.controller.abort();});
+  if(!refocus)return;
+  const back=(impState.opener&&document.querySelector(`[data-focus-key="${impState.opener.replace(/["\\]/g,'\\$&')}"]`))||document.getElementById('hdr-upload');
+  if(back&&back.focus)back.focus({preventScroll:true});
+}
+// The drawer covers the page, so Tab and Shift+Tab stay inside it; Esc closes it (Ask AI's Esc wins when open).
+function impPanelKey(e){
+  if(e.key!=='Tab')return;
+  const items=[...document.getElementById('imp-panel').querySelectorAll('a[href],button,input,select,textarea,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(!first)return;
+  if(e.shiftKey?active===first:active===last){e.preventDefault();(e.shiftKey?last:first).focus();}
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!impState.open||e.defaultPrevented||(typeof aiState!=='undefined'&&aiState.open))return;
+  e.preventDefault();impClose();
+});
+const IMP_TONE={ok:['teal','OK'],warn:['amber','Warning'],error:['red','Error'],idle:['indigo','Not loaded'],info:['indigo','Info']};
+const IMP_ICO={ok:'#0f766e',warn:'#f59e0b',error:'#e11d48',idle:'#6366f1',info:'#6366f1'};
+function impRender(){
+  const panel=document.getElementById('imp-panel'),r=impState.report;
+  if(!panel||!r||panel.hidden)return;
+  const focus=captureFocus(panel);
+  const scroll=(panel.querySelector('.imp-body')||{}).scrollTop||0;
+  const counts=[r.failed?'':impCount(r.loaded,'file')+' loaded',r.errors?impCount(r.errors,'error'):'',r.warns?impCount(r.warns,'warning'):''].filter(Boolean).join(' · ');
+  const others=r.readError?r.files.filter(f=>f.file!==r.readError.file&&f.status!=='error').length:0;
+  const failFix=!r.failed?'':r.readError?'Remove or re-save that file, then upload again.'
+    :/Logican sheet adds to a SAP export/.test(r.error)?'Upload the SAP KPI export too; several files at once is fine.'
+    :/does not look like a KPI export/.test(r.error)?'See the file below: export it again, or let Claude match its columns.'
+    :/No rows found/.test(r.error)?'Check the files have data, then upload them again.':'Check the files below, then upload them again.';
+  const head=r.failed
+    ?`<div class="imp-sum red" role="alert"><span class="imp-sum-ico" style="--ico:${IMP_ICO.error}">${dzIconSvg('alert')}</span><div><p class="imp-sum-t">${r.hadReport?'Nothing new was loaded':'Nothing was loaded'}</p><p>${esc(`${r.error}${/[.!?)]$/.test(r.error)?'':'.'}`)}${r.hadReport?' The report on screen is unchanged.':''}</p><p class="imp-sum-fix"><b>How to fix:</b> ${esc(failFix)}</p>${others?`<div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-retry" onclick="impRetryWithout()"${tipAttr('Load the other files now, without the one that could not be opened.')}>Load the other ${impCount(others,'file')}</button></div>`:''}</div></div>`
+    :`<div class="imp-sum ${r.tone}"><span class="imp-sum-ico" style="--ico:${r.tone==='teal'?IMP_ICO.ok:r.tone==='amber'?IMP_ICO.warn:IMP_ICO.error}">${dzIconSvg(r.tone==='teal'?'check':'alert')}</span><div><p class="imp-sum-t">${esc(`${impCount(r.loaded,'file')} loaded`)}${r.files.length>r.loaded?` <span class="imp-of">of ${fmtNum(r.files.length)}</span>`:''}</p><p>${r.tone==='teal'?'Every file was read. Nothing to fix.':esc(`${[r.errors?`${impCount(r.errors,'file')} could not be used`:'',r.warns?`${impCount(r.warns,'warning')} to check`:''].filter(Boolean).join(' and ')}. Each one says what happened and how to fix it.`)}</p></div></div>`;
+  const files=r.files.map(f=>impFileHtml(f)).join('');
+  const checks=r.checks.length?`<h3 class="imp-h3">Across the report</h3>${r.checks.map(c=>{
+    const [chipTone,chipText]=IMP_TONE[c.tone];
+    return `<section class="imp-file ${c.tone}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[c.tone]}">${dzIconSvg(c.tone==='info'?'layers':'alert')}</span><div class="imp-file-main"><p class="imp-name">${esc(c.title)}</p></div>${dzChip(chipText,chipTone)}</div><div class="imp-issue"><p class="imp-lbl">What happened</p><p>${esc(c.what)}</p>${c.examples&&c.examples.length?`<ul class="imp-ex">${c.examples.map(x=>`<li>${esc(x)}</li>`).join('')}${c.more?`<li>…and ${fmtNum(c.more)} more (Data check lists them)</li>`:''}</ul>`:''}${c.fix.length?`<p class="imp-lbl">How to fix</p><ol class="imp-fix">${c.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`:''}</div></section>`;
+  }).join('')}`:'';
+  panel.innerHTML=`<div class="ai-head imp-head"><h2 id="imp-title" tabindex="-1">Import</h2><span class="ai-mode">${esc(counts)}</span><button type="button" class="ai-close" data-focus-key="imp-close" aria-label="Close import report" onclick="impClose()"${tipAttr('Close (Esc). Reopen it from the export date in the header.')}>×</button></div>
+    <div class="imp-body">${head}<h3 class="imp-h3">Files</h3>${files}${checks}<p class="imp-note">Drop files anywhere on the page to add them.</p></div>
+    <div class="imp-foot"><button type="button" class="dz-btn" data-focus-key="imp-add" onclick="impPick()"${tipAttr('Choose more files to add (several at once is fine).')}>${IMP_UPLOAD_SVG}Add files</button><button type="button" class="dz-btn primary" data-focus-key="imp-done" onclick="impClose()">${hasLoadedData()&&document.getElementById('results-screen').style.display==='block'?'View dashboard':'Close'}</button></div>`;
+  const body=panel.querySelector('.imp-body');
+  if(body)body.scrollTop=scroll;
+  restoreFocus(panel,focus);
+}
+function impFileHtml(f){
+  const [chipTone,chipText]=IMP_TONE[f.status];
+  const rows=f.rows===null?'':impCount(f.rows,f.rowWord);
+  const meta=[f.kindLabel,rows,f.meta,f.earlier?'loaded earlier':''].filter(Boolean).join(' · ');
+  const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(`Renamed with Claude before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with Claude: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
+  const issues=f.issues.map(x=>`<div class="imp-issue ${x.tone}"><p class="imp-lbl">${x.tone==='info'?'Good to know':'What happened'}</p><p>${esc(x.what)}</p>${x.missing&&x.missing.length?`<p class="imp-missing">${x.missing.map(m=>`<code>${esc(m)}</code>`).join('')}</p>`:''}<p class="imp-lbl">${x.tone==='info'?'To add them':'How to fix'}</p><ol class="imp-fix">${x.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${x.claude?impClaudeHtml(f):''}</div>`).join('');
+  return `<section class="imp-file ${f.status}" aria-label="${esc(`${f.name}: ${chipText}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[f.status]}">${dzIconSvg('file')}</span><div class="imp-file-main"><p class="imp-name" title="${esc(f.name)}">${esc(f.name)}</p><p class="imp-meta">${esc(meta)}</p></div>${dzChip(chipText,chipTone)}</div>${mapped}${issues}</section>`;
+}
+
+// --- Fix with Claude: the header row and 5 sample rows go to the site's AI service (POST /api/ai/chat, Claude,
+// the provider's default model) only on a click and with the same per-provider consent as Ask AI. The answer must be
+// strict JSON naming a known kind and only known headers; Apply renames those columns and loads the file again. ---
+const IMP_SPARK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
+function impClaude(){
+  if(isSnapshotView)return {ok:false,why:'A shared snapshot has no server for Claude. Open the hosted dashboard to use it.'};
+  // The same status Ask AI uses (GET /api/ai/status); asked once, when a file first needs it.
+  if(!aiState.status&&!aiState.statusError){
+    if(!impState.statusAsked){impState.statusAsked=true;aiCheckStatus().then(impRender,impRender);}
+    if(!aiState.status)return {ok:false,checking:true,why:'Checking whether this site has Claude set up…'};
+  }
+  if(aiState.statusError)return {ok:false,why:aiState.statusError};
+  const p=aiConfigured().find(x=>x.id==='anthropic');
+  if(!p)return {ok:false,why:aiState.status&&aiState.status.hosted?'Claude is not set up on this site yet: whoever runs it adds the ANTHROPIC_API_KEY secret (docs/AI_ASSISTANT.md).':'Claude needs the hosted site: this copy runs without the server that holds the key.'};
+  return {ok:true,p,model:p.models.includes(p.defaultModel)?p.defaultModel:p.models[0]};
+}
+function impClaudeHtml(f){
+  const a=impClaude(),st=impState.claude.get(f.file)||{},i=f.i;
+  const sendTip='Sends only this file\'s name, its header row and its first 5 rows to Claude, which suggests which column is which. Nothing changes until you click Apply.';
+  if(!a.ok)return `<div class="imp-claude"><button type="button" class="dz-btn imp-claude-btn" data-focus-key="imp-claude-${i}" aria-disabled="true"${tipAttr(`${a.why} ${a.checking?'':'The steps above work without it.'}`)}>${IMP_SPARK}${a.checking?'Fix with Claude…':'Fix with Claude (available on the hosted site)'}</button></div>`;
+  if(st.step==='consent'){
+    const ok=aiConsented('anthropic');
+    return `<div class="imp-claude imp-box"><p><b>Fix with Claude</b> sends only this file's name, its header row and its first 5 rows to Claude.</p>${a.p.dataNotice?`<p class="imp-small">${esc(a.p.dataNotice)}${/^https:\/\//.test(String(a.p.termsUrl||''))?` <a href="${esc(a.p.termsUrl)}" target="_blank" rel="noopener noreferrer">Data terms</a>`:''}</p>`:''}<label class="ai-check imp-check"><input type="checkbox" data-focus-key="imp-consent-${i}"${ok?' checked':''} onchange="impSetConsent(this.checked)"> <span>Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to Claude.</span></label><div class="imp-actions"><button type="button" class="dz-btn primary" data-focus-key="imp-send-${i}" onclick="impClaudeSend(${i})"${ok?'':' disabled'}${tipAttr(sendTip)}>${IMP_SPARK}Send to Claude</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
+  }
+  if(st.step==='busy')return `<div class="imp-claude imp-box" role="status"><p class="imp-busy"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Claude is reading the header row…</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
+  if(st.step==='error')return `<div class="imp-claude imp-box bad" role="alert"><p>${esc(st.message)}</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-claude-${i}" onclick="impClaudeStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Try again</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
+  if(st.step==='proposal'){
+    const p=st.proposal,k=impKind(p.kind);
+    const table=p.pairs.length?`<div class="imp-map" role="table" aria-label="Proposed column names"><div class="imp-map-r imp-map-h" role="row"><span role="columnheader">Their column</span><span aria-hidden="true"></span><span role="columnheader">Our field</span></div>${p.pairs.map(([a,b])=>`<div class="imp-map-r" role="row"><span role="cell">${esc(a)}</span><span class="imp-arrow" aria-hidden="true">→</span><span role="cell"><code>${esc(b)}</code></span></div>`).join('')}</div>`:'';
+    const can=p.pairs.length&&!p.missing.length&&p.kind!=='unknown';
+    return `<div class="imp-claude imp-box claude"><p class="imp-claude-t">${IMP_SPARK}<b>Claude:</b> ${k?esc(k.label):'Not a file the app reads'}</p>${p.explanation?`<p>${esc(p.explanation)}</p>`:''}${table}${p.dropped?`<p class="imp-small">${impCount(p.dropped,'suggestion')} left out: ${p.dropped===1?'it names':'they name'} a column the file does not have or a field the app does not read.</p>`:''}${p.missing.length?`<p class="imp-small imp-red-text">Even with these names the file would still miss: ${esc(p.missing.join(', '))}.</p>`:''}${!can&&p.fix?`<p class="imp-small"><b>What to do:</b> ${esc(p.fix)}</p>`:''}<div class="imp-actions">${can?`<button type="button" class="dz-btn primary" data-focus-key="imp-apply-${i}" onclick="impApply(${i})"${tipAttr('Rename these columns and read the file again. The file on your computer is not changed.')}>Apply</button>`:''}<button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">${can?'Cancel':'Close'}</button></div><p class="imp-small">Only the header row and 5 sample rows were sent.</p></div>`;
+  }
+  return `<div class="imp-claude"><button type="button" class="dz-btn imp-claude-btn on" data-focus-key="imp-claude-${i}" onclick="impClaudeStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Fix with Claude</button></div>`;
+}
+const impFileAt=i=>impState.report&&impState.report.files[i]||null;
+function impClaudeStart(i){
+  const f=impFileAt(i);
+  if(!f||!impClaude().ok)return;
+  if(!aiConsented('anthropic')){impState.claude.set(f.file,{step:'consent'});impRender();const box=document.querySelector(`[data-focus-key="imp-consent-${i}"]`);if(box)box.focus();return;}
+  impClaudeSend(i);
+}
+// The same consent Ask AI keeps for Claude (one tick allows both).
+function impSetConsent(on){
+  const all=aiReadJson(AI_CONSENT_STORE);
+  if(on)all.anthropic=new Date().toISOString().slice(0,10);else delete all.anthropic;
+  aiSet(AI_CONSENT_STORE,Object.keys(all).length?JSON.stringify(all):'');
+  try{aiSyncSettings();}catch(err){}
+  impRender();
+}
+function impClaudeCancel(i){
+  const f=impFileAt(i);
+  if(!f)return;
+  const st=impState.claude.get(f.file);
+  if(st&&st.controller)st.controller.abort();
+  impState.claude.delete(f.file);
+  impRender();
+  const b=document.querySelector(`[data-focus-key="imp-claude-${i}"]`);
+  if(b)b.focus();
+}
+const IMP_SYSTEM=`You help an operations KPI dashboard read a spreadsheet whose columns it did not recognise. You get the file name, its header row, up to 5 sample rows and the file kinds the dashboard reads, each with the field headers it expects.
+Decide which kind the file is and which of its columns holds each field, judging from the header names and the sample values.
+Answer with ONLY one JSON object and no other text:
+{"kind": "kpi" | "sd" | "ctb" | "logican-open" | "logican-forecast" | "unknown", "mapping": {"<their header, exactly as given>": "<the dashboard field header, exactly as listed>"}, "explanation": "<one plain sentence for an operations user>", "fix": "<what the user should do if renaming columns is not enough; one or two short sentences, or empty>"}
+Rules: map only columns you are confident about; each dashboard field at most once; never invent headers; leave out columns that already use an accepted header; for logican-forecast a month column maps to a heading like "Nov 2026"; if the file is none of these kinds, answer "unknown" with an empty mapping and say in "fix" what file is needed.`;
+function impClaudeQuestion(f){
+  const read=fileReadCache.get(f.file);
+  const keys=impHeaders(read.rows).slice(0,80);
+  const sample=read.rows.slice(0,5).map(r=>keys.map(k=>impCut(r[k])));
+  const kinds=IMP_KINDS.map(k=>({kind:k.id,name:k.label,needs:k.required.map(([label])=>label),fields:k.fields.map(([header,aliases,meaning])=>({header,...(aliases.length?{also_accepted:aliases}:{}),meaning}))}));
+  return `File name: ${impCut(f.name,120)}\n\nHeader row and first ${sample.length} data rows (JSON):\n${JSON.stringify({headers:keys.map(k=>impCut(k,80)),rows:sample})}\n\nFile kinds the dashboard reads (also_accepted lists spellings it already reads, lower case without spaces or punctuation):\n${JSON.stringify(kinds)}`;
+}
+async function impClaudeSend(i){
+  const f=impFileAt(i),a=impClaude();
+  if(!f||!a.ok)return;
+  if(!aiConsented('anthropic')){impClaudeStart(i);return;}
+  const report=impState.report,controller=typeof AbortController==='function'?new AbortController():null;
+  impState.claude.set(f.file,{step:'busy',controller});
+  impRender();
+  let next;
+  try{
+    const data=await aiPost({provider:'anthropic',model:a.model,system:IMP_SYSTEM,messages:[{role:'user',content:impClaudeQuestion(f)}]},controller&&controller.signal);
+    if(data.stop==='refusal')throw aiFail('Claude declined to map this file. Use the steps above instead.');
+    next={step:'proposal',proposal:impParseProposal(data.text,f)};
+  }catch(err){
+    if(err&&err.name==='AbortError')return;
+    next={step:'error',message:aiErrorText(err)};
+  }
+  if(impState.report!==report||!impState.claude.has(f.file))return;
+  impState.claude.set(f.file,next);
+  impRender();
+  const go=document.querySelector(`[data-focus-key="imp-apply-${i}"]`)||document.querySelector(`[data-focus-key="imp-cancel-${i}"]`);
+  if(go&&impState.open)go.focus({preventScroll:true});
+}
+// Strict check of Claude's answer: one JSON object, a known kind, sources that are this file's headers, targets that
+// are headers the app reads for that kind, and no target named twice. Anything else is not used.
+function impParseProposal(text,f){
+  const bad=()=>aiFail('Claude\'s answer was not in the expected form, so it was not used. Try again.');
+  const s=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+  const from=s.indexOf('{'),to=s.lastIndexOf('}');
+  if(from<0||to<from)throw bad();
+  let o;
+  try{o=JSON.parse(s.slice(from,to+1));}catch(err){throw bad();}
+  if(!o||typeof o!=='object'||Array.isArray(o))throw bad();
+  const kind=typeof o.kind==='string'?o.kind.trim():'';
+  if(kind!=='unknown'&&!impKind(kind))throw bad();
+  const mapping=o.mapping===undefined||o.mapping===null?{}:o.mapping;
+  if(typeof mapping!=='object'||Array.isArray(mapping))throw bad();
+  const k=impKind(kind),headers=f.headers;
+  const pairs=[],used=new Set();
+  let dropped=0;
+  for(const [src,tgt] of Object.entries(mapping)){
+    if(typeof tgt!=='string'){dropped++;continue;}
+    const source=headers.find(h=>h===src)||headers.find(h=>impCut(h,80)===src||h.trim()===String(src).trim());
+    const field=k&&source?impFieldOf(k,tgt):null;
+    if(!field){dropped++;continue;}
+    const target=field[0]==='<month heading>'?impCut(tgt,20):field[0];
+    const key=k.cm?cmHead(target):normalizeHeader(target);
+    if(used.has(key))throw aiFail(`Claude matched two columns to ${target}, so the answer was not used. Try again.`);
+    used.add(key);
+    // Another column already holds that field: renaming this one too would give the reader two.
+    if(headers.some(h=>h!==source&&impFieldOf(k,h)&&impFieldOf(k,h)[0]===field[0]&&field[0]!=='<month heading>')){dropped++;continue;}
+    if(source!==target)pairs.push([source,target]);
+  }
+  const renamed=headers.map(h=>(pairs.find(([a])=>a===h)||[,h])[1]);
+  const read=fileReadCache.get(f.file);
+  const records=read.rows.slice(0,5).map(r=>headers.map(h=>String(r[h]??'')));
+  const reads=k&&pairs.length?impClassify(renamed,records):'';
+  const missing=!k||!pairs.length?[]:reads===kind?[]:impMissing(kind,renamed).length?impMissing(kind,renamed):[`it would be read as ${reads?impKind(reads).label:'nothing the app reads'}`];
+  return {kind,pairs,dropped,missing,explanation:impCut(o.explanation,300),fix:impCut(o.fix,300)};
+}
+// Apply: the rows already read, with the proposed header names, written out as CSV and loaded in place of the file
+// (same name), in the same way as the import that brought it in (added to the report, or a new one).
+function impCsvField(v){const s=String(v??'');return /[",\r\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}
+function impApply(i){
+  const r=impState.report,f=impFileAt(i);
+  const st=f&&impState.claude.get(f.file);
+  if(impState.busy||!f||!st||st.step!=='proposal'||!st.proposal.pairs.length||st.proposal.missing.length)return;
+  const read=fileReadCache.get(f.file);
+  if(!read||!read.rows.length)return;
+  const keys=impHeaders(read.rows),names=new Map(st.proposal.pairs);
+  const lines=[keys.map(k=>impCsvField(names.get(k)||k)).join(','),...read.rows.map(row=>keys.map(k=>impCsvField(row[k])).join(','))];
+  const file=new File([`sep=,\r\n${lines.join('\r\n')}\r\n`],f.file.name,{type:'text/csv',lastModified:f.file.lastModified||Date.now()});
+  impMapped.set(file,{pairs:st.proposal.pairs,kind:st.proposal.kind});
+  impState.claude.delete(f.file);
+  handleFiles(r.files.map(x=>x.file===f.file?file:x.file),{adding:r.adding});
+}
+// After a file that could not be opened stopped the load: load the others now.
+function impRetryWithout(){
+  const r=impState.report;
+  if(impState.busy||!r||!r.readError)return;
+  handleFiles(r.files.map(x=>x.file).filter(x=>x!==r.readError.file),{adding:r.adding});
 }
 
 function normalizeSupplyDemandRows(raw){
@@ -8241,7 +8934,7 @@ function renderSidebar(){
   const fileOpen=dzOpenMenu==='hdr-file';
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button></div></div></div>`
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button></div></div></div>`
     :`<span class="hdr-date none"><span class="hdr-date-txt">No export loaded</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;
@@ -8265,7 +8958,7 @@ function renderSidebar(){
   hdrRendering=true;
   el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="110" height="23"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
-    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${avatar}</div>`;
+    <div class="hdr-right">${file}${search}${impHeaderButton()}${askAi}${exportPdf}${avatar}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
   // The page links scroll sideways on a phone: keep where they were, and the current page in view.
