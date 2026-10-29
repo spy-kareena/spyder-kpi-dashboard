@@ -12,7 +12,7 @@ There are two ways to host it:
 ## Files
 
 - `index.html` - the dashboard page to host. The spreadsheet reader, SheetJS Community Edition 0.20.3 (`xlsx.full.min.js` from cdn.sheetjs.com, Apache 2.0 licence), is built into it, so no script is loaded from the internet
-- `assets/spyder-logo.jpg` - the logo shown on the Cloudflare sign-in page (the dashboard itself has the logo built in)
+- `assets/spyder-logo.png` - the logo shown on the Cloudflare sign-in page (the dashboard itself has the logo built in)
 - `queries/` - SAP B1 HANA query templates used to generate Excel exports
 - `samples/` - example CSV for a local smoke test
 - `VERSION.txt` - package/version marker
@@ -149,7 +149,7 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
 - Restrict access to internal users only. On Cloudflare Pages with `REPORT_STORE` bound, the last uploaded export, the shared notes, the at-risk history and the Shipping statuses are stored in Workers KV and readable by anyone with the dashboard password; otherwise uploaded KPI data and notes never reach the server. The page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.
-- Cloudflare Pages: only the sign-in page logo, `/assets/spyder-logo.jpg`, is served without signing in (an exact path in `functions/_middleware.js`). Every other path, including any other name under `/assets/`, needs a session; this matters because Cloudflare Pages answers a missing file with `index.html`. To make another file public, add its exact path to `PUBLIC_PATHS` there, and never put anything private in it.
+- Cloudflare Pages: only the sign-in page logo, `/assets/spyder-logo.png`, is served without signing in (an exact path in `functions/_middleware.js`). Every other path, including any other name under `/assets/`, needs a session; this matters because Cloudflare Pages answers a missing file with `index.html`. To make another file public, add its exact path to `PUBLIC_PATHS` there, and never put anything private in it.
 - The page loads the Inter font from Google Fonts (fonts.googleapis.com, fonts.gstatic.com), as the sign-in page does. Without internet access both fall back to the system font; nothing else is loaded from outside.
 - The Shipping page sends nothing to any carrier or tracking service; its **Check** links only open AfterShip's public page in the viewer's own browser tab. The dormant FedEx module's keys (`FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`), if ever set, live only as Worker / Pages secrets; they and the FedEx sign-in token are never sent to the browser. `/api/shipping` is behind the sign-in; changing the tracking list or asking FedEx now is accepted only from the dashboard page itself (same origin), and Refresh now is limited to once per 10 minutes for the whole site.
 - Cloudflare Pages: set `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32+ random characters) as Pages secrets for Production and Preview. Both are required; the site returns a "not configured" error until both are set. Changing either signs everyone out. Failed sign-ins are delayed by one second; for stronger protection put the project behind Cloudflare Access, or add a rate-limiting rule matching the path `/login` with method POST (and redirect `<project>.pages.dev` to the custom domain so the rule cannot be bypassed).

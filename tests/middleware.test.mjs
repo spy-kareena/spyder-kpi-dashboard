@@ -131,7 +131,7 @@ test('non-form POSTs and malformed cookies do not throw', async () => {
 
 test('the sign-in logo under /assets/ is served without a session (GET and HEAD)', async () => {
   for (const method of ['GET', 'HEAD']) {
-    const res = await call('/assets/spyder-logo.jpg', { method });
+    const res = await call('/assets/spyder-logo.png', { method });
     assert.equal(res.status, 200, method);
     if (method === 'GET') assert.equal(await res.text(), STATIC_BODY, 'the file itself, not the sign-in page');
     assert.equal(res.headers.get('X-Content-Type-Options'), 'nosniff');
@@ -141,19 +141,19 @@ test('the sign-in logo under /assets/ is served without a session (GET and HEAD)
 
 test('only the exact logo path skips the sign-in (no traversal, no other methods)', async () => {
   const paths = ['/assets/', '/assets', '/assets/../index.html', '/assets/%2e%2e/index.html', '/assets/..%2Findex.html', '/assets/%2E%2E%2Findex.html',
-    '/assets/sub/logo.jpg', '/assets/.hidden', '/assets/a..jpg', '/assets/logo.jpg/', '/assetsx/logo.jpg', '/ASSETS/spyder-logo.jpg', '/index.html?f=/assets/spyder-logo.jpg', '/api/report?x=/assets/a.jpg'];
+    '/assets/sub/logo.jpg', '/assets/.hidden', '/assets/a..jpg', '/assets/logo.jpg/', '/assetsx/logo.jpg', '/ASSETS/spyder-logo.png', '/index.html?f=/assets/spyder-logo.png', '/api/report?x=/assets/a.jpg'];
   for (const path of paths) {
     const res = await call(path);
     if (path.startsWith('/api/')) { assert.equal(res.status, 401, path); continue; }
     assert.ok(await refused(res), `${path} must need a session`);
   }
   for (const method of ['POST', 'PUT', 'DELETE']) {
-    assert.ok(await refused(await call('/assets/spyder-logo.jpg', { method })), method);
+    assert.ok(await refused(await call('/assets/spyder-logo.png', { method })), method);
   }
 });
 
 test('any other name under /assets/ needs a session: the static server is never asked (Pages would answer index.html)', async () => {
-  for (const path of ['/assets/does-not-exist', '/assets/x.html', '/assets/index', '/assets/spyder-logo.jpeg', '/assets/spyder-logo.jpg.html', '/assets/Spyder-logo.jpg']) {
+  for (const path of ['/assets/does-not-exist', '/assets/x.html', '/assets/index', '/assets/spyder-logo.jpg', '/assets/spyder-logo.png.html', '/assets/Spyder-logo.png']) {
     for (const method of ['GET', 'HEAD']) {
       let nextCalled = false;
       const res = await onRequest({ request: new Request(ORIGIN + path, { method }), env: ENV, next: async () => { nextCalled = true; return new Response(STATIC_BODY); } });
@@ -169,7 +169,7 @@ test('login page: logo, welcome message, footer, password autocomplete; no error
   const res = await call('/');
   const page = await res.text();
   assert.equal(res.status, 200);
-  assert.match(page, /<img class="logo" src="\/assets\/spyder-logo\.jpg" alt="Spyder Controls"/);
+  assert.match(page, /<img class="logo" src="\/assets\/spyder-logo\.png" alt="Spyder Controls"/);
   assert.match(page, /<h1>Welcome back<\/h1>/);
   assert.ok(page.includes("Sign in to see this week's order health, purchase orders and build risk."));
   assert.ok(page.includes('Internal use · Spyder Controls'));
@@ -190,13 +190,13 @@ test('a wrong password shows an inline error tied to the field (401); an unreada
   assert.match(await bad.text(), /The sign-in form could not be read\. Try again\./);
 });
 
-test('assets/spyder-logo.jpg holds exactly the logo embedded in index.html (LOGO_SRC)', () => {
+test('assets/spyder-logo.png holds exactly the logo embedded in index.html (LOGO_SRC)', () => {
   const html = readFileSync(join(here, '..', 'index.html'), 'utf8');
-  const m = html.match(/const LOGO_SRC='data:image\/jpeg;base64,([A-Za-z0-9+/=]+)'/);
+  const m = html.match(/const LOGO_SRC='data:image\/png;base64,([A-Za-z0-9+/=]+)'/);
   assert.ok(m, 'index.html keeps its inline logo for Share snapshot');
-  const file = readFileSync(join(here, '..', 'assets', 'spyder-logo.jpg'));
+  const file = readFileSync(join(here, '..', 'assets', 'spyder-logo.png'));
   assert.ok(file.equals(Buffer.from(m[1], 'base64')), 'same bytes');
-  assert.equal(file.subarray(0, 3).toString('hex'), 'ffd8ff', 'a JPEG file, matching its .jpg name');
+  assert.equal(file.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', 'a PNG file, matching its .png name');
 });
 
 test('logout clears the session and the legacy cookie', async () => {

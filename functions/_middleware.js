@@ -14,7 +14,7 @@ const FAILED_LOGIN_DELAY_MS = 1000;
 // match exactly. A pattern such as "any file under /assets/" is not safe: Cloudflare Pages answers a path with no
 // file behind it with index.html (its single-page-app fallback), so /assets/anything would hand out the whole app.
 // If another public file is ever needed, add its exact path here.
-const LOGO_PATH = '/assets/spyder-logo.jpg';
+const LOGO_PATH = '/assets/spyder-logo.png';
 const PUBLIC_PATHS = new Set([LOGO_PATH]);
 const encoder = new TextEncoder();
 
@@ -168,11 +168,11 @@ function loginPage(failed, status) {
     :root{--fg:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.08);--accent:#6366f1;--ring:rgba(99,102,241,.22);--crit:#be123c;--crit-bg:#fff1f2;
       --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
-    html{background:#eef4ff}
-    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:linear-gradient(135deg,#eef4ff 0%,#fdf2f8 55%,#f0fdfa 100%);color:var(--fg);-webkit-font-smoothing:antialiased}
+    html{background:#eaf1fd}
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:#eaf1fd;color:var(--fg);-webkit-font-smoothing:antialiased}
     .card{width:100%;max-width:400px;background:rgba(255,255,255,.75);border:1px solid #fff;border-radius:24px;padding:34px 30px 30px;box-shadow:0 10px 40px rgba(15,23,42,.06)}
-    /* The logo file is black on white: multiply lets the page gradient show through the white */
-    .logo{display:block;width:150px;height:29px;object-fit:cover;object-position:center;margin:0 0 28px -2px;mix-blend-mode:multiply}
+    /* The logo is a transparent PNG (black ink only) */
+    .logo{display:block;width:150px;height:auto;margin:0 0 28px -2px}
     h1{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
     .lead{margin-top:8px;font-size:14px;color:var(--muted);line-height:1.55}
     form{display:grid;gap:8px;margin-top:26px}
@@ -196,7 +196,7 @@ function loginPage(failed, status) {
 </head>
 <body>
   <main class="card">
-    <img class="logo" src="${LOGO_PATH}" alt="Spyder Controls" width="150" height="29">
+    <img class="logo" src="${LOGO_PATH}" alt="Spyder Controls" width="150" height="31">
     <h1>Welcome back</h1>
     <p class="lead">Sign in to see this week's order health, purchase orders and build risk.</p>
     <form method="post" action="/login">

@@ -160,3 +160,9 @@ Tests have not been updated for the new markup yet.
 Us / Them: the Cause control (note editor, Build Risk and Purchase Orders row editors, linked-lines bulk bar) and every
 Us / Them tag and wording are removed. Saved causes stay in the data and Ask AI keeps the cause numbers.
 The first-visit hint banners (Order Health, Shipping, load screen) and "Show hints again" are removed.
+2v6.1: the page background is one light blue (#eaf1fd, no gradient); the Spyder logo is a transparent PNG (no white box),
+in the header and on the sign-in page (assets/spyder-logo.png replaces the .jpg). Small icons on the little tiles
+(each picked from the tile's words). The note editor on order lines has "Your name" (the shared list of names, or add a
+new one) and "Comment" (ready-made comments or Custom comment); the Notes column shows the note's last line and who wrote
+it. The At risk card shows, quietly, the share of orders due in the next month that are at risk. The Most affected
+warehouse is highlighted in soft amber. Card titles Capitalize Each Word.

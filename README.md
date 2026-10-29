@@ -8,7 +8,7 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 
 1. Sign in and load the KPI export. SAP's "Export to Excel" `.xls` works as-is, as do `.csv` and `.xlsx`.
 2. **Add file** (the export-date popover in the header) loads a supply/demand snapshot or a Clear To Build report next to the KPI export. **New file** opens the load screen; the current report stays until a new file is read. If two exports of the same report have different export dates, only the newest is used and **Data check** names the file left out.
-3. Pick a page in the top menu (Order Health · Monthly · Warehouses · Metrics · Shipping · **Supply** ▾). Ask AI, Export PDF, search and your name are the icons at the right; Share snapshot, Change name and Connect an AI are in the avatar menu. Click a KPI card to list its lines. **Add note** on a line sets an override or a note.
+3. Pick a page in the top menu (Order Health · Monthly · Warehouses · Metrics · Shipping · **Supply** ▾). Ask AI, Export PDF, search and your name are the icons at the right; Share snapshot, Change name and Connect an AI are in the avatar menu. Click a KPI card to list its lines. **Add note** on a line sets an override or a note: pick your name and a ready-made comment, or write your own.
 4. Rest the pointer on any card, chart bar, column heading, filter or button (or Tab to it, or press and hold on a phone) for a short tip with the numbers in full. Rest on a section title the same way for what that section shows and what clicking does; **About these numbers** at the bottom of each page defines the key terms. First-visit hints close with ×; **Show hints again** (sidebar, Help) brings them back.
 
 | Page | Menu | What it shows |
@@ -65,7 +65,7 @@ Secrets are set in Cloudflare (`npx wrangler pages secret put <NAME> --project-n
 Set at least one AI key to turn Ask AI on ([docs/AI_ASSISTANT.md](docs/AI_ASSISTANT.md)); the AI keys are shared by everyone who signs in (`functions/api/ai/`). The FedEx Worker and keys are not needed: the Shipping page is checked by hand ([docs/SHIPPING.md](docs/SHIPPING.md)). Keep `DASHBOARD_PASSWORD` and `SESSION_SECRET` as encrypted secrets: the repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy.
 
 
-Without the two required secrets every page returns a "not configured" error; changing either signs everyone out. Open `/logout` to clear the sign-in cookie. The sign-in page shows the logo from `assets/spyder-logo.jpg`, the only file served before signing in (it holds nothing private).
+Without the two required secrets every page returns a "not configured" error; changing either signs everyone out. Open `/logout` to clear the sign-in cookie. The sign-in page shows the logo from `assets/spyder-logo.png`, the only file served before signing in (it holds nothing private).
 
 For IIS or another static host, serve `index.html` as the default document. That path does not use the Cloudflare login gate. See `docs/IT_HOSTING_README.md`.
 
