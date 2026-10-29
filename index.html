@@ -3226,6 +3226,27 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#fd
 @media print{.dz-ico{background:none}}
 /* Card titles Capitalize Each Word (the words stay as written in the code, for screen readers and copy) */
 .dz-title,.dz-card-head h2,.ohl-sec-title,.ohl-sec-sub,.section-title,.need-title,.misc-need-title,.sup-need-title{text-transform:capitalize}
+/* Collapsible line tables: a chevron before the title folds the card to its header (screen only; print shows all) */
+.dz-collapse-btn{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin:0 2px 0 -6px;border:0;border-radius:50%;background:transparent;color:var(--dz-ink-4);cursor:pointer;transition:transform .2s ease,background .15s}
+.dz-collapse-btn:hover{background:var(--dz-fill-1);color:var(--dz-ink-1)}
+.dz-collapse-btn:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.dz-collapsed .dz-collapse-btn svg{transform:rotate(-90deg)}
+.dz-collapsible>.dz-card-head,.dz-collapsible>.sup-thead,.dz-collapsible>.ohl-lines-head{align-items:center}
+.ohl-lines-title,.sup-ttitle,.misc-head-l{display:flex;align-items:center}
+@media screen{.dz-collapsed>:not(:first-child){display:none!important}.dz-collapsed{padding-bottom:22px}}
+/* About these numbers: a round info button at the bottom right of every page; it opens a small panel above itself */
+#results-screen details.about:not(.sk-about){position:fixed;right:24px;bottom:24px;z-index:45;margin:0;padding:0;border:0;background:none;box-shadow:none;width:auto;max-width:none;animation:none}
+#results-screen details.about:not(.sk-about)>summary{list-style:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(15,23,42,.06);box-shadow:0 10px 30px rgba(15,23,42,.14);color:var(--dz-indigo);cursor:pointer}
+#results-screen details.about:not(.sk-about)>summary::-webkit-details-marker{display:none}
+#results-screen details.about:not(.sk-about)>summary:hover{color:var(--dz-indigo-link);box-shadow:0 12px 34px rgba(15,23,42,.18)}
+#results-screen details.about:not(.sk-about)>summary:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px}
+#results-screen details.about:not(.sk-about)[open]>summary{background:var(--dz-ink-1);color:#fff}
+#results-screen details.about:not(.sk-about) .about-l{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#results-screen details.about:not(.sk-about) .about-body{position:absolute;right:0;bottom:56px;width:min(380px,calc(100vw - 32px));max-height:min(60vh,520px);overflow:auto;margin:0;padding:18px 20px 16px;background:#fff;border:1px solid rgba(15,23,42,.06);border-radius:18px;box-shadow:0 14px 40px rgba(15,23,42,.18);font-size:12.5px;line-height:1.5;color:var(--dz-ink-3);text-align:left}
+#results-screen details.about:not(.sk-about) .about-body::before{content:'About These Numbers';display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:var(--dz-ink-1)}
+.misc-about:has(details.about){display:contents}
+@media (max-width:640px){#results-screen details.about:not(.sk-about){right:16px;bottom:16px}#results-screen details.about:not(.sk-about)>summary{width:40px;height:40px}}
+@media print{#results-screen details.about:not(.sk-about){display:none!important}}
 /* 2v6:end misc-pages */
 </style>
 </head>
@@ -9330,6 +9351,7 @@ function renderResults(){
   if(el.classList)el.classList.toggle('entering',entering);
   el.innerHTML=html;
   dzDecorateIcons(el);
+  dzDecorateCollapse(el);
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
   restoreFocus(el,focus);
   runCountUps(el,entering);
@@ -9680,7 +9702,9 @@ function sectionTipText(key){
 function sectionTip(key){return tipAttr(sectionTipText(key));}
 // The "About these numbers" (or "About this chart") toggle, with its tip; every page's About block uses it.
 function aboutSummary(label='About these numbers',tipText='Show what the numbers on this page mean.'){
-  return `<summary${tipAttr(tipText)}>${esc(label)}</summary>`;
+  // On a page this is the round info button at the bottom right (CSS: #results-screen details.about); the words stay
+  // for screen readers, print and the Big picture chart's own About.
+  return `<summary aria-label="${esc(label)}"${tipAttr(tipText)}><svg class="about-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span class="about-l">${esc(label)}</span></summary>`;
 }
 // List items for an About list (trusted HTML strings).
 function aboutItems(items){return (items||[]).filter(Boolean).map(t=>`<li>${t}</li>`).join('');}
@@ -11515,6 +11539,66 @@ function dzDecorateIcons(root){
     ico.innerHTML=dzIconSvg(rule?rule[1]:'bars');
     label.insertBefore(ico,label.firstChild);
     label.classList.add('dz-ico-l');
+  });
+}
+
+// --- Collapsible line tables and the About panel (2v6.2) ---
+// Every list of lines (Order Health Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments, Search lines)
+// gets a chevron before its title that folds the card to its header; the choice is kept per page and table in this
+// browser (spyderKpiCollapsed). Applied after each draw (renderResults), like the tile icons.
+const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head';
+const DZ_COLLAPSE_KEY='spyderKpiCollapsed';
+function dzCollapsedMap(){
+  try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
+}
+function dzDecorateCollapse(root){
+  if(!root||!root.querySelectorAll)return;
+  const saved=dzCollapsedMap();
+  root.querySelectorAll(DZ_COLLAPSE_HEADS).forEach(head=>{
+    const card=head.parentElement;
+    if(!card||head.querySelector('.dz-collapse-btn'))return;
+    const title=head.querySelector('.dz-title');
+    const name=String(title?title.textContent:'Lines').trim();
+    const key=`${activeTab}:${name.toLowerCase()}`;
+    const closed=!!saved[key];
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='dz-collapse-btn print-hide';
+    btn.dataset.collapseKey=key;
+    btn.dataset.focusKey=`collapse-${key}`;
+    btn.setAttribute('aria-expanded',closed?'false':'true');
+    btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
+    btn.innerHTML='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    btn.onclick=()=>dzToggleCollapse(btn);
+    (title&&title.parentElement?title.parentElement:head).insertBefore(btn,title||head.firstChild);
+    card.classList.add('dz-collapsible');
+    card.classList.toggle('dz-collapsed',closed);
+  });
+}
+function dzToggleCollapse(btn){
+  const card=btn.closest('.dz-collapsible');
+  if(!card)return;
+  const closed=!card.classList.contains('dz-collapsed');
+  card.classList.toggle('dz-collapsed',closed);
+  btn.setAttribute('aria-expanded',closed?'false':'true');
+  const name=String((card.querySelector('.dz-title')||{}).textContent||'Lines').trim();
+  btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
+  const map=dzCollapsedMap();
+  if(closed)map[btn.dataset.collapseKey]=true;else delete map[btn.dataset.collapseKey];
+  try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
+}
+// The About panel closes on a click outside it or on Escape (it is a <details>, so it opens and closes on its own).
+if(typeof document!=='undefined'&&document.addEventListener){
+  document.addEventListener('click',e=>{
+    document.querySelectorAll('#results-screen details.about[open]:not(.sk-about)').forEach(d=>{if(!d.contains(e.target))d.open=false;});
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='Escape')return;
+    const open=document.querySelector('#results-screen details.about[open]:not(.sk-about)');
+    if(!open)return;
+    open.open=false;
+    const sum=open.querySelector('summary');
+    if(sum&&sum.focus)sum.focus();
   });
 }
 
