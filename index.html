@@ -2044,6 +2044,23 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end oh-leading */
 
 /* 2v6:oh-lagging */
+/* Lagging view: Monthly and Quarterly cards (order count headline, six metric tiles) and the Top offenders bars. */
+.ohg-grid{align-items:stretch}
+.ohg-card{padding-bottom:24px}
+.ohg-head{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-top:12px}
+.ohg-orders{letter-spacing:-.03em}
+.ohg-delta{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.ohg-tiles{margin-top:18px}
+.ohg-d{font-weight:500;font-variant-numeric:tabular-nums}
+.ohg-good{color:var(--dz-teal)}
+.ohg-bad{color:var(--dz-risk-text)}
+.ohg-flat{color:var(--dz-ink-4)}
+.ohg-bars{margin-top:16px}
+.ohg-empty{margin:16px 0 0}
+@media (max-width:640px){
+  .ohg-orders{font-size:28px}
+  .ohg-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 /* 2v6:end oh-lagging */
 
 /* 2v6:monthly-wh-metrics */
@@ -6883,34 +6900,9 @@ function renderResults(){
     if(ohViewShown('leading')&&!weeklyLeadingCollapsed)html+=ohRenderStates(m)+ohRenderAtRisk(m)+ohRenderOnTrack(m);
     html+=ohPanelClose()+ohPanelOpen('lagging');
 
-    // ---------- Lagging tab (2v4 oh): OTD and Fill rate, then Warehouse defaulting ----------
-    const series=ohViewShown('lagging')?cachedByFilter(m,`${ohKey}|series`,()=>monthlyRateSeries(shipRowsAll,reschedulePerf.closed,reschedulePerf.met)):[];
-    const otdTone=otd3Mo.scored.length?toneFor(otd3Mo.rate,90,75):'neutral';
-    // No ordered qty in view (e.g. only a Clear To Build or supply file loaded): nothing to score, so "—" not a red 0%.
-    const hasFill=fillLineRows.some(r=>(num(r.quantity)||0)>0);
-    const fillTone=hasFill?toneFor(fillRate,90,70):'neutral';
-    const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-    html+=!ohViewShown('lagging')?'':`
-    ${ohGroupOpen('oh-g-performance','Lagging · delivery performance',{cls:'rise rise-2',info:'oh-performed'})}
-      ${weeklyLaggingCollapsed?'':`<div class="grid-2 oh24-lag">
-        <button type="button" class="card kpi lag${selected('otd3mo')}" ${tileAttrs('otd3mo')}${tipAttr(withDeltaText(otd3Mo.scored.length?`On-time delivery, 3 months: ${fmtNum(otd3Mo.rate)}%, ${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries (${money(otd3MoAmt)}) by the original date; click for details.`:'On-time delivery, 3 months: no deliveries to score; click to list the lines.',series,'otd'))}>
-          <div class="kpi-top"><span class="kpi-label">OTD · 3 mo</span>${renderDeltaPill(series,'otd')}</div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[otdTone]}" data-count="${otd3Mo.rate}" data-fmt="pct">${otd3Mo.scored.length?`${fmtNum(otd3Mo.rate)}%`:'—'}</span>${ohTargetUnit(series,'otd')}</div>
-          ${renderSparkline(series.map(s=>s.otd),otdTone)}
-          <span class="kpi-sub">${otd3Mo.scored.length?`${fmtNum(otd3Mo.early.length+otd3Mo.onTime.length)} of ${fmtNum(otd3Mo.scored.length)} deliveries early/on time vs original date · ${money(otd3MoAmt)}`:(hasShipments?'No deliveries in the last 3 months for this filter':'Needs delivery close-date data')}</span>
-        </button>
-        <button type="button" class="card kpi lag${selected('fillrate')}" ${tileAttrs('fillrate')}${tipAttr(hasFill?`Fill rate: ${fmtNum(fillRate)}% of ordered quantity delivered or closed, ${fmtNum(fillOpenRows.length)} lines still open; click for details.`:'Fill rate: no ordered quantity to score.')}>
-          <div class="kpi-top"><span class="kpi-label">Fill rate</span><span class="kpi-tag">target 90%</span></div>
-          <div class="kpi-row"><span class="kpi-value ${TONE_CLASS[fillTone]}" data-count="${fillRate}" data-fmt="pct">${hasFill?`${fmtNum(fillRate)}%`:'—'}</span><span class="kpi-unit">of ordered qty</span></div>
-          <div class="bullet-wrap">${renderBullet(fillRate,fillTone)}<div class="bullet-scale"><span>0%</span><span>90% target</span></div></div>
-          ${ohFillSpark(m,fillTone)}
-          <span class="kpi-sub">${fmtNum(fillOpenRows.length)} lines still open</span>
-        </button>
-      </div>`}
-    </section>
-    ${weeklyLaggingCollapsed?'':`${ohGroupOpen('oh-g-defaulting','Lagging · warehouse defaulting',{cls:'rise rise-3',info:'oh-defaulting'})}
-      ${ohRenderWarehouseDefaulting(m)}
-    </section>`}`;
+    // ---------- Lagging view (2v6): Monthly and Quarterly cards, then the Top offenders ----------
+    // The lagging maths runs only when the Lagging view is shown or printed (ohViewShown).
+    if(ohViewShown('lagging'))html+=ohgRender(m);
     html+=ohPanelClose();
 
     // ---------- Linked lines for the selected card ----------
@@ -7186,7 +7178,8 @@ function renderResults(){
     if(weeklyTileFilter&&!weeklyTileRows[weeklyTileFilter])weeklyTileFilter='';
     const rawLinkedTileRows=weeklyTileFilter?(weeklyTileRows[weeklyTileFilter]||[]):[];
     const laggingTileIds=OH_LAGGING_TILES;
-    const hideLinkedTile=(weeklyLaggingCollapsed&&laggingTileIds.has(weeklyTileFilter))||(weeklyLeadingCollapsed&&weeklyTileFilter&&!laggingTileIds.has(weeklyTileFilter));
+    // 2v6: the Lagging view (Monthly / Quarterly cards, Top offenders) has no card to pick, so it lists no lines.
+    const hideLinkedTile=weeklyView==='lagging'||(weeklyLaggingCollapsed&&laggingTileIds.has(weeklyTileFilter))||(weeklyLeadingCollapsed&&weeklyTileFilter&&!laggingTileIds.has(weeklyTileFilter));
     const otdLinkedStats=weeklyTileFilter==='otd3mo'?otdStats(rawLinkedTileRows):null;
     const rescheduleLinkedStats=weeklyTileFilter==='reschedhit'?rescheduleStats(rawLinkedTileRows):null;
     const linkedTileRows=weeklyTileFilter==='otd3mo'
@@ -12136,6 +12129,176 @@ function ohLaggingExtras(m,oh=orderHealthData(m)){
     };
   });
 }
+// --- 2v6 oh-lagging: Monthly and Quarterly cards, Top offenders (helpers start with ohg) ---
+// The Lagging view: the last complete month and quarter against the one before, then the warehouses and vendors with the
+// most late orders in the quarter. Every number comes from the app's own rules, scored for the calendar window instead of the
+// trailing 3 months: otdStats (on time, late orders), fillRateForRows, perfectOrderStats, deliveryLateDays, rescheduleStats.
+const OHG_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const OHG_MONTH=['January','February','March','April','May','June','July','August','September','October','November','December'];
+// The last complete month and quarter at the report date (the report's own month or quarter counts once the report date is
+// its last day), each with the one before it for the "vs Aug" changes.
+function ohgPeriods(){
+  const t=reportToday();
+  const y=t.getFullYear(),mo=t.getMonth();
+  const monthDone=t.getDate()===new Date(y,mo+1,0).getDate();
+  const month=n=>{
+    const s=new Date(y,mo-(monthDone?0:1)-n,1);
+    return {start:s,end:new Date(s.getFullYear(),s.getMonth()+1,0,23,59,59,999),label:`${OHG_MONTH[s.getMonth()]} ${s.getFullYear()}`,meta:`${OHG_MONTH[s.getMonth()]} ${s.getFullYear()}`,short:OHG_MON[s.getMonth()]};
+  };
+  const q0=Math.floor(mo/3)*3;
+  const quarterDone=t>=new Date(y,q0+3,0);
+  const quarter=n=>{
+    const s=new Date(y,q0-(quarterDone?0:3)-3*n,1);
+    const q=Math.floor(s.getMonth()/3)+1;
+    return {start:s,end:new Date(s.getFullYear(),s.getMonth()+3,0,23,59,59,999),label:`Q${q} ${s.getFullYear()}`,meta:`Q${q} ${s.getFullYear()} · ${OHG_MON[s.getMonth()]}–${OHG_MON[s.getMonth()+2]}`,short:`Q${q}`};
+  };
+  return {month:{cur:month(0),prev:month(1)},quarter:{cur:quarter(0),prev:quarter(1)}};
+}
+// The numbers of the four windows and the two offender lists, for the current Order Health filters.
+function ohgData(m){
+  return cachedByFilter(m,`ohg|${weeklyFilterKey()}`,()=>{
+    const oh=orderHealthData(m);
+    // The page's filtered delivery lines (the same cache entry renderResults uses).
+    const ship=cachedByFilter(m,`oh|${weeklyFilterKey()}|ship`,()=>filterWeeklyRows(m.closedRows).filter(isClosedPerformanceRow));
+    const per=ohgPeriods();
+    const closeAt=new Map(ship.map(r=>[r,parseDate(r.closeDate)]));
+    // Perfect order: the Metrics page rule on the lines in view, each completed line counted in the window of its last delivery.
+    const lines=oh.allSelectedRows;
+    const shipments=indexShipmentsByLine(lines);
+    const pstats=perfectOrderStats(lines,shipments);
+    const perfectSet=new Set(pstats.perfect);
+    const lastDelivery=r=>{
+      const dates=(shipments.get(orderLineKey(r))||[]).map(x=>parseDate(x.closeDate)).filter(Boolean);
+      const own=isShipmentRow(r)&&parseDate(r.closeDate);
+      if(own)dates.push(own);
+      return dates.length?new Date(Math.max(...dates)):null;
+    };
+    const perfLines=[];
+    pstats.eligible.forEach(r=>{const d=lastDelivery(r);if(d)perfLines.push({d,ok:perfectSet.has(r)});});
+    // Fill rate: the app's rule for the lines whose original date fell in the window (as the by-due-month fill series).
+    const fillLines=[];
+    oh.fillLineRows.forEach(r=>{const d=originalHeaderDate(r);if(d)fillLines.push({d,r});});
+    const metSet=new Set(oh.reschedulePerf.met);
+    const resched=oh.reschedulePerf.closed.map(r=>({d:parseDate(r.closeDate),met:metSet.has(r)}));
+    const win=w=>{
+      const inW=d=>!!d&&d>=w.start&&d<=w.end;
+      const rows=ship.filter(r=>inW(closeAt.get(r)));
+      const otd=otdStats(rows);
+      const days=rows.map(deliveryLateDays).filter(x=>x!==null);
+      const late=days.filter(x=>x>=1);
+      const fl=fillLines.filter(x=>inW(x.d)).map(x=>x.r);
+      const pl=perfLines.filter(x=>inW(x.d));
+      const rc=resched.filter(x=>inW(x.d));
+      const perfectOk=pl.filter(x=>x.ok).length,hitMet=rc.filter(x=>x.met).length;
+      return {...w,rows,
+        orders:rowDocCount(rows),lines:new Set(rows.map(orderLineKey)).size,value:rowShippedAmount(rows),
+        scored:otd.scored.length,onTimeN:otd.early.length+otd.onTime.length,otd:otd.scored.length?otd.rate:null,
+        lateRows:otd.late,late:rowDocCount(otd.late),
+        fill:fl.some(r=>(num(r.quantity)||0)>0)?fillRateForRows(fl):null,fillN:fl.length,
+        perfect:pl.length?Math.round(perfectOk/pl.length*100):null,perfectN:pl.length,perfectOk,
+        avgDays:days.length?(late.length?Math.round(late.reduce((s,x)=>s+x,0)/late.length*10)/10:0):null,lateDeliveries:late.length,
+        hit:rc.length?Math.round(hitMet/rc.length*100):null,hitN:rc.length,hitMet};
+    };
+    const month={cur:win(per.month.cur),prev:win(per.month.prev)};
+    const quarter={cur:win(per.quarter.cur),prev:win(per.quarter.prev)};
+    // Top offenders in the quarter: late = a delivery more than 2 days after its original date (otdStats' late, the same
+    // rule as the late-shipments-by-warehouse ranking); the count is orders (purchase orders for vendors).
+    const whRows=groupBy(quarter.cur.rows,rowWarehouse).map(g=>{
+      const s=otdStats(g.rows);
+      return {name:g.key,orders:rowDocCount(s.late),lines:s.late.length,value:rowShippedAmount(s.late),scored:s.scored.length,rate:s.scored.length?s.rate:null};
+    }).filter(x=>x.orders>0).sort((a,b)=>b.orders-a.orders||b.lines-a.lines||a.name.localeCompare(b.name));
+    // Vendors: PO receipts, as the Purchase Orders page scores them (isClosedPerformanceRow), narrowed by the Warehouse filter
+    // (Segment and Customer belong to sales orders).
+    const receipts=cachedByFilter(m,'ohg|po-receipts',()=>poSourceRows().filter(isClosedPerformanceRow));
+    const q=quarter.cur;
+    const venRows=receipts.filter(r=>{
+      const d=parseDate(r.closeDate);
+      return !!d&&d>=q.start&&d<=q.end&&(weeklyWarehouseFilter.includes('ALL')||weeklyWarehouseFilter.includes(rowWarehouse(r)));
+    });
+    const vendors=groupBy(venRows,poVendor).map(g=>{
+      const s=otdStats(g.rows);
+      const named=g.rows.find(r=>String(r.name||'').trim());
+      return {name:named?String(named.name).trim():g.key,orders:rowDocCount(s.late),lines:new Set(s.late.map(orderLineKey)).size,value:rowShippedAmount(s.late),scored:s.scored.length,rate:s.scored.length?s.rate:null};
+    }).filter(x=>x.orders>0).sort((a,b)=>b.orders-a.orders||b.lines-a.lines||a.name.localeCompare(b.name));
+    return {per,month,quarter,warehouses:whRows.slice(0,6),warehouseTotal:whRows.length,vendors:vendors.slice(0,6),vendorTotal:vendors.length,receiptsInWindow:venRows.length};
+  });
+}
+// A change against the previous window as text and tone: "+1 pts vs Aug" (teal when better, red when worse, grey when none).
+function ohgDelta(cur,prev,{vs,dp=0,suffix='',lowerBetter=false}){
+  if(cur===null||cur===undefined)return {t:' ',c:'flat'};
+  if(prev===null||prev===undefined)return {t:`no ${vs} data`,c:'flat'};
+  const d=+(cur-prev).toFixed(dp);
+  if(d===0)return {t:`no change vs ${vs}`,c:'flat'};
+  const mag=dp?Math.abs(d).toFixed(dp):fmtNum(Math.abs(d));
+  return {t:`${d>0?'+':'−'}${mag}${suffix} vs ${vs}`,c:(lowerBetter?d<0:d>0)?'good':'bad'};
+}
+// One card: the order count shipped (headline), its value and lines, the change against the window before, six metric tiles.
+function ohgPeriodCard(cur,prev,{title,span,tip,i}){
+  const vs=prev.short;
+  const od=ohgDelta(cur.orders,prev.orders?prev.orders:null,{vs,suffix:' orders'});
+  const pct=v=>`${fmtNum(v)}%`;
+  const tile=(label,value,delta,tipText,{tone=''}={})=>{
+    const none=value===null;
+    const col=none?'var(--dz-ink-5)':tone==='teal'?'var(--dz-teal)':tone==='red'?'var(--dz-risk-text)':'';
+    return `<div class="dz-stat ohg-tile"${tipAttr(tipText)}><div class="dz-stat-l">${esc(label)}</div><div class="dz-stat-v"${col?` style="color:${col}"`:''}>${none?'—':esc(value)}</div><div class="dz-stat-s ohg-d ohg-${delta.c}">${esc(delta.t)}</div></div>`;
+  };
+  const w=cur.label,pw=prev.label;
+  const tiles=[
+    tile('On time',cur.otd===null?null:pct(cur.otd),ohgDelta(cur.otd,prev.otd,{vs,suffix:' pts'}),
+      cur.otd===null?`On time: no scored deliveries in ${w}.`:`On time: ${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries shipped on or before the original date in ${w} (1 to 2 days late is not on time); ${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}.`,{tone:cur.otd!==null&&cur.otd>=90?'teal':''}),
+    tile('Fill rate',cur.fill===null?null:pct(cur.fill),ohgDelta(cur.fill,prev.fill,{vs,suffix:' pts'}),
+      cur.fill===null?`Fill rate: no ordered quantity on lines due in ${w}.`:`Fill rate: ${pct(cur.fill)} of the ordered quantity delivered or closed, on the ${ohN(cur.fillN,'line')} whose original date fell in ${w}; ${pw}: ${prev.fill===null?'none':pct(prev.fill)}.`),
+    tile('Perfect order',cur.perfect===null?null:pct(cur.perfect),ohgDelta(cur.perfect,prev.perfect,{vs,suffix:' pts'}),
+      cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:`Perfect order: ${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines were never rescheduled and shipped on time (counted in the month of the last delivery) in ${w}; ${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}.`),
+    tile('Avg days late',cur.avgDays===null?null:cur.avgDays.toFixed(1),ohgDelta(cur.avgDays,prev.avgDays,{vs,dp:1,suffix:' days',lowerBetter:true}),
+      cur.avgDays===null?`Avg days late: no scored deliveries in ${w}.`:`Avg days late: ${cur.avgDays.toFixed(1)} days after the original date, across the ${ohN(cur.lateDeliveries,'late delivery line')} of ${fmtNum(cur.scored)} scored in ${w}; ${pw}: ${prev.avgDays===null?'none scored':prev.avgDays.toFixed(1)}.`),
+    tile('Reschedule hit',cur.hit===null?null:pct(cur.hit),ohgDelta(cur.hit,prev.hit,{vs,suffix:' pts'}),
+      cur.hit===null?`Reschedule hit: no rescheduled deliveries in ${w}.`:`Reschedule hit: ${fmtNum(cur.hitMet)} of ${fmtNum(cur.hitN)} rescheduled deliveries shipped by their reschedule date in ${w}; ${pw}: ${prev.hit===null?'none':pct(prev.hit)}.`),
+    tile('Late orders',cur.scored?fmtNum(cur.late):null,cur.scored?ohgDelta(cur.late,prev.scored?prev.late:null,{vs,lowerBetter:true}):ohgDelta(null,null,{vs}),
+      cur.scored?`Late orders: ${ohN(cur.late,'order')} with a delivery more than 2 days after the original date (${ohN(cur.lateRows.length,'delivery line')}) in ${w}; ${pw}: ${prev.scored?fmtNum(prev.late):'none scored'}.`:`Late orders: no scored deliveries in ${w}.`,{tone:cur.late?'red':''})
+  ].join('');
+  const sub=cur.orders?`${moneyShort(cur.value)} · ${ohN(cur.lines,'line')}`:'';
+  const body=`<div class="ohg-head"><span class="dz-big sm ohg-orders">${fmtNum(cur.orders)} ${cur.orders===1?'order':'orders'} shipped</span>${sub?`<span class="dz-sub">${esc(sub)}</span>`:''}${cur.orders?`<span class="ohg-delta ohg-${od.c}">${esc(od.t)}</span>`:''}</div><div class="dz-stats ohg-tiles">${tiles}</div>`;
+  return dzCard({title,meta:esc(cur.meta),span,cls:'ohg-card dz-fade',attrs:` style="--i:${i}"`,tip,body});
+}
+// A Top offenders card: up to 6 rows, the first in red, the others slate; the late-order count at the end of the bar.
+function ohgOffenderCard({title,meta,tip,rows,sub,rowTip,onclick,focusKey,selected,empty,span,i}){
+  const max=Math.max(1,...rows.map(r=>r.orders));
+  const body=rows.length
+    ?`<div class="dz-bars ohg-bars">${rows.map((r,k)=>dzBarRow({label:r.label,sub:sub(r),value:r.orders,max,color:k===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(r.orders),
+      onclick:onclick?onclick(r):'',selected:selected?selected(r):false,tip:rowTip(r),attrs:focusKey?` data-focus-key="${esc(focusKey(r))}"`:'',i:k})).join('')}</div>`
+    :`<p class="dz-sub ohg-empty">${esc(empty)}</p>`;
+  return dzCard({title,meta:esc(meta),span,sm:true,cls:'ohg-card dz-fade',attrs:` style="--i:${i}"`,tip,body});
+}
+function ohgRender(m){
+  const d=ohgData(m);
+  const q=d.quarter.cur,mo=d.month.cur;
+  const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
+  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>`;
+  const common='Counts are orders (an order that ships on several days counts once). On time, Fill rate, Perfect order, Avg days late, Reschedule hit and Late orders use the same rules as the rest of the dashboard, scored for deliveries in the period; the Order Health filters apply.';
+  const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
+    tip:`Monthly: orders shipped in ${mo.label}, the last complete month at the report date, and the change against ${d.month.prev.label}. ${common}`});
+  const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
+    tip:`Quarterly: orders shipped in ${q.label}, the last complete quarter at the report date, and the change against ${d.quarter.prev.label}. ${common}`});
+  const whName=n=>String(n).replace(/ - /g,' · ');
+  const focused=whFocusedWarehouse();
+  const warehouses=ohgOffenderCard({title:'Top offenders · warehouses',meta:`late orders · ${q.short}`,span:3,i:2,
+    tip:`Warehouses with the most late orders in ${q.label}: orders with a delivery more than 2 days after its original date. Click a warehouse to filter the page to it; click it again to show every warehouse.`,
+    rows:d.warehouses.map(r=>({...r,label:whName(r.name)})),
+    sub:r=>r.rate===null?'':`${fmtNum(r.rate)}% on time`,
+    rowTip:r=>`${r.name}: ${ohN(r.orders,'late order')} (${ohN(r.lines,'late delivery line')}, ${money(r.value)}) of ${ohN(r.scored,'delivery line')} in ${q.label}, ${r.rate===null?'none scored':`${fmtNum(r.rate)}% on time`}; ${focused===r.name?'click to show all.':'click to filter.'}`,
+    onclick:r=>`setWeeklyScorecardWarehouse(${dzJs(r.name)})`,
+    focusKey:r=>`ohg-wh-${r.name}`,selected:r=>focused===r.name,
+    empty:d.quarter.cur.scored?`No late shipments in ${q.label}: every delivery shipped within 2 days of its original date.`:`No deliveries in ${q.label} for these filters.`});
+  const vendors=ohgOffenderCard({title:'Top offenders · vendors',meta:`late orders · ${q.short}`,span:3,i:3,
+    tip:`Vendors with the most late purchase orders in ${q.label}: orders with a receipt more than 2 days after the original date. The Warehouse filter applies; Segment and Customer do not (they belong to sales orders).`,
+    rows:d.vendors.map(r=>({...r,label:r.name})),
+    sub:r=>`${ohN(r.lines,'late line')}${r.rate===null?'':` · ${fmtNum(r.rate)}% on time`}`,
+    rowTip:r=>`${r.name}: ${ohN(r.orders,'late purchase order')} (${ohN(r.lines,'late receipt line')}, ${money(r.value)}) of ${ohN(r.scored,'receipt line')} in ${q.label}${r.rate===null?'':`, ${fmtNum(r.rate)}% on time`}.`,
+    empty:d.receiptsInWindow?`No late receipts in ${q.label}: every purchase order arrived within 2 days of its original date.`:`No purchase-order receipts in ${q.label}.`});
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}${warehouses}${vendors}</div>`;
+}
+// --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.
 function ohSparkline(values,tone){
   const w=240,h=40,n=values.length;
