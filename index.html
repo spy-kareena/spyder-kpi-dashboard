@@ -8940,8 +8940,7 @@ function stgSpec(){
     poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])},
-    theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined},
-    poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined}
+    theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined}
   };
 }
 // Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
