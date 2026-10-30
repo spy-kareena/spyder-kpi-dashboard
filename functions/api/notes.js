@@ -11,10 +11,11 @@
  *         are left out of the reply and counted in `skipped`, for the page to send again.
  *         500 when the stored notes cannot be read (nothing is written); 429 with Retry-After when Workers KV is
  *         busy (one write per second to the key), so the page sends the batch again.
- * Row entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}. `by` is the editor's name (the same rules as
+ * Row entry: {status, notes, cause:'us'|'them'|'', deleted, kitClean, by, at}. kitClean (2v6.5) is the Kit Clean?
+ * tick on a purchase-order line: true or false, only true is stored. `by` is the editor's name (the same rules as
  * functions/api/people.js: up to 40 letters, spaces and . ' -; initials saved before 2v2 are still taken), `at` the
- * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause or deleted flag
- * records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
+ * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause, deleted flag or
+ * kitClean tick records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
  * dropped on every save). When storage runs full (2 MB), the entries edited longest ago go (`pruned` in the reply).
  * Shipment entry: {order, number, carrier?, status?, statusDate?, note?, deleted?, by, at}. A tracking number added by
  * hand is keyed by the number; the manual delivery status someone set on the Shipping page is keyed 'st:<number>'
@@ -182,6 +183,7 @@ function rowEntry(raw) {
   if (raw.notes !== undefined) { if (!text(raw.notes, MAX_NOTE)) return { error: `A note must be text of at most ${MAX_NOTE.toLocaleString('en-US')} characters.` }; entry.notes = raw.notes; }
   if (raw.cause !== undefined) { if (!CAUSES.has(raw.cause)) return { error: 'Cause must be "us", "them" or blank.' }; entry.cause = raw.cause; }
   if (raw.deleted !== undefined) { if (typeof raw.deleted !== 'boolean') return { error: 'deleted must be true or false.' }; if (raw.deleted) entry.deleted = true; }
+  if (raw.kitClean !== undefined) { if (typeof raw.kitClean !== 'boolean') return { error: 'kitClean must be true or false.' }; if (raw.kitClean) entry.kitClean = true; }
   return { ...entry, by: head.by, at: head.at };
 }
 
@@ -220,7 +222,7 @@ function time(at) {
 }
 
 function isCleared(e) {
-  return !e.status && !e.notes && !e.cause && !e.deleted;
+  return !e.status && !e.notes && !e.cause && !e.deleted && !e.kitClean;
 }
 
 // On every save: cleared-line markers older than 180 days go (their lines have long left the report, and browsers

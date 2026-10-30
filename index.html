@@ -3057,6 +3057,82 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .sup-plot{height:calc(var(--h) + 24px)}
 }
 /* 2v6:end supply */
+/* 2v6:po */
+/* Purchase Orders 2v6.5: PO At Risk and Kit cards, sortable PO line titles, Owner and Kit Clean? columns, the Kit
+   Clean? tick, and the PO At Risk drawer (reuses the Import drawer: .ai-panel.imp-panel, .imp-*). Prefixes po / kit / poa. */
+.po-unit{margin-left:5px;font-size:12px;font-weight:500;letter-spacing:0;color:var(--dz-ink-4)}
+.sup-tile-v .po-unit{font-size:13px}
+.sup-more-views.po-views-8{grid-template-columns:repeat(4,minmax(0,1fr))}
+/* PO lines: 11 columns; below 1240px they scroll sideways inside the card, as before */
+.sup-po{--min:1240px}
+.sup-po .c-po{width:70px}.sup-po .c-ven{width:13%}.sup-po .c-own{width:112px}.sup-po .c-wh{width:12%}.sup-po .c-date{width:96px}.sup-po .c-qty{width:76px}.sup-po .c-val{width:92px}.sup-po .c-st{width:186px}.sup-po .c-kit{width:88px}.sup-po .c-act{width:104px}
+.sup-po th .po-th{max-width:100%;padding:2px 0;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);border-radius:6px;white-space:nowrap}
+.sup-po th .po-th:hover{color:var(--dz-ink-2)}
+.sup-po th .po-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.sup-po th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
+.sup-po th .po-th:hover .sort-arrow,.sup-po th .po-th:focus-visible .sort-arrow{opacity:.5}
+.sup-po th[aria-sort] .po-th{color:var(--dz-indigo-deep);font-weight:500}
+.sup-po th[aria-sort] .sort-arrow{opacity:1}
+.sup-po th.po-kit,.sup-po td.po-kit{text-align:center}
+.sup-po tr.po-left>td{opacity:.45;transition:opacity .2s}
+.sup-po tr.po-flash>td{animation:poFlash 2.6s ease}
+@keyframes poFlash{0%,40%{background:color-mix(in srgb,var(--dz-indigo) 10%,transparent)}100%{background:transparent}}
+/* Kit Clean? tick: a 20px rounded box that turns into a filled teal circle with a drawn check */
+.kit-check{position:relative;display:inline-grid;place-items:center;width:30px;height:30px;margin:-5px 0;border-radius:10px;cursor:pointer;vertical-align:middle}
+.kit-cb{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.kit-box{display:grid;place-items:center;width:20px;height:20px;box-sizing:border-box;border:1.5px solid var(--dz-ink-6);border-radius:6px;background:var(--dz-surface,#fff);color:var(--dz-on-teal,#fff);pointer-events:none;transition:border-radius .2s ease,background-color .2s ease,border-color .2s ease,box-shadow .2s ease,transform .12s ease}
+.kit-box svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:16;stroke-dashoffset:16;transition:stroke-dashoffset .24s ease .06s}
+.kit-check:hover .kit-box{border-color:var(--dz-teal);box-shadow:0 0 0 4px color-mix(in srgb,var(--dz-teal) 12%,transparent)}
+.kit-cb:checked+.kit-box{border-color:var(--dz-teal);border-radius:50%;background:var(--dz-teal)}
+.kit-cb:checked+.kit-box svg{stroke-dashoffset:0}
+.kit-check:hover .kit-cb:checked+.kit-box{box-shadow:0 0 0 4px color-mix(in srgb,var(--dz-teal) 18%,transparent)}
+.kit-cb:active+.kit-box{transform:scale(.88)}
+.kit-cb:focus-visible+.kit-box{outline:2px solid var(--dz-indigo);outline-offset:3px}
+.kit-cb:disabled{cursor:default}
+.kit-check:has(.kit-cb:disabled){cursor:default}
+.kit-cb:disabled+.kit-box{opacity:.55;box-shadow:none}
+.kit-check:hover .kit-cb:disabled+.kit-box{border-color:var(--dz-ink-6);box-shadow:none}
+.kit-check:hover .kit-cb:disabled:checked+.kit-box{border-color:var(--dz-teal)}
+.kit-print{display:none}
+/* PO At Risk drawer */
+.ai-panel.poa-panel{z-index:58}
+.poa-off{margin:0;padding:10px 14px;border-radius:14px;background:var(--dz-surface-2,#f1f5f9);font-size:12.5px;line-height:1.5;color:var(--dz-ink-3)}
+.poa-owner .imp-file-head .dz-chip{flex:none}
+.poa-lines{list-style:none;margin:10px 0 0;padding:0}
+.poa-line{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--dz-line-6)}
+.poa-line-main{flex:1;min-width:0}
+.poa-line-t{margin:0;font-size:13px;line-height:1.4;color:var(--dz-ink-1);overflow-wrap:anywhere}
+.poa-line-t b{font-weight:600}
+.poa-line-s{margin:2px 0 0;font-size:12px;line-height:1.45;color:var(--dz-ink-4)}
+.poa-line .dz-chip{flex:none;margin-top:1px;white-space:nowrap}
+.poa-show{margin-top:4px;padding:0;border:0;border-radius:4px;background:none;font:inherit;font-size:12px;font-weight:500;color:var(--dz-indigo-link);cursor:pointer;text-underline-offset:3px}
+.poa-show:hover{text-decoration:underline}
+.poa-show:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.poa-owner .imp-actions{margin-top:10px}
+.poa-show.poa-more{display:block;margin-top:2px;padding-top:8px;border-top:1px solid var(--dz-line-6);width:100%;text-align:left;border-radius:0}
+.poa-owner .imp-actions .dz-btn svg{width:14px;height:14px}
+.toast-item.poa-toast svg{color:var(--dz-risk)}
+.poa-toast-btn{flex:none;margin-left:6px;padding:4px 10px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-surface,#fff);font:inherit;font-size:12px;font-weight:500;color:var(--dz-ink-1);cursor:pointer}
+.poa-toast-btn:hover{background:var(--dz-surface-2,#f1f5f9)}
+@media (max-width:640px){
+  .sup-more-views.po-views-8{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sup-tbl.sup-po td.sup-status{order:1}
+  .sup-tbl.sup-po td.sup-act{order:2}
+  .sup-tbl.sup-po td.po-kit{text-align:left}
+  .sup-tbl.sup-po .kit-check{margin:-3px 0 0 -5px}
+}
+@media (prefers-reduced-motion:reduce){
+  .kit-box,.kit-box svg,.sup-po th .sort-arrow{transition:none}
+  .sup-po tr.po-flash>td{animation:none}
+}
+@media print{
+  .poa-panel{display:none!important}
+  .sup-po th .sort-arrow{display:none}
+  .kit-cb,.kit-box{display:none}
+  .kit-check{width:auto;height:auto;margin:0}
+  .kit-print{display:inline}
+}
+/* 2v6:end po */
 
 /* 2v6:misc-pages */
 /* Agent 6: pages the handoff left out (load screen, Forecast, Connect an AI, Search), global overlays and notes (Data check,
@@ -4007,6 +4083,8 @@ function applyRowOverride(r){
   r.overrideCause=saved&&(saved.cause==='us'||saved.cause==='them')?saved.cause:'';
   r.hasOverride=!!(r.overrideStatus||r.overrideNotes);
   r.isDeleted=!!(saved&&saved.deleted);
+  // Kit Clean? tick on a PO line (2v6.5); changes no metric, only the PO lines list and the Kit cards.
+  r.kitClean=!!(saved&&saved.kitClean===true);
   applyRiskOverride(r);
   return r;
 }
@@ -4090,7 +4168,7 @@ function writeRowOverride(cleanKey,matches,field,value){
   const stamp=noteStamp();
   legacyKeys.forEach(k=>{delete rowOverrides[k];sharedNoteChanged(k,null,stamp);});
   // A deleted line keeps its entry with no note, so it stays hidden here and in shared snapshots.
-  if(!current.status&&!current.notes&&!current.cause&&!current.deleted){delete rowOverrides[cleanKey];sharedNoteChanged(cleanKey,null,stamp);}
+  if(!current.status&&!current.notes&&!current.cause&&!current.deleted&&!current.kitClean){delete rowOverrides[cleanKey];sharedNoteChanged(cleanKey,null,stamp);}
   else{Object.assign(current,stamp);rowOverrides[cleanKey]=current;sharedNoteChanged(cleanKey,current,stamp);}
   matches.forEach(applyRowOverride);
 }
@@ -5271,6 +5349,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     showResults();
     if(!restoring){saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}
     impFinish(imp);
+    if(typeof poAlertsMaybeToast==='function')poAlertsMaybeToast();
   }catch(err){
     ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
     if(cmState.files!==previous.cmFiles){cmState.files=previous.cmFiles;cmChanged();}
@@ -7999,11 +8078,17 @@ function supMonthShort(key,first){
 function supPurchaseOrders(m){
   if(!poSourceRows().length)return supNeedsFile('purchaseorders');
   const {today,thisWeekStart,poWarehouseOptions,poVendorOptionMap,poVendorOptions,filteredPoOpen,poReceiptRows,realPoReschedule,poLateRows,poNoCommitRows,poFutureRescheduleRows,poDueThisMonthRows,poAllOpenRows,poUnconfirmedRows,poMissingPriceRows,poReceivedThisWeekRows,poOtd3Mo,poOtdAmt,poReceivedWeekAmt,poReschedulePerf,poReschedulePerfAmt,poFillRate,poDueThisWeekRows,poTileRows,poCmOn,poCmRows,poCmLateRows,poCmShortRows}=poData(m);
-  if(poTileFilter&&!poTileRows[poTileFilter])poTileFilter='';
+  // 2v6.5: PO At Risk (expected after the sales order that needs the item ships) and the Kit Clean? tick, read live
+  // from the lines (a tick changes no metrics), so the Kit cards follow the PO filters without a cache.
+  const poAtRisk=poAtRiskData(m);
+  const atRiskBy=new Map(poAtRisk.lines.map(l=>[l.row,l]));
+  const kitCleanRows=filteredPoOpen.filter(r=>r.kitClean),kitNotCleanRows=filteredPoOpen.filter(r=>!r.kitClean);
+  const tileRows={...poTileRows,poatrisk:poAtRisk.lines.map(l=>l.row),kitclean:kitCleanRows,kitnotclean:kitNotCleanRows};
+  if(poTileFilter&&!tileRows[poTileFilter])poTileFilter='';
   // With no card picked the page shows the late lines, so the Late card is the selected one.
   const sel=poTileFilter||'late';
-  const linked=poTileRows[sel]||[];
-  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet'};
+  const linked=tileRows[sel]||[];
+  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
   const view=supGet('po-view','open')==='received'?'received':'open';
   const value=rows=>rowOpenAmount(rows),qty=rows=>rowOpenQty(rows);
   const vendorLabel=code=>{const label=poVendorOptionMap.get(code)||code;return label.replace(/^[^-]+ - /,'')||label;};
@@ -8059,19 +8144,24 @@ function supPurchaseOrders(m){
   }
 
   // Open: the five order tiles, the other views, the vendors / warehouses card, the PO lines.
+  // PO At Risk counts lines (the owner's rule), the other order cards count POs.
   const tiles=[
     ['allopen','var(--dz-teal)','Open POs',poAllOpenRows,'','open on purchase orders in view'],
     ['late','var(--dz-risk)','Late / missed commit',poLateRows,'red','past their date'],
+    ['poatrisk','var(--dz-risk)','PO At Risk',tileRows.poatrisk,'red','',true],
     ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
     ['duethisweek','var(--dz-indigo)','This week focus',poDueThisWeekRows,'','at risk or due this week'],
     ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
-  const tileHtml=([id,dot,label,rows,tone,what],i)=>{
-    const n=supDocs(rows);
-    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipOf(label,rows,what))}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}</span><span class="sup-tile-s">${esc(subOf(rows))}</span></button>`;
+  const tileHtml=([id,dot,label,rows,tone,what,byLine],i)=>{
+    const n=byLine?rows.length:supDocs(rows);
+    const tipText=byLine?`PO At Risk: ${supLines(rows.length)} on ${ordersN(supDocs(rows))} (${money(value(rows))} open) expected after the sales order that needs the item ships: the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item. Click to list the lines.`:tipOf(label,rows,what);
+    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span><span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span></button>`;
   };
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
-  const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('');
+  const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('')
+    +kitStatHtml('kitclean',kitCleanRows,sel)+kitStatHtml('kitnotclean',kitNotCleanRows,sel);
+  const extraCount=extra.length+2;
 
   // Vendors with the most late POs, or open POs by warehouse (a click filters the page; again clears it).
   const by=supGet('po-by','vendor')==='wh'?'wh':'vendor';
@@ -8100,7 +8190,7 @@ function supPurchaseOrders(m){
 
   // PO lines: the selected card's lines, a search box, the sort, Add note, show more.
   const terms=supTerms(supGet('po-q',''));
-  const hits=terms.length?linked.filter(r=>supHit(terms,[r.documentNumber,r.name,r.code,r.itemCode,r.itemDescription,rowWarehouse(r),cmSearchText(r)])):linked;
+  const hits=terms.length?linked.filter(r=>supHit(terms,[r.documentNumber,r.name,r.code,r.itemCode,r.itemDescription,rowWarehouse(r),rowOwner(r),cmSearchText(r)])):linked;
   const poLineStatus=r=>{
     if(r.noCommitDate)return 'No Commit';
     const reschedule=realPoReschedule(r);
@@ -8115,23 +8205,25 @@ function supPurchaseOrders(m){
     const bd=parseDate(b.effectiveDueDate||b.dueDate||b.lineDueDate)||new Date(8640000000000000);
     return ad-bd||String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||String(a.documentNumber).localeCompare(String(b.documentNumber));
   };
-  const sorted=[...hits].sort((a,b)=>{
-    if(poLineSort==='warehouse')return String(rowWarehouse(a)).localeCompare(String(rowWarehouse(b)))||defaultSort(a,b);
-    if(poLineSort==='vendor')return String(poVendorLabel(a)).localeCompare(String(poVendorLabel(b)))||defaultSort(a,b);
-    if(poLineSort==='owner')return String(rowOwner(a)).localeCompare(String(rowOwner(b)))||defaultSort(a,b);
-    if(poLineSort==='status')return poLineStatus(a).localeCompare(poLineStatus(b))||defaultSort(a,b);
-    if(poLineSort==='value')return openLineValue(b)-openLineValue(a)||defaultSort(a,b);
-    return defaultSort(a,b);
-  });
+  // One sort state for the Sort select and the column titles (poSortState): the select's choices are column sorts too,
+  // so a title click and the select always show the same order. The Promised date is the one the column shows.
+  const promisedDate=r=>{const re=realPoReschedule(r);return re||cmExpectedDate(r)||(hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate)||r.effectiveDueDate;};
+  const statusLabel=r=>{const st=poLineStatus(r);return (statusChip[st]||[st])[0];};
+  const sortState=poSortState();
+  const sorted=sortState?poSortRows(hits,sortState,{status:statusLabel,date:promisedDate,vendor:vendorName},defaultSort):[...hits].sort(defaultSort);
   const shownLines=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
   const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
-  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort or group the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${v}"${poLineSort===v?' selected':''}>Sort: ${l}</option>`).join('')}</select>`;
+  const sortCol=sortState&&!sortOptions.some(([v])=>v===poLineSort)?PO_LINE_COLS.find(c=>c[0]===sortState.col):null;
+  // A title sort with no matching choice shows as an extra choice, so the other choices still switch back.
+  if(sortCol)sortOptions.push([poLineSort,`Column: ${sortCol[1]} ${sortState.dir==='asc'?'↑':'↓'}`]);
+  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort or group the PO lines; a column title sorts too.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${poLineSort===v?' selected':''}>${sortCol&&v===poLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
   const lineRow=(r,i)=>{
     const reschedule=realPoReschedule(r);
     const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
     // No SAP reschedule date: the Logican commit date is the expected date (marked Logican).
     const cmDate=reschedule?'':cmExpectedDate(r);
     const dueDate=reschedule||cmDate||originalDue||r.effectiveDueDate;
+    const risk=atRiskBy.get(r);
     const originalDays=r.originalDaysPastDue??daysFromToday(originalDue);
     const rescheduleDays=daysFromToday(reschedule);
     const status=poLineStatus(r);
@@ -8144,31 +8236,375 @@ function supPurchaseOrders(m){
       <td class="sup-strong" data-label="PO #">${esc(r.documentNumber||'—')}</td>
       <td class="sup-clip" data-label="Vendor" title="${esc(poVendorLabel(r))}">${esc(r.name||'—')}</td>
       <td class="sup-item" data-label="Item"><strong>${esc(r.itemCode||'—')}</strong><span class="sup-desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
+      <td class="sup-clip" data-label="Owner" title="${esc(rowOwner(r))}">${esc(rowOwner(r))}</td>
       <td class="sup-clip" data-label="Warehouse" title="${esc(rowWarehouse(r)||'')}">${esc(supWh(rowWarehouse(r)||'—'))}</td>
       <td data-label="Promised">${esc(supDay(dueDate)||'—')}${cmDate?`<span class="sup-sub sup-cm-from"${tipAttr(`Logican commit date; the PO is due ${displayDate(originalDue)||'with no date'} in SAP.`)}>Logican</span>`:''}</td>
       <td class="num sup-strong" data-label="Open qty">${fmtNum(r.openQuantity)}</td>
       <td class="num sup-strong" data-label="Value">${money(openLineValue(r))}</td>
-      <td class="sup-status" data-label="Status">${dzChip(label,tone)}<span class="sup-sub">${esc(timing)}</span>${reschedule?`<span class="sup-sub">↻ ${esc(supDay(reschedule))}</span>`:''}${cmStatusHtml(r)}${renderPrintOverride(r)}</td>
+      <td class="sup-status" data-label="Status">${dzChip(label,tone)}<span class="sup-sub">${esc(timing)}</span>${reschedule?`<span class="sup-sub">↻ ${esc(supDay(reschedule))}</span>`:''}${risk?`<span class="sup-sub red"${tipAttr(poAtRiskText(risk))}>${esc(`${ohN(risk.days,'day')} after SO ${risk.so} ships`)}</span>`:''}${cmStatusHtml(r)}${renderPrintOverride(r)}</td>
+      <td class="po-kit" data-label="Kit Clean?">${kitCellHtml(r)}</td>
       <td class="sup-act print-hide">${renderNoteButton(r)}</td>
-    </tr>${renderNoteEditorRow(r,9)}${renderPrintNoteRow(r,9)}`;
+    </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
   };
-  const colHead=[['PO #',''],['Vendor',''],['Item',''],['Warehouse',''],['Promised','','The reschedule date, else the Logican commit date, else the original due date.'],['Open qty','num','Quantity still to receive.'],['Value','num','Value still to receive.'],['Status','','Late, Missed commit, No commit, Rescheduled, Unconfirmed or Open, with the reschedule date (↻) when there is one.'],['','print-hide','Add note sets an override or a note on the line.']];
-  const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-act"></colgroup>
-    <thead><tr>${colHead.map(([l,cls,tp])=>`<th${cls?` class="${cls}"`:''}${tipAttr(tp||(l?columnTip('po',l):''))}>${esc(l)}</th>`).join('')}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
+  // Every column title with data is a sort button (aria-sort on the sorted one); the note column has no title.
+  const colHead=PO_LINE_COLS.map(([id,l,cls,,tp])=>{
+    const on=sortState&&sortState.col===id;
+    return `<th${cls?` class="${cls}"`:''}${on?` aria-sort="${sortState.dir==='asc'?'ascending':'descending'}"`:''}><button type="button" class="th-sort po-th" data-focus-key="po-sort-${id}" onclick="poSortColumn('${id}')"${tipAttr(`${tp||columnTip('po',l)||l} Click to sort, again to reverse.`)}>${esc(l)}<span class="sort-arrow" aria-hidden="true">${on?(sortState.dir==='asc'?'↑':'↓'):'↕'}</span></button></th>`;
+  }).join('')+`<th class="print-hide"${tipAttr('Add note sets an override or a note on the line.')}><span class="sr-only">Note</span></th>`;
+  const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-own"><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-kit"><col class="c-act"></colgroup>
+    <thead><tr>${colHead}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
     <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
-  const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate')&&sorted.length;
+  const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
     sub:`${esc(titles[sel]||'Late / missed commit')} · ${supLines(sorted.length)} · ${fmtNum(qty(sorted))} open qty · ${money(value(sorted))}`,body:tbl});
   const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
     <div class="sup-tiles">${tiles.map(tileHtml).join('')}</div>
-    <div class="dz-stats sup-more-views" role="group" aria-label="More purchase order views">${extraHtml}</div>
+    <div class="dz-stats sup-more-views${extraCount===8?' po-views-8':''}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
     ${linesWrap}
     ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
 }
+
+// ===== 2v6.5 po: PO lines sorting, Kit Clean?, PO At Risk and its drawer (prefixes po / kit / poa) =====
+// PO lines columns: [id, title, th class, first click 'asc' | 'desc', what the column shows]. The note column has no
+// title and is not sorted.
+const PO_LINE_COLS=[
+  ['po','PO #','','asc','Purchase order number.'],
+  ['vendor','Vendor','','asc','Vendor name.'],
+  ['item','Item','','asc','Item code and description.'],
+  ['owner','Owner','','asc','The PO’s document owner in SAP.'],
+  ['wh','Warehouse','','asc','Warehouse the line is received into.'],
+  ['date','Promised','','asc','The reschedule date, else the Logican commit date, else the original due date.'],
+  ['qty','Open qty','num','desc','Quantity still to receive.'],
+  ['value','Value','num','desc','Value still to receive.'],
+  ['status','Status','','asc','Late, Missed commit, No commit, Rescheduled, Unconfirmed or Open, with the reschedule date (↻) when there is one.'],
+  ['kit','Kit Clean?','po-kit','desc','Ticked when the line’s kit is clean; saved for everyone like notes. The first click lists ticked lines first.']
+];
+// The Sort select's choices are column sorts too (Due date is the page's own order and marks no column).
+const PO_SORT_ALIASES={warehouse:['wh','asc'],vendor:['vendor','asc'],owner:['owner','asc'],status:['status','asc'],value:['value','desc']};
+// poLineSort as {col, dir}, or null for the default order. 'col:<id>:asc|desc' comes from a column title.
+function poSortState(){
+  const a=PO_SORT_ALIASES[poLineSort];
+  if(a)return {col:a[0],dir:a[1]};
+  const [kind,col,dir]=String(poLineSort||'').split(':');
+  return kind==='col'&&PO_LINE_COLS.some(c=>c[0]===col)&&(dir==='asc'||dir==='desc')?{col,dir}:null;
+}
+// A column title: the first click sorts it (text A to Z, dates oldest first, numbers high to low, Kit Clean ticked
+// first), the next click reverses it. A sort that matches a Sort choice is kept as that choice, so the select shows it.
+function poSortColumn(col){
+  const c=PO_LINE_COLS.find(x=>x[0]===col);
+  if(!c)return;
+  const cur=poSortState();
+  const dir=cur&&cur.col===col?(cur.dir==='asc'?'desc':'asc'):c[3];
+  const alias=Object.keys(PO_SORT_ALIASES).find(k=>PO_SORT_ALIASES[k][0]===col&&PO_SORT_ALIASES[k][1]===dir);
+  poLineSort=alias||`col:${col}:${dir}`;
+  renderResults();
+  announce(`PO lines sorted by ${c[1].replace('?','')}, ${dir==='asc'?'ascending':'descending'}.`);
+}
+// A sorted copy of rows; ties keep the page's default order (tie). Lines with no date go last either way.
+function poSortRows(rows,{col,dir},{status,date,vendor},tie){
+  const text=(a,b)=>String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
+  const key={po:r=>r.documentNumber,vendor,item:r=>r.itemCode,owner:rowOwner,wh:r=>rowWarehouse(r)||'',status}[col];
+  const sign=dir==='desc'?-1:1;
+  const day=r=>{const v=date(r);return hasRealDate(v)?parseDate(v):null;};
+  const cmp=(a,b)=>{
+    if(col==='date'){const x=day(a),y=day(b);return x&&y?sign*(x-y):x?-1:y?1:0;}
+    if(col==='qty')return sign*(num(a.openQuantity)-num(b.openQuantity));
+    if(col==='value')return sign*(openLineValue(a)-openLineValue(b));
+    if(col==='kit')return sign*((a.kitClean?1:0)-(b.kitClean?1:0));
+    return key?sign*text(key(a),key(b)):0;
+  };
+  return [...rows].sort((a,b)=>cmp(a,b)||tie(a,b));
+}
+
+// --- Kit Clean? (a tick per PO line) ---
+// Saved in the shared notes store like a note (rowOverrides[key].kitClean, stamped by / at, sent to
+// functions/api/notes.js; only true is kept). A tick changes no metric: the row and the two Kit cards change in place.
+const KIT_TILES={kitclean:['Kit Clean','boxCheck','var(--dz-teal)','var(--dz-teal)','ticked Kit Clean'],kitnotclean:['Kit Not Clean','box','var(--dz-amber)','var(--dz-amber-text)','not ticked Kit Clean yet']};
+function kitStatHtml(id,rows,sel){
+  const [label,icon,ico,col,what]=KIT_TILES[id];
+  const n=rows.length,docs=supDocs(rows),amt=rowOpenAmount(rows),pos=`${fmtNum(docs)} ${docs===1?'PO':'POs'}`;
+  const tipText=`${label}: ${supLines(n)} on ${pos} (${money(amt)} open) ${what} in PO lines; click to list them.`;
+  return `<button type="button" class="dz-stat kit-stat" onclick="setPoTileFilter('${id}')" data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><div class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:${ico}">${dzIconSvg(icon)}</span>${esc(label)}</div><div class="dz-stat-v"${n?` style="color:${col}"`:''}>${fmtNum(n)}<span class="po-unit">${n===1?'line':'lines'}</span></div><div class="dz-stat-s">${esc(`${moneyShort(amt)} · ${pos}`)}</div></button>`;
+}
+function kitTipText(r){
+  if(isSnapshotView)return `Kit ${r.kitClean?'clean':'not ticked clean'}. A shared snapshot cannot change the tick.`;
+  if(!r.kitClean)return 'Tick when the kit for this line is clean; everyone who signs in sees it.';
+  const e=rowKeyCandidates(r).map(k=>rowOverrides[k]).find(Boolean);
+  const when=e&&noteTime(e)?new Date(noteTime(e)).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+  return `Kit clean.${e&&e.by?` Last change on this line by ${e.by}${when?`, ${when}`:''}.`:''} Click to clear.`;
+}
+function kitCellHtml(r){
+  const key=rowKey(r),on=!!r.kitClean;
+  const what=`PO ${r.documentNumber||''}${String(r.lineNumber??'').trim()?` line ${r.lineNumber}`:''}${r.itemCode?`, ${r.itemCode}`:''}`;
+  return `<label class="kit-check"${tipAttr(kitTipText(r))}><input type="checkbox" class="kit-cb" data-key="${esc(key)}" data-focus-key="kit-${esc(key)}"${on?' checked':''}${isSnapshotView?' disabled':''} aria-label="${esc(`Kit clean: ${what}`)}" onchange="kitToggle(this)"><span class="kit-box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5.6 10.4l3 3 5.8-6.6"/></svg></span><span class="kit-print">${on?'Yes':''}</span></label>`;
+}
+function kitToggle(el){
+  if(!el)return;
+  if(isSnapshotView){el.checked=!el.checked;return;}
+  const key=String(el.dataset.key||'');
+  const matches=key?allLoadedRows.filter(r=>rowKey(r)===key):[];
+  if(!matches.length)return;
+  const on=!!el.checked;
+  writeRowOverride(key,matches,'kitClean',on?true:undefined);
+  saveRowOverrides();
+  const label=el.closest('.kit-check');
+  if(label)tip(label,kitTipText(matches[0]));
+  const print=label&&label.querySelector('.kit-print');
+  if(print)print.textContent=on?'Yes':'';
+  // On the Kit Clean / Kit Not Clean list the line now belongs to the other card: it fades and leaves on the next redraw.
+  const left=(poTileFilter==='kitclean'&&!on)||(poTileFilter==='kitnotclean'&&on);
+  const tr=el.closest('tr');
+  if(tr&&tr.classList)tr.classList.toggle('po-left',left);
+  kitUpdateTiles();
+  const r=matches[0];
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')}: kit ${on?'clean':'not clean'}${left?', moves to the other Kit card':''}.`);
+}
+function kitUpdateTiles(){
+  const d=poData(currentMetrics());
+  if(!d||!document.querySelector)return;
+  const open=d.filteredPoOpen;
+  [['kitclean',open.filter(r=>r.kitClean)],['kitnotclean',open.filter(r=>!r.kitClean)]].forEach(([id,rows])=>{
+    const el=document.querySelector(`[data-focus-key="potile-${id}"]`);
+    if(!el)return;
+    const box=document.createElement('div');
+    box.innerHTML=kitStatHtml(id,rows,poTileFilter||'late');
+    const fresh=box.firstElementChild;
+    // The button stays (focus, its place); only its contents and tip change.
+    el.innerHTML=fresh.innerHTML;
+    tip(el,fresh.getAttribute('data-tip'));
+  });
+}
+
+// --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
+// A PO line counts when the date Spyder expects it (cmPoDue: its reschedule date, else its due date) is after the
+// earliest ship date of the open sales-order lines for the same item code (each sales line's reschedule date, else its
+// original due date; open lines with open quantity). Each PO line counts once, shown against that earliest sales line.
+// A PO line marked Not At Risk is left out, as on the other PO cards. Cached per metrics object (cachedByFilter).
+function poAtRiskAll(m){
+  return cachedByFilter(m,'poar|all',()=>{
+    const ships=new Map();
+    parsedRows.forEach(r=>{
+      if(/purchase/i.test(String(r.sourceType||''))||!isOrderLineRow(r)||r.statusBucket==='Closed'||!(num(r.openQuantity)>0))return;
+      const item=String(r.itemCode||'').trim().toUpperCase();
+      const v=rowRealRescheduleDate(r)||ohOriginalDue(r);
+      const d=item&&hasRealDate(v)?parseDate(v):null;
+      if(!d)return;
+      d.setHours(0,0,0,0);
+      const cur=ships.get(item);
+      if(!cur||d<cur.date||(+d===+cur.date&&String(r.documentNumber).localeCompare(String(cur.row.documentNumber),undefined,{numeric:true})<0))ships.set(item,{row:r,date:d});
+    });
+    const lines=[];
+    if(ships.size)poSourceRows().forEach(r=>{
+      if(!isOrderLineRow(r)||!hasOpenWork(r)||isManuallyNonUrgent(r))return;
+      const s=ships.get(String(r.itemCode||'').trim().toUpperCase());
+      const v=s?cmPoDue(r):null;
+      const exp=v&&hasRealDate(v)?parseDate(v):null;
+      if(!exp)return;
+      exp.setHours(0,0,0,0);
+      const days=Math.round((exp-s.date)/864e5);
+      if(days<=0)return;
+      const so=s.row;
+      lines.push({row:r,po:String(r.documentNumber||'').trim(),line:String(r.lineNumber??'').trim(),item:String(r.itemCode||'').trim(),owner:rowOwner(r),
+        vendor:String(r.name||'').trim()||poVendor(r),poDate:exp,so:String(so.documentNumber||'').trim(),customer:String(so.name||'').trim()||rowCustomer(so),shipDate:s.date,days,soRow:so});
+    });
+    lines.sort((a,b)=>b.days-a.days||a.poDate-b.poDate||a.po.localeCompare(b.po,undefined,{numeric:true}));
+    return poAtRiskPack(lines);
+  });
+}
+function poAtRiskPack(lines){
+  const byOwner=new Map();
+  lines.forEach(l=>{if(!byOwner.has(l.owner))byOwner.set(l.owner,[]);byOwner.get(l.owner).push(l);});
+  return {count:lines.length,lines,byOwner};
+}
+// The same lines for the Purchase Orders filters (vendor, warehouse): {count, lines, byOwner} for the card and the list.
+function poAtRiskData(m){
+  return cachedByFilter(m,`poar|${poFilterKey()}`,()=>{
+    const all=poAtRiskAll(m);
+    const keep=new Set(filterPoRows(all.lines.map(l=>l.row)));
+    return poAtRiskPack(all.lines.filter(l=>keep.has(l.row)));
+  });
+}
+// "PO 24411 · TTI Inc. · ITEM — expected Nov 12, sales order 70022 (Newell Coach Corp.) ships Oct 30, 13 days late"
+function poAtRiskText(l){
+  return `PO ${l.po} · ${l.vendor} · ${l.item} — expected ${supDay(l.poDate)}, sales order ${l.so} (${l.customer}) ships ${supDay(l.shipDate)}, ${ohN(l.days,'day')} late`;
+}
+
+// --- PO alerts: the count for the header bell, the drawer it opens, one reminder per loaded report ---
+// Contract for the header (agent B): poAlertCount() -> number (0 when Settings turns the alerts off or nothing is
+// loaded; every warehouse and vendor, whatever the Purchase Orders filters); poAlertsToggle(open?) opens / closes the
+// drawer (#poa-panel; give the bell aria-controls="poa-panel" and a data-focus-key so focus returns to it);
+// poAlertsIsOpen() -> boolean for its aria-expanded. poAlertsMaybeToast() runs after each load (handleFiles).
+const poaState={open:false,opener:'',more:new Set()};
+const POA_SHOWN=6; // lines per owner before "Show all"
+function poaMore(owner){
+  if(poaState.more.has(owner))poaState.more.delete(owner);else poaState.more.add(owner);
+  poaRender();
+}
+const poaToasted=new WeakSet();
+const POA_MAIL_SUBJECT='PO lines arriving after the sales order ships';
+function poAlertsOn(){return typeof stgValue!=='function'||stgValue('poAlerts')!==false;}
+function poaLoaded(){return !!(allLoadedRows.length&&poSourceRows().length);}
+function poAlertCount(){
+  try{return poAlertsOn()&&poaLoaded()?poAtRiskAll(currentMetrics()).count:0;}catch(err){return 0;}
+}
+function poAlertsIsOpen(){return poaState.open;}
+function poAlertsToggle(open){
+  if(typeof open==='boolean'?open:!poaState.open)poaOpen();else poaClose();
+}
+function poaPanel(){
+  let el=document.getElementById('poa-panel');
+  if(!el&&document.body){
+    el=document.createElement('aside');
+    el.id='poa-panel';el.className='ai-panel imp-panel poa-panel';el.hidden=true;
+    el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','poa-title');
+    el.addEventListener('keydown',poaPanelKey);
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function poaOpen(){
+  const panel=poaPanel();
+  if(!panel)return false;
+  // One drawer at a time: Ask AI and the Import report close.
+  if(typeof aiState!=='undefined'&&aiState.open&&typeof aiToggle==='function')aiToggle(false);
+  if(typeof impState!=='undefined'&&impState.open&&typeof impClose==='function')impClose(false);
+  if(!poaState.open){const a=document.activeElement;poaState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
+  poaState.open=true;
+  panel.hidden=false;
+  poaRender();
+  poaSyncOpeners();
+  const t=document.getElementById('poa-title');
+  if(t&&t.focus)t.focus({preventScroll:true});
+  return true;
+}
+function poaClose(refocus=true){
+  const panel=document.getElementById('poa-panel');
+  const was=poaState.open;
+  poaState.open=false;
+  if(panel)panel.hidden=true;
+  poaSyncOpeners();
+  if(!refocus||!was)return;
+  const back=poaState.opener&&document.querySelector(`[data-focus-key="${poaState.opener.replace(/["\\]/g,'\\$&')}"]`);
+  if(back&&back.focus)back.focus({preventScroll:true});
+}
+function poaSyncOpeners(){
+  document.querySelectorAll('[aria-controls="poa-panel"]').forEach(b=>b.setAttribute('aria-expanded',poaState.open?'true':'false'));
+}
+// Tab and Shift+Tab stay inside the open drawer; Esc closes it (Ask AI's Esc wins when that is open).
+function poaPanelKey(e){
+  if(e.key!=='Tab')return;
+  const items=[...document.getElementById('poa-panel').querySelectorAll('a[href],button,input,select,textarea,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
+  const first=items[0],last=items[items.length-1],active=document.activeElement;
+  if(!first)return;
+  if(e.shiftKey?active===first:active===last){e.preventDefault();(e.shiftKey?last:first).focus();}
+}
+if(typeof document!=='undefined'&&document.addEventListener)document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!poaState.open||e.defaultPrevented||(typeof aiState!=='undefined'&&aiState.open))return;
+  e.preventDefault();poaClose();
+});
+// max: lines listed (an email link stays short enough for every mail program; Copy list takes up to 200).
+function poaListText(owner,lines,max=200){
+  const shown=lines.slice(0,max);
+  return `${owner}: ${ohN(lines.length,'PO line')} ${lines.length===1?'is':'are'} expected after the sales order that needs the item ships.\n\n${shown.map(l=>`- ${poAtRiskText(l)}`).join('\n')}${lines.length>shown.length?`\n- …and ${fmtNum(lines.length-shown.length)} more on the dashboard`:''}\n\nExpected = the PO's reschedule date, else its due date. From the Spyder KPI dashboard, export of ${displayDate(reportAsOfDate||reportToday())}.`;
+}
+const POA_MAIL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+const POA_COPY_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>';
+function poaRender(){
+  const panel=document.getElementById('poa-panel');
+  if(!panel||panel.hidden)return;
+  const focus=captureFocus(panel);
+  const body=panel.querySelector('.imp-body'),scroll=body?body.scrollTop:0;
+  const loaded=poaLoaded();
+  const data=loaded?poAtRiskAll(currentMetrics()):poAtRiskPack([]);
+  const owners=[...data.byOwner.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+  const meta=data.count?`${ohN(data.count,'line')} · ${ohN(owners.length,'owner')}`:'';
+  const head=!loaded?`<div class="imp-sum"><span class="imp-sum-ico" style="--ico:var(--dz-indigo)">${dzIconSvg('file')}</span><div><p class="imp-sum-t">No purchase-order lines loaded</p><p>Load a SAP export with PO lines to check them against the sales orders.</p></div></div>`
+    :data.count?`<div class="imp-sum red"><span class="imp-sum-ico" style="--ico:var(--dz-risk)">${dzIconSvg('alert')}</span><div><p class="imp-sum-t">${esc(`${ohN(data.count,'PO line')} ${data.count===1?'arrives':'arrive'} after the sales order ships`)}</p><p>The PO’s reschedule date (else its due date) is after the earliest open sales-order ship date for the same item. By PO owner, most days late first.</p></div></div>`
+    :`<div class="imp-sum"><span class="imp-sum-ico" style="--ico:var(--dz-teal)">${dzIconSvg('check')}</span><div><p class="imp-sum-t">No PO line arrives after its sales order ships</p><p>Every open PO line is expected by the earliest open sales-order ship date for its item.</p></div></div>`;
+  const off=poAlertsOn()?'':`<p class="poa-off">Alerts are off in Settings: no reminder after a load and no count on the bell.</p>`;
+  const groups=owners.map(([owner,lines],gi)=>{
+    const mail=`mailto:?subject=${encodeURIComponent(POA_MAIL_SUBJECT)}&body=${encodeURIComponent(poaListText(owner,lines,10))}`;
+    return `<section class="imp-file poa-owner" aria-label="${esc(`${owner}: ${ohN(lines.length,'line')}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:var(--dz-indigo)">${dzIconSvg('users')}</span><div class="imp-file-main"><p class="imp-name">${esc(owner)}</p><p class="imp-meta">${esc(`${ohN(lines.length,'line')} · up to ${ohN(lines[0].days,'day')} late`)}</p></div>${dzChip(fmtNum(lines.length),'red')}</div>
+      <div class="imp-actions"><a class="dz-btn" href="${esc(mail)}" data-focus-key="poa-mail-${gi}"${tipAttr(`Start an email listing ${owner}'s ${ohN(lines.length,'line')}; add the recipient (the export has no email addresses).`)}>${POA_MAIL_SVG}Email</a><button type="button" class="dz-btn" data-owner="${esc(owner)}" data-focus-key="poa-copy-${gi}" onclick="poaCopy(this.dataset.owner,this)"${tipAttr(`Copy ${owner}'s lines as text, to paste into Teams, Slack or an email.`)}>${POA_COPY_SVG}Copy list</button></div>
+      <ul class="poa-lines">${(poaState.more.has(owner)?lines:lines.slice(0,POA_SHOWN)).map(l=>{const key=rowKey(l.row);return `<li class="poa-line"><div class="poa-line-main"><p class="poa-line-t"><b>PO ${esc(l.po)}</b> · ${esc(l.vendor)} · ${esc(l.item)}</p><p class="poa-line-s">Expected ${esc(supDay(l.poDate))}, sales order ${esc(l.so)} (${esc(l.customer)}) ships ${esc(supDay(l.shipDate))}</p><button type="button" class="poa-show" data-key="${esc(key)}" data-focus-key="poa-show-${esc(key)}" onclick="poaShow(this.dataset.key)"${tipAttr(`Open Purchase Orders on PO At Risk, searched for PO ${l.po}.`)}>Show in PO lines</button></div>${dzChip(`${ohN(l.days,'day')} late`,'red')}</li>`;}).join('')}</ul>
+      ${lines.length>POA_SHOWN?`<button type="button" class="poa-show poa-more" data-owner="${esc(owner)}" data-focus-key="poa-more-${gi}" aria-expanded="${poaState.more.has(owner)?'true':'false'}" onclick="poaMore(this.dataset.owner)">${poaState.more.has(owner)?'Show fewer':`Show all ${fmtNum(lines.length)}`}</button>`:''}</section>`;
+  }).join('');
+  panel.innerHTML=`<div class="ai-head imp-head"><h2 id="poa-title" tabindex="-1">PO At Risk</h2><span class="ai-mode">${esc(meta)}</span><button type="button" class="ai-close" data-focus-key="poa-close" aria-label="Close PO At Risk" onclick="poAlertsToggle(false)"${tipAttr('Close (Esc).')}>×</button></div>
+    <div class="imp-body">${head}${off}${groups}</div>
+    <div class="imp-foot">${data.count?`<button type="button" class="dz-btn" data-focus-key="poa-show-all" onclick="poaShow('')"${tipAttr('Open Purchase Orders with the PO At Risk card picked, every warehouse and vendor.')}>Show all in PO lines</button>`:''}<button type="button" class="dz-btn primary" data-focus-key="poa-done" onclick="poAlertsToggle(false)">Close</button></div>`;
+  const nb=panel.querySelector('.imp-body');
+  if(nb)nb.scrollTop=scroll;
+  restoreFocus(panel,focus);
+}
+function poaCopy(owner,btn){
+  const lines=poAtRiskAll(currentMetrics()).byOwner.get(owner)||[];
+  if(!lines.length)return;
+  const text=poaListText(owner,lines);
+  const done=()=>showToast(`Copied ${ohN(lines.length,'line')} for ${owner}.`);
+  const fallback=()=>{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy');}catch(err){ok=false;}
+    ta.remove();
+    if(btn&&btn.focus)btn.focus({preventScroll:true});
+    if(ok)done();else showToast('Could not copy here: use Email, or select the lines and copy them.');
+  };
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,fallback);else fallback();
+}
+// Purchase Orders on the PO At Risk card, every warehouse and vendor; a line's own link searches for its PO. The PO
+// lines list opens (kept like a click on its chevron) and the line is shown and focused.
+function poaShow(key){
+  if(!hasLoadedData())return;
+  poaClose(false);
+  const r=key?allLoadedRows.find(x=>rowKey(x)===key):null;
+  poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='poatrisk';poLinkedShowAll=false;
+  tableMore={...tableMore,'sup-po-view':'open','sup-po-q':r?String(r.documentNumber||''):''};
+  setTab('purchaseorders');
+  const card=document.querySelector('#po-linked-lines .dz-collapsible');
+  if(card&&card.classList.contains('dz-collapsed')){const b=card.querySelector('.dz-collapse-btn');if(b)dzToggleCollapse(b);}
+  const wrap=document.getElementById('po-linked-lines');
+  if(wrap&&wrap.scrollIntoView)wrap.scrollIntoView({block:'start'});
+  const cb=key?document.querySelector(`.kit-cb[data-key="${key.replace(/["\\]/g,'\\$&')}"]`):null;
+  const tr=cb&&cb.closest('tr');
+  if(tr){tr.classList.add('po-flash');setTimeout(()=>tr.classList.remove('po-flash'),2600);}
+  const target=cb&&!cb.disabled?cb:document.querySelector('[data-focus-key="potile-poatrisk"]');
+  if(target&&target.focus)target.focus({preventScroll:true});
+}
+// After a load: one reminder per loaded report (the rows array a load builds), when there is something to say and the
+// alerts are on. The load's own toast ("Loaded 4 files…") shows first; this one follows it, with a Show button.
+function poAlertsMaybeToast(){
+  try{
+    if(poaState.open)poaRender();
+    if(isSnapshotView||!allLoadedRows.length||poaToasted.has(allLoadedRows))return;
+    poaToasted.add(allLoadedRows);
+    const n=poAlertCount();
+    if(!n)return;
+    const bell=document.querySelector('[aria-controls="poa-panel"]');
+    const msg=`${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after ${n===1?'its':'their'} sales order ships — ${bell?'see the bell':'see PO At Risk'}`;
+    const box=document.getElementById('toast');
+    const busy=!!(box&&box.querySelector&&box.querySelector('.toast-item'));
+    const rows=allLoadedRows;
+    setTimeout(()=>{if(rows===allLoadedRows&&poAlertCount())poaToast(msg);},busy?4900:400);
+  }catch(err){console.warn('PO alert not shown:',err);}
+}
+function poaToast(msg){
+  showToast(msg);
+  const item=document.querySelector('#toast .toast-item');
+  if(!item)return;
+  item.classList.add('poa-toast');
+  const svg=item.querySelector('svg');
+  if(svg)svg.outerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${DZ_ICON_PATHS.alert}</svg>`;
+  const b=document.createElement('button');
+  b.type='button';b.className='poa-toast-btn';b.textContent='Show';
+  b.onclick=()=>poAlertsToggle(true);
+  item.appendChild(b);
+}
+// ===== end 2v6.5 po =====
 
 // ---------- Supply / Demand ----------
 // One status chip per supply line: short first, then the risky PO supply that is behind it (the quantities go under it).
@@ -8451,6 +8887,7 @@ function stgSpec(){
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
     shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
+    poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
   };
@@ -11947,7 +12384,7 @@ initStreamAUi();
 // this version) is sent back. After that every change is sent 800 ms after the last change to that line, in one
 // batch. Hosts without the API (IIS, a file share, a page opened from disk) keep notes in this browser only, as
 // before. Shared snapshots never read or write either copy; they carry the notes of their rows.
-// Entry: {status, notes, cause:'us'|'them'|'', deleted, by, at}; by = the editor's name (asked once, kept in
+// Entry: {status, notes, cause:'us'|'them'|'', deleted, kitClean (PO lines, 2v6.5; only true is kept), by, at}; by = the editor's name (asked once, kept in
 // localStorage spyderKpiEditorName and in the shared list of names, functions/api/people.js), at = ISO time of the
 // edit. A cleared line is sent as {by, at} only, so other browsers drop their copy; until the server has that marker
 // it is kept in localStorage (spyderKpiNotesClearedV1).
@@ -12065,6 +12502,7 @@ function sharedRowEntry(e){
   if(e.notes!==undefined)out.notes=cleanNoteText(e.notes,NOTE_MAX_LENGTH);
   if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
   if(e.deleted)out.deleted=true;
+  if(e.kitClean===true)out.kitClean=true;
   out.by=cleanEditorTag(e.by);
   out.at=noteTime(e)?e.at:noteNowIso();
   return out;
@@ -12084,12 +12522,13 @@ function localRowEntry(e){
   if(typeof e.notes==='string')out.notes=e.notes;
   if(e.cause==='us'||e.cause==='them'||e.cause==='')out.cause=e.cause;
   if(e.deleted===true)out.deleted=true;
+  if(e.kitClean===true)out.kitClean=true;
   out.by=typeof e.by==='string'?e.by:'';
   out.at=typeof e.at==='string'?e.at:'';
   return out;
 }
 function isClearedNote(e){
-  return !e.status&&!e.notes&&!e.cause&&!e.deleted;
+  return !e.status&&!e.notes&&!e.cause&&!e.deleted&&!e.kitClean;
 }
 // Returns true when the line's status or deleted flag changed (the metrics then need a rebuild; a note or a cause
 // does not: causes are part of ohStamp(), which keys every cache that reads them).
