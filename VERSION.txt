@@ -45,7 +45,7 @@ kept in snapshots); Top offenders as $20k blocks; Search finds reasons and cause
 cause, leading and lagging. About these numbers on Order Health explains every number.
 
 1v9: Ask AI rebuilt for four providers with the keys kept on the server (functions/api/ai/, Pages secrets
-ANTHROPIC_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY): Claude and ChatGPT (paid), Groq and
+ANTHROPIC_API_KEY, OPENAI_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY): Anthropic and ChatGPT (paid), Groq and
 OpenRouter free models (free). Provider and model picker grouped Paid / Free, a data-use notice and consent tick
 per provider, tool loop in both the Anthropic and OpenAI formats, plain-English "not set up" help (also shown in
 shared snapshots and file copies). The Gemini panel, its proxy and personal browser keys are removed (an old saved
@@ -146,7 +146,7 @@ shared notes for everyone. No tracking API is called (the FedEx module and polle
 Demo data (12 made-up shipments, clearly labelled, with a Show real shipments switch) is on by default until the
 owner asks to remove it (SHIP_DEMO_DEFAULT in index.html).
 
-2v6: Claude Design redesign of every page. The left sidebar is now a centred top header (Order Health, Monthly,
+2v6: Redesign of every page. The left sidebar is now a centred top header (Order Health, Monthly,
 Warehouses, Metrics, Shipping, Supply menu; export date, search, Ask AI, Export PDF and the avatar menu on the right),
 on a soft gradient page with Outfit type, glass cards and pill filters. Order Health has the Leading | Lagging switch
 back: Leading shows At risk (orders first, most affected warehouse, production issues, override tiles), status and top
@@ -169,8 +169,8 @@ warehouse is highlighted in soft amber. Card titles Capitalize Each Word.
 2v6.2: Settings page (avatar menu > Settings; saved in this browser): your name, at-risk target, on-track tolerance,
 look-ahead window, lines shown, opening view, the ready-made note comments, Shipping demo default, data status, Ask AI
 provider. Upload files button in the header and drop-anywhere for several files at once; an Import report that says,
-per file, what was read, what went wrong and how to fix it; "Fix with Claude" sends a file's header row and first 5 rows
-(only after a click and consent) to Claude through the site's AI proxy, which suggests a column mapping that is applied
+per file, what was read, what went wrong and how to fix it; "Fix with AI" sends a file's header row and first 5 rows
+(only after a click and consent) to the Anthropic model through the site's AI proxy, which suggests a column mapping that is applied
 before the normal parser reads the file (needs ANTHROPIC_API_KEY on the hosted site). Line tables fold with a chevron;
 "About these numbers" is a round info button at the bottom right. Brighter colours with muted highlight tints; the
 Most affected warehouse is light yellow.
@@ -212,7 +212,7 @@ Settings > Pages & Display > Background: Blue (default), Lavender, Mint, Peach, 
 Smaller notification dots (gear, Upload, Settings card). The Shipping map is centred on Lacombe and the delivery dots.
 Purchase Orders: no as-of / open PO lines line in the page head (the export date is in the header).
 Purchase Orders: the second row of cards fills the width like the row above (as many columns as cards, up to 6), and
-the Kit cards read Kits Clean / Kits Not Clean. Ask AI's not-set-up view no longer lists the Cloudflare secrets for IT;
+the Kit cards read Kits Clean / Kits Not Clean. Ask AI's not-set-up view no longer lists the Cloudflare secrets;
 Connect An AI App says to get the dashboard folder from the GitHub repo.
 Purchase Orders: each name in the PO At Risk card is a button that lists that person's at-risk lines (again for all).
 Order Health, Lagging: the change line under each big number ("+1 pts vs Aug") is smaller and quieter.

@@ -1,4 +1,4 @@
-// Tests for functions/api/ai/[[path]].js (Ask AI server proxy for Claude, ChatGPT, Groq and OpenRouter).
+// Tests for functions/api/ai/[[path]].js (Ask AI server proxy for Anthropic, ChatGPT, Groq and OpenRouter).
 // Run: node tests/ai-proxy.test.mjs. fetch is mocked: nothing leaves the machine, and every key is fake.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -63,10 +63,11 @@ test('status lists all four providers grouped by tier, configured only where the
   assert.equal(s.hosted, true);
   assert.equal(s.configured, true);
   assert.deepEqual(s.providers.map((p) => [p.id, p.tier, p.configured]), [['anthropic', 'paid', true], ['openai', 'paid', false], ['groq', 'free', true], ['openrouter', 'free', false]]);
-  const claude = s.providers[0];
-  assert.deepEqual(claude.models, ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']);
-  assert.equal(claude.defaultModel, 'claude-opus-5-5');
-  assert.match(claude.modelLabels['claude-opus-5-5'], /Opus 5\.5/);
+  const anthropic = s.providers[0];
+  assert.deepEqual([anthropic.name, anthropic.short], ['Anthropic', 'Anthropic']);
+  assert.deepEqual(anthropic.models, ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5']);
+  assert.equal(anthropic.defaultModel, 'claude-opus-5-5');
+  assert.equal(anthropic.modelLabels['claude-opus-5-5'], 'Opus 5.5 (most capable)');
   for (const p of s.providers) {
     // One short line or two on what happens to the data, naming Spyder Controls (never "the company").
     assert.ok(p.dataNotice.length > 80 && p.dataNotice.length <= 160, `${p.id} has a short data notice`);
@@ -74,14 +75,14 @@ test('status lists all four providers grouped by tier, configured only where the
     assert.match(p.termsUrl, /^https:\/\//);
     assert.match(p.secret, /^[A-Z]+_API_KEY$/);
   }
-  assert.match(s.providers[0].dataNotice, /^Billed to Spyder Controls\. Anthropic does not train on this data/, 'Claude: paid, no training');
+  assert.match(s.providers[0].dataNotice, /^Billed to Spyder Controls\. Anthropic does not train on this data/, 'Anthropic: paid, no training');
   assert.match(s.providers[1].dataNotice, /^Billed to Spyder Controls\. OpenAI does not train on this data by default/, 'ChatGPT: paid, no training by default');
   assert.match(s.providers[2].dataNotice, /^Free\b.*Groq says it does not train on this data, but free terms can change/, 'Groq: free, terms can change');
   assert.match(s.providers[3].dataNotice, /outside providers that host them may keep, train on or publish/, 'OpenRouter warns that free hosts may keep, train on or publish data');
   assert.match(s.providers[3].dataNotice, /public/i, 'OpenRouter says to treat it as public');
   assert.deepEqual(s.providers[1].models, [], 'no models for a provider without a key');
   assert.ok(s.providers[2].models.includes('openai/gpt-oss-120b'));
-  assert.ok(calls.every((c) => !/anthropic/.test(c.url)), 'Claude needs no upstream call for status');
+  assert.ok(calls.every((c) => !/anthropic/.test(c.url)), 'Anthropic needs no upstream call for status');
   const none = await body(await call('/api/ai/status', { env: {} }));
   assert.equal(none.configured, false);
   assert.ok(none.providers.every((p) => !p.configured && !p.models.length));
@@ -192,7 +193,7 @@ test('malformed conversations are 400 with a plain message', async () => {
 });
 
 // --- Request shapes ---------------------------------------------------------------------------------------
-test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schema; reply normalized with thinking kept', async () => {
+test('Anthropic: Messages API shape, headers, fallback opt-in, tools as input_schema; reply normalized with thinking kept', async () => {
   const content = [{ type: 'thinking', thinking: '', signature: 'sig-abc' }, { type: 'text', text: 'Let me check.' }, { type: 'tool_use', id: 'toolu_1', name: 'get_overview', input: { warehouse: 'Alta' } }];
   reset(() => ({ body: { id: 'msg_1', model: 'claude-opus-5-5', role: 'assistant', content, stop_reason: 'tool_use', usage: { input_tokens: 100, cache_read_input_tokens: 50, output_tokens: 20 } } }));
   const history = [...QUESTION, { role: 'assistant', content: [{ type: 'text', text: 'Earlier answer' }] }, { role: 'user', content: 'And now?' }];
@@ -224,7 +225,7 @@ test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schem
   ]);
   assert.deepEqual([out.provider, out.dialect, out.stop, out.text], ['anthropic', 'anthropic', 'tool_use', 'Let me check.']);
   assert.deepEqual(out.toolCalls, [{ id: 'toolu_1', name: 'get_overview', input: { warehouse: 'Alta' } }]);
-  assert.deepEqual(out.message, { role: 'assistant', content }, 'the assistant turn comes back exactly as Claude sent it');
+  assert.deepEqual(out.message, { role: 'assistant', content }, 'the assistant turn comes back exactly as the model sent it');
   assert.deepEqual(out.usage, { input: 150, output: 20 });
 
   // The last allowed round asks for an answer without tools; Haiku has no server-side fallback.
@@ -237,7 +238,7 @@ test('Claude: Messages API shape, headers, fallback opt-in, tools as input_schem
   assert.deepEqual([last.stop, last.text, last.toolCalls], ['end', 'Done.', []]);
 });
 
-test('Claude: an account without the betas gets the plain request once; refusal and max_tokens map', async () => {
+test('Anthropic: an account without the betas gets the plain request once; refusal and max_tokens map', async () => {
   reset(({}, init) => (new Headers(init.headers).get('anthropic-beta')
     ? { status: 400, body: { type: 'error', error: { type: 'invalid_request_error', message: 'Unexpected value(s) `server-side-fallback-2026-07-01` for the `anthropic-beta` header.' } } }
     : { body: { model: 'claude-sonnet-5-5', content: [{ type: 'text', text: 'Fine.' }], stop_reason: 'end_turn' } }));
@@ -263,7 +264,7 @@ test('Claude: an account without the betas gets the plain request once; refusal 
   assert.equal((await body(await chat({ provider: 'anthropic', model: 'claude-opus-5-5', messages: QUESTION }))).stop, 'max_tokens');
 });
 
-test('Claude: after a server-side fallback only text is kept from before the marker; tool calls come from after it', async () => {
+test('Anthropic: after a server-side fallback only text is kept from before the marker; tool calls come from after it', async () => {
   const content = [
     { type: 'thinking', thinking: '', signature: 'declined' }, { type: 'text', text: 'Looking ' }, { type: 'tool_use', id: 'toolu_old', name: 'get_overview', input: {} },
     { type: 'fallback', from: { model: 'claude-opus-5-5' }, to: { model: 'claude-opus-5' } },
@@ -325,7 +326,7 @@ test('upstream errors become plain-English errors; auth errors and keys never pa
     ['openai', 429, { error: { message: 'Rate limit reached' } }, 429, 'rate_limited', /too many requests/],
     ['groq', 429, { error: { message: 'Rate limit reached for model in organization on tokens per minute (TPM)' } }, 429, 'rate_limited', /free limit/],
     ['groq', 413, { error: { message: 'Request too large for model on tokens per minute (TPM): Limit 6000' } }, 413, 'too_large', /narrower question, or pick a paid provider/],
-    ['anthropic', 400, { error: { type: 'invalid_request_error', message: 'prompt is too long: 1200000 tokens > 1000000 maximum' } }, 413, 'too_large', /too large for Claude/],
+    ['anthropic', 400, { error: { type: 'invalid_request_error', message: 'prompt is too long: 1200000 tokens > 1000000 maximum' } }, 413, 'too_large', /too large for Anthropic/],
     ['openrouter', 404, { error: { message: 'No endpoints found matching your data policy (Free model publication)' } }, 404, 'model_unavailable', /privacy settings/],
     ['openrouter', 404, { error: { message: 'No endpoints found that support tool use. To learn more about provider routing, visit: https://openrouter.ai/docs/provider-routing' } }, 404, 'model_unavailable', /^OpenRouter could not use that model because that model cannot look up dashboard data \(no tool support\)\. Pick another model/],
     ['openai', 402, { error: { message: 'billing' } }, 402, 'billing', /out of credit/],

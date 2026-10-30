@@ -217,23 +217,27 @@ test('Connect an AI opens in Settings before any export is loaded: a short card 
   assert.doesNotMatch(html, /Share snapshot|Export PDF/);
   // Concise: one intro line, the three steps, one privacy line; the details live in the guide.
   const text = unescape(card.replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ');
-  for (const t of ['Use Claude Desktop or another AI app to read your exports.', 'Use only an AI app Spyder Controls approves.', 'Settings → Developer → Edit Config']) assert.ok(text.includes(t), t);
+  for (const t of ['Use an AI app on your computer to read your exports.', 'Use only an AI app Spyder Controls approves.', "In your AI app's MCP settings, add this server, then restart the app."]) assert.ok(text.includes(t), t);
   assert.doesNotMatch(text, /\bcompan(y|ies)\b/i);
+  // No AI product names and no "IT": the steps fit any app that supports MCP.
+  assert.doesNotMatch(card, /claude|cursor/i);
+  assert.doesNotMatch(text, /\bIT\b/);
   assert.ok(text.split(' ').length < 120, `the card stays short (${text.split(' ').length} words)`);
   assert.match(card, /href="docs\/MCP\.md"/);
-  assert.match(card, /<span class="misc-code-file">claude_desktop_config\.json<\/span>/);
+  assert.match(card, /<span class="misc-code-file">MCP server config<\/span>/);
 
   const config = JSON.parse(unescape(card.match(/<pre id="connect-desktop"[^>]*>([^<]*)<\/pre>/)[1]));
   assert.deepEqual(config.mcpServers['spyder-kpi'], { command: 'node', args: ['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs', 'C:\\path\\to\\kpi_export.xls'] });
   // The scrolling snippet can be reached with the keyboard.
-  assert.match(card, /<pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">/);
+  assert.match(card, /<pre id="connect-desktop" tabindex="0" aria-label="MCP server config">/);
   // The one Copy button reads the snippet id from data-copy, has its own accessible name and is left out of print.
   const copies = [...card.matchAll(/<div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-(desktop)-status" role="status"><\/span><button type="button" class="dz-btn" data-copy="connect-\1" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
-  assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config'], 'the Copy button has its own accessible name');
-  // The Claude Code command and the other apps' settings stay in the guide.
+  assert.deepEqual(copies.map((m) => m[2]), ['Copy the MCP server config'], 'the Copy button has its own accessible name');
+  // The guide shows the same config as the card, plus the fields for apps that ask for them one by one.
   const guide = fs.readFileSync(path.join(path.dirname(SERVER), '..', 'docs', 'MCP.md'), 'utf8');
-  assert.ok(guide.includes('claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'));
-  assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same Claude Desktop config as the card');
+  assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same MCP server config as the card');
+  assert.ok(guide.includes('| Command | `node` |'));
+  assert.doesNotMatch(guide, /claude|cursor/i, 'the guide names no AI product');
 });
 
 test('Connect an AI with an export loaded opens the Settings card; no Data check pill anywhere; Copy uses the clipboard or a fallback', async () => {

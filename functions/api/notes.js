@@ -106,7 +106,7 @@ export async function onRequest(context) {
     pruned = dropOldMarkers(doc, now);
     let stored = JSON.stringify(doc);
     if (!fits(stored)) { pruned += prune(doc, sent); stored = JSON.stringify(doc); }
-    if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (2 MB). Ask IT to clear old notes.' });
+    if (!fits(stored)) return json(413, { error: 'Shared notes storage is full (2 MB). Ask whoever runs this site to clear old notes.' });
     try { await store.put(KEY, stored); } catch (err) {
       // Workers KV takes one write per second to the same key; another save may have just gone in. Try once more.
       await new Promise((r) => setTimeout(r, PUT_RETRY_MS));

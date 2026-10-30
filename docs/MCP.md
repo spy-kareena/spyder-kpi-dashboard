@@ -1,22 +1,18 @@
 # Connect an AI
 
-Ask questions about the SAP export in plain English, such as "What is at risk this week?". Both options answer from the same numbers as the dashboard pages, as of the export date. The dashboard's **Connect an AI** page (sidebar, under **Help**) has the short version with a Copy button.
+Ask questions about the SAP export in plain English, such as "What is at risk this week?". Both options answer from the same numbers as the dashboard pages, as of the export date. The short version, with a Copy button, is the **Connect An AI App** card in **Settings** (the gear, top right).
 
 ## Option 1: Ask AI in this dashboard
 
-Nothing to install. On the hosted site, click **Ask AI** at the top of any page, pick a provider in **Settings** and tick its consent box. Claude and ChatGPT are paid and do not train on what you send; Groq and OpenRouter's free models cost nothing but may keep what you send. A shared snapshot or a copy opened as a file cannot use Ask AI. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
+Nothing to install. On the hosted site, click **Ask AI** at the top of any page, pick a provider in **Settings** and tick its consent box. Anthropic and ChatGPT are paid and do not train on what you send; Groq and OpenRouter's free models cost nothing but may keep what you send. A shared snapshot or a copy opened as a file cannot use Ask AI. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
 ## Option 2: Your own AI app (MCP connector)
 
-The connector `mcp/spyder-kpi-mcp.mjs` is a small program that runs on your computer and reads the export files you list. It needs only Node.js.
+The connector `mcp/spyder-kpi-mcp.mjs` is a small program that runs on your computer and reads the export files you list. It works with any desktop AI app that supports MCP servers and needs only Node.js.
 
 1. Install Node.js 20 or newer from [nodejs.org](https://nodejs.org).
-2. Save the dashboard folder on your computer (IT has it). It needs `index.html` and the `mcp` folder.
-3. Add the connector to your AI app, as below.
-
-### Claude Desktop
-
-Open **Settings → Developer → Edit Config** (this opens `claude_desktop_config.json`: on Windows `%APPDATA%\Claude\claude_desktop_config.json`, on macOS `~/Library/Application Support/Claude/claude_desktop_config.json`). Add this with your two paths, save, then restart Claude:
+2. Get the dashboard folder from the GitHub repo. It needs `index.html` and the `mcp` folder.
+3. In your AI app's MCP settings, add this server with your two paths, save, then restart the app:
 
 ```json
 {
@@ -33,22 +29,10 @@ Open **Settings → Developer → Edit Config** (this opens `claude_desktop_conf
 ```
 
 - In JSON every `\` in a Windows path is written twice (`\\`).
-- If the file already has settings, keep them: put the `"spyder-kpi"` entry inside its `"mcpServers"` section, or add `"mcpServers"` after the last setting with a comma. The file must stay one `{ ... }` block.
+- If the config already has settings, keep them: put the `"spyder-kpi"` entry inside its `"mcpServers"` section. The file must stay one `{ ... }` block.
 - To also load a supply / demand snapshot or a Clear To Build report, add its path to `args` after the KPI export.
 
-### Claude Code
-
-Run this once with your two paths, in the folder where you use Claude Code (add `--scope user` after `add` to use it in every folder):
-
-```
-claude mcp add spyder-kpi -- node "C:\path\to\spyder-kpi-dashboard\mcp\spyder-kpi-mcp.mjs" "C:\path\to\kpi_export.xls"
-```
-
-Then start `claude` there and type `/mcp` to check that spyder-kpi is connected.
-
-### Any other MCP app
-
-Cursor, VS Code, ChatGPT desktop and other apps that support local MCP servers:
+If your app asks for the fields one by one instead:
 
 | Setting | Value |
 | --- | --- |
@@ -85,7 +69,7 @@ The tools only read; nothing changes in SAP or the export files. The connector d
 
 ## Update the export
 
-Save the new export over the old file (same path), then ask the AI to load it ("Load C:\Exports\kpi_export.xls", which calls `load_exports`) or restart the AI app (Claude Desktop: quit it from the tray or menu bar, not just the window). If the file name changed, change the path in the config too.
+Save the new export over the old file (same path), then ask the AI to load it ("Load C:\Exports\kpi_export.xls", which calls `load_exports`) or restart the AI app (quit it fully, not just the window). If the file name changed, change the path in the config too.
 
 ## Privacy
 
@@ -103,12 +87,12 @@ node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"
 
 It loads the file, prints the overview (the same numbers as Order Health and Purchase Orders) and exits. If the file cannot be read, it prints why and exits with code 1.
 
-**"node" is not recognized / command not found.** Install Node.js 20 or newer from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer); `node --version` in a new terminal should print v20 or newer. If the app still cannot find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`. On a Mac, Claude Desktop does not see the Terminal's PATH (for example with nvm or Homebrew): run `which node` and use the path it prints, such as `/opt/homebrew/bin/node`.
+**"node" is not recognized / command not found.** Install Node.js 20 or newer from [nodejs.org](https://nodejs.org), then restart the AI app (or the computer); `node --version` in a new terminal should print v20 or newer. If the app still cannot find it, use the full path as the command, for example `"command": "C:\\Program Files\\nodejs\\node.exe"`. On a Mac, an app started from the Dock may not see the Terminal's PATH (for example with nvm or Homebrew): run `which node` and use the path it prints, such as `/opt/homebrew/bin/node`.
 
-**Paths with spaces.** In the Claude Desktop config each path is its own quoted string, so spaces are fine. In a terminal command (Claude Code, `--check`), put each path in double quotes. Use full paths.
+**Paths with spaces.** In the JSON config each path is its own quoted string, so spaces are fine. In a terminal command (such as `--check`), put each path in double quotes. Use full paths.
 
 **The AI says no export is loaded.** The path is wrong or the file moved. Ask the AI to call `loaded_files` (it shows what is loaded and the last load error), or to load the file by its full path.
 
-**Claude Desktop shows the server as failed.** Open **Settings → Developer** for the error; in Claude's MCP log, lines starting with `[spyder-kpi]` come from the connector. Common causes: a JSON typo (a missing comma or a single `\` in a path), or `index.html` is not in the folder above `mcp`. If it is elsewhere, add `"--index", "C:\\path\\to\\index.html"` before the export paths in `args`.
+**The app shows the server as failed.** Open the app's MCP settings or log for the error; lines starting with `[spyder-kpi]` come from the connector. Common causes: a JSON typo (a missing comma or a single `\` in a path), or `index.html` is not in the folder above `mcp`. If it is elsewhere, add `"--index", "C:\\path\\to\\index.html"` before the export paths in `args`.
 
 **The numbers differ from the website.** Check the as-of date (`loaded_files`). The connector reads the file you listed, which may be older than the one in the browser.
