@@ -47,12 +47,12 @@ function hero(html) {
 }
 
 // --- The site's /api/ai, mocked ---------------------------------------------------------------------------
-const LABELS = { 'claude-opus-5-5': 'Claude Opus 5.5 (most capable)', 'claude-sonnet-5-5': 'Claude Sonnet 5.5 (faster, about half the cost)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (fastest, lowest cost)' };
+const LABELS = { 'claude-opus-5-5': 'Opus 5.5 (most capable)', 'claude-sonnet-5-5': 'Sonnet 5.5 (faster, about half the cost)', 'claude-haiku-5-5': 'Haiku 5.5 (fastest, lowest cost)' };
 function siteStatus(configured = ['anthropic', 'groq']) {
   const on = (id) => configured.includes(id);
   const p = (id, name, short, tier, models, extra = {}) => ({ id, name, short, tier, configured: on(id), models: on(id) ? models : [], defaultModel: on(id) ? models[0] : '', modelLabels: {}, dataNotice: `${short} data notice: what is sent and kept.`, termsUrl: `https://${id}.example.test/terms`, secret: `${id.toUpperCase()}_API_KEY`, ...extra });
   return { hosted: true, configured: configured.length > 0, providers: [
-    p('anthropic', 'Claude (Anthropic)', 'Claude', 'paid', ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'], { modelLabels: LABELS }),
+    p('anthropic', 'Anthropic', 'Anthropic', 'paid', ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'], { modelLabels: LABELS }),
     p('openai', 'ChatGPT (OpenAI)', 'ChatGPT', 'paid', ['gpt-5', 'gpt-5-mini']),
     p('groq', 'Groq', 'Groq', 'free', ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile']),
     p('openrouter', 'OpenRouter (free models)', 'OpenRouter', 'free', ['meta-llama/llama-3.3-70b-instruct:free']),
@@ -76,7 +76,7 @@ function site(page, { status = siteStatus(), answers = [] } = {}) {
 const chats = (calls) => calls.filter((c) => c.url === '/api/ai/chat');
 const consent = (...ids) => ({ spyderKpiAiConsentV2: JSON.stringify(Object.fromEntries(ids.map((id) => [id, '2026-10-09']))) });
 // One normalized /api/ai/chat reply in each dialect.
-function claudeTurn(content, stop) {
+function anthropicTurn(content, stop) {
   const toolCalls = content.filter((b) => b.type === 'tool_use').map((b) => ({ id: b.id, name: b.name, input: b.input }));
   return { provider: 'anthropic', model: 'claude-opus-5-5', dialect: 'anthropic', stop: stop || (toolCalls.length ? 'tool_use' : 'end'), text: content.filter((b) => b.type === 'text').map((b) => b.text).join(''), toolCalls, message: { role: 'assistant', content } };
 }
@@ -201,20 +201,25 @@ test('status: providers grouped Paid / Free, unconfigured ones disabled, default
   page.run('aiToggle(true)');
   await page.run('aiPrepare()');
   const picker = page.els['ai-provider'].innerHTML;
-  assert.match(picker, /^<optgroup label="Paid"><option value="anthropic" selected>Claude \(Anthropic\)<\/option><option value="openai" disabled>ChatGPT \(OpenAI\) \(not set up\)<\/option><\/optgroup><optgroup label="Free"><option value="groq">Groq<\/option><option value="openrouter" disabled>OpenRouter \(free models\) \(not set up\)<\/option><\/optgroup>$/);
+  assert.match(picker, /^<optgroup label="Paid"><option value="anthropic" selected>Anthropic<\/option><option value="openai" disabled>ChatGPT \(OpenAI\) \(not set up\)<\/option><\/optgroup><optgroup label="Free"><option value="groq">Groq<\/option><option value="openrouter" disabled>OpenRouter \(free models\) \(not set up\)<\/option><\/optgroup>$/);
   assert.equal(page.run('aiState.model'), 'claude-opus-5-5');
-  assert.match(page.els['ai-model'].innerHTML, /<option value="claude-opus-5-5" selected>Claude Opus 5\.5 \(most capable\)<\/option><option value="claude-sonnet-5-5">/);
-  assert.equal(page.els['ai-mode'].textContent, 'Claude · Claude Opus 5.5');
+  assert.match(page.els['ai-model'].innerHTML, /<option value="claude-opus-5-5" selected>Opus 5\.5 \(most capable\)<\/option><option value="claude-sonnet-5-5">/);
+  assert.equal(page.els['ai-mode'].textContent, 'Anthropic · Opus 5.5');
+  // Model names drop the family word an Anthropic id starts with (display only; the id is what is sent); other
+  // providers' ids stay whole.
+  assert.equal(page.run("aiModelLabel({id:'anthropic',modelLabels:{'fam-pro-2':'Fam Pro 2 (fast)'}},'fam-pro-2')"), 'Pro 2 (fast)');
+  assert.equal(page.run("aiModelLabel({id:'anthropic',modelLabels:{}},'claude-haiku-5-5')"), 'haiku-5-5');
+  assert.equal(page.run("aiModelLabel({id:'groq',modelLabels:{}},'llama-3.3-70b-versatile')"), 'llama-3.3-70b-versatile');
   assert.equal(page.els['ai-tier'].textContent, 'Paid');
-  assert.equal(page.els['ai-notice-text'].textContent, 'Claude data notice: what is sent and kept.');
+  assert.equal(page.els['ai-notice-text'].textContent, 'Anthropic data notice: what is sent and kept.');
   assert.equal(page.els['ai-terms'].href, 'https://anthropic.example.test/terms');
-  assert.equal(page.els['ai-consent-text'].textContent, 'Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to Claude.');
+  assert.equal(page.els['ai-consent-text'].textContent, 'Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to Anthropic.');
   // Not yet allowed: the settings view is shown, not the chat.
   assert.deepEqual([page.els['ai-settings'].hidden, page.els['ai-chat'].hidden, page.els['ai-setup'].hidden], [false, true, true]);
   page.run('aiSetConsent(true)');
   page.run('aiBackToChat()');
   assert.deepEqual([page.els['ai-settings'].hidden, page.els['ai-chat'].hidden], [true, false]);
-  assert.match(page.els['ai-foot'].textContent, /Answers come from Claude \(claude-opus-5-5\)/);
+  assert.match(page.els['ai-foot'].textContent, /^Answers come from Anthropic \(Opus 5\.5\) and can be wrong/);
   // The choice is remembered; a provider that is not set up cannot be picked.
   page.run("aiSetProvider('groq')");
   page.run("aiSetModel('llama-3.3-70b-versatile')");
@@ -262,7 +267,7 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
   assert.equal(snapCalls.length, 0, 'a snapshot sends nothing anywhere');
   assert.equal(snap.els['ai-setup'].hidden, false);
   assert.match(snap.els['ai-setup-why'].textContent, /shared snapshot/);
-  // The setup view links to the guide; the IT instructions (secret names, redeploy) are not shown (owner, 2v6.6).
+  // The setup view links to the guide; the setup instructions (secret names, redeploy) are not shown (owner, 2v6.6).
   const setupView = HTML.match(/<div class="ai-setup" id="ai-setup"[\s\S]*?<\/div>\s*<\/div>/)[0];
   for (const s of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'Cloudflare Pages secrets']) assert.doesNotMatch(setupView, new RegExp(s));
   assert.match(HTML, /id="ai-setup"[\s\S]*?href="docs\/AI_ASSISTANT\.md"/);
@@ -270,7 +275,7 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
 
 test('consent is per provider: nothing is sent to a provider until its box is ticked', async () => {
   const page = await loaded({ storage: consent('anthropic') });
-  const calls = site(page, { answers: [claudeTurn([{ type: 'text', text: 'Hi from Claude' }])] });
+  const calls = site(page, { answers: [anthropicTurn([{ type: 'text', text: 'Hi from Anthropic' }])] });
   page.run("aiSetProvider('groq')"); // before status: not known yet, ignored
   await page.run('aiPrepare()');
   page.run("aiSetProvider('groq')");
@@ -281,7 +286,7 @@ test('consent is per provider: nothing is sent to a provider until its box is ti
   page.run("aiSetProvider('anthropic')");
   await page.run("aiSend('hello')");
   assert.equal(chats(calls).length, 1);
-  assert.match(page.els['ai-log'].innerHTML, /Hi from Claude/);
+  assert.match(page.els['ai-log'].innerHTML, /Hi from Anthropic/);
   // Unticking stops it again.
   page.run('aiSetConsent(false)');
   assert.deepEqual(JSON.parse(page.storage.spyderKpiAiConsentV2 || '{}'), {});
@@ -290,10 +295,10 @@ test('consent is per provider: nothing is sent to a provider until its box is ti
 });
 
 // --- Tool loop ---------------------------------------------------------------------------------------------
-test('Claude dialect: tool_use round, tool_result back, thinking kept, answer rendered', async () => {
+test('Anthropic dialect: tool_use round, tool_result back, thinking kept, answer rendered', async () => {
   const page = await loaded({ storage: consent('anthropic') });
   const first = [{ type: 'thinking', thinking: '', signature: 'sig-1' }, { type: 'tool_use', id: 'toolu_1', name: 'get_overview', input: {} }, { type: 'tool_use', id: 'toolu_2', name: 'search_lines', input: { scope: 'nope' } }];
-  const calls = site(page, { answers: [claudeTurn(first), claudeTurn([{ type: 'text', text: 'At risk: **$2,200** across 3 lines as of 2026-09-03.\n- Past due: 1' }])] });
+  const calls = site(page, { answers: [anthropicTurn(first), anthropicTurn([{ type: 'text', text: 'At risk: **$2,200** across 3 lines as of 2026-09-03.\n- Past due: 1' }])] });
   await page.run("aiSend('What is at risk?')");
   const [c1, c2] = chats(calls);
   assert.equal(chats(calls).length, 2);
@@ -312,12 +317,12 @@ test('Claude dialect: tool_use round, tool_result back, thinking kept, answer re
   const log = page.els['ai-log'].innerHTML;
   assert.match(log, /<strong>\$2,200<\/strong>/);
   assert.match(log, /<li>Past due: 1<\/li>/);
-  assert.match(log, /Claude Opus 5\.5 · Looked up: get_overview, search_lines/);
+  assert.match(log, /Opus 5\.5 · Looked up: get_overview, search_lines/);
   assert.match(page.els['ai-announce'].textContent, /^At risk: \$2,200 across 3 lines/, 'announced once, without markdown');
   assert.equal(page.run('aiState.history.length'), 4);
   assert.deepEqual(page.errors, []);
   // A follow-up carries the earlier exchange.
-  const more = site(page, { answers: [claudeTurn([{ type: 'text', text: 'Follow-up answer' }])] });
+  const more = site(page, { answers: [anthropicTurn([{ type: 'text', text: 'Follow-up answer' }])] });
   await page.run("aiSend('And next week?')");
   assert.equal(chats(more)[0].body.messages.length, 5);
 });
@@ -352,7 +357,7 @@ test('OpenAI dialect (Groq): tool_calls answered with role "tool" messages; bad 
 
 test('the step cap: the last round asks for an answer without tools; too many lookups is explained', async () => {
   const page = await loaded({ storage: consent('anthropic') });
-  const lookup = (i) => claudeTurn([{ type: 'tool_use', id: `toolu_${i}`, name: 'get_monthly', input: {} }]);
+  const lookup = (i) => anthropicTurn([{ type: 'tool_use', id: `toolu_${i}`, name: 'get_monthly', input: {} }]);
   const calls = site(page, { answers: Array.from({ length: 8 }, (_, i) => lookup(i)) });
   await page.run("aiSend('Loop forever')");
   const sent = chats(calls);
@@ -367,14 +372,14 @@ test('a long question stays under the site\'s 1 MB limit: results are cut furthe
   // Big lookups with non-ASCII text (2 to 3 bytes a character), and turns with long thinking, as a real long question.
   page.run("aiRunTool=(name,input)=>({total_matches:3000,returned:3000,rows:Array.from({length:3000},(_,i)=>({doc:'SO '+i,customer:'Client Québec – 供应商延迟供应商延迟',value:i}))})");
   let n = 0;
-  const lookups = () => claudeTurn([{ type: 'thinking', thinking: 't'.repeat(100000), signature: 'sig' }, ...[0, 1, 2].map((k) => ({ type: 'tool_use', id: `toolu_${n}_${k}`, name: 'search_lines', input: {} }))]);
+  const lookups = () => anthropicTurn([{ type: 'thinking', thinking: 't'.repeat(100000), signature: 'sig' }, ...[0, 1, 2].map((k) => ({ type: 'tool_use', id: `toolu_${n}_${k}`, name: 'search_lines', input: {} }))]);
   const answer = (url, init) => {
     const body = JSON.parse(init.body);
     n++;
-    const turn = body.final ? claudeTurn([{ type: 'text', text: 'Answer from the lookups so far.' }]) : lookups();
+    const turn = body.final ? anthropicTurn([{ type: 'text', text: 'Answer from the lookups so far.' }]) : lookups();
     return { ok: true, status: 200, json: async () => turn };
   };
-  const calls = site(page, { answers: [() => ({ ok: true, status: 200, json: async () => claudeTurn([{ type: 'text', text: 'Warm' }]) }), ...Array.from({ length: 8 }, () => answer)] });
+  const calls = site(page, { answers: [() => ({ ok: true, status: 200, json: async () => anthropicTurn([{ type: 'text', text: 'Warm' }]) }), ...Array.from({ length: 8 }, () => answer)] });
   await page.run("aiSend('warm up')");
   // An earlier exchange that nearly fills the history budget (300,000 bytes) before the question starts.
   page.run("aiState.history[1]={role:'assistant',content:[{type:'text',text:'w'.repeat(250000)}]}");
@@ -400,15 +405,15 @@ test('a long question stays under the site\'s 1 MB limit: results are cut furthe
 test('errors: refusal, cut-off answer, proxy messages, expired sign-in, unreachable site', async () => {
   const page = await loaded({ storage: consent('anthropic') });
   site(page, { answers: [
-    claudeTurn([], 'refusal'),
-    claudeTurn([{ type: 'text', text: 'Half an ans' }], 'max_tokens'),
-    { status: 429, body: { error: { code: 'rate_limited', message: 'Claude is getting too many requests right now. Wait a minute and try again.' } } },
+    anthropicTurn([], 'refusal'),
+    anthropicTurn([{ type: 'text', text: 'Half an ans' }], 'max_tokens'),
+    { status: 429, body: { error: { code: 'rate_limited', message: 'Anthropic is getting too many requests right now. Wait a minute and try again.' } } },
     { status: 401, body: { error: { code: 401, message: 'x' } } },
     () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('Unexpected token <'); } }),
     () => { throw new TypeError('Failed to fetch'); },
   ] });
   const say = async (q) => { await page.run(`aiSend(${JSON.stringify(q)})`); return page.run('aiState.messages[aiState.messages.length-1].text'); };
-  assert.match(await say('a'), /Claude declined to answer this one/);
+  assert.match(await say('a'), /Anthropic declined to answer this one/);
   assert.match(await say('b'), /Half an ans\n\n_\(The answer was cut off\.\)_/);
   assert.match(await say('c'), /too many requests/);
   assert.match(await say('d'), /sign-in to this site has expired/);
@@ -419,7 +424,7 @@ test('errors: refusal, cut-off answer, proxy messages, expired sign-in, unreacha
   // The status check itself: a gate 401 is explained, and asked again on the next try.
   const expired = await loaded({ storage: consent('anthropic') });
   let signedIn = false;
-  const calls = site(expired, { status: () => (signedIn ? { ok: true, status: 200, json: async () => siteStatus() } : { ok: false, status: 401, json: async () => ({ error: { code: 401, message: 'expired' } }) }), answers: [claudeTurn([{ type: 'text', text: 'Back again' }])] });
+  const calls = site(expired, { status: () => (signedIn ? { ok: true, status: 200, json: async () => siteStatus() } : { ok: false, status: 401, json: async () => ({ error: { code: 401, message: 'expired' } }) }), answers: [anthropicTurn([{ type: 'text', text: 'Back again' }])] });
   expired.run('aiToggle(true)');
   await expired.run('aiPrepare()');
   assert.match(expired.els['ai-settings-status'].textContent, /sign-in to this site has expired/);
@@ -460,16 +465,16 @@ test('Stop aborts the request and Clear chat empties it', async () => {
 
 test('a different provider or model starts a new conversation; long histories are trimmed without old thinking', async () => {
   const page = await loaded({ storage: consent('anthropic', 'groq') });
-  site(page, { answers: [claudeTurn([{ type: 'thinking', thinking: '', signature: 's' }, { type: 'text', text: 'One' }])] });
+  site(page, { answers: [anthropicTurn([{ type: 'thinking', thinking: '', signature: 's' }, { type: 'text', text: 'One' }])] });
   await page.run("aiSend('first')");
   assert.equal(page.run('aiState.history.length'), 2);
   page.run("aiSetModel('claude-sonnet-5-5')");
   assert.equal(page.run('aiState.history.length'), 0);
-  assert.match(page.els['ai-log'].innerHTML, /<div class="ai-msg note">Now asking Claude Sonnet 5\.5 \(faster, about half the cost\)\. Earlier questions are not sent to it\.<\/div>/);
+  assert.match(page.els['ai-log'].innerHTML, /<div class="ai-msg note">Now asking Sonnet 5\.5 \(faster, about half the cost\)\. Earlier questions are not sent to it\.<\/div>/);
   page.run("aiSetModel('claude-haiku-5-5')");
   page.run("aiSetModel('claude-sonnet-5-5')");
   assert.equal(page.run("aiState.messages.filter(m=>m.role==='note').length"), 1, 'stepping through models leaves one note');
-  const calls = site(page, { answers: [claudeTurn([{ type: 'text', text: 'Two' }])] });
+  const calls = site(page, { answers: [anthropicTurn([{ type: 'text', text: 'Two' }])] });
   await page.run("aiSend('second')");
   assert.deepEqual(chats(calls)[0].body.messages, [{ role: 'user', content: 'second' }]);
   assert.equal(chats(calls)[0].body.model, 'claude-sonnet-5-5');
@@ -488,7 +493,7 @@ test('a different provider or model starts a new conversation; long histories ar
 
 test('a newly loaded export starts a new chat', async () => {
   const page = await loaded({ storage: consent('anthropic') });
-  const text = (t) => claudeTurn([{ type: 'text', text: t }]);
+  const text = (t) => anthropicTurn([{ type: 'text', text: t }]);
   const calls = site(page, { answers: [text('First answer'), text('Second answer'), text('Third answer')] });
   await page.run("aiSend('first')");
   await page.run("aiSend('second')");
@@ -521,16 +526,17 @@ test('markdown renderer escapes HTML and renders the small markdown subset', () 
   assert.match(html, /<th>Warehouse<\/th><th>Value<\/th>[\s\S]*<td>&lt;script&gt;x&lt;\/script&gt;<\/td><td>\$1<\/td>/);
 });
 
-test('provider names, notices and model labels from the site are escaped', async () => {
+test('notices and model labels from the site are escaped; the provider names are the page\'s own', async () => {
   const page = await loaded({ storage: consent('anthropic') });
   const status = siteStatus(['anthropic']);
-  status.providers[0].name = 'Claude <img src=x onerror=alert(1)>';
+  status.providers[0].name = 'Anthropic <img src=x onerror=alert(1)>';
   status.providers[0].modelLabels = { 'claude-opus-5-5': '<b>Opus</b>' };
   status.providers[0].termsUrl = 'javascript:alert(1)';
   site(page, { status });
   page.run('aiToggle(true)');
   await page.run('aiPrepare()');
   assert.doesNotMatch(page.els['ai-provider'].innerHTML + page.els['ai-model'].innerHTML, /<img|<b>/);
+  assert.match(page.els['ai-provider'].innerHTML, /<option value="anthropic" selected>Anthropic<\/option>/);
   assert.equal(page.els['ai-terms'].hidden, true, 'only https links are used');
 });
 
@@ -573,27 +579,21 @@ test('every Ask AI control carries a plain-English tooltip', () => {
   assert.match(panel, /<textarea id="ai-input"[^>]*placeholder="Ask about orders, POs, warehouses… \(Enter sends\)" data-tip="Shift\+Enter starts a new line\."/);
 });
 
-test('the Ask AI button in the page header names the four providers and says nothing is sent until one is allowed', async () => {
+test('the Ask AI button in the page header says nothing is sent until it is allowed', async () => {
   const page = await loaded();
-  const head = page.els['results-screen'].innerHTML.match(/<button [^>]*data-focus-key="ask-ai"[^>]*>/)[0];
-  assert.match(head, /data-tip="Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings\."/);
+  const head = page.els['app-header'].innerHTML.match(/<button [^>]*data-focus-key="ask-ai"[^>]*>/)[0];
+  assert.match(head, /data-tip="Ask AI about this export\. Nothing is sent until you allow it\."/);
   assert.match(head, /aria-controls="ai-panel"/);
 });
 
-test('Connect an AI describes the four providers and opens the panel', () => {
+test('Connect an AI opens Settings at the Connect An AI App card, which names no AI product', () => {
   const page = loadPage();
   page.run("setTab('connect')");
-  const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /<h2 class="connect-title" id="connect-opt-1"><span class="connect-no">Option 1<span class="sr-only">:<\/span><\/span> Ask AI in this dashboard<\/h2>/);
-  assert.match(html, /<span class="ai-tier paid">Paid<\/span><span><strong>Claude and ChatGPT<\/strong><span class="connect-tier-note">Billed to Spyder Controls\. Not used to train models\.<\/span>/);
-  assert.match(html, /<span class="ai-tier free">Free<\/span><span><strong>Groq and OpenRouter<\/strong><span class="connect-tier-note">Tight limits\. May keep or publish what you send\.<\/span>/);
-  assert.match(html, /data-focus-key="connect-ask-ai"[^>]*data-tip="Open the Ask AI panel; nothing is sent/);
-  assert.doesNotMatch(html, /Gemini|Google AI Studio/);
-  // Option 2: the steps are for Claude Desktop, and the sub-line sends other apps to the Setup guide; no grey text
-  // beside the button that reads as disabled.
-  assert.match(html, /Your own AI app<\/h2><p class="connect-sub">Claude Desktop below; other apps: see Setup guide\.<\/p>/);
-  assert.match(html, /<div class="connect-actions print-hide"><a class="btn" href="docs\/MCP\.md" target="_blank" rel="noopener" data-tip="Claude Code, Cursor and other apps, updates and troubleshooting \(docs\/MCP\.md\)\.">Setup guide<\/a><\/div>/);
-  assert.doesNotMatch(html, /connect-more|Other apps and troubleshooting/);
+  assert.equal(page.run('activeTab'), 'settings');
+  const card = page.els['results-screen'].innerHTML.match(/<section class="dz-card stg-card[^"]*" id="stg-card-connect"[\s\S]*?<\/section>/);
+  assert.ok(card, 'the Connect An AI App card is on the Settings page');
+  assert.doesNotMatch(card[0], /Claude|Cursor/i);
+  assert.doesNotMatch(card[0], /Gemini|Google AI Studio/);
 });
 
 test('"company" is never used: Spyder Controls is named on Connect an AI, in the Ask AI panel and in the AI guides', () => {
@@ -607,7 +607,7 @@ test('"company" is never used: Spyder Controls is named on Connect an AI, in the
   const files = ['functions/api/ai/[[path]].js', 'docs/AI_ASSISTANT.md', 'docs/MCP.md'].map((f) => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
   for (const [name, text] of [['Connect an AI', connect], ['Ask AI panel', panel], ['Ask AI code', app], ...files]) assert.doesNotMatch(text, /\bcompan(y|ies)\b/i, name);
   assert.match(connect, /Use only an AI app Spyder Controls approves\./);
-  assert.match(panel, /data-tip="Paid \(Claude, ChatGPT\): billed to Spyder Controls/);
+  assert.match(panel, /data-tip="Paid \(Anthropic, ChatGPT\): billed to Spyder Controls/);
   assert.match(files[2][1], /Use only an AI app Spyder Controls approves for this data\./);
   assert.match(files[1][1], /outside providers that host the models/);
 });
