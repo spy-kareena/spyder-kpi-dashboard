@@ -11,10 +11,13 @@ switches to the real list.
 
 ## What the page shows
 
-- **Bar:** "Checked by hand · statuses shared with everyone" (on the hosted site) or "kept in this browser" (a file or
-  a static web server), and the **Show demo data / Show real shipments** switch.
+- **Bar:** the **Carrier**, **Customer**, **Status** and **Destination** filters (Destination is left out on a phone),
+  the **Show demo data / Show real shipments** switch and **Add tracking #**. Statuses are shared with everyone on the
+  hosted site, or kept in this browser (a file or a static web server); **About these numbers** says which.
 - **Demo data banner** (demo mode only): a yellow "Demo data" note saying the shipments are made up.
-- **Status cards** (click one to list only those shipments, click again for all):
+- **Map and status cards** in one row: the delivery map on the left, the four cards as a 2 x 2 grid on the right
+  (stacked on a narrow screen, cards first). Each card shows its count; its tooltip adds the orders and value. Click a
+  card to list only those shipments, click again for all:
   - **In transit**: marked Shipped or In transit.
   - **Delayed**: marked Delayed.
   - **Delivered this week**: marked Delivered with a date since Monday.

@@ -2493,7 +2493,6 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 /* Shipping (designs/Shipping.dc.html + shipping-map.html): filter row, demo banner, status tiles, delivery map, Shipments
    table with the three-segment progress bar, Cross-border and Delayed lists. All names are shp-*; dz-* primitives
    (dz-card, dz-seg, dz-filter, dz-btn, dz-pillinput, dz-prog, dz-th, dz-fade, dz-chip) come from the foundation. */
-.shp-checked{font-size:12.5px;color:var(--dz-ink-4)}
 .dz-btn.shp-pill,.dz-btn.shp-addbtn{height:38px;padding:0 16px}
 .dz-btn.shp-pill{background:var(--dz-glass-55);border-color:#fff;font-weight:400}
 .dz-btn.shp-pill:hover{background:var(--dz-glass-75)}
@@ -2510,7 +2509,6 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
 .shp-tile-l i{width:8px;height:8px;border-radius:50%;flex:none}
 .shp-tile-v{display:block;margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--dz-ink-1)}
-.shp-tile-s{display:block;margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
 
 /* Delivery map: land and routes are one SVG, dots / labels / hub are HTML at % positions of the same stage (the stage
    keeps the view box's aspect ratio, so they stay the same size in pixels while the map scales down on a narrow screen).
@@ -2670,7 +2668,6 @@ a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
   .shp-tile{padding:14px 16px;border-radius:18px}
   .shp-tile-v{font-size:24px}
   .dz-card.shp-map{border-radius:22px}
-  .shp-frow .shp-checked{order:5;flex-basis:100%}
   .shp-frow .dz-filters{width:auto;flex:1 1 auto}
   .shp-facts{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
   .shp-map-head{position:relative;left:auto;top:auto;max-width:none;padding:16px 18px 8px}
@@ -3079,7 +3076,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 /* 2v6:end supply */
 /* 2v6:po */
 /* Purchase Orders 2v6.5: PO At Risk and Kit cards, sortable PO line titles, Owner and Kit Clean? columns, the Kit
-   Clean? tick, and the PO At Risk drawer (reuses the Import drawer: .ai-panel.imp-panel, .imp-*). Prefixes po / kit / poa. */
+   Clean? tick. Prefixes po / kit. */
 .po-unit{margin-left:5px;font-size:12px;font-weight:500;letter-spacing:0;color:var(--dz-ink-4)}
 .sup-tile-v .po-unit{font-size:13px}
 .sup-more-views.po-views-8{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -3114,26 +3111,6 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .kit-check:hover .kit-cb:disabled+.kit-box{border-color:var(--dz-ink-6);box-shadow:none}
 .kit-check:hover .kit-cb:disabled:checked+.kit-box{border-color:var(--dz-teal)}
 .kit-print{display:none}
-/* PO At Risk drawer */
-.ai-panel.poa-panel{z-index:58}
-.poa-off{margin:0;padding:10px 14px;border-radius:14px;background:var(--dz-surface-2,#f1f5f9);font-size:12.5px;line-height:1.5;color:var(--dz-ink-3)}
-.poa-owner .imp-file-head .dz-chip{flex:none}
-.poa-lines{list-style:none;margin:10px 0 0;padding:0}
-.poa-line{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--dz-line-6)}
-.poa-line-main{flex:1;min-width:0}
-.poa-line-t{margin:0;font-size:13px;line-height:1.4;color:var(--dz-ink-1);overflow-wrap:anywhere}
-.poa-line-t b{font-weight:600}
-.poa-line-s{margin:2px 0 0;font-size:12px;line-height:1.45;color:var(--dz-ink-4)}
-.poa-line .dz-chip{flex:none;margin-top:1px;white-space:nowrap}
-.poa-show{margin-top:4px;padding:0;border:0;border-radius:4px;background:none;font:inherit;font-size:12px;font-weight:500;color:var(--dz-indigo-link);cursor:pointer;text-underline-offset:3px}
-.poa-show:hover{text-decoration:underline}
-.poa-show:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
-.poa-owner .imp-actions{margin-top:10px}
-.poa-show.poa-more{display:block;margin-top:2px;padding-top:8px;border-top:1px solid var(--dz-line-6);width:100%;text-align:left;border-radius:0}
-.poa-owner .imp-actions .dz-btn svg{width:14px;height:14px}
-.toast-item.poa-toast svg{color:var(--dz-risk)}
-.poa-toast-btn{flex:none;margin-left:6px;padding:4px 10px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-surface,#fff);font:inherit;font-size:12px;font-weight:500;color:var(--dz-ink-1);cursor:pointer}
-.poa-toast-btn:hover{background:var(--dz-surface-2,#f1f5f9)}
 @media (max-width:640px){
   .sup-more-views.po-views-8{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sup-tbl.sup-po td.sup-status{order:1}
@@ -3146,13 +3123,51 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .sup-po tr.po-flash>td{animation:none}
 }
 @media print{
-  .poa-panel{display:none!important}
   .sup-po th .sort-arrow{display:none}
   .kit-cb,.kit-box{display:none}
   .kit-check{width:auto;height:auto;margin:0}
   .kit-print{display:inline}
 }
 /* 2v6:end po */
+/* 2v7:pages */
+/* Shipping: one row with the map on the left half and the four status tiles as a 2 x 2 grid on the right, as tall as
+   the map card (the tiles stretch: label at the top, the count at the bottom). The map title sits above the map and the
+   legend below it, so neither covers a dot at half width. Below 981px they stack: the tiles (2 x 2) first, then the
+   map at full width. */
+.shp-top{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"map tiles";gap:16px;align-items:stretch}
+.shp-top>.shp-map{grid-area:map;display:flex;flex-direction:column;min-width:0}
+.shp-top>.shp-tiles{grid-area:tiles;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:16px;min-width:0}
+.shp-top .shp-tile{display:flex;flex-direction:column;justify-content:space-between;gap:12px;min-height:0;padding:20px 22px}
+.shp-top .shp-tile-v{margin-top:0;font-size:46px;line-height:1;letter-spacing:-.035em}
+.shp-top .shp-map-head{position:relative;left:auto;top:auto;max-width:none;padding:18px 22px 4px}
+.shp-top .shp-map-stage{flex:none}
+.shp-top .shp-map-svg{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent)}
+.shp-top .shp-map-foot{position:static;margin:auto 22px 0;padding:8px 0 16px}
+@media (max-width:980px){
+  .shp-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"tiles" "map"}
+  .shp-top>.shp-tiles{grid-template-rows:none}
+  .shp-top .shp-tile{gap:10px;padding:18px 20px}
+  .shp-top .shp-tile-v{font-size:32px}
+}
+@media (max-width:640px){
+  .shp-top{gap:12px}
+  .shp-top>.shp-tiles{gap:12px}
+  .shp-top .shp-tile{gap:8px;padding:14px 16px}
+  .shp-top .shp-tile-v{font-size:26px;line-height:1.1}
+  .shp-top .shp-map-head{padding:16px 18px 8px}
+  .shp-top .shp-map-foot{margin:4px 18px 0;padding:0 0 14px}
+}
+@media print{
+  .shp-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"tiles" "map"}
+  .shp-top>.shp-tiles{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none}
+}
+/* Purchase Orders: the PO At Risk card names its PO owners on the line under the count (first names, most lines
+   first), on one line that ends in an ellipsis when it runs out of room; names in ink, counts in the card's red. */
+.sup-tile-s.po-owners{display:block;align-self:stretch;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dz-ink-4)}
+.po-own-name{color:var(--dz-ink-2)}
+.po-own-n{font-weight:500;font-variant-numeric:tabular-nums;color:var(--dz-risk-text)}
+.po-own-more{color:var(--dz-ink-3);font-variant-numeric:tabular-nums}
+/* 2v7:end pages */
 
 /* 2v6:misc-pages */
 /* Agent 6: pages the handoff left out (load screen, Forecast, Connect an AI, Search), global overlays and notes (Data check,
@@ -5590,7 +5605,6 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     showResults();
     if(!restoring){saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}
     impFinish(imp);
-    if(typeof poAlertsMaybeToast==='function')poAlertsMaybeToast();
   }catch(err){
     ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
     if(cmState.files!==previous.cmFiles){cmState.files=previous.cmFiles;cmChanged();}
@@ -8395,10 +8409,13 @@ function supPurchaseOrders(m){
     ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
     ['duethisweek','var(--dz-indigo)','This week focus',poDueThisWeekRows,'','at risk or due this week'],
     ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
+  // PO At Risk: the line under its count names the PO owners (first names, most lines first); the tip lists them all.
+  const atRiskOwners=poAtRiskOwners(poAtRisk);
   const tileHtml=([id,dot,label,rows,tone,what,byLine],i)=>{
     const n=byLine?rows.length:supDocs(rows);
-    const tipText=byLine?`PO At Risk: ${supLines(rows.length)} on ${ordersN(supDocs(rows))} (${money(value(rows))} open) expected after the sales order that needs the item ships: the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item. Click to list the lines.`:tipOf(label,rows,what);
-    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span><span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span></button>`;
+    const tipText=byLine?`PO At Risk: ${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after the sales order that needs the item ships (${ordersN(supDocs(rows))}, ${money(value(rows))} open): the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item.${atRiskOwners.length?` By PO owner: ${atRiskOwners.map(o=>`${o.name} ${fmtNum(o.n)}`).join(', ')}.`:''} Click to list the lines.`:tipOf(label,rows,what);
+    const sub=byLine&&n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):`<span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span>`;
+    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span>${sub}</button>`;
   };
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
@@ -8511,7 +8528,7 @@ function supPurchaseOrders(m){
     ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
 }
 
-// ===== 2v6.5 po: PO lines sorting, Kit Clean?, PO At Risk and its drawer (prefixes po / kit / poa) =====
+// ===== 2v6.5 po: PO lines sorting, Kit Clean? and PO At Risk (prefixes po / kit) =====
 // PO lines columns: [id, title, th class, first click 'asc' | 'desc', what the column shows]. The note column has no
 // title and is not sorted.
 const PO_LINE_COLS=[
@@ -8675,182 +8692,30 @@ function poAtRiskData(m){
 function poAtRiskText(l){
   return `PO ${l.po} · ${l.vendor} · ${l.item} — expected ${supDay(l.poDate)}, sales order ${l.so} (${l.customer}) ships ${supDay(l.shipDate)}, ${ohN(l.days,'day')} late`;
 }
+// The PO At Risk card's owners (data = poAtRiskData): [{name, short, n}], most lines first, then by name. name is the
+// PO owner ("No owner" when the export has none); short is the first name (the first word), with the last initial when
+// two owners share a first name ("Pat D.", "Pat S."), else the whole name when that is the same too.
+function poAtRiskOwners(data){
+  const list=[...(data&&data.byOwner||new Map()).entries()].map(([owner,lines])=>{
+    const raw=String(owner||'').trim(),name=!raw||raw==='Unassigned'?'No owner':raw;
+    const words=name==='No owner'?[name]:name.split(/\s+/);
+    return {name,words,n:lines.length};
+  });
+  const firstKey=o=>o.words[0].toLowerCase();
+  const initial=o=>o.words.length>1?`${o.words[0]} ${o.words[o.words.length-1].charAt(0).toUpperCase()}.`:o.words[0];
+  list.forEach(o=>{
+    const same=list.filter(x=>firstKey(x)===firstKey(o));
+    o.short=same.length<2?o.words[0]:same.filter(x=>initial(x).toLowerCase()===initial(o).toLowerCase()).length<2?initial(o):o.name;
+  });
+  return list.map(({name,short,n})=>({name,short,n})).sort((a,b)=>b.n-a.n||a.short.localeCompare(b.short)||a.name.localeCompare(b.name));
+}
+// One line under the count: "Maria 5 · Dev 3 · Lee 2 · +2" (the top three, then how many more owners).
+function poAtRiskOwnersHtml(owners,top=3){
+  const shown=owners.slice(0,top).map(o=>`<span class="po-own"><span class="po-own-name">${esc(o.short)}</span> <span class="po-own-n">${fmtNum(o.n)}</span></span>`);
+  if(owners.length>top)shown.push(`<span class="po-own-more">+${fmtNum(owners.length-top)}</span>`);
+  return `<span class="sup-tile-s po-owners">${shown.join('<span class="po-own-sep" aria-hidden="true"> · </span>')}</span>`;
+}
 
-// --- PO alerts: the count for the header bell, the drawer it opens, one reminder per loaded report ---
-// Contract for the header (agent B): poAlertCount() -> number (0 when Settings turns the alerts off or nothing is
-// loaded; every warehouse and vendor, whatever the Purchase Orders filters); poAlertsToggle(open?) opens / closes the
-// drawer (#poa-panel; give the bell aria-controls="poa-panel" and a data-focus-key so focus returns to it);
-// poAlertsIsOpen() -> boolean for its aria-expanded. poAlertsMaybeToast() runs after each load (handleFiles).
-const poaState={open:false,opener:'',more:new Set()};
-const POA_SHOWN=6; // lines per owner before "Show all"
-function poaMore(owner){
-  if(poaState.more.has(owner))poaState.more.delete(owner);else poaState.more.add(owner);
-  poaRender();
-}
-const poaToasted=new WeakSet();
-const POA_MAIL_SUBJECT='PO lines arriving after the sales order ships';
-function poAlertsOn(){return typeof stgValue!=='function'||stgValue('poAlerts')!==false;}
-function poaLoaded(){return !!(allLoadedRows.length&&poSourceRows().length);}
-function poAlertCount(){
-  try{return poAlertsOn()&&poaLoaded()?poAtRiskAll(currentMetrics()).count:0;}catch(err){return 0;}
-}
-function poAlertsIsOpen(){return poaState.open;}
-function poAlertsToggle(open){
-  if(typeof open==='boolean'?open:!poaState.open)poaOpen();else poaClose();
-}
-function poaPanel(){
-  let el=document.getElementById('poa-panel');
-  if(!el&&document.body){
-    el=document.createElement('aside');
-    el.id='poa-panel';el.className='ai-panel imp-panel poa-panel';el.hidden=true;
-    el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','poa-title');
-    el.addEventListener('keydown',poaPanelKey);
-    document.body.appendChild(el);
-  }
-  return el;
-}
-function poaOpen(){
-  const panel=poaPanel();
-  if(!panel)return false;
-  // One drawer at a time: Ask AI and the Import report close.
-  if(typeof aiState!=='undefined'&&aiState.open&&typeof aiToggle==='function')aiToggle(false);
-  if(typeof impState!=='undefined'&&impState.open&&typeof impClose==='function')impClose(false);
-  if(!poaState.open){const a=document.activeElement;poaState.opener=a&&a.dataset&&a.dataset.focusKey||'';}
-  poaState.open=true;
-  panel.hidden=false;
-  poaRender();
-  poaSyncOpeners();
-  const t=document.getElementById('poa-title');
-  if(t&&t.focus)t.focus({preventScroll:true});
-  return true;
-}
-function poaClose(refocus=true){
-  const panel=document.getElementById('poa-panel');
-  const was=poaState.open;
-  poaState.open=false;
-  if(panel)panel.hidden=true;
-  poaSyncOpeners();
-  if(!refocus||!was)return;
-  const back=poaState.opener&&document.querySelector(`[data-focus-key="${poaState.opener.replace(/["\\]/g,'\\$&')}"]`);
-  if(back&&back.focus)back.focus({preventScroll:true});
-}
-function poaSyncOpeners(){
-  document.querySelectorAll('[aria-controls="poa-panel"]').forEach(b=>b.setAttribute('aria-expanded',poaState.open?'true':'false'));
-}
-// Tab and Shift+Tab stay inside the open drawer; Esc closes it (Ask AI's Esc wins when that is open).
-function poaPanelKey(e){
-  if(e.key!=='Tab')return;
-  const items=[...document.getElementById('poa-panel').querySelectorAll('a[href],button,input,select,textarea,[tabindex="0"]')].filter(el=>!el.disabled&&el.getClientRects().length);
-  const first=items[0],last=items[items.length-1],active=document.activeElement;
-  if(!first)return;
-  if(e.shiftKey?active===first:active===last){e.preventDefault();(e.shiftKey?last:first).focus();}
-}
-if(typeof document!=='undefined'&&document.addEventListener)document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape'||!poaState.open||e.defaultPrevented||(typeof aiState!=='undefined'&&aiState.open))return;
-  e.preventDefault();poaClose();
-});
-// max: lines listed (an email link stays short enough for every mail program; Copy list takes up to 200).
-function poaListText(owner,lines,max=200){
-  const shown=lines.slice(0,max);
-  return `${owner}: ${ohN(lines.length,'PO line')} ${lines.length===1?'is':'are'} expected after the sales order that needs the item ships.\n\n${shown.map(l=>`- ${poAtRiskText(l)}`).join('\n')}${lines.length>shown.length?`\n- …and ${fmtNum(lines.length-shown.length)} more on the dashboard`:''}\n\nExpected = the PO's reschedule date, else its due date. From the Spyder KPI dashboard, export of ${displayDate(reportAsOfDate||reportToday())}.`;
-}
-const POA_MAIL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
-const POA_COPY_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>';
-function poaRender(){
-  const panel=document.getElementById('poa-panel');
-  if(!panel||panel.hidden)return;
-  const focus=captureFocus(panel);
-  const body=panel.querySelector('.imp-body'),scroll=body?body.scrollTop:0;
-  const loaded=poaLoaded();
-  const data=loaded?poAtRiskAll(currentMetrics()):poAtRiskPack([]);
-  const owners=[...data.byOwner.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
-  const meta=data.count?`${ohN(data.count,'line')} · ${ohN(owners.length,'owner')}`:'';
-  const head=!loaded?`<div class="imp-sum"><span class="imp-sum-ico" style="--ico:var(--dz-indigo)">${dzIconSvg('file')}</span><div><p class="imp-sum-t">No purchase-order lines loaded</p><p>Load a SAP export with PO lines to check them against the sales orders.</p></div></div>`
-    :data.count?`<div class="imp-sum red"><span class="imp-sum-ico" style="--ico:var(--dz-risk)">${dzIconSvg('alert')}</span><div><p class="imp-sum-t">${esc(`${ohN(data.count,'PO line')} ${data.count===1?'arrives':'arrive'} after the sales order ships`)}</p><p>The PO’s reschedule date (else its due date) is after the earliest open sales-order ship date for the same item. By PO owner, most days late first.</p></div></div>`
-    :`<div class="imp-sum"><span class="imp-sum-ico" style="--ico:var(--dz-teal)">${dzIconSvg('check')}</span><div><p class="imp-sum-t">No PO line arrives after its sales order ships</p><p>Every open PO line is expected by the earliest open sales-order ship date for its item.</p></div></div>`;
-  const off=poAlertsOn()?'':`<p class="poa-off">Alerts are off in Settings: no reminder after a load and no count on the bell.</p>`;
-  const groups=owners.map(([owner,lines],gi)=>{
-    const mail=`mailto:?subject=${encodeURIComponent(POA_MAIL_SUBJECT)}&body=${encodeURIComponent(poaListText(owner,lines,10))}`;
-    return `<section class="imp-file poa-owner" aria-label="${esc(`${owner}: ${ohN(lines.length,'line')}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:var(--dz-indigo)">${dzIconSvg('users')}</span><div class="imp-file-main"><p class="imp-name">${esc(owner)}</p><p class="imp-meta">${esc(`${ohN(lines.length,'line')} · up to ${ohN(lines[0].days,'day')} late`)}</p></div>${dzChip(fmtNum(lines.length),'red')}</div>
-      <div class="imp-actions"><a class="dz-btn" href="${esc(mail)}" data-focus-key="poa-mail-${gi}"${tipAttr(`Start an email listing ${owner}'s ${ohN(lines.length,'line')}; add the recipient (the export has no email addresses).`)}>${POA_MAIL_SVG}Email</a><button type="button" class="dz-btn" data-owner="${esc(owner)}" data-focus-key="poa-copy-${gi}" onclick="poaCopy(this.dataset.owner,this)"${tipAttr(`Copy ${owner}'s lines as text, to paste into Teams, Slack or an email.`)}>${POA_COPY_SVG}Copy list</button></div>
-      <ul class="poa-lines">${(poaState.more.has(owner)?lines:lines.slice(0,POA_SHOWN)).map(l=>{const key=rowKey(l.row);return `<li class="poa-line"><div class="poa-line-main"><p class="poa-line-t"><b>PO ${esc(l.po)}</b> · ${esc(l.vendor)} · ${esc(l.item)}</p><p class="poa-line-s">Expected ${esc(supDay(l.poDate))}, sales order ${esc(l.so)} (${esc(l.customer)}) ships ${esc(supDay(l.shipDate))}</p><button type="button" class="poa-show" data-key="${esc(key)}" data-focus-key="poa-show-${esc(key)}" onclick="poaShow(this.dataset.key)"${tipAttr(`Open Purchase Orders on PO At Risk, searched for PO ${l.po}.`)}>Show in PO lines</button></div>${dzChip(`${ohN(l.days,'day')} late`,'red')}</li>`;}).join('')}</ul>
-      ${lines.length>POA_SHOWN?`<button type="button" class="poa-show poa-more" data-owner="${esc(owner)}" data-focus-key="poa-more-${gi}" aria-expanded="${poaState.more.has(owner)?'true':'false'}" onclick="poaMore(this.dataset.owner)">${poaState.more.has(owner)?'Show fewer':`Show all ${fmtNum(lines.length)}`}</button>`:''}</section>`;
-  }).join('');
-  panel.innerHTML=`<div class="ai-head imp-head"><h2 id="poa-title" tabindex="-1">PO At Risk</h2><span class="ai-mode">${esc(meta)}</span><button type="button" class="ai-close" data-focus-key="poa-close" aria-label="Close PO At Risk" onclick="poAlertsToggle(false)"${tipAttr('Close (Esc).')}>×</button></div>
-    <div class="imp-body">${head}${off}${groups}</div>
-    <div class="imp-foot">${data.count?`<button type="button" class="dz-btn" data-focus-key="poa-show-all" onclick="poaShow('')"${tipAttr('Open Purchase Orders with the PO At Risk card picked, every warehouse and vendor.')}>Show all in PO lines</button>`:''}<button type="button" class="dz-btn primary" data-focus-key="poa-done" onclick="poAlertsToggle(false)">Close</button></div>`;
-  const nb=panel.querySelector('.imp-body');
-  if(nb)nb.scrollTop=scroll;
-  restoreFocus(panel,focus);
-}
-function poaCopy(owner,btn){
-  const lines=poAtRiskAll(currentMetrics()).byOwner.get(owner)||[];
-  if(!lines.length)return;
-  const text=poaListText(owner,lines);
-  const done=()=>showToast(`Copied ${ohN(lines.length,'line')} for ${owner}.`);
-  const fallback=()=>{
-    const ta=document.createElement('textarea');
-    ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';
-    document.body.appendChild(ta);ta.select();
-    let ok=false;try{ok=document.execCommand('copy');}catch(err){ok=false;}
-    ta.remove();
-    if(btn&&btn.focus)btn.focus({preventScroll:true});
-    if(ok)done();else showToast('Could not copy here: use Email, or select the lines and copy them.');
-  };
-  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,fallback);else fallback();
-}
-// Purchase Orders on the PO At Risk card, every warehouse and vendor; a line's own link searches for its PO. The PO
-// lines list opens (kept like a click on its chevron) and the line is shown and focused.
-function poaShow(key){
-  if(!hasLoadedData())return;
-  poaClose(false);
-  const r=key?allLoadedRows.find(x=>rowKey(x)===key):null;
-  poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='poatrisk';poLinkedShowAll=false;
-  tableMore={...tableMore,'sup-po-view':'open','sup-po-q':r?String(r.documentNumber||''):''};
-  setTab('purchaseorders');
-  const card=document.querySelector('#po-linked-lines .dz-collapsible');
-  if(card&&card.classList.contains('dz-collapsed')){const b=card.querySelector('.dz-collapse-btn');if(b)dzToggleCollapse(b);}
-  const wrap=document.getElementById('po-linked-lines');
-  if(wrap&&wrap.scrollIntoView)wrap.scrollIntoView({block:'start'});
-  const cb=key?document.querySelector(`.kit-cb[data-key="${key.replace(/["\\]/g,'\\$&')}"]`):null;
-  const tr=cb&&cb.closest('tr');
-  if(tr){tr.classList.add('po-flash');setTimeout(()=>tr.classList.remove('po-flash'),2600);}
-  const target=cb&&!cb.disabled?cb:document.querySelector('[data-focus-key="potile-poatrisk"]');
-  if(target&&target.focus)target.focus({preventScroll:true});
-}
-// After a load: one reminder per loaded report (the rows array a load builds), when there is something to say and the
-// alerts are on. The load's own toast ("Loaded 4 files…") shows first; this one follows it, with a Show button.
-function poAlertsMaybeToast(){
-  try{
-    if(poaState.open)poaRender();
-    if(isSnapshotView||!allLoadedRows.length||poaToasted.has(allLoadedRows))return;
-    poaToasted.add(allLoadedRows);
-    const n=poAlertCount();
-    if(!n)return;
-    const box=document.getElementById('toast');
-    const busy=!!(box&&box.querySelector&&box.querySelector('.toast-item'));
-    const rows=allLoadedRows;
-    setTimeout(()=>{
-      const c=rows===allLoadedRows?poAlertCount():0;
-      if(!c)return;
-      // The header bell (hdrBell) is drawn whenever there is a count; the words point at it when it is on screen.
-      const bell=document.getElementById('hdr-bell')||document.querySelector('[aria-controls="poa-panel"]');
-      poaToast(`${ohN(c,'PO line')} ${c===1?'arrives':'arrive'} after ${c===1?'its':'their'} sales order ships — ${bell?'see the bell':'see PO At Risk'}`);
-    },busy?4900:400);
-  }catch(err){console.warn('PO alert not shown:',err);}
-}
-function poaToast(msg){
-  showToast(msg);
-  const item=document.querySelector('#toast .toast-item');
-  if(!item)return;
-  item.classList.add('poa-toast');
-  const svg=item.querySelector('svg');
-  if(svg)svg.outerHTML=`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${DZ_ICON_PATHS.alert}</svg>`;
-  const b=document.createElement('button');
-  b.type='button';b.className='poa-toast-btn';b.textContent='Show';
-  b.onclick=()=>poAlertsToggle(true);
-  item.appendChild(b);
-}
 // ===== end 2v6.5 po =====
 
 // ---------- Supply / Demand ----------
@@ -14788,6 +14653,34 @@ function shipDotTip(p,selected){
   const who=names.length?` · ${names.slice(0,3).join(', ')}${names.length>3?` +${names.length-3}`:''}`:'';
   return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')} (${parts})${who}; ${selected?'click to show all destinations.':'click to list only these.'}`;
 }
+// How wide the map is drawn, for its label placer (the CSS in 2v7:pages): the map card is the left half of the page
+// from 981px (the tiles take the right half), the full width below; its stage is the card's width, at most 420px tall
+// on a wide screen, and zoomed past the card (--zoom) on a phone (640px or less). Printing draws it full width.
+// shpMapScale -> rendered pixels per map unit for a view box vw x vh.
+let shpMapDrawn=null,shpMapTimer=null;
+function shpMapPhone(){return !printMode&&typeof innerWidth==='number'&&innerWidth>0&&innerWidth<=640;}
+function shpMapScale(vw,vh,zoom=1){
+  const vpw=typeof innerWidth==='number'&&innerWidth>0?innerWidth:1440;
+  let col=0;
+  try{const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('results-screen'):null;col=el&&el.clientWidth>0?el.clientWidth:0;}catch(err){col=0;}
+  if(printMode)col=700;
+  else if(!col)col=vpw-(vpw<=640?32:64);
+  const card=(!printMode&&vpw>980?(col-16)/2:col)-2;
+  const stage=shpMapPhone()?card*zoom:Math.min(card,420*vw/vh);
+  return Math.max(.2,stage/vw);
+}
+// Labels are placed for the width the map was drawn at: when the window is resized enough to matter (a phone turned,
+// the window dragged across the two-column width), the open Shipping page is drawn again once it settles.
+function shpMapRefit(){
+  clearTimeout(shpMapTimer);
+  shpMapTimer=setTimeout(()=>{
+    const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('results-screen'):null;
+    if(printMode||activeTab!=='shipping'||!shpMapDrawn||!el||el.style.display!=='block'||!el.querySelector('.shp-map'))return;
+    const {vw,vh,zoom,k}=shpMapDrawn;
+    if(Math.abs(shpMapScale(vw,vh,zoom)-k)/k>.12)renderResults();
+  },300);
+}
+if(typeof addEventListener==='function')addEventListener('resize',shpMapRefit);
 // The map card. Dots, labels and the hub are HTML laid over the SVG (land, borders, routes) at % positions of one
 // stage whose aspect ratio is the view box's, so they keep their pixel size while the map scales on a narrow screen.
 function renderShipMap(list){
@@ -14806,21 +14699,30 @@ function renderShipMap(list){
   const zoom=Math.max(1,Math.min(2.2,vw/(bx1-bx0)));
   const shift=Math.max(1-zoom,Math.min(0,.5-zoom*((bx0+bx1)/2-x0)/vw));
   // Labels: above the dot, else below, right or left, whichever is free; a label that fits nowhere is left out (the
-  // dot's tip still names the place). The busiest few stay on a phone.
-  const taken=[[hub[0]-12,hub[1]-12,24,24]];
-  const free=r=>!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
-  const place=(cx,cy,rad,w)=>{
-    const h=14,c=[[cx-w/2,cy-rad-4-h],[cx-w/2,cy+rad+4],[cx+rad+4,cy-h/2],[cx-rad-4-w,cy-h/2]].map(([x,y])=>[x,y,w,h]).find(free);
+  // dot's tip still names the place). The busiest few stay on a phone. Labels, dots and the hub keep their size in
+  // pixels while the stage scales, so the placer works in map units of u = 1 / (pixels per map unit) at the width the
+  // map will be drawn (shpMapScale), and keeps each label inside the part of the stage that shows.
+  const scale=shpMapScale(vw,vh,zoom);
+  shpMapDrawn={vw,vh,zoom,k:scale};
+  const u=1/scale;
+  const phone=shpMapPhone();
+  const vx0=phone?x0+(-shift/zoom)*vw:x0,vx1=phone?x0+((1-shift)/zoom)*vw:x1;
+  const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u]];
+  const inside=r=>r[0]>=vx0+2*u&&r[0]+r[2]<=vx1-2*u&&r[1]>=y0+2*u&&r[1]+r[3]<=y1-2*u;
+  const free=r=>inside(r)&&!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
+  const place=(cx,cy,rad,px)=>{
+    const w=px*u,h=14*u,g=4*u;
+    const c=[[cx-w/2,cy-rad-g-h],[cx-w/2,cy+rad+g],[cx+rad+g,cy-h/2],[cx-rad-g-w,cy-h/2]].map(([x,y])=>[x,y,w,h]).find(free);
     if(c)taken.push(c);
     return c?[c[0]+w/2,c[1]+h/2]:null;
   };
   const hubText='Spyder · Lacombe';
-  const hubLbl=place(hub[0],hub[1],11,hubText.length*6.3+6);
+  const hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);
   const labels=[];
-  dots.forEach(({p,xy,d},i)=>{taken.push([xy[0]-d/2,xy[1]-d/2,d,d]);});
+  dots.forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
   dots.forEach(({p,c,xy,d},i)=>{
     const text=c.name;
-    const pos=place(xy[0],xy[1],d/2,text.length*6.1+6);
+    const pos=place(xy[0],xy[1],d*u/2,text.length*6.4+8);
     if(pos)labels.push(`<span class="shp-lbl${i>=3&&shipDestSel!==p.key?' minor':''}" style="${at(pos)}">${esc(text)}</span>`);
   });
   const routes=dots.map(({p,c},i)=>{
@@ -14955,20 +14857,19 @@ function renderShipCheck(s,cls='dz-btn shp-check'){
   const tip=s.demo?`Demo number: opens AfterShip in a new tab, which will not find it.`:`Opens AfterShip’s public tracking page for ${s.number} (${shipCarrier(s)}) in a new tab; then set the status here.`;
   return `<a class="${cls}" href="${esc(shipTrackUrl(s.number))}" target="_blank" rel="noopener" data-focus-key="ship-check-${esc(s.number)}" data-tip="${esc(tip)}">Check</a>`;
 }
-// Tile: dot + label, the shipment count, then orders and value (a click lists just these in the table).
+// Tile: dot + label and the shipment count; its orders and value are in the tip (a click lists just these in the table).
 function renderShipCard(id,label,group,color,tipLead,tone=''){
   const count=group.length;
   const value=group.reduce((sum,s)=>sum+(s.value||0),0);
   const orders=new Set();
   group.forEach(s=>s.orders.forEach(o=>orders.add(o)));
   const selected=shippingFilter===id;
-  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')} ${tipLead}${value?`, worth ${money(value)}`:''}; ${selected?'click to show all.':'click to list only these.'}`;
-  const sub=[orders.size?shipPlural(orders.size,'order','orders'):'',value?moneyShort(value):''].filter(Boolean).join(' · ')||(count?'added by hand':'none right now');
+  const detail=[orders.size?shipPlural(orders.size,'order','orders'):count?'no sales order':'',value?`worth ${money(value)}`:''].filter(Boolean).join(', ');
+  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')}${detail?` (${detail})`:''} ${tipLead}; ${selected?'click to show all.':'click to list only these.'}`;
   const vcol=count&&tone==='red'?'var(--dz-risk-text)':count&&tone==='amber'?'var(--dz-amber-text)':'';
   return `<button type="button" class="shp-tile${selected?' sel':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
     <span class="shp-tile-l"><i style="background:${color}"></i>${esc(label)}</span>
     <span class="shp-tile-v"${vcol?` style="color:${vcol}"`:''}>${fmtNum(count)}</span>
-    <span class="shp-tile-s">${esc(sub)}</span>
   </button>`;
 }
 // ETA cell: delivered shipments show the delivery date over "promised ..."; the others the promised date (no carrier
@@ -15126,21 +15027,17 @@ function renderShippingPage(m){
   const destPill=destKeys.length>1?dzFilterPill({id:'ship-dest',label:'Destination',value:shipPlaceName(shipDestSel)||'All',set:!!shipDestSel,tip:'List only the shipments to this place in the Shipments table (the same as clicking its dot on the map).',
     options:[{label:'All',selected:!shipDestSel,onclick:"shpPickDest('')"},{sep:true},...destKeys.map(([k,name])=>({label:name,selected:shipDestSel===k,onclick:`shpPickDest(${dzJs(k)})`}))]}):'';
 
-  // Filter row: carrier switch (or a menu when there are many), what "checked" means here, then customer, the demo
-  // switch and Add tracking #.
+  // Filter row: Carrier, Customer, Status and Destination pills, the demo switch, Add tracking # and Clear.
   const demoBtn=isSnapshotView?'':model.demo
     ?`<button type="button" class="dz-btn" data-focus-key="ship-demo" aria-pressed="true" onclick="setShippingDemo(false)"${tipAttr('Hide the made-up shipments and list the real deliveries from this export.')}>Show real shipments</button>`
     :`<button type="button" class="dz-btn shp-pill" data-focus-key="ship-demo" aria-pressed="false" onclick="setShippingDemo(true)"${tipAttr(`Show ${SHIP_DEMO_ROWS.length} made-up shipments to see how the page works; nothing real is changed.`)}>Show demo data</button>`;
-  const carrierItems=[{label:'All',on:!shipCarrierSel,onclick:"shipPickCarrier('')",key:'ship-car-all'},...carriers.map((c,k)=>({label:c,on:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`,key:`ship-car-${k}`}))];
-  const carrierCtl=carriers.length<2?'':carriers.length<=5
-    ?dzSeg(carrierItems,{label:'Carrier'})
-    :dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,options:[{label:'All',selected:!shipCarrierSel,onclick:"shipPickCarrier('')"},{sep:true},...carriers.map(c=>({label:c,selected:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`}))]});
-  const checkedTxt=isSnapshotView?'Shared snapshot: statuses as they were when it was saved':`Checked by hand · statuses ${shared?'shared with everyone':'kept in this browser'}`;
-  const checked=`<span class="shp-checked"${tipAttr(`Nobody’s tracking system is asked: open Check, then set the status. Statuses are ${shared?'shared with everyone who signs in':'kept in this browser (shared on the hosted site)'}.`)}>${esc(checkedTxt)}</span>`;
-  const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
+  // Carrier is a menu like Customer (most shipments first), shown when there are two carriers or more.
+  const carrierCtl=carriers.length<2?'':dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,tip:'Show only one carrier’s shipments: the tiles, the map and the lists.',
+    options:[{label:'All',selected:!shipCarrierSel,onclick:"shipPickCarrier('')"},{sep:true},...carriers.map(c=>({label:c,selected:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`}))]});
+  const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,tip:'Show only one customer’s shipments: the tiles, the map and the lists.',options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
   const canAdd=!isSnapshotView&&!model.demo;
   const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add tracking #</button>`:'';
-  const filterRow=`<div class="shp-frow">${dzFilterRow(`${carrierCtl}${checked}`,`${custPill}${statusPill}${destPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
+  const filterRow=`<div class="shp-frow">${dzFilterRow('',`${carrierCtl}${custPill}${statusPill}${destPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
 
   const realStatuses=!model.demo||isSnapshotView?0:shippingStatusEntries().size;
   const banner=model.demo?`<div class="shp-demo" role="note" aria-label="Demo data"><span class="dz-chip amber">Demo data</span><span class="shp-demo-t">${esc(`These ${model.list.length} shipments are made up (fake customers and tracking numbers) to show how the page works. Statuses set here are not kept.${realStatuses?` ${shipPlural(realStatuses,'real status has','real statuses have')} been saved.`:''}`)}</span>${demoBtn}</div>`:'';
@@ -15167,7 +15064,7 @@ function renderShippingPage(m){
     return head+empty+about;
   }
 
-  // Tiles (a click lists just these in the table).
+  // Tiles (a click lists just these in the table); first in the page order, drawn right of the map on a wide screen.
   const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
       ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: marked Shipped or In transit')}
       ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','marked Delayed','red')}
@@ -15208,7 +15105,8 @@ function renderShippingPage(m){
     ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
   const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then shipments not checked for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
-  return head+tiles+renderShipMap(fl)+`<div class="shp-grid">${list}${side}</div>`+about;
+  // One row: the map on the left half, the four tiles as a 2 x 2 grid on the right (stacked, tiles first, below 981px).
+  return head+`<div class="shp-top">${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
