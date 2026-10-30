@@ -1788,7 +1788,7 @@ body{background:var(--dz-page-base)}
 @media (max-width:900px){.app-shell{padding:16px 20px 40px}}
 @media (max-width:640px){.app-shell{padding:12px 16px 36px}.app-col{gap:18px}#upload-screen>*+*,#results-screen>*+*{margin-top:18px}}
 
-/* Header: 56px, logo | centred page links | export date, search, Ask AI, Export PDF, avatar */
+/* Header: 56px, logo | centred page links | export date, search, Ask AI, Export PDF, Dark mode, Upload, Settings gear */
 /* Columns: logo | page links (shrink, scroll sideways, when the screen is narrow) | tools. The side columns are equal (so the links are centred on the page) until the tools need more room. */
 .app-header{position:relative;z-index:50;display:grid;grid-template-columns:minmax(auto,1fr) minmax(0,auto) minmax(auto,1fr);align-items:center;gap:24px;min-height:56px;font-family:var(--font)}
 .hdr-logo{display:block;justify-self:start;border-radius:4px}
@@ -1820,10 +1820,6 @@ body{background:var(--dz-page-base)}
 .hdr-icon:hover{background:var(--dz-glass-60);color:var(--dz-ink-1)}
 .hdr-icon:disabled{opacity:.4;cursor:default;background:transparent;color:var(--dz-ink-3)}
 .hdr-icon svg{width:16px;height:16px}
-.hdr-avatar{width:34px;height:34px;border-radius:50%;border:0;background:var(--dz-ink-1);color:#fff;display:grid;place-items:center;font:inherit;font-size:12px;font-weight:600;margin-left:8px;cursor:pointer;flex:none;padding:0;letter-spacing:.02em}
-.hdr-avatar svg{width:16px;height:16px}
-.hdr-avatar:hover{background:var(--dz-ink-2)}
-.hdr-menuwrap{position:relative;flex:none}
 /* Search: the icon expands into a pill with the input (id="global-search" keeps its Ctrl/Cmd+K and Esc behaviour) */
 .hdr-search{display:flex;align-items:center;height:34px;border-radius:999px;border:1px solid transparent;flex:none}
 .hdr-search .hdr-icon{border-radius:999px}
@@ -1844,8 +1840,6 @@ body{background:var(--dz-page-base)}
 .hdr-pop .link-btn{color:var(--dz-indigo-link);font-weight:500}
 .hdr-pop .link-btn:hover{color:var(--dz-indigo-hover)}
 .hdr-pop .warn-text{color:var(--dz-amber-text)}
-.hdr-who{padding:8px 12px 6px;font-size:12px;color:var(--dz-ink-4);max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hdr-who strong{display:block;font-size:13px;font-weight:600;color:var(--dz-ink-1);overflow:hidden;text-overflow:ellipsis}
 @media (max-width:900px){
   .hdr-search.open input{width:170px}
 }
@@ -1870,10 +1864,9 @@ body{background:var(--dz-page-base)}
   .hdr-date .hdr-date-txt{display:none}
   .hdr-date .hdr-date-ico{display:block}
   .hdr-date{padding:0;width:34px;justify-content:center}
-  .hdr-avatar{margin-left:4px}
 }
 
-/* Menus: Supply, the avatar, the export-date popover and every filter pill share one look. One is open at a time
+/* Menus: Supply, the export-date popover and every filter pill share one look. One is open at a time
    (dzMenuToggle / dzMenuClose); a click outside or Esc closes it. */
 .dz-menuwrap{position:relative}
 .dz-menu{position:absolute;top:calc(100% + 8px);min-width:210px;background:#fff;border-radius:var(--dz-r-menu);box-shadow:var(--dz-sh-menu);border:1px solid var(--dz-line-6);padding:6px;z-index:60;text-align:left;font-family:var(--font)}
@@ -2247,9 +2240,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 /* 2v6:settings */
 /* The Settings page (stg*): one glass card per group on the shared .dz-grid (two per row, one on phones). Each setting
    is a row: label and help at the left, its control at the right (pill select, small number box, segmented pill,
-   switch). Also the avatar menu's gear item and the At risk card's target chip. */
-.stg-menu-item .stg-menu-l{display:flex;align-items:center;gap:9px}
-.stg-menu-ico{width:15px;height:15px;flex:none;color:var(--dz-ink-4)}
+   switch). Also the At risk card's target chip. */
 .stg-ro{margin:0 0 14px;padding:10px 16px;border-radius:14px;background:var(--dz-amber-bg,#fbf1d9);color:var(--dz-amber-text,#b45309);font-size:13px}
 .stg-grid{margin-top:6px;align-items:start}
 .stg-col{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -2339,6 +2330,80 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 }
 @media print{.shp-sort-arrow:empty{display:none}}
 /* 2v6:end r5c */
+/* 2v7:shell */
+/* Header: the Dark mode icon (a moon in light mode, a sun in dark mode; the new one turns in after a click) and the
+   Settings gear, whose corner dot is the Data check's level (red: rows or files to fix in SAP, yellow: worth a look).
+   The dot's ring is the page colour so it reads on the page background. The export-date popover holds Share snapshot
+   next to Add file / New file. Settings: the Data Check card (the same dot on its icon tile) and Connect An AI App. */
+.hdr-gear,.hdr-theme{position:relative}
+.hdr-gear svg{width:17px;height:17px}
+.hdr-gear.on{color:var(--dz-ink-1);background:var(--dz-surface-2)}
+.hdr-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px var(--dz-page);pointer-events:none}
+.hdr-dot.red{background:var(--dz-risk)}
+.hdr-dot.yellow{background:var(--dz-amber)}
+.hdr-theme .hdr-theme-ico{width:17px;height:17px}
+.hdr-theme.turn .hdr-theme-ico{animation:hdr-turn .45s cubic-bezier(.2,.75,.25,1) both}
+@keyframes hdr-turn{from{opacity:0;transform:rotate(-100deg) scale(.5)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hdr-theme.turn .hdr-theme-ico{animation:none}}
+@media (forced-colors:active){.hdr-dot{forced-color-adjust:none;box-shadow:0 0 0 2px Canvas}}
+.dz-menu.hdr-pop{padding:14px 16px 16px}
+.hdr-pop-actions{flex-wrap:wrap}
+.hdr-pop-actions .dz-btn{flex:1 1 auto;padding:0 12px}
+/* Phones: while the search box is open the Dark mode icon steps aside with Upload, so the box keeps its room */
+@media (max-width:760px){.app-header.searching .hdr-theme{display:none}}
+/* Settings: card titles take focus after a Restore and when a card is opened from elsewhere */
+.stg-card{scroll-margin-top:16px}
+.stg-title:focus{outline:none}
+.stg-title:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-radius:6px}
+/* Data Check card: full width above the two columns; the summary at the left, lists and actions at the right */
+.stg-top{margin:6px 0 16px}
+.stg-top+.stg-grid{margin-top:0}
+.stg-dc{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:12px 40px;align-items:start}
+.stg-dc.solo{grid-template-columns:minmax(0,1fr)}
+.stg-ico-dot{position:relative}
+.stg-ico-dot .hdr-dot{top:-3px;right:-3px;width:8px;height:8px;box-shadow:0 0 0 2px var(--dz-surface)}
+.stg-dc-sum{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:7px}
+.stg-dc-sum li{display:flex;align-items:baseline;gap:10px;font-size:13.5px;line-height:1.45;color:var(--dz-ink-1)}
+.stg-dc-sum li.note{color:var(--dz-ink-3)}
+.stg-dc-mark{flex:none;width:8px;height:8px;border-radius:50%;transform:translateY(-1px)}
+.stg-dc-sum .red .stg-dc-mark{background:var(--dz-risk)}
+.stg-dc-sum .yellow .stg-dc-mark{background:var(--dz-amber)}
+.stg-dc-sum .note .stg-dc-mark{box-shadow:inset 0 0 0 1.5px var(--dz-ink-5)}
+.stg-dc-list{margin:0;padding:10px 14px 10px 30px;max-height:220px;overflow:auto;border-radius:14px;background:var(--dz-surface-2);font-size:12.5px;line-height:1.55;color:var(--dz-ink-3);overflow-wrap:anywhere}
+.stg-dc-list li+li{margin-top:2px}
+.stg-dc-list:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.stg-dc-more{list-style:none;margin-left:-16px;color:var(--dz-ink-4)}
+.stg-dc-lead>.stg-now{margin-top:10px}
+.stg-dc-list+.stg-row{margin-top:10px}
+.stg-dc-row .dz-btn{height:32px;padding:0 14px}
+.stg-dc-deleted{list-style:none;margin:-4px 0 0;padding:0 0 2px;max-height:220px;overflow:auto}
+.stg-dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:5px 0;font-size:12.5px;color:var(--dz-ink-3)}
+.stg-dc-deleted li+li{border-top:1px solid var(--dz-line-5)}
+.stg-dc-deleted .stg-dc-more{margin:0}
+.stg-dc-line{min-width:0;overflow-wrap:anywhere}
+.stg-dc-deleted .link-btn{flex:none;font-size:12.5px;font-weight:500;color:var(--dz-indigo-link)}
+.stg-dc-deleted .link-btn:hover{color:var(--dz-indigo-hover)}
+.stg-dc-ok{display:inline-flex;align-items:center;gap:6px;color:var(--dz-ink-3)}
+.stg-dc-ok svg{width:14px;height:14px;flex:none;color:var(--dz-teal)}
+/* Connect An AI App card: one line, Show setup (the steps, the config to copy, the Setup guide), the privacy line */
+.stg-lead{margin-top:2px}
+.stg-setup{margin-top:12px}
+.stg-setup-sum{height:32px;padding:0 12px 0 14px;list-style:none;user-select:none}
+.stg-setup-sum::-webkit-details-marker{display:none}
+.stg-setup-sum:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.stg-setup-sum .dz-chev{width:14px;height:14px;color:var(--dz-ink-4);transition:transform .2s ease}
+.stg-setup[open]>.stg-setup-sum .dz-chev{transform:rotate(180deg)}
+.stg-setup-hide,.stg-setup[open] .stg-setup-show{display:none}
+.stg-setup[open] .stg-setup-hide{display:inline}
+.stg-setup-body{display:grid;gap:16px;margin-top:16px}
+.stg-setup[open] .stg-setup-body{animation:rise .25s ease both}
+.stg-setup-body .misc-step{font-size:13px}
+.stg-setup-body .stg-actions{margin-top:0;padding-top:0}
+.stg-privacy{margin-top:14px;font-size:12.5px}
+@media (prefers-reduced-motion:reduce){.stg-setup-sum .dz-chev{transition:none}.stg-setup[open] .stg-setup-body{animation:none}}
+@media (max-width:900px){.stg-dc{grid-template-columns:minmax(0,1fr)}}
+@media print{.stg-setup-body{margin-top:0}.stg-dc-list,.stg-dc-deleted{max-height:none;overflow:visible}}
+/* 2v7:end shell */
 
 /* 2v6:monthly-wh-metrics */
 /* Monthly, Warehouse Timeline and Metrics Timeline. Cards, pills, bar rows and chips are the shared dz-* ones; these are
@@ -3572,19 +3637,8 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .misc-flat .lines-table tbody tr.line-row:hover,.misc-flat .data-table tbody tr:hover,.misc-flat .lines-table tbody tr.line-row.editing{background:var(--dz-hover)}
 .hdr-icon:not(:disabled):hover{background:var(--dz-surface-2)}
 
-/* ---------- Header: a larger logo; Upload files is the last icon before the avatar, the PO At Risk bell just left of
-   it (only while there are some) ---------- */
+/* ---------- Header: a larger logo; Upload files is the last icon before the Settings gear ---------- */
 .hdr-logo img{width:132px;height:auto}
-.hdr-bell{position:relative}
-.hdr-badge{position:absolute;top:1px;right:-1px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--dz-badge);color:#fff;font-size:10px;font-weight:600;line-height:16px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--dz-page);pointer-events:none}
-/* The avatar menu's Dark mode switch */
-.hdr-theme-item{gap:16px}
-.hdr-switch{position:relative;flex:none;width:30px;height:18px;border-radius:999px;background:var(--dz-ink-6);transition:background-color .15s}
-.hdr-switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.25);transition:transform .15s ease}
-.hdr-switch.on{background:var(--dz-indigo)}
-.hdr-switch.on::after{transform:translateX(12px)}
-@media (prefers-reduced-motion:reduce){.hdr-switch,.hdr-switch::after{transition:none}}
-@media (forced-colors:active){.hdr-switch{border:1px solid CanvasText}.hdr-switch.on{background:Highlight}.hdr-switch::after{background:CanvasText}.hdr-badge{forced-color-adjust:none}}
 /* Tablets: tighter gaps and the export date as its icon (the date stays in its label and tooltip), so the page links
    keep their room next to the larger logo and the extra icon */
 @media (min-width:761px) and (max-width:1180px){
@@ -3597,13 +3651,12 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 }
 @media (max-width:760px){
   .hdr-logo img{width:110px}
-  .app-header.searching .hdr-bell{display:none}
 }
 /* Phones: seven round icons and the logo share one row, so the icons are 32px with no gaps */
 @media (max-width:420px){
   .app-header{column-gap:8px}
   .hdr-right{gap:0}
-  .hdr-right .hdr-icon,.hdr-right .hdr-date,.hdr-right .hdr-avatar{width:32px;height:32px}
+  .hdr-right .hdr-icon,.hdr-right .hdr-date{width:32px;height:32px}
   .hdr-search{height:32px}
 }
 
@@ -3642,8 +3695,8 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 :where([data-theme=dark]) .imp-drop{background:rgba(11,17,32,.8)}
 :where([data-theme=dark]) .imp-drop-box{background:rgba(24,34,56,.92)}
 :where([data-theme=dark]) .toast-item{background:#273246;color:var(--dz-ink-1);box-shadow:0 0 0 1px rgba(255,255,255,.08),var(--dz-sh-menu)}
-/* Fills drawn in ink with white text (primary buttons, the avatar, user chat bubbles): light fill, dark text */
-:where([data-theme=dark]) .hdr-avatar,:where([data-theme=dark]) .dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary:hover,
+/* Fills drawn in ink with white text (primary buttons, user chat bubbles): light fill, dark text */
+:where([data-theme=dark]) .dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary:hover,
 :where([data-theme=dark]) .ohl-peak,:where([data-theme=dark]) .sup-page .note-editor .note-done,:where([data-theme=dark]) .ai-panel .btn-primary,
 :where([data-theme=dark]) .ai-msg.user,:where([data-theme=dark]) .ai-msg.user code,:where([data-theme=dark]) .editor-actions .btn-primary,
 :where([data-theme=dark]) #results-screen details.about:not(.sk-about)[open]>summary{color:var(--dz-on-ink)}
@@ -3792,7 +3845,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
         <li><code>OPENROUTER_API_KEY</code> OpenRouter (free models)</li>
       </ul>
       <p>Steps: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs (docs/AI_ASSISTANT.md).">Ask AI guide</a>. Or connect your own AI app instead.</p>
-      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up Claude Desktop or another AI app to read your exports." onclick="aiToggle(false);setTab('connect')">Connect an AI</button></div>
+      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up Claude Desktop or another AI app to read your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
     </div>
     <div class="ai-chat" id="ai-chat">
       <div class="ai-log" id="ai-log"></div>
@@ -3999,8 +4052,8 @@ async function exportShareSnapshot(){
     rowOverrides:sharedOverrides,
     // When each line was first at risk (from the shared at-risk history), for the lines in this export.
     firstFlagged:Object.fromEntries(Object.entries(firstFlagged).filter(([k])=>rowKeys.has(k))),
-    // A snapshot saved from Search opens on the page the search started from; one saved from the help page on Order Health.
-    activeTab:activeTab==='search'?searchPrevTab:activeTab==='connect'||activeTab==='settings'?'weekly':activeTab,
+    // A snapshot saved from Search opens on the page the search started from; one saved from Settings on Order Health.
+    activeTab:activeTab==='search'?searchPrevTab:activeTab==='settings'?'weekly':activeTab,
     weeklyWarehouseFilter,
     weeklyCustomerFilter,
     weeklySegmentFilter,
@@ -4128,7 +4181,7 @@ async function loadEmbeddedSnapshot(){
     supplyDemandRows=data.supplyDemandRows||[];
     rowOverrides=data.rowOverrides||{};
     firstFlagged=data.firstFlagged&&typeof data.firstFlagged==='object'&&!Array.isArray(data.firstFlagged)?data.firstFlagged:{};
-    activeTab=data.activeTab||'weekly';
+    activeTab=data.activeTab==='connect'?'settings':data.activeTab||'weekly'; // the Connect an AI page is in Settings now
     weeklyWarehouseFilter=data.weeklyWarehouseFilter||['ALL'];
     weeklyCustomerFilter=data.weeklyCustomerFilter||['ALL'];
     weeklySegmentFilter=data.weeklySegmentFilter||['ALL'];
@@ -4421,12 +4474,12 @@ function applyLinkedOverride(){
 function deleteLinkedSelection(){
   const n=linkedSelection.size;
   const where=isSnapshotView?'in this tab until it is closed (changes in a shared snapshot are not saved)':sharedNotes.state==='shared'?'for everyone who signs in and in snapshots you share':'in this browser and in snapshots you share';
-  if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI ${where}. Restore them from Data check.`))return;
+  if(!n||!confirm(`Delete ${fmtNum(n)} selected line${n===1?'':'s'}?\n\nThey are hidden from every page and KPI ${where}. Restore them from Settings → Data check.`))return;
   const keys=[...linkedSelection];
   linkedSelection.clear();
   setRowOverrides(keys,'deleted',true);
   keepLinkedFocus();
-  showToast(`Deleted ${fmtNum(n)} line${n===1?'':'s'}. Restore ${n===1?'it':'them'} from Data check.`);
+  showToast(`Deleted ${fmtNum(n)} line${n===1?'':'s'}. Restore ${n===1?'it':'them'} from Settings → Data check.`);
 }
 function restoreDeletedLines(key){
   const buttons=()=>[...document.querySelectorAll('button.dc-restore')];
@@ -4434,10 +4487,13 @@ function restoreDeletedLines(key){
   const keys=key?[String(key)]:[...new Set(allLoadedRows.filter(r=>r.isDeleted).map(rowKey))];
   setRowOverrides(keys,'deleted',undefined);
   if(keys.length)showToast(`Restored ${fmtNum(keys.length)} line${keys.length===1?'':'s'}.`);
-  // The pressed Restore button is gone: focus the next one, else Restore all, else the Data check summary, else
-  // this page's sidebar item (Data check goes away when nothing is left to report).
-  const now=buttons();
-  refocus(now[at]||now[now.length-1],document.querySelector('[data-focus-key="restore-deleted"]'),document.querySelector('summary[data-focus-key="data-check"]'),document.querySelector(`[data-focus-key="nav-${activeTab}"]`));
+  // The pressed Restore button is gone (the redraw then puts focus on the page title): focus the next Restore in the
+  // Settings Data Check card, else Restore all, else the card's title, else the Data card's title (the Data Check card
+  // goes away when nothing is left to report), else the header's Settings gear.
+  const now=buttons(),a=document.activeElement;
+  if(a&&a!==document.body&&!(a.matches&&a.matches('h1[tabindex="-1"]')))return;
+  const next=[now[at]||now[now.length-1],document.querySelector('[data-focus-key="restore-deleted"]'),document.getElementById('stg-h-dc'),document.getElementById('stg-h-data'),document.querySelector('[data-focus-key="hdr-gear"]')].find(t=>t&&t.focus);
+  if(next)next.focus({preventScroll:true});
 }
 // Column headers sort as 'col:<column>:<asc|desc>'. Qty, value and lead start high to low; the rest A to Z / oldest first.
 function sortLinkedColumn(col){
@@ -9135,7 +9191,6 @@ function stgSpec(){
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
     shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
-    poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
   };
@@ -9302,18 +9357,31 @@ function stgVersion(){
   const m=document.querySelector('meta[name="app-version"]');
   return String(m&&m.getAttribute('content')||'').trim()||'2v6';
 }
-// The avatar menu's Settings item (above Connect an AI); it opens before any export is loaded, like Connect an AI.
-function stgMenuItem(){
-  const gear='<svg class="stg-menu-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
-  return `<button type="button" role="menuitem" class="dz-menu-item stg-menu-item" data-focus-key="hdr-menu-settings" onclick="dzMenuClose(true);setTab('settings')"${tipAttr('Targets, windows, comment lists and more, saved in this browser.')}><span class="stg-menu-l">${gear}<span>Settings</span></span></button>`;
+// Settings opens at one card: the header's gear, the Ask AI panel's Connect an AI (and the old 'connect' page),
+// the notes status line's Set your name. Works before any export is loaded. focusId: a control in the card to focus
+// (else the card's title). The Connect card's setup steps open when it is asked for.
+let stgConnectOpen=false;
+function stgShowCard(card,focusId){
+  if(card==='connect')stgConnectOpen=true;
+  setTab('settings');
+  stgRevealCard(card,focusId);
+}
+function stgRevealCard(card,focusId){
+  const el=document.getElementById(`stg-card-${card}`);
+  if(!el)return;
+  let reduce=false;
+  try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(err){/* no matchMedia: jump */}
+  const target=(focusId&&document.getElementById(focusId))||document.getElementById(`stg-h-${card}`);
+  if(target&&target.focus)target.focus({preventScroll:true});
+  if(el.scrollIntoView)el.scrollIntoView({block:card==='profile'?'nearest':'start',behavior:reduce?'auto':'smooth'});
 }
 
 // --- The page ---
 const STG_AI_ICON='<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>';
-function stgCard({id,title,icon,color,body,changed=false,i=0,meta=''}){
+function stgCard({id,title,icon,color,body,changed=false,i=0,meta='',dot=''}){
   const svg=icon==='ai'?`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${STG_AI_ICON}</svg>`:dzIconSvg(icon);
-  return `<section class="dz-card stg-card dz-fade" style="--i:${i}" aria-labelledby="stg-h-${id}">
-    <div class="dz-card-head"><h2 class="dz-title sm stg-title" id="stg-h-${id}"><span class="dz-ico" style="--ico:${color}" aria-hidden="true">${svg}</span>${esc(title)}</h2>${meta||(changed?`<span class="dz-meta">${dzChip('Changed','indigo')}</span>`:'')}</div>
+  return `<section class="dz-card stg-card dz-fade" id="stg-card-${id}" style="--i:${i}" aria-labelledby="stg-h-${id}">
+    <div class="dz-card-head"><h2 class="dz-title sm stg-title" id="stg-h-${id}" tabindex="-1"><span class="dz-ico${dot?' stg-ico-dot':''}" style="--ico:${color}" aria-hidden="true">${svg}${dot?`<span class="hdr-dot ${dot}"></span>`:''}</span>${esc(title)}</h2>${meta||(changed?`<span class="dz-meta">${dzChip('Changed','indigo')}</span>`:'')}</div>
     <div class="stg-rows">${body}</div></section>`;
 }
 // One setting: label and a short help line at the left, the control at the right. labelFor ties the label to an input.
@@ -9377,7 +9445,7 @@ function stgShippingCard(dis,i){
     +`<p class="stg-now">Shipping page now shows ${now?'demo data':'real shipments'}${hasLoadedData()?'':' once an export is loaded'}.</p>`;
   return stgCard({id:'ship',title:'Shipping',icon:'truck',color:'#0fa08e',i,changed:!stgIsDefault('shipDemoDefault'),body});
 }
-function stgDataCard(i){
+function stgDataCard(i,dc){
   const loaded=hasLoadedData();
   const kv=(k,v)=>`<div class="stg-kv"><dt>${esc(k)}</dt><dd>${v}</dd></div>`;
   const files=loadedFiles.map(f=>{
@@ -9399,6 +9467,7 @@ function stgDataCard(i){
       ${kv('Report',kept)}
       ${notes?kv('Notes',notes):''}
       ${cm?kv('Logican',cm):''}
+      ${dc&&!dc.parts.length?kv('Data check',`<span class="stg-dc-ok">${dzIconSvg('check')}No data issues</span>`):''}
     </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
   const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report with a new export; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
   return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,meta:'<span class="dz-meta">Read only</span>',body:body+actions});
@@ -9439,12 +9508,6 @@ function stgPagesCard(dis,i){
     stgRow('Import report',`After files load: a short message when all is well, or the full report every time. Default only with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
   return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
-}
-// Purchase Orders: the header's PO At Risk bell (the Purchase Orders code reads stgValue('poAlerts')).
-function stgPoCard(dis,i){
-  const on=stgValue('poAlerts');
-  const body=stgRow('PO At Risk alerts',`A bell in the header lists PO lines expected after their sales order ships. Default on.`,stgSwitch('stg-poalerts','PO At Risk alerts',on,`stgSet('poAlerts',${on?'false':'true'})`,dis));
-  return stgCard({id:'po',title:'Purchase Orders',icon:'cart',color:'#5468ff',i,changed:!stgIsDefault('poAlerts'),body});
 }
 // Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
 function stgExport(){
@@ -9494,54 +9557,64 @@ function stgAboutCard(i){
     </dl><p class="stg-now">Settings are saved in this browser only; Export and Import move them to another browser.</p>${move}`;
   return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
 }
-function stgRenderPage(){
-  const ro=isSnapshotView,dis=ro?' disabled':'';
-  const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
-  const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
-  // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one.
-  const left=[stgProfileCard(dis,0),stgOrderHealthCard(dis,2),stgPagesCard(dis,4),stgDataCard(6)].join('');
-  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgPoCard(dis,5),stgAiCard(dis,7),stgAboutCard(8)].join('');
-  const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
-  return `${note}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
+// Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
+function stgDataCheckLevel(){return dcReport().level;}
+// The Data Check card: shown while the Data check has anything to report, full width above the two columns (the
+// summary at the left, the lists and actions at the right; stacked on narrow screens). Its title tile
+// carries the gear's dot (none for by-design notes). Restore buttons keep the class dc-restore (restoreDeletedLines).
+function stgDataCheckCard(dc,i){
+  if(!dc.parts.length)return '';
+  const mark=t=>t==='red'?'red':t==='yellow'?'yellow':'note';
+  const sum=`<ul class="stg-dc-sum">${dc.parts.map(p=>`<li class="${mark(p.tone)}"><span class="stg-dc-mark" aria-hidden="true"></span><span>${esc(p.text)}</span></li>`).join('')}</ul>`;
+  const issues=dc.issues.length?`<ul class="stg-dc-list" tabindex="0" aria-label="Rows and files that need attention in SAP">${dc.issues.slice(0,50).map(x=>`<li>${esc(x.message)}</li>`).join('')}${dc.issues.length>50?`<li class="stg-dc-more">…and ${fmtNum(dc.issues.length-50)} more</li>`:''}</ul>`:'';
+  const dateHelp=dc.issues.some(x=>x.kind==='date')?'<p class="stg-now">Dates outside 1990–2099 count as missing until fixed in SAP.</p>':'';
+  const scope=dc.nonInventory?stgRow('Non-inventory charges','PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave non-inventory charges out of the KPIs again (the default).':'Count non-inventory charges (PPV, tariff, NRE) in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
+  const d=dc.deleted;
+  const deleted=d.length?stgRow('Deleted lines',`Left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.`,`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back all ${fmtNum(d.length)} deleted ${d.length===1?'line':'lines'} on every page.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
+    +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${d.slice(0,50).map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back on every page.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${d.length>50?`<li class="stg-dc-more">…and ${fmtNum(d.length-50)} more</li>`:''}</ul>`:'';
+  const meta=dc.level==='red'?dzChip(`${fmtNum(dc.red)} to fix in SAP`,'red'):dc.level==='yellow'?dzChip(`${fmtNum(dc.yellow)} to review`,'amber'):'<span class="dz-meta">By design</span>';
+  const color=dc.level==='red'?'#ff3d68':dc.level==='yellow'?'#ffae1a':'#64748b';
+  return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,meta:`<span class="dz-meta">${meta}</span>`,
+    body:`<div class="stg-dc${issues||scope||deleted?'':' solo'}"><div class="stg-dc-lead">${sum}${dateHelp}</div>${issues||scope||deleted?`<div class="stg-dc-side">${issues}${scope}${deleted}</div>`:''}</div>`});
 }
-// ===== end 2v6 settings =====
-// Help page: the two ways to ask an AI about the export: Ask AI here, or the MCP connector in mcp/ for Claude
-// Desktop and other AI apps. It works before any file is loaded. Details: docs/AI_ASSISTANT.md and docs/MCP.md.
-const CONNECT_SNIPPETS={
-  'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2)
-};
-function renderConnectPage(){
-  const doc=(href,label,tip)=>`<a class="dz-btn" href="${href}" target="_blank" rel="noopener"${tipAttr(tip)}>${label}</a>`;
+// Connect An AI App (it was the Connect an AI help page): the MCP connector in mcp/ for Claude Desktop and other AI
+// apps. Setup steps fold away under Show setup; Copy keeps the ids connect-desktop / connect-desktop-status
+// (CONNECT_SNIPPETS, copyConnectSnippet). Details: docs/MCP.md.
+function stgConnectCard(i){
   const step=(n,text)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${n}</span><span class="misc-step-text">${text}</span></li>`;
-  const tier=(tone,label,names,note)=>`<li><span class="dz-chip ${tone}">${label}</span><span class="misc-tier-text"><strong>${names}</strong><span>${note}</span></span></li>`;
-  // 2v6: two glass cards. Option 1 (narrow) is the panel in this dashboard; Option 2 (wide) holds the steps and the config to copy.
-  return `<p class="misc-intro rise">Ask an AI about the export in plain English, such as “What is at risk this week?”.</p>
-  <div class="dz-grid misc-connect">
-    <section class="dz-card dz-span-2 misc-opt rise rise-1" aria-labelledby="connect-opt-1">
-      <div class="dz-card-head"><h2 class="dz-title" id="connect-opt-1">Ask AI in this dashboard</h2><span class="dz-meta">Option 1<span class="sr-only">:</span></span></div>
-      <p class="misc-opt-sub">Nothing to install. Click <strong>Ask AI</strong> at the top of any page, pick a provider in <strong>Settings</strong> and tick its consent box.</p>
-      <ul class="misc-tiers">
-        ${tier('indigo','Paid','Claude and ChatGPT','Billed to Spyder Controls. Not used to train models.')}
-        ${tier('amber','Free','Groq and OpenRouter','Tight limits. May keep or publish what you send.')}
-      </ul>
-      <div class="misc-opt-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" data-tip="Open the Ask AI panel; nothing is sent until you allow a provider." onclick="aiToggle(true)">Open Ask AI</button>${doc('docs/AI_ASSISTANT.md','Ask AI guide','Providers, costs and data terms (docs/AI_ASSISTANT.md).')}</div>
-    </section>
-    <section class="dz-card dz-span-4 misc-opt rise rise-2" aria-labelledby="connect-opt-2">
-      <div class="dz-card-head"><h2 class="dz-title" id="connect-opt-2">Your own AI app</h2><span class="dz-meta">Option 2<span class="sr-only">:</span></span></div>
-      <p class="misc-opt-sub">Claude Desktop below; other apps: see Setup guide.</p>
-      <div class="misc-opt2">
+  const body=`<p class="stg-now stg-lead">Use Claude Desktop or another AI app to read your exports.</p>
+    <details class="stg-setup"${stgConnectOpen||printMode?' open':''} ontoggle="stgConnectOpen=this.open">
+      <summary class="dz-btn stg-setup-sum print-hide" data-focus-key="stg-connect-setup"${tipAttr('The three steps and the Claude Desktop config to copy.')}><span class="stg-setup-show">Show setup</span><span class="stg-setup-hide">Hide setup</span>${DZ_CHEV}</summary>
+      <div class="stg-setup-body">
         <ol class="misc-steps">
           ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
           ${step(2,'Get the dashboard folder from IT.')}
           ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
         </ol>
         <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">claude_desktop_config.json</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
+        <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).')}>Setup guide</a></div>
       </div>
-      <div class="misc-opt-actions print-hide">${doc('docs/MCP.md','Setup guide','Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).')}</div>
-    </section>
-  </div>
-  <p class="misc-privacy rise rise-3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI provider receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
+    </details>
+    <p class="misc-privacy stg-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI app receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
+  return stgCard({id:'connect',title:'Connect An AI App',icon:'link',color:'#5468ff',i,body});
 }
+function stgRenderPage(){
+  const ro=isSnapshotView,dis=ro?' disabled':'';
+  const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
+  const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
+  // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one. The
+  // Data Check card (only while the Data check reports something) sits above both, full width, so they stay even.
+  const dc=dcReport(),check=stgDataCheckCard(dc,0),k=check?1:0;
+  const left=[stgProfileCard(dis,k),stgOrderHealthCard(dis,k+2),stgPagesCard(dis,k+4),stgDataCard(k+6,dc)].join('');
+  const right=[stgNotesCard(dis,k+1),stgShippingCard(dis,k+3),stgAiCard(dis,k+5),stgConnectCard(k+7),stgAboutCard(k+8)].join('');
+  const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
+  return `${note}${check?`<div class="stg-top">${check}</div>`:''}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
+}
+// ===== end 2v6 settings =====
+// Connect An AI App (Settings): the Claude Desktop config the card shows and copies. Details: docs/MCP.md.
+const CONNECT_SNIPPETS={
+  'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2)
+};
 function copyConnectSnippet(btn){
   const id=btn.dataset.copy,text=CONNECT_SNIPPETS[id],status=document.getElementById(`${id}-status`);
   const done=ok=>{if(status)status.textContent=ok?'Copied':'Select the text and press Ctrl+C.';};
@@ -9904,9 +9977,9 @@ function hasLoadedData(){
 const NAV_GROUPS=[
   ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
-  ['Help',[['connect','Connect an AI'],['settings','Settings','Targets, windows and comment lists, saved in this browser.']]]
+  ['Help',[['settings','Settings','Targets, comment lists, Data check and Connect an AI app.']]]
 ];
-const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',connect:'Connect an AI',settings:'Settings'};
+const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
 // Every page builds its cards, chips, bar rows, filter pills and segmented switches with the helpers below and styles
 // them with the .dz-* classes ("2v6 foundation" in the style block). All of them return HTML strings; text arguments
@@ -10069,9 +10142,9 @@ document.addEventListener('keydown',e=>{
 });
 
 // Header: logo, page links (Order Health, Monthly, Warehouses, Metrics, Shipping, Supply ▾), then the export date
-// (its popover is the loaded-export card), search, Ask AI, Export PDF, the PO At Risk bell (only when there are some),
-// Upload files and the avatar menu (Share snapshot, Change name, Settings, Connect an AI, Dark mode). The function keeps
-// its old name: many places redraw the "sidebar".
+// (its popover is the loaded-export card, with Add file, New file and Share snapshot), search, Ask AI, Export PDF, the
+// Dark mode icon, Upload files and the Settings gear (its dot is the Data check's level). The function keeps its old
+// name: many places redraw the "sidebar".
 // ===== 2v6 theme: light / dark / system =====
 // The Settings key 'theme' ('light' default, 'dark', 'system' = the computer's choice). applyTheme() puts
 // data-theme="dark|light" and color-scheme on <html>; the /* 2v6:theme */ CSS block recolours the --dz-* tokens and the
@@ -10100,39 +10173,36 @@ function applyTheme(){
   if(root&&root.style)root.style.colorScheme=t;
   return t;
 }
-// The avatar menu's Dark mode switch (the menu stays open): dark <-> light, saved like any other setting.
-function hdrThemeItem(){
-  const on=thmIsDark();
-  return `<button type="button" role="menuitemcheckbox" aria-checked="${on}" class="dz-menu-item hdr-theme-item" data-focus-key="hdr-menu-theme" onclick="hdrThemeToggle()"${tipAttr('Dark colours for the dashboard. Saved in this browser; Settings can also follow your computer.')}><span>Dark mode</span><span class="hdr-switch${on?' on':''}" aria-hidden="true"></span></button>`;
+// The header's Dark mode icon: a moon in light mode, a sun in dark mode. One click switches light <-> dark (saved like
+// any other setting; a shared snapshot keeps it for this visit). The label stays "Dark mode" and aria-pressed says
+// whether it is on; the tip names what a click does. The new icon turns in once after a click (not with reduced motion).
+const HDR_MOON_SVG='<svg class="hdr-theme-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.1A8.5 8.5 0 1 1 9.9 3.5a6.6 6.6 0 0 0 10.6 10.6z"/></svg>';
+const HDR_SUN_SVG='<svg class="hdr-theme-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></svg>';
+let hdrThemeTurned=false; // the next header draw turns the new icon in (set by a click on it)
+function hdrThemeButton(){
+  const dark=thmIsDark(),turn=hdrThemeTurned;
+  hdrThemeTurned=false;
+  return `<button type="button" class="hdr-icon hdr-theme${turn?' turn':''}" id="hdr-theme" data-focus-key="hdr-theme" aria-label="Dark mode" aria-pressed="${dark}" onclick="hdrThemeToggle()"${tipAttr(dark?'Light mode':'Dark mode')}>${dark?HDR_SUN_SVG:HDR_MOON_SVG}</button>`;
 }
 function hdrThemeToggle(){
   const next=thmIsDark()?'light':'dark';
   thmSession='';
+  hdrThemeTurned=true;
   if(!stgSet('theme',next)){thmSession=next;applyTheme();renderSidebar();}
 }
 applyTheme(); // the boot script at the top of <body> set it before the first paint; this also starts following 'system'
-// The PO At Risk bell (agent A's poAlertCount / poAlertsToggle): shown only while some PO lines arrive after the sales
-// order they feed ships; the badge is redrawn with the header.
-const HDR_BELL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
-function hdrBellCount(){
-  try{const n=typeof poAlertCount==='function'?Number(poAlertCount()):0;return n>0?Math.floor(n):0;}catch(err){return 0;}
-}
-function hdrBell(){
-  const n=hdrBellCount();
-  if(!n)return '';
-  const label=n===1?'1 PO line arrives after its sales order ships':`${fmtNum(n)} PO lines arrive after their sales order ships`;
-  const open=typeof poAlertsIsOpen==='function'&&poAlertsIsOpen();
-  return `<button type="button" class="hdr-icon hdr-bell" id="hdr-bell" data-focus-key="hdr-bell" aria-label="${esc(label)}" aria-controls="poa-panel" aria-expanded="${open?'true':'false'}" onclick="if(typeof poAlertsToggle==='function')poAlertsToggle()"${tipAttr(`PO At Risk: ${label}.`)}>${HDR_BELL_SVG}<span class="hdr-badge" aria-hidden="true">${n>99?'99+':n}</span></button>`;
+// The Settings gear (it replaced the avatar menu): one click opens Settings, before any export is loaded too. A dot on
+// its corner is the Data check's level (stgDataCheckLevel): red = rows or files need attention in SAP, yellow = worth a
+// look (Logican lines, deleted lines); by-design notes give no dot. The label says what the dot means.
+const HDR_GEAR_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+function hdrGearButton(current){
+  const dc=dcReport(),said=dcSummary(dc);
+  const label=said?`Settings, data check: ${said}`:'Settings';
+  return `<button type="button" class="hdr-icon hdr-gear${current?' on':''}" id="hdr-gear" data-focus-key="hdr-gear" aria-label="${esc(label)}"${current?' aria-current="page"':''} onclick="dzMenuClose();setTab('settings')"${tipAttr(said?`Settings · data check: ${said}.`:'Settings')}>${HDR_GEAR_SVG}${dc.level?`<span class="hdr-dot ${dc.level}" aria-hidden="true"></span>`:''}</button>`;
 }
 // ===== end 2v6 theme =====
 let hdrSearchOpen=false;   // the search pill is expanded (it also stays open while the box holds text)
 let hdrRendering=false;    // true while the header's markup is swapped (a blur then is not the user leaving the box)
-function hdrInitials(name){
-  const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
-  if(!parts.length)return '';
-  const a=[...parts[0]];
-  return (parts.length>1?a[0]+[...parts[parts.length-1]][0]:a.slice(0,2).join('')).toUpperCase();
-}
 function hdrSearchSet(open,focusBtn){
   hdrSearchOpen=!!open;
   const on=hdrSearchOpen||!!searchQuery;
@@ -10191,35 +10261,25 @@ function renderSidebar(){
   const asOf=reportAsOfDate?parseDate(reportAsOfDate):null;
   const dateText=asOf?`${asOf.getDate()} ${asOf.toLocaleDateString('en-US',{month:'short'})}`:'Export';
   const fileOpen=dzOpenMenu==='hdr-file';
+  const canShare=loaded;
+  const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${canShare?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button></div></div></div>`
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
     :`<span class="hdr-date none"><span class="hdr-date-txt">No export loaded</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;
   const search=`<div class="hdr-search${sOpen?' open':''}" id="hdr-search" role="search"><button type="button" class="hdr-icon" id="hdr-search-btn" aria-label="Search orders, items and customers" aria-expanded="${sOpen}" aria-controls="global-search" aria-keyshortcuts="Control+K Meta+K" onclick="hdrSearchClick()"${loaded?'':' disabled'}${tipAttr('Search orders, items and customers (Ctrl+K).')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)" onblur="hdrSearchBlur(event)"${loaded?'':' disabled'}></div>`;
   const askAi=`<button type="button" class="hdr-icon" id="hdr-askai" data-focus-key="ask-ai" aria-label="Ask AI" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${loaded?'':' disabled'}${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>`;
-  const canPrint=loaded&&onResults&&activeTab!=='connect';
+  const canPrint=loaded&&onResults;
   const exportPdf=`<button type="button" class="hdr-icon" id="hdr-pdf" data-focus-key="export-pdf" aria-label="Export PDF" onclick="exportPdf()"${canPrint?'':' disabled'}${tipAttr('Print this page or save it as a PDF, with every linked line.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>`;
-  // Avatar: the editor's initials (the "Your name" feature; a person icon until a name is given) and its menu.
-  const name=readEditor()||'';
-  const initials=name?hdrInitials(name):hdrInitials(legacyInitials());
-  const avOpen=dzOpenMenu==='hdr-avatar';
-  const canShare=loaded&&!(onResults&&activeTab==='connect');
-  const item=(key,label,onclick,tip,disabled)=>`<button type="button" role="menuitem" class="dz-menu-item" data-focus-key="${key}" onclick="dzMenuClose(true);${onclick}"${disabled?' disabled':''}${tipAttr(tip)}><span>${esc(label)}</span></button>`;
-  const avatar=`<div class="dz-menuwrap hdr-menuwrap${avOpen?' open':''}" data-dzmenu="hdr-avatar"><button type="button" class="hdr-avatar" id="hdr-avatar-btn" aria-haspopup="menu" aria-expanded="${avOpen}" aria-label="${esc(name?`Profile menu for ${name}`:'Profile menu')}" onclick="dzMenuToggle('hdr-avatar',event)">${initials?esc(initials):'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'}</button><div class="dz-menu dz-menu-r" role="menu" aria-label="Profile menu"${avOpen?'':' hidden'}><div class="hdr-who"><strong>${esc(name||'No name set')}</strong>${name?'shown with your notes':'add it to show it with your notes'}</div><div class="dz-menu-sep" role="separator"></div>${
-    item('hdr-menu-share','Share snapshot','exportShareSnapshot()','Save an .html copy of the data and notes to send; anyone with the file sees all of it.',!canShare)
-  }${item('hdr-menu-name',name?'Change name':'Add your name','askEditorName(true)',isSnapshotView?'Names are not saved from a shared snapshot.':'The name shown with the notes you save.',isSnapshotView)
-  }${stgMenuItem()
-  }${item('hdr-menu-connect','Connect an AI',"setTab('connect')",PAGE_TIPS.connect||'Set up Claude Desktop or another AI app to read your exports.',false)
-  }<div class="dz-menu-sep" role="separator"></div>${hdrThemeItem()}</div></div>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
   const focus=captureFocus(el);
   el.classList.toggle('searching',sOpen);
   hdrRendering=true;
   el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
-    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${loaded?hdrBell():''}${impHeaderButton()}${avatar}</div>`;
+    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${hdrThemeButton()}${impHeaderButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
   // The page links scroll sideways on a phone: keep where they were, and the current page in view.
@@ -10234,8 +10294,10 @@ function renderSidebar(){
   }
 }
 function setTab(t){
-  // Connect an AI is a help page, so it opens before any export is loaded.
-  if(!hasLoadedData()&&t!=='connect'&&t!=='settings')return;
+  // The Connect an AI page moved into Settings: 'connect' opens Settings at its card. Settings opens before any export
+  // is loaded.
+  if(t==='connect'){stgShowCard('connect');return;}
+  if(!hasLoadedData()&&t!=='settings')return;
   dzOpenMenu=''; // a page change closes the open menu
   const changed=activeTab!==t;
   // Going to any other page ends the search, so the box does not keep showing an old query.
@@ -10244,26 +10306,36 @@ function setTab(t){
   showResults();
   if(changed&&window.scrollY>0&&window.scrollTo)window.scrollTo(0,0);
 }
-// Rows the export could not fully use (unreadable dates, skipped files) and quarantine rows left out on purpose.
-function renderDataQualityNote(){
+// Data check: rows the export could not fully use (unreadable dates, skipped files), Logican lines that do not match,
+// lines you deleted, and what is left out by design (quarantine rows, non-inventory charges). One source for the
+// header gear's dot (hdrGearButton) and the Settings Data Check card (stgDataCheckCard).
+// level: 'red' = rows or files need attention in SAP; 'yellow' = worth a look (Logican lines not matched or dates not
+// readable, deleted lines hidden); '' = by-design notes only, nothing to report, or no export loaded.
+// parts: [{tone:'red'|'yellow'|'', text}], most serious first.
+function dcReport(){
+  const out={level:'',parts:[],issues:[],deleted:[],nonInventory:0,red:0,yellow:0};
+  if(!hasLoadedData())return out;
   const issues=dataQualityIssues||[];
-  const parts=[];
-  if(issues.length)parts.push(`${fmtNum(issues.length)} ${issues.length===1?'row or file needs':'rows or files need'} attention in SAP`);
-  if(excludedQuarantineRows)parts.push(`${fmtNum(excludedQuarantineRows)} quarantine-warehouse rows excluded by design`);
-  const nonInventory=allLoadedRows.filter(r=>r.isNonInventory).length;
-  if(nonInventory)parts.push(`${fmtNum(nonInventory)} non-inventory rows (charges, services) ${includeNonInventory?'included':'left out of shipping KPIs'}`);
-  parts.push(...cmDataCheckParts());
+  out.issues=issues;
+  out.red=issues.length;
+  if(issues.length)out.parts.push({tone:'red',text:`${fmtNum(issues.length)} ${issues.length===1?'row or file needs':'rows or files need'} attention in SAP`});
+  cmDataCheckParts().forEach(text=>out.parts.push({tone:'yellow',text}));
   const deleted=allLoadedRows.filter(r=>r.isDeleted);
-  if(deleted.length)parts.push(`${fmtNum(deleted.length)} ${deleted.length===1?'line you deleted is':'lines you deleted are'} hidden`);
-  if(!parts.length)return '';
-  const deletedHelp=deleted.length?`<p>Deleted lines are left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.<br><button type="button" class="btn" data-focus-key="restore-deleted"${tipAttr(`Bring back all ${fmtNum(deleted.length)} deleted ${deleted.length===1?'line':'lines'} on every page.`)} onclick="restoreDeletedLines()">Restore all</button></p><ul class="dc-deleted">${deleted.slice(0,50).map(r=>`<li><span>${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back on every page.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${deleted.length>50?`<li>…and ${fmtNum(deleted.length-50)} more</li>`:''}</ul>`:'';
-  const scopeHelp=nonInventory?`<p>Non-inventory charges (PPV, tariff, NRE) close by invoice, so they are left out of late, OTD and fill KPIs.<br><button type="button" class="btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave non-inventory charges out of the KPIs again (the default).':'Count non-inventory charges (PPV, tariff, NRE) in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button></p>`:'';
-  const list=issues.slice(0,50).map(i=>`<li>${esc(i.message)}</li>`).join('');
-  const more=issues.length>50?`<li>…and ${fmtNum(issues.length-50)} more</li>`:'';
-  const dateHelp=issues.some(i=>i.kind==='date')?'<p>Dates outside 1990–2099 count as missing until fixed in SAP.</p>':'';
-  // The open popover covers the filters below it, so it closes on Esc and when focus leaves it (the popover itself
-  // takes focus on click, so clicking its text keeps it open).
-  return `<details class="data-check print-hide"${dataCheckOpen?' open':''} ontoggle="dataCheckOpen=this.open" onkeydown="if(event.key==='Escape'&amp;&amp;this.open){this.open=false;this.querySelector('summary').focus();}" onfocusout="if(this.open&amp;&amp;!this.contains(event.relatedTarget))this.open=false"><summary data-focus-key="data-check"${tipAttr('Rows the dashboard could not use, deleted lines and left-out charges; click for details.')}>⚠ Data check</summary><div class="data-check-pop" tabindex="-1"><strong>${esc(parts.join(' · '))}</strong>${list?`<ul>${list}${more}</ul>`:''}${dateHelp}${scopeHelp}${deletedHelp}</div></details>`;
+  out.deleted=deleted;
+  if(deleted.length)out.parts.push({tone:'yellow',text:`${fmtNum(deleted.length)} ${deleted.length===1?'line you deleted is':'lines you deleted are'} hidden`});
+  out.yellow=out.parts.filter(p=>p.tone==='yellow').length;
+  if(excludedQuarantineRows)out.parts.push({tone:'',text:`${fmtNum(excludedQuarantineRows)} quarantine-warehouse rows excluded by design`});
+  const nonInventory=allLoadedRows.filter(r=>r.isNonInventory).length;
+  out.nonInventory=nonInventory;
+  if(nonInventory)out.parts.push({tone:'',text:`${fmtNum(nonInventory)} non-inventory rows (charges, services) ${includeNonInventory?'included':'left out of shipping KPIs'}`});
+  out.level=out.red?'red':out.yellow?'yellow':'';
+  return out;
+}
+// What the gear's dot means, in words ('' when there is no dot).
+function dcSummary(dc){
+  const red=dc.red?`${fmtNum(dc.red)} ${dc.red===1?'row or file needs':'rows or files need'} attention`:'';
+  const yellow=dc.yellow?`${fmtNum(dc.yellow)} ${dc.yellow===1?'item':'items'} to review`:'';
+  return [red,yellow].filter(Boolean).join(', ');
 }
 
 // The KPI query's AmountLocal is already the OPEN amount on order-line rows (RDR1/POR1.OpenSum, local currency)
@@ -10492,8 +10564,7 @@ function renderResults(){
   const openPoCount=activeTab==='purchaseorders'?((poData(m)||{}).poAllOpenRows||[]).length:0;
   const asOfShort=displayDate(reportAsOfDate||reportToday());
   const loaded=hasLoadedData();
-  const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
-    : activeTab==='settings'?'Saved in this browser'
+  const headMeta=activeTab==='settings'?'Saved in this browser'
     : activeTab==='metrics'?''  // no as-of line on the Metrics Timeline (the owner's ask); the export date is in the header
     : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='shipping'?shippingHeadMeta()
@@ -10514,11 +10585,10 @@ function renderResults(){
   const said=activeTab==='search'?headMeta:'';
   if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
-  // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Share snapshot,
-  // Ask AI and Export PDF live in the header now. Connect an AI is a help page: no Data check there.
-  const isConnect=activeTab==='connect'||activeTab==='settings';
+  // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Ask AI and
+  // Export PDF live in the header, Share snapshot in its export-date popover, Data check in Settings (the gear's dot).
   const showTitle=activeTab!=='weekly';
-  const headNotes=`${isConnect?'':renderDataQualityNote()}${snapshotTag}`;
+  const headNotes=snapshotTag;
   const headRight=loaded?(showTitle&&headMeta?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
     :`<button type="button" class="dz-btn primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`;
   const headTitle=`<h1 class="dz-h1${showTitle?'':' dz-h1-hidden'}" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1>`;
@@ -10793,7 +10863,7 @@ function renderResults(){
           <span class="bulk-count">${fmtNum(selectedCount)} selected</span>
           <label>Override <select id="linked-bulk-status" class="select"${tipAttr('The override to set on the selected lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}</select></label>
           <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply"${tipAttr(`Set the chosen override on the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'}.`)} onclick="applyLinkedOverride()">Apply</button>
-          <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete"${tipAttr(`Hide the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'} from every page; Data check brings them back.`)} onclick="deleteLinkedSelection()">Delete</button>
+          <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete"${tipAttr(`Hide the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'} from every page; Settings → Data check brings them back.`)} onclick="deleteLinkedSelection()">Delete</button>
           <button type="button" class="link-btn" id="linked-bulk-clear"${tipAttr('Untick every selected line.')} onclick="selectAllLinked(false)">Clear selection</button>
         </div>`:'';
       // What each column shows, for its heading's tooltip.
@@ -10938,7 +11008,6 @@ function renderResults(){
   }
   // Search: order lines, supply / demand and Clear To Build rows that match every typed term.
   if(activeTab==='search')html+=renderGlobalSearchPage(m);
-  if(activeTab==='connect')html+=renderConnectPage();
   if(activeTab==='settings')html+=stgRenderPage();
   if(activeTab==='forecast')html+=renderForecastPage(m);
   // A new report resets the Shipping page's view (filter, open rows).
@@ -13143,7 +13212,7 @@ function recomputeLastEdit(){
   sharedNotes.last=last?{by:String(last.by||''),at:last.at}:null;
 }
 // Sidebar line under the report status (its own .loaded-notes row): "Notes shared · last edit Kareena · Oct 8", and
-// the Change name button.
+// the Set your name / Change name in Settings link.
 function sharedNotesSidebarLine(){
   if(isSnapshotView)return '';
   const s=sharedNotes;
@@ -13166,7 +13235,8 @@ function sharedNotesSidebarLine(){
     tip='This site has no shared storage; Share snapshot carries your notes to others.';
   }else return '';
   const name=readEditor();
-  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName(true)" data-tip="${esc(name?`Your notes show “${name}”; click to change it.`:'Add your name to the notes you save.')}">${name?'Change name':'Add your name'}</button>`:'';
+  // The name lives in Settings (Profile card): the link opens it on the name picker.
+  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="dzMenuClose();stgShowCard('profile','stg-name')" data-tip="${esc(name?`Your notes show “${name}”; change it in Settings.`:'Set the name shown with the notes you save.')}">${name?'Change name in Settings':'Set your name in Settings'}</button>`:'';
   return `<span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
 }
 
@@ -13305,7 +13375,7 @@ function openEditorDialog(){
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
       <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save this name for your notes.">Save</button>
-      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without a name. Add it later from the profile menu.">Not now</button>
+      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without a name. Set it later in Settings.">Not now</button>
     </div>
   </form>`;
   const form=d.querySelector('form'),input=d.querySelector('#editor-name'),error=d.querySelector('#editor-error');
