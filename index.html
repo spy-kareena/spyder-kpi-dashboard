@@ -1327,7 +1327,6 @@ button.oh24-cell:hover{background:var(--muted)}
 .ai-setup h3{margin:0;font-size:14px;font-weight:600;color:var(--gray-900)}
 .ai-setup h3:focus{outline:none}
 .ai-setup p{margin:0;color:var(--gray-600)}
-.ai-setup-list{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--gray-700)}
 .ai-setup code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;background:var(--gray-100);border-radius:4px;padding:1px 5px;margin-right:6px;overflow-wrap:anywhere}
 .ai-msg.note{align-self:stretch;max-width:none;padding:0 4px;background:none;border:0;font-size:12px;color:var(--gray-500);text-align:center}
 @media print{.ai-setup{display:none!important}}
@@ -3144,7 +3143,6 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
    Clean? tick. Prefixes po / kit. */
 .po-unit{margin-left:5px;font-size:12px;font-weight:500;letter-spacing:0;color:var(--dz-ink-4)}
 .sup-tile-v .po-unit{font-size:13px}
-.sup-more-views.po-views-8{grid-template-columns:repeat(4,minmax(0,1fr))}
 /* PO lines: 11 columns; below 1240px they scroll sideways inside the card, as before */
 .sup-po{--min:1240px}
 .sup-po .c-po{width:70px}.sup-po .c-ven{width:13%}.sup-po .c-own{width:112px}.sup-po .c-wh{width:12%}.sup-po .c-date{width:96px}.sup-po .c-qty{width:76px}.sup-po .c-val{width:92px}.sup-po .c-st{width:186px}.sup-po .c-kit{width:88px}.sup-po .c-act{width:104px}
@@ -3177,7 +3175,6 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .kit-check:hover .kit-cb:disabled:checked+.kit-box{border-color:var(--dz-teal)}
 .kit-print{display:none}
 @media (max-width:640px){
-  .sup-more-views.po-views-8{grid-template-columns:repeat(2,minmax(0,1fr))}
   .sup-tbl.sup-po td.sup-status{order:1}
   .sup-tbl.sup-po td.sup-act{order:2}
   .sup-tbl.sup-po td.po-kit{text-align:left}
@@ -3873,6 +3870,14 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 }
 @media (max-width:359px){.sup-tiles.po-strip{grid-template-columns:minmax(0,1fr)}}
 /* 2v7:end e */
+/* 2v7:po-row */
+/* Purchase Orders, the second row of cards: as many columns as cards (up to 6; more go in two rows), each row filled
+   edge to edge like the row above (the cards of a shorter last row share its width). Tablet 3 a row, phone 2. */
+.sup-more-views.po-fill{display:flex;flex-wrap:wrap;gap:10px}
+.sup-more-views.po-fill>*{flex:1 1 calc((100% - (var(--po-cols,4) - 1)*10px)/var(--po-cols,4));min-width:0}
+@media (max-width:980px){.sup-more-views.po-fill>*{flex-basis:calc((100% - 20px)/3)}}
+@media (max-width:640px){.sup-more-views.po-fill>*{flex-basis:calc((100% - 10px)/2)}}
+/* 2v7:end po-row */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -4537,13 +4542,6 @@ details.data-check>summary{font-size:13px}
     <div class="ai-setup" id="ai-setup" hidden>
       <h3 id="ai-setup-title" tabindex="-1">Ask AI is not set up</h3>
       <p id="ai-setup-why">No AI provider has a key on this site yet.</p>
-      <p>To turn it on, IT adds one of these Cloudflare Pages secrets and redeploys:</p>
-      <ul class="ai-setup-list">
-        <li><code>ANTHROPIC_API_KEY</code> Claude (paid)</li>
-        <li><code>OPENAI_API_KEY</code> ChatGPT (paid)</li>
-        <li><code>GROQ_API_KEY</code> Groq (free tier)</li>
-        <li><code>OPENROUTER_API_KEY</code> OpenRouter (free models)</li>
-      </ul>
       <p>Steps: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs (docs/AI_ASSISTANT.md).">Ask AI guide</a>. Or connect your own AI app instead.</p>
       <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up Claude Desktop or another AI app to read your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
     </div>
@@ -9271,7 +9269,7 @@ function supPurchaseOrders(m){
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
     <div class="sup-tiles po-strip">${tiles.map(tileHtml).join('')}</div>
-    <div class="dz-stats sup-more-views${extraCount===8?' po-views-8':''}" role="group" aria-label="More purchase order views">${extraHtml}</div>
+    <div class="dz-stats sup-more-views po-fill" style="--po-cols:${extraCount<=6?extraCount:Math.ceil(extraCount/2)}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
     ${linesWrap}
     ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
@@ -9332,7 +9330,7 @@ function poSortRows(rows,{col,dir},{status,date,vendor},tie){
 // --- Kit Clean? (a tick per PO line) ---
 // Saved in the shared notes store like a note (rowOverrides[key].kitClean, stamped by / at, sent to
 // functions/api/notes.js; only true is kept). A tick changes no metric: the row and the two Kit cards change in place.
-const KIT_TILES={kitclean:['Kit Clean','boxCheck','var(--dz-teal)','var(--dz-teal)','ticked Kit Clean'],kitnotclean:['Kit Not Clean','box','var(--dz-amber)','var(--dz-amber-text)','not ticked Kit Clean yet']};
+const KIT_TILES={kitclean:['Kits Clean','boxCheck','var(--dz-teal)','var(--dz-teal)','ticked Kit Clean'],kitnotclean:['Kits Not Clean','box','var(--dz-amber)','var(--dz-amber-text)','not ticked Kit Clean yet']};
 function kitStatHtml(id,rows,sel){
   const [label,icon,ico,col,what]=KIT_TILES[id];
   const n=rows.length,docs=supDocs(rows),amt=rowOpenAmount(rows),pos=`${fmtNum(docs)} ${docs===1?'PO':'POs'}`;
@@ -10182,7 +10180,7 @@ function stgConnectCard(i){
       <div class="stg-setup-body">
         <ol class="misc-steps">
           ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
-          ${step(2,'Get the dashboard folder from IT.')}
+          ${step(2,'Get the dashboard folder from the GitHub repo.')}
           ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
         </ol>
         <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">claude_desktop_config.json</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>

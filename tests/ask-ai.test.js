@@ -262,8 +262,9 @@ test('not set up: no keys on the site, a host without /api/ai, or a file copy sh
   assert.equal(snapCalls.length, 0, 'a snapshot sends nothing anywhere');
   assert.equal(snap.els['ai-setup'].hidden, false);
   assert.match(snap.els['ai-setup-why'].textContent, /shared snapshot/);
-  // The markup lists every secret with plain instructions and a link to the guide.
-  for (const s of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY']) assert.match(HTML, new RegExp(`<li><code>${s}</code>`));
+  // The setup view links to the guide; the IT instructions (secret names, redeploy) are not shown (owner, 2v6.6).
+  const setupView = HTML.match(/<div class="ai-setup" id="ai-setup"[\s\S]*?<\/div>\s*<\/div>/)[0];
+  for (const s of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'Cloudflare Pages secrets']) assert.doesNotMatch(setupView, new RegExp(s));
   assert.match(HTML, /id="ai-setup"[\s\S]*?href="docs\/AI_ASSISTANT\.md"/);
 });
 
