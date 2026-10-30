@@ -210,3 +210,4 @@ unchecked); the PO At Risk card is twice as wide with its top four owners and th
 "Set your name in Settings" focuses the name picker again, clearing an Order Health card no longer scrolls the page.
 Settings > Pages & Display > Background: Blue (default), Lavender, Mint, Peach, Grey or White, each in light and dark.
 Smaller notification dots (gear, Upload, Settings card). The Shipping map is centred on Lacombe and the delivery dots.
+Purchase Orders: no as-of / open PO lines line in the page head (the export date is in the header).

@@ -11170,17 +11170,15 @@ function renderResults(){
 
   renderSidebar();
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
-  const openPoCount=activeTab==='purchaseorders'?((poData(m)||{}).poAllOpenRows||[]).length:0;
   const asOfShort=displayDate(reportAsOfDate||reportToday());
   const loaded=hasLoadedData();
   const headMeta=activeTab==='settings'?'Saved in this browser'
-    : activeTab==='metrics'?''  // no as-of line on the Metrics Timeline (the owner's ask); the export date is in the header
+    // No as-of line on the Metrics Timeline or Purchase Orders (the owner's ask); the export date is in the header.
+    : activeTab==='metrics'||activeTab==='purchaseorders'?''
     : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='shipping'?shippingHeadMeta()
-    // Each page counts what it is about: PO lines, supply / demand lines, or open sales-order lines; Build Risk shows
-    // its CTB report line count in its own bar.
-    : activeTab==='purchaseorders'
-    ? `as of ${asOfShort} · ${ohN(openPoCount,'open PO line')}`
+    // Each page counts what it is about: supply / demand lines, or open sales-order lines; Build Risk shows its CTB
+    // report line count in its own bar.
     : activeTab==='supplyweekly'||activeTab==='supplydemand'
     ? `as of ${asOfShort}${supplyDemandRows.length?` · ${ohN(supplyDemandRows.length,'supply / demand line')}`:''}`
     : activeTab==='buildrisk'
