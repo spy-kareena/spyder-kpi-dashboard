@@ -2338,14 +2338,14 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .hdr-gear,.hdr-theme{position:relative}
 .hdr-gear svg{width:17px;height:17px}
 .hdr-gear.on{color:var(--dz-ink-1);background:var(--dz-surface-2)}
-.hdr-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 2px var(--dz-page);pointer-events:none}
+.hdr-dot{position:absolute;top:7px;right:7px;width:5px;height:5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--dz-page);pointer-events:none}
 .hdr-dot.red{background:var(--dz-risk)}
 .hdr-dot.yellow{background:var(--dz-amber)}
 .hdr-theme .hdr-theme-ico{width:17px;height:17px}
 .hdr-theme.turn .hdr-theme-ico{animation:hdr-turn .45s cubic-bezier(.2,.75,.25,1) both}
 @keyframes hdr-turn{from{opacity:0;transform:rotate(-100deg) scale(.5)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.hdr-theme.turn .hdr-theme-ico{animation:none}}
-@media (forced-colors:active){.hdr-dot{forced-color-adjust:none;box-shadow:0 0 0 2px Canvas}}
+@media (forced-colors:active){.hdr-dot{forced-color-adjust:none;box-shadow:0 0 0 1.5px Canvas}}
 .dz-menu.hdr-pop{padding:14px 16px 16px}
 .hdr-pop-actions{flex-wrap:wrap}
 .hdr-pop-actions .dz-btn{flex:1 1 auto;padding:0 12px}
@@ -2361,7 +2361,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-dc{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:12px 40px;align-items:start}
 .stg-dc.solo{grid-template-columns:minmax(0,1fr)}
 .stg-ico-dot{position:relative}
-.stg-ico-dot .hdr-dot{top:-3px;right:-3px;width:8px;height:8px;box-shadow:0 0 0 2px var(--dz-surface)}
+.stg-ico-dot .hdr-dot{top:-2px;right:-2px;width:5px;height:5px;box-shadow:0 0 0 1.5px var(--dz-surface)}
 .stg-dc-sum{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:7px}
 .stg-dc-sum li{display:flex;align-items:baseline;gap:10px;font-size:13.5px;line-height:1.45;color:var(--dz-ink-1)}
 .stg-dc-sum li.note{color:var(--dz-ink-3)}
@@ -2765,7 +2765,7 @@ a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
 /* Header Upload files button (dot after an import with warnings or errors), drop-anywhere overlay and the Import drawer
    (prefix imp-; the drawer reuses the Ask AI sheet: .ai-panel, .ai-head, .ai-close) */
 .imp-hdr{position:relative}
-.imp-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px var(--dz-page-bg)}
+.imp-dot{position:absolute;top:7px;right:7px;width:5px;height:5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--dz-page-bg)}
 .imp-dot.amber{background:var(--dz-amber)}
 .imp-dot.red{background:var(--dz-risk)}
 .imp-red-text{color:var(--dz-risk-text)}
@@ -15629,8 +15629,12 @@ function renderShipMap(list){
   const {places,unplaced,placed}=shipMapPlaces(list);
   const hub=shipNE(SHIP_HUB.lon,SHIP_HUB.lat);
   const dots=places.map(p=>{const c=SHIP_PLACES[p.key];return {p,c,xy:shipNE(c.lon,c.lat),d:2*(4+Math.sqrt(p.n)*1.3)+2.5};});
-  // The design's fixed view (North America and Europe), grown to hold a dot that falls outside it.
-  let x0=0,y0=0,x1=SHIP_MAP.W,y1=SHIP_MAP.H;
+  // The design's view (SHIP_MAP.W x SHIP_MAP.H map units: North America and the Atlantic), centred on Lacombe and the
+  // dots so they sit in the middle of the card (owner, 2v7), grown to hold a dot that falls outside it.
+  const pts=[hub,...dots.map(d=>d.xy)];
+  const cx=(Math.min(...pts.map(q=>q[0]))+Math.max(...pts.map(q=>q[0])))/2;
+  const cy=(Math.min(...pts.map(q=>q[1]))+Math.max(...pts.map(q=>q[1])))/2;
+  let x0=cx-SHIP_MAP.W/2,x1=cx+SHIP_MAP.W/2,y0=cy-SHIP_MAP.H/2,y1=cy+SHIP_MAP.H/2;
   for(const {xy} of dots){x0=Math.min(x0,xy[0]-40);x1=Math.max(x1,xy[0]+40);y0=Math.min(y0,xy[1]-40);y1=Math.max(y1,xy[1]+40);}
   const vw=x1-x0,vh=y1-y0;
   const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;

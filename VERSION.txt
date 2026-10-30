@@ -209,3 +209,4 @@ right, each card with one or two short facts (next due date and carriers, how la
 unchecked); the PO At Risk card is twice as wide with its top four owners and their line counts on the right. QA fixes:
 "Set your name in Settings" focuses the name picker again, clearing an Order Health card no longer scrolls the page.
 Settings > Pages & Display > Background: Blue (default), Lavender, Mint, Peach, Grey or White, each in light and dark.
+Smaller notification dots (gear, Upload, Settings card). The Shipping map is centred on Lacombe and the delivery dots.
