@@ -184,3 +184,12 @@ click a customer to filter the page.
 load), Export / Import settings (a small JSON file, to move settings to another browser or share them; your name is not
 included), the real version on the About card, clearer Shipping demo wording, card colours on the new palette. Help texts
 (section tips and About these numbers) follow the target, tolerance and window set in Settings.
+2v6.5: Purchase Orders: PO lines start folded, every column sorts by its title, a Kit Clean? tick per line (shared for
+everyone through the notes store, functions/api/notes.js accepts kitClean), Kit Clean / Kit Not Clean cards, an Owner
+column, and PO At Risk: open PO lines expected after the earliest open sales-order ship date for the same item (lines),
+with a header bell listing them by PO owner (Email / Copy list / Show in PO lines) and one toast per load (Settings can
+turn it off). Order Health: No commit date counts only lines whose date is 1111-11-11; a No Commit override shows as its
+own reason. Shipping: Shipments sort by every column and filter by status and destination. White page, dark mode (avatar
+menu switch, Settings: light / dark / match system), bigger logo, upload button next to the avatar, no as-of on
+Metrics. Settings: theme and PO At Risk alerts. QA fixes: the page now loads in the test harness and MCP server (theme
+code), "+N new this week" lists the same lines it counts, the PO At Risk toast points at the bell, layout fixes.
