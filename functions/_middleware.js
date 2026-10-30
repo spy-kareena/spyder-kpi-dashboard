@@ -168,9 +168,9 @@ function loginPage(failed, status) {
     :root{--fg:#0f172a;--muted:#64748b;--line:rgba(15,23,42,.08);--accent:#5468ff;--ring:rgba(84,104,255,.22);--crit:#e0244f;--crit-bg:#fdeef1;
       --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
-    html{background:#eaf1fd}
-    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:#eaf1fd;color:var(--fg);-webkit-font-smoothing:antialiased}
-    .card{width:100%;max-width:400px;background:rgba(255,255,255,.75);border:1px solid #fff;border-radius:24px;padding:34px 30px 30px;box-shadow:0 10px 40px rgba(15,23,42,.06)}
+    html{background:#fff}
+    body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px 16px;font-family:var(--font);background:#fff;color:var(--fg);-webkit-font-smoothing:antialiased}
+    .card{width:100%;max-width:400px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:34px 30px 30px;box-shadow:0 1px 3px rgba(15,23,42,.04),0 10px 32px rgba(15,23,42,.06)}
     /* The logo is a transparent PNG (black ink only) */
     .logo{display:block;width:150px;height:auto;margin:0 0 28px -2px}
     h1{font-size:26px;font-weight:600;letter-spacing:-.02em;line-height:1.2}
