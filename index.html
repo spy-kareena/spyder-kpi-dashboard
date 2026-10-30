@@ -4431,11 +4431,57 @@ details.data-check>summary{font-size:13px}
 }
 @media print{.mo-reveal{animation:none!important}}
 /* 2v7:end motion */
+/* 2v7:bg */
+/* Page background choices (Settings > Pages & Display > Background, html[data-bg]). Blue is the gradient in 2v7:motion;
+   the others below, each in light and dark, with --dz-page set to a solid colour near the top of its blend. Screen only
+   (print stays white). */
+@media screen{
+  html[data-bg=lavender]:not([data-theme=dark]){--dz-page:#f1eefc;background-color:#f1eefc;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(139,92,246,.10) 0%,rgba(139,92,246,.05) 38%,rgba(139,92,246,.015) 62%,rgba(139,92,246,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(236,72,153,.07) 0%,rgba(236,72,153,.035) 40%,rgba(236,72,153,.01) 64%,rgba(236,72,153,0) 82%),
+    linear-gradient(180deg,#efebfc 0%,#f2effd 20%,#f5f3fd 45%,#f8f6fe 70%,#faf9fe 100%)}
+  html[data-theme=dark][data-bg=lavender]{--dz-page:#130f24;background-color:#130f24;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(139,92,246,.15) 0%,rgba(139,92,246,.07) 38%,rgba(139,92,246,.02) 62%,rgba(139,92,246,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(236,72,153,.06) 0%,rgba(236,72,153,.03) 40%,rgba(236,72,153,.01) 64%,rgba(236,72,153,0) 82%),
+    linear-gradient(180deg,#16112b 0%,#130f24 25%,#110d20 55%,#0e0b1b 100%)}
+  html[data-bg=mint]:not([data-theme=dark]){--dz-page:#eaf6f3;background-color:#eaf6f3;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(20,184,166,.10) 0%,rgba(20,184,166,.05) 38%,rgba(20,184,166,.015) 62%,rgba(20,184,166,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(56,189,248,.08) 0%,rgba(56,189,248,.04) 40%,rgba(56,189,248,.012) 64%,rgba(56,189,248,0) 82%),
+    linear-gradient(180deg,#e6f5f1 0%,#eaf6f3 20%,#eff8f6 45%,#f3faf9 70%,#f7fcfb 100%)}
+  html[data-theme=dark][data-bg=mint]{--dz-page:#0b1a1b;background-color:#0b1a1b;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(20,184,166,.12) 0%,rgba(20,184,166,.06) 38%,rgba(20,184,166,.018) 62%,rgba(20,184,166,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(56,189,248,.05) 0%,rgba(56,189,248,.025) 40%,rgba(56,189,248,.008) 64%,rgba(56,189,248,0) 82%),
+    linear-gradient(180deg,#0c1e1e 0%,#0b1a1b 25%,#0a1718 55%,#081314 100%)}
+  html[data-bg=peach]:not([data-theme=dark]){--dz-page:#fcf1ea;background-color:#fcf1ea;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(251,146,60,.09) 0%,rgba(251,146,60,.045) 38%,rgba(251,146,60,.014) 62%,rgba(251,146,60,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(244,114,182,.06) 0%,rgba(244,114,182,.03) 40%,rgba(244,114,182,.01) 64%,rgba(244,114,182,0) 82%),
+    linear-gradient(180deg,#fbeee5 0%,#fcf1ea 20%,#fdf4ef 45%,#fdf7f3 70%,#fefaf7 100%)}
+  html[data-theme=dark][data-bg=peach]{--dz-page:#1a120e;background-color:#1a120e;background-image:
+    radial-gradient(1100px 680px at 0% 0%,rgba(251,146,60,.09) 0%,rgba(251,146,60,.045) 38%,rgba(251,146,60,.014) 62%,rgba(251,146,60,0) 80%),
+    radial-gradient(1000px 640px at 100% 0%,rgba(244,114,182,.05) 0%,rgba(244,114,182,.025) 40%,rgba(244,114,182,.008) 64%,rgba(244,114,182,0) 82%),
+    linear-gradient(180deg,#1d140f 0%,#1a120e 25%,#160f0c 55%,#120c09 100%)}
+  html[data-bg=grey]:not([data-theme=dark]){--dz-page:#f2f4f7;background:#f2f4f7}
+  html[data-theme=dark][data-bg=grey]{--dz-page:#111318;background:#111318}
+  html[data-bg=white]:not([data-theme=dark]){--dz-page:#fff;background:#fff}
+  html[data-theme=dark][data-bg=white]{--dz-page:#0b1120;background:#0b1120}
+}
+/* The swatches: one round chip per choice, the picked one ringed in indigo; dark mode shows each choice's dark look */
+.stg-bgs{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.stg-bg{flex:none;width:30px;height:30px;padding:0;border:0;border-radius:50%;background:var(--sw);cursor:pointer;
+  box-shadow:inset 0 0 0 1px var(--dz-line-8),0 0 0 2px transparent;transition:box-shadow .16s ease,transform .16s ease}
+[data-theme=dark] .stg-bg{background:var(--sw-dark)}
+.stg-bg:hover:not(:disabled){transform:scale(1.08)}
+.stg-bg.on{box-shadow:inset 0 0 0 1px var(--dz-line-8),0 0 0 2px var(--dz-surface),0 0 0 4px var(--dz-indigo)}
+.stg-bg:disabled{cursor:default;opacity:.6}
+.stg-bg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:4px}
+@media (prefers-reduced-motion:reduce){.stg-bg{transition:none}.stg-bg:hover:not(:disabled){transform:none}}
+@media (forced-colors:active){.stg-bg{border:1px solid ButtonText}.stg-bg.on{outline:3px solid Highlight;outline-offset:2px}}
+/* 2v7:end bg */
 </style>
 </head>
 <body>
 <script id="thm-boot">/* Dark or light before the first paint, from the saved setting (applyTheme() takes over once the app runs) */
-(function(){try{var t=(JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{}).theme;if(t==='system')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';t=t==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();</script>
+(function(){try{var s=JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{};if(typeof s.background==='string'&&/^[a-z]+$/.test(s.background))document.documentElement.setAttribute('data-bg',s.background);var t=s.theme;if(t==='system')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';t=t==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();</script>
 <div class="app-shell">
   <div class="app-col">
   <header class="app-header" id="app-header"></header>
@@ -9691,12 +9737,26 @@ function supBuildRisk(m){
 // recompute them from the loaded rows, the same rows a file load leaves behind (no reload, nothing read again).
 var stgMemo; // the parsed store; undefined = not read yet (or changed in another tab)
 function stgKey(){return 'spyderKpiSettings';}
+// The page backgrounds Settings offers: [value, name, light swatch, dark swatch]. applyTheme() puts the value on <html>
+// as data-bg; the /* 2v7:bg */ CSS block draws each one in light and dark. A function, so it is ready before any setting
+// is read.
+function stgBackgrounds(){
+  return [
+    ['blue','Blue','linear-gradient(135deg,#c9d5ff,#d4ebfb 55%,#f3f7fe)','linear-gradient(135deg,#1b2350,#0c1324 60%,#0f2a33)'],
+    ['lavender','Lavender','linear-gradient(135deg,#dacdff,#f0d9f0 55%,#f8f6fe)','linear-gradient(135deg,#2a1d52,#120f24 60%,#2a1530)'],
+    ['mint','Mint','linear-gradient(135deg,#c0ebe0,#d2ebf7 55%,#f3faf9)','linear-gradient(135deg,#0f3a36,#0a1a1a 60%,#0f2a3a)'],
+    ['peach','Peach','linear-gradient(135deg,#fbd5bc,#f8d9e5 55%,#fdf6f2)','linear-gradient(135deg,#3d2416,#1a120d 60%,#33182a)'],
+    ['grey','Grey','#e7eaef','#1a1d24'],
+    ['white','White','#ffffff','#0b1120']
+  ];
+}
 function stgSpec(){
   const num=(lo,hi)=>v=>Number.isInteger(v)&&v>=lo&&v<=hi?v:undefined;
   const oneOf=list=>v=>list.includes(v)?v:undefined;
   const list=v=>Array.isArray(v)?stgCleanList(v):undefined;
   return {
     theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined},
+    background:{def:()=>'blue',check:oneOf(stgBackgrounds().map(b=>b[0]))},
     atRiskTarget:{def:()=>5,check:num(1,50)},
     toleranceDays:{def:()=>2,check:num(0,14)},
     horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
@@ -9775,7 +9835,7 @@ function stgSet(key,value){
 }
 function stgAfterChange(keys){
   stgSync();
-  if(keys.includes('theme'))applyTheme();
+  if(keys.includes('theme')||keys.includes('background'))applyTheme();
   if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
   // The Shipping page's own Show demo data / Show real shipments choice gives way to the new default.
   if(keys.includes('shipDemoDefault')&&typeof SHIP_DEMO_KEY==='string'){
@@ -10013,12 +10073,31 @@ function stgSetTheme(v){
   if(!stgSet('theme',v))return;
   if(typeof applyTheme==='function')applyTheme();
 }
+// Arrow keys move between the background swatches and pick the next one (a radio group).
+function stgBgKey(e){
+  const step={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];
+  if(!step)return;
+  e.preventDefault();
+  const list=stgBackgrounds().map(b=>b[0]);
+  const next=list[(list.indexOf(stgValue('background'))+step+list.length)%list.length];
+  stgSet('background',next);
+  const el=document.querySelector(`[data-focus-key="stg-bg-${next}"]`);
+  if(el)el.focus();
+}
 // Pages & Display: the colour theme, how line lists open and when the Import report shows.
 function stgPagesCard(dis,i){
   const seg=(key,items,label,fn=`stgSet('${key}',`)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`${fn}'${v}')`,attrs:dis})),{label,cls:'stg-seg'});
-  const keys=['theme','linesStart','importReport'];
+  const keys=['theme','background','linesStart','importReport'];
+  // Background: one round swatch per choice (a radio group; arrow keys move, like the other choices on this page).
+  const bgNow=stgValue('background'),bgs=stgBackgrounds();
+  const bgName=(bgs.find(b=>b[0]===bgNow)||bgs[0])[1];
+  const swatches=`<div class="stg-bgs" role="radiogroup" aria-label="Background">${bgs.map(([v,name,lightSw,darkSw])=>{
+    const on=v===bgNow;
+    return `<button type="button" role="radio" class="stg-bg${on?' on':''}" aria-checked="${on}" aria-label="${esc(name)}" tabindex="${on?0:-1}" data-focus-key="stg-bg-${v}" style="--sw:${lightSw};--sw-dark:${darkSw}" onclick="stgSet('background','${v}')" onkeydown="stgBgKey(event)"${dis}${tipAttr(name)}></button>`;
+  }).join('')}</div>`;
   const body=[
     stgRow('Theme',`Match system follows this device. Default light.`,seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
+    stgRow('Background',`The page behind the cards, in light and dark: ${esc(bgName)}. Default Blue.`,swatches),
     stgRow('Line lists start',`Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments. A list you open or fold keeps that choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
     stgRow('Import report',`After files load: a short message when all is well, or the full report every time. Default only with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
@@ -10684,6 +10763,12 @@ function thmChoice(){return thmSession||stgValue('theme')||'light';}
 function thmIsDark(){const c=thmChoice();return c==='dark'||(c==='system'&&thmSystemDark());}
 function applyTheme(){
   const t=thmIsDark()?'dark':'light',root=document.documentElement;
+  // The page background (Settings, Pages & Display): data-bg on <html>; a change while the page shows cross-fades.
+  const bg=typeof stgValue==='function'?stgValue('background'):'blue';
+  if(root&&root.dataset&&root.dataset.bg!==bg){
+    if(root.dataset.bg&&typeof moTransition==='function')moTransition(()=>{root.dataset.bg=bg;},true);
+    else root.dataset.bg=bg;
+  }
   const set=()=>{
     const now=thmIsDark()?'dark':'light';  // the choice when it applies (it may have changed back meanwhile)
     if(root&&root.dataset&&root.dataset.theme!==now)root.dataset.theme=now;

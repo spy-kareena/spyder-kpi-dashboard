@@ -208,3 +208,4 @@ Follow-up: the Dark mode icon sits next to the gear; Shipping shows the status c
 right, each card with one or two short facts (next due date and carriers, how late and who, on-time share, oldest
 unchecked); the PO At Risk card is twice as wide with its top four owners and their line counts on the right. QA fixes:
 "Set your name in Settings" focuses the name picker again, clearing an Order Health card no longer scrolls the page.
+Settings > Pages & Display > Background: Blue (default), Lavender, Mint, Peach, Grey or White, each in light and dark.
