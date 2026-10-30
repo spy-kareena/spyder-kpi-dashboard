@@ -61,7 +61,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   --sh-pop:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
   --dur:.16s;--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);
   --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
-  /* 2v6 design tokens (Claude Design redesign). The legacy tokens above stay until every page is restyled. */
+  /* 2v6 design tokens (the 2v6 redesign). The legacy tokens above stay until every page is restyled. */
   --dz-ink-1:#0f172a;--dz-ink-2:#334155;--dz-ink-3:#475569;--dz-ink-4:#64748b;--dz-ink-5:#94a3b8;--dz-ink-6:#cbd5e1;
   --dz-indigo:#5468ff;--dz-indigo-link:#3f57ff;--dz-indigo-hover:#2c3fd1;--dz-indigo-deep:#3346e0;--dz-indigo-bg:#eceffc;
   --dz-risk:#ff3d68;--dz-risk-text:#e0244f;--dz-risk-bg:#fdeef1;
@@ -859,7 +859,7 @@ button.trow.po-wh-cols{font-size:13px}
 /* A long press shows the tip on touch screens, so it should not also open the phone's link / copy menu */
 [data-tip]{-webkit-touch-callout:none}
 
-/* Section help is the title's tooltip (no ⓘ button): a titled heading with a tip shows the help cursor */
+/* Section help is the title's tooltip (no ⓘ button): a titled heading with a tip shows the help pointer */
 h2[data-tip]{cursor:help}
 .list-head{flex-wrap:wrap;row-gap:4px}
 .about-src{color:var(--gray-500)}
@@ -1767,7 +1767,7 @@ details.oh-more[open] .oh-more-less{display:inline}
   .fc-months{font-size:9.5px}
 }
 @media print{.fc-plot{height:140px}}
-/* ===== 2v6 foundation (Claude Design redesign): page shell, header, shared dz-* primitives =====
+/* ===== 2v6 foundation (the 2v6 redesign): page shell, header, shared dz-* primitives =====
    Tokens (--dz-*) are on :root at the top of this sheet. Page work adds CSS only inside its own marker pair at the very
    end of the sheet (/* 2v6:<area> */ ... /* 2v6:end <area> */), so parallel edits never touch the same lines.
    Reusable pieces: .dz-card .dz-grid .dz-span-N .dz-card-head .dz-title .dz-meta .dz-h1 .dz-big .dz-sub .dz-chip
@@ -2813,17 +2813,17 @@ a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
 .imp-issue .imp-missing code{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
 .imp-issue.warn .imp-missing code{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
 .imp-issue.info .imp-missing code{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
-.imp-claude{margin-top:10px}
-.imp-claude-btn{height:32px;padding:0 14px;color:var(--dz-ink-3)}
-.imp-claude-btn.on{border-color:rgba(84,104,255,.35);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
-.imp-claude-btn.on:hover{background:#e3e7fb}
-.imp-claude-btn[aria-disabled="true"]{opacity:.7;cursor:default;background:#fff}
-.imp-claude-btn[aria-disabled="true"]:hover{background:#fff}
+.imp-ai{margin-top:10px}
+.imp-ai-btn{height:32px;padding:0 14px;color:var(--dz-ink-3)}
+.imp-ai-btn.on{border-color:rgba(84,104,255,.35);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.imp-ai-btn.on:hover{background:#e3e7fb}
+.imp-ai-btn[aria-disabled="true"]{opacity:.7;cursor:default;background:#fff}
+.imp-ai-btn[aria-disabled="true"]:hover{background:#fff}
 .imp-box{display:grid;gap:8px;padding:12px 14px;border-radius:14px;background:var(--dz-fill-1)}
-.imp-box.claude{background:var(--dz-indigo-bg)}
+.imp-box.ans{background:var(--dz-indigo-bg)}
 .imp-box.bad{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
-.imp-claude-t{display:flex;gap:6px;align-items:center;color:var(--dz-indigo-deep)}
-.imp-claude-t b{font-weight:600}
+.imp-ai-t{display:flex;gap:6px;align-items:center;color:var(--dz-indigo-deep)}
+.imp-ai-t b{font-weight:600}
 .imp-small{font-size:11.5px;color:var(--dz-ink-4)}
 .imp-small a{color:var(--dz-indigo-link)}
 .imp-check{font-size:12px}
@@ -3730,7 +3730,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 :where([data-theme=dark]) .fc-max,:where([data-theme=dark]) .dz-filter.set,:where([data-theme=dark]) .dz-btn,
 :where([data-theme=dark]) .ohl-stat.sel,:where([data-theme=dark]) .ohl-stat.sel:hover,:where([data-theme=dark]) .ohl-tile.sel,:where([data-theme=dark]) .ohl-pt,
 :where([data-theme=dark]) .mwm-datebtn[aria-expanded="true"],:where([data-theme=dark]) .mwm-pt,:where([data-theme=dark]) .shp-tile.sel,:where([data-theme=dark]) .shp-dot,
-:where([data-theme=dark]) .imp-file,:where([data-theme=dark]) .imp-claude-btn[aria-disabled="true"],:where([data-theme=dark]) .imp-claude-btn[aria-disabled="true"]:hover,
+:where([data-theme=dark]) .imp-file,:where([data-theme=dark]) .imp-ai-btn[aria-disabled="true"],:where([data-theme=dark]) .imp-ai-btn[aria-disabled="true"]:hover,
 :where([data-theme=dark]) .imp-map,:where([data-theme=dark]) .sup-tile.sel,:where([data-theme=dark]) .sup-page button.dz-stat[aria-pressed="true"],
 :where([data-theme=dark]) .sup-toggle[aria-pressed="true"],:where([data-theme=dark]) .sup-page .note-btn,:where([data-theme=dark]) .sup-cmcard.sel,
 :where([data-theme=dark]) .data-check-pop .btn:where(:not(.btn-primary)),:where([data-theme=dark]) .snapshot-download-box .btn:where(:not(.btn-primary)),
@@ -3753,7 +3753,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 :where([data-theme=dark]) .ohl-wh{background:#2a2210;box-shadow:inset 0 0 0 1px rgba(255,181,61,.22)}
 :where([data-theme=dark]) .ohl-wh:hover{background:#33290f}
 :where([data-theme=dark]) .ohl-wh.sel{box-shadow:inset 0 0 0 2px rgba(255,181,61,.6)}
-:where([data-theme=dark]) .shp-chipbtn:hover,:where([data-theme=dark]) .imp-claude-btn.on:hover{background:#2b3570}
+:where([data-theme=dark]) .shp-chipbtn:hover,:where([data-theme=dark]) .imp-ai-btn.on:hover{background:#2b3570}
 :where([data-theme=dark]) .imp-sum.amber{background:var(--dz-amber-bg)}
 :where([data-theme=dark]) .stg-thumb{background:#f1f5f9}
 /* Lines drawn in ink at a fixed alpha */
@@ -4550,15 +4550,15 @@ details.data-check>summary{font-size:13px}
   <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
-    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The provider and model answering. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Pick the provider and model, and see what each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat is kept." onclick="aiToggle(false)">×</button></div>
+    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The provider and model answering. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Provider, model and what each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat is kept." onclick="aiToggle(false)">×</button></div>
     <div class="ai-settings" id="ai-settings" hidden>
-      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid (Claude, ChatGPT): billed to Spyder Controls, not used for training. Free (Groq, OpenRouter): tight limits, may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
+      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid (Anthropic, ChatGPT): billed to Spyder Controls, not used for training. Free (Groq, OpenRouter): tight limits, may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
       <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models answer better but are slower, and cost more on paid providers." onchange="aiSetModel(this.value)"></select></label>
       <div class="ai-notice" id="ai-notice" hidden>
         <p class="ai-notice-head"><span class="ai-tier" id="ai-tier"></span><strong>Where the data goes</strong></p>
         <p id="ai-notice-text"></p>
-        <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="This provider's own data terms (new tab).">Data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Providers, costs and data terms (docs/AI_ASSISTANT.md).">Ask AI guide</a></p>
-        <label class="ai-check" data-tip="Nothing is sent until this is ticked. Saved in this browser for each provider; untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
+        <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="This provider's own data terms (new tab).">Data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Providers, costs and data terms.">Ask AI guide</a></p>
+        <label class="ai-check" data-tip="Nothing is sent until this is ticked. Kept per provider in this browser; untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
       </div>
       <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Back to the chat with this provider and model." onclick="aiBackToChat()">Back to chat</button></div>
       <p class="ai-status" id="ai-settings-status" role="status"></p>
@@ -4566,8 +4566,8 @@ details.data-check>summary{font-size:13px}
     <div class="ai-setup" id="ai-setup" hidden>
       <h3 id="ai-setup-title" tabindex="-1">Ask AI is not set up</h3>
       <p id="ai-setup-why">No AI provider has a key on this site yet.</p>
-      <p>Steps: the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs (docs/AI_ASSISTANT.md).">Ask AI guide</a>. Or connect your own AI app instead.</p>
-      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up Claude Desktop or another AI app to read your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
+      <p>See the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs.">Ask AI guide</a>, or connect your own AI app.</p>
+      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up an AI app on your computer to read your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
     </div>
     <div class="ai-chat" id="ai-chat">
       <div class="ai-log" id="ai-log"></div>
@@ -5342,7 +5342,7 @@ function renderNoteCommentSelect(r){
     <option value="__custom">Custom comment…</option>
   </select>`;
 }
-// A ready-made comment goes into the note (on a new line when there is text already); Custom puts the cursor in the
+// A ready-made comment goes into the note (on a new line when there is text already); Custom puts the caret in the
 // note box. Notes save as they change, like typing.
 function pickNoteComment(sel){
   const key=sel.dataset.key,v=sel.value;
@@ -6441,9 +6441,9 @@ function isKpiExportHeaderSet(headers){
   return has(['documentnumber','sodocnum','ponumber','docnum'])&&has(['sourcetype','doctype','ordertype','kpiarea','duedate','lineduedate','headerduedate']);
 }
 // --- Import report (2v6): the header's Upload files button, dropping files anywhere, a report per file (what
-// happened, how to fix it) and Fix with Claude for a file whose columns the app does not recognise. handleFiles
+// happened, how to fix it) and Fix with AI for a file whose columns the app does not recognise. handleFiles
 // tells this block what it found on each run (impBegin / impFinish); the parsing rules stay as they are. Fix with
-// Claude only renames the header row of the rows already read and loads the result (as CSV) through handleFiles again.
+// AI only renames the header row of the rows already read and loads the result (as CSV) through handleFiles again.
 const IMP_ACCEPT='.xlsx,.xls,.csv,.txt,.tsv';
 const IMP_KPI_QUERY='queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql';
 // The files the app reads, with the headers each reader looks for ([header, normalized spellings it accepts, what it
@@ -6522,8 +6522,8 @@ const IMP_KINDS=[
   ],required:[['six or more month columns'],['In-Active (or the word Forecast)']]}
 ];
 const impKind=id=>IMP_KINDS.find(k=>k.id===id)||null;
-// One import run (set by handleFiles) and the report the panel shows; claude holds Fix with Claude state per file.
-const impState={report:null,busy:false,open:false,opener:'',drag:0,claude:new Map(),statusAsked:false};
+// One import run (set by handleFiles) and the report the panel shows; ai holds Fix with AI state per file.
+const impState={report:null,busy:false,open:false,opener:'',drag:0,ai:new Map(),statusAsked:false};
 // Files made by Apply (renamed header row) -> what was renamed, so the report can say so.
 const impMapped=new WeakMap();
 function impBegin(files,valid,{adding=false,restoring=false,hadReport=false,previousFiles=[]}={}){
@@ -6537,7 +6537,7 @@ function impFinish(imp,error){
   try{
     imp.error=error||'';
     impState.report=impBuildReport(imp);
-    impState.claude=new Map();
+    impState.ai=new Map();
     renderSidebar();
     if(imp.restoring)return false;
     const r=impState.report;
@@ -6679,9 +6679,9 @@ function impBuildReport(imp){
       issue('error',near
         ?`Its columns do not match any export the app reads. It looks closest to a ${near.label}, which needs these columns:`
         :'None of its columns match an export the app reads (a SAP KPI export, supply / demand snapshot, Clear To Build or Logican sheet).',
-        near?[IMP_FIX_SOURCE[near.id](),'Or rename those columns in the file and upload it again, or let Claude match them below.']
-          :['Check it is the right file: the KPI query export, the supply / demand snapshot, the Clear To Build workbook or a Logican sheet tab.','If it is, let Claude match its columns below.'],
-        {missing,claude:true});
+        near?[IMP_FIX_SOURCE[near.id](),'Or rename those columns and upload again, or use Fix with AI below.']
+          :['Check it is the right file: the KPI query export, the supply / demand snapshot, the Clear To Build workbook or a Logican sheet tab.','If it is, use Fix with AI below.'],
+        {missing,ai:true});
       return f;
     }
     f.kindLabel=e.kind==='kpi'?'SAP KPI export':e.kind==='sd'?'Supply / demand snapshot':e.kind==='ctb'?'Clear To Build':f.kindLabel;
@@ -6702,11 +6702,11 @@ function impBuildReport(imp){
       issue('warn',`Exported ${impDay(f.exportDate)}, before the report date (${impDay(reportAsOfDate)}${other}). Both are counted, so its lines may be out of date.`,
         ['Export both files again on the same day so the numbers line up.','Or load only the newest with New file.']);
     }
-    // ExportDate only matters when no other file gives the report its date. After Fix with Claude the gaps are a note.
+    // ExportDate only matters when no other file gives the report its date. After Fix with AI the gaps are a note.
     const gaps=impKeyGaps(e.kind,f.headers).filter(([h])=>h!=='ExportDate'||!reportAsOfDate);
     if(gaps.length){
-      issue(f.mapped?'info':'warn',`${f.mapped?'Read with the column names Claude suggested':`Read as a ${f.kindLabel}`}, but some columns the pages use are missing: ${gaps.map(([h,,effect])=>`without ${h}, ${effect}`).join('; ')}.`,
-        f.mapped?[IMP_FIX_SOURCE[e.kind]()]:[IMP_FIX_SOURCE[e.kind](),'Or rename the columns in the file, or let Claude match them below.'],{missing:gaps.map(([h])=>h),claude:!f.mapped});
+      issue(f.mapped?'info':'warn',`${f.mapped?'Read with the AI\'s column names':`Read as a ${f.kindLabel}`}, but some columns the pages use are missing: ${gaps.map(([h,,effect])=>`without ${h}, ${effect}`).join('; ')}.`,
+        f.mapped?[IMP_FIX_SOURCE[e.kind]()]:[IMP_FIX_SOURCE[e.kind](),'Or rename the columns, or use Fix with AI below.'],{missing:gaps.map(([h])=>h),ai:!f.mapped});
     }
     return f;
   });
@@ -6830,7 +6830,7 @@ function impClose(refocus=true){
   const panel=document.getElementById('imp-panel');
   impState.open=false;
   if(panel)panel.hidden=true;
-  impState.claude.forEach(s=>{if(s.controller)s.controller.abort();});
+  impState.ai.forEach(s=>{if(s.controller)s.controller.abort();});
   if(!refocus)return;
   const back=(impState.opener&&document.querySelector(`[data-focus-key="${impState.opener.replace(/["\\]/g,'\\$&')}"]`))||document.getElementById('hdr-upload');
   if(back&&back.focus)back.focus({preventScroll:true});
@@ -6858,7 +6858,7 @@ function impRender(){
   const others=r.readError?r.files.filter(f=>f.file!==r.readError.file&&f.status!=='error').length:0;
   const failFix=!r.failed?'':r.readError?'Remove or re-save that file, then upload again.'
     :/Logican sheet adds to a SAP export/.test(r.error)?'Upload the SAP KPI export too; several files at once is fine.'
-    :/does not look like a KPI export/.test(r.error)?'See the file below: export it again, or let Claude match its columns.'
+    :/does not look like a KPI export/.test(r.error)?'See the file below: export it again, or use Fix with AI.'
     :/No rows found/.test(r.error)?'Check the files have data, then upload them again.':'Check the files below, then upload them again.';
   const head=r.failed
     ?`<div class="imp-sum red" role="alert"><span class="imp-sum-ico" style="--ico:${IMP_ICO.error}">${dzIconSvg('alert')}</span><div><p class="imp-sum-t">${r.hadReport?'Nothing new was loaded':'Nothing was loaded'}</p><p>${esc(`${r.error}${/[.!?)]$/.test(r.error)?'':'.'}`)}${r.hadReport?' The report on screen is unchanged.':''}</p><p class="imp-sum-fix"><b>How to fix:</b> ${esc(failFix)}</p>${others?`<div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-retry" onclick="impRetryWithout()"${tipAttr('Load the other files now, without the one that could not be opened.')}>Load the other ${impCount(others,'file')}</button></div>`:''}</div></div>`
@@ -6879,53 +6879,53 @@ function impFileHtml(f){
   const [chipTone,chipText]=IMP_TONE[f.status];
   const rows=f.rows===null?'':impCount(f.rows,f.rowWord);
   const meta=[f.kindLabel,rows,f.meta,f.earlier?'loaded earlier':''].filter(Boolean).join(' · ');
-  const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(`Renamed with Claude before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with Claude: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
-  const issues=f.issues.map(x=>`<div class="imp-issue ${x.tone}"><p class="imp-lbl">${x.tone==='info'?'Good to know':'What happened'}</p><p>${esc(x.what)}</p>${x.missing&&x.missing.length?`<p class="imp-missing">${x.missing.map(m=>`<code>${esc(m)}</code>`).join('')}</p>`:''}<p class="imp-lbl">${x.tone==='info'?'To add them':'How to fix'}</p><ol class="imp-fix">${x.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${x.claude?impClaudeHtml(f):''}</div>`).join('');
+  const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(`Renamed by the AI before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with AI: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
+  const issues=f.issues.map(x=>`<div class="imp-issue ${x.tone}"><p class="imp-lbl">${x.tone==='info'?'Good to know':'What happened'}</p><p>${esc(x.what)}</p>${x.missing&&x.missing.length?`<p class="imp-missing">${x.missing.map(m=>`<code>${esc(m)}</code>`).join('')}</p>`:''}<p class="imp-lbl">${x.tone==='info'?'To add them':'How to fix'}</p><ol class="imp-fix">${x.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${x.ai?impAiHtml(f):''}</div>`).join('');
   return `<section class="imp-file ${f.status}" aria-label="${esc(`${f.name}: ${chipText}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[f.status]}">${dzIconSvg('file')}</span><div class="imp-file-main"><p class="imp-name" title="${esc(f.name)}">${esc(f.name)}</p><p class="imp-meta">${esc(meta)}</p></div>${dzChip(chipText,chipTone)}</div>${mapped}${issues}</section>`;
 }
 
-// --- Fix with Claude: the header row and 5 sample rows go to the site's AI service (POST /api/ai/chat, Claude,
+// --- Fix with AI: the header row and 5 sample rows go to the site's AI service (POST /api/ai/chat, Anthropic,
 // the provider's default model) only on a click and with the same per-provider consent as Ask AI. The answer must be
 // strict JSON naming a known kind and only known headers; Apply renames those columns and loads the file again. ---
 const IMP_SPARK='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg>';
-function impClaude(){
-  if(isSnapshotView)return {ok:false,why:'A shared snapshot has no server for Claude. Open the hosted dashboard to use it.'};
+function impAi(){
+  if(isSnapshotView)return {ok:false,why:'Not in a shared snapshot. Open the hosted dashboard.'};
   // The same status Ask AI uses (GET /api/ai/status); asked once, when a file first needs it.
   if(!aiState.status&&!aiState.statusError){
     if(!impState.statusAsked){impState.statusAsked=true;aiCheckStatus().then(impRender,impRender);}
-    if(!aiState.status)return {ok:false,checking:true,why:'Checking whether this site has Claude set up…'};
+    if(!aiState.status)return {ok:false,checking:true,why:'Checking this site…'};
   }
   if(aiState.statusError)return {ok:false,why:aiState.statusError};
   const p=aiConfigured().find(x=>x.id==='anthropic');
-  if(!p)return {ok:false,why:aiState.status&&aiState.status.hosted?'Claude is not set up on this site yet: whoever runs it adds the ANTHROPIC_API_KEY secret (docs/AI_ASSISTANT.md).':'Claude needs the hosted site: this copy runs without the server that holds the key.'};
+  if(!p)return {ok:false,why:aiState.status&&aiState.status.hosted?'Not set up on this site yet.':'Needs the hosted site.'};
   return {ok:true,p,model:p.models.includes(p.defaultModel)?p.defaultModel:p.models[0]};
 }
-function impClaudeHtml(f){
-  const a=impClaude(),st=impState.claude.get(f.file)||{},i=f.i;
-  const sendTip='Sends only this file\'s name, its header row and its first 5 rows to Claude, which suggests which column is which. Nothing changes until you click Apply.';
-  if(!a.ok)return `<div class="imp-claude"><button type="button" class="dz-btn imp-claude-btn" data-focus-key="imp-claude-${i}" aria-disabled="true"${tipAttr(`${a.why} ${a.checking?'':'The steps above work without it.'}`)}>${IMP_SPARK}${a.checking?'Fix with Claude…':'Fix with Claude (available on the hosted site)'}</button></div>`;
+function impAiHtml(f){
+  const a=impAi(),st=impState.ai.get(f.file)||{},i=f.i;
+  const sendTip='Sends only the file name, header row and first 5 rows to the AI to match the columns. Nothing changes until you click Apply.';
+  if(!a.ok)return `<div class="imp-ai"><button type="button" class="dz-btn imp-ai-btn" data-focus-key="imp-ai-${i}" aria-disabled="true"${tipAttr(`${a.why} ${a.checking?'':'The steps above work without it.'}`)}>${IMP_SPARK}${a.checking?'Fix with AI…':'Fix with AI (hosted site only)'}</button></div>`;
   if(st.step==='consent'){
     const ok=aiConsented('anthropic');
-    return `<div class="imp-claude imp-box"><p><b>Fix with Claude</b> sends only this file's name, its header row and its first 5 rows to Claude.</p>${a.p.dataNotice?`<p class="imp-small">${esc(a.p.dataNotice)}${/^https:\/\//.test(String(a.p.termsUrl||''))?` <a href="${esc(a.p.termsUrl)}" target="_blank" rel="noopener noreferrer">Data terms</a>`:''}</p>`:''}<label class="ai-check imp-check"><input type="checkbox" data-focus-key="imp-consent-${i}"${ok?' checked':''} onchange="impSetConsent(this.checked)"> <span>Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to Claude.</span></label><div class="imp-actions"><button type="button" class="dz-btn primary" data-focus-key="imp-send-${i}" onclick="impClaudeSend(${i})"${ok?'':' disabled'}${tipAttr(sendTip)}>${IMP_SPARK}Send to Claude</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
+    return `<div class="imp-ai imp-box"><p><b>Fix with AI</b> sends only the file name, header row and first 5 rows to ${esc(a.p.short)}.</p>${a.p.dataNotice?`<p class="imp-small">${esc(a.p.dataNotice)}${/^https:\/\//.test(String(a.p.termsUrl||''))?` <a href="${esc(a.p.termsUrl)}" target="_blank" rel="noopener noreferrer">Data terms</a>`:''}</p>`:''}<label class="ai-check imp-check"><input type="checkbox" data-focus-key="imp-consent-${i}"${ok?' checked':''} onchange="impSetConsent(this.checked)"> <span>Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to ${esc(a.p.short)}.</span></label><div class="imp-actions"><button type="button" class="dz-btn primary" data-focus-key="imp-send-${i}" onclick="impAiSend(${i})"${ok?'':' disabled'}${tipAttr(sendTip)}>${IMP_SPARK}Send</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impAiCancel(${i})">Cancel</button></div></div>`;
   }
-  if(st.step==='busy')return `<div class="imp-claude imp-box" role="status"><p class="imp-busy"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Claude is reading the header row…</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
-  if(st.step==='error')return `<div class="imp-claude imp-box bad" role="alert"><p>${esc(st.message)}</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-claude-${i}" onclick="impClaudeStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Try again</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">Cancel</button></div></div>`;
+  if(st.step==='busy')return `<div class="imp-ai imp-box" role="status"><p class="imp-busy"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Reading the header row…</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impAiCancel(${i})">Cancel</button></div></div>`;
+  if(st.step==='error')return `<div class="imp-ai imp-box bad" role="alert"><p>${esc(st.message)}</p><div class="imp-actions"><button type="button" class="dz-btn" data-focus-key="imp-ai-${i}" onclick="impAiStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Try again</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impAiCancel(${i})">Cancel</button></div></div>`;
   if(st.step==='proposal'){
     const p=st.proposal,k=impKind(p.kind);
     const table=p.pairs.length?`<div class="imp-map" role="table" aria-label="Proposed column names"><div class="imp-map-r imp-map-h" role="row"><span role="columnheader">Their column</span><span aria-hidden="true"></span><span role="columnheader">Our field</span></div>${p.pairs.map(([a,b])=>`<div class="imp-map-r" role="row"><span role="cell">${esc(a)}</span><span class="imp-arrow" aria-hidden="true">→</span><span role="cell"><code>${esc(b)}</code></span></div>`).join('')}</div>`:'';
     const can=p.pairs.length&&!p.missing.length&&p.kind!=='unknown';
-    return `<div class="imp-claude imp-box claude"><p class="imp-claude-t">${IMP_SPARK}<b>Claude:</b> ${k?esc(k.label):'Not a file the app reads'}</p>${p.explanation?`<p>${esc(p.explanation)}</p>`:''}${table}${p.dropped?`<p class="imp-small">${impCount(p.dropped,'suggestion')} left out: ${p.dropped===1?'it names':'they name'} a column the file does not have or a field the app does not read.</p>`:''}${p.missing.length?`<p class="imp-small imp-red-text">Even with these names the file would still miss: ${esc(p.missing.join(', '))}.</p>`:''}${!can&&p.fix?`<p class="imp-small"><b>What to do:</b> ${esc(p.fix)}</p>`:''}<div class="imp-actions">${can?`<button type="button" class="dz-btn primary" data-focus-key="imp-apply-${i}" onclick="impApply(${i})"${tipAttr('Rename these columns and read the file again. The file on your computer is not changed.')}>Apply</button>`:''}<button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impClaudeCancel(${i})">${can?'Cancel':'Close'}</button></div><p class="imp-small">Only the header row and 5 sample rows were sent.</p></div>`;
+    return `<div class="imp-ai imp-box ans"><p class="imp-ai-t">${IMP_SPARK}<b>AI:</b> ${k?esc(k.label):'Not a file the app reads'}</p>${p.explanation?`<p>${esc(p.explanation)}</p>`:''}${table}${p.dropped?`<p class="imp-small">${impCount(p.dropped,'suggestion')} left out: ${p.dropped===1?'it names':'they name'} a column the file does not have or a field the app does not read.</p>`:''}${p.missing.length?`<p class="imp-small imp-red-text">Even with these names the file would still miss: ${esc(p.missing.join(', '))}.</p>`:''}${!can&&p.fix?`<p class="imp-small"><b>What to do:</b> ${esc(p.fix)}</p>`:''}<div class="imp-actions">${can?`<button type="button" class="dz-btn primary" data-focus-key="imp-apply-${i}" onclick="impApply(${i})"${tipAttr('Rename these columns and read the file again. The file on your computer is not changed.')}>Apply</button>`:''}<button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impAiCancel(${i})">${can?'Cancel':'Close'}</button></div><p class="imp-small">Only the header row and 5 sample rows were sent.</p></div>`;
   }
-  return `<div class="imp-claude"><button type="button" class="dz-btn imp-claude-btn on" data-focus-key="imp-claude-${i}" onclick="impClaudeStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Fix with Claude</button></div>`;
+  return `<div class="imp-ai"><button type="button" class="dz-btn imp-ai-btn on" data-focus-key="imp-ai-${i}" onclick="impAiStart(${i})"${tipAttr(sendTip)}>${IMP_SPARK}Fix with AI</button></div>`;
 }
 const impFileAt=i=>impState.report&&impState.report.files[i]||null;
-function impClaudeStart(i){
+function impAiStart(i){
   const f=impFileAt(i);
-  if(!f||!impClaude().ok)return;
-  if(!aiConsented('anthropic')){impState.claude.set(f.file,{step:'consent'});impRender();const box=document.querySelector(`[data-focus-key="imp-consent-${i}"]`);if(box)box.focus();return;}
-  impClaudeSend(i);
+  if(!f||!impAi().ok)return;
+  if(!aiConsented('anthropic')){impState.ai.set(f.file,{step:'consent'});impRender();const box=document.querySelector(`[data-focus-key="imp-consent-${i}"]`);if(box)box.focus();return;}
+  impAiSend(i);
 }
-// The same consent Ask AI keeps for Claude (one tick allows both).
+// The same consent Ask AI keeps for Anthropic (one tick allows both).
 function impSetConsent(on){
   const all=aiReadJson(AI_CONSENT_STORE);
   if(on)all.anthropic=new Date().toISOString().slice(0,10);else delete all.anthropic;
@@ -6933,14 +6933,14 @@ function impSetConsent(on){
   try{aiSyncSettings();}catch(err){}
   impRender();
 }
-function impClaudeCancel(i){
+function impAiCancel(i){
   const f=impFileAt(i);
   if(!f)return;
-  const st=impState.claude.get(f.file);
+  const st=impState.ai.get(f.file);
   if(st&&st.controller)st.controller.abort();
-  impState.claude.delete(f.file);
+  impState.ai.delete(f.file);
   impRender();
-  const b=document.querySelector(`[data-focus-key="imp-claude-${i}"]`);
+  const b=document.querySelector(`[data-focus-key="imp-ai-${i}"]`);
   if(b)b.focus();
 }
 const IMP_SYSTEM=`You help an operations KPI dashboard read a spreadsheet whose columns it did not recognise. You get the file name, its header row, up to 5 sample rows and the file kinds the dashboard reads, each with the field headers it expects.
@@ -6948,39 +6948,39 @@ Decide which kind the file is and which of its columns holds each field, judging
 Answer with ONLY one JSON object and no other text:
 {"kind": "kpi" | "sd" | "ctb" | "logican-open" | "logican-forecast" | "unknown", "mapping": {"<their header, exactly as given>": "<the dashboard field header, exactly as listed>"}, "explanation": "<one plain sentence for an operations user>", "fix": "<what the user should do if renaming columns is not enough; one or two short sentences, or empty>"}
 Rules: map only columns you are confident about; each dashboard field at most once; never invent headers; leave out columns that already use an accepted header; for logican-forecast a month column maps to a heading like "Nov 2026"; if the file is none of these kinds, answer "unknown" with an empty mapping and say in "fix" what file is needed.`;
-function impClaudeQuestion(f){
+function impAiQuestion(f){
   const read=fileReadCache.get(f.file);
   const keys=impHeaders(read.rows).slice(0,80);
   const sample=read.rows.slice(0,5).map(r=>keys.map(k=>impCut(r[k])));
   const kinds=IMP_KINDS.map(k=>({kind:k.id,name:k.label,needs:k.required.map(([label])=>label),fields:k.fields.map(([header,aliases,meaning])=>({header,...(aliases.length?{also_accepted:aliases}:{}),meaning}))}));
   return `File name: ${impCut(f.name,120)}\n\nHeader row and first ${sample.length} data rows (JSON):\n${JSON.stringify({headers:keys.map(k=>impCut(k,80)),rows:sample})}\n\nFile kinds the dashboard reads (also_accepted lists spellings it already reads, lower case without spaces or punctuation):\n${JSON.stringify(kinds)}`;
 }
-async function impClaudeSend(i){
-  const f=impFileAt(i),a=impClaude();
+async function impAiSend(i){
+  const f=impFileAt(i),a=impAi();
   if(!f||!a.ok)return;
-  if(!aiConsented('anthropic')){impClaudeStart(i);return;}
+  if(!aiConsented('anthropic')){impAiStart(i);return;}
   const report=impState.report,controller=typeof AbortController==='function'?new AbortController():null;
-  impState.claude.set(f.file,{step:'busy',controller});
+  impState.ai.set(f.file,{step:'busy',controller});
   impRender();
   let next;
   try{
-    const data=await aiPost({provider:'anthropic',model:a.model,system:IMP_SYSTEM,messages:[{role:'user',content:impClaudeQuestion(f)}]},controller&&controller.signal);
-    if(data.stop==='refusal')throw aiFail('Claude declined to map this file. Use the steps above instead.');
+    const data=await aiPost({provider:'anthropic',model:a.model,system:IMP_SYSTEM,messages:[{role:'user',content:impAiQuestion(f)}]},controller&&controller.signal);
+    if(data.stop==='refusal')throw aiFail('The AI declined to match this file. Use the steps above.');
     next={step:'proposal',proposal:impParseProposal(data.text,f)};
   }catch(err){
     if(err&&err.name==='AbortError')return;
     next={step:'error',message:aiErrorText(err)};
   }
-  if(impState.report!==report||!impState.claude.has(f.file))return;
-  impState.claude.set(f.file,next);
+  if(impState.report!==report||!impState.ai.has(f.file))return;
+  impState.ai.set(f.file,next);
   impRender();
   const go=document.querySelector(`[data-focus-key="imp-apply-${i}"]`)||document.querySelector(`[data-focus-key="imp-cancel-${i}"]`);
   if(go&&impState.open)go.focus({preventScroll:true});
 }
-// Strict check of Claude's answer: one JSON object, a known kind, sources that are this file's headers, targets that
+// Strict check of the AI's answer: one JSON object, a known kind, sources that are this file's headers, targets that
 // are headers the app reads for that kind, and no target named twice. Anything else is not used.
 function impParseProposal(text,f){
-  const bad=()=>aiFail('Claude\'s answer was not in the expected form, so it was not used. Try again.');
+  const bad=()=>aiFail('The AI\'s answer was not usable. Try again.');
   const s=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
   const from=s.indexOf('{'),to=s.lastIndexOf('}');
   if(from<0||to<from)throw bad();
@@ -7001,7 +7001,7 @@ function impParseProposal(text,f){
     if(!field){dropped++;continue;}
     const target=field[0]==='<month heading>'?impCut(tgt,20):field[0];
     const key=k.cm?cmHead(target):normalizeHeader(target);
-    if(used.has(key))throw aiFail(`Claude matched two columns to ${target}, so the answer was not used. Try again.`);
+    if(used.has(key))throw aiFail(`The AI matched two columns to ${target}, so it was not used. Try again.`);
     used.add(key);
     // Another column already holds that field: renaming this one too would give the reader two.
     if(headers.some(h=>h!==source&&impFieldOf(k,h)&&impFieldOf(k,h)[0]===field[0]&&field[0]!=='<month heading>')){dropped++;continue;}
@@ -7019,7 +7019,7 @@ function impParseProposal(text,f){
 function impCsvField(v){const s=String(v??'');return /[",\r\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}
 function impApply(i){
   const r=impState.report,f=impFileAt(i);
-  const st=f&&impState.claude.get(f.file);
+  const st=f&&impState.ai.get(f.file);
   if(impState.busy||!f||!st||st.step!=='proposal'||!st.proposal.pairs.length||st.proposal.missing.length)return;
   const read=fileReadCache.get(f.file);
   if(!read||!read.rows.length)return;
@@ -7027,7 +7027,7 @@ function impApply(i){
   const lines=[keys.map(k=>impCsvField(names.get(k)||k)).join(','),...read.rows.map(row=>keys.map(k=>impCsvField(row[k])).join(','))];
   const file=new File([`sep=,\r\n${lines.join('\r\n')}\r\n`],f.file.name,{type:'text/csv',lastModified:f.file.lastModified||Date.now()});
   impMapped.set(file,{pairs:st.proposal.pairs,kind:st.proposal.kind});
-  impState.claude.delete(f.file);
+  impState.ai.delete(f.file);
   handleFiles(r.files.map(x=>x.file===f.file?file:x.file),{adding:r.adding});
 }
 // After a file that could not be opened stopped the load: load the others now.
@@ -8533,18 +8533,19 @@ function aiRunTool(name,args){
     return out&&typeof out==='object'&&!Array.isArray(out)?out:{result:out};
   }catch(err){return {error:String(err&&err.message||err)};}
 }
-// --- Stream C: Ask AI with four providers (Claude, ChatGPT, Groq, OpenRouter) through /api/ai ---
+// --- Stream C: Ask AI with four providers (Anthropic, ChatGPT, Groq, OpenRouter) through /api/ai ---
 // The site's server holds the AI keys (functions/api/ai/[[path]].js); this page never sees them. The panel lists
 // the providers the site has set up, grouped Paid / Free, asks for consent per provider before anything is sent,
 // and runs the model's tool calls here with aiRunTool, so answers use the same numbers as the pages.
-// Claude speaks the Anthropic dialect (tool_use / tool_result blocks); ChatGPT, Groq and OpenRouter speak the
+// Anthropic speaks its own dialect (tool_use / tool_result blocks); ChatGPT, Groq and OpenRouter speak the
 // OpenAI dialect (tool_calls / role "tool" messages). Setup, costs and data terms: docs/AI_ASSISTANT.md.
 const AI_API='/api/ai';
 const AI_MAX_ROUNDS=8; // model turns per question; the last one has to answer without more lookups
 const AI_CONSENT_STORE='spyderKpiAiConsentV2',AI_CHOICE_STORE='spyderKpiAiChoiceV2';
-// Names and secrets for the "not set up" view and before the site has answered; the site's status adds the rest.
+// Names (always these, whatever the site's status says) and secrets for the "not set up" view and before the site
+// has answered; the site's status adds the rest.
 const AI_PROVIDER_INFO={
-  anthropic:{id:'anthropic',short:'Claude',name:'Claude (Anthropic)',tier:'paid',dialect:'anthropic',secret:'ANTHROPIC_API_KEY'},
+  anthropic:{id:'anthropic',short:'Anthropic',name:'Anthropic',tier:'paid',dialect:'anthropic',secret:'ANTHROPIC_API_KEY'},
   openai:{id:'openai',short:'ChatGPT',name:'ChatGPT (OpenAI)',tier:'paid',dialect:'openai',secret:'OPENAI_API_KEY'},
   groq:{id:'groq',short:'Groq',name:'Groq',tier:'free',dialect:'openai',secret:'GROQ_API_KEY'},
   openrouter:{id:'openrouter',short:'OpenRouter',name:'OpenRouter (free models)',tier:'free',dialect:'openai',secret:'OPENROUTER_API_KEY'}
@@ -8570,17 +8571,23 @@ function aiSet(key,value,kind){try{const s=aiStorage(kind);if(value)s.setItem(ke
 // Versions 1v2-1v8 kept a personal Gemini key and a Google consent in the browser; neither is used any more.
 ['spyderKpiGeminiKeyV1','spyderKpiAiConsentV1','spyderKpiAiModelV1'].forEach(k=>{aiSet(k,'');aiSet(k,'','session');});
 function aiReadJson(key){try{const v=JSON.parse(aiGet(key)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}}
-// Consent is kept per provider ({anthropic:'2026-10-09', ...}): agreeing to Claude's terms does not allow Groq.
+// Consent is kept per provider ({anthropic:'2026-10-09', ...}): agreeing to Anthropic's terms does not allow Groq.
 const aiConsented=id=>!!(id&&aiReadJson(AI_CONSENT_STORE)[id]);
 function aiFocus(target){const el=typeof target==='string'?aiEl(target):target;if(el&&el.focus)el.focus();}
 
 // --- Providers and models (from GET /api/ai/status) ---
 // A shared snapshot never asks a site for AI: wherever the file is opened from, that site does not hold the keys.
 const aiHosted=()=>!isSnapshotView&&/^https?:$/.test(String(location.protocol||''));
-function aiProviders(){return ((aiState.status&&aiState.status.providers)||[]).filter(p=>p&&AI_PROVIDER_INFO[p.id]).map(p=>({...AI_PROVIDER_INFO[p.id],...p,models:Array.isArray(p.models)?p.models.filter(m=>typeof m==='string'):[]}));}
+function aiProviders(){return ((aiState.status&&aiState.status.providers)||[]).filter(p=>p&&AI_PROVIDER_INFO[p.id]).map(p=>({...AI_PROVIDER_INFO[p.id],...p,short:AI_PROVIDER_INFO[p.id].short,name:AI_PROVIDER_INFO[p.id].name,models:Array.isArray(p.models)?p.models.filter(m=>typeof m==='string'):[]}));}
 const aiConfigured=()=>aiProviders().filter(p=>p.configured&&p.models.length);
 const aiCurrent=()=>aiConfigured().find(p=>p.id===aiState.provider)||null;
-function aiModelLabel(p,id){return (p&&p.modelLabels&&typeof p.modelLabels[id]==='string'&&p.modelLabels[id])||id;}
+// A model's name on screen (display only; the id is what is sent): the site's label, else the id. An Anthropic label
+// or id loses the family word its id starts with, since the provider name is shown beside it ("Opus 5.5").
+function aiModelLabel(p,id){
+  const label=String((p&&p.modelLabels&&typeof p.modelLabels[id]==='string'&&p.modelLabels[id])||id||'');
+  const fam=String(id||'').split('-')[0].toLowerCase();
+  return p&&p.id==='anthropic'&&fam&&[`${fam} `,`${fam}-`].includes(label.slice(0,fam.length+1).toLowerCase())?label.slice(fam.length+1):label;
+}
 // Keeps the provider and model picked earlier when the site still offers them, else the first set-up provider
 // (paid before free) and its default model.
 function aiChoose(){
@@ -8609,8 +8616,8 @@ function aiCheckStatus(){
   })();
   return aiState.statusCheck;
 }
-// A different provider or model starts a new conversation: each one keeps its own history format, and Claude
-// only accepts its own earlier thinking back.
+// A different provider or model starts a new conversation: each one keeps its own history format, and an Anthropic
+// model only accepts its own earlier thinking back.
 function aiNewConversation(note){
   aiStop();
   aiState.history=[];aiState.system='';aiState.chatKey='';
@@ -8746,9 +8753,9 @@ function aiSyncSettings(){
   aiEl('ai-consent').disabled=!p;
   aiEl('ai-consent-text').textContent=`Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to ${p?p.short:'this provider'}.`;
   aiEl('ai-mode').textContent=aiState.statusError?'Needs attention':!aiState.status?'':p?`${p.short} · ${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}`:'Not set up';
-  aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiState.model}) and can be wrong. Check key numbers.`:'Answers can be wrong. Check key numbers.';
+  aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}) and can be wrong. Check key numbers.`:'Answers can be wrong. Check key numbers.';
   aiEl('ai-setup-why').textContent=aiState.status&&!aiState.status.hosted
-    ?'Ask AI needs the hosted site. A shared snapshot, a file copy or a site without the AI service has no server for the keys.'
+    ?'Ask AI needs the hosted site, not a shared snapshot or file copy.'
     :'No AI provider has a key on this site yet.';
 }
 
@@ -8820,7 +8827,7 @@ function aiFitBody(body,start,limit){
   return size()<=AI_BODY_BUDGET?'cut':'too large';
 }
 // One question: ask the model, run its tool calls here, send the results back, up to AI_MAX_ROUNDS turns.
-// Each assistant turn is kept exactly as the site returned it (Claude's thinking blocks included).
+// Each assistant turn is kept exactly as the site returned it (Anthropic thinking blocks included).
 async function aiAsk(p,question,signal){
   const history=aiState.history,start=history.length,used=[],limit=AI_RESULT_CHARS[p.tier==='free'?'free':'paid'];
   history.push({role:'user',content:question});
@@ -8859,8 +8866,8 @@ async function aiAsk(p,question,signal){
   }
 }
 // Old exchanges are dropped once the history nears the tier's budget (each one carries its tool results).
-// Claude checks that everything before a thinking block is unchanged, so after a cut the earlier thinking is left
-// out instead of being sent back with a different history.
+// The Anthropic model checks that everything before a thinking block is unchanged, so after a cut the earlier
+// thinking is left out instead of being sent back with a different history.
 function aiTrimHistory(p){
   const h=aiState.history,max=AI_HISTORY_CHARS[p.tier==='free'?'free':'paid'];
   let cut=false;
@@ -8890,7 +8897,7 @@ async function aiSend(text){
     if(!hasLoadedData())throw aiFail('Load a KPI export first: Ask AI answers from the data loaded in this dashboard.');
     const key=`${p.id}|${aiState.model}`;
     if(aiState.chatKey!==key){aiState.history=[];aiState.system='';aiState.chatKey=key;}
-    // The system prompt is fixed for the whole conversation (Claude re-checks earlier turns byte for byte).
+    // The system prompt is fixed for the whole conversation (the Anthropic model re-checks earlier turns byte for byte).
     if(!aiState.system)aiState.system=aiSystemPrompt();
     if(text===undefined)input.value='';
     aiTrimHistory(p);
@@ -8926,7 +8933,7 @@ function aiRenderLog(){
     :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}<div class="ai-tools">${m.by?`${esc(m.by)}${m.used&&m.used.length?' · ':''}`:''}${m.used&&m.used.length?`Looked up: ${esc(m.used.join(', '))}`:''}</div></div>`
     :m.role==='note'?`<div class="ai-msg note">${esc(m.text)}</div>`
     :`<div class="ai-msg error">${esc(m.text)}</div>`).join('');
-  log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: what is at risk and why, customers, vendors, warehouses, OTD or fill. Answers use the same numbers as these pages.</p>')
+  log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: risk, customers, vendors, warehouses, OTD or fill. Answers use the same numbers as these pages.</p>')
     +(aiState.busy?'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>':'');
   log.scrollTop=log.scrollHeight;
   aiEl('ai-send').disabled=aiState.busy;
@@ -9004,7 +9011,7 @@ const NEEDS_FILE={
     preview:[['Leading · Supply commitments','Late, no-commit and unconfirmed PO lines.',56],['Lagging · Receiving performance','On-time receipts and fill.',40]],
     snapshot:'This shared snapshot has no purchase order lines.',newFile:true},
   forecast:{tag:'Needs the Logican sheet',title:'Forecast reads the Logican sheet',body:'Compares the forecast Spyder Controls sends Logican with open sales and purchase orders; it needs that sheet’s Forecast tab.',cta:'Add Forecast file',
-    steps:[['On the hosted site, IT sets the CM_SHEET_ID secret once (docs/IT_HOSTING_README.md).',''],['Or download the Forecast tab from Google Sheets as .csv or .xlsx.',''],['Click Add file and choose it.','']],
+    steps:[['The hosted site can read the sheet directly once linked.',''],['Or download its Forecast tab as .csv or .xlsx.',''],['Click Add file and choose it.','']],
     preview:[['Next 12 months','Forecast, open orders and supply.',56],['By month','Forecast bars, open order lines.',40],['By item','Gap per SAP item.',40]],
     snapshot:'This shared snapshot has no Logican forecast.'}
 };
@@ -10021,8 +10028,8 @@ function stgProfileCard(dis,i){
   const current=readEditor()||'';
   const names=[...new Set([current,...sharedPeople.map(p=>p.name)].filter(Boolean))];
   const opts=`${current?'':'<option value="" selected disabled>Pick your name</option>'}${names.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('')}<option value="__new">Add a new name…</option>`;
-  const select=`<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName(this)"${tipAttr(isSnapshotView?'Names are not saved from a shared snapshot.':'Pick a saved name or add a new one; it is stamped on the notes you save.')}${dis}>${opts}</select>`;
-  const where=canSharePeople()?'Pick yours from the names saved for everyone, or add one.':'Shown with the notes you save.';
+  const select=`<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName(this)"${tipAttr(isSnapshotView?'Not saved from a shared snapshot.':'Stamped on the notes you save.')}${dis}>${opts}</select>`;
+  const where=canSharePeople()?'Pick yours or add one.':'Shown on your notes.';
   return stgCard({id:'profile',title:'Profile',icon:'users',color:'#5468ff',i,
     meta:`<span class="dz-meta">${esc(current||'No name set')}</span>`,
     body:stgRow('Your name',esc(where),select,{labelFor:'stg-name'})});
@@ -10032,10 +10039,10 @@ function stgOrderHealthCard(dis,i){
   const seg=(key,items,label)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`stgSet('${key}',${JSON.stringify(v).replace(/"/g,"'")})`,attrs:dis})),{label,cls:'stg-seg'});
   const body=[
     stgRow('At-risk target',`Share of open value at risk; amber up to twice it, red above. Default 5%.`,stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
-    stgRow('On-track tolerance',`Days late a line still counts as on track (At risk, late shipments, date changes). Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
+    stgRow('On-track tolerance',`Days late that still count as on track. Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
     stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
     stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
-    stgRow('Opening view',`Order Health opens on it, and after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
+    stgRow('Opening view',`Where Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
   ].join('');
   return stgCard({id:'oh',title:'Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
@@ -10045,18 +10052,18 @@ function stgNotesCard(dis,i){
     {label:'Sales orders',on:kind==='so',key:'stg-notes-so',onclick:"stgSetNotesKind('so')"},
     {label:'Purchase orders',on:kind==='po',key:'stg-notes-po',onclick:"stgSetNotesKind('po')"}
   ],{label:'Comment list',cls:'stg-seg'});
-  const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr('Remove this comment from the picker.')}${dis}>×</button></li>`).join('');
+  const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr('Remove from the picker.')}${dis}>×</button></li>`).join('');
   const add=isSnapshotView?'':`<form class="stg-add print-hide" onsubmit="event.preventDefault();stgAddComment('${kind}',this)"><input type="text" class="dz-pillinput" maxlength="120" placeholder="Add a comment" aria-label="${esc(`New ${what} comment`)}" data-focus-key="stg-add-${kind}" autocomplete="off"><button type="submit" class="dz-btn" data-focus-key="stg-add-btn-${kind}">Add</button></form>`;
   const reset=!stgIsDefault(key)&&!isSnapshotView?`<button type="button" class="link-btn stg-link print-hide" data-focus-key="stg-reset-${kind}" onclick="stgResetList('${kind}')"${tipAttr(`Put back the ${fmtNum(stgSpec()[key].def().length)} ready-made ${what} comments.`)}>Reset list</button>`:'';
-  const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span><span class="stg-help">The note editor's Comment picker, for ${kind==='po'?'purchase-order':'sales-order'} lines.</span></div><div class="stg-ctl">${tabs}</div></div>
-    <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">No ready-made comments: the picker offers Custom comment only.</li>'}</ul>
+  const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span><span class="stg-help">Comment picker choices for ${kind==='po'?'purchase-order':'sales-order'} lines.</span></div><div class="stg-ctl">${tabs}</div></div>
+    <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">None: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
   return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
 }
 function stgShippingCard(dis,i){
   const on=stgValue('shipDemoDefault');
   const now=typeof shippingDemoOn==='function'?shippingDemoOn():on;
-  const body=stgRow('Show demo shipments',`On: the Shipping page opens on 12 made-up shipments. Off: it opens on your real shipments (the made-up ones show only while no shipment has a status yet). Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
+  const body=stgRow('Show demo shipments',`On: Shipping opens on 12 made-up shipments. Off: your real shipments (demo shows until one has a status). Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
     +`<p class="stg-now">Shipping page now shows ${now?'demo data':'real shipments'}${hasLoadedData()?'':' once an export is loaded'}.</p>`;
   return stgCard({id:'ship',title:'Shipping',icon:'truck',color:'#0fa08e',i,changed:!stgIsDefault('shipDemoDefault'),body});
 }
@@ -10084,27 +10091,27 @@ function stgDataCard(i,dc){
       ${cm?kv('Logican',cm):''}
       ${dc&&!dc.parts.length?kv('Data check',`<span class="stg-dc-ok">${dzIconSvg('check')}No data issues</span>`):''}
     </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
-  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report with a new export; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
+  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
   return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,meta:'<span class="dz-meta">Read only</span>',body:body+actions});
 }
 function stgAiCard(dis,i){
   const st=aiState.status;
   let body;
-  if(isSnapshotView)body=`<p class="stg-now">Ask AI is not used from a shared snapshot.</p>`;
+  if(isSnapshotView)body=`<p class="stg-now">Not available in a shared snapshot.</p>`;
   else if(!aiHosted()&&!(st&&st.hosted))body=`<p class="stg-now">Available on the hosted site.</p>`;
   else if(!st&&!aiState.statusError){
     if(!stgAiAsked){stgAiAsked=true;aiCheckStatus().then(()=>{if(activeTab==='settings')renderResults();});}
     body=`<p class="stg-now">Checking this site…</p>`;
   }else if(aiState.statusError)body=`<p class="stg-now warn-text">${esc(aiState.statusError)}</p>`;
-  else if(!aiConfigured().length)body=`<p class="stg-now">No AI provider is set up on this site yet; IT adds the keys (docs/AI_ASSISTANT.md).</p>`;
+  else if(!aiConfigured().length)body=`<p class="stg-now">No AI provider is set up on this site yet.</p>`;
   else{
     const p=aiCurrent(),list=aiConfigured();
     const allowed=p&&aiConsented(p.id);
-    body=stgRow('Provider',allowed?'Allowed on this browser.':'Not allowed yet: tick its box in Ask AI settings.',stgSelect('stg-ai-provider','',list.map(x=>[x.id,x.name]),aiState.provider,'stgAiProvider(this.value)',{dis}),{labelFor:'stg-ai-provider'})
+    body=stgRow('Provider',allowed?'Allowed in this browser.':'Not allowed yet: tick its box in Ask AI settings.',stgSelect('stg-ai-provider','',list.map(x=>[x.id,x.name]),aiState.provider,'stgAiProvider(this.value)',{dis}),{labelFor:'stg-ai-provider'})
       +(p?stgRow('Model','A new model starts a new chat.',stgSelect('stg-ai-model','',p.models.map(id=>[id,aiModelLabel(p,id)]),aiState.model,'stgAiModel(this.value)',{dis}),{labelFor:'stg-ai-model'}):'')
       +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
   }
-  const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Open the Ask AI panel on its settings: provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
+  const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
   return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,body:body+open});
 }
 // Theme: saved like every setting; the page's colours follow it through applyTheme (the shell's theme code, which
@@ -10137,9 +10144,9 @@ function stgPagesCard(dis,i){
   }).join('')}</div>`;
   const body=[
     stgRow('Theme',`Match system follows this device. Default light.`,seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
-    stgRow('Background',`The page behind the cards, in light and dark: ${esc(bgName)}. Default Blue.`,swatches),
-    stgRow('Line lists start',`Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments. A list you open or fold keeps that choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
-    stgRow('Import report',`After files load: a short message when all is well, or the full report every time. Default only with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
+    stgRow('Background',`Behind the cards: ${esc(bgName)}. Default Blue.`,swatches),
+    stgRow('Line lists start',`Lines, PO lines, Build Risk, Supply / Demand, Shipments. Each list keeps your choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
+    stgRow('Import report',`A short message when all is well, or the full report every time. Default with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
   return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
@@ -10184,11 +10191,11 @@ function stgImport(input){
 }
 function stgAboutCard(i){
   const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length;
-  const move=isSnapshotView?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) as a small file, to load them in another browser or send them to a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`;
+  const move=isSnapshotView?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) to a file for another browser or a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`;
   const body=`<dl class="stg-dl">
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
       <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
-    </dl><p class="stg-now">Settings are saved in this browser only; Export and Import move them to another browser.</p>${move}`;
+    </dl><p class="stg-now">Saved in this browser only. Export and Import move them.</p>${move}`;
   return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
 }
 // Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
@@ -10235,7 +10242,7 @@ function stgConnectCard(i){
 function stgRenderPage(){
   const ro=isSnapshotView,dis=ro?' disabled':'';
   const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
-  const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
+  const note=ro?`<p class="stg-ro rise">Shared snapshot: settings are read only. Open the dashboard to change them.</p>`:'';
   // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one. The
   // Data Check card (only while the Data check reports something) sits above both, full width, so they stay even.
   const dc=dcReport(),check=stgDataCheckCard(dc,0),k=check?1:0;
@@ -10915,12 +10922,12 @@ function renderSidebar(){
   const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${canShare?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Load another export (supply / demand, Clear To Build or the Logican sheet) next to this one.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
     :`<span class="hdr-date none"><span class="hdr-date-txt">No export loaded</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;
   const search=`<div class="hdr-search${sOpen?' open':''}" id="hdr-search" role="search"><button type="button" class="hdr-icon" id="hdr-search-btn" aria-label="Search orders, items and customers" aria-expanded="${sOpen}" aria-controls="global-search" aria-keyshortcuts="Control+K Meta+K" onclick="hdrSearchClick()"${loaded?'':' disabled'}${tipAttr('Search orders, items and customers (Ctrl+K).')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)" onblur="hdrSearchBlur(event)"${loaded?'':' disabled'}></div>`;
-  const askAi=`<button type="button" class="hdr-icon" id="hdr-askai" data-focus-key="ask-ai" aria-label="Ask AI" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${loaded?'':' disabled'}${tipAttr('Ask Claude, ChatGPT, Groq or OpenRouter about this export; nothing is sent until you allow one in Settings.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>`;
+  const askAi=`<button type="button" class="hdr-icon" id="hdr-askai" data-focus-key="ask-ai" aria-label="Ask AI" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${loaded?'':' disabled'}${tipAttr('Ask AI about this export. Nothing is sent until you allow it.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>`;
   const canPrint=loaded&&onResults;
   const exportPdf=`<button type="button" class="hdr-icon" id="hdr-pdf" data-focus-key="export-pdf" aria-label="Export PDF" onclick="exportPdf()"${canPrint?'':' disabled'}${tipAttr('Print this page or save it as a PDF, with every linked line.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
@@ -16577,7 +16584,7 @@ function cmSidebarLine(){
   }else if(isSnapshotView)return '';
   else if(cmState.state==='error')text='<span class="warn-text">Logican sheet · could not be read</span>',tip=cmState.message||'The Logican sheet could not be read.',refresh=true;
   else if(cmState.state==='loading'||cmState.loading)text='Logican sheet · reading…';
-  else text='Logican sheet · not set up',tip='IT sets CM_SHEET_ID on the hosted site, or Add file takes a download of its tabs.';
+  else text='Logican sheet · not set up',tip='Not linked on this site. Use Add file with a download of its tabs.';
   const link=refresh&&!isSnapshotView?` <button type="button" class="link-btn cm-refresh" data-focus-key="cm-refresh" onclick="cmRefreshNow()"${cmState.loading?' disabled':''}${tipAttr('Read the Logican sheet from Google now (at most once a minute).')}>${cmState.loading?'Reading…':'Refresh'}</button>`:'';
   return `<span class="cm-sync" data-tip="${esc(tip)}">${text}</span>${link}`;
 }
@@ -17861,7 +17868,7 @@ function ohTopWarehouse(rows){
   const top=list[0];
   return {...top,share:total>0?Math.round(top.value/total*100):0,total,warehouses:list.length,next:list[1]||null};
 }
-// --- 2v6 oh-leading: the Leading view in the Claude Design layout ("Order Health 2b") ---
+// --- 2v6 oh-leading: the Leading view in the 2v6 design layout ("Order Health 2b") ---
 // Every number comes from the calculations that were already here (orderHealthData, ohLeadingData, ohAtRiskData,
 // ohReasonTileData, ohFlagAges, ohTopWarehouse, soDateChangeImpact, rowDocCount, rowOpenAmount); only layout and copy
 // are new. Cards on the 6-column grid: At risk (3) + Status & top reasons (3); Open lines by due week, Customers at
