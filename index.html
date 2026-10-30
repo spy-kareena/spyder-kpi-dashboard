@@ -2087,10 +2087,10 @@ button.ohl-chipbtn.sel{box-shadow:0 0 0 2px rgba(255,61,104,.3)}
 .ohl-status.zero .dz-barrow-n{color:var(--dz-ink-5)}
 .ohl-status.zero .dz-barrow-fill{display:none}
 .ohl-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px}
-.ohl-tile{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;border:1px solid var(--dz-line-6);border-radius:12px;background:transparent;padding:9px 12px;font:inherit;text-align:left;color:var(--dz-ink-1);cursor:pointer}
+.ohl-tile{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border:1px solid var(--dz-line-6);border-radius:12px;background:transparent;padding:9px 12px;font:inherit;text-align:left;color:var(--dz-ink-1);cursor:pointer}
 .ohl-tile:hover{background:rgba(255,255,255,.7)}
 .ohl-tile.sel{background:#fff;border-color:rgba(84,104,255,.45)}
-.ohl-tile-l{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--dz-ink-4)}
+.ohl-tile-l{min-width:0;line-height:1.25;overflow-wrap:anywhere;font-size:12.5px;color:var(--dz-ink-4)} /* a long override name (Supply Chain Delay) wraps to two lines */
 .ohl-tile-n{flex:none;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .ohl-tile.zero{color:var(--dz-ink-5)}
 .ohl-chart{position:relative;height:190px;margin-top:56px}
@@ -3045,6 +3045,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .sup-cmcards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .sup-cmcard{padding:14px 14px 12px;border-radius:18px}
   .sup-cmhead{flex-direction:column;gap:1px}
+  .sup-cmhead>b{max-width:100%;white-space:normal}
   .sup-cmnums b{font-size:18px}
   .sup-tbl td.sup-item,.sup-tbl td.sup-status,.sup-tbl td.sup-ovr,.sup-tbl td.sup-act,.sup-tbl.sup-sd td:nth-child(2),.sup-tbl.sup-groups td:last-child{grid-column:1/-1}
   .sup-tbl td.sup-item::before,.sup-tbl td.sup-status::before{display:none}
@@ -3517,6 +3518,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .dz-collapse-btn:hover{background:var(--dz-fill-1);color:var(--dz-ink-1)}
 .dz-collapse-btn:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
 .dz-collapsed .dz-collapse-btn svg{transform:rotate(-90deg)}
+.dz-card-head>.dz-collapse-btn+.dz-title{margin-right:auto} /* a dzCard head (Shipments): the title stays by its chevron */
 .dz-collapsible>.dz-card-head,.dz-collapsible>.sup-thead,.dz-collapsible>.ohl-lines-head{align-items:center}
 .ohl-lines-title,.sup-ttitle,.misc-head-l{display:flex;align-items:center}
 @media screen{.dz-collapsed>:not(:first-child){display:none!important}.dz-collapsed{padding-bottom:22px}}
@@ -7659,7 +7661,7 @@ function aiOverview(a){
 const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
 const KPI_TOOLS=[
   {name:'get_overview',
-    description:'Headline numbers: every Order Health tile (at risk with its past due / no commit / rescheduled split and its Us / Them cause split, no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
+    description:'Headline numbers: every Order Health tile (at risk = every open line past due with no reschedule, with no commit date, rescheduled or marked Urgent, with its past due / no commit / rescheduled split and its Us / Them cause split; the page\'s At risk card is the next-month view in order_health.leading.next_month.at_risk: lines due by its due_by date expected more than on_track_tolerance_days late, with no commit date or marked Urgent; no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
     parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it (every matching warehouse is included)'},customer:{type:'string',description:'Customer code or name, or part of it (every match is included)'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name, or part of it (every match is included)'}},required:[]},
     run:(a={})=>aiOverview(a)},
   {name:'search_lines',
@@ -8825,12 +8827,16 @@ function poAlertsMaybeToast(){
     poaToasted.add(allLoadedRows);
     const n=poAlertCount();
     if(!n)return;
-    const bell=document.querySelector('[aria-controls="poa-panel"]');
-    const msg=`${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after ${n===1?'its':'their'} sales order ships — ${bell?'see the bell':'see PO At Risk'}`;
     const box=document.getElementById('toast');
     const busy=!!(box&&box.querySelector&&box.querySelector('.toast-item'));
     const rows=allLoadedRows;
-    setTimeout(()=>{if(rows===allLoadedRows&&poAlertCount())poaToast(msg);},busy?4900:400);
+    setTimeout(()=>{
+      const c=rows===allLoadedRows?poAlertCount():0;
+      if(!c)return;
+      // The header bell (hdrBell) is drawn whenever there is a count; the words point at it when it is on screen.
+      const bell=document.getElementById('hdr-bell')||document.querySelector('[aria-controls="poa-panel"]');
+      poaToast(`${ohN(c,'PO line')} ${c===1?'arrives':'arrive'} after ${c===1?'its':'their'} sales order ships — ${bell?'see the bell':'see PO At Risk'}`);
+    },busy?4900:400);
   }catch(err){console.warn('PO alert not shown:',err);}
 }
 function poaToast(msg){
@@ -10090,8 +10096,8 @@ function thmChoice(){return thmSession||stgValue('theme')||'light';}
 function thmIsDark(){const c=thmChoice();return c==='dark'||(c==='system'&&thmSystemDark());}
 function applyTheme(){
   const t=thmIsDark()?'dark':'light',root=document.documentElement;
-  if(root.dataset.theme!==t)root.dataset.theme=t;
-  root.style.colorScheme=t;
+  if(root&&root.dataset&&root.dataset.theme!==t)root.dataset.theme=t;
+  if(root&&root.style)root.style.colorScheme=t;
   return t;
 }
 // The avatar menu's Dark mode switch (the menu stays open): dark <-> light, saved like any other setting.
@@ -10115,7 +10121,8 @@ function hdrBell(){
   const n=hdrBellCount();
   if(!n)return '';
   const label=n===1?'1 PO line arrives after its sales order ships':`${fmtNum(n)} PO lines arrive after their sales order ships`;
-  return `<button type="button" class="hdr-icon hdr-bell" id="hdr-bell" data-focus-key="hdr-bell" aria-label="${esc(label)}" onclick="if(typeof poAlertsToggle==='function')poAlertsToggle()"${tipAttr(`PO At Risk: ${label}.`)}>${HDR_BELL_SVG}<span class="hdr-badge" aria-hidden="true">${n>99?'99+':n}</span></button>`;
+  const open=typeof poAlertsIsOpen==='function'&&poAlertsIsOpen();
+  return `<button type="button" class="hdr-icon hdr-bell" id="hdr-bell" data-focus-key="hdr-bell" aria-label="${esc(label)}" aria-controls="poa-panel" aria-expanded="${open?'true':'false'}" onclick="if(typeof poAlertsToggle==='function')poAlertsToggle()"${tipAttr(`PO At Risk: ${label}.`)}>${HDR_BELL_SVG}<span class="hdr-badge" aria-hidden="true">${n>99?'99+':n}</span></button>`;
 }
 // ===== end 2v6 theme =====
 let hdrSearchOpen=false;   // the search pill is expanded (it also stays open while the box holds text)
@@ -16126,7 +16133,9 @@ function ohDrillKey(){return ohDrillActive()?[weeklyReasonFilter,weeklyReasonMai
 // The reason a Big picture box counts the line under (sankeyLineReason): its first reason.
 function ohMainReason(r){const rs=ohRowInfo(r).reasons;return rs.length?rs[0]:sankeyLineReason(r);}
 function ohDrillMatch(r){
-  if(weeklyAgeFilter&&!(ohIsAtRisk(r)&&ohAgeBucket(r)===weeklyAgeFilter))return false;
+  // The When flagged rows and the "+N new this week" chip count the At risk card's lines (ohLeadClass, ohAtRiskData),
+  // so the age filter keeps exactly those lines.
+  if(weeklyAgeFilter&&!(ohLeadClass(r)==='risk'&&ohAgeBucket(r)===weeklyAgeFilter))return false;
   if(weeklyReasonFilter&&(weeklyReasonMain?!(ohIsAtRisk(r)&&ohMainReason(r)===weeklyReasonFilter):!ohRowInfo(r).reasons.includes(weeklyReasonFilter)))return false;
   if(weeklyCauseFilter&&ohRowInfo(r).causeFor!==weeklyCauseFilter)return false;
   return true;
