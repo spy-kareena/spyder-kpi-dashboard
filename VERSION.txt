@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 2v6
+Version: 2v6.6
 Package date: 2026-10-13
 
 Main file: index.html
@@ -193,3 +193,14 @@ own reason. Shipping: Shipments sort by every column and filter by status and de
 menu switch, Settings: light / dark / match system), bigger logo, upload button next to the avatar, no as-of on
 Metrics. Settings: theme and PO At Risk alerts. QA fixes: the page now loads in the test harness and MCP server (theme
 code), "+N new this week" lists the same lines it counts, the PO At Risk toast points at the bell, layout fixes.
+
+2v6.6: header: the avatar is now a Settings gear (one click opens Settings; a red dot when rows or files need attention in
+SAP, a yellow dot for Logican lines not matched or deleted lines hidden), a Dark mode icon (moon / sun), Upload next to
+the gear; Share snapshot moved into the export-date popover. The avatar menu and the PO At Risk bell (drawer, toast and
+its setting) are gone. Settings now holds the Data Check card (moved from the page heads: issues, non-inventory include /
+leave out, deleted lines with Restore), your name, and a Connect An AI App card (the Connect an AI page is retired).
+Purchase Orders: the PO At Risk card names the PO owners (first names with their line counts). Shipping: the map takes
+the left half with the four status cards 2x2 on the right, Carrier sits left of Customer, no "Checked by hand" line, no
+small line under the big numbers, Shipments opens by default. Everywhere: type one step larger (metric labels 14px), a
+soft blue gradient background (light and dark), smoother motion (page cross-fades, list folding, hover and press), and a
+metric click opens and scrolls to its list after half a second. Slack is no longer mentioned anywhere.

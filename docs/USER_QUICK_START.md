@@ -14,7 +14,7 @@ Order Health opens on **Leading** with a **Leading | Lagging** pill switch at th
 
 The **Warehouse scorecard** (Order Health) lists CM SFG warehouses and all other warehouses as two groups, each with a subtotal row. Click a row to show only that warehouse; click again to show all.
 
-In Order Health’s Lines to act on, tick rows (or the header box for the whole list) to set an override or a cause (**Set cause**) on many lines at once, or delete them. Deleted lines are hidden on every page (for everyone, on the hosted site); restore them from **Data check**. A short confirmation appears after Apply, Delete, Restore and when you close a note. Click a column header to sort. On Purchase Orders, sort with **Sort lines** and use **Add note** on each line.
+In Order Health’s Lines to act on, tick rows (or the header box for the whole list) to set an override or a cause (**Set cause**) on many lines at once, or delete them. Deleted lines are hidden on every page (for everyone, on the hosted site); restore them from **Settings → Data check**. A short confirmation appears after Apply, Delete, Restore and when you close a note. Click a column header to sort. On Purchase Orders, sort with **Sort lines** and use **Add note** on each line.
 
 The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line by number, customer, vendor, item, warehouse or tracking number, or by a reason such as "no commit date" or "caused by us".
 
@@ -24,9 +24,9 @@ The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line b
 
 **Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". The first time, pick a provider in **Settings** and tick its box: Claude or ChatGPT (paid; they do not train on your data) or Groq or OpenRouter (free; they may keep what you send, so use them only for data you may share). It sends your question and the data needed to answer it to that provider. Setup, costs and privacy: docs/AI_ASSISTANT.md.
 
-**Connect an AI** (avatar menu, top right) shows how to use the same data from Claude Desktop, Claude Code or another MCP app; it opens before an export is loaded.
+**Connect An AI App** (in Settings: the gear, top right) shows how to use the same data from Claude Desktop, Claude Code or another MCP app; Settings opens before an export is loaded.
 
-The page header shows the date the KPIs are calculated for (the export date). If the amber **Data check** pill appears, click it for the SAP rows with unreadable dates (for example a year typed as 0202 or 2626); fix those in SAP and re-export.
+The page header shows the date the KPIs are calculated for (the export date). If the Settings gear shows a red or yellow dot, open Settings: the **Data Check** card lists the SAP rows with unreadable dates (for example a year typed as 0202 or 2626) and other problems; fix those in SAP and re-export.
 
 The dashboard remembers the last files loaded: anyone who opens the hosted site sees that report, on any computer, until someone loads a new export with **New file** (which replaces it for everyone). The sidebar says "Saved for everyone who signs in" once it is stored; "Saved in this browser only" means the site has no shared storage.
 
