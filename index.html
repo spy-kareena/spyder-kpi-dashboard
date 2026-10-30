@@ -2320,6 +2320,24 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
   .stg-ro{background:none;border:1px solid var(--gray-300)}
 }
 /* 2v6:end settings */
+/* 2v6:r5c */
+/* Shipping: the Shipments table's column titles are sort buttons (indigo with an arrow while sorted). On phones the
+   header row stays as a small row of the four sort buttons above the stacked shipments. */
+.shp-sort{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;display:inline-flex;align-items:baseline;gap:3px;cursor:pointer;border-radius:4px;white-space:nowrap}
+.shp-sort:hover{color:var(--dz-ink-2)}
+.shp-sort.on{color:var(--dz-indigo-deep,var(--dz-indigo));font-weight:500}
+.shp-sort:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.shp-sort-arrow{display:inline-block;min-width:.6em;font-size:11px}
+/* The Destination pill is for wide screens; on phones a map dot picks the place and its chip sits by the search. */
+.shp-destchip{display:none}
+@media (max-width:640px){
+  .shp-thwrap .shp-th{display:flex;flex-wrap:wrap;gap:6px 18px;padding:8px 0 9px}
+  .shp-thwrap .shp-th>.dz-num{text-align:left}
+  .shp-frow [data-dzmenu="ship-dest"]{display:none}
+  .shp-destchip{display:contents}
+}
+@media print{.shp-sort-arrow:empty{display:none}}
+/* 2v6:end r5c */
 
 /* 2v6:monthly-wh-metrics */
 /* Monthly, Warehouse Timeline and Metrics Timeline. Cards, pills, bar rows and chips are the shared dz-* ones; these are
@@ -5021,11 +5039,14 @@ let ON_TRACK_TOLERANCE_DAYS=stgValue('toleranceDays');
 // --- end 2v4 oh ---
 function weeklyRiskBucket(r){
   if(!r||r.isClosed||!r.isOpen||!hasOpenWork(r)||isManuallyNonUrgent(r))return '';
-  const flagText=[r.rescheduleFlag,r.dueDateRiskFlag,r.kpiStatus,r.statusBucket].join(' ').toLowerCase();
-  const noCommit=r.noCommitDate
+  // Sales lines: no commit date only when the 1111-11-11 date is on the line (r5SalesNoCommit); flag text alone does
+  // not count. Purchase-order lines (Ask AI's PO answers) keep the rule they had.
+  const flagText=()=>[r.rescheduleFlag,r.dueDateRiskFlag,r.kpiStatus,r.statusBucket].join(' ').toLowerCase();
+  const noCommit=!/purchase/i.test(String(r.sourceType||''))?r5SalesNoCommit(r)
+    : r.noCommitDate
     || isNoCommitDate(r.lineRescheduleDate)
     || isNoCommitDate(r.rescheduleDate)
-    || /no confirmed|no commit/.test(flagText);
+    || /no confirmed|no commit/.test(flagText());
   if(noCommit)return 'nocommit';
   const reschedule=rowRealRescheduleDate(r);
   const rescheduleDays=daysFromToday(reschedule);
@@ -5121,6 +5142,33 @@ function isNoCommitDate(v){
   // SAP's no-commit marker is a year of 1111 (11/11/1111, also mistyped as 01/11/1111); 11/11/11 is its 2-digit form.
   return /(^|\D)1111(\D|$)/.test(s)||s==='11111111'||digits==='111111'||s.includes('no confirmed date')||s.includes('no commit');
 }
+// --- 2v6.5 r5c: the sales-line no-commit rule ---
+// True only when v is SAP's no-commit DATE 1111-11-11, in any written form: a Date in year 1111, "1111-11-11" (with or
+// without a time), "11/11/1111", the mistyped "01/11/1111", "11111111" or the 2-digit "11/11/11". Text such as
+// "No Commit" or "No confirmed date" is not a date, so it never counts (isNoCommitDate, which also reads that text,
+// stays for the purchase-order rules and the date parsing).
+function r5IsNoCommitDay(v){
+  if(v instanceof Date)return !isNaN(v)&&v.getFullYear()===1111;
+  if(typeof v!=='string'&&typeof v!=='number')return false;
+  const s=String(v).trim();
+  if(!s)return false;
+  if(s==='11111111')return true;
+  const ymd=s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[\sT].*)?$/);
+  if(ymd)return ymd[1]==='1111';
+  const mdy=s.match(/^(\d{1,2})([-\/.])(\d{1,2})\2(\d{4}|\d{2})(?:[\sT].*)?$/);
+  if(mdy)return mdy[4]==='1111'||(mdy[4]==='11'&&Number(mdy[1])===11&&Number(mdy[3])===11);
+  // A Date written out as text ("Sat Nov 11 1111 ...").
+  if(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b/i.test(s)&&/(^|\D)1111(\D|$)/.test(s)){const d=new Date(s);return !isNaN(d)&&d.getFullYear()===1111;}
+  return false;
+}
+// A sales line has no commit date only when 1111-11-11 is its reschedule date or line reschedule date, or its line
+// due date (or, with no line due date, its due date). The RescheduleFlag / DueDateRiskFlag / KPIStatus text and the
+// No Commit override do not make a line "No commit date".
+function r5SalesNoCommit(r){
+  return r5IsNoCommitDay(r.rescheduleDate)||r5IsNoCommitDay(r.lineRescheduleDate)||r5IsNoCommitDay(r.lineDueDate)
+    ||(!String(r.lineDueDate??'').trim()&&r5IsNoCommitDay(r.dueDate));
+}
+// --- end 2v6.5 r5c ---
 function sourceFromDocType(v){
   const s=String(v??'').trim().toUpperCase();
   if(s==='SO')return 'Sales Order';
@@ -6411,7 +6459,9 @@ function normalizeRows(raw){
     const badDates=DATE_FIELDS.filter(([field])=>isInvalidDateValue(row[field]));
     if(badDates.length)row.invalidDates=badDates.map(([field,label])=>`${label} ${String(row[field]).trim()}`);
     // 1111-11-11 is SAP's "no commit" marker whether it sits on the reschedule UDF or on the ship date itself.
-    row.noCommitDate=isNoCommitDate(row.rescheduleDate)||isNoCommitDate(row.rescheduleFlag)||isNoCommitDate(row.lineDueDate)||(!String(row.lineDueDate||'').trim()&&isNoCommitDate(row.dueDate));
+    // Sales lines: only that date counts (r5SalesNoCommit); purchase-order lines keep their own rule.
+    row.noCommitDate=!/purchase/i.test(String(row.sourceType||''))?r5SalesNoCommit(row)
+      :isNoCommitDate(row.rescheduleDate)||isNoCommitDate(row.rescheduleFlag)||isNoCommitDate(row.lineDueDate)||(!String(row.lineDueDate||'').trim()&&isNoCommitDate(row.dueDate));
     row.hasReschedule=hasRealDate(row.rescheduleDate)||/rescheduled|late/.test(String(row.rescheduleFlag).toLowerCase());
     // SAP's Status (document/line status) decides open vs closed when present. Fill/on-time text is only a
     // fallback: service lines have Quantity 0, so the query calls them 'Complete' even while they are open.
@@ -8889,7 +8939,9 @@ function stgSpec(){
     shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
-    importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
+    importReport:{def:()=>'problems',check:oneOf(['problems','always'])},
+    theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined},
+    poAlerts:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined}
   };
 }
 // Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
@@ -9174,14 +9226,28 @@ function stgAiCard(dis,i){
   const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Open the Ask AI panel on its settings: provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
   return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,body:body+open});
 }
-// Pages: how line lists open and when the Import report shows.
+// Theme: saved like every setting; the page's colours follow it through applyTheme (the shell's theme code, which
+// also re-applies it from stgAfterChange). The typeof guard keeps this working where that code is absent.
+function stgSetTheme(v){
+  if(!stgSet('theme',v))return;
+  if(typeof applyTheme==='function')applyTheme();
+}
+// Pages & Display: the colour theme, how line lists open and when the Import report shows.
 function stgPagesCard(dis,i){
-  const seg=(key,items,label)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`stgSet('${key}','${v}')`,attrs:dis})),{label,cls:'stg-seg'});
+  const seg=(key,items,label,fn=`stgSet('${key}',`)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`${fn}'${v}')`,attrs:dis})),{label,cls:'stg-seg'});
+  const keys=['theme','linesStart','importReport'];
   const body=[
+    stgRow('Theme',`Match system follows this device. Default light.`,seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
     stgRow('Line lists start',`Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments. A list you open or fold keeps that choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
     stgRow('Import report',`After files load: a short message when all is well, or the full report every time. Default only with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
-  return stgCard({id:'pages',title:'Pages',icon:'layers',color:'#0fa08e',i,changed:['linesStart','importReport'].some(k=>!stgIsDefault(k)),body});
+  return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+}
+// Purchase Orders: the header's PO At Risk bell (the Purchase Orders code reads stgValue('poAlerts')).
+function stgPoCard(dis,i){
+  const on=stgValue('poAlerts');
+  const body=stgRow('PO At Risk alerts',`A bell in the header lists PO lines expected after their sales order ships. Default on.`,stgSwitch('stg-poalerts','PO At Risk alerts',on,`stgSet('poAlerts',${on?'false':'true'})`,dis));
+  return stgCard({id:'po',title:'Purchase Orders',icon:'cart',color:'#5468ff',i,changed:!stgIsDefault('poAlerts'),body});
 }
 // Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
 function stgExport(){
@@ -9237,7 +9303,7 @@ function stgRenderPage(){
   const note=ro?`<p class="stg-ro rise">A shared snapshot: settings are read only here. Open the dashboard itself to change them.</p>`:'';
   // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one.
   const left=[stgProfileCard(dis,0),stgOrderHealthCard(dis,2),stgPagesCard(dis,4),stgDataCard(6)].join('');
-  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgAiCard(dis,5),stgAboutCard(7)].join('');
+  const right=[stgNotesCard(dis,1),stgShippingCard(dis,3),stgPoCard(dis,5),stgAiCard(dis,7),stgAboutCard(8)].join('');
   const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
   return `${note}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
 }
@@ -14004,7 +14070,10 @@ let shippingDemoChoice;
 // 2v6 view state (this page only, reset when a report loads or the demo switch is used): carrier and customer
 // filters, the destination picked on the map, the search text, and whether the Add tracking # form is open.
 let shipCarrierSel='',shipCustomerSel='',shipDestSel='',shipQuery='',shipAddOpen=false;
-function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';}
+// 2v6.5: the Shipments table's Status filter ('' = all, a SHIP_STATUS_OPTIONS key, or 'none' = not checked) and its
+// column sort ('' = the default order of shippingSortedList; 1 = ascending, -1 = descending).
+let shipStatusSel='',shipSortCol='',shipSortDir=1;
+function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';shipStatusSel='';shipSortCol='';shipSortDir=1;}
 
 // Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/fedex.mjs.
 // At least one digit: words typed into TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
@@ -14332,6 +14401,7 @@ function shippingWatchRows(){
 function setShippingFilter(id){
   shippingFilter=shippingFilter===id?'':String(id||'');
   renderResults();
+  if(shippingFilter&&typeof shpOpenList==='function')shpOpenList();
 }
 function toggleShipment(number){
   const n=shipClean(number);
@@ -14344,11 +14414,12 @@ function openShipment(number){
   const n=shipClean(number);
   if(!n)return;
   shippingFilter='';
-  shipDestSel='';shipQuery='';
+  shipDestSel='';shipQuery='';shipStatusSel='';
   shippingExpanded.add(n);
-  const i=shippingSortedList(shipFilteredList(shippingModel().list)).findIndex(s=>s.number===n);
+  const i=shpSortList(shipFilteredList(shippingModel().list)).findIndex(s=>s.number===n);
   if(i>=SHIP_LIST_LIMIT)tableMore={...tableMore,'ship-list':true};
   renderResults();
+  shpOpenList();
   const head=document.querySelector(`[data-focus-key="ship-${n}"]`);
   if(head&&head.focus)head.focus();
   if(head&&head.scrollIntoView)head.scrollIntoView({block:'center'});
@@ -14566,9 +14637,60 @@ function shipGroups(list,now=Date.now()){
 }
 function shipPickCarrier(c){shipCarrierSel=String(c||'');shipDestSel='';renderResults();}
 function shipPickCustomer(c){shipCustomerSel=String(c||'');shipDestSel='';renderResults();}
-function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');renderResults();}
+function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');renderResults();if(shipDestSel)shpOpenList();}
 function shipSearch(v){shipQuery=String(v||'');renderResults();}
 function shipClearFilters(){shipResetView();shippingFilter='';renderResults();}
+// --- 2v6.5 r5c: Shipments table sort and Status / Destination filters ---
+const SHP_STATUS_FILTERS=[['shipped','Shipped'],['transit','In transit'],['delayed','Delayed'],['delivered','Delivered'],['none','Not checked']];
+const shpStatusMatch=(s,sel)=>!sel||(sel==='none'?!s.status:s.status===sel);
+// Progress order: not checked, then shipped, in transit, delayed, delivered.
+const SHP_PROGRESS_RANK={'':0,shipped:1,transit:2,delayed:3,delivered:4};
+// ETA sort date: the delivery date of a delivered shipment, else the promised date (null = none, listed last).
+function shpEtaTime(s){const d=s.status==='delivered'?(s.deliveredDate||s.promised):s.promised;return d?+d:null;}
+// The table's order: the default (delayed first ... delivered last) or the picked column; shipments with no order or
+// no date stay last either way, and ties keep the default order.
+function shpSortList(list){
+  const base=shippingSortedList(list);
+  const col=shipSortCol,dir=shipSortDir<0?-1:1;
+  if(!col)return base;
+  const pos=new Map(base.map((s,i)=>[s,i]));
+  const txt=(x,y)=>String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'});
+  const missing=s=>col==='order'?!s.orders.size:col==='eta'?shpEtaTime(s)===null:false;
+  const cmp=(a,b)=>col==='track'?txt(a.number,b.number)
+    :col==='order'?txt([...a.orders][0],[...b.orders][0])||txt(a.customer||'',b.customer||'')
+    :col==='progress'?(SHP_PROGRESS_RANK[a.status||'']??0)-(SHP_PROGRESS_RANK[b.status||'']??0)
+    :shpEtaTime(a)-shpEtaTime(b);
+  return base.slice().sort((a,b)=>{
+    const ma=missing(a),mb=missing(b);
+    if(ma!==mb)return ma?1:-1;
+    return (ma?0:cmp(a,b)*dir)||pos.get(a)-pos.get(b);
+  });
+}
+// A column title: first click sorts ascending, the next one reverses.
+function shpSort(col){
+  if(!['track','order','progress','eta'].includes(col))return;
+  shipSortDir=shipSortCol===col?-shipSortDir:1;
+  shipSortCol=col;
+  renderResults();
+}
+// Opens the Shipments list when a pick narrows it (it starts folded), as if its chevron were clicked.
+function shpOpenList(){
+  const card=document.querySelector('#results-screen .shp-ships.dz-collapsed');
+  const btn=card&&card.querySelector('.dz-collapse-btn');
+  if(btn&&typeof dzToggleCollapse==='function')dzToggleCollapse(btn);
+}
+function shpPickStatus(v){
+  const s=String(v||'');
+  shipStatusSel=SHP_STATUS_FILTERS.some(([k])=>k===s)?s:'';
+  renderResults();
+  if(shipStatusSel)shpOpenList();
+}
+function shpPickDest(key){
+  shipDestSel=String(key||'');
+  renderResults();
+  if(shipDestSel)shpOpenList();
+}
+// --- end 2v6.5 r5c ---
 function shipToggleAdd(){
   shipAddOpen=!shipAddOpen;
   renderResults();
@@ -14741,7 +14863,15 @@ function renderShippingPage(m){
   const customerList=[...customers].sort((a,b)=>a.localeCompare(b));
   const fl=shipFilteredList(model.list);
   const g=shipGroups(fl,now);
-  const anyFilter=!!(shipCarrierSel||shipCustomerSel||shipDestSel||shipQuery||shippingFilter);
+  const anyFilter=!!(shipCarrierSel||shipCustomerSel||shipDestSel||shipQuery||shippingFilter||shipStatusSel||shipSortCol);
+  // Status and Destination narrow the Shipments table only, like the tiles and the map dots (Destination is the same
+  // pick as a map dot). Destination lists the places on the map (shipments with no ship-to country have none).
+  const statusLabel=(SHP_STATUS_FILTERS.find(([k])=>k===shipStatusSel)||[])[1]||'';
+  const statusPill=fl.length?dzFilterPill({id:'ship-status',label:'Status',value:statusLabel||'All',set:!!shipStatusSel,tip:'List only the shipments with this status in the Shipments table.',
+    options:[{label:'All',selected:!shipStatusSel,onclick:"shpPickStatus('')"},{sep:true},...SHP_STATUS_FILTERS.map(([k,t])=>({label:t,selected:shipStatusSel===k,onclick:`shpPickStatus('${k}')`}))]}):'';
+  const destKeys=[...new Set(fl.map(shipPlaceKey).filter(Boolean))].map(k=>[k,shipPlaceName(k)]).sort((a,b)=>a[1].localeCompare(b[1]));
+  const destPill=destKeys.length>1?dzFilterPill({id:'ship-dest',label:'Destination',value:shipPlaceName(shipDestSel)||'All',set:!!shipDestSel,tip:'List only the shipments to this place in the Shipments table (the same as clicking its dot on the map).',
+    options:[{label:'All',selected:!shipDestSel,onclick:"shpPickDest('')"},{sep:true},...destKeys.map(([k,name])=>({label:name,selected:shipDestSel===k,onclick:`shpPickDest(${dzJs(k)})`}))]}):'';
 
   // Filter row: carrier switch (or a menu when there are many), what "checked" means here, then customer, the demo
   // switch and Add tracking #.
@@ -14757,7 +14887,7 @@ function renderShippingPage(m){
   const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
   const canAdd=!isSnapshotView&&!model.demo;
   const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add tracking #</button>`:'';
-  const filterRow=`<div class="shp-frow">${dzFilterRow(`${carrierCtl}${checked}`,`${custPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again.'):''}`)}</div>`;
+  const filterRow=`<div class="shp-frow">${dzFilterRow(`${carrierCtl}${checked}`,`${custPill}${statusPill}${destPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
 
   const realStatuses=!model.demo||isSnapshotView?0:shippingStatusEntries().size;
   const banner=model.demo?`<div class="shp-demo" role="note" aria-label="Demo data"><span class="dz-chip amber">Demo data</span><span class="shp-demo-t">${esc(`These ${model.list.length} shipments are made up (fake customers and tracking numbers) to show how the page works. Statuses set here are not kept.${realStatuses?` ${shipPlural(realStatuses,'real status has','real statuses have')} been saved.`:''}`)}</span>${demoBtn}</div>`:'';
@@ -14795,21 +14925,31 @@ function renderShippingPage(m){
   // Shipments table: status tile, map dot and search narrow it; delayed first, delivered last.
   const byStatus=shippingFilter&&g[shippingFilter]?g[shippingFilter]:fl;
   const byDest=shipDestSel?byStatus.filter(s=>shipPlaceKey(s)===shipDestSel):byStatus;
+  const byPill=shipStatusSel?byDest.filter(s=>shpStatusMatch(s,shipStatusSel)):byDest;
   const q=shipQuery.trim().toLowerCase(),qn=q.replace(/[\s-]+/g,'');
-  const matched=q?byDest.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byDest;
-  const shown=shippingSortedList(matched);
+  const matched=q?byPill.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byPill;
+  const shown=shpSortList(matched);
   const more=!!tableMore['ship-list']||printMode;
   const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
   const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'not checked in 2+ days'}[shippingFilter];
-  const emptyMsg=filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:'No shipments match these filters.';
+  const tablePicks=[filterName,q,shipDestSel,shipStatusSel].filter(Boolean).length;
+  const emptyMsg=tablePicks>1?'No shipments match these filters.':filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:shipStatusSel?`No shipments with the status ${statusLabel} right now.`:'No shipments match these filters.';
   const chip=(text,onclick,tip)=>`<button type="button" class="shp-chipbtn" data-focus-key="ship-chip-${esc(text)}" onclick="${esc(onclick)}"${tipAttr(tip)}>${esc(text)}<span aria-hidden="true">×</span></button>`;
-  const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):''}`;
+  // The destination chip shows a map-dot pick where there is no Destination pill (the pill is left out on phones).
+  const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):'';
+  const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
+  // Column titles sort the table (again to reverse); aria-sort is on each column header.
+  const etaTip='Delivered shipments: the delivery date and the promised date. Others: the promised date from the order lines and when the status was last checked (statuses are set by hand, so there is no carrier ETA).';
+  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','Not checked, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip]].map(([id,label,tip])=>{
+    const on=shipSortCol===id;
+    return `<span role="columnheader"${id==='eta'?' class="dz-num"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
+  }).join('');
   const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
   const listSub=model.demo?'made-up demo shipments':`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
   const tableBody=`<div class="shp-tools print-hide">${search}${chips}</div>
     ${canAdd&&shipAddOpen?renderShipAddForm(shared):''}
     <div class="dz-table shp-table">
-      <div class="dz-th shp-th"><span>Tracking</span><span>Order</span><span>Progress</span><span class="dz-num"${tipAttr('Delivered shipments: the delivery date and the promised date. Others: the promised date from the order lines and when the status was last checked (statuses are set by hand, so there is no carrier ETA).')}>ETA</span><span class="sr-only">Check</span></div>
+      <div class="shp-thwrap" role="table" aria-label="Sort the shipments"><div class="dz-th shp-th" role="row">${sortHead}<span class="sr-only" role="columnheader">Check</span></div></div>
       <div class="shp-rows">${visible.map(renderShipRow).join('')||`<p class="shp-none">${esc(emptyMsg)}</p>`}</div>
     </div>
     ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
@@ -15503,7 +15643,7 @@ function renderForecastPage(m){
 // Who a late line is waiting on. Us = Spyder (production, quality, supply, planning); Them = the customer or the carrier.
 // The labels are override statuses (OVERRIDE_OPTIONS) and the SAP signals below; matching ignores case.
 const CAUSE_MAP={
-  us:['Waiting on Production','QC Delay','Supply Chain','Supplier Late','Waiting on PO','Partial Coverage','R&D Hold','No Commit','No commit date','Past due · no reschedule','Missed commit','Unconfirmed','Supply shortage','CM commit late'],
+  us:['Waiting on Production','QC Delay','Supply Chain','Supplier Late','Waiting on PO','Partial Coverage','R&D Hold','No Commit','No Commit (override)','No commit date','Past due · no reschedule','Missed commit','Unconfirmed','Supply shortage','CM commit late'],
   them:['Hold','Urgent','Close Short','Short Ship','Shipping Delay','Customer reschedule'],
   neutral:['Not At Risk','Covered']
 };
@@ -15515,8 +15655,9 @@ const OH_CAUSE_LABEL=Object.fromEntries(OH_CAUSES.map(([id,label])=>[id,label]))
 // SAP signals, in the order that decides a line's cause when no override says otherwise.
 const OH_SAP_REASONS=[['nocommit','No commit date'],['pastdue','Past due · no reschedule'],['customer','Customer reschedule'],['missed','Missed commit'],['reschedlater','Rescheduled later'],['resched','Rescheduled'],['unconfirmed','Unconfirmed'],['shortage','Supply shortage'],['cmlate','CM commit late']];
 const OH_REASON_LABEL=Object.fromEntries(OH_SAP_REASONS);
-// An override that names the same thing as a SAP signal uses the signal's label, so the reasons chart has one bar for it.
-const OH_OVERRIDE_REASON={'no commit':'No commit date'};
+// Reason labels for override statuses that read too close to a SAP signal. The No Commit override is its own reason,
+// "No Commit (override)": "No commit date" is only SAP's 1111-11-11 date (r5SalesNoCommit).
+const OH_OVERRIDE_REASON={'no commit':'No Commit (override)'};
 // When flagged: whole weeks since the line was first at risk.
 const OH_AGE_BUCKETS=[['new','New this week',0,0],['1-2','1–2 wk',1,2],['3-4','3–4 wk',3,4],['5-8','5–8 wk',5,8],['9+','9+ wk',9,Infinity]];
 const OH_AGE_IDS=OH_AGE_BUCKETS.map(a=>a[0]);
@@ -16458,10 +16599,10 @@ function ohAtRiskData(m){
     return {end:ohHorizonEnd(),all:view.all,risk:view.risk,ontrack:view.ontrack,whole,total,riskValue,onValue,riskPct,onTrackPct,tone:ohRiskTone(riskPct),target:AT_RISK_TARGET};
   });
 }
-// Reason tiles: Past due, No commit date (SAP, and the No Commit override), Missed commit, Rescheduled later, Logican
-// commit late, then every other override status that is
-// not neutral, in the dropdown's order. Clicking one is the Reason filter (lineReasons lists the status), so the chip,
-// Clear all, snapshots and Search behave as before. A tile counts the next-month at-risk lines with that reason.
+// Reason tiles: Past due, No commit date (SAP's 1111-11-11 date only), Missed commit, Rescheduled later, Logican
+// commit late, then every override status that is not neutral, in the dropdown's order (the No Commit override as
+// "No Commit (override)", OH_OVERRIDE_REASON). Clicking one is the Reason filter (lineReasons lists the status), so
+// the chip, Clear all, snapshots and Search behave as before. A tile counts the next-month at-risk lines with that reason.
 const OH_REASON_TILES=[
   {label:'Past due',reason:OH_REASON_LABEL.pastdue},
   {label:'No commit date',reason:OH_REASON_LABEL.nocommit},
@@ -16470,7 +16611,7 @@ const OH_REASON_TILES=[
   {label:'Missed commit',reason:OH_REASON_LABEL.missed},
   {label:'Rescheduled later',reason:OH_REASON_LABEL.reschedlater},
   {label:'Logican commit late',reason:OH_REASON_LABEL.cmlate},
-  ...OVERRIDE_OPTIONS.filter(o=>o&&causeOfLabel(o)!=='neutral'&&!OH_OVERRIDE_REASON[o.toLowerCase()]).map(o=>({label:overrideLabel(o),reason:o}))
+  ...OVERRIDE_OPTIONS.filter(o=>o&&causeOfLabel(o)!=='neutral').map(o=>{const own=OH_OVERRIDE_REASON[o.toLowerCase()];return own?{label:own,reason:own}:{label:overrideLabel(o),reason:o};})
 ];
 function ohReasonTileOn(reason){return !weeklyReasonMain&&weeklyReasonFilter===reason;}
 function ohReasonTileData(m){
