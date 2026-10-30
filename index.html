@@ -3792,6 +3792,564 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 /* Printing is always light: native controls too */
 @media print{:root{color-scheme:light!important}}
 /* 2v6:end theme */
+/* 2v7:motion */
+/* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
+   rules with the same selectors, so they win without raising specificity.
+   Motion tokens: one ease-out curve, three durations. Everything that moves is inside
+   @media (prefers-reduced-motion:no-preference); the JS side (dzToggleCollapse, dzRevealList, moTransition) checks
+   motionAllowed() too. Nothing runs longer than ~450ms; no springs. */
+:root{
+  --mo-ease:cubic-bezier(.22,1,.36,1);--mo-fast:160ms;--mo-med:240ms;--mo-slow:380ms;
+  --mo-lift:0 1px 2px rgba(15,23,42,.04),0 10px 24px -10px rgba(30,41,90,.22);
+  --mo-glow:84,104,255;
+}
+
+/* ---------- The page: a fixed, very soft blue gradient behind the white cards (screen only; print stays white) ----------
+   Light: a pale blue to near-white vertical blend under two faint washes (indigo top left, sky top right).
+   Dark: the same in deep navy with faint indigo and teal washes. --dz-page (and --dz-page-bg / -base) stay one solid
+   colour, the top of the blend, for the places that use it as a ring or fill. */
+@media screen{
+  :root{--dz-page:#edf2fc}
+  html{
+    background-color:#edf2fc;
+    background-image:
+      radial-gradient(1100px 680px at 0% 0%,rgba(84,104,255,.10) 0%,rgba(84,104,255,.055) 38%,rgba(84,104,255,.018) 62%,rgba(84,104,255,0) 80%),
+      radial-gradient(1000px 640px at 100% 0%,rgba(56,189,248,.10) 0%,rgba(56,189,248,.05) 40%,rgba(56,189,248,.015) 64%,rgba(56,189,248,0) 82%),
+      radial-gradient(1400px 900px at 50% 115%,rgba(99,102,241,.05) 0%,rgba(99,102,241,.02) 45%,rgba(99,102,241,0) 75%),
+      linear-gradient(180deg,#e9f0fc 0%,#edf2fd 18%,#f1f5fd 40%,#f4f7fe 62%,#f7f9fe 82%,#f8fafe 100%);
+    background-attachment:fixed;background-repeat:no-repeat;
+    min-height:100%;
+  }
+  body,.app-shell{background:transparent}
+  [data-theme=dark]{--dz-page:#0c1324}
+  html[data-theme=dark]{
+    background-color:#0c1324;
+    background-image:
+      radial-gradient(1100px 680px at 0% 0%,rgba(99,102,241,.13) 0%,rgba(99,102,241,.065) 38%,rgba(99,102,241,.02) 62%,rgba(99,102,241,0) 80%),
+      radial-gradient(1000px 640px at 100% 0%,rgba(45,212,191,.07) 0%,rgba(45,212,191,.035) 40%,rgba(45,212,191,.01) 64%,rgba(45,212,191,0) 82%),
+      radial-gradient(1400px 900px at 50% 115%,rgba(56,189,248,.04) 0%,rgba(56,189,248,.015) 45%,rgba(56,189,248,0) 75%),
+      linear-gradient(180deg,#0d1427 0%,#0c1324 20%,#0b1121 45%,#0a101e 70%,#090e1b 100%);
+  }
+  [data-theme=dark]{--mo-lift:0 1px 2px rgba(0,0,0,.35),0 12px 28px -10px rgba(0,0,0,.6);--mo-glow:115,131,255}
+  /* Tiles that sit on the page itself (not in a card), their hovers and the map card: solid card colour, not glass */
+  .dz-stat:not(.dz-card .dz-stat),button.dz-stat:not(.dz-card .dz-stat):hover,button.sup-tile:hover,.sup-cmcard:hover,
+  .dz-card.shp-map{background-color:var(--dz-surface)}
+}
+
+/* ---------- Type: one step larger everywhere, metric-card labels most (owner, 2v7) ----------
+   Every px font-size rule above this block, re-declared in its own order and @media context (screen only, so print keeps
+   its pt sizes): metric labels (.dz-stat-l, .sup-tile-l, .ohl-tile-l, .shp-tile-l, .ohl-stat-l, .mwm-kpi-l ...) 14px;
+   values from 19 to 23px +2px; chips +0.5px; heroes and page titles (24px and up) and tiny marks (under 10px) as they
+   were; everything else +1px. A rule added above with one of these selectors and a new size needs its size here too. */
+@media screen{
+.page-meta{font-size:13.5px}
+.btn{font-size:14px}
+.link-btn{font-size:13px}
+.select,.segmented button{font-size:13.5px}
+.chip{font-size:12.5px}
+.data-check{font-size:13px}
+.section-title{font-size:16px}
+.section-sub{font-size:13px}
+.kpi-label{font-size:14px}
+.kpi-sub,.delta{font-size:13px}
+.pill,.badge{font-size:12.5px}
+.tone-cell{font-size:13px}
+.late-badge{font-size:12px}
+.thead{font-size:13px}
+.trow{font-size:13.5px}
+.tfoot,.note-btn{font-size:13px}
+.note-editor textarea{font-size:14px}
+.btn-lg{font-size:15px}
+.btn-sm,details.data-check>summary{font-size:13px}
+.data-check-pop{font-size:13.5px}
+.data-check-pop .btn,.snapshot-note{font-size:13px}
+.snapshot-download-box{font-size:13.5px}
+.snapshot-download-box .btn{font-size:13px}
+.count-badge{font-size:12.5px}
+.kpi-unit{font-size:13.5px}
+.kpi-unit.sm{font-size:13px}
+.kpi-tag{font-size:12.5px}
+.legend{font-size:13px}
+.ms-label{font-size:14px}
+.ms-sub{font-size:13px}
+.ms-big{font-size:17px}
+.ms-big.lg{font-size:18px}
+.ms-big.xl{font-size:22px}
+.ms-amt,.drill-label{font-size:13px}
+.drill-value{font-size:22px}
+.drill-sub{font-size:13px}
+.card-head h2{font-size:16px}
+button.trow{font-size:13.5px}
+.list-head h2{font-size:16px}
+.rank-top{font-size:13.5px}
+.rank-top.lg{font-size:14px}
+.rank-no,.rank-val{font-size:13px}
+.empty-note{font-size:13.5px}
+.col-chart .col-val,.col-labels>span{font-size:13px}
+.lines-table{font-size:13.5px}
+.lines-table th,.lines-table .c-doc,.lines-table .c-item .desc,.lines-table .c-date,.lines-table .c-qty,.lines-table .c-val{font-size:13px}
+.status-chip{font-size:12.5px}
+.timing,.note-editor label,.note-editor select,.note-editor textarea,.tfoot .link-btn{font-size:13px}
+.data-table{font-size:14px}
+.data-table th,.data-table .sub,.data-table .item-desc,.lines-table .c-type,.lines-table .sub{font-size:13px}
+.month-tag{font-size:12.5px}
+.stat-label,.stat-val{font-size:14px}
+.chart-head h2{font-size:16px}
+.pair-labels>span{font-size:13px}
+details.about,.inline-controls{font-size:13.5px}
+.inline-controls input[type=date]{font-size:13px}
+.rank-row{font-size:14px}
+.heat-grid.head{font-size:13px}
+.heat-grid.row{font-size:14px}
+.heat-cell{font-size:13px}
+.heat-cell .late-badge{font-size:12.5px}
+.ai-panel{font-size:14px}
+.ai-head h2{font-size:16px}
+.ai-mode{font-size:13px}
+.ai-check{font-size:13.5px}
+.ai-field,.ai-status{font-size:13px}
+.ai-empty{font-size:13.5px}
+.ai-msg code,.ai-msg table,.ai-tools{font-size:13px}
+.ai-compose textarea{font-size:14px}
+.ai-foot,.need-tag{font-size:13px}
+.need-body{font-size:15px}
+.step-no{font-size:13.5px}
+.step-text{font-size:14.5px}
+.step-text code{font-size:13px}
+.need-preview>span{font-size:14px}
+.preview-item strong{font-size:14.5px}
+.preview-item span{font-size:13.5px}
+.privacy-pill{font-size:13px}
+.upload-zone h2{font-size:21px}
+.upload-zone p{font-size:15px}
+.upload-chip,.upload-current>span{font-size:13px}
+.upload-current strong,.upload-current .btn,.error-box{font-size:14px}
+#loading-screen p{font-size:15px}
+@media (max-width:640px){
+.segmented.full button{font-size:13px}
+}
+.trow .soft-cell,.trow .risk-cell,.sc-cols>.num,.rank-sub,.editable-rows .row-override,.editable-rows .row-note,.day-col strong,.day-col span,.tip-layer{font-size:13px}
+.toast-item{font-size:14px}
+.sc-group-head,.wl-cols>.num{font-size:13px}
+@media (max-width:640px){
+.page-head .actions .btn{font-size:13.5px}
+}
+.notes-editor-btn{font-size:13px}
+.editor-form h2{font-size:17px}
+.editor-form p{font-size:14px}
+.editor-form label{font-size:13px}
+.editor-form input{font-size:17px}
+.editor-form .editor-sub{font-size:13px}
+.editor-chip{font-size:13.5px}
+.editor-chip-x{font-size:16px}
+.editor-form .editor-none{font-size:13px}
+.sk-name{font-size:14px}
+.sk-heads text{font-size:12px}
+.sk-label,.sk-detail{font-size:13px}
+.sk-filter{font-size:13.5px}
+.sk-swipe,.ship-add label{font-size:13px}
+.ship-add input{font-size:14px}
+.ship-check{font-size:13.5px}
+.ship-demo{font-size:14px}
+@media (max-width:640px){
+.ship-add input{font-size:17px}
+}
+.oh-drill-label{font-size:13px}
+.oh-x{font-size:15px}
+.oh-bar-row{font-size:13.5px}
+.oh-note,.oh-legend,.oh-cause-text{font-size:13px}
+.oh-cause-name{font-size:13.5px}
+.oh-cause-btn strong{font-size:16px}
+.oh-cause-btn .muted{font-size:13px}
+.oh-why{font-size:12.5px}
+.waffle-more{font-size:12px}
+.oh-waffle-legend{font-size:13px}
+.ai-notice-head strong{font-size:13.5px}
+.ai-tier{font-size:12px}
+.ai-links{font-size:13.5px}
+.ai-setup h3{font-size:15px}
+.ai-setup code,.ai-msg.note{font-size:13px}
+.ovr-head{font-size:13.5px}
+.ovr-name{font-size:14px}
+.ovr-count{font-size:17px}
+.ovr-amt{font-size:13px}
+details.oh-more>summary{font-size:14px}
+@media (max-width:640px){
+.ovr-name{font-size:13.5px}
+.ovr-count{font-size:16px}
+}
+.pg-group-title{font-size:13px}
+.page-lead{font-size:15px}
+.upload-pages h3{font-size:14.5px}
+.upload-pages li strong{font-size:14px}
+.upload-pages li span,.ship-add label{font-size:13.5px}
+@media (max-width:640px){
+.lines-table.so>thead th.c-check::after{font-size:13px}
+.lines-table .c-doc{font-size:15px}
+.lines-table .c-val{font-size:14px}
+.data-table.cards td[data-label]:not([data-card=key]):not([data-card=amt]):not([data-card=st])::before{font-size:12.5px}
+.data-table.cards td[data-card=key]{font-size:15px}
+.data-table.cards td[data-card=amt]{font-size:14px}
+}
+.grp-name{font-size:13.5px}
+.grp-sub,.ovr-note{font-size:13px}
+.mini-strip .ms-big{font-size:22px}
+.heat-cell .late-badge{font-size:11px}
+.heat-key-late{font-size:12px}
+.status-chip.cm{font-size:11.5px}
+.dc-sub{font-size:13px}
+.fc-max,.fc-months,.data-table td .fc-spark+.sub{font-size:12px}
+.hdr-nav,.hdr-link{font-size:15px}
+.hdr-date,.hdr-avatar{font-size:13px}
+.hdr-search input{font-size:14px}
+.hdr-pop{font-size:13.5px}
+.hdr-pop-label{font-size:13px}
+.hdr-pop-name{font-size:14px}
+.hdr-pop-meta,.hdr-pop-notes,.hdr-who{font-size:13px}
+.hdr-who strong,.dz-menu-item,.dz-filter,.dz-clear{font-size:14px}
+.dz-seg{font-size:14.5px}
+.dz-pagehead .page-meta{font-size:14px}
+.dz-title{font-size:19px}
+.dz-title.sm{font-size:17px}
+.dz-meta{font-size:13.5px}
+.dz-sub{font-size:14px}
+.dz-chip{font-size:12.5px}
+.dz-stat-l{font-size:14px}
+.dz-stat-v{font-size:24px}
+.dz-stat-s{font-size:13px}
+.dz-btn,.dz-pillinput{font-size:14px}
+.dz-th{font-size:12.5px}
+.dz-tr,button.dz-tr{font-size:14px}
+.dz-cell-sub{font-size:12.5px}
+.dz-barrow{font-size:14px}
+.dz-barrow-sub{font-size:13px}
+.dz-barrow-n{font-size:16px}
+button.dz-barrow{font-size:14px}
+.ohl-card .empty-note{font-size:13.5px}
+.ohl-note,button.ohl-chipbtn,.ohl-hero-pct{font-size:13px}
+.ohl-stat-l{font-size:14px}
+.ohl-stat-v{font-size:21px}
+.ohl-stat-s{font-size:12.5px}
+.ohl-sec-title{font-size:15px}
+.ohl-sec-sub{font-size:14px}
+.ohl-wh-name{font-size:16px}
+.ohl-wh-sub{font-size:13px}
+.ohl-fig-l{font-size:12.5px}
+.ohl-fig-v{font-size:24px}
+.ohl-fig-v.sm{font-size:17px}
+.ohl-status .dz-barrow-name{font-size:14.5px}
+.ohl-status .dz-barrow-sub{font-size:13px}
+.ohl-status .dz-barrow-n{font-size:16px}
+.ohl-tile-l{font-size:14px}
+.ohl-tile-n{font-size:13.5px}
+.ohl-peak{font-size:13px}
+.ohl-weeks{font-size:12px}
+button.ohl-cust,button.ohl-age{font-size:14px}
+.ohl-cust-amt{font-size:12.5px}
+.ohl-dc-meta,.ohl-bulk{font-size:13.5px}
+.ohl-card table.lines-table.so.ohl-lines{font-size:14px}
+.ohl-card table.ohl-lines th{font-size:12.5px}
+.ohl-card table.ohl-lines td{font-size:14px}
+.ohl-card table.ohl-lines .th-sort{font-size:12.5px}
+.ohl-card table.ohl-lines .c-doc,.ohl-card table.ohl-lines .c-item strong{font-size:14px}
+.ohl-card table.ohl-lines .c-item .desc{font-size:13px}
+.ohl-card table.ohl-lines .c-date,.ohl-card table.ohl-lines .c-qty,.ohl-card table.ohl-lines .c-val{font-size:14px}
+.ohl-card table.ohl-lines .c-status .dz-cell-sub{font-size:13px}
+.ohl-card table.ohl-lines .c-status .oh-why{font-size:12.5px}
+.ohl-foot,.ohl-card .ohl-more{font-size:13.5px}
+.ohl-note-by{font-size:12.5px}
+.ohl-sup-pill{font-size:13px}
+.ohl-sup-row{font-size:14px}
+.ohl-sup-th{font-size:12.5px}
+.ohl-sup-foot{font-size:13.5px}
+@media (max-width:760px){
+.ohl-sup-row{font-size:13.5px}
+}
+.ohg-delta{font-size:13.5px}
+.stg-ro{font-size:14px}
+.stg-label{font-size:14.5px}
+.stg-help{font-size:13px}
+.stg-unit,.stg-now{font-size:13.5px}
+.stg-item{font-size:14px}
+.stg-x{font-size:18px}
+.stg-empty,.stg-link{font-size:13.5px}
+.stg-kv{font-size:14px}
+.ohl-hero-quiet{font-size:13px}
+@media (max-width:640px){
+.stg-kv dt{font-size:13px}
+}
+.shp-sort-arrow{font-size:12px}
+.mwm-legend{font-size:13px}
+.mwm-more>summary{font-size:14px}
+.mwm-foot{font-size:13.5px}
+.mwm-bar-l{font-size:13px}
+.mwm-stats .dz-stat-v{font-size:21px}
+.mwm-note,.mwm-closer{font-size:14px}
+.mwm-closer .dz-chip{font-size:12.5px}
+.mwm-by,.mwm-datebtn,.mwm-dates{font-size:13px}
+.mwm-dates .dz-pillinput{font-size:13.5px}
+.mwm-col-n{font-size:14px}
+.mwm-collabels{font-size:13px}
+.mwm-todate{font-size:12px}
+.mwm-badge{font-size:11.5px}
+.mwm-ghead{font-size:13px}
+.mwm-heat.dense .mwm-heat-cell{font-size:12px}
+.mwm-heat-head{font-size:12.5px}
+.mwm-heat-name,.mwm-heat-cell{font-size:14px}
+.mwm-trow-n{font-size:15px}
+.mwm-trow-s{font-size:13px}
+.mwm-trow-d{font-size:21px}
+.mwm-kpi-l{font-size:14px}
+.mwm-kpi-d{font-size:13.5px}
+.mwm-kpi-s,.mwm-yax,.mwm-pt-l{font-size:12.5px}
+.mwm-xax{font-size:13px}
+@media (max-width:640px){
+.mwm-stats .dz-stat-v{font-size:17px}
+.mwm-collabels{font-size:11px}
+.mwm-col-n{font-size:11.5px}
+.mwm-heat-head,.mwm-pt-l,.mwm-xax{font-size:11px}
+.mwm-trow-d{font-size:19px}
+}
+.shp-checked{font-size:13.5px}
+.shp-demo,.shp-note,.shp-tile-l{font-size:14px}
+.shp-tile-s{font-size:13px}
+.shp-lbl{font-size:12px}
+.shp-legend,.shp-pillnote,.shp-chipbtn{font-size:13px}
+.shp-head{font-size:14px}
+.shp-trk em,.shp-ord em,.shp-eta em{font-size:12.5px}
+.shp-ord em,.shp-st{font-size:13px}
+.shp-stage{font-size:12.5px}
+a.dz-btn.shp-check{font-size:13.5px}
+.shp-none{font-size:14px}
+.shp-foot{font-size:13.5px}
+.shp-more{font-size:14px}
+.shp-fact span{font-size:12.5px}
+.shp-fact strong{font-size:14px}
+.shp-alert{font-size:13.5px}
+.shp-update label,.shp-add label{font-size:12.5px}
+.shp-update-t{font-size:14px}
+.shp-msg,.shp-lines table{font-size:13.5px}
+.shp-lines th{font-size:12.5px}
+.shp-lines .item-desc{font-size:13px}
+.shp-note-p{font-size:13.5px}
+.shp-li-l b,.shp-li-top b{font-size:14.5px}
+.shp-li-l em{font-size:13px}
+.shp-li-r b{font-size:19px}
+.shp-li-r em{font-size:12.5px}
+.shp-li-top em{font-size:13px}
+.shp-li-why{font-size:13.5px}
+.shp-more-n{font-size:13px}
+.shp-empty-t{font-size:19px}
+.shp-empty-p{font-size:14px}
+.imp-drop-box h2{font-size:23px}
+.imp-drop-box p{font-size:14px}
+.imp-drop-box .imp-drop-types,.imp-h3{font-size:13px}
+.imp-sum{font-size:13.5px}
+.imp-sum .imp-sum-t{font-size:16px}
+.imp-sum .imp-of{font-size:14px}
+.imp-name{font-size:14.5px}
+.imp-meta,.imp-mapped{font-size:13px}
+.imp-issue{font-size:13.5px}
+.imp-issue .imp-lbl{font-size:12.5px}
+.imp-ex{font-size:13px}
+.imp-missing code,.imp-map code,.imp-small{font-size:12.5px}
+.imp-check{font-size:13px}
+.imp-map-r{font-size:13.5px}
+.imp-map-h{font-size:12.5px}
+.imp-note{font-size:13px}
+.sup-tile-l{font-size:14px}
+.sup-tile-s{font-size:13px}
+.sup-page .dz-stat-v{font-size:22px}
+.sup-bars .dz-barrow-sub{font-size:12.5px}
+.sup-unit{font-size:13px}
+.sup-seg-sm{font-size:13.5px}
+.sup-empty{font-size:14px}
+.sup-legend{font-size:13px}
+.sup-col-v{font-size:14px}
+.sup-col-labels{font-size:13px}
+.sup-cols[style*="--n:12"] .sup-col-v,.sup-cols[style*="--n:11"] .sup-col-v,.sup-cols[style*="--n:10"] .sup-col-v{font-size:12.5px}
+.sup-cols[style*="--n:12"] .sup-col-labels,.sup-cols[style*="--n:11"] .sup-col-labels,.sup-cols[style*="--n:10"] .sup-col-labels{font-size:11.5px}
+.sup-ttitle .dz-chip{font-size:13px}
+.sup-tbl{font-size:14px}
+.sup-tbl th{font-size:12.5px}
+.sup-desc,.sup-sub{font-size:13px}
+.sup-grp b{font-size:15px}
+.sup-grp span,.sup-foot{font-size:13px}
+.sup-more{font-size:13.5px}
+.sup-page .status-chip.cm{font-size:12px}
+.sup-page .cm-line .timing,.sup-page .print-ovr,.sup-page .note-btn,.sup-page .note-editor label{font-size:13px}
+.sup-page .note-editor select,.sup-page .note-editor textarea,.sup-page .note-editor .note-done{font-size:14px}
+.sup-heat-head{font-size:12.5px}
+.sup-heat-w,.sup-heat-c{font-size:14px}
+.sup-heat-t{font-size:15px}
+.sup-meter-h{font-size:14px}
+.sup-meter-s{font-size:13px}
+.sup-pair .dz-stat-v{font-size:22px}
+.sup-whrow{font-size:14px}
+.sup-whrow-n{font-size:16px}
+.sup-covcell>span:last-child{font-size:13.5px}
+.sup-cmhead b{font-size:15px}
+.sup-cmhead span{font-size:12.5px}.sup-cmhead{gap:6px} /* half a step: the CM name keeps its room in six cards a row */
+.sup-cmnums b{font-size:21px}
+.sup-cmnums i{font-size:12px}
+.sup-block-t b{font-size:14.5px}
+.sup-block-t span,.sup-block-n{font-size:13px}
+.sup-block-n b{font-size:19px}
+.sup-detail>summary{font-size:14.5px}
+.sup-h3,.sup-need-body{font-size:15px}
+.sup-step-n{font-size:13px}
+.sup-step-t{font-size:14.5px}
+.sup-need-cap{font-size:13px}
+.sup-need-item strong{font-size:14.5px}
+.sup-need-item>span{font-size:13px}
+@media (max-width:640px){
+.sup-need-title{font-size:22px}
+.sup-tbl td[data-label]::before{font-size:12px}
+.sup-tbl.sup-sd td.sup-nolabel{font-size:15px}
+.sup-cmnums b{font-size:19px}
+.sup-tbl.sup-sd td:first-child,.sup-tbl.sup-po td:first-child,.sup-tbl.sup-br td:first-child{font-size:15px}
+}
+.po-unit{font-size:13px}
+.sup-tile-v .po-unit{font-size:14px}
+.sup-po th .po-th{font-size:12.5px}
+.sup-po th .sort-arrow{font-size:12px}
+.poa-off{font-size:13.5px}
+.poa-line-t{font-size:14px}
+.poa-line-s,.poa-show,.poa-toast-btn{font-size:13px}
+.misc-uphead .page-lead{font-size:15px}
+#upload-screen .page-meta{font-size:14px}
+#upload-screen .privacy-pill{font-size:12.5px}
+#upload-screen .upload-zone h2{font-size:21px}
+#upload-screen .upload-zone p{font-size:15px}
+#upload-screen .upload-chip{font-size:12.5px}
+#upload-screen .upload-current>span{font-size:13px}
+#upload-screen .upload-current strong{font-size:14.5px}
+.misc-pg-col h3{font-size:13px}
+.misc-pg-col li strong{font-size:15px}
+.misc-pg-col li span{font-size:13.5px}
+#upload-error.error-box{font-size:14px}
+#loading-screen p{font-size:15px}
+.misc-step{font-size:14.5px}
+.misc-step-no,.misc-step-text code{font-size:13px}
+.misc-need-body{font-size:15px}
+.misc-need-eyebrow{font-size:13.5px}
+.misc-need-side li strong{font-size:15px}
+.misc-need-side li span{font-size:13.5px}
+.misc-tile-l{font-size:14px}
+.misc-tile-s,.misc-fc-legend{font-size:13px}
+.misc-fc-max{font-size:12.5px}
+.misc-fc-months,.misc-more{font-size:13px}
+.misc-more .link-btn{font-size:13.5px}
+.misc-none{font-size:14px}
+.misc-intro{font-size:15px}
+.misc-opt-sub{font-size:14.5px}
+.misc-tier-text{font-size:13.5px}
+.misc-tier-text strong{font-size:14.5px}
+.misc-code-file,.misc-code-copy .dz-btn,.misc-code-status,.misc-code pre{font-size:13px}
+.misc-privacy{font-size:14px}
+.misc-flat .card-head h2{font-size:19px}
+.misc-flat .section-sub{font-size:13.5px}
+.misc-flat .lines-table,.misc-flat .data-table{font-size:14px}
+.misc-flat .lines-table th,.misc-flat .data-table th,.misc-flat .lines-table.search th,.misc-flat .lines-table.so th{font-size:12.5px}
+.misc-flat .lines-table td,.misc-flat .data-table td,.misc-flat .lines-table.search td,.misc-flat .lines-table .c-doc,.misc-flat .lines-table .c-date,.misc-flat .lines-table .c-val,.misc-flat .lines-table .c-qty{font-size:14px}
+.misc-flat .status-chip,.misc-flat .pill{font-size:12.5px}
+.misc-flat .tfoot{font-size:13px}
+.misc-flat .tfoot .link-btn,.misc-flat .link-btn{font-size:13.5px}
+details.data-check>summary{font-size:13px}
+.data-check-pop{font-size:13.5px}
+.data-check-pop .btn,.snapshot-note{font-size:13px}
+.snapshot-download-box{font-size:13.5px}
+.snapshot-download-box .btn{font-size:13px}
+.toast-item{font-size:14px}
+.ai-head h2{font-size:19px}
+.ai-panel .link-btn{font-size:13.5px}
+.ai-panel .btn{font-size:14px}
+.ai-setup h3{font-size:16px}
+.ai-chips .chip{font-size:13px}
+.editor-form h2{font-size:19px}
+.editor-form label,.editor-form .editor-sub{font-size:13.5px}
+.editor-actions .btn{font-size:14px}
+#results-screen details.about:not(.sk-about) .about-body{font-size:13.5px}
+#results-screen details.about:not(.sk-about) .about-body::before{font-size:15px}
+.hdr-badge{font-size:10.5px}
+}
+/* Phones: bar-row names wrap instead of losing their end to the larger type */
+@media screen and (max-width:640px){.dz-barrow-name{white-space:normal}}
+
+/* ---------- Motion ---------- */
+@keyframes moRise{from{opacity:0;translate:0 10px}}
+@keyframes moPop{from{opacity:0;scale:.98;translate:0 -4px}}
+@keyframes moPopUp{from{opacity:0;scale:.98;translate:0 6px}}
+@keyframes moDrawer{from{opacity:0;translate:28px 0}}
+@keyframes moSel{from{scale:.985}}
+@keyframes moGlow{
+  0%{box-shadow:var(--dz-sh-card),0 0 0 0 rgba(var(--mo-glow),0)}
+  22%{box-shadow:var(--dz-sh-card),0 0 0 4px rgba(var(--mo-glow),.22),0 10px 34px -8px rgba(var(--mo-glow),.28)}
+  100%{box-shadow:var(--dz-sh-card),0 0 0 0 rgba(var(--mo-glow),0)}
+}
+/* The folding chevron turns with the card (aria-expanded flips at once; the folded class lands when the fold ends) */
+.dz-collapse-btn[aria-expanded="false"] svg{transform:rotate(-90deg)}
+@media (prefers-reduced-motion:no-preference){
+  /* Page entrance: cards and tiles fade and rise, 40ms apart within their row or grid, only when a page opens
+     (#results-screen gets .entering from renderResults for a new page or new data; a filter click or a search
+     keystroke redraws without it). Individual translate / opacity only, so a tile's own transform is left alone. */
+  #results-screen.entering :is(.dz-card,.shp-tile,.sup-tile,.sup-cmcard,.mwm-kpi,.misc-tile,.dz-filterrow){
+    animation:moRise var(--mo-slow) var(--mo-ease) backwards;animation-delay:calc(var(--mo-i,0)*40ms)
+  }
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(2){--mo-i:1}
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(3){--mo-i:2}
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(4){--mo-i:3}
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(5){--mo-i:4}
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(6){--mo-i:5}
+  #results-screen.entering :is(.dz-grid,.shp-tiles,.sup-tiles,.mwm-kpis,.sup-cmcards,.shp-grid,.shp-side,.stg-col,.oh-panel)>:nth-child(n+7){--mo-i:6}
+  /* The shared primitives on the one curve and shorter: rows fade 380ms (35ms apart, capped), bars grow 450ms */
+  .rise{animation-duration:var(--mo-slow);animation-timing-function:var(--mo-ease)}
+  .fade-row,.dz-fade{animation-duration:var(--mo-slow);animation-timing-function:var(--mo-ease)}
+  .dz-fade{animation-delay:calc(min(var(--i,0),10)*35ms)}
+  .dz-grow{animation-duration:.45s;animation-timing-function:var(--mo-ease);animation-delay:calc(min(var(--i,0),8)*50ms)}
+  .grow-w,.grow-h{animation-duration:.45s}
+  .draw{animation-duration:.45s;animation-delay:.12s;animation-timing-function:var(--mo-ease)}
+  .pop{animation-duration:var(--mo-med);animation-timing-function:var(--mo-ease)}
+  .toast-item{animation-duration:var(--mo-med);animation-timing-function:var(--mo-ease)}
+  /* Colour, background, border and shadow changes ease over 160ms on every control; tiles also lift */
+  .dz-btn,.dz-filter,.dz-pillinput,.dz-clear,.dz-seg button,.dz-menu-item,.dz-chip,button.dz-stat,button.dz-tr,.dz-tr.dz-click,
+  button.dz-barrow,.dz-collapse-btn,.hdr-icon,.hdr-link,.hdr-avatar,.hdr-date,.link-btn,.btn,.chip,.note-btn,.segmented button,
+  button.shp-tile,button.sup-tile,.sup-cmcard,.mwm-kpi,.ohl-tile,button.ohl-cust,button.ohl-age,.ohl-wh,.ohl-sup-row,.shp-head,.shp-li,
+  .sup-whrow,.misc-tile,.ovr-tile,.stg-item,#results-screen details.about:not(.sk-about)>summary{
+    transition:color var(--mo-fast) var(--mo-ease),background-color var(--mo-fast) var(--mo-ease),border-color var(--mo-fast) var(--mo-ease),
+      box-shadow var(--mo-fast) var(--mo-ease),opacity var(--mo-fast) var(--mo-ease),transform var(--mo-fast) var(--mo-ease),translate var(--mo-fast) var(--mo-ease),scale var(--mo-fast) var(--mo-ease)
+  }
+  .dz-collapse-btn svg{transition:transform var(--mo-med) var(--mo-ease)}
+  .tip-layer{transition:opacity var(--mo-fast) var(--mo-ease),transform var(--mo-fast) var(--mo-ease)}
+  /* Pressed: buttons and pills give a little (the tiles settle back from their lift) */
+  .dz-btn:not(:disabled):active,.dz-filter:active,.dz-clear:active,.dz-seg button:active,button.dz-pillinput:active,.hdr-icon:not(:disabled):active,
+  .hdr-avatar:active,.dz-collapse-btn:active,.btn:not(:disabled):active,.chip:active,.note-btn:active,
+  #results-screen details.about:not(.sk-about)>summary:active{scale:.98}
+  /* A tile just picked (focus comes back to it after the redraw) settles in */
+  #results-screen:not(.entering) :is(button.shp-tile,button.sup-tile,.sup-cmcard,button.dz-stat,.ohl-tile,.ohl-wh,.ovr-tile,button.dz-barrow):is(.sel,.selected,[aria-pressed="true"]):focus{
+    animation:moSel var(--mo-med) var(--mo-ease)
+  }
+  /* Menus and popovers open from their corner; the Ask AI and Import drawers slide in; the About panel rises */
+  .dz-menu{transform-origin:top center}
+  .dz-menu.dz-menu-l{transform-origin:top left}
+  .dz-menu.dz-menu-r{transform-origin:top right}
+  .dz-menu:not([hidden]){animation:moPop var(--mo-fast) var(--mo-ease) backwards}
+  .ai-panel:not([hidden]){animation:moDrawer var(--mo-slow) var(--mo-ease) backwards}
+  #results-screen details.about:not(.sk-about)[open] .about-body{transform-origin:bottom right;animation:moPopUp var(--mo-med) var(--mo-ease) backwards}
+  /* The list a metric click revealed (dzRevealList) glows once */
+  #results-screen .dz-card.mo-reveal{animation:moGlow 1.1s var(--mo-ease)}
+  /* Page changes and theme switches cross-fade (moTransition; browsers with view transitions) */
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:var(--mo-med);animation-timing-function:var(--mo-ease)}
+}
+/* Lift on hover only where there is a pointer that hovers */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  button.shp-tile:hover,button.sup-tile:hover,.sup-cmcard:hover,button.dz-stat:hover,.ohl-tile:hover,.ohl-wh:hover,.ovr-tile:hover,
+  button.misc-tile:hover{translate:0 -1px;box-shadow:var(--mo-lift)}
+  button.shp-tile:active,button.sup-tile:active,.sup-cmcard:active,button.dz-stat:active,.ohl-tile:active,.ohl-wh:active,.ovr-tile:active,
+  button.misc-tile:active{translate:0 0;box-shadow:none}
+}
+@media print{.mo-reveal{animation:none!important}}
+/* 2v7:end motion */
 </style>
 </head>
 <body>
@@ -4802,6 +5360,7 @@ function setWeeklyTileFilter(id){
   if(weeklyTileFilter==='otd3mo')weeklyOtdFilter='total';
   if(weeklyTileFilter==='reschedhit')weeklyRescheduleFilter='total';
   renderResults();
+  dzRevealList(weeklyTileFilter&&'#results-screen .ohl-lines-card');
 }
 function setWeeklyOffenderView(view){
   weeklyOffenderView=view||'customers';
@@ -4904,6 +5463,7 @@ function setPoTileFilter(id){
   poTileFilter=poTileFilter===id?'':id;
   poLinkedShowAll=false;
   renderResults();
+  dzRevealList(poTileFilter&&'#po-linked-lines');
 }
 function resetPoFilters(){
   poWarehouseFilter=['ALL'];
@@ -4923,11 +5483,13 @@ function setPoWarehouseRow(name){
   const only=poWarehouseFilter.length===1&&poWarehouseFilter[0]===name;
   poWarehouseFilter=only||!name?['ALL']:[String(name)];
   renderResults();
+  dzRevealList(!poWarehouseFilter.includes('ALL')&&'#po-linked-lines');
 }
 function setPoVendorRow(code){
   const only=poVendorFilter.length===1&&poVendorFilter[0]===code;
   poVendorFilter=only||!code?['ALL']:[String(code)];
   renderResults();
+  dzRevealList(!poVendorFilter.includes('ALL')&&'#po-linked-lines');
 }
 function setPoLineSort(kind){
   poLineSort=kind||'default';
@@ -8785,6 +9347,7 @@ function supSdStatus(r){
 function supSdFocus(kind){
   tableMore={...tableMore,'sup-sd-view':'risk','sd-risk-only':kind==='risk'};
   renderResults();
+  dzRevealList('#results-screen .sup-page .sup-tcard');
 }
 function supSupplyDemand(m){
   const sd=m.supplyDemand;
@@ -10034,8 +10597,18 @@ function thmChoice(){return thmSession||stgValue('theme')||'light';}
 function thmIsDark(){const c=thmChoice();return c==='dark'||(c==='system'&&thmSystemDark());}
 function applyTheme(){
   const t=thmIsDark()?'dark':'light',root=document.documentElement;
-  if(root&&root.dataset&&root.dataset.theme!==t)root.dataset.theme=t;
-  if(root&&root.style)root.style.colorScheme=t;
+  const set=()=>{
+    const now=thmIsDark()?'dark':'light';  // the choice when it applies (it may have changed back meanwhile)
+    if(root&&root.dataset&&root.dataset.theme!==now)root.dataset.theme=now;
+    if(root&&root.style)root.style.colorScheme=now;
+  };
+  // 2v7: a switch made while the page shows cross-fades (moTransition); the first call at boot and calls without a
+  // DOM set it at once. A second call for the same switch before the fade starts does nothing.
+  const swap=!!(root&&root.dataset&&root.dataset.theme&&root.dataset.theme!==t&&typeof moTransition==='function');
+  if(!swap){set();return t;}
+  if(root.dataset.moTheme===t)return t;
+  root.dataset.moTheme=t;
+  moTransition(()=>{delete root.dataset.moTheme;set();},true);
   return t;
 }
 // The header's Dark mode icon: a moon in light mode, a sun in dark mode. One click switches light <-> dark (saved like
@@ -10168,8 +10741,7 @@ function setTab(t){
   // Going to any other page ends the search, so the box does not keep showing an old query.
   if(t!=='search'){searchQuery='';clearTimeout(searchTimer);}
   activeTab=t;
-  showResults();
-  if(changed&&window.scrollY>0&&window.scrollTo)window.scrollTo(0,0);
+  moPage(changed,()=>{showResults();if(changed&&window.scrollY>0&&window.scrollTo)window.scrollTo(0,0);}); // 2v7: cross-fade, cancel a pending reveal
 }
 // Data check: rows the export could not fully use (unreadable dates, skipped files), Logican lines that do not match,
 // lines you deleted, and what is left out by design (quarantine rows, non-inventory charges). One source for the
@@ -13433,6 +14005,8 @@ function dzDecorateIcons(root){
 // page and table in this browser (spyderKpiOpenLines). Applied after each draw (renderResults), like the tile icons.
 const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head';
 const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
+// Lists (page:title, as in their collapse key) that start open on a first visit (owner, 2v7: Shipments is open).
+const DZ_OPEN_BY_DEFAULT=new Set(['shipping:shipments']);
 function dzCollapsedMap(){
   try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
 }
@@ -13446,9 +14020,10 @@ function dzDecorateCollapse(root){
     const title=head.querySelector('.dz-title');
     const name=String(title?title.textContent:'Lines').trim();
     const key=`${activeTab}:${name.toLowerCase()}`;
-    // A list's own choice ('open' / 'closed'; true from 2v6.2 = open) wins over the Settings default.
+    // A list's own choice ('open' / 'closed'; true from 2v6.2 = open) wins over the Settings default; the lists in
+    // DZ_OPEN_BY_DEFAULT start open whatever that default is (2v7: Shipments).
     const own=saved[key]===true?'open':saved[key];
-    const closed=own==='closed'||(own!=='open'&&folded);
+    const closed=own==='closed'||(own!=='open'&&folded&&!DZ_OPEN_BY_DEFAULT.has(key));
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='dz-collapse-btn print-hide';
@@ -13463,17 +14038,141 @@ function dzDecorateCollapse(root){
     card.classList.toggle('dz-collapsed',closed);
   });
 }
-function dzToggleCollapse(btn){
+// opts.reveal (dzRevealList): the card opens at once (the page then scrolls to it) and only its rows fade in; a click on
+// the chevron animates the card's height (2v7). The choice is saved either way.
+function dzToggleCollapse(btn,opts){
   const card=btn.closest('.dz-collapsible');
   if(!card)return;
+  moFoldSettle(card);
   const closed=!card.classList.contains('dz-collapsed');
-  card.classList.toggle('dz-collapsed',closed);
+  const anim=moCanAnimate(card);
+  const from=anim&&!(opts&&opts.reveal)?card.getBoundingClientRect().height:0;
+  if(from&&closed)moFoldClose(card,from);  // the class goes on when the card has folded
+  else card.classList.toggle('dz-collapsed',closed);
   btn.setAttribute('aria-expanded',closed?'false':'true');
   const name=String((card.querySelector('.dz-title')||{}).textContent||'Lines').trim();
   btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
   const map=dzCollapsedMap();
   map[btn.dataset.collapseKey]=closed?'closed':'open';
   try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
+  if(anim&&!closed)moFoldOpen(card,from);
+}
+
+// --- 2v7 motion (prefix mo- / dz-): folding line lists, the reveal after a metric click, page and theme cross-fades ---
+// Everything here is skipped when motion is reduced, while printing, in a background tab and without a real DOM (the
+// Node test harness), so the end state is always what the code without motion would show. CSS: /* 2v7:motion */.
+var moFolds=typeof WeakMap==='function'?new WeakMap():null;  // card -> settle(): ends a running fold at once
+const MO_EASE='cubic-bezier(.22,1,.36,1)';
+function moCanAnimate(el){
+  return !!(el&&typeof el.animate==='function'&&el.getBoundingClientRect&&motionAllowed()&&!printMode&&!(typeof document!=='undefined'&&document.hidden));
+}
+function moFoldSettle(card){
+  const settle=moFolds&&moFolds.get(card);
+  if(settle){moFolds.delete(card);settle();}
+}
+function moClip(card,on){
+  if(!card.style)return;
+  card.style.overflow=on?(typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('overflow','clip')?'clip':'hidden'):'';
+}
+function moFoldMs(a,b){return Math.round(Math.min(380,220+Math.abs(a-b)/10));}
+// The rows under the head fade (and drift 4px) in.
+function moFadeBody(card,delay){
+  [...card.children].slice(1).forEach(c=>{
+    if(c.animate)c.animate([{opacity:0,translate:'0 -4px'},{opacity:1,translate:'0 0'}],{duration:240,delay:delay||0,easing:MO_EASE,fill:'backwards'});
+  });
+}
+function moFoldOpen(card,from){
+  if(!from){moFadeBody(card,0);return;}
+  const to=card.getBoundingClientRect().height;
+  if(Math.abs(to-from)<2)return;
+  moClip(card,true);
+  const a=card.animate([{height:`${from}px`},{height:`${to}px`}],{duration:moFoldMs(from,to),easing:MO_EASE});
+  const done=()=>{moClip(card,false);if(moFolds)moFolds.delete(card);};
+  if(moFolds)moFolds.set(card,()=>{a.cancel();done();});
+  a.onfinish=done;
+  moFadeBody(card,60);
+}
+function moFoldClose(card,from){
+  card.classList.add('dz-collapsed');
+  const to=card.getBoundingClientRect().height;  // the folded height, measured; the rows stay visible while it shrinks
+  card.classList.remove('dz-collapsed');
+  moClip(card,true);
+  const a=card.animate([{height:`${from}px`},{height:`${to}px`}],{duration:moFoldMs(from,to),easing:MO_EASE,fill:'forwards'});
+  const body=[...card.children].slice(1).map(c=>c.animate?c.animate([{opacity:1},{opacity:0}],{duration:160,easing:'linear',fill:'forwards'}):null).filter(Boolean);
+  const done=()=>{
+    if(moFolds)moFolds.delete(card);
+    card.classList.add('dz-collapsed');
+    a.cancel();body.forEach(x=>x.cancel());
+    moClip(card,false);
+  };
+  if(moFolds)moFolds.set(card,done);
+  a.onfinish=done;
+}
+// After a metric click that sets a filter: 500 ms later the list it filters (a selector or element, looked up then,
+// after the redraw) opens if folded (saved like a chevron click), scrolls up to just under the header and glows once.
+// A falsy target (the click cleared its filter) only cancels a pending reveal; a newer click, a page change and the
+// mouse wheel or a swipe cancel it too. Nothing scrolls when the click came from inside that list or its head is
+// already in view.
+var moRevealTimer=0;
+function dzRevealCancel(){if(moRevealTimer){clearTimeout(moRevealTimer);moRevealTimer=0;}}
+function moRevealCard(target){
+  const el=typeof target==='string'?document.querySelector(target):target;
+  if(!el||!el.classList)return null;
+  if(el.classList.contains('dz-collapsible'))return el;
+  return (el.querySelector&&el.querySelector('.dz-collapsible'))||(el.closest&&el.closest('.dz-collapsible'))||el;
+}
+function dzRevealList(target){
+  dzRevealCancel();
+  if(!target||typeof document==='undefined'||!document.querySelector||typeof window==='undefined'||!window.scrollTo)return;
+  const tab=activeTab,from=document.activeElement;
+  moRevealTimer=setTimeout(()=>{
+    moRevealTimer=0;
+    if(activeTab!==tab||printMode)return;
+    const card=moRevealCard(target);
+    if(!card||!card.getBoundingClientRect||!card.isConnected)return;
+    if(from&&from!==document.body&&from.isConnected&&card.contains(from))return;
+    const btn=card.classList.contains('dz-collapsed')&&card.querySelector('.dz-collapse-btn');
+    if(btn)dzToggleCollapse(btn,{reveal:true});
+    const motion=motionAllowed();
+    let off=12;
+    try{
+      const hdr=document.querySelector('.app-header'),pos=hdr?getComputedStyle(hdr).position:'';
+      if(pos==='sticky'||pos==='fixed')off+=hdr.getBoundingClientRect().bottom;
+    }catch(err){/* no header: 12px */}
+    const top=card.getBoundingClientRect().top;
+    if(top<off||top>innerHeight*.45){
+      const y=Math.max(0,Math.round(top+window.scrollY-off));
+      try{window.scrollTo({top:y,behavior:motion?'smooth':'instant'});}catch(err){window.scrollTo(0,y);}
+    }
+    if(motion){
+      card.classList.remove('mo-reveal');
+      void card.offsetWidth;
+      card.classList.add('mo-reveal');
+      setTimeout(()=>card.classList.remove('mo-reveal'),1300);
+    }
+  },500);
+}
+if(typeof document!=='undefined'&&document.addEventListener){
+  ['wheel','touchmove'].forEach(t=>document.addEventListener(t,()=>{if(moRevealTimer)dzRevealCancel();},{passive:true}));
+}
+// Cross-fade a DOM change with a view transition where the browser has them (fn runs inside it, a frame later);
+// otherwise, and when want is false, fn runs now. Never while printing, with reduced motion or in a hidden tab.
+function moTransition(fn,want){
+  const d=typeof document!=='undefined'?document:null;
+  if(!want||!d||typeof d.startViewTransition!=='function'||d.hidden||printMode||!motionAllowed()){fn();return;}
+  try{
+    const vt=d.startViewTransition(()=>{try{fn();}catch(err){console.error(err);}});
+    // A transition that is skipped (another one started) rejects these; nothing to report.
+    [vt&&vt.ready,vt&&vt.finished,vt&&vt.updateCallbackDone].forEach(p=>{if(p&&p.catch)p.catch(()=>{});});
+  }catch(err){fn();}
+}
+// setTab: cancels a pending reveal; a page change made from the header (a click on a page link, the logo, a menu item)
+// cross-fades. Other callers (search, code that reads the new page right after setTab) get a synchronous draw.
+function moPage(changed,fn){
+  dzRevealCancel();
+  let nav=false;
+  try{const e=typeof window!=='undefined'&&window.event;nav=!!(e&&e.isTrusted&&e.type==='click'&&e.target&&e.target.closest&&e.target.closest('.app-header'));}catch(err){nav=false;}
+  moTransition(fn,changed&&nav);
 }
 // The About panel closes on a click outside it or on Escape (it is a <details>, so it opens and closes on its own).
 if(typeof document!=='undefined'&&document.addEventListener){
@@ -13876,6 +14575,7 @@ function setBuildRiskCm(id){
   const next=String(id||'');
   buildRiskCmFilter=buildRiskCmFilter===next?'':next;
   renderResults();
+  dzRevealList(buildRiskCmFilter&&'#results-screen .sup-page .sup-tcard');
 }
 function sankeyBuildRiskFlows(m){
   if(!buildRiskRows.length)return [];
@@ -14589,7 +15289,7 @@ function shippingWatchRows(){
 function setShippingFilter(id){
   shippingFilter=shippingFilter===id?'':String(id||'');
   renderResults();
-  if(shippingFilter&&typeof shpOpenList==='function')shpOpenList();
+  dzRevealList(shippingFilter&&'#results-screen .shp-ships');
 }
 function toggleShipment(number){
   const n=shipClean(number);
@@ -14862,7 +15562,7 @@ function shipGroups(list,now=Date.now()){
 }
 function shipPickCarrier(c){shipCarrierSel=String(c||'');shipDestSel='';renderResults();}
 function shipPickCustomer(c){shipCustomerSel=String(c||'');shipDestSel='';renderResults();}
-function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');renderResults();if(shipDestSel)shpOpenList();}
+function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');renderResults();dzRevealList(shipDestSel&&'#results-screen .shp-ships');}
 function shipSearch(v){shipQuery=String(v||'');renderResults();}
 function shipClearFilters(){shipResetView();shippingFilter='';renderResults();}
 // --- 2v6.5 r5c: Shipments table sort and Status / Destination filters ---
@@ -16123,11 +16823,11 @@ function ohDrillChanged(){
   if(ohDrillActive()&&(!weeklyTileFilter||OH_LAGGING_TILES.has(weeklyTileFilter)))weeklyTileFilter='late';
   renderResults();
 }
-function setWeeklyReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&!weeklyReasonMain?'':s;weeklyReasonMain=false;ohDrillChanged();}
+function setWeeklyReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&!weeklyReasonMain?'':s;weeklyReasonMain=false;ohDrillChanged();dzRevealList(weeklyReasonFilter&&'#results-screen .ohl-lines-card');}
 // From a Big picture reason box: only the at-risk lines whose first reason is this one (the box's own lines).
-function setWeeklyMainReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&weeklyReasonMain?'':s;weeklyReasonMain=!!weeklyReasonFilter;ohDrillChanged();}
-function setWeeklyCauseFilter(v){const s=OH_CAUSE_IDS.includes(v)?v:'';weeklyCauseFilter=weeklyCauseFilter===s?'':s;ohDrillChanged();}
-function setWeeklyAgeFilter(v){const s=OH_AGE_IDS.includes(v)?v:'';weeklyAgeFilter=weeklyAgeFilter===s?'':s;ohDrillChanged();}
+function setWeeklyMainReasonFilter(v){const s=String(v||'');weeklyReasonFilter=weeklyReasonFilter===s&&weeklyReasonMain?'':s;weeklyReasonMain=!!weeklyReasonFilter;ohDrillChanged();dzRevealList(weeklyReasonFilter&&'#results-screen .ohl-lines-card');}
+function setWeeklyCauseFilter(v){const s=OH_CAUSE_IDS.includes(v)?v:'';weeklyCauseFilter=weeklyCauseFilter===s?'':s;ohDrillChanged();dzRevealList(weeklyCauseFilter&&'#results-screen .ohl-lines-card');}
+function setWeeklyAgeFilter(v){const s=OH_AGE_IDS.includes(v)?v:'';weeklyAgeFilter=weeklyAgeFilter===s?'':s;ohDrillChanged();dzRevealList(weeklyAgeFilter&&'#results-screen .ohl-lines-card');}
 // A chip's x (or Clear all) removes its filter; focus moves to the next chip, else to the active tab.
 function clearWeeklyDrill(kind){
   if(!kind||kind==='reason'){weeklyReasonFilter='';weeklyReasonMain=false;}
@@ -16726,6 +17426,7 @@ function setWeeklyOffenderFilter(view,key){
   else if(view==='warehouses')weeklyWarehouseFilter=toggle(weeklyWarehouseFilter);
   else return; // owners rank only (2v2: no owner filter)
   renderResults();
+  dzRevealList(!(view==='customers'?weeklyCustomerFilter:weeklyWarehouseFilter).includes('ALL')&&'#results-screen .ohl-lines-card');
 }
 function ohRenderWaffle(m,view,offenders,keyOf){
   const vendors=view==='vendors';
