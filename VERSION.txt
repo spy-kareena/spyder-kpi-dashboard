@@ -1,6 +1,6 @@
 Spyder KPI Dashboard
 Version: 2v6.6
-Package date: 2026-10-13
+Package date: 2026-10-30
 
 Main file: index.html
 Type: Static offline-capable browser dashboard
@@ -204,3 +204,7 @@ the left half with the four status cards 2x2 on the right, Carrier sits left of 
 small line under the big numbers, Shipments opens by default. Everywhere: type one step larger (metric labels 14px), a
 soft blue gradient background (light and dark), smoother motion (page cross-fades, list folding, hover and press), and a
 metric click opens and scrolls to its list after half a second. Slack is no longer mentioned anywhere.
+Follow-up: the Dark mode icon sits next to the gear; Shipping shows the status cards on the left and the map on the
+right, each card with one or two short facts (next due date and carriers, how late and who, on-time share, oldest
+unchecked); the PO At Risk card is twice as wide with its top four owners and their line counts on the right. QA fixes:
+"Set your name in Settings" focuses the name picker again, clearing an Order Health card no longer scrolls the page.
