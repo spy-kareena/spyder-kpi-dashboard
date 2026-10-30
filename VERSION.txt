@@ -214,3 +214,4 @@ Purchase Orders: no as-of / open PO lines line in the page head (the export date
 Purchase Orders: the second row of cards fills the width like the row above (as many columns as cards, up to 6), and
 the Kit cards read Kits Clean / Kits Not Clean. Ask AI's not-set-up view no longer lists the Cloudflare secrets for IT;
 Connect An AI App says to get the dashboard folder from the GitHub repo.
+Purchase Orders: each name in the PO At Risk card is a button that lists that person's at-risk lines (again for all).

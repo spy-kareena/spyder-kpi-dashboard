@@ -3878,6 +3878,23 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 @media (max-width:980px){.sup-more-views.po-fill>*{flex-basis:calc((100% - 20px)/3)}}
 @media (max-width:640px){.sup-more-views.po-fill>*{flex-basis:calc((100% - 10px)/2)}}
 /* 2v7:end po-row */
+/* 2v7:po-own */
+/* PO At Risk card: a group whose main button covers the whole card (its ::after), with the owners' names as buttons
+   above it. Looks and hovers like the other cards. */
+.sup-tile.po-risk{position:relative}
+.sup-tile.po-risk:hover{border-color:rgba(84,104,255,.28)}
+.po-risk-main{appearance:none;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.po-risk-main::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.po-risk-main:focus-visible{outline:none}
+.sup-tile.po-risk:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
+.po-owners{position:relative;z-index:1}
+.po-own{appearance:none;width:calc(100% + 12px);margin:0 -6px;padding:1px 6px;border:0;border-radius:8px;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:background-color .16s ease}
+.po-own:hover{background:var(--dz-hover)}
+.po-own.on{background:color-mix(in srgb,var(--dz-risk) 10%,transparent)}
+.po-own.on .po-own-name{color:var(--dz-ink-1);font-weight:600}
+.po-own:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+@media (prefers-reduced-motion:reduce){.po-own{transition:none}}
+/* 2v7:end po-own */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -4609,6 +4626,7 @@ let dataCheckOpen = false;
 let poWarehouseFilter = ['ALL'];
 let poVendorFilter = ['ALL'];
 let poTileFilter = '';
+let poRiskOwner = '';      // PO At Risk card: one PO owner picked from its list ('' = every owner)
 let poLineSort = 'default';
 let poLinkedShowAll = false;
 let poWarehouseAll = false;
@@ -5587,10 +5605,20 @@ function setPoVendorFilter(v){
   renderResults();
 }
 function setPoTileFilter(id){
-  poTileFilter=poTileFilter===id?'':id;
+  // On PO At Risk with one owner picked, a click on the card shows every owner's lines again.
+  if(id==='poatrisk'&&poTileFilter==='poatrisk'&&poRiskOwner)poRiskOwner='';
+  else{poTileFilter=poTileFilter===id?'':id;poRiskOwner='';}
   poLinkedShowAll=false;
   renderResults();
   dzRevealList(poTileFilter&&'#po-linked-lines');
+}
+// A name in the PO At Risk card: lists that owner's at-risk lines; the same name again shows every owner.
+function setPoRiskOwner(owner){
+  const again=poTileFilter==='poatrisk'&&poRiskOwner===owner;
+  poTileFilter='poatrisk';poRiskOwner=again?'':String(owner||'');
+  poLinkedShowAll=false;
+  renderResults();
+  dzRevealList('#po-linked-lines');
 }
 function resetPoFilters(){
   poWarehouseFilter=['ALL'];
@@ -9089,7 +9117,9 @@ function supPurchaseOrders(m){
   if(poTileFilter&&!tileRows[poTileFilter])poTileFilter='';
   // With no card picked the page shows the late lines, so the Late card is the selected one.
   const sel=poTileFilter||'late';
-  const linked=tileRows[sel]||[];
+  if(poRiskOwner&&(sel!=='poatrisk'||!poAtRisk.byOwner.has(poRiskOwner)))poRiskOwner='';
+  const riskOwnerName=poRiskOwner?((poAtRiskOwners(poAtRisk).find(o=>o.key===poRiskOwner)||{}).name||''):'';
+  const linked=poRiskOwner?(tileRows.poatrisk||[]).filter(r=>(atRiskBy.get(r)||{}).owner===poRiskOwner):(tileRows[sel]||[]);
   const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
   const view=supGet('po-view','open')==='received'?'received':'open';
   const value=rows=>rowOpenAmount(rows),qty=rows=>rowOpenQty(rows);
@@ -9161,8 +9191,10 @@ function supPurchaseOrders(m){
     const n=byLine?rows.length:supDocs(rows);
     const tipText=byLine?`PO At Risk: ${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after the sales order that needs the item ships (${ordersN(supDocs(rows))}, ${money(value(rows))} open): the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item.${atRiskOwners.length?` By PO owner: ${atRiskOwners.map(o=>`${o.name} ${fmtNum(o.n)}`).join(', ')}.`:''} Click to list the lines.`:tipOf(label,rows,what);
     const main=`<span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span><span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span>`;
-    const body=byLine?`<span class="po-risk-main">${main}</span>${n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):''}`:main;
-    return `<button type="button" class="sup-tile dz-fade${byLine?' po-risk':''}${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}>${body}</button>`;
+    // PO At Risk holds its owners' names as their own buttons, so the card is a group: its main button covers the card
+    // (CSS 2v7:po-own) and each name sits above it.
+    if(byLine)return `<div class="sup-tile dz-fade po-risk${sel===id?' sel':''}" style="--i:${i}" role="group" aria-label="PO At Risk"><button type="button" class="po-risk-main" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id&&!poRiskOwner?'true':'false'}"${tipAttr(tipText)}>${main}</button>${n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):''}</div>`;
+    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}>${main}</button>`;
   };
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
@@ -9264,7 +9296,7 @@ function supPurchaseOrders(m){
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
   const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
-    sub:`${esc(titles[sel]||'Late / missed commit')} · ${supLines(sorted.length)} · ${fmtNum(qty(sorted))} open qty · ${money(value(sorted))}`,body:tbl});
+    sub:`${esc(titles[sel]||'Late / missed commit')}${riskOwnerName?` · ${esc(riskOwnerName)}`:''} · ${supLines(sorted.length)} · ${fmtNum(qty(sorted))} open qty · ${money(value(sorted))}`,body:tbl});
   const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
@@ -9446,7 +9478,7 @@ function poAtRiskOwners(data){
   const list=[...(data&&data.byOwner||new Map()).entries()].map(([owner,lines])=>{
     const raw=String(owner||'').trim(),name=!raw||raw==='Unassigned'?'No owner':raw;
     const words=name==='No owner'?[name]:name.split(/\s+/);
-    return {name,words,n:lines.length};
+    return {key:owner,name,words,n:lines.length};
   });
   const firstKey=o=>o.words[0].toLowerCase();
   const initial=o=>o.words.length>1?`${o.words[0]} ${o.words[o.words.length-1].charAt(0).toUpperCase()}.`:o.words[0];
@@ -9454,14 +9486,17 @@ function poAtRiskOwners(data){
     const same=list.filter(x=>firstKey(x)===firstKey(o));
     o.short=same.length<2?o.words[0]:same.filter(x=>initial(x).toLowerCase()===initial(o).toLowerCase()).length<2?initial(o):o.name;
   });
-  return list.map(({name,short,n})=>({name,short,n})).sort((a,b)=>b.n-a.n||a.short.localeCompare(b.short)||a.name.localeCompare(b.name));
+  return list.map(({key,name,short,n})=>({key,name,short,n})).sort((a,b)=>b.n-a.n||a.short.localeCompare(b.short)||a.name.localeCompare(b.name));
 }
 // The right half of the PO At Risk tile (2v7 e): the top four owners, one per row, "Maria ····· 5", then "+2 more"
-// when there are more owners (the tile's tip names them all). Text inside the tile's one button, not buttons.
+// when there are more owners (the tile's tip names them all). Each name is a button that lists that owner's lines.
 function poAtRiskOwnersHtml(owners,top=4){
-  const rows=owners.slice(0,top).map(o=>`<span class="po-own"><span class="po-own-name">${esc(o.short)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(o.n)}</span></span>`).join('');
+  const rows=owners.slice(0,top).map((o,k)=>{
+    const on=poTileFilter==='poatrisk'&&poRiskOwner===o.key;
+    return `<button type="button" class="po-own${on?' on':''}" data-owner="${esc(o.key)}" data-focus-key="po-own-${k}" aria-pressed="${on}" onclick="setPoRiskOwner(this.dataset.owner)"${tipAttr(`${o.name}: ${ohN(o.n,'line')}. ${on?'Click to show every owner.':'Click to list them.'}`)}><span class="po-own-name">${esc(o.short)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(o.n)}</span></button>`;
+  }).join('');
   const more=owners.length>top?`<span class="po-own-more">+${fmtNum(owners.length-top)} more</span>`:'';
-  return `<span class="po-owners">${rows}${more}</span>`;
+  return `<div class="po-owners">${rows}${more}</div>`;
 }
 
 // ===== end 2v6.5 po =====
