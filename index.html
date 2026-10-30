@@ -1788,7 +1788,7 @@ body{background:var(--dz-page-base)}
 @media (max-width:900px){.app-shell{padding:16px 20px 40px}}
 @media (max-width:640px){.app-shell{padding:12px 16px 36px}.app-col{gap:18px}#upload-screen>*+*,#results-screen>*+*{margin-top:18px}}
 
-/* Header: 56px, logo | centred page links | export date, search, Ask AI, Export PDF, Dark mode, Upload, Settings gear */
+/* Header: 56px, logo | centred page links | export date, search, Ask AI, Export PDF, Upload, Dark mode, Settings gear */
 /* Columns: logo | page links (shrink, scroll sideways, when the screen is narrow) | tools. The side columns are equal (so the links are centred on the page) until the tools need more room. */
 .app-header{position:relative;z-index:50;display:grid;grid-template-columns:minmax(auto,1fr) minmax(0,auto) minmax(auto,1fr);align-items:center;gap:24px;min-height:56px;font-family:var(--font)}
 .hdr-logo{display:block;justify-self:start;border-radius:4px}
@@ -3226,9 +3226,8 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .shp-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"tiles" "map"}
   .shp-top>.shp-tiles{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:none}
 }
-/* Purchase Orders: the PO At Risk card names its PO owners on the line under the count (first names, most lines
-   first), on one line that ends in an ellipsis when it runs out of room; names in ink, counts in the card's red. */
-.sup-tile-s.po-owners{display:block;align-self:stretch;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dz-ink-4)}
+/* Purchase Orders: the PO At Risk card names its PO owners (first names, most lines first; the list layout is in
+   2v7:e); names in ink, counts in the card's red. */
 .po-own-name{color:var(--dz-ink-2)}
 .po-own-n{font-weight:500;font-variant-numeric:tabular-nums;color:var(--dz-risk-text)}
 .po-own-more{color:var(--dz-ink-3);font-variant-numeric:tabular-nums}
@@ -3792,6 +3791,88 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 /* Printing is always light: native controls too */
 @media print{:root{color-scheme:light!important}}
 /* 2v6:end theme */
+/* 2v7:e */
+/* Header: … Export PDF · Upload · Dark mode · Settings gear (renderSidebar). On a phone the open search box shrinks
+   to the room left by the icons beside it (at 320px its natural width pushed the gear off screen). */
+@media (max-width:900px){
+  .app-header.searching .hdr-right{min-width:0}
+  .app-header.searching .hdr-search{min-width:0}
+  .app-header.searching .hdr-search.open input{width:0}
+}
+/* Shipping: the four status tiles (2 x 2) on the left half, the map on the right; below 981px they stack, tiles first
+   (2v7:pages). A tile: the label at the top, the count and one or two short facts (shpTileFacts) at the bottom, in the
+   muted sub-line style; a fact ends in an ellipsis rather than wrap (a phone shows the shorter carrier line). The
+   map's legend sits in its title row, so the row is shorter and the tiles more compact; the grid row keeps both halves
+   the same height and centres the map in any spare height. */
+@media screen and (min-width:981px){
+  .shp-top{grid-template-areas:"tiles map"}
+  .shp-top .shp-tile{padding:18px 20px}
+  .shp-top .shp-tile-v{font-size:42px}
+}
+.shp-top .shp-tile{justify-content:flex-start;gap:0}
+.shp-top .shp-tile-v{margin-top:auto;padding-top:10px}
+.shp-tile-facts{display:flex;flex-direction:column;gap:1px;margin-top:8px;min-width:0}
+.shp-tile-s{display:block;min-width:0;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dz-ink-4)}
+.shp-tile-s:first-child{color:var(--dz-ink-3)}
+.shp-tile-s.warn{color:var(--dz-amber-text)}
+.shp-ts-row{display:flex;min-width:0}
+.shp-ts-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.shp-ts-more{flex:none;margin-left:6px;font-variant-numeric:tabular-nums}
+.shp-ts-n{display:none}
+.shp-top .shp-map-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:6px 16px;padding-bottom:6px;container:shpmaphead/inline-size}
+.shp-map-ttl{min-width:0}
+.shp-top .shp-map-head .shp-legend{margin:3px 0 0 auto;padding:0;background:none}
+@container shpmaphead (max-width:540px){.shp-top .shp-map-head .shp-legend{margin-left:0;flex-basis:100%}}
+.shp-top>.shp-map{padding-bottom:10px}
+.shp-top .shp-map-stage{margin-top:auto;margin-bottom:auto}
+.shp-top .shp-map-foot{margin:4px 22px 4px;padding:0}
+@media (max-width:640px){
+  .shp-ts-w{display:none}
+  .shp-ts-n{display:inline}
+  .shp-tile-facts{margin-top:6px}
+  .shp-top .shp-tile-v{padding-top:8px}
+  .shp-top .shp-map-head .shp-legend{margin-left:0;gap:12px}
+  .shp-top .shp-map-foot{margin:4px 18px 4px}
+}
+/* Purchase Orders: the six-tile strip on seven columns, PO At Risk across two (the other five narrower): its label,
+   line count and value at the left, its top four PO owners listed at the right behind a hairline, each "Name ··· 19"
+   with the count in red tabular figures, then "+N more". Every tile keeps its count on one baseline (labels that wrap
+   push the space above the count). Below 1260px (where "Rescheduled" no longer fits a seventh): PO At Risk takes the
+   first row, its owners in two columns, and the other five share the second (980px and below: three columns, phones
+   two with the owners in one, the last tile filling its row; one column under 360px). */
+.sup-tiles.po-strip{grid-template-columns:repeat(7,minmax(0,1fr))}
+.po-strip>.sup-tile .sup-tile-v{margin-top:auto;padding-top:6px}
+.po-strip>.po-risk{grid-column:span 2;flex-direction:row;align-items:stretch}
+.po-risk-main{display:flex;flex-direction:column;align-items:flex-start;flex:1 1 0;min-width:0}
+.po-owners{display:flex;flex-direction:column;justify-content:center;flex:1 1 0;min-width:0;margin:-2px 0 -2px 16px;padding-left:16px;border-left:1px solid var(--dz-line-8);font-size:13px;line-height:1.3}
+.po-own{display:flex;align-items:baseline;gap:6px;min-width:0}
+.po-own+.po-own{margin-top:2px}
+.po-own-name{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.po-own-lead{flex:1 1 10px;min-width:10px;border-bottom:1px dotted var(--dz-ink-6);opacity:.8;transform:translateY(-3px)}
+.po-own-n{flex:none;min-width:2ch;text-align:right;font-weight:600}
+.po-own-more{margin-top:3px;font-size:12px;color:var(--dz-ink-4)}
+@media screen and (min-width:1260px) and (max-width:1400px){.po-strip>.sup-tile:not(.po-risk){padding-left:18px;padding-right:18px}}
+@media (max-width:1259px){
+  .sup-tiles.po-strip{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .po-strip>.po-risk{grid-column:1/-1;order:-1}
+  .po-risk-main{flex:0 0 auto;min-width:190px}
+  .po-owners{display:grid;grid-template-columns:repeat(2,minmax(0,200px));grid-template-rows:auto auto;grid-auto-flow:column;align-content:center;justify-content:start;gap:2px 40px;flex:1 1 auto}
+  .po-own+.po-own{margin-top:0}
+  .po-own-more{grid-row:3;grid-column:1/-1}
+}
+@media (max-width:980px){
+  .sup-tiles.po-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .po-strip>.sup-tile:last-child{grid-column:span 2}
+}
+@media (max-width:640px){
+  .sup-tiles.po-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .po-strip>.sup-tile:last-child{grid-column:1/-1}
+  .po-risk-main{flex:1 1 0;min-width:0}
+  .po-owners{display:flex;flex:1 1 0;margin-left:12px;padding-left:12px}
+  .po-own+.po-own{margin-top:2px}
+}
+@media (max-width:359px){.sup-tiles.po-strip{grid-template-columns:minmax(0,1fr)}}
+/* 2v7:end e */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -9027,13 +9108,15 @@ function supPurchaseOrders(m){
     ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
     ['duethisweek','var(--dz-indigo)','This week focus',poDueThisWeekRows,'','at risk or due this week'],
     ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
-  // PO At Risk: the line under its count names the PO owners (first names, most lines first); the tip lists them all.
+  // PO At Risk: the wide tile (two of the strip's seven columns, CSS 2v7:e): label, line count and value at the left,
+  // its top four PO owners (first names, most lines first) listed at the right; the tip lists them all.
   const atRiskOwners=poAtRiskOwners(poAtRisk);
   const tileHtml=([id,dot,label,rows,tone,what,byLine],i)=>{
     const n=byLine?rows.length:supDocs(rows);
     const tipText=byLine?`PO At Risk: ${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after the sales order that needs the item ships (${ordersN(supDocs(rows))}, ${money(value(rows))} open): the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item.${atRiskOwners.length?` By PO owner: ${atRiskOwners.map(o=>`${o.name} ${fmtNum(o.n)}`).join(', ')}.`:''} Click to list the lines.`:tipOf(label,rows,what);
-    const sub=byLine&&n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):`<span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span>`;
-    return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span>${sub}</button>`;
+    const main=`<span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span><span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span>`;
+    const body=byLine?`<span class="po-risk-main">${main}</span>${n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):''}`:main;
+    return `<button type="button" class="sup-tile dz-fade${byLine?' po-risk':''}${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}>${body}</button>`;
   };
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
@@ -9139,7 +9222,7 @@ function supPurchaseOrders(m){
   const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
-    <div class="sup-tiles">${tiles.map(tileHtml).join('')}</div>
+    <div class="sup-tiles po-strip">${tiles.map(tileHtml).join('')}</div>
     <div class="dz-stats sup-more-views${extraCount===8?' po-views-8':''}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
     ${linesWrap}
@@ -9327,11 +9410,12 @@ function poAtRiskOwners(data){
   });
   return list.map(({name,short,n})=>({name,short,n})).sort((a,b)=>b.n-a.n||a.short.localeCompare(b.short)||a.name.localeCompare(b.name));
 }
-// One line under the count: "Maria 5 · Dev 3 · Lee 2 · +2" (the top three, then how many more owners).
-function poAtRiskOwnersHtml(owners,top=3){
-  const shown=owners.slice(0,top).map(o=>`<span class="po-own"><span class="po-own-name">${esc(o.short)}</span> <span class="po-own-n">${fmtNum(o.n)}</span></span>`);
-  if(owners.length>top)shown.push(`<span class="po-own-more">+${fmtNum(owners.length-top)}</span>`);
-  return `<span class="sup-tile-s po-owners">${shown.join('<span class="po-own-sep" aria-hidden="true"> · </span>')}</span>`;
+// The right half of the PO At Risk tile (2v7 e): the top four owners, one per row, "Maria ····· 5", then "+2 more"
+// when there are more owners (the tile's tip names them all). Text inside the tile's one button, not buttons.
+function poAtRiskOwnersHtml(owners,top=4){
+  const rows=owners.slice(0,top).map(o=>`<span class="po-own"><span class="po-own-name">${esc(o.short)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(o.n)}</span></span>`).join('');
+  const more=owners.length>top?`<span class="po-own-more">+${fmtNum(owners.length-top)} more</span>`:'';
+  return `<span class="po-owners">${rows}${more}</span>`;
 }
 
 // ===== end 2v6.5 po =====
@@ -10717,7 +10801,7 @@ function renderSidebar(){
   hdrRendering=true;
   el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
-    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${hdrThemeButton()}${impHeaderButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
+    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${impHeaderButton()}${hdrThemeButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
   // The page links scroll sideways on a phone: keep where they were, and the current page in view.
@@ -15423,8 +15507,8 @@ function shipDotTip(p,selected){
   const who=names.length?` · ${names.slice(0,3).join(', ')}${names.length>3?` +${names.length-3}`:''}`:'';
   return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')} (${parts})${who}; ${selected?'click to show all destinations.':'click to list only these.'}`;
 }
-// How wide the map is drawn, for its label placer (the CSS in 2v7:pages): the map card is the left half of the page
-// from 981px (the tiles take the right half), the full width below; its stage is the card's width, at most 420px tall
+// How wide the map is drawn, for its label placer (the CSS in 2v7:pages and 2v7:e): the map card is the right half of
+// the page from 981px (the tiles take the left half), the full width below; its stage is the card's width, at most 420px tall
 // on a wide screen, and zoomed past the card (--zoom) on a phone (640px or less). Printing draws it full width.
 // shpMapScale -> rendered pixels per map unit for a view box vw x vh.
 let shpMapDrawn=null,shpMapTimer=null;
@@ -15506,9 +15590,12 @@ function renderShipMap(list){
   }).join('');
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
   const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('The SAP delivery has no ship-to country (or one this map does not know), so these shipments are in the table but not on the map.')}>${esc(`${shipPlural(unplaced,'shipment','shipments')} with no ship-to country`)}</span>`:'';
-  const legend=`<div class="shp-map-foot">${noPlace}<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div></div>`;
+  // 2v7 e: the legend sits in the title row (right of the title, under it when there is no room), so the card is
+  // shorter; the foot is left only for the no-ship-to-country note.
+  const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
+  const foot=noPlace?`<div class="shp-map-foot">${noPlace}</div>`:'';
   return `<section class="dz-card shp-map" aria-label="Where orders are headed">
-    <div class="shp-map-head"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div>
+    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div>${legend}</div>
     <div class="shp-map-stage" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
@@ -15519,7 +15606,7 @@ function renderShipMap(list){
       <span class="shp-hub" style="${at(hub)}" aria-hidden="true"></span>
       ${dotHtml}
     </div>
-    ${legend}
+    ${foot}
   </section>`;
 }
 
@@ -15627,7 +15714,57 @@ function renderShipCheck(s,cls='dz-btn shp-check'){
   const tip=s.demo?`Demo number: opens AfterShip in a new tab, which will not find it.`:`Opens AfterShip’s public tracking page for ${s.number} (${shipCarrier(s)}) in a new tab; then set the status here.`;
   return `<a class="${cls}" href="${esc(shipTrackUrl(s.number))}" target="_blank" rel="noopener" data-focus-key="ship-check-${esc(s.number)}" data-tip="${esc(tip)}">Check</a>`;
 }
-// Tile: dot + label and the shipment count; its orders and value are in the tip (a click lists just these in the table).
+// 2v7 e: one or two short facts under a tile's count, new information only (its orders and value stay in the tip).
+// In transit: the next promised date (or how many are past it) and the carriers (top two, +N more; a phone shows the
+// top one). Delayed: how late the worst one is against its promised date and the customer with the most (+N more).
+// Delivered this week: on time against the promised date, and the latest delivery. Not checked in 2+ days: how long
+// ago the oldest check was, and how many were never checked. An empty tile says "None right now". The carrier and
+// customer lines are left out while the Carrier / Customer pill already names one. Each fact is {html, tone}; tone
+// 'warn' tints it amber.
+function shpTileFacts(id,group,now=Date.now()){
+  if(!group.length)return [{html:'None right now'}];
+  const today=new Date(now);today.setHours(0,0,0,0);
+  const ranked=keyOf=>{const m=new Map();group.forEach(s=>{const k=keyOf(s);if(k)m.set(k,(m.get(k)||0)+1);});return [...m.entries()].sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));};
+  const earliest=list=>list.length?new Date(Math.min(...list.map(d=>d.getTime()))):null;
+  const promised=group.map(s=>parseDate(s.promised)).filter(Boolean);
+  const nameMore=(name,more)=>`<span class="shp-ts-row"><span class="shp-ts-name">${esc(name)}</span>${more?`<span class="shp-ts-more">+${fmtNum(more)}</span>`:''}</span>`;
+  const out=[];
+  if(id==='transit'){
+    const past=promised.filter(d=>d<today).length;
+    const next=earliest(promised.filter(d=>d>=today));
+    if(past)out.push({html:esc(`${fmtNum(past)} past promised date`),tone:'warn'});
+    else if(next)out.push({html:esc(`Next due ${shipDateLabel(next)}`)});
+    const cs=shipCarrierSel?[]:ranked(shipCarrier); // one carrier picked: the pill already names it
+    if(cs.length===1)out.push({html:esc(group.length===1?cs[0][0]:`All ${cs[0][0]}`)});
+    else if(cs.length>1){
+      // Counts only when they tell carriers apart (one shipment each: just the names).
+      const part=([c,n])=>cs[0][1]>1?`${c} ${fmtNum(n)}`:c;
+      const wide=cs.slice(0,2).map(part).join(' · ')+(cs.length>2?` · +${fmtNum(cs.length-2)} more`:'');
+      out.push({html:`<span class="shp-ts-w">${esc(wide)}</span><span class="shp-ts-n">${esc(`${part(cs[0])} · +${fmtNum(cs.length-1)}`)}</span>`});
+    }
+  }else if(id==='delayed'){
+    const late=group.map(s=>s.promised?daysBetweenDates(s.promised,today):null).filter(n=>n!==null&&n>0);
+    if(late.length){const mx=Math.max(...late);out.push({html:esc(group.length===1?`${shipPlural(mx,'day','days')} past promised`:`Up to ${shipPlural(mx,'day','days')} late`)});}
+    else if(promised.length)out.push({html:esc(`Next due ${shipDateLabel(earliest(promised))}`)});
+    const cust=shipCustomerSel?[]:ranked(s=>s.customer);
+    if(cust.length)out.push({html:nameMore(cust[0][0],cust.length-1)});
+  }else if(id==='delivered'){
+    const scored=group.filter(s=>s.lateDays!==null&&s.lateDays!==undefined);
+    const onTime=scored.filter(s=>s.lateDays<=0).length;
+    if(scored.length===1&&group.length===1)out.push({html:esc(onTime?'On time':shipLateText(scored[0].lateDays))});
+    else if(scored.length)out.push({html:esc(onTime===group.length?'All on time':`${fmtNum(onTime)} of ${fmtNum(scored.length)} on time`)});
+    const days=group.map(s=>parseDate(s.deliveredDate)).filter(Boolean);
+    if(days.length){const last=new Date(Math.max(...days.map(d=>d.getTime())));out.push({html:esc(`${group.length===1?'Delivered':'Latest'} ${shipDateLabel(last)}`)});}
+  }else if(id==='stale'){
+    const checked=group.filter(s=>s.checkedAt!==null&&s.checkedAt!==undefined).map(s=>s.checkedAt);
+    const never=group.length-checked.length;
+    if(checked.length)out.push({html:esc(`${checked.length===1?'Checked':'Oldest'} ${shipAgo(now-Math.min(...checked))}`)});
+    if(never)out.push({html:esc(never===group.length?(never===1?'Never checked':'None checked yet'):`${fmtNum(never)} never checked`)});
+  }
+  return out.slice(0,2);
+}
+// Tile: dot + label and the shipment count, then its facts (shpTileFacts); its orders and value are in the tip (a click
+// lists just these in the table).
 function renderShipCard(id,label,group,color,tipLead,tone=''){
   const count=group.length;
   const value=group.reduce((sum,s)=>sum+(s.value||0),0);
@@ -15640,6 +15777,7 @@ function renderShipCard(id,label,group,color,tipLead,tone=''){
   return `<button type="button" class="shp-tile${selected?' sel':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
     <span class="shp-tile-l"><i style="background:${color}"></i>${esc(label)}</span>
     <span class="shp-tile-v"${vcol?` style="color:${vcol}"`:''}>${fmtNum(count)}</span>
+    <span class="shp-tile-facts">${shpTileFacts(id,group).map(f=>`<span class="shp-tile-s${f.tone?` ${f.tone}`:''}">${f.html}</span>`).join('')}</span>
   </button>`;
 }
 // ETA cell: delivered shipments show the delivery date over "promised ..."; the others the promised date (no carrier
@@ -15834,7 +15972,7 @@ function renderShippingPage(m){
     return head+empty+about;
   }
 
-  // Tiles (a click lists just these in the table); first in the page order, drawn right of the map on a wide screen.
+  // Tiles (a click lists just these in the table); first in the page order, drawn left of the map on a wide screen.
   const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
       ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: marked Shipped or In transit')}
       ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','marked Delayed','red')}
@@ -15875,7 +16013,7 @@ function renderShippingPage(m){
     ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
   const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then shipments not checked for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
-  // One row: the map on the left half, the four tiles as a 2 x 2 grid on the right (stacked, tiles first, below 981px).
+  // One row: the four tiles as a 2 x 2 grid on the left half, the map on the right (stacked, tiles first, below 981px).
   return head+`<div class="shp-top">${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
