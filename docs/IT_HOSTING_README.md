@@ -20,7 +20,7 @@ There are two ways to host it:
 - `docs/` - guides: user quick start, this file, the owner checklist, Ask AI, MCP connector, Shipping
 - `shared/fedex.mjs` - FedEx tracking code used by `functions/api/shipping.js` and the shipping poller Worker (kept, unused since 2v4)
 - `workers/shipping-poller/` - Cloudflare Worker that checked FedEx every 4 hours (its own `wrangler.toml` and README); kept in the repo but **not deployed** since 2v4, see `docs/SHIPPING.md`
-- `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node.js 20 or newer) to connect Claude or other AI apps; see `docs/MCP.md`
+- `mcp/spyder-kpi-mcp.mjs` - optional MCP server users run on their own computer (Node.js 20 or newer) to connect an AI app that supports MCP; see `docs/MCP.md`
 - `web.config` - optional IIS static hosting config
 
 ## Hosting
@@ -82,7 +82,7 @@ so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipD
 |---|---|---|---|
 | `DASHBOARD_PASSWORD` | Pages secret | Required | The shared sign-in password |
 | `SESSION_SECRET` | Pages secret | Required | 32+ random characters that sign the session cookie; changing it signs everyone out |
-| `ANTHROPIC_API_KEY` | Pages secret | Optional | Ask AI with Claude (paid) |
+| `ANTHROPIC_API_KEY` | Pages secret | Optional | Ask AI with Anthropic (paid) |
 | `OPENAI_API_KEY` | Pages secret | Optional | Ask AI with ChatGPT (paid) |
 | `GROQ_API_KEY` | Pages secret | Optional | Ask AI with Groq (free tier) |
 | `OPENROUTER_API_KEY` | Pages secret | Optional | Ask AI with OpenRouter's free models |
@@ -103,7 +103,7 @@ Pages secrets: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-d
 | `history` | For each of the last 52 weeks (one entry per week; a second upload in the same week is merged into it): the earliest export date loaded that week and the keys of the lines on the At Risk card in any of that week's uploads (SO number, line, item, warehouse). New uploads are merged into it | Each upload | Capped at 8 MB |
 | `history:first` | The same weeks with each line listed only under the first week it was at risk: what the page reads to show how long a line has been at risk ("first flagged"), so a line at risk all year is sent once instead of 52 times. Rebuilt from `history` on each upload | Each upload | Smaller than `history` |
 | `tracking:*` | Dormant FedEx module: `tracking:wanted` (tracking numbers the page sends), `tracking:index` (FedEx results), `tracking:token` (FedEx sign-in, expires on its own), `tracking:refresh` (the 10-minute Refresh limit) | Not written since 2v4 (the page no longer calls `/api/shipping`); old keys can be deleted | Small |
-| `ai:day:<provider>:<date>` | Ask AI request counts for a paid provider that day (the site's daily cap, `AI_DAILY_REQUESTS`) and per signed-in browser for the current minute (an id derived from the session cookie, not the cookie) | Each Ask AI request to Claude or ChatGPT | A few hundred bytes; expires after 2 days |
+| `ai:day:<provider>:<date>` | Ask AI request counts for a paid provider that day (the site's daily cap, `AI_DAILY_REQUESTS`) and per signed-in browser for the current minute (an id derived from the session cookie, not the cookie) | Each Ask AI request to Anthropic or ChatGPT | A few hundred bytes; expires after 2 days |
 
 A line key looks like `Sales Order|1234|5678|0|SPY-100|Spyder - Lacombe`. Notes are free text typed by users, so treat the namespace like the SAP export itself. The name is what each person picks or types the first time they edit a note (kept in their browser as `spyderKpiEditorName`, and in the `people` list for everyone): 1 to 40 letters (any language), spaces and . ' - only. Names are not checked against accounts, since the site has one shared password. Initials saved before 2v2 (`spyderKpiEditor`) are still shown on older edits; each browser asks for the name once.
 
@@ -138,14 +138,14 @@ A **Share snapshot** file carries the loaded rows and the notes on those rows, s
 
 ## Security notes
 
-- No external data upload is required. The optional **Ask AI** panel sends questions and the data needed to answer them to the AI provider the user picks, only after the user ticks that provider's consent box. Paid providers (Claude, ChatGPT) do not train on API data; the free ones (Groq, OpenRouter free models) have weaker terms, and OpenRouter's free hosts may keep or publish prompts. See `docs/AI_ASSISTANT.md`.
+- No external data upload is required. The optional **Ask AI** panel sends questions and the data needed to answer them to the AI provider the user picks, only after the user ticks that provider's consent box. Paid providers (Anthropic, ChatGPT) do not train on API data; the free ones (Groq, OpenRouter free models) have weaker terms, and OpenRouter's free hosts may keep or publish prompts. See `docs/AI_ASSISTANT.md`.
 - Ask AI keys (Cloudflare Pages secrets, each optional; set at least one to turn Ask AI on, for Production and Preview as needed, then redeploy):
-  - `ANTHROPIC_API_KEY` - Claude (paid, billed to the Anthropic account)
+  - `ANTHROPIC_API_KEY` - Anthropic (paid, billed to the Anthropic account)
   - `OPENAI_API_KEY` - ChatGPT (paid, billed to the OpenAI account)
   - `GROQ_API_KEY` - Groq (free tier)
   - `OPENROUTER_API_KEY` - OpenRouter (free models only)
 
-  Set each with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`. The keys never reach the browser: the page calls `/api/ai/status` and `/api/ai/chat`, which sit behind the same sign-in gate, accept chat requests only from the dashboard page itself, cap each request at 1 MB and allow only listed models. Set a monthly spend limit on the paid accounts. IIS and other static hosts have no proxy, so Ask AI is not available there (users can connect Claude Desktop instead, see `docs/MCP.md`).
+  Set each with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`. The keys never reach the browser: the page calls `/api/ai/status` and `/api/ai/chat`, which sit behind the same sign-in gate, accept chat requests only from the dashboard page itself, cap each request at 1 MB and allow only listed models. Set a monthly spend limit on the paid accounts. IIS and other static hosts have no proxy, so Ask AI is not available there (users can connect their own AI app instead, see `docs/MCP.md`).
 - No SAP credentials are stored in the dashboard.
 - SAP exports are loaded by the user from their local machine.
 - Restrict access to internal users only. On Cloudflare Pages with `REPORT_STORE` bound, the last uploaded export, the shared notes, the at-risk history and the Shipping statuses are stored in Workers KV and readable by anyone with the dashboard password; otherwise uploaded KPI data and notes never reach the server. The page itself lists customer codes (for segment grouping) and `queries/` shows SAP table/UDF names.

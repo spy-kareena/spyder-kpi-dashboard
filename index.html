@@ -10169,22 +10169,22 @@ function stgDataCheckCard(dc,i){
   return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,meta:`<span class="dz-meta">${meta}</span>`,
     body:`<div class="stg-dc${issues||scope||deleted?'':' solo'}"><div class="stg-dc-lead">${sum}${dateHelp}</div>${issues||scope||deleted?`<div class="stg-dc-side">${issues}${scope}${deleted}</div>`:''}</div>`});
 }
-// Connect An AI App (it was the Connect an AI help page): the MCP connector in mcp/ for Claude Desktop and other AI
-// apps. Setup steps fold away under Show setup; Copy keeps the ids connect-desktop / connect-desktop-status
+// Connect An AI App (it was the Connect an AI help page): the MCP connector in mcp/ for any AI app that supports MCP.
+// Setup steps fold away under Show setup; Copy keeps the ids connect-desktop / connect-desktop-status
 // (CONNECT_SNIPPETS, copyConnectSnippet). Details: docs/MCP.md.
 function stgConnectCard(i){
   const step=(n,text)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${n}</span><span class="misc-step-text">${text}</span></li>`;
-  const body=`<p class="stg-now stg-lead">Use Claude Desktop or another AI app to read your exports.</p>
+  const body=`<p class="stg-now stg-lead">Use an AI app on your computer to read your exports.</p>
     <details class="stg-setup"${stgConnectOpen||printMode?' open':''} ontoggle="stgConnectOpen=this.open">
-      <summary class="dz-btn stg-setup-sum print-hide" data-focus-key="stg-connect-setup"${tipAttr('The three steps and the Claude Desktop config to copy.')}><span class="stg-setup-show">Show setup</span><span class="stg-setup-hide">Hide setup</span>${DZ_CHEV}</summary>
+      <summary class="dz-btn stg-setup-sum print-hide" data-focus-key="stg-connect-setup"${tipAttr('Three steps and the config to copy.')}><span class="stg-setup-show">Show setup</span><span class="stg-setup-hide">Hide setup</span>${DZ_CHEV}</summary>
       <div class="stg-setup-body">
         <ol class="misc-steps">
           ${step(1,'Install <a href="https://nodejs.org" target="_blank" rel="noopener" data-tip="Download Node.js 20 or newer (new tab).">Node.js</a> 20 or newer.')}
           ${step(2,'Get the dashboard folder from the GitHub repo.')}
-          ${step(3,'In Claude Desktop, open <strong>Settings → Developer → Edit Config</strong>, paste this with your two paths and restart Claude.')}
+          ${step(3,"In your AI app's MCP settings, add this server, then restart the app.")}
         </ol>
-        <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">claude_desktop_config.json</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the Claude Desktop config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
-        <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Claude Code, Cursor and other apps, updates and troubleshooting (docs/MCP.md).')}>Setup guide</a></div>
+        <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">MCP server config</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the MCP server config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="MCP server config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
+        <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Paths, updates and troubleshooting (docs/MCP.md).')}>Setup guide</a></div>
       </div>
     </details>
     <p class="misc-privacy stg-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI app receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
@@ -10203,7 +10203,7 @@ function stgRenderPage(){
   return `${note}${check?`<div class="stg-top">${check}</div>`:''}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
 }
 // ===== end 2v6 settings =====
-// Connect An AI App (Settings): the Claude Desktop config the card shows and copies. Details: docs/MCP.md.
+// Connect An AI App (Settings): the MCP server config the card shows and copies. Details: docs/MCP.md.
 const CONNECT_SNIPPETS={
   'connect-desktop':JSON.stringify({mcpServers:{'spyder-kpi':{command:'node',args:['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs','C:\\path\\to\\kpi_export.xls']}}},null,2)
 };

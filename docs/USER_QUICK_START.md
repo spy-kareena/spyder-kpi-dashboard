@@ -1,6 +1,6 @@
 # Spyder KPI Dashboard 2v2 - User Quick Start
 
-1. Open the dashboard link from IT.
+1. Open the dashboard link and sign in.
 2. Run the SAP KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`).
 3. Export the result to Excel (SAP saves it as an `.xls` file; upload it as-is).
 4. Upload the file into the dashboard.
@@ -22,9 +22,9 @@ The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line b
 
 **Big picture** (the switch at the top right of Order Health, Build Risk and Supply Mix) shows a flow chart at the top of the page (on Order Health it is on until you switch it off); your browser remembers it. Thick bands carry most of the value. Order Health: pick open order value (warehouse to status to customer segment) or at-risk value (reason to Us / Them to customer). Build Risk: each CM's orders by clear to build, at risk and late, by month. Supply Mix: open demand by warehouse, item group and month; red bands are short of open purchase orders. Point at a box for its numbers (keyboard: Tab to the chart, arrow keys between boxes). Click a box to filter the page to it (one warehouse, customer or CM); click again to show everything. On a phone, swipe sideways inside the chart. Turn the switch off to hide it.
 
-**Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". The first time, pick a provider in **Settings** and tick its box: Claude or ChatGPT (paid; they do not train on your data) or Groq or OpenRouter (free; they may keep what you send, so use them only for data you may share). It sends your question and the data needed to answer it to that provider. Setup, costs and privacy: docs/AI_ASSISTANT.md.
+**Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". The first time, pick a provider in **Settings** and tick its box: Anthropic or ChatGPT (paid; they do not train on your data) or Groq or OpenRouter (free; they may keep what you send, so use them only for data you may share). It sends your question and the data needed to answer it to that provider. Setup, costs and privacy: docs/AI_ASSISTANT.md.
 
-**Connect An AI App** (in Settings: the gear, top right) shows how to use the same data from Claude Desktop, Claude Code or another MCP app; Settings opens before an export is loaded.
+**Connect An AI App** (in Settings: the gear, top right) shows how to use the same data from an AI app on your computer (any app that supports MCP); Settings opens before an export is loaded.
 
 The page header shows the date the KPIs are calculated for (the export date). If the Settings gear shows a red or yellow dot, open Settings: the **Data Check** card lists the SAP rows with unreadable dates (for example a year typed as 0202 or 2626) and other problems; fix those in SAP and re-export.
 

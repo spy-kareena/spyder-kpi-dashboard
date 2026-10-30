@@ -124,7 +124,7 @@ test('get_overview with part of a name covers every match, like search_lines', a
 // --- Chat reset on a new export ----------------------------------------------------------------------------
 test('loading an export clears the chat at once and drops an answer still pending from the old data', async () => {
   const page = await kpiPage({ spyderKpiAiConsentV2: JSON.stringify({ anthropic: '2026-10-09' }) });
-  const status = { hosted: true, providers: [{ id: 'anthropic', name: 'Claude (Anthropic)', short: 'Claude', tier: 'paid', configured: true, models: ['claude-opus-5-5'], defaultModel: 'claude-opus-5-5' }] };
+  const status = { hosted: true, providers: [{ id: 'anthropic', name: 'Anthropic', short: 'Anthropic', tier: 'paid', configured: true, models: ['claude-opus-5-5'], defaultModel: 'claude-opus-5-5' }] };
   const answer = (t) => ({ ok: true, status: 200, json: async () => ({ stop: 'end', text: t, toolCalls: [], message: { role: 'assistant', content: [{ type: 'text', text: t }] } }) });
   let next = async () => answer('At risk lines: 3');
   page.ctx.fetch = async (url, init = {}) => (/\/status$/.test(url) ? { ok: true, status: 200, json: async () => status } : next(url, init));

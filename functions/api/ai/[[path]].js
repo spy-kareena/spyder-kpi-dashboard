@@ -1,7 +1,7 @@
 /**
  * Ask AI server proxy: the dashboard's chat panel talks to four AI providers through this one route, using
  * keys kept on the server as Cloudflare Pages secrets (never in this repo, never sent to the browser):
- *   wrangler pages secret put ANTHROPIC_API_KEY    Claude (paid)
+ *   wrangler pages secret put ANTHROPIC_API_KEY    Anthropic (paid)
  *   wrangler pages secret put OPENAI_API_KEY       ChatGPT (paid)
  *   wrangler pages secret put GROQ_API_KEY         Groq (free tier)
  *   wrangler pages secret put OPENROUTER_API_KEY   OpenRouter (free models only)
@@ -13,10 +13,10 @@
  *                           normalized: {provider, model, dialect, stop:'end'|'tool_use'|'max_tokens'|'refusal',
  *                           text, toolCalls:[{id, name, input, invalid}], message, usage}
  * The page runs the tools itself (KPI_TOOLS in index.html) and sends the results back in the next request.
- * `messages` are in the provider's own dialect: Anthropic content blocks (tool_use / tool_result) for Claude,
+ * `messages` are in the provider's own dialect: Anthropic content blocks (tool_use / tool_result) for Anthropic,
  * OpenAI chat messages (tool_calls / role "tool") for ChatGPT, Groq and OpenRouter. `message` in the reply is
- * the assistant turn to append to that history unchanged (Claude's thinking blocks must be sent back as-is, and
- * the system prompt and tools must stay the same for the whole chat: Claude checks earlier turns are unchanged).
+ * the assistant turn to append to that history unchanged (Anthropic thinking blocks must be sent back as-is, and
+ * the system prompt and tools must stay the same for the whole chat: the Anthropic API checks earlier turns are unchanged).
  * Errors are {error:{code, message}} with a plain-English message; upstream auth errors and keys are never echoed.
  * Paid providers are capped per session per minute and per site per day (spendingCap; 429 rate_limited).
  * Docs: docs/AI_ASSISTANT.md.
@@ -31,14 +31,14 @@ const MAX_TOOLS = 16;
 // thousand tokens per minute, so they get less room; a short data answer fits easily.
 const MAX_OUTPUT_TOKENS = 16000;
 const ANTHROPIC_VERSION = '2023-06-01';
-// Claude Opus / Sonnet: if a safety classifier declines a question, Anthropic re-runs it on its recommended
+// Opus / Sonnet: if a safety classifier declines a question, Anthropic re-runs it on its recommended
 // fallback model in the same call.
 const ANTHROPIC_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
-// Claude's thinking blocks are tied to the conversation before them. The page only ever appends to a chat, but if
-// an earlier turn ever differs, Claude drops the old thinking for that request instead of refusing it.
+// Anthropic thinking blocks are tied to the conversation before them. The page only ever appends to a chat, but if
+// an earlier turn ever differs, the model drops the old thinking for that request instead of refusing it.
 // If the account rejects either beta, the request is sent again once without both.
 const ANTHROPIC_BINDING_BETA = 'thinking-binding-controls-2026-08-01';
-// Spending cap for the paid providers (Claude, ChatGPT), counted in Workers KV (REPORT_STORE) before each call:
+// Spending cap for the paid providers (Anthropic, ChatGPT), counted in Workers KV (REPORT_STORE) before each call:
 // at most AI_PER_MINUTE requests a minute per signed-in session, and AI_DAILY_REQUESTS (a Pages variable or
 // secret, default 300) a day per provider for the whole site. A question is one request per model turn (up to 8).
 const AI_PER_MINUTE = 15;
@@ -50,12 +50,12 @@ const SESSION_COOKIE = '__Host-spyder_kpi_session'; // set by functions/_middlew
 // is sent).
 const PROVIDERS = [
   {
-    id: 'anthropic', name: 'Claude (Anthropic)', short: 'Claude', tier: 'paid', dialect: 'anthropic', secret: 'ANTHROPIC_API_KEY',
+    id: 'anthropic', name: 'Anthropic', short: 'Anthropic', tier: 'paid', dialect: 'anthropic', secret: 'ANTHROPIC_API_KEY',
     base: 'https://api.anthropic.com/v1',
-    // Current Claude models only; the list is fixed so the cost per question stays predictable.
+    // Current Anthropic models only; the list is fixed so the cost per question stays predictable.
     models: ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5'],
     defaultModel: 'claude-opus-5-5',
-    labels: { 'claude-opus-5-5': 'Claude Opus 5.5 (most capable)', 'claude-sonnet-5-5': 'Claude Sonnet 5.5 (faster, about half the cost)', 'claude-haiku-5-5': 'Claude Haiku 5.5 (fastest, lowest cost)' },
+    labels: { 'claude-opus-5-5': 'Opus 5.5 (most capable)', 'claude-sonnet-5-5': 'Sonnet 5.5 (faster, about half the cost)', 'claude-haiku-5-5': 'Haiku 5.5 (fastest, lowest cost)' },
     fallbackModels: ['claude-opus-5-5', 'claude-sonnet-5-5'],
     termsUrl: 'https://www.anthropic.com/legal/commercial-terms',
     dataNotice: 'Billed to Spyder Controls. Anthropic does not train on this data and keeps it for a limited time for safety checks.',
@@ -187,7 +187,7 @@ function checkConversation(p, body) {
   const roles = p.dialect === 'anthropic' ? ['user', 'assistant'] : ['user', 'assistant', 'tool'];
   for (const m of messages) {
     if (!m || typeof m !== 'object' || !roles.includes(m.role)) return { error: `Each message needs a role of ${roles.join(', ')}.` };
-    if (p.dialect === 'anthropic' && !(typeof m.content === 'string' || Array.isArray(m.content))) return { error: 'Each Claude message needs text or content blocks.' };
+    if (p.dialect === 'anthropic' && !(typeof m.content === 'string' || Array.isArray(m.content))) return { error: 'Each Anthropic message needs text or content blocks.' };
     // The page's own turns are plain text and tool results; no images, files or links for the provider to fetch.
     // (Assistant turns are passed back as the provider sent them.)
     if (m.role !== 'assistant' && !userContentOk(p, m.content)) return { error: 'Questions and tool results must be plain text.' };
@@ -287,7 +287,7 @@ function pickDefault(p, models) {
   return models[0] || '';
 }
 
-// The allowlist: Claude's fixed list; for the others the listed models plus their families (OpenAI, Groq);
+// The allowlist: Anthropic's fixed list; for the others the listed models plus their families (OpenAI, Groq);
 // OpenRouter only ever free (":free") models, checked against its price list when that could be read.
 async function modelAllowed(p, env, model) {
   if (!MODEL_ID_RE.test(model)) return false;
