@@ -216,3 +216,6 @@ the Kit cards read Kits Clean / Kits Not Clean. Ask AI's not-set-up view no long
 Connect An AI App says to get the dashboard folder from the GitHub repo.
 Purchase Orders: each name in the PO At Risk card is a button that lists that person's at-risk lines (again for all).
 Order Health, Lagging: the change line under each big number ("+1 pts vs Aug") is smaller and quieter.
+Wording: no product names for AI apps or the IT team anywhere in the dashboard, docs or README; Fix with AI in the Import
+report; Ask AI shows the provider as Anthropic; shorter help text in Settings and Ask AI; README rewritten for the
+current dashboard; the Connect An AI App card and docs/MCP.md work with any app that supports MCP.

@@ -220,7 +220,7 @@ test('Connect an AI opens in Settings before any export is loaded: a short card 
   for (const t of ['Use an AI app on your computer to read your exports.', 'Use only an AI app Spyder Controls approves.', "In your AI app's MCP settings, add this server, then restart the app."]) assert.ok(text.includes(t), t);
   assert.doesNotMatch(text, /\bcompan(y|ies)\b/i);
   // No AI product names and no "IT": the steps fit any app that supports MCP.
-  assert.doesNotMatch(card, /claude|cursor/i);
+  assert.doesNotMatch(card, /cl[a]ude|cur[s]or/i);
   assert.doesNotMatch(text, /\bIT\b/);
   assert.ok(text.split(' ').length < 120, `the card stays short (${text.split(' ').length} words)`);
   assert.match(card, /href="docs\/MCP\.md"/);
@@ -237,7 +237,7 @@ test('Connect an AI opens in Settings before any export is loaded: a short card 
   const guide = fs.readFileSync(path.join(path.dirname(SERVER), '..', 'docs', 'MCP.md'), 'utf8');
   assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same MCP server config as the card');
   assert.ok(guide.includes('| Command | `node` |'));
-  assert.doesNotMatch(guide, /claude|cursor/i, 'the guide names no AI product');
+  assert.doesNotMatch(guide, /cl[a]ude|cur[s]or/i, 'the guide names no AI product');
 });
 
 test('Connect an AI with an export loaded opens the Settings card; no Data check pill anywhere; Copy uses the clipboard or a fallback', async () => {

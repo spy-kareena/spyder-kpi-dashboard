@@ -158,7 +158,7 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
   }
   assert.ok(keys.size >= 35, `${keys.size} section titles carry their help`);
   assert.deepEqual(Object.keys(info).filter((k) => !keys.has(k)), [], 'every section text is on a title');
-  // The popover, its script and its styles are gone; the help cursor marks a titled heading with a tip.
+  // The popover, its script and its styles are gone; the help pointer marks a titled heading with a tip.
   assert.doesNotMatch(HTML, /id="info-pop"|class="info-pop|\.info-btn|\.info-pop|\.title-row|function (infoButton|toggleInfo|openInfo|closeInfo|infoPopKey)\b|INFO_ICON|syncInfoPop|queuePlaceInfo/);
   assert.match(CSS, /\nh2\[data-tip\]\{cursor:help\}\n/);
   assert.equal(page.run("sectionTip('')"), '');

@@ -1,4 +1,4 @@
-# Spyder KPI Dashboard 2v2 - IT Hosting Notes
+# Spyder KPI Dashboard - Hosting Notes
 
 ## What this is
 
@@ -35,7 +35,7 @@ For IIS:
    `C:\inetpub\wwwroot\spyder-kpi-dashboard`
 2. Create an IIS site or virtual directory pointing at that folder.
 3. Set the default document to `index.html`.
-4. Bind the site to the internal IP/host name IT wants to use.
+4. Bind the site to the internal IP / host name you want to use.
 5. Users can open the dashboard from a URL like:
    `http://internal-server-name/spyder-kpi-dashboard/`
 
