@@ -1774,7 +1774,8 @@ details.oh-more[open] .oh-more-less{display:inline}
    Reusable pieces: .dz-card .dz-grid .dz-span-N .dz-card-head .dz-title .dz-meta .dz-h1 .dz-big .dz-sub .dz-chip
    .dz-seg .dz-filter + .dz-menu .dz-clear .dz-table .dz-barrow .dz-prog .dz-pillinput .dz-stat .dz-btn .dz-fade .dz-grow */
 
-/* Shell: light blue page, one centred 1440px column, 22px between the header, the filter row and the cards */
+/* Shell: white page (--dz-page; dark mode and the page tokens are in the 2v6:theme block at the end), one centred 1440px
+   column, 22px between the header, the filter row and the cards */
 html{background:var(--dz-page-base)}
 body{background:var(--dz-page-base)}
 .app-shell{min-height:100vh;background:var(--dz-page-bg);padding:20px 32px 48px}
@@ -3439,9 +3440,199 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 @media (max-width:640px){#results-screen details.about:not(.sk-about){right:16px;bottom:16px}#results-screen details.about:not(.sk-about)>summary{width:40px;height:40px}}
 @media print{#results-screen details.about:not(.sk-about){display:none!important}}
 /* 2v6:end misc-pages */
+/* 2v6:theme */
+/* White page, the header's logo / bell / upload, and dark mode (prefix thm- / hdr-).
+   Surface tokens for every page (use them instead of #fff / #0f172a), light | dark:
+     --dz-page       page background                          #fff     | #0b1120
+     --dz-surface    card, menu, drawer, input background     #fff     | #131b2e
+     --dz-surface-2  subtle fill (same as --dz-fill-1)        #f1f5f9  | #1a2437
+     --dz-surface-up raised layers (menus, dialogs, drawers)  #fff     | #182238
+     --dz-hover      row / item hover wash                    ink 3%   | white 4%
+     --dz-on-ink     text on a --dz-ink-1 fill (primary)      #fff     | #0b1120
+   Inks --dz-ink-1..6, lines --dz-line-5/6/8, the indigo / risk / amber / teal families and the older --gray-* scale
+   turn over in dark mode. Dark mode is <html data-theme="dark"> (applyTheme()); everything dark sits inside
+   @media screen, so printing is always light. Overrides of older rules use :where([data-theme=dark]) so they keep the
+   original rule's specificity: its :hover / .sel / .on variants still win, as if the rule itself had been edited. */
+:root{
+  --dz-page:#fff;--dz-surface:#fff;--dz-surface-2:#f1f5f9;--dz-surface-up:#fff;--dz-hover:rgba(15,23,42,.03);--dz-on-ink:#fff;
+  --dz-page-base:var(--dz-page);--dz-page-bg:var(--dz-page);
+  --dz-sh-card:0 1px 2px rgba(15,23,42,.04),0 6px 24px rgba(15,23,42,.05);
+  --dz-badge:#e0244f;
+}
+
+/* ---------- White page: cards keep white, so they get a hairline and a soft shadow; pills and panels that sat on the
+   blue page get the same hairline (their #fff border vanished on white) ---------- */
+.dz-card,.mwm-kpi,.shp-tile,.sup-tile,.sup-cmcard,.misc-tile,#upload-screen .upload-side,#loading-screen .reading{background:var(--dz-surface);border-color:var(--dz-line-8)}
+.dz-filter,.dz-seg,.dz-btn.shp-pill,.shp-demo,.shp-note,.mwm-more>summary,.sup-detail,.sup-page details.about,.misc-about details.about,#loading-screen .skeleton{border-color:var(--dz-line-8)}
+.dz-filter{background:var(--dz-surface)}
+.dz-filter:hover,.dz-btn.shp-pill:hover,.mwm-more>summary:hover{background:var(--dz-surface-2)}
+.dz-seg{background:var(--dz-surface)}
+button.shp-tile:hover,.shp-tile:hover,button.sup-tile:hover,.sup-cmcard:hover{border-color:rgba(84,104,255,.28)}
+#loading-screen .skeleton{background:linear-gradient(100deg,var(--dz-surface-2) 40%,var(--dz-surface) 50%,var(--dz-surface-2) 60%);background-size:200% 100%}
+/* Row and item hovers were a white wash over the glass cards: on white cards they use a faint ink wash */
+button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,button.ohl-cust:hover,button.ohl-age:hover,
+.ohl-card table.ohl-lines tbody tr.line-row:hover,.ohl-card table.ohl-lines tbody tr.line-row.editing,.ohl-sup-row:hover,
+.shp-row.open,.shp-head:hover,.shp-li:hover,.sup-whrow:hover,
+.misc-flat .lines-table tbody tr.line-row:hover,.misc-flat .data-table tbody tr:hover,.misc-flat .lines-table tbody tr.line-row.editing{background:var(--dz-hover)}
+.hdr-icon:not(:disabled):hover{background:var(--dz-surface-2)}
+
+/* ---------- Header: a larger logo; Upload files is the last icon before the avatar, the PO At Risk bell just left of
+   it (only while there are some) ---------- */
+.hdr-logo img{width:132px;height:auto}
+.hdr-bell{position:relative}
+.hdr-badge{position:absolute;top:1px;right:-1px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--dz-badge);color:#fff;font-size:10px;font-weight:600;line-height:16px;text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 2px var(--dz-page);pointer-events:none}
+/* The avatar menu's Dark mode switch */
+.hdr-theme-item{gap:16px}
+.hdr-switch{position:relative;flex:none;width:30px;height:18px;border-radius:999px;background:var(--dz-ink-6);transition:background-color .15s}
+.hdr-switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.25);transition:transform .15s ease}
+.hdr-switch.on{background:var(--dz-indigo)}
+.hdr-switch.on::after{transform:translateX(12px)}
+@media (prefers-reduced-motion:reduce){.hdr-switch,.hdr-switch::after{transition:none}}
+@media (forced-colors:active){.hdr-switch{border:1px solid CanvasText}.hdr-switch.on{background:Highlight}.hdr-switch::after{background:CanvasText}.hdr-badge{forced-color-adjust:none}}
+/* Tablets: tighter gaps and the export date as its icon (the date stays in its label and tooltip), so the page links
+   keep their room next to the larger logo and the extra icon */
+@media (min-width:761px) and (max-width:1180px){
+  .app-header{column-gap:12px}
+  .hdr-logo img{width:120px}
+  .hdr-nav,.hdr-center{gap:12px}
+  .hdr-date .hdr-date-txt{display:none}
+  .hdr-date .hdr-date-ico{display:block}
+  .hdr-date{padding:0;width:34px;justify-content:center}
+}
+@media (max-width:760px){
+  .hdr-logo img{width:110px}
+  .app-header.searching .hdr-bell{display:none}
+}
+/* Phones: seven round icons and the logo share one row, so the icons are 32px with no gaps */
+@media (max-width:420px){
+  .app-header{column-gap:8px}
+  .hdr-right{gap:0}
+  .hdr-right .hdr-icon,.hdr-right .hdr-date,.hdr-right .hdr-avatar{width:32px;height:32px}
+  .hdr-search{height:32px}
+}
+
+/* ---------- Dark mode (screen only) ---------- */
+@media screen{
+[data-theme=dark]{
+  --dz-page:#0b1120;--dz-surface:#131b2e;--dz-surface-2:#1a2437;--dz-surface-up:#182238;--dz-hover:rgba(255,255,255,.04);--dz-on-ink:#0b1120;
+  --dz-ink-1:#f1f5f9;--dz-ink-2:#dbe3ee;--dz-ink-3:#c0cad8;--dz-ink-4:#97a3b6;--dz-ink-5:#7a879b;--dz-ink-6:#3e4a5e;
+  --dz-indigo:#7383ff;--dz-indigo-link:#9aa6ff;--dz-indigo-hover:#b8c0ff;--dz-indigo-deep:#aab4ff;--dz-indigo-bg:#222b55;
+  --dz-risk:#ff5c82;--dz-risk-text:#ff8aa3;--dz-risk-bg:#3b1824;
+  --dz-amber:#ffb53d;--dz-amber-text:#fcc35a;--dz-amber-bg:#3a2b10;
+  --dz-teal:#2cc8b2;--dz-teal-bg:#0f3a35;--dz-teal-bg-2:#0f2b2a;
+  --dz-fill-1:#1a2437;--dz-glass-55:rgba(255,255,255,.03);--dz-glass-60:rgba(255,255,255,.035);--dz-glass-75:rgba(255,255,255,.05);--dz-glass-80:rgba(255,255,255,.06);
+  --dz-line-5:rgba(226,232,240,.07);--dz-line-6:rgba(226,232,240,.09);--dz-line-8:rgba(226,232,240,.13);
+  --dz-sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.28);--dz-sh-menu:0 16px 44px rgba(0,0,0,.55);
+  --dz-seg-on-bg:#f1f5f9;--dz-seg-on-fg:#0b1120;--dz-seg-off-fg:#c0cad8;
+  /* the older scale (zinc), turned over */
+  --gray-900:#f1f5f9;--gray-800:#e2e8f0;--gray-700:#cbd5e1;--gray-600:#b6c1d0;--gray-500:#97a3b6;--gray-400:#6b778b;
+  --gray-300:#3a4659;--gray-200:#2a3548;--gray-100:#1a2437;--gray-50:#162033;--white:#131b2e;
+  --accent:#5468ff;--accent-strong:#9aa6ff;--accent-tint:#222b55;--accent-border:#37438f;--accent-ring:rgba(115,131,255,.35);--accent-mid:#4a58c9;
+  --crit:#ff5c82;--crit-text:#ff8aa3;--crit-tint:#3b1824;--crit-border:#5e2536;
+  --warn-text:#fcc35a;--warn-tint:#3a2b10;--warn-border:#5c4518;
+  --good-text:#2cc8b2;--good-tint:#0f3a35;--good-border:#1b5a50;
+  --tip-bg:#334155;--tip-fg:#f8fafc;
+  --sh-rest:0 1px 2px rgba(0,0,0,.3);--sh-hover:0 4px 12px -2px rgba(0,0,0,.4);--sh-pop:0 10px 24px -4px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+:where([data-theme=dark]) a{color:var(--accent-strong)}
+:where([data-theme=dark]) a:hover{color:var(--dz-indigo-hover)}
+:where([data-theme=dark]) .hdr-logo img{filter:invert(1)}
+/* Raised layers: menus, popovers, the Ask AI and Import drawers, dialogs */
+:where([data-theme=dark]) .dz-menu,:where([data-theme=dark]) .ai-panel,:where([data-theme=dark]) .data-check-pop,
+:where([data-theme=dark]) #results-screen details.about:not(.sk-about) .about-body{background:var(--dz-surface-up);border-color:var(--dz-line-8)}
+:where([data-theme=dark]) .editor-dialog{background:var(--dz-surface-up);border-color:var(--dz-line-8)}
+:where([data-theme=dark]) .dz-menu-item:hover{background:rgba(255,255,255,.06)}
+:where([data-theme=dark]) .imp-drop{background:rgba(11,17,32,.8)}
+:where([data-theme=dark]) .imp-drop-box{background:rgba(24,34,56,.92)}
+:where([data-theme=dark]) .toast-item{background:#273246;color:var(--dz-ink-1);box-shadow:0 0 0 1px rgba(255,255,255,.08),var(--dz-sh-menu)}
+/* Fills drawn in ink with white text (primary buttons, the avatar, user chat bubbles): light fill, dark text */
+:where([data-theme=dark]) .hdr-avatar,:where([data-theme=dark]) .dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary,:where([data-theme=dark]) a.dz-btn.primary:hover,
+:where([data-theme=dark]) .ohl-peak,:where([data-theme=dark]) .sup-page .note-editor .note-done,:where([data-theme=dark]) .ai-panel .btn-primary,
+:where([data-theme=dark]) .ai-msg.user,:where([data-theme=dark]) .ai-msg.user code,:where([data-theme=dark]) .editor-actions .btn-primary,
+:where([data-theme=dark]) #results-screen details.about:not(.sk-about)[open]>summary{color:var(--dz-on-ink)}
+:where([data-theme=dark]) .ai-msg.user code{background:rgba(11,17,32,.12)}
+/* Older rules that paint #fff (cards, tables, inputs, chips, tiles, selected tiles): the card surface */
+:where([data-theme=dark]) .select,:where([data-theme=dark]) .segmented button.active,:where([data-theme=dark]) .chip,:where([data-theme=dark]) .filter-bar,
+:where([data-theme=dark]) .card,:where([data-theme=dark]) .mini-strip,:where([data-theme=dark]) .mini-strip>button,:where([data-theme=dark]) .mini-strip>div,
+:where([data-theme=dark]) .late-badge,:where([data-theme=dark]) .table,:where([data-theme=dark]) .note-btn,:where([data-theme=dark]) .drill,
+:where([data-theme=dark]) button.trow,:where([data-theme=dark]) .lines-table th,:where([data-theme=dark]) .note-editor select,:where([data-theme=dark]) details.about,
+:where([data-theme=dark]) .preview-item,:where([data-theme=dark]) .connect-code-head,:where([data-theme=dark]) .upload-zone,:where([data-theme=dark]) .upload-chip,
+:where([data-theme=dark]) .upload-side,:where([data-theme=dark]) .editable-rows .row-override,:where([data-theme=dark]) .editable-rows .row-note,
+:where([data-theme=dark]) .editable-rows .row-cause,:where([data-theme=dark]) .sc-group-head,:where([data-theme=dark]) .editor-form input,
+:where([data-theme=dark]) .editor-form input:focus,:where([data-theme=dark]) .editor-pick,:where([data-theme=dark]) .editor-chip,:where([data-theme=dark]) .editor-chip-x,
+:where([data-theme=dark]) .bp-thumb,:where([data-theme=dark]) .ship-bar,:where([data-theme=dark]) .ship-add input,:where([data-theme=dark]) .ship-list,
+:where([data-theme=dark]) .ship-demo-tag,:where([data-theme=dark]) .ship-update,:where([data-theme=dark]) .ship-update select,:where([data-theme=dark]) .ship-update input,
+:where([data-theme=dark]) .ship-alert.calm,:where([data-theme=dark]) .ship-step>i,:where([data-theme=dark]) .ship-strip.unknown .ship-step>i,
+:where([data-theme=dark]) .ship-detail .table-scroll,:where([data-theme=dark]) .rsn-chip,:where([data-theme=dark]) .oh24-age,:where([data-theme=dark]) .oh-cause-btn,
+:where([data-theme=dark]) .ai-tier,:where([data-theme=dark]) .ai-tier.free,:where([data-theme=dark]) .ovr-tile,:where([data-theme=dark]) details.oh-more>summary,
+:where([data-theme=dark]) .ship-kpis,:where([data-theme=dark]) .data-table tr.grp-row>td,:where([data-theme=dark]) .data-table tbody tr.grp-row:hover,
+:where([data-theme=dark]) .fc-max,:where([data-theme=dark]) .dz-filter.set,:where([data-theme=dark]) .dz-btn,
+:where([data-theme=dark]) .ohl-stat.sel,:where([data-theme=dark]) .ohl-stat.sel:hover,:where([data-theme=dark]) .ohl-tile.sel,:where([data-theme=dark]) .ohl-pt,
+:where([data-theme=dark]) .mwm-datebtn[aria-expanded="true"],:where([data-theme=dark]) .mwm-pt,:where([data-theme=dark]) .shp-tile.sel,:where([data-theme=dark]) .shp-dot,
+:where([data-theme=dark]) .imp-file,:where([data-theme=dark]) .imp-claude-btn[aria-disabled="true"],:where([data-theme=dark]) .imp-claude-btn[aria-disabled="true"]:hover,
+:where([data-theme=dark]) .imp-map,:where([data-theme=dark]) .sup-tile.sel,:where([data-theme=dark]) .sup-page button.dz-stat[aria-pressed="true"],
+:where([data-theme=dark]) .sup-toggle[aria-pressed="true"],:where([data-theme=dark]) .sup-page .note-btn,:where([data-theme=dark]) .sup-cmcard.sel,
+:where([data-theme=dark]) .data-check-pop .btn:where(:not(.btn-primary)),:where([data-theme=dark]) .snapshot-download-box .btn:where(:not(.btn-primary)),
+:where([data-theme=dark]) .ai-panel .btn:where(:not(.btn-primary)),
+:where([data-theme=dark]) .ai-msg.model,:where([data-theme=dark]) .ai-chips .chip:hover,:where([data-theme=dark]) .editor-actions .btn:where(:not(.btn-primary)),
+:where([data-theme=dark]) #results-screen details.about:not(.sk-about)>summary,:where([data-theme=dark]) .dz-card.shp-map{background-color:var(--dz-surface)}
+:where([data-theme=dark]) .ship-alert.calm,:where([data-theme=dark]) .shp-alert.calm,:where([data-theme=dark]) .shp-update,:where([data-theme=dark]) .shp-add,
+:where([data-theme=dark]) .shp-lines,:where([data-theme=dark]) .shp-tile:hover{background:rgba(255,255,255,.035)}
+:where([data-theme=dark]) .snapshot-download-box .btn:where(:not(.btn-primary)):hover{background:var(--dz-fill-1)}
+/* Pale tints drawn as hex: their dark counterparts */
+:where([data-theme=dark]) .upload-zone:hover{background:var(--dz-surface-2)}
+:where([data-theme=dark]) details.data-check>summary:hover,:where([data-theme=dark]) details.data-check[open]>summary{background:#4a3712}
+:where([data-theme=dark]) .live-dot{box-shadow:0 0 0 3px rgba(44,200,178,.22)}
+:where([data-theme=dark]) .dot.halo{box-shadow:0 0 0 3px rgba(255,92,130,.25)}
+:where([data-theme=dark]) .cause-tag.us{background:#262046;color:#b3a8f5}
+:where([data-theme=dark]) .cause-tag.them{background:#3b1a2a;color:#f3a6c6}
+:where([data-theme=dark]) .cause-text-us{color:#b3a8f5}
+:where([data-theme=dark]) .data-table .crit-dark{color:var(--crit)}
+:where([data-theme=dark]) .cause-text-them{color:#f3a6c6}
+:where([data-theme=dark]) .ohl-wh{background:#2a2210;box-shadow:inset 0 0 0 1px rgba(255,181,61,.22)}
+:where([data-theme=dark]) .ohl-wh:hover{background:#33290f}
+:where([data-theme=dark]) .ohl-wh.sel{box-shadow:inset 0 0 0 2px rgba(255,181,61,.6)}
+:where([data-theme=dark]) .shp-chipbtn:hover,:where([data-theme=dark]) .imp-claude-btn.on:hover{background:#2b3570}
+:where([data-theme=dark]) .imp-sum.amber{background:var(--dz-amber-bg)}
+:where([data-theme=dark]) .stg-thumb{background:#f1f5f9}
+/* Lines drawn in ink at a fixed alpha */
+:where([data-theme=dark]) .ohl-sec{border-top-color:var(--dz-line-8)}
+:where([data-theme=dark]) .mwm-cols,:where([data-theme=dark]) .sup-plot{border-bottom-color:rgba(226,232,240,.16)}
+:where([data-theme=dark]) .mwm-grid.base{border-top-color:rgba(226,232,240,.16)}
+:where([data-theme=dark]) .mwm-badge{background:rgba(255,255,255,.06)}
+:where([data-theme=dark]) .mwm-sub{background:rgba(255,255,255,.03)}
+:where([data-theme=dark]) .misc-code{background:rgba(255,255,255,.04)}
+:where([data-theme=dark]) .sup-page .note-btn,:where([data-theme=dark]) #results-screen details.about:not(.sk-about)>summary,
+:where([data-theme=dark]) #results-screen details.about:not(.sk-about) .about-body{border-color:var(--dz-line-8)}
+:where([data-theme=dark]) .sup-skel{background:linear-gradient(90deg,var(--dz-fill-1),rgba(26,36,55,.45))}
+:where([data-theme=dark]) .sk-node:hover .sk-hit{fill:rgba(255,255,255,.05)}
+:where([data-theme=dark]) .sk-label{stroke:var(--dz-surface)}
+/* Shipping map: dark land, borders and label halos in the card colour */
+:where([data-theme=dark]) .shp-land-p{fill:#222d42;stroke:var(--dz-surface)}
+:where([data-theme=dark]) .shp-borders{stroke:var(--dz-surface)}
+:where([data-theme=dark]) .shp-lbl{text-shadow:0 0 3px var(--dz-surface),0 0 3px var(--dz-surface),0 0 3px var(--dz-surface),0 0 2px var(--dz-surface)}
+/* Heat maps keep their status colours; only the empty (neutral) cells, drawn inline, follow the theme */
+:where([data-theme=dark]) .mwm-heat-cell[style*="#f1f5f9"],:where([data-theme=dark]) .sup-heat-c[style*="#f1f5f9"],
+:where([data-theme=dark]) [class*="sup-heat"] [style*="background:#f1f5f9"],:where([data-theme=dark]) .mwm-sw[style*="#f1f5f9"],
+:where([data-theme=dark]) .sup-legend [style*="#f1f5f9"]{background:var(--dz-surface-2)!important;color:var(--dz-ink-3)!important}
+:where([data-theme=dark]) .mwm-heat-cell[style*="rgba(15,23,42,.03)"]{background:rgba(255,255,255,.03)!important;color:var(--dz-ink-6)!important}
+/* Neutral bars and dots drawn inline in slate / ink (Status & Top Reasons bars, the Forecast tile dots) */
+:where([data-theme=dark]) [style*="background:#cbd5e1"]{background:#4a566b!important}
+:where([data-theme=dark]) [style*="background:#0f172a"]{background:var(--dz-ink-1)!important}
+/* Native controls (checkboxes, scrollbars, date pickers) follow color-scheme; text inputs without a class too */
+:where([data-theme=dark]) input:not([type]),:where([data-theme=dark]) input[type=text],:where([data-theme=dark]) input[type=search],
+:where([data-theme=dark]) input[type=number],:where([data-theme=dark]) input[type=date],:where([data-theme=dark]) textarea,:where([data-theme=dark]) select{color:var(--dz-ink-1)}
+:where([data-theme=dark]) ::placeholder{color:var(--dz-ink-5)}
+}
+/* Printing is always light: native controls too */
+@media print{:root{color-scheme:light!important}}
+/* 2v6:end theme */
 </style>
 </head>
 <body>
+<script id="thm-boot">/* Dark or light before the first paint, from the saved setting (applyTheme() takes over once the app runs) */
+(function(){try{var t=(JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{}).theme;if(t==='system')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';t=t==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();</script>
 <div class="app-shell">
   <div class="app-col">
   <header class="app-header" id="app-header"></header>
@@ -8443,6 +8634,7 @@ function stgSpec(){
   const oneOf=list=>v=>list.includes(v)?v:undefined;
   const list=v=>Array.isArray(v)?stgCleanList(v):undefined;
   return {
+    theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined},
     atRiskTarget:{def:()=>5,check:num(1,50)},
     toleranceDays:{def:()=>2,check:num(0,14)},
     horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
@@ -8521,6 +8713,7 @@ function stgSet(key,value){
 }
 function stgAfterChange(keys){
   stgSync();
+  if(keys.includes('theme'))applyTheme();
   if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
   // The Shipping page's own Show demo data / Show real shipments choice gives way to the new default.
   if(keys.includes('shipDemoDefault')&&typeof SHIP_DEMO_KEY==='string'){
@@ -9369,8 +9562,61 @@ document.addEventListener('keydown',e=>{
 });
 
 // Header: logo, page links (Order Health, Monthly, Warehouses, Metrics, Shipping, Supply ▾), then the export date
-// (its popover is the loaded-export card), search, Ask AI, Export PDF and the avatar menu (Share snapshot, Change name,
-// Show hints again, Connect an AI). The function keeps its old name: many places redraw the "sidebar".
+// (its popover is the loaded-export card), search, Ask AI, Export PDF, the PO At Risk bell (only when there are some),
+// Upload files and the avatar menu (Share snapshot, Change name, Settings, Connect an AI, Dark mode). The function keeps
+// its old name: many places redraw the "sidebar".
+// ===== 2v6 theme: light / dark / system =====
+// The Settings key 'theme' ('light' default, 'dark', 'system' = the computer's choice). applyTheme() puts
+// data-theme="dark|light" and color-scheme on <html>; the /* 2v6:theme */ CSS block recolours the --dz-* tokens and the
+// older rules from it. The small script at the top of <body> does the same from localStorage before the first paint.
+// Tokens every page can use, light | dark: --dz-surface (card, menu, drawer background) #fff | #131b2e,
+// --dz-surface-2 (subtle fill, = --dz-fill-1) #f1f5f9 | #1a2437, --dz-page (page background) #fff | #0b1120, plus
+// --dz-surface-up (menus, dialogs), --dz-hover (row hover wash), --dz-on-ink (text on an ink fill), --dz-ink-1..6 and
+// --dz-line-5/6/8 (the full list is at the top of the CSS block). Printing is always light.
+let thmSession='';  // a shared snapshot keeps no settings: the Dark mode switch then holds the choice for this visit
+let thmMql=null;
+function thmSystemDark(){
+  try{
+    if(!thmMql&&typeof matchMedia==='function'){
+      thmMql=matchMedia('(prefers-color-scheme: dark)');
+      const follow=()=>{if(thmChoice()==='system')applyTheme();};
+      if(thmMql.addEventListener)thmMql.addEventListener('change',follow);else if(thmMql.addListener)thmMql.addListener(follow);
+    }
+    return !!(thmMql&&thmMql.matches);
+  }catch(err){return false;}
+}
+function thmChoice(){return thmSession||stgValue('theme')||'light';}
+function thmIsDark(){const c=thmChoice();return c==='dark'||(c==='system'&&thmSystemDark());}
+function applyTheme(){
+  const t=thmIsDark()?'dark':'light',root=document.documentElement;
+  if(root.dataset.theme!==t)root.dataset.theme=t;
+  root.style.colorScheme=t;
+  return t;
+}
+// The avatar menu's Dark mode switch (the menu stays open): dark <-> light, saved like any other setting.
+function hdrThemeItem(){
+  const on=thmIsDark();
+  return `<button type="button" role="menuitemcheckbox" aria-checked="${on}" class="dz-menu-item hdr-theme-item" data-focus-key="hdr-menu-theme" onclick="hdrThemeToggle()"${tipAttr('Dark colours for the dashboard. Saved in this browser; Settings can also follow your computer.')}><span>Dark mode</span><span class="hdr-switch${on?' on':''}" aria-hidden="true"></span></button>`;
+}
+function hdrThemeToggle(){
+  const next=thmIsDark()?'light':'dark';
+  thmSession='';
+  if(!stgSet('theme',next)){thmSession=next;applyTheme();renderSidebar();}
+}
+applyTheme(); // the boot script at the top of <body> set it before the first paint; this also starts following 'system'
+// The PO At Risk bell (agent A's poAlertCount / poAlertsToggle): shown only while some PO lines arrive after the sales
+// order they feed ships; the badge is redrawn with the header.
+const HDR_BELL_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+function hdrBellCount(){
+  try{const n=typeof poAlertCount==='function'?Number(poAlertCount()):0;return n>0?Math.floor(n):0;}catch(err){return 0;}
+}
+function hdrBell(){
+  const n=hdrBellCount();
+  if(!n)return '';
+  const label=n===1?'1 PO line arrives after its sales order ships':`${fmtNum(n)} PO lines arrive after their sales order ships`;
+  return `<button type="button" class="hdr-icon hdr-bell" id="hdr-bell" data-focus-key="hdr-bell" aria-label="${esc(label)}" onclick="if(typeof poAlertsToggle==='function')poAlertsToggle()"${tipAttr(`PO At Risk: ${label}.`)}>${HDR_BELL_SVG}<span class="hdr-badge" aria-hidden="true">${n>99?'99+':n}</span></button>`;
+}
+// ===== end 2v6 theme =====
 let hdrSearchOpen=false;   // the search pill is expanded (it also stays open while the box holds text)
 let hdrRendering=false;    // true while the header's markup is swapped (a blur then is not the user leaving the box)
 function hdrInitials(name){
@@ -9457,14 +9703,15 @@ function renderSidebar(){
     item('hdr-menu-share','Share snapshot','exportShareSnapshot()','Save an .html copy of the data and notes to send; anyone with the file sees all of it.',!canShare)
   }${item('hdr-menu-name',name?'Change name':'Add your name','askEditorName(true)',isSnapshotView?'Names are not saved from a shared snapshot.':'The name shown with the notes you save.',isSnapshotView)
   }${stgMenuItem()
-  }${item('hdr-menu-connect','Connect an AI',"setTab('connect')",PAGE_TIPS.connect||'Set up Claude Desktop or another AI app to read your exports.',false)}</div></div>`;
+  }${item('hdr-menu-connect','Connect an AI',"setTab('connect')",PAGE_TIPS.connect||'Set up Claude Desktop or another AI app to read your exports.',false)
+  }<div class="dz-menu-sep" role="separator"></div>${hdrThemeItem()}</div></div>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
   const focus=captureFocus(el);
   el.classList.toggle('searching',sOpen);
   hdrRendering=true;
-  el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="110" height="23"></a>
+  el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
-    <div class="hdr-right">${file}${search}${impHeaderButton()}${askAi}${exportPdf}${avatar}</div>`;
+    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${loaded?hdrBell():''}${impHeaderButton()}${avatar}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
   // The page links scroll sideways on a phone: keep where they were, and the current page in view.
@@ -9739,6 +9986,7 @@ function renderResults(){
   const loaded=hasLoadedData();
   const headMeta=activeTab==='connect'?(loaded?`answers use the export as of ${asOfShort}`:'no export loaded yet')
     : activeTab==='settings'?'Saved in this browser'
+    : activeTab==='metrics'?''  // no as-of line on the Metrics Timeline (the owner's ask); the export date is in the header
     : activeTab==='search'?globalSearchMeta(m)
     : activeTab==='shipping'?shippingHeadMeta()
     // Each page counts what it is about: PO lines, supply / demand lines, or open sales-order lines; Build Risk shows
@@ -9763,7 +10011,7 @@ function renderResults(){
   const isConnect=activeTab==='connect'||activeTab==='settings';
   const showTitle=activeTab!=='weekly';
   const headNotes=`${isConnect?'':renderDataQualityNote()}${snapshotTag}`;
-  const headRight=loaded?(showTitle?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
+  const headRight=loaded?(showTitle&&headMeta?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
     :`<button type="button" class="dz-btn primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`;
   const headTitle=`<h1 class="dz-h1${showTitle?'':' dz-h1-hidden'}" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1>`;
   let html=showTitle||headRight||headNotes.trim()
