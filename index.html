@@ -5360,7 +5360,9 @@ function setWeeklyTileFilter(id){
   if(weeklyTileFilter==='otd3mo')weeklyOtdFilter='total';
   if(weeklyTileFilter==='reschedhit')weeklyRescheduleFilter='total';
   renderResults();
-  dzRevealList(weeklyTileFilter&&'#results-screen .ohl-lines-card');
+  // Reveal only when the clicked card is the one listed after the redraw: a second click on another card clears it
+  // (Leading then falls back to At Risk) and does not scroll; a click on At Risk, already the default, still shows its lines.
+  dzRevealList(weeklyTileFilter===id&&'#results-screen .ohl-lines-card');
 }
 function setWeeklyOffenderView(view){
   weeklyOffenderView=view||'customers';
@@ -9794,9 +9796,10 @@ function stgShowCard(card,focusId){
   setTab('settings');
   stgRevealCard(card,focusId);
 }
-function stgRevealCard(card,focusId){
+function stgRevealCard(card,focusId,tries=0){
   const el=document.getElementById(`stg-card-${card}`);
-  if(!el)return;
+  // A click in the header draws Settings a frame later, inside moPage's cross-fade: wait for the card (about 0.5 s).
+  if(!el){if(tries<30&&activeTab==='settings'&&typeof requestAnimationFrame==='function')requestAnimationFrame(()=>stgRevealCard(card,focusId,tries+1));return;}
   let reduce=false;
   try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(err){/* no matchMedia: jump */}
   const target=(focusId&&document.getElementById(focusId))||document.getElementById(`stg-h-${card}`);

@@ -111,11 +111,15 @@ test('delete hides lines from every KPI, persists, travels in snapshots, and res
   // Including non-inventory lines does not bring deleted lines back.
   page.run('setIncludeNonInventory(true)');
   assert.equal(page.run('parsedRows.length'), 3);
-  // The Data check pill appears and lists the deleted lines with Restore buttons.
-  assert.match(html(page), /Data check<\/summary><div class="data-check-pop"[^>]*><strong>2 lines you deleted are hidden/);
+  // 2v7: the Settings Data Check card lists the deleted lines with Restore buttons (it was a pill in the page head);
+  // deleted lines alone give the header gear a yellow dot.
+  assert.doesNotMatch(html(page), /class="data-check/);
+  assert.equal(page.run('stgDataCheckLevel()'), 'yellow');
+  page.run("setTab('settings')");
+  assert.match(html(page), /id="stg-card-dc"[\s\S]*?2 lines you deleted are hidden/);
   assert.match(html(page), /onclick="restoreDeletedLines\(\)">Restore all/);
   assert.equal([...html(page).matchAll(/class="dc-restore link-btn"/g)].length, 2);
-  assert.match(html(page), /<li><span>1000 · Firefly RV · SPY-100<\/span>/);
+  assert.match(html(page), /<li><span class="stg-dc-line">1000 · Firefly RV · SPY-100<\/span>/);
 
   // Same browser storage, same file: still hidden.
   const again = await atRiskPage(rows, { storage: page.storage });
@@ -137,6 +141,7 @@ test('delete hides lines from every KPI, persists, travels in snapshots, and res
   assert.equal(atRiskCount(page), 5);
   assert.deepEqual(saved(page), { [k0]: { notes: 'Duplicate line' } });
   assert.doesNotMatch(html(page), /you deleted/);
+  assert.equal(page.run('stgDataCheckLevel()'), '');
 });
 
 test('in a shared snapshot, delete is for this tab only and says so; focus stays in the table; restore buttons name their line', async () => {
@@ -158,6 +163,8 @@ test('in a shared snapshot, delete is for this tab only and says so; focus stays
   assert.equal(focused, 2);
   assert.equal(atRiskCount(snap), 2);
   assert.deepEqual(snap.storage, {});
+  // 2v7: the Restore buttons are in the Settings Data Check card.
+  snap.run("setTab('settings')");
   assert.match(html(snap), /aria-label="Restore 1000 SPY-100"/);
 });
 

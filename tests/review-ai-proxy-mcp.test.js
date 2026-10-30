@@ -196,21 +196,26 @@ test('below 1600px Tab and Shift+Tab stay inside the open drawer; Esc closes it 
 
 test('closing Ask AI returns focus to the button that opened it; every Ask AI button reports aria-expanded', async () => {
   const page = await kpiPage();
+  // 2v7: the Connect page moved into Settings ('connect' opens Settings at its card); the header's Ask AI button and
+  // Settings' Open Ask AI settings button (hosted site) both control the panel.
   page.run("setTab('connect')");
-  assert.match(page.els['results-screen'].innerHTML, /data-focus-key="connect-ask-ai" aria-controls="ai-panel" aria-expanded="false"/);
+  assert.equal(page.run('activeTab'), 'settings');
+  assert.match(page.els['app-header'].innerHTML, /data-focus-key="ask-ai" aria-label="Ask AI" aria-controls="ai-panel" aria-expanded="false"/);
+  page.run("aiState.status={hosted:true,providers:[]};renderResults()");
+  assert.match(page.els['results-screen'].innerHTML, /data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="false"/);
   const doc = page.ctx.document;
-  // The page head's button comes first in the document, as in the real page.
+  // The header's button comes first in the document, as in the real page.
   const header = control(doc, 'header'), connect = control(doc, 'connect');
   header.dataset.focusKey = 'ask-ai';
-  connect.dataset.focusKey = 'connect-ask-ai';
+  connect.dataset.focusKey = 'stg-open-ai';
   doc.querySelectorAll = (sel) => (sel === '[aria-controls="ai-panel"]' ? [header, connect] : []);
   connect.focus();
   page.run('aiToggle(true)');
   assert.deepEqual([header.attrs['aria-expanded'], connect.attrs['aria-expanded']], ['true', 'true']);
   page.ctx.aiDocKey(key('Escape'));
-  assert.equal(doc.activeElement.name, 'connect', 'focus goes back to Open Ask AI, not the page head button');
+  assert.equal(doc.activeElement.name, 'connect', 'focus goes back to Open Ask AI settings, not the header button');
   assert.deepEqual([header.attrs['aria-expanded'], connect.attrs['aria-expanded']], ['false', 'false']);
-  // Opened from the page head: focus returns there.
+  // Opened from the header: focus returns there.
   header.focus();
   page.run('aiToggle()');
   page.run('aiToggle()');

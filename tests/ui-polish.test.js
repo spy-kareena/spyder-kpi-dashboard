@@ -464,7 +464,7 @@ test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast
   page.run("linkedBulkStatus='';applyLinkedOverride()");
   assert.equal(toast(), 'Override cleared on 3 lines.');
   page.run('deleteLinkedSelection()');
-  assert.equal(toast(), 'Deleted 3 lines. Restore them from Data check.');
+  assert.equal(toast(), 'Deleted 3 lines. Restore them from Settings → Data check.'); // 2v7: Data check moved into Settings
   page.run('restoreDeletedLines()');
   assert.equal(toast(), 'Restored 3 lines.');
   const key = page.run('rowKey(parsedRows[0])');
