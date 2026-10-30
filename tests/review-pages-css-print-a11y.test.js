@@ -121,25 +121,21 @@ test('Data check popover hangs from the title row (left edge of the page), not f
   assert.match(CSS, /\.data-check-pop\{position:absolute;top:100%;left:0;[^}]*width:400px;max-width:calc\(100vw - 32px\)/);
 });
 
-test('Data check popover closes on Esc (focus back on the pill) and when focus leaves it', async () => {
+// 2v7: the Data check pill and its popover left the page heads; the Settings Data Check card holds the list and the
+// header gear's dot (red / yellow) says there is something to look at.
+test('Data check lives in Settings: no pill in any page head; the gear dot and its label; the Settings card carries the dot', async () => {
   const page = await loaded([sapRow({ DocumentNumber: '1', DueDate: '07/16/0202', LineDueDate: '07/16/0202' })]);
-  page.run('setTab("weekly")');
-  const tag = html(page).match(/<details class="data-check[^>]*>/)[0].replace(/&amp;/g, '&');
-  const handler = (name) => tag.match(new RegExp(`${name}="([^"]*)"`))[1];
-  const run = (code, el, event) => new Function('event', code).call(el, event);
-  const summary = { focused: false, focus() { this.focused = true; } };
-  const inside = {};
-  const details = { open: true, querySelector: () => summary, contains: (n) => n === inside };
-  run(handler('onfocusout'), details, { relatedTarget: inside });
-  assert.equal(details.open, true, 'focus moving within the popover keeps it open');
-  run(handler('onfocusout'), details, { relatedTarget: null });
-  assert.equal(details.open, false, 'focus leaving closes it');
-  details.open = true;
-  run(handler('onkeydown'), details, { key: 'Tab' });
-  assert.equal(details.open, true);
-  run(handler('onkeydown'), details, { key: 'Escape' });
-  assert.deepEqual([details.open, summary.focused], [false, true]);
-  assert.match(html(page), /<div class="data-check-pop" tabindex="-1">/);
+  for (const t of ['weekly', 'monthly', 'warehouses', 'metrics', 'shipping', 'purchaseorders']) {
+    page.run(`setTab(${JSON.stringify(t)})`);
+    assert.doesNotMatch(html(page), /class="data-check|data-focus-key="data-check"/, t);
+  }
+  const gear = page.els['app-header'].innerHTML.match(/<button[^>]*id="hdr-gear"[^>]*>[\s\S]*?<\/button>/)[0];
+  assert.match(gear, /aria-label="Settings, data check: 1 row or file needs attention"/);
+  assert.match(gear, /onclick="dzMenuClose\(\);setTab\('settings'\)"/);
+  assert.match(gear, /<span class="hdr-dot red" aria-hidden="true"><\/span>/);
+  page.run('setTab("settings")');
+  assert.match(html(page), /<h2 class="dz-title sm stg-title" id="stg-h-dc" tabindex="-1"><span class="dz-ico stg-ico-dot"[^>]*>[\s\S]*?<span class="hdr-dot red"><\/span><\/span>Data Check<\/h2>/);
+  assert.match(page.els['app-header'].innerHTML, /id="hdr-gear"[^>]*aria-current="page"/);
 });
 
 // Text of every @media print block (brace-matched).

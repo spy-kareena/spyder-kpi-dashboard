@@ -200,7 +200,7 @@ test('a manual status round-trips through the shared notes store (/api/notes): e
   const site = await notesSite();
   const a = await notesBrowser(site, 'Kareena', '2026-10-07');
   assert.equal(a.run('sharedNotes.state'), 'shared');
-  assert.match(html(a), /Checked by hand · statuses shared with everyone/);
+  assert.doesNotMatch(html(a), /Checked by hand/); // 2v7: the owner had the "Checked by hand · statuses shared with everyone" line removed
   setStatus(a, N.ups, 'delayed', '2026-10-07', 'Held at the border');
   assert.match(a.els.toast.innerHTML, /1Z999AA10123456784: Delayed Oct 7 saved for everyone\./);
   await a.run('flushSharedNotes({all:true})');
@@ -365,7 +365,7 @@ test('a shared snapshot keeps the saved statuses (and the demo choice), shows no
   snap.els['embedded-snapshot-data'].textContent = payload;
   await snap.run('loadEmbeddedSnapshot()');
   const m = html(snap);
-  assert.match(m, /Shared snapshot: statuses as they were when it was saved/);
+  assert.doesNotMatch(m, /Checked by hand|statuses as they were/); // 2v7: that status line is gone, snapshot or not
   assert.match(m, /<span class="status-chip bad">Delayed<\/span>/);
   assert.doesNotMatch(m, /ship-add-number|ship-st-|data-focus-key="ship-demo"/);
   assert.deepEqual(calls, []);

@@ -87,8 +87,13 @@ test('implausible dates are listed in the data check instead of producing huge l
   assert.equal(page.run('dataQualityIssues.length'), 1);
   assert.equal(page.run('parsedRows[0].statusBucket'), 'Open');
   page.run('setTab("weekly")');
-  // The header shows a "Data check" pill; its popover lists what needs fixing.
-  assert.match(page.els['results-screen'].innerHTML, /Data check<\/summary><div class="data-check-pop"[^>]*><strong>1 row/);
+  // 2v7: the Data check lives in Settings. No pill in the page head; the header gear carries a red dot and the
+  // Settings Data Check card lists what needs fixing.
+  assert.doesNotMatch(page.els['results-screen'].innerHTML, /class="data-check/);
+  assert.equal(page.run('stgDataCheckLevel()'), 'red');
+  assert.match(page.els['app-header'].innerHTML, /id="hdr-gear"[^>]*aria-label="Settings, data check: 1 row or file needs attention"[\s\S]*?<span class="hdr-dot red"/);
+  page.run('setTab("settings")');
+  assert.match(page.els['results-screen'].innerHTML, /id="stg-card-dc"[\s\S]*?1 row or file needs attention in SAP/);
 });
 
 // --- Notes / overrides -------------------------------------------------------------------------------

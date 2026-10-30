@@ -198,60 +198,59 @@ test('--check prints the overview and exits; exits 1 without files', () => {
 // --- The "Connect an AI" help page in index.html --------------------------------------------------------
 const unescape = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-test('Connect an AI opens before any export is loaded: two short options and a working config snippet', () => {
+// 2v7: the Connect an AI page moved into Settings ("Connect An AI App" card); setTab('connect') opens Settings there.
+test('Connect an AI opens in Settings before any export is loaded: a short card and a working config snippet', () => {
   const page = loadPage();
-  const sidebar = () => page.els['app-sidebar'].innerHTML;
-  assert.doesNotMatch(sidebar().match(/<button[^>]*data-focus-key="nav-connect"[^>]*>/)[0], /disabled/);
-  assert.match(sidebar().match(/<button[^>]*data-focus-key="nav-weekly"[^>]*>/)[0], /disabled/);
+  const header = () => page.els['app-header'].innerHTML;
+  assert.doesNotMatch(header().match(/<button[^>]*id="hdr-gear"[^>]*>/)[0], /disabled/);
+  assert.match(header().match(/<button[^>]*data-focus-key="nav-weekly"[^>]*>/)[0], /disabled/);
   page.run("setTab('connect')");
   page.run("setTab('weekly')"); // still no data: other pages stay closed
-  assert.equal(page.run('activeTab'), 'connect');
+  assert.equal(page.run('activeTab'), 'settings');
+  assert.equal(page.run('stgConnectOpen'), true, 'asked for, its setup steps are open');
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /<h1 class="page-title"[^>]*>Connect an AI<\/h1>/);
-  assert.match(html, /onclick="showUpload\(\)">Load an export</);
+  const at = html.indexOf('id="stg-card-connect"');
+  assert.ok(at > 0, 'the Connect An AI App card is drawn');
+  const card = html.slice(at, html.indexOf('</section>', at));
+  assert.match(card, /<h2 class="dz-title sm stg-title" id="stg-h-connect" tabindex="-1">[\s\S]*Connect An AI App<\/h2>/);
+  assert.match(card, /<details class="stg-setup" open/);
   assert.doesNotMatch(html, /Share snapshot|Export PDF/);
-  // Concise: one intro line, two option cards, one privacy line; the details live in the two guides.
-  const text = unescape(html.replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ');
-  for (const t of ['Option 1: Ask AI in this dashboard', 'Option 2: Your own AI app', 'Use only an AI app Spyder Controls approves.']) assert.ok(text.includes(t), t);
-  assert.equal((html.match(/<section class="card connect-opt\b/g) || []).length, 2, 'two option cards');
-  assert.doesNotMatch(text, /Option 3|Option 4|\bcompan(y|ies)\b/i);
-  assert.ok(text.split(' ').length < 220, `the page stays short (${text.split(' ').length} words with the page head)`);
-  assert.match(html, /onclick="aiToggle\(true\)"/);
-  assert.match(html, /href="docs\/AI_ASSISTANT\.md"/);
-  assert.match(html, /href="docs\/MCP\.md"/);
-  assert.match(html, /<span class="connect-file">claude_desktop_config\.json<\/span>/);
-  assert.match(html, /Settings → Developer → Edit Config/);
+  // Concise: one intro line, the three steps, one privacy line; the details live in the guide.
+  const text = unescape(card.replace(/<pre[\s\S]*?<\/pre>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ');
+  for (const t of ['Use Claude Desktop or another AI app to read your exports.', 'Use only an AI app Spyder Controls approves.', 'Settings → Developer → Edit Config']) assert.ok(text.includes(t), t);
+  assert.doesNotMatch(text, /\bcompan(y|ies)\b/i);
+  assert.ok(text.split(' ').length < 120, `the card stays short (${text.split(' ').length} words)`);
+  assert.match(card, /href="docs\/MCP\.md"/);
+  assert.match(card, /<span class="misc-code-file">claude_desktop_config\.json<\/span>/);
 
-  const config = JSON.parse(unescape(html.match(/<pre id="connect-desktop"[^>]*>([^<]*)<\/pre>/)[1]));
+  const config = JSON.parse(unescape(card.match(/<pre id="connect-desktop"[^>]*>([^<]*)<\/pre>/)[1]));
   assert.deepEqual(config.mcpServers['spyder-kpi'], { command: 'node', args: ['C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs', 'C:\\path\\to\\kpi_export.xls'] });
   // The scrolling snippet can be reached with the keyboard.
-  assert.match(html, /<pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">/);
-  // The one Copy button reads the snippet id from data-copy and is left out of print.
-  const copies = [...html.matchAll(/<div class="connect-copy print-hide"><span class="connect-status" id="connect-(desktop)-status" role="status"><\/span><button type="button" class="btn btn-sm" data-copy="connect-\1" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
+  assert.match(card, /<pre id="connect-desktop" tabindex="0" aria-label="Claude Desktop config">/);
+  // The one Copy button reads the snippet id from data-copy, has its own accessible name and is left out of print.
+  const copies = [...card.matchAll(/<div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-(desktop)-status" role="status"><\/span><button type="button" class="dz-btn" data-copy="connect-\1" data-focus-key="copy-connect-\1" aria-label="(Copy [^"]+)"(?: data-tip="[^"]+")? onclick="copyConnectSnippet\(this\)">Copy<\/button>/g)];
   assert.deepEqual(copies.map((m) => m[2]), ['Copy the Claude Desktop config'], 'the Copy button has its own accessible name');
   // The Claude Code command and the other apps' settings stay in the guide.
   const guide = fs.readFileSync(path.join(path.dirname(SERVER), '..', 'docs', 'MCP.md'), 'utf8');
   assert.ok(guide.includes('claude mcp add spyder-kpi -- node "C:\\path\\to\\spyder-kpi-dashboard\\mcp\\spyder-kpi-mcp.mjs" "C:\\path\\to\\kpi_export.xls"'));
-  assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same Claude Desktop config as the page');
+  assert.ok(guide.includes(JSON.stringify(config, null, 2)), 'the guide shows the same Claude Desktop config as the card');
 });
 
-test('Connect an AI with an export loaded: only Ask AI in the header (no Share snapshot, Export PDF or Data check); Copy uses the clipboard or a fallback', async () => {
+test('Connect an AI with an export loaded opens the Settings card; no Data check pill anywhere; Copy uses the clipboard or a fallback', async () => {
   const page = await pageFor(ROWS_A);
   page.run("setTab('connect')");
+  assert.equal(page.run('activeTab'), 'settings');
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /answers use the export as of 2026-09-03/);
-  const head = html.slice(0, html.indexOf('</div>\n  </div>'));
-  assert.match(head, /data-focus-key="ask-ai"[^>]*>(<svg[^]*?<\/svg>)?Ask AI</);
-  assert.doesNotMatch(head, /share-snapshot|export-pdf|data-check|Share snapshot|Export PDF/);
-  // The other pages keep them (Data check only when the export has rows to check).
-  page.run("setTab('weekly')");
-  const weekly = page.els['results-screen'].innerHTML;
-  assert.match(weekly, /data-focus-key="share-snapshot"[^>]*>[^]*?Share<span class="btn-long"> snapshot<\/span><\/button>/);
-  assert.match(weekly, /data-focus-key="export-pdf"[^>]*>[^]*?<span class="btn-long">Export&nbsp;<\/span>PDF<\/button>/);
-  page.run("dataQualityIssues=[{message:'test'}];setTab('connect')");
+  assert.match(html, /id="stg-card-connect"/);
+  assert.match(html, /<pre id="connect-desktop" tabindex="0"/);
+  // Share snapshot (in the export-date popover) and Export PDF stay in the header; the Data check is a Settings card.
+  assert.match(page.els['app-header'].innerHTML, /data-focus-key="hdr-share"[^>]*>Share snapshot<\/button>/);
+  assert.match(page.els['app-header'].innerHTML, /data-focus-key="export-pdf"/);
+  page.run("dataQualityIssues=[{message:'test'}];setTab('weekly')");
   assert.doesNotMatch(page.els['results-screen'].innerHTML, /class="data-check/);
-  page.run("setTab('weekly')");
-  assert.match(page.els['results-screen'].innerHTML, /class="data-check/);
+  assert.match(page.els['app-header'].innerHTML, /<span class="hdr-dot red"/);
+  page.run("setTab('connect')");
+  assert.match(page.els['results-screen'].innerHTML, /id="stg-card-dc"[\s\S]*?<li>test<\/li>/);
   page.run("dataQualityIssues=[];setTab('connect')");
 
   let copied = '';
@@ -276,7 +275,7 @@ test('Connect an AI with an export loaded: only Ask AI in the header (no Share s
   page.ctx.copyConnectSnippet({ dataset: { copy: 'connect-desktop' }, focus() {} });
   assert.match(page.els['connect-desktop-status'].textContent, /Select the text/);
 
-  // A snapshot shared from the help page opens on Order Health.
+  // A snapshot shared from Settings opens on Order Health.
   let payload = '';
   Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
   await page.ctx.exportShareSnapshot();
