@@ -6,7 +6,7 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 
 ## Use
 
-1. Sign in and load the KPI export (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`). SAP's "Export to Excel" `.xls` works as-is, as do `.xlsx`, `.csv` and `.txt`.
+1. Sign in and load the KPI export (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`). SAP's "Export to Excel" `.xls` works as-is, as do `.xlsx`, `.csv` and `.txt`. When the site has a SAP bridge, **Load from SAP** (and **Refresh from SAP** in the export-date popover) reads it live instead ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
 2. Pick a page in the top menu (see **Pages**). Click a KPI card to list its lines. Rest on any card, bar, heading or button for a short tip; **About these numbers** at the bottom of a page defines its terms.
 3. **Add note** on a line sets an override or a note (your name plus a ready-made or custom comment).
 4. On Order Health, tick rows to set an override or a cause on many lines at once, or to delete them. Deleted lines can be restored in **Settings → Data Check**.
@@ -68,6 +68,7 @@ Secrets are set with `npx wrangler pages secret put <NAME> --project-name spyder
 
 - `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): required. Without them every page returns "not configured", and changing either one signs everyone out.
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`: optional. Set at least one to turn on Ask AI.
+- `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Load from SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
 - `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`: not used. The FedEx module (`shared/fedex.mjs`, `functions/api/shipping.js`, `workers/shipping-poller`) stays in the repo, undeployed; Shipping is checked by hand ([docs/SHIPPING.md](docs/SHIPPING.md)).
 
 Keep these as encrypted secrets: the repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy. On IIS or another static host, serve `index.html` as the default document; there is no sign-in gate, shared data or Ask AI there ([docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md)).
@@ -85,10 +86,10 @@ This runs every `tests/*.test.js` and `*.test.mjs` file: the page's scripts, the
 ## Files
 
 - `index.html`: the whole app (HTML, CSS and JavaScript, with SheetJS Community Edition 0.20.3 built in as `<script id="sheetjs-lib">`)
-- `functions/`: Cloudflare Pages Functions (sign-in, report, notes, people, history, Ask AI proxy)
+- `functions/`: Cloudflare Pages Functions (sign-in, report, notes, people, history, Ask AI proxy, Live SAP)
 - `mcp/`: the MCP connector
 - `queries/`: SAP HANA queries for the KPI export and the supply / demand snapshot
-- `docs/`: user quick start, owner checklist, hosting notes, Ask AI, MCP connector and Shipping
+- `docs/`: user quick start, owner checklist, hosting notes, Ask AI, MCP connector, Shipping and Live SAP
 - `tests/`: the test suite; `samples/`: a tiny fake export for a smoke test
 - `assets/`: the logo for the sign-in page (the only file served before sign-in)
 - `shared/`, `workers/`: the unused FedEx code; `web.config`: IIS; `wrangler.toml`: Pages config; `VERSION.txt`: release notes

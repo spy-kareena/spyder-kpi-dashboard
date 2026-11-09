@@ -1,6 +1,6 @@
 Spyder KPI Dashboard
-Version: 2v6.6
-Package date: 2026-10-30
+Version: 2v6.7
+Package date: 2026-11-09
 
 Main file: index.html
 Type: Static offline-capable browser dashboard
@@ -219,3 +219,12 @@ Order Health, Lagging: the change line under each big number ("+1 pts vs Aug") i
 Wording: no product names for AI apps or the IT team anywhere in the dashboard, docs or README; Fix with AI in the Import
 report; Ask AI shows the provider as Anthropic; shorter help text in Settings and Ask AI; README rewritten for the
 current dashboard; the Connect An AI App card and docs/MCP.md work with any app that supports MCP.
+
+2v6.7: Live SAP. When the site has a SAP bridge (a small read-only service on the company network, see docs/LIVE_SAP.md),
+the load screen has Load from SAP and the export-date popover has Refresh from SAP: the KPI query and the supply / demand
+snapshot are read straight from SAP B1 and go through the same steps as an upload (numbers, Data Check, notes, at-risk
+history, saved for everyone). A Clear To Build workbook or Logican sheet already loaded stays; if the supply / demand
+snapshot cannot be read the last one stays; if SAP cannot be read the report on screen stays and a message says why.
+New: functions/api/sap/[[path]].js (GET /api/sap/status, /api/sap/kpi, /api/sap/supply-demand behind the sign-in gate;
+Pages secrets SAP_BRIDGE_URL, SAP_BRIDGE_KEY, CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET), tests/sap-api.test.mjs and
+tests/sap-live.test.js. Without the secrets nothing changes.
