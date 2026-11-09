@@ -86,6 +86,8 @@ so the export carries `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipD
 | `OPENAI_API_KEY` | Pages secret | Optional | Ask AI with ChatGPT (paid) |
 | `GROQ_API_KEY` | Pages secret | Optional | Ask AI with Groq (free tier) |
 | `OPENROUTER_API_KEY` | Pages secret | Optional | Ask AI with OpenRouter's free models |
+| `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY` | Pages secrets | Optional | Turn on Load from SAP: the SAP bridge's tunnel address and one of its API keys ([LIVE_SAP.md](LIVE_SAP.md)) |
+| `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET` | Pages secrets | Recommended with Live SAP | The Cloudflare Access service token in front of the bridge's tunnel |
 | `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET` | Worker secrets in `workers/shipping-poller` (not deployed) | Not used since 2v4 | FedEx Track API keys for the dormant FedEx module; the Shipping page is checked by hand |
 | `FEDEX_API_BASE` | Worker `[vars]` / Pages secret | Not used since 2v4 | `https://apis-sandbox.fedex.com` for FedEx sandbox keys |
 | `REPORT_STORE` | KV binding in `wrangler.toml` and `workers/shipping-poller/wrangler.toml` (same namespace, `spyder-kpi-report`) | Recommended | Shared report, notes, Shipping statuses and at-risk history (keys below) |

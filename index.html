@@ -9,7 +9,7 @@
 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="2v6.6">
+<meta name="app-version" content="2v6.7">
 <title>Spyder KPI Visualizer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -689,6 +689,11 @@ details.about .about-list{margin:0;padding-left:18px;display:grid;gap:4px}
 .upload-actions{display:flex;gap:8px;flex-wrap:wrap}
 .upload-chip{font-size:12.5px;font-weight:500;border:1px solid var(--gray-200);background:#fff;color:var(--gray-700);border-radius:var(--r-pill);padding:5px 11px}
 .upload-side{background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-card);padding:26px;display:grid;gap:16px;align-content:start;box-shadow:var(--sh-rest)}
+/* Live SAP (2v6.7): Load from SAP under the drop area, shown only when /api/sap/status says the site has a bridge. */
+.sap-live-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 0}
+.sap-live-row[hidden]{display:none}
+.sap-live-row .dz-btn svg{margin-right:6px;vertical-align:-3px}
+.sap-live-note{color:var(--gray-600);font-size:14px}
 .upload-current{border-top:1px solid var(--gray-100);padding-top:14px;display:grid;gap:8px}
 .upload-current>span{font-size:12px;color:var(--gray-500)}
 .upload-current strong{font-size:13px;font-weight:500;word-break:break-word}
@@ -4541,6 +4546,7 @@ details.data-check>summary{font-size:13px}
         <div class="upload-current" id="upload-current" hidden></div>
       </aside>
     </div>
+    <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the KPI query and the supply / demand snapshot straight from SAP now, instead of exporting them."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
     <section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
   </div>
@@ -6272,6 +6278,72 @@ async function restoreSavedReport(){
   if(shared){sharedReport={state:'shared',savedAt:shared.savedAt,message:''};saveReportFiles(loadedFiles);}
   else sharedReport={state:shared===null?'local':'',savedAt:'',message:''};
   renderSidebar();
+}
+// --- Live SAP (2v6.7) ---
+// When the site has a SAP bridge (functions/api/sap, github.com/DavidP-M/SAP-app), Load from SAP reads the KPI query and
+// the supply / demand snapshot straight from SAP B1 and loads them exactly like uploaded exports: the same parsing,
+// Data check, notes, at-risk history and saving for everyone. GET /api/sap/status is asked once at start; without a
+// bridge (or in a snapshot, or opened as a file) nothing changes.
+let sapLive={configured:false,busy:false};
+const sapLiveHosted=()=>!isSnapshotView&&typeof fetch!=='undefined'&&/^https?:$/.test(String(location.protocol||''));
+const canLoadFromSap=()=>sapLive.configured&&sapLiveHosted();
+async function sapLiveCheck(){
+  if(!sapLiveHosted())return;
+  try{
+    const res=await fetch('/api/sap/status',{cache:'no-store'});
+    const body=res.ok&&/json/.test(res.headers.get('content-type')||'')?await res.json():null;
+    sapLive.configured=!!(body&&body.configured===true);
+  }catch(err){sapLive.configured=false;}
+  if(sapLive.configured){renderSidebar();renderUploadState();}
+}
+// One report from /api/sap/<name> as a File, named by the bridge (SAP_live_KPI_<date>.txt). The KPI report must work;
+// supply / demand is optional and gives null when it does not.
+async function sapLiveFile(name,required){
+  let res;
+  try{res=await fetch(`/api/sap/${name}?refresh=1`,{cache:'no-store'});}
+  catch(err){if(required)throw new Error('the site could not be reached');return null;}
+  if(!res.ok){
+    if(!required)return null;
+    let msg=`HTTP ${res.status}`;
+    try{msg=(await res.json()).error||msg;}catch(err){}
+    throw new Error(msg);
+  }
+  const text=await res.text();
+  if(!text.trim()){if(required)throw new Error('SAP sent back an empty report');return null;}
+  const m=(res.headers.get('content-disposition')||'').match(/filename="?([^";]+)"?/);
+  return new File([text],m?m[1]:`SAP_live_${name}_${toISODateLocal(new Date())}.txt`,{type:'text/plain',lastModified:Date.now()});
+}
+const toISODateLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// What a loaded file is, from the rows already read (the same tests handleFiles uses).
+function sapFileKind(file){
+  const read=fileReadCache.get(file),rows=read&&read.rows;
+  if(!rows)return '';
+  if(rows.cmSheet)return 'cm';
+  if(!rows.length)return '';
+  return isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':'kpi';
+}
+async function loadFromSap(){
+  if(sapLive.busy||!canLoadFromSap())return;
+  sapLive.busy=true;
+  const onUpload=document.getElementById('upload-screen').style.display==='block'||!hasLoadedData();
+  showLoading('Reading live data from SAP…');
+  try{
+    const [kpi,sd]=await Promise.all([sapLiveFile('kpi',true),sapLiveFile('supply-demand',false)]);
+    // Clear To Build and the Logican sheet stay; an uploaded SAP export is replaced by the live one. If the live
+    // supply / demand snapshot did not come, the one already loaded stays too.
+    const keep=loadedFiles.filter(f=>{const k=sapFileKind(f);return k==='cm'||k==='ctb'||(k==='sd'&&!sd);});
+    await handleFiles([kpi,...(sd?[sd]:[]),...keep]);
+    const keptSd=keep.some(f=>sapFileKind(f)==='sd');
+    if(hasLoadedData()&&!sd)showToast(keptSd?'Loaded live from SAP. The supply / demand snapshot could not be read; the one loaded before stays.':'Loaded live from SAP. The supply / demand snapshot could not be read, so the supply pages have no data for now.');
+  }catch(err){
+    const message=`Load from SAP did not work: ${err&&err.message||'unknown error'}.`;
+    if(onUpload){showUpload();showUploadError(message);}
+    else{showResults();showToast(message);}
+  }finally{
+    sapLive.busy=false;
+    renderSidebar();
+    renderUploadState();
+  }
 }
 async function handleFiles(files,{adding=false,restoring=false}={}){
   const valid=files.filter(f=>f&&f.name.match(/\.(xlsx|xls|csv|txt|tsv)$/i));
@@ -10386,6 +10458,9 @@ function renderUploadState(){
   const asOf=reportAsOfDate?displayDate(reportAsOfDate):'';
   if(meta)meta.textContent=loaded&&asOf?`Current export: ${asOf}`:'';
   renderUploadPages();
+  const sapRow=document.getElementById('sap-live-row'),sapBtn=document.getElementById('sap-live-btn');
+  if(sapRow)sapRow.hidden=!canLoadFromSap();
+  if(sapBtn)sapBtn.disabled=!!sapLive.busy;
   // With a report loaded, the drop area shares the row with "Currently loaded"; otherwise it has the row to itself.
   const side=document.getElementById('upload-side');
   if(side)side.hidden=!loaded;
@@ -10922,7 +10997,7 @@ function renderSidebar(){
   const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${canShare?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${canLoadFromSap()?`<button type="button" class="dz-btn" data-focus-key="hdr-sap" onclick="dzMenuClose(true);loadFromSap()"${sapLive.busy?' disabled':''}${tipAttr('Read the KPI data straight from SAP now and replace this report; Clear To Build and the Logican sheet stay.')}>Refresh from SAP</button>`:''}${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
     :`<span class="hdr-date none"><span class="hdr-date-txt">No export loaded</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;
@@ -18306,7 +18381,7 @@ renderSidebar();
 renderUploadPages();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
 // Shared notes and the at-risk history load next to the report (see Stream B: shared notes).
-function startApp(){loadEmbeddedSnapshot();restoreSavedReport();syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView)cmLoad();}
+function startApp(){loadEmbeddedSnapshot();restoreSavedReport();syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();sapLiveCheck();}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startApp);
 else startApp();
 </script>
