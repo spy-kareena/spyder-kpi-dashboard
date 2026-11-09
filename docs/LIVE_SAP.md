@@ -21,10 +21,10 @@ Browser ── /api/sap/kpi ──> functions/api/sap ──> Cloudflare Tunnel 
 
 ## Settings (Pages secrets)
 
-In the Cloudflare dashboard: **Workers & Pages → kpi-dashboard-spyder → Settings → Variables and Secrets**, type
-**Secret**. Add them to **Preview** first to try the branch preview, then to **Production**, and redeploy. From a terminal:
-`npx wrangler pages secret put <NAME> --project-name kpi-dashboard-spyder`. The Cloudflare project is named
-`kpi-dashboard-spyder`; some older notes in this repo say `spyder-kpi-dashboard`.
+In the Cloudflare dashboard: **Workers & Pages →** the dashboard's project (its address is
+`spyder-kpi-dashboard.pages.dev`) **→ Settings → Variables and Secrets**, type **Secret**. Add them to **Preview** first to
+try a branch preview (`https://<branch>.spyder-kpi-dashboard.pages.dev`), then to **Production**, and redeploy. From a
+terminal: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`.
 
 | Secret | What it is |
 |---|---|
