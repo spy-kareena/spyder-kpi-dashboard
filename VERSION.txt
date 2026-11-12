@@ -1,5 +1,5 @@
 Spyder KPI Dashboard
-Version: 2v6.8
+Version: 2v6.9
 Package date: 2026-11-12
 
 Main file: index.html
