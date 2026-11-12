@@ -1,10 +1,12 @@
-# Live SAP (2v6.7)
+# Live SAP (2v6.7, live by default since 2v6.8)
 
-**Load from SAP** reads the KPI query and the supply / demand snapshot straight from SAP Business One, instead of
-someone running them in Query Manager and uploading the export. The live data goes through the same steps as an upload:
-the same numbers, Data Check, notes, at-risk history, and the report saved for everyone who signs in.
+The dashboard reads the KPI query and the supply / demand snapshot straight from SAP Business One, instead of someone
+running them in Query Manager and uploading the export. The live data goes through the same steps as an upload: the
+same numbers, Data Check, notes and overrides.
 
-Until the settings below are in place, nothing changes: the button does not show and files are uploaded as before.
+**Live SAP is the default data source.** Settings → **Data Source** switches between **Live SAP** and **Import files**
+(uploading exports, as before 2v6.8). Until the settings below are in place, live mode says "Live SAP isn't set up on
+this site" with a **Use import files** button.
 
 ## How it fits together
 
@@ -18,6 +20,7 @@ Browser ── /api/sap/kpi ──> functions/api/sap ──> Cloudflare Tunnel 
 - **`functions/api/sap/[[path]].js`** sits behind the sign-in gate. It calls the bridge with the keys below and returns the
   report as the tab-delimited file SAP's Export to Excel makes. None of the keys reach the browser.
 - **`GET /api/sap/status`** tells the page whether the site has a bridge (`{"configured": true}`). It shows nothing else.
+- The function passes on the bridge's `X-Row-Count`, `X-Refreshed-At` and `X-Stale` headers.
 
 ## Settings (Pages secrets)
 
@@ -34,18 +37,54 @@ terminal: `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashbo
 | `CF_ACCESS_CLIENT_SECRET` | The same service token: Client Secret |
 
 `SAP_BRIDGE_URL` and `SAP_BRIDGE_KEY` turn the feature on. The two Access values are strongly recommended, so that
-nothing but this site can reach the bridge. To turn it off, delete `SAP_BRIDGE_URL` and redeploy.
+nothing but this site can reach the bridge. To turn it off, delete `SAP_BRIDGE_URL` and redeploy; the load screen then offers **Use import files** (each
+browser keeps that choice).
 
-## Using it
+## Live mode (the default)
 
-- **Load screen:** **Load from SAP** under the drop area.
-- **On a report:** the export-date popover has **Refresh from SAP**.
-- Both read SAP now (they skip the bridge's 5-minute cache) and replace the loaded SAP export.
-- A Clear To Build workbook or Logican sheet already loaded stays. Those still come as files.
-- If the supply / demand snapshot can't be read, the one already loaded stays and a message says so.
-- If SAP can't be read at all, the report on screen stays and a message gives the reason. Common reasons: the bridge
-  PC is off, the tunnel isn't running, or the HANA password changed.
-- The live file is named `SAP_live_KPI_<date>.txt`. Its export date is the day it was read, like a fresh export.
+- **When the page opens** it reads `/api/sap/status`, then `/api/sap/kpi` and `/api/sap/supply-demand`. The last saved
+  report and the last import are not reopened.
+- **Every 5 minutes** while the page is open and visible it reads both again, through the bridge's 5-minute cache (no
+  `refresh=1`), so SAP is asked at most once per 5 minutes however many people have the page open. A read that falls
+  due while the tab is hidden happens when it is shown again. If SAP sent the same text as before nothing is reloaded
+  (filters, scroll and open lists stay); new data reloads in place, on the same page with the same filters.
+- **Refresh now** (in the export-date popover and in Settings → Data Source) reads SAP at once and skips the cache. The
+  bridge allows one such read every 30 seconds; a second one sooner gets the result just read.
+- **The dot** left of the export date: green with a slow pulse when the last read worked (tip: "Live · updated 2 min
+  ago"), red when it did not ("Disconnected · showing data from 10:42", or "SAP not reachable" when the bridge sent its
+  last good result because HANA could not be read: `X-Stale: 1`). No dot in import mode. With reduced motion it does
+  not pulse.
+- **When the link drops** everything on screen stays. The page tries again after 30 s, 1, 2 and 5 minutes, then every
+  5 minutes, and shows a short message only when the link drops and when it is back. The bridge's message (for example
+  "SAP HANA could not be reached from the bridge PC… (bridge log ref ab12cd34)") is shown as it comes, in the popover
+  and in Settings.
+- **The last live data is kept in this browser** (IndexedDB `spyderKpiLive`, apart from the import copy): on the next
+  visit it shows at once, with a red dot until the first read works, so the data from just before a disconnection stays
+  until the link is back.
+- **Add file** adds a Clear To Build workbook or the Logican sheet to the live data; it stays with it (also in the kept
+  copy) when the live data updates. Dropping files on the page is off in live mode.
+- Live reads are **not** written to the shared report store (`/api/report`), so the at-risk history does not get new
+  weeks from live data (it still shows the weeks recorded from uploads). Notes and overrides work as before.
+- If the supply / demand snapshot can't be read, the one already loaded stays.
+- The live file is named `SAP_live_KPI_<date>.txt`. The header date is the query's `ExportDate`.
+- `X-Refreshed-At` (the time the bridge read SAP) is ISO with a UTC offset on current bridges and is shown in local
+  time; older bridges send the bridge PC's local time without an offset, which is read as local time.
+- A shared snapshot always shows its own data. A `file://` copy or a static host has no bridge: pick **Import files**.
+
+## Import mode
+
+Settings → Data Source → **Import files**: exactly the upload flow of before. The last report reopens (the shared one,
+or this browser's copy), the load screen has the drop area (and **Load from SAP** when the site has a bridge), and the
+export-date popover has **Add file**, **New file** and **Share snapshot**. Settings → Data Source has **Upload files**,
+**Add file** and **New file**. Switching back to Live SAP shows the kept live data and reads SAP.
+
+## Data types
+
+The bridge writes UTF-8 tab-separated text with a header row: dates `YYYY-MM-DD`, date-times `YYYY-MM-DD HH:MM:SS`,
+plain decimals (`1234.5`, `-250.75`), floats as Python writes them (`1e-05`, `-0.0`), empty cells for NULL, and text
+with tabs and line breaks made spaces. The page reads all of it exactly like a Query Manager export of the same lines
+(`tests/bridge-data.test.js` compares every page). A whole number written as a float (`45001.0`) keys a line like
+`45001`, so notes still find it.
 
 ## Keeping the queries in step
 
@@ -55,5 +94,7 @@ by hand.
 
 ## Tests
 
-`node tests/sap-api.test.mjs` (the function) and `node tests/sap-live.test.js` (the page through the function, with a
-stand-in bridge). Both are part of `node tests/run-all.js`.
+`node tests/sap-api.test.mjs` (the function), `node tests/sap-live.test.js` (the page through the function, with a
+stand-in bridge: start-up, the 5-minute read, disconnects, the kept data, Settings) and `node tests/bridge-data.test.js`
+(the bridge's data types against a Query Manager export, with the bridge repo's fixture in `tests/fixtures/`). All are
+part of `node tests/run-all.js`.

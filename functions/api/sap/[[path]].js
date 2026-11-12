@@ -3,7 +3,9 @@
 //   GET /api/sap/status          -> {configured: true|false}; the page shows Load from SAP only when true
 //   GET /api/sap/kpi             -> the KPI query as a tab-delimited file (the layout of SAP's Export to Excel)
 //   GET /api/sap/supply-demand   -> the supply / demand snapshot, the same way
-//   ?refresh=1                   -> skip the bridge's 5-minute cache
+//   ?refresh=1                   -> skip the bridge's 5-minute cache (the bridge allows one every 30 s)
+//   Headers passed on from the bridge: X-Row-Count, X-Refreshed-At (ISO, with a UTC offset on newer bridges) and
+//   X-Stale: 1 when SAP could not be read and the bridge sent its last good result instead.
 //
 // The sign-in gate in functions/_middleware.js runs first, so only signed-in users get here. The data comes from the
 // SAP bridge (github.com/DavidP-M/SAP-app), a small read-only service on the company network that runs the same SQL as
@@ -56,6 +58,7 @@ export async function onRequest({ request, env, params }) {
       'content-disposition': res.headers.get('content-disposition') || `attachment; filename="SAP_live_${name}.txt"`,
       'x-row-count': res.headers.get('x-row-count') || '',
       'x-refreshed-at': res.headers.get('x-refreshed-at') || '',
+      'x-stale': res.headers.get('x-stale') || '',
       'cache-control': 'no-store',
       'x-content-type-options': 'nosniff',
     },

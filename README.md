@@ -1,12 +1,12 @@
 # Spyder KPI Dashboard
 
-A browser dashboard for Spyder Controls' SAP Business One KPI exports: order health, monthly shipments, warehouses, purchase orders, supply and shipping. The whole app is one `index.html`. On the hosted site, the last loaded report and the notes are shared by everyone who signs in.
+A browser dashboard for Spyder Controls' SAP Business One KPI exports: order health, monthly shipments, warehouses, purchase orders, supply and shipping. The whole app is one `index.html`. On the hosted site the data comes live from SAP (or, in import mode, from the last uploaded report), and the notes are shared by everyone who signs in.
 
 Live site: https://spyder-kpi-dashboard.pages.dev
 
 ## Use
 
-1. Sign in and load the KPI export (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`). SAP's "Export to Excel" `.xls` works as-is, as do `.xlsx`, `.csv` and `.txt`. When the site has a SAP bridge, **Load from SAP** (and **Refresh from SAP** in the export-date popover) reads it live instead ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
+1. Sign in. By default the dashboard reads SAP live through the SAP bridge and reads it again every 5 minutes; a green dot next to the date means live, red means the link is down and the last data stays on screen ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)). To upload exports by hand instead, pick **Import files** in **Settings → Data Source** and load the KPI export (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`). SAP's "Export to Excel" `.xls` works as-is, as do `.xlsx`, `.csv` and `.txt`.
 2. Pick a page in the top menu (see **Pages**). Click a KPI card to list its lines. Rest on any card, bar, heading or button for a short tip; **About these numbers** at the bottom of a page defines its terms.
 3. **Add note** on a line sets an override or a note (your name plus a ready-made or custom comment).
 4. On Order Health, tick rows to set an override or a cause on many lines at once, or to delete them. Deleted lines can be restored in **Settings → Data Check**.
@@ -15,12 +15,12 @@ KPIs are calculated as of the export's `ExportDate`, so an older file or a share
 
 ## Header
 
-- **Export date:** opens a popover with the loaded files and the notes status. **Add file** loads a supply / demand snapshot, a Clear To Build workbook or the Logican sheet next to the KPI export. **New file** opens the load screen; the current report stays until the new file is read. **Share snapshot** saves a self-contained `.html` copy with the notes on its rows.
+- **Export date:** the dot left of it shows Live SAP (green: live, red: disconnected; none when importing files). It opens a short popover. Live: the status, **Refresh now**, **Add file** (a Clear To Build workbook or the Logican sheet) and **Share snapshot**. Import: the file names, **Add file** (supply / demand, Clear To Build, Logican), **New file** (the load screen; the current report stays until the new file is read) and **Share snapshot** (a self-contained `.html` copy with the notes on its rows).
 - **Search** (Ctrl+K, Cmd+K on a Mac): order lines by number, customer, vendor, item, warehouse, owner, tracking number or at-risk reason.
 - **Ask AI:** a chat about the loaded export (see below).
-- **Export PDF:** prints the open page.
-- **Upload:** several files at once (or drop them anywhere). The Import report says what each file was read as and how to fix a problem; **Fix with AI** suggests a column mapping for a file it does not recognise (hosted site, with an Anthropic key).
 - **Dark mode** and the **Settings** gear. The gear shows a red dot when rows or files need fixing in SAP, and a yellow dot when something is worth a look.
+
+To print a page or save it as a PDF, use the browser's Print. In import mode, **Settings → Data Source → Upload files** loads several files at once (or drop them anywhere); the Import report says what each file was read as and how to fix a problem, and **Fix with AI** suggests a column mapping for a file it does not recognise (hosted site, with an Anthropic key).
 
 ## Pages
 
@@ -68,7 +68,7 @@ Secrets are set with `npx wrangler pages secret put <NAME> --project-name spyder
 
 - `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): required. Without them every page returns "not configured", and changing either one signs everyone out.
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`: optional. Set at least one to turn on Ask AI.
-- `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Load from SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
+- `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Live SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
 - `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`: not used. The FedEx module (`shared/fedex.mjs`, `functions/api/shipping.js`, `workers/shipping-poller`) stays in the repo, undeployed; Shipping is checked by hand ([docs/SHIPPING.md](docs/SHIPPING.md)).
 
 Keep these as encrypted secrets: the repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy. On IIS or another static host, serve `index.html` as the default document; there is no sign-in gate, shared data or Ask AI there ([docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md)).

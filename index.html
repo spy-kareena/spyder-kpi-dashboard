@@ -3907,6 +3907,39 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v8:live */
+/* Live SAP (2v6.8): the dot left of the export date (green with a calm 2 s pulse while live reads work, red when
+   disconnected; none in import mode), the short export-date popover, the Data Source card and the live load screen. */
+:root{--live-ok:#12b76a;--live-ok-ring:rgba(18,183,106,.45);--live-ok-ring-0:rgba(18,183,106,0);--live-ok-halo:rgba(18,183,106,.22)}
+.live-pulse{flex:none;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dz-ink-5);vertical-align:middle}
+.live-pulse.ok{background:var(--live-ok);animation:live-pulse 2s ease-in-out infinite}
+.live-pulse.down{background:var(--dz-risk);box-shadow:0 0 0 3px var(--dz-risk-bg)}
+@keyframes live-pulse{0%{box-shadow:0 0 0 0 var(--live-ok-ring)}70%{box-shadow:0 0 0 6px var(--live-ok-ring-0)}100%{box-shadow:0 0 0 0 var(--live-ok-ring-0)}}
+.hdr-date.has-live{position:relative;gap:7px}
+.hdr-date.none .live-pulse{margin-right:6px}
+.hdr-pop-label .live-pulse{width:7px;height:7px}
+.hdr-pop-more{color:var(--dz-ink-4);font-weight:500}
+.hdr-pop .live-why,.stg-card .live-why{color:var(--dz-ink-4);overflow-wrap:anywhere}
+.stg-card .live-why{display:block;margin-top:2px;font-size:12px}
+.live-now{display:flex;align-items:flex-start;gap:9px}
+.live-now .live-pulse{margin-top:6px}
+#upload-shell[hidden],.live-load[hidden],#upload-screen .privacy-pill[hidden]{display:none}
+.live-load{margin:4px 0 0}
+.live-load-box{background:var(--dz-glass-75);border:1px solid #fff;border-radius:var(--dz-r-card);padding:24px 26px;box-shadow:var(--dz-sh-card);color:var(--dz-ink-1)}
+.live-load-box h2{display:flex;align-items:center;gap:10px;margin:0;font-size:18px;font-weight:600}
+.live-load-box p{margin:8px 0 0;color:var(--dz-ink-3);font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.live-load-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+/* Tablets and phones show the date as its icon: the dot sits on the icon's corner */
+@media (max-width:1180px){
+  .hdr-date.has-live .live-pulse{position:absolute;top:5px;right:4px;width:7px;height:7px}
+}
+@media (prefers-reduced-motion:reduce){.live-pulse.ok{animation:none;box-shadow:0 0 0 3px var(--live-ok-halo)}}
+@media (forced-colors:active){.live-pulse{forced-color-adjust:none;border:1px solid CanvasText}}
+@media screen{
+  [data-theme=dark]{--live-ok:#32d583;--live-ok-ring:rgba(50,213,131,.5);--live-ok-ring-0:rgba(50,213,131,0);--live-ok-halo:rgba(50,213,131,.25)}
+  [data-theme=dark] .live-load-box{background:var(--dz-surface);border-color:var(--dz-line-8)}
+}
+/* 2v8:end live */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -4547,6 +4580,7 @@ details.data-check>summary{font-size:13px}
       </aside>
     </div>
     <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the KPI query and the supply / demand snapshot straight from SAP now, instead of exporting them."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
+    <div class="live-load rise rise-2" id="live-load" role="status" hidden></div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
     <section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
   </div>
@@ -4720,15 +4754,6 @@ function endPrintMode(){
 }
 window.addEventListener('beforeprint',refreshForPrint);
 window.addEventListener('afterprint',endPrintMode);
-function exportPdf(){
-  refreshForPrint();
-  const tab=(PAGE_TITLES[activeTab]||'Summary').replace(/[^\w\s/-]/g,'').trim();
-  const previousTitle=document.title;
-  document.title=`Spyder KPI Report - ${tab}`;
-  window.print();
-  document.title=previousTitle;
-  endPrintMode();
-}
 function downloadPreparedSnapshot(){
   if(!activeSnapshotBlob||!activeSnapshotFileName){
     alert('Create the snapshot first.');
@@ -4978,7 +5003,8 @@ function utf8Bytes(s){
 function num(v){
   if(v===null||v===undefined||v==='')return 0;
   const n=Number(String(v).replace(/[$,]/g,''));
-  return isNaN(n)?0:n;
+  // Live SAP sends floats as written by Python (1e-05, -0.0): read as numbers, -0 as 0.
+  return isNaN(n)?0:n||0;
 }
 const moneyFormat=new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
 function money(v){
@@ -6265,7 +6291,7 @@ async function fetchSharedReport(){
     return await unpackReport(await res.arrayBuffer());
   }catch(err){console.warn('Shared report not read:',err);return undefined;}
 }
-async function restoreSavedReport(){
+async function restoreSavedReport({keepView=false}={}){
   if(isSnapshotView||hasLoadedData())return;
   const shared=await fetchSharedReport();
   let files=shared&&shared.files;
@@ -6273,7 +6299,7 @@ async function restoreSavedReport(){
     try{files=await reportStore('readonly',store=>store.get('last'));}catch(err){console.warn('Saved report not read:',err);}
   }
   if(!Array.isArray(files)||!files.length||hasLoadedData()||isSnapshotView)return;
-  await handleFiles(files,{restoring:true});
+  await handleFiles(files,{restoring:true,keepView});
   if(!hasLoadedData())return;
   if(shared){sharedReport={state:'shared',savedAt:shared.savedAt,message:''};saveReportFiles(loadedFiles);}
   else sharedReport={state:shared===null?'local':'',savedAt:'',message:''};
@@ -6299,20 +6325,28 @@ async function sapLiveCheck(){
 // One report from /api/sap/<name> as a File, named by the bridge (SAP_live_KPI_<date>.txt). The KPI report must work;
 // supply / demand is optional and gives null when it does not.
 async function sapLiveFile(name,required){
+  const r=await liveFetch(name,{refresh:true,required});
+  return r?liveFileOf(r):null;
+}
+// One report from /api/sap/<name>: {text, name, refreshedAt (ms), stale, rows}. refresh skips the bridge's 5-minute
+// cache. A required report that does not come throws (err.notSetUp when the site has no bridge); else null.
+async function liveFetch(name,{refresh=false,required=false}={}){
   let res;
-  try{res=await fetch(`/api/sap/${name}?refresh=1`,{cache:'no-store'});}
+  try{res=await fetch(`/api/sap/${name}${refresh?'?refresh=1':''}`,{cache:'no-store'});}
   catch(err){if(required)throw new Error('the site could not be reached');return null;}
   if(!res.ok){
     if(!required)return null;
-    let msg=`HTTP ${res.status}`;
-    try{msg=(await res.json()).error||msg;}catch(err){}
-    throw new Error(msg);
+    let msg=`HTTP ${res.status}`,notSetUp=false;
+    try{const body=await res.json();msg=body.error||msg;notSetUp=body.configured===false;}catch(err){}
+    throw Object.assign(new Error(String(msg).replace(/\.+$/,'')),{notSetUp});
   }
   const text=await res.text();
   if(!text.trim()){if(required)throw new Error('SAP sent back an empty report');return null;}
-  const m=(res.headers.get('content-disposition')||'').match(/filename="?([^";]+)"?/);
-  return new File([text],m?m[1]:`SAP_live_${name}_${toISODateLocal(new Date())}.txt`,{type:'text/plain',lastModified:Date.now()});
+  const head=k=>String(res.headers&&res.headers.get&&res.headers.get(k)||'');
+  const m=head('content-disposition').match(/filename="?([^";]+)"?/);
+  return {text,name:m?m[1]:`SAP_live_${name}_${toISODateLocal(new Date())}.txt`,refreshedAt:liveTime(head('x-refreshed-at')),stale:head('x-stale')==='1',rows:Number(head('x-row-count'))||0};
 }
+const liveFileOf=r=>new File([r.text],r.name,{type:'text/plain',lastModified:Date.now()});
 const toISODateLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 // What a loaded file is, from the rows already read (the same tests handleFiles uses).
 function sapFileKind(file){
@@ -6323,6 +6357,8 @@ function sapFileKind(file){
   return isBuildRiskRow(rows[0])?'ctb':isSupplyDemandRow(rows[0])?'sd':'kpi';
 }
 async function loadFromSap(){
+  // Live mode: Load from SAP / Refresh now is a live read that skips the bridge's cache.
+  if(liveMode())return liveRead({manual:true});
   if(sapLive.busy||!canLoadFromSap())return;
   sapLive.busy=true;
   const onUpload=document.getElementById('upload-screen').style.display==='block'||!hasLoadedData();
@@ -6345,12 +6381,255 @@ async function loadFromSap(){
     renderUploadState();
   }
 }
-async function handleFiles(files,{adding=false,restoring=false}={}){
+// --- Live SAP by default (2v6.8) ---
+// Settings > Data Source: 'live' (the default) reads SAP through the bridge when the page opens and every 5 minutes
+// while it is visible; 'import' is the file upload of before (the last import reopens). The last good live read (its
+// files, a Clear To Build workbook or Logican sheet added to it, and its refresh time) is kept in this browser
+// (IndexedDB 'spyderKpiLive', apart from the import copy): it shows at once on the next visit, and stays on screen
+// whenever SAP cannot be read, until a live read works again. Live reads are never saved to the shared report store.
+// Reads without refresh=1 use the bridge's 5-minute cache; Refresh now skips it. A read that brings the same text as
+// the data on screen changes nothing (filters, scroll and open lists stay). A shared snapshot, a file:// copy and a
+// site without a bridge read nothing.
+const LIVE_POLL_MS=5*60*1000;
+const LIVE_RETRY_MS=[30000,60000,120000,300000];
+// status: '' (not started), 'connecting', 'ok', 'down' (a read failed, or the bridge sent its last good result
+// because SAP could not be read: stale), 'off' (no bridge on this site, or not hosted).
+let liveState={on:false,status:'',dataAt:0,okAt:0,downSince:0,fails:0,stale:false,message:'',rows:0,sig:{kpi:'',sd:''},busy:false,timer:null,labelTimer:null,missed:false,listening:false};
+const liveMode=()=>!isSnapshotView&&stgValue('dataSource')==='live';
+// Length and a 32-bit FNV-1a hash: enough to tell whether a read brought the same text again.
+function liveSig(text){
+  const t=String(text||'');
+  let h=0x811c9dc5;
+  for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,0x01000193);}
+  return `${t.length}:${(h>>>0).toString(36)}`;
+}
+// X-Refreshed-At: ISO with a UTC offset (2026-11-12T10:42:05-06:00), or from older bridges the bridge PC's local time
+// without one (2026-11-12 10:42:05, read as this browser's local time). 0 when missing or unreadable.
+function liveTime(v){
+  const m=String(v||'').trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?\s*(Z|[+-]\d{2}:?\d{2})?$/i);
+  if(!m)return 0;
+  if(m[7]){
+    const zone=/^z$/i.test(m[7])?'Z':m[7].includes(':')?m[7]:`${m[7].slice(0,3)}:${m[7].slice(3)}`;
+    const t=Date.parse(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]||'00'}${zone}`);
+    return isNaN(t)?0:t;
+  }
+  const d=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
+  return isNaN(d)?0:d.getTime();
+}
+// "10:42 AM", with the day when it is not today ("Nov 11, 10:42 AM").
+function liveClock(t){
+  if(!t)return '';
+  const d=new Date(t),now=new Date();
+  const time=d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return d.toDateString()===now.toDateString()?time:`${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${time}`;
+}
+function liveAgo(t){
+  if(!t)return '';
+  const min=Math.floor((Date.now()-t)/60000);
+  if(min<1)return 'just now';
+  if(min<60)return `${min} min ago`;
+  return liveClock(t);
+}
+// What the dot, the export-date popover and Settings say. tone: 'ok' (green, pulsing), 'down' (red), '' (none).
+function liveStatusText(){
+  const s=liveState,from=liveClock(s.dataAt);
+  if(!liveMode())return {tone:'',short:'',line:''};
+  if(s.status==='off')return {tone:hasLoadedData()&&s.sig.kpi?'down':'',short:'Live SAP is not set up on this site',line:'Live SAP is not set up on this site'};
+  if(s.status==='ok')return {tone:'ok',short:`Live · updated ${liveAgo(s.dataAt||s.okAt)}`,line:`Connected · updated ${liveClock(s.dataAt||s.okAt)}`};
+  if(s.status==='down'){
+    const what=s.stale?'SAP not reachable':'Disconnected';
+    return {tone:'down',short:`${what}${from?` · showing data from ${from}`:''}`,line:`${s.stale?'SAP not reachable':'Disconnected'} since ${liveClock(s.downSince)}${from?` · showing data from ${from}`:''}`};
+  }
+  if(s.sig.kpi)return {tone:'down',short:`Connecting · showing data from ${from||'the last visit'}`,line:`Connecting… showing the last live data${from?` (${from})`:''}`};
+  return {tone:'',short:'Connecting',line:'Connecting to SAP…'};
+}
+function liveStore(mode,use){
+  return new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'){resolve(null);return;}
+    const open=indexedDB.open('spyderKpiLive',1);
+    open.onupgradeneeded=()=>open.result.createObjectStore('files');
+    open.onerror=()=>reject(open.error);
+    open.onsuccess=()=>{
+      const db=open.result,tx=db.transaction('files',mode),req=use(tx.objectStore('files'));
+      tx.oncomplete=()=>{db.close();resolve(req.result);};
+      tx.onerror=tx.onabort=()=>{db.close();reject(tx.error);};
+    };
+  });
+}
+// Keeps the live data on screen (and a file added to it) for the next visit and for when SAP cannot be read.
+function liveSave(){
+  if(!liveMode()||!liveState.sig.kpi||!loadedFiles.length)return Promise.resolve();
+  const rec={v:1,files:loadedFiles.slice(),dataAt:liveState.dataAt,sig:{...liveState.sig}};
+  return liveStore('readwrite',store=>store.put(rec,'last')).catch(err=>console.warn('Live data not kept for the next visit:',err));
+}
+// The last live data kept in this browser, shown while SAP is read. true when it was loaded.
+async function liveShowStored(){
+  let rec=null;
+  try{rec=await liveStore('readonly',store=>store.get('last'));}catch(err){console.warn('Last live data not read:',err);}
+  if(!rec||!Array.isArray(rec.files)||!rec.files.length||!liveState.on)return false;
+  const ok=await handleFiles(rec.files,{restoring:true,live:true,keepView:hasLoadedData()});
+  if(!ok)return false;
+  liveState.sig={kpi:String(rec.sig&&rec.sig.kpi||''),sd:String(rec.sig&&rec.sig.sd||'')};
+  liveState.dataAt=Number(rec.dataAt)||0;
+  return true;
+}
+// true / false from /api/sap/status; null when the site could not be asked.
+async function liveConfigured(){
+  try{
+    const res=await fetch('/api/sap/status',{cache:'no-store'});
+    if(!res.ok||!/json/.test(res.headers.get('content-type')||''))return res.status===404?false:null;
+    const body=await res.json();
+    return !!(body&&body.configured===true);
+  }catch(err){return null;}
+}
+async function liveStart(){
+  if(!liveMode()||liveState.on)return;
+  if(!sapLiveHosted()){liveState.status='off';liveRender();return;}
+  liveState.on=true;
+  liveState.status='connecting';
+  liveListen();
+  liveLabelTick();
+  await liveShowStored();
+  if(!liveState.on)return;
+  liveRender();
+  const configured=await liveConfigured();
+  if(!liveState.on)return;
+  sapLive.configured=configured!==false;
+  if(configured===false){liveState.status='off';liveRender();return;}
+  if(configured===null){liveDown(new Error('the site could not be reached'));liveSchedule();liveRender();return;}
+  await liveRead();
+}
+function liveStop(){
+  liveState.on=false;
+  clearTimeout(liveState.timer);clearTimeout(liveState.labelTimer);
+  liveState.timer=liveState.labelTimer=null;
+  Object.assign(liveState,{status:'',fails:0,missed:false,stale:false,message:'',downSince:0});
+}
+// One live read: the KPI report (required) and the supply / demand snapshot (optional; the one loaded stays if it
+// does not come). manual (Refresh now): skips the bridge's cache and says how it went.
+async function liveRead({manual=false}={}){
+  if(!liveState.on||liveState.status==='off'||liveState.busy)return;
+  liveState.busy=sapLive.busy=true;
+  clearTimeout(liveState.timer);liveState.timer=null;
+  const first=!hasLoadedData();
+  if(first)showLoading('Reading live data from SAP…');
+  else if(manual)liveRender();
+  try{
+    const [kpi,sd]=await Promise.all([liveFetch('kpi',{refresh:manual,required:true}),liveFetch('supply-demand',{refresh:manual})]);
+    if(!liveState.on)return;
+    const sig={kpi:liveSig(kpi.text),sd:sd?liveSig(sd.text):''};
+    const same=hasLoadedData()&&sig.kpi===liveState.sig.kpi&&(!sd||sig.sd===liveState.sig.sd);
+    if(!same){
+      // Clear To Build and the Logican sheet stay; the SAP data is replaced (supply / demand only when it came).
+      const keep=loadedFiles.filter(f=>{const k=sapFileKind(f);return k==='cm'||k==='ctb'||(k==='sd'&&!sd);});
+      const ok=await handleFiles([liveFileOf(kpi),...(sd?[liveFileOf(sd)]:[]),...keep],{restoring:true,live:true,keepView:!first});
+      if(!ok)throw new Error('the live data could not be read');
+      liveState.sig={kpi:sig.kpi,sd:sd?sig.sd:keep.some(f=>sapFileKind(f)==='sd')?liveState.sig.sd:''};
+      if(!sd&&(first||manual))showToast(keep.some(f=>sapFileKind(f)==='sd')?'The supply / demand snapshot could not be read; the one loaded before stays.':'The supply / demand snapshot could not be read, so the supply pages have no data for now.');
+    }
+    const wasDown=liveState.status==='down';
+    liveState.dataAt=kpi.refreshedAt||(same&&liveState.dataAt)||Date.now();
+    liveState.rows=kpi.rows;
+    if(!same)liveSave();
+    if(kpi.stale){liveDown(new Error('SAP not reachable'),{manual,stale:true});return;}
+    Object.assign(liveState,{status:'ok',okAt:Date.now(),downSince:0,fails:0,stale:false,message:''});
+    if(manual)showToast(same?'Up to date: no changes in SAP.':'Updated from SAP.');
+    else if(wasDown)showToast('Live SAP is back.');
+  }catch(err){
+    if(liveState.on)liveDown(err,{manual});
+  }finally{
+    liveState.busy=sapLive.busy=false;
+    liveSchedule();
+    liveRender();
+  }
+}
+// A failed read: everything on screen stays; the dot turns red; a toast only on the first failure (or a manual try).
+function liveDown(err,{manual=false,stale=false}={}){
+  if(err&&err.notSetUp){liveState.status='off';sapLive.configured=false;if(!hasLoadedData())showUpload();return;}
+  const msg=String(err&&err.message||'unknown error').replace(/\.+$/,'');
+  const firstFail=liveState.status!=='down';
+  Object.assign(liveState,{status:'down',stale,message:msg,fails:liveState.fails+1});
+  if(firstFail)liveState.downSince=Date.now();
+  if(!hasLoadedData()){showUpload();return;}
+  if(manual)showToast(`Refresh did not work: ${msg}. The data on screen stays.`);
+  else if(firstFail)showToast(`Live SAP disconnected: ${msg}. The data on screen stays.`);
+}
+// The next read: 5 minutes after a good one; 30 s, 1, 2, then every 5 minutes after failures.
+function liveSchedule(){
+  clearTimeout(liveState.timer);liveState.timer=null;
+  if(!liveState.on||liveState.status==='off')return;
+  const ms=liveState.status==='down'?LIVE_RETRY_MS[Math.min(liveState.fails,LIVE_RETRY_MS.length)-1]||LIVE_POLL_MS:LIVE_POLL_MS;
+  liveState.timer=setTimeout(liveTick,ms);
+}
+const liveHidden=()=>typeof document!=='undefined'&&document.visibilityState==='hidden';
+// A read that falls due while the page is hidden waits until it is visible again.
+function liveTick(){
+  liveState.timer=null;
+  if(!liveState.on)return;
+  if(liveHidden()){liveState.missed=true;return;}
+  liveRead();
+}
+function liveListen(){
+  if(liveState.listening||typeof document==='undefined'||!document.addEventListener)return;
+  liveState.listening=true;
+  document.addEventListener('visibilitychange',()=>{
+    if(!liveState.on||liveHidden()||!liveState.missed)return;
+    liveState.missed=false;
+    liveRead();
+  });
+}
+// "updated 2 min ago" stays true: the header's date button gets its words again every minute (no redraw).
+function liveLabelTick(){
+  clearTimeout(liveState.labelTimer);
+  if(!liveState.on)return;
+  liveState.labelTimer=setTimeout(()=>{
+    const btn=document.getElementById('hdr-date-btn'),st=liveStatusText();
+    if(btn&&btn.setAttribute&&st.tone){btn.setAttribute('aria-label',liveDateLabel(st));btn.setAttribute('data-tip',`${st.short}. Click for Refresh now, Add file and Share snapshot.`);}
+    liveLabelTick();
+  },60000);
+}
+function liveDateLabel(st){return `${st.short}. Data from ${reportAsOfDate?displayDate(reportAsOfDate):'SAP'}: refresh, add a file or share.`;}
+// Header, load screen and (when open) Settings show the new state. Settings is drawn again only when what its Data
+// Source card says has changed (a quiet 5-minute read does not redraw the page someone is working on).
+let liveSettingsShown='';
+function liveRender(){
+  renderSidebar();
+  renderUploadState();
+  const results=document.getElementById('results-screen');
+  const said=`${liveStatusText().line}|${liveState.busy}|${liveState.message}|${liveState.on}`;
+  if(activeTab==='settings'&&results&&results.style.display==='block'&&said!==liveSettingsShown){liveSettingsShown=said;renderResults();}
+}
+// Settings > Data Source changed. To import: live reading stops and the last import reopens (or the load screen).
+// To live: the last live data shows and SAP is read.
+function liveSwitch(){
+  if(liveMode()){
+    liveStop();
+    liveState.sig={kpi:'',sd:''};
+    liveStart();
+    return;
+  }
+  const wasLive=!!liveState.sig.kpi;
+  liveStop();
+  liveState.sig={kpi:'',sd:''};liveState.dataAt=0;
+  if(wasLive){
+    invalidateMetrics();
+    parsedRows=[];buildRiskRows=[];supplyDemandRows=[];exportHeaders=new Set();reportAsOfDate=null;dataQualityIssues=[];excludedQuarantineRows=0;loadedFiles=[];allLoadedRows=[];
+  }
+  sapLiveCheck();
+  liveRender();
+  const onSettings=activeTab==='settings'&&document.getElementById('results-screen').style.display==='block';
+  restoreSavedReport({keepView:onSettings}).then(()=>{if(!hasLoadedData()&&!onSettings)showUpload();liveRender();});
+}
+// live: a read from Live SAP (never saved to the shared report or the import copy; failures stay quiet).
+// keepView: a report replaced in place (a live update): the page, filters and scroll stay, no loading screen.
+// Returns true when the files were loaded.
+async function handleFiles(files,{adding=false,restoring=false,live=false,keepView=false}={}){
   const valid=files.filter(f=>f&&f.name.match(/\.(xlsx|xls|csv|txt|tsv)$/i));
   const skipped=files.filter(f=>f&&!valid.includes(f)).map(f=>f.name);
   document.getElementById('file-input').value='';
   // Adding a file to a report on screen must never lose that report: on failure the previous state comes back.
-  const hadReport=adding&&document.getElementById('results-screen').style.display==='block';
+  const hadReport=(adding||keepView)&&document.getElementById('results-screen').style.display==='block';
+  const scrollY=hadReport&&typeof window.scrollY==='number'?window.scrollY:0;
   // Any failed load puts the previous state back: the report on hand (also when New file opened the upload
   // screen), or nothing on a first load, so a file that failed is never listed as loaded.
   const previous={reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles,cmFiles:cmState.files};
@@ -6359,11 +6638,12 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
   const fail=message=>{
     if(hadReport)showResults();
     else{showUploadError(message);showUpload();}
-    if(!impFinish(imp,message)&&hadReport)alert(message);
+    if(!impFinish(imp,message)&&hadReport&&!live)alert(message);
+    return false;
   };
   const skippedText=skipped.length?`${skipped.join(', ')}: only .xlsx, .xls, .csv, or .txt exports can be read (not PDF).`:'';
-  if(!valid.length){fail(skippedText||'Please upload .xlsx, .xls, .csv, or .txt exports.');return;}
-  showLoading(valid.length>1?`Reading ${valid.length} KPI exports…`:'Reading KPI export…');
+  if(!valid.length)return fail(skippedText||'Please upload .xlsx, .xls, .csv, or .txt exports.');
+  if(!(keepView&&hadReport))showLoading(valid.length>1?`Reading ${valid.length} KPI exports…`:'Reading KPI export…');
   try{
     // Each file is read and classified once by its header row (every row of a sheet has the same columns).
     const entries=[];
@@ -6441,7 +6721,7 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     if(JSON.stringify(Object.keys(cmFiles))!==JSON.stringify(Object.keys(cmState.files||{}))||Object.keys(cmFiles).some(k=>cmFiles[k].records!==cmState.files[k].records)){cmState.files=cmFiles;cmChanged();}
     loadedFiles=used;
     // A replacement report (not Add file) opens on the default view, with non-inventory lines left out again.
-    if(!adding){resetViewState();applyInventoryScope();}
+    if(!adding&&!keepView){resetViewState();applyInventoryScope();}
     // A new report opened inside a shared snapshot leaves the snapshot: this browser's notes, and this site's at-risk
     // history and shared notes (start-up skipped both in snapshot mode) instead of the snapshot's first-flagged dates.
     if(isSnapshotView){
@@ -6454,14 +6734,19 @@ async function handleFiles(files,{adding=false,restoring=false}={}){
     if(unrecognized.length)dataQualityIssues.unshift({kind:'file',message:`Skipped ${unrecognized.join(', ')}: not a recognized KPI, supply/demand, or Clear To Build export.`});
     if(skippedText)dataQualityIssues.unshift({kind:'file',message:`Skipped ${skippedText}`});
     document.getElementById('upload-error').style.display='none';
+    // An update in place (live) is not a new report: no entrance animation (renderResults plays it for new rows).
+    if(keepView&&hadReport)lastRenderedRows=allLoadedRows;
     showResults();
-    if(!restoring){saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}
+    if(keepView&&hadReport&&scrollY&&typeof window.scrollTo==='function')window.scrollTo(0,scrollY);
+    // Live data is kept apart (liveSave): a file added to it is kept with it, never in the shared report or import copy.
+    if(!restoring&&!live){if(liveMode()&&liveState.sig.kpi)liveSave();else{saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}}
     impFinish(imp);
+    return true;
   }catch(err){
     ({reportAsOfDate,allLoadedRows,parsedRows,buildRiskRows,supplyDemandRows,dataQualityIssues,excludedQuarantineRows,exportHeaders,loadedFiles}=previous);
     if(cmState.files!==previous.cmFiles){cmState.files=previous.cmFiles;cmChanged();}
     invalidateMetrics();
-    fail(err&&err.message||'Could not read this file.');
+    return fail(err&&err.message||'Could not read this file.');
   }
 }
 // Row identity for cross-file duplicate checks, keyed by normalized header so the same data matches across
@@ -6801,19 +7086,13 @@ function impBuildReport(imp){
     errors,warns,loaded,tone:imp.error||errors?'red':warns?'amber':'teal'};
 }
 
-// --- Header button, picker, drop anywhere ---
+// --- Picker, drop anywhere (the header's Upload button is gone in 2v6.8: Settings > Data Source and the export-date
+// popover load files) ---
 const IMP_UPLOAD_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>';
-function impHeaderButton(){
-  const r=impState.report,tone=r&&r.tone!=='teal'?r.tone:'';
-  const loaded=hasLoadedData();
-  const state=tone==='red'?' (the last import had errors)':tone==='amber'?' (the last import had warnings)':'';
-  const tip=`${loaded&&!isSnapshotView?'Add files to this report':'Load files'}: SAP KPI exports, the supply / demand snapshot, Clear To Build or the Logican sheet, several at once. You can also drop files anywhere on the page.${tone?' The dot: the last import needs a look (View import report, under the export date).':''}`;
-  return `<button type="button" class="hdr-icon imp-hdr" id="hdr-upload" data-focus-key="hdr-upload" aria-label="${esc(`Upload files${state}`)}" onclick="impPick()"${tipAttr(tip)}>${IMP_UPLOAD_SVG}${tone?`<span class="imp-dot ${tone}" aria-hidden="true"></span>`:''}</button>`;
-}
 // The export-date popover's link to the last report (with how many problems it had).
 function impPopoverLink(){
   const r=impState.report;
-  if(!r)return '';
+  if(!r||r.tone==='teal')return '';
   const n=[r.errors?impCount(r.errors,'error'):'',r.warns?impCount(r.warns,'warning'):''].filter(Boolean).join(', ');
   return `<div class="hdr-pop-notes imp-poplink"><button type="button" class="link-btn" data-focus-key="sidebar-import" onclick="dzMenuClose(true);impOpen()"${tipAttr('What each file was read as, and what to fix.')}>View import report</button>${n?` · <span class="${r.tone==='red'?'imp-red-text':'warn-text'}">${esc(n)}</span>`:''}</div>`;
 }
@@ -6859,8 +7138,10 @@ function impShowDrop(on){
 }
 const impHasFiles=e=>{const t=e&&e.dataTransfer&&e.dataTransfer.types;return !!t&&[...t].includes('Files');};
 if(typeof window!=='undefined'&&window.addEventListener){
-  window.addEventListener('dragenter',e=>{if(!impHasFiles(e))return;e.preventDefault();impState.drag++;impShowDrop(true);});
-  window.addEventListener('dragover',e=>{if(!impHasFiles(e))return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='copy';});
+  // Live mode (2v6.8): dropping files is off (the browser does not open them either); Add file adds Clear To Build
+  // or the Logican sheet.
+  window.addEventListener('dragenter',e=>{if(!impHasFiles(e))return;e.preventDefault();if(liveMode())return;impState.drag++;impShowDrop(true);});
+  window.addEventListener('dragover',e=>{if(!impHasFiles(e))return;e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect=liveMode()?'none':'copy';});
   window.addEventListener('dragleave',e=>{if(!impHasFiles(e))return;impState.drag=Math.max(0,impState.drag-1);if(!impState.drag)impShowDrop(false);});
   window.addEventListener('drop',e=>{
     if(!impHasFiles(e))return;
@@ -6868,6 +7149,7 @@ if(typeof window!=='undefined'&&window.addEventListener){
     // The load screen's own drop area already took it.
     if(e.defaultPrevented)return;
     e.preventDefault();
+    if(liveMode()){showToast(hasLoadedData()?'Live SAP is on: use Add file (click the date) for Clear To Build or the Logican sheet.':'Live SAP is on. To upload files, switch to Import files in Settings.');return;}
     impAdd([...(e.dataTransfer.files||[])]);
   });
 }
@@ -6904,7 +7186,7 @@ function impClose(refocus=true){
   if(panel)panel.hidden=true;
   impState.ai.forEach(s=>{if(s.controller)s.controller.abort();});
   if(!refocus)return;
-  const back=(impState.opener&&document.querySelector(`[data-focus-key="${impState.opener.replace(/["\\]/g,'\\$&')}"]`))||document.getElementById('hdr-upload');
+  const back=(impState.opener&&document.querySelector(`[data-focus-key="${impState.opener.replace(/["\\]/g,'\\$&')}"]`))||document.getElementById('hdr-date-btn');
   if(back&&back.focus)back.focus({preventScroll:true});
 }
 // The drawer covers the page, so Tab and Shift+Tab stay inside it; Esc closes it (Ask AI's Esc wins when open).
@@ -7450,14 +7732,14 @@ function normalizeRows(raw){
       exportDate:pick(mapped,['exportdate']),
       sourceType:sourceFromDocType(pick(mapped,['sourcetype','doctype'])),
       // SAP's Excel export titles DocEntry "Internal Number" on sales documents and "Numerator" on purchase documents.
-      docEntry:pick(mapped,['docentry','internalnumber','numerator']),
-      documentNumber:pick(mapped,['documentnumber','sodocnum','ponumber','docnum']),
-      lineNumber:pick(mapped,['linenumber','linenum','line']),
+      docEntry:wholeId(pick(mapped,['docentry','internalnumber','numerator'])),
+      documentNumber:wholeId(pick(mapped,['documentnumber','sodocnum','ponumber','docnum'])),
+      lineNumber:wholeId(pick(mapped,['linenumber','linenum','line'])),
       customerPONumber:pick(mapped,['customerponumber','numatcard','custpo','customerpo','custref','customerref']),
       documentDate:pick(mapped,['documentdate']),
       closeDate:pick(mapped,['closeddate','deliveryclosedate','actualclosedate','completiondate']),
       closeDateSource:pick(mapped,['closedatesource','closeddatesource','closedsource']),
-      deliveryDocNumber:pick(mapped,['deliverydocnumber','deliverydocnum','delnumber','deliverynum']),
+      deliveryDocNumber:wholeId(pick(mapped,['deliverydocnumber','deliverydocnum','delnumber','deliverynum'])),
       // Delivery rows of the 2v1 query: tracking number(s) (ODLN.TrackNo), shipping type, ship-to country and
       // delivery date, for the Shipping page. Optional: older exports have none of these and load as before.
       // Tracking numbers are kept cleaned ("7700 1234 5678" -> 770012345678), several separated by ", ".
@@ -7560,6 +7842,11 @@ function normalizeRows(raw){
     message:`${r.sourceType||'Row'} ${r.documentNumber||'?'}${String(r.lineNumber||'').trim()?` line ${r.lineNumber}`:''}${r.orderType&&r.deliveryDocNumber?` (${r.orderType} ${r.deliveryDocNumber})`:''}: ${r.invalidDates.join(', ')}`
   }));
   return kept;
+}
+// A number column read as a float ("45001.0", from Live SAP when the database sends a float) keys like the export's
+// "45001", so notes and the at-risk history still find the line. Anything else is kept as it is.
+function wholeId(v){
+  return typeof v==='string'&&/^\s*-?\d+\.0+\s*$/.test(v)?v.trim().replace(/\.0+$/,''):v;
 }
 // Date columns checked for unreadable values. Each entry is [row field, label shown in the data check].
 const DATE_FIELDS=[['documentDate','document date'],['dueDate','due date'],['headerDueDate','header due date'],['lineDueDate','line due date'],['rescheduleDate','reschedule date'],['lineRescheduleDate','line reschedule date'],['closeDate','closed date']];
@@ -9885,7 +10172,8 @@ function stgSpec(){
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
     shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
-    importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
+    importReport:{def:()=>'problems',check:oneOf(['problems','always'])},
+    dataSource:{def:()=>'live',check:oneOf(['live','import'])}
   };
 }
 // Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
@@ -9956,6 +10244,7 @@ function stgAfterChange(keys){
   stgSync();
   if(keys.includes('theme')||keys.includes('background'))applyTheme();
   if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
+  if(keys.includes('dataSource')&&typeof liveSwitch==='function')liveSwitch();
   // The Shipping page's own Show demo data / Show real shipments choice gives way to the new default.
   if(keys.includes('shipDemoDefault')&&typeof SHIP_DEMO_KEY==='string'){
     shippingDemoChoice=null;
@@ -10132,6 +10421,30 @@ function stgNotesCard(dis,i){
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
   return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
 }
+// Data Source: Live SAP (the default: read through the SAP bridge every 5 minutes) or Import files (uploads, as
+// before). The live state, Refresh now, or the import actions. Self-contained (liveStatusText, liveRead, impPick).
+function stgDataSourceCard(dis,i){
+  const live=stgValue('dataSource')==='live',loaded=hasLoadedData();
+  const seg=dzSeg([
+    {label:'Live SAP',on:live,key:'stg-ds-live',onclick:"stgSet('dataSource','live')",attrs:dis,tip:'Read SAP through the SAP bridge every 5 minutes.'},
+    {label:'Import files',on:!live,key:'stg-ds-import',onclick:"stgSet('dataSource','import')",attrs:dis,tip:'Upload Query Manager exports, as before.'}
+  ],{label:'Data source',cls:'stg-seg'});
+  let status='',actions='';
+  if(isSnapshotView)status=`<p class="stg-now">Shared snapshot: shows the data it was saved with.</p>`;
+  else if(live){
+    const st=liveStatusText(),line=st.line||'Live SAP is not set up on this site';
+    const why=liveState.status==='down'&&liveState.message&&!liveState.stale?`<span class="live-why">${esc(liveState.message)}</span>`:'';
+    liveSettingsShown=`${st.line}|${liveState.busy}|${liveState.message}|${liveState.on}`;
+    status=`<p class="stg-now live-now"><span class="live-pulse${st.tone?` ${st.tone}`:''}" aria-hidden="true"></span><span>${esc(line)}${why}</span></p>`;
+    if(liveState.on&&liveState.status!=='off')actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-ds-refresh" onclick="loadFromSap()"${liveState.busy?' disabled':''}${tipAttr('Read SAP now, skipping the 5-minute cache.')}>${liveState.busy?'Reading…':'Refresh now'}</button></div>`;
+  }else{
+    const names=loadedFiles.map(f=>f.name);
+    status=`<p class="stg-now">${loaded?`Loaded: ${esc(names.slice(0,2).join(', '))}${names.length>2?` + ${names.length-2} more`:''}`:'No files loaded.'}</p>`;
+    actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="stg-ds-upload" onclick="impPick()"${tipAttr('Pick one or more exports to load.')}>Upload files</button><button type="button" class="dz-btn" data-focus-key="stg-ds-add" onclick="document.getElementById('add-file-input').click()"${loaded?'':' disabled'}${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button><button type="button" class="dz-btn" data-focus-key="stg-ds-new" onclick="showUpload()"${tipAttr('Replace this report with a new export.')}>New file</button></div>`;
+  }
+  const help=live?'Read from SAP every 5 minutes. The last data stays if the link drops.':'Upload Query Manager exports by hand.';
+  return stgCard({id:'source',title:'Data Source',icon:'trend',color:'#12b76a',i,changed:!live,body:stgRow('Data source',esc(help),seg)+status+actions});
+}
 function stgShippingCard(dis,i){
   const on=stgValue('shipDemoDefault');
   const now=typeof shippingDemoOn==='function'?shippingDemoOn():on;
@@ -10151,6 +10464,7 @@ function stgDataCard(i,dc){
   const lines=[so?ohN(so,'sales line'):'',po?ohN(po,'PO line'):'',supplyDemandRows.length?ohN(supplyDemandRows.length,'supply / demand line'):'',buildRiskRows.length?ohN(buildRiskRows.length,'CTB line'):''].filter(Boolean).join(' · ');
   const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
   const kept=isSnapshotView?`Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}`
+    :liveMode()&&liveState.sig.kpi?'Live from SAP · the last read is kept in this browser'
     :{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||(loaded?'Saved in this browser only':'—');
   const notes=loaded?sharedNotesSidebarLine():'';
   const cm=loaded?cmSidebarLine():'';
@@ -10318,7 +10632,7 @@ function stgRenderPage(){
   // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one. The
   // Data Check card (only while the Data check reports something) sits above both, full width, so they stay even.
   const dc=dcReport(),check=stgDataCheckCard(dc,0),k=check?1:0;
-  const left=[stgProfileCard(dis,k),stgOrderHealthCard(dis,k+2),stgPagesCard(dis,k+4),stgDataCard(k+6,dc)].join('');
+  const left=[stgDataSourceCard(dis,k),stgProfileCard(dis,k),stgOrderHealthCard(dis,k+2),stgPagesCard(dis,k+4),stgDataCard(k+6,dc)].join('');
   const right=[stgNotesCard(dis,k+1),stgShippingCard(dis,k+3),stgAiCard(dis,k+5),stgConnectCard(k+7),stgAboutCard(k+8)].join('');
   const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
   return `${note}${check?`<div class="stg-top">${check}</div>`:''}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
@@ -10459,17 +10773,33 @@ function renderUploadState(){
   if(meta)meta.textContent=loaded&&asOf?`Current export: ${asOf}`:'';
   renderUploadPages();
   const sapRow=document.getElementById('sap-live-row'),sapBtn=document.getElementById('sap-live-btn');
-  if(sapRow)sapRow.hidden=!canLoadFromSap();
+  // Live mode (2v6.8): no drop area; the live state instead (not set up, could not be read, connecting).
+  const live=liveMode(),liveBox=document.getElementById('live-load');
+  if(sapRow)sapRow.hidden=live||!canLoadFromSap();
   if(sapBtn)sapBtn.disabled=!!sapLive.busy;
+  if(liveBox){liveBox.hidden=!live;liveBox.innerHTML=live?liveLoadHtml():'';}
+  const head=document.querySelector('#upload-screen .page-title'),lead=document.querySelector('#upload-screen .page-lead');
+  if(head)head.textContent=live?'Live SAP':'Load KPI export';
+  if(lead)lead.textContent=live?'Order data straight from SAP, read every 5 minutes.':'Load SAP exports into one offline summary.';
+  const pill=document.querySelector('#upload-screen .privacy-pill');
+  if(pill)pill.hidden=live;
   // With a report loaded, the drop area shares the row with "Currently loaded"; otherwise it has the row to itself.
   const side=document.getElementById('upload-side');
   if(side)side.hidden=!loaded;
   const shell=document.getElementById('upload-shell');
   if(shell&&shell.classList)shell.classList.toggle('single',!loaded);
+  if(shell)shell.hidden=live;
   if(!box)return;
   box.hidden=!loaded;
   const names=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'Loaded export');
   box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
+}
+// The load screen in live mode: what is happening, and the way to import files instead.
+function liveLoadHtml(){
+  const s=liveState,useImport=`<button type="button" class="dz-btn${s.status==='off'?' primary':''}" data-focus-key="live-use-import" onclick="stgSet('dataSource','import')"${tipAttr('Switch to uploading Query Manager exports (Settings > Data Source).')}>Use import files</button>`;
+  if(s.status==='off')return `<div class="live-load-box"><h2>Live SAP isn't set up on this site.</h2><p>Upload Query Manager exports instead.</p><div class="live-load-actions">${useImport}</div></div>`;
+  if(s.status==='down')return `<div class="live-load-box"><h2><span class="live-pulse down" aria-hidden="true"></span>SAP could not be read</h2><p>${esc(s.message||'Unknown error')}. Trying again shortly.</p><div class="live-load-actions"><button type="button" class="dz-btn primary" data-focus-key="live-retry" onclick="loadFromSap()"${s.busy?' disabled':''}${tipAttr('Read SAP now.')}>Try again</button>${useImport}</div></div>`;
+  return `<div class="live-load-box"><h2><span class="live-pulse" aria-hidden="true"></span>Connecting to SAP…</h2><p>The data shows as soon as it is read.</p></div>`;
 }
 // Load screen: every page by sidebar group, with its one-line description (PAGE_TIPS, the same text as its tooltip).
 function renderUploadPages(){
@@ -10976,42 +11306,50 @@ function renderSidebar(){
     const active=!!supplyOn&&supplyOn[0]===id;
     return `<button type="button" role="menuitem" class="dz-menu-item${active?' sel':''}" data-focus-key="nav-${id}" onclick="dzMenuClose(true);setTab('${id}')"${active?' aria-current="page"':''}${tipAttr(aboutOf(id,tipText))} data-tip-pos="right"><span>${esc(label)}</span><span class="dz-tick" aria-hidden="true">${active?'✓':''}</span></button>`;
   }).join('')}</div></div>`;
-  // The loaded-export card (file names, counts, where it is kept, notes and Logican status, Add file / New file).
-  // One file name per line.
-  const fileNames=loadedFiles.length?loadedFiles.map(f=>esc(f.name)).join('<br>'):esc(isSnapshotView?'Shared snapshot':'No export loaded');
-  const kinds=[
-    allLoadedRows.some(r=>!/purchase order/i.test(String(r.sourceType||'')))?'SO':'',
-    allLoadedRows.some(r=>/purchase order/i.test(String(r.sourceType||'')))?'PO':'',
-    supplyDemandRows.length?'supply / demand':'',
-    buildRiskRows.length?'CTB':''
-  ].filter(Boolean).join(' + ');
+  // The export date and its popover. Live mode (2v6.8): a dot left of the date (green, pulsing: the last live read
+  // worked; red: disconnected, the data on screen is from before), and a short popover: the live status, the line
+  // count, Refresh now / Add file / Share snapshot. Import mode: the file names, one quiet line, Add file / New file /
+  // Share snapshot. The import report's link only when the last import had problems.
   const rowCount=allLoadedRows.length+supplyDemandRows.length+buildRiskRows.length;
-  const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
-  const kept=isSnapshotView?'':{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||'';
-  const meta=`<span${tipAttr(`${ohN(rowCount,'line')} loaded${kinds?`: ${kinds}`:''}.`)}>${reportAsOfDate?`Export date ${esc(displayDate(reportAsOfDate))}`:ohN(rowCount,'line')}</span>${kept?`<br>${kept}`:''}`;
-  const notesLine=loaded?[sharedNotesSidebarLine(),cmSidebarLine()].filter(Boolean).join('<br>'):'';
   const asOf=reportAsOfDate?parseDate(reportAsOfDate):null;
   const dateText=asOf?`${asOf.getDate()} ${asOf.toLocaleDateString('en-US',{month:'short'})}`:'Export';
   const fileOpen=dzOpenMenu==='hdr-file';
-  const canShare=loaded;
-  const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${canShare?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
+  const live=liveMode(),st=live?liveStatusText():{tone:'',short:'',line:''};
+  const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${loaded?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
+  const addFile=isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr(live?'Add a Clear To Build workbook or the Logican sheet to the live data.':'Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`;
+  const quiet=`${ohN(rowCount,'line')}${asOf?` · export date ${esc(displayDate(asOf))}`:''}`;
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+  let popLabel,popBody,popActions;
+  if(live){
+    const why=liveState.status==='down'&&liveState.message&&!liveState.stale?`<div class="hdr-pop-meta live-why">${esc(liveState.message)}</div>`:'';
+    popLabel=`<span class="live-pulse${st.tone?` ${st.tone}`:''}" aria-hidden="true"></span>Live SAP`;
+    popBody=`<div class="hdr-pop-name">${esc(st.line||'Live SAP')}</div>${why}<div class="hdr-pop-meta">${quiet}</div>`;
+    const canRefresh=liveState.on&&liveState.status!=='off';
+    popActions=`${canRefresh?`<button type="button" class="dz-btn" data-focus-key="hdr-sap" onclick="dzMenuClose(true);loadFromSap()"${liveState.busy?' disabled':''}${tipAttr('Read SAP now, skipping the 5-minute cache.')}>Refresh now</button>`:''}${addFile}${share}`;
+  }else{
+    const names=loadedFiles.map(f=>esc(f.name));
+    const fileNames=names.length?`${names.slice(0,2).join('<br>')}${names.length>2?` <span class="hdr-pop-more">+ ${names.length-2} more</span>`:''}`:esc(isSnapshotView?'Shared snapshot':'No export loaded');
+    popLabel=isSnapshotView?'Shared snapshot':'Loaded export';
+    popBody=`<div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${quiet}</div>`;
+    popActions=`${addFile}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}`;
+  }
+  const dot=st.tone?`<span class="live-pulse ${st.tone}" aria-hidden="true"></span>`:'';
+  const dateLabel=live&&st.tone?liveDateLabel(st):`Export date ${dateText}: loaded files, Add file, New file and Share snapshot`;
+  const dateTip=live&&st.tone?`${st.short}. Click for Refresh now, Add file and Share snapshot.`:'Export date. Click for the loaded files, Add file and New file.';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(`Export date ${dateText}: loaded files and notes status`)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr('Export date. Click for the loaded files, notes status, Add file and New file.')}><span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="Loaded export"${fileOpen?'':' hidden'}><div class="hdr-pop-label"><span class="live-dot"></span>Loaded export</div><div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${meta}</div>${notesLine?`<div class="hdr-pop-notes">${notesLine}</div>`:''}${impPopoverLink()}<div class="hdr-pop-actions">${canLoadFromSap()?`<button type="button" class="dz-btn" data-focus-key="hdr-sap" onclick="dzMenuClose(true);loadFromSap()"${sapLive.busy?' disabled':''}${tipAttr('Read the KPI data straight from SAP now and replace this report; Clear To Build and the Logican sheet stay.')}>Refresh from SAP</button>`:''}${isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}</div></div></div>`
-    :`<span class="hdr-date none"><span class="hdr-date-txt">No export loaded</span></span>`;
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date${dot?' has-live':''}" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(dateLabel)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr(dateTip)}>${dot}<span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="${live?'Live SAP':'Loaded export'}"${fileOpen?'':' hidden'}><div class="hdr-pop-label">${popLabel}</div>${popBody}${impPopoverLink()}<div class="hdr-pop-actions">${popActions}</div></div></div>`
+    :`<span class="hdr-date none">${live&&st.tone==='down'?`<span class="live-pulse down" aria-hidden="true"></span>`:''}<span class="hdr-date-txt">${esc(live&&!isSnapshotView?(liveState.status==='off'?'Live SAP not set up':liveState.status==='down'?'SAP not reachable':'Live SAP'):'No export loaded')}</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;
   const search=`<div class="hdr-search${sOpen?' open':''}" id="hdr-search" role="search"><button type="button" class="hdr-icon" id="hdr-search-btn" aria-label="Search orders, items and customers" aria-expanded="${sOpen}" aria-controls="global-search" aria-keyshortcuts="Control+K Meta+K" onclick="hdrSearchClick()"${loaded?'':' disabled'}${tipAttr('Search orders, items and customers (Ctrl+K).')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button><input type="search" id="global-search" placeholder="Search orders, items, customers…" aria-label="Search orders, items and customers" aria-keyshortcuts="Control+K Meta+K" autocomplete="off" spellcheck="false" value="${esc(searchQuery)}" oninput="onGlobalSearchInput(this.value)" onkeydown="globalSearchKey(event)" onblur="hdrSearchBlur(event)"${loaded?'':' disabled'}></div>`;
   const askAi=`<button type="button" class="hdr-icon" id="hdr-askai" data-focus-key="ask-ai" aria-label="Ask AI" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="aiToggle()"${loaded?'':' disabled'}${tipAttr('Ask AI about this export. Nothing is sent until you allow it.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/></svg></button>`;
-  const canPrint=loaded&&onResults;
-  const exportPdf=`<button type="button" class="hdr-icon" id="hdr-pdf" data-focus-key="export-pdf" aria-label="Export PDF" onclick="exportPdf()"${canPrint?'':' disabled'}${tipAttr('Print this page or save it as a PDF, with every linked line.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></button>`;
   const nav=el.querySelector('.hdr-nav'),prevScroll=nav?nav.scrollLeft:0;
   const focus=captureFocus(el);
   el.classList.toggle('searching',sOpen);
   hdrRendering=true;
   el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
-    <div class="hdr-right">${file}${search}${askAi}${exportPdf}${impHeaderButton()}${hdrThemeButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
+    <div class="hdr-right">${file}${search}${askAi}${hdrThemeButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
   // The page links scroll sideways on a phone: keep where they were, and the current page in view.
@@ -18381,7 +18719,8 @@ renderSidebar();
 renderUploadPages();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
 // Shared notes and the at-risk history load next to the report (see Stream B: shared notes).
-function startApp(){loadEmbeddedSnapshot();restoreSavedReport();syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();sapLiveCheck();}}
+// Live mode (Settings > Data Source, the default) reads SAP instead of reopening the last import (liveStart).
+function startApp(){loadEmbeddedSnapshot();if(liveMode())liveStart();else restoreSavedReport();syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startApp);
 else startApp();
 </script>

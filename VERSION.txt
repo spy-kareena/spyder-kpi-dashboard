@@ -228,3 +228,13 @@ snapshot cannot be read the last one stays; if SAP cannot be read the report on 
 New: functions/api/sap/[[path]].js (GET /api/sap/status, /api/sap/kpi, /api/sap/supply-demand behind the sign-in gate;
 Pages secrets SAP_BRIDGE_URL, SAP_BRIDGE_KEY, CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET), tests/sap-api.test.mjs and
 tests/sap-live.test.js. Without the secrets nothing changes.
+
+2v6.8: Live SAP by default. The dashboard opens on live SAP data (no saved report or import is reopened) and reads SAP
+again every 5 minutes while it is open (through the bridge's 5-minute cache; a read the same as the data on screen
+changes nothing). A dot left of the date: green and pulsing while live, red when disconnected; the data on screen stays
+and the last live data is kept in this browser, so it shows at once on the next visit until the link is back. Settings
+> Data Source: Live SAP or Import files (the upload flow of before), the live status and Refresh now. The export-date
+popover is short (live: status, Refresh now, Add file, Share snapshot; import: file names, Add file, New file, Share
+snapshot). The Upload and Export PDF icons are gone from the header (print from the browser). Bridge data types (date-
+times, floats such as 1e-05, -0.0, whole numbers as 12.0) read exactly like a Query Manager export; the function passes
+on X-Stale. New: tests/bridge-data.test.js and tests/fixtures/kpi_from_bridge.txt.

@@ -247,9 +247,10 @@ test('Connect an AI with an export loaded opens the Settings card; no Data check
   const html = page.els['results-screen'].innerHTML;
   assert.match(html, /id="stg-card-connect"/);
   assert.match(html, /<pre id="connect-desktop" tabindex="0"/);
-  // Share snapshot (in the export-date popover) and Export PDF stay in the header; the Data check is a Settings card.
+  // Share snapshot stays in the export-date popover; the Export PDF icon is gone (2v6.8: print from the browser); the
+  // Data check is a Settings card.
   assert.match(page.els['app-header'].innerHTML, /data-focus-key="hdr-share"[^>]*>Share snapshot<\/button>/);
-  assert.match(page.els['app-header'].innerHTML, /data-focus-key="export-pdf"/);
+  assert.doesNotMatch(page.els['app-header'].innerHTML, /data-focus-key="export-pdf"/);
   page.run("dataQualityIssues=[{message:'test'}];setTab('weekly')");
   assert.doesNotMatch(page.els['results-screen'].innerHTML, /class="data-check/);
   assert.match(page.els['app-header'].innerHTML, /<span class="hdr-dot red"/);

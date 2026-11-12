@@ -52,6 +52,18 @@ test('a report is passed through as the bridge sent it; the keys go only to the 
   assert.equal(seen.url, 'https://sap-bridge.example.test/api/reports/supply-demand');
 });
 
+test('a stale answer (SAP down, the bridge sent its last good result) is passed on with X-Stale and the refresh time', async () => {
+  bridge(200, 'ExportDate\tSourceType\r\n2026-11-09\tSales Order\r\n', {
+    'content-type': 'text/tab-separated-values', 'x-row-count': '1', 'x-refreshed-at': '2026-11-12T10:42:05-06:00', 'x-stale': '1',
+  });
+  const res = await call('kpi');
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('x-stale'), '1');
+  assert.equal(res.headers.get('x-refreshed-at'), '2026-11-12T10:42:05-06:00');
+  bridge(200, 'x', { 'content-type': 'text/tab-separated-values' });
+  assert.equal((await call('kpi')).headers.get('x-stale'), '', 'a fresh answer has no X-Stale');
+});
+
 test('only the two reports, only GET; without a bridge a clear 503', async () => {
   bridge(200, 'x');
   for (const p of ['../report', 'kpi/extra', 'drop', '']) assert.equal((await call(p)).status, 404, p);
