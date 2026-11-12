@@ -6533,6 +6533,7 @@ async function liveRead({manual=false}={}){
     if(!same)liveSave();
     if(kpi.stale){liveDown(new Error('SAP not reachable'),{manual,stale:true});return;}
     Object.assign(liveState,{status:'ok',okAt:Date.now(),downSince:0,fails:0,stale:false,message:''});
+    liveRecordHistory();
     if(manual)showToast(same?'Up to date: no changes in SAP.':'Updated from SAP.');
     else if(wasDown)showToast('Live SAP is back.');
   }catch(err){
@@ -6542,6 +6543,20 @@ async function liveRead({manual=false}={}){
     liveSchedule();
     liveRender();
   }
+}
+// Live data is never uploaded, so the at-risk history (first flagged) gets its week here instead: once a day per browser,
+// the lines on the At Risk card go to POST /api/history (merged into that week on the server, like an upload).
+const LIVE_HISTORY_DAY='spyderKpiLiveHistoryDay';
+function liveRecordHistory(){
+  if(isSnapshotView||typeof canShareReports!=='function'||!canShareReports())return;
+  const atRisk=reportAtRiskWeek();
+  if(!atRisk||!atRisk.keys.length)return;
+  let sent='';try{sent=localStorage.getItem(LIVE_HISTORY_DAY)||'';}catch(err){}
+  if(sent===atRisk.asOf)return;
+  fetch('/api/history',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({atRisk})})
+    .then(res=>res.ok?res.json():null)
+    .then(data=>{if(!data)return;try{localStorage.setItem(LIVE_HISTORY_DAY,atRisk.asOf);}catch(err){}addAtRiskWeek({...atRisk,savedAt:new Date().toISOString()});})
+    .catch(()=>{});
 }
 // A failed read: everything on screen stays; the dot turns red; a toast only on the first failure (or a manual try).
 function liveDown(err,{manual=false,stale=false}={}){

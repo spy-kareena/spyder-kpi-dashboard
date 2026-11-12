@@ -4,10 +4,11 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const load = async (file) => (await import('data:text/javascript;base64,' + Buffer.from(readFileSync(join(here, '..', 'functions', 'api', file), 'utf8')).toString('base64'))).onRequest;
+// Imported by file URL: report.js and history.js import ../../shared/history.mjs.
+const load = async (file) => (await import(pathToFileURL(join(here, '..', 'functions', 'api', file)).href)).onRequest;
 const report = await load('report.js');
 const history = await load('history.js');
 
@@ -167,9 +168,9 @@ test('a bad atRisk never stops the report from saving; the history is left as it
 test('GET /api/history: 503 without the KV binding, 405 for other methods, empty when the value is unreadable', async () => {
   assert.equal((await getHistory({})).status, 503);
   const env = { REPORT_STORE: kv() };
-  const post = await getHistory(env, 'POST');
-  assert.equal(post.status, 405);
-  assert.equal(post.headers.get('allow'), 'GET');
+  const del = await getHistory(env, 'DELETE');
+  assert.equal(del.status, 405);
+  assert.equal(del.headers.get('allow'), 'GET, POST');
   env.REPORT_STORE.map.set('history', new TextEncoder().encode('{nope'));
   const res = await getHistory(env);
   assert.equal(res.status, 200);
@@ -178,6 +179,23 @@ test('GET /api/history: 503 without the KV binding, 405 for other methods, empty
   // A broken history value is replaced by the next save instead of failing it.
   const saved = await put(env, { asOf: '2026-09-03', keys: [key(1)] });
   assert.deepEqual((await saved.json()).history, { weeks: 1 });
+});
+
+test('POST /api/history (live SAP data, no upload) adds a week like an upload; checks origin and body', async () => {
+  const env = { REPORT_STORE: kv() };
+  const post = (body, origin = ORIGIN) => history({ request: new Request(ORIGIN + '/api/history', { method: 'POST', body: JSON.stringify(body), headers: { Origin: origin, 'content-type': 'application/json' } }), env, params: {} });
+  assert.equal((await post({ atRisk: { asOf: day(0), keys: [key(1)] } }, 'https://evil.example')).status, 403);
+  assert.equal((await post({ atRisk: { asOf: 'yesterday', keys: [key(1)] } })).status, 400);
+  assert.equal((await post({})).status, 400);
+  const first = await post({ atRisk: { asOf: day(0), keys: [key(1), key(2)] } });
+  assert.equal(first.status, 200);
+  assert.deepEqual(await first.json(), { weeks: 1 });
+  // A second post the same week merges into that week; an upload the next week adds a week.
+  await post({ atRisk: { asOf: day(0), keys: [key(3)] } });
+  await put(env, { asOf: day(1), keys: [key(1)] });
+  const w = await weeks(env);
+  assert.equal(w.length, 2);
+  assert.deepEqual(w[0].keys.sort(), [key(1), key(2), key(3)].sort());
 });
 
 test('GET serves the compact copy as stored: each line only under its first week, the same "first flagged" answer', async () => {

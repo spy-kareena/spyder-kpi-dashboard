@@ -2,11 +2,13 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, '..', 'functions', 'api', 'report.js'), 'utf8');
-const { onRequest } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
+// Imported by file URL: report.js imports ../../shared/history.mjs.
+const { onRequest } = await import(pathToFileURL(join(here, '..', 'functions', 'api', 'report.js')).href);
+void source;
 
 const ORIGIN = 'https://kpi.example.test';
 // Workers KV stand-in: get(key, {type:'arrayBuffer'}) and put(key, bytes).
