@@ -14,8 +14,8 @@ const tick = () => new Promise((r) => setTimeout(r, 20));
 let onRequest;
 async function api() {
   if (!onRequest) {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'functions', 'api', 'report.js'), 'utf8');
-    ({ onRequest } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')));
+    // By file URL: report.js imports ../../shared/history.mjs.
+    ({ onRequest } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'functions', 'api', 'report.js')).href));
   }
   return onRequest;
 }
@@ -34,8 +34,10 @@ function fakeSite({ status } = {}) {
   return site;
 }
 // A browser on its own computer (its own IndexedDB stand-in), with real Blob/File/stream classes.
+// Uploads and the shared report belong to Settings > Data Source > Import files (2v6.8: live SAP is the default and is
+// never uploaded), so these browsers use import mode.
 async function openBrowser(site) {
-  const page = loadPage();
+  const page = loadPage({ storage: { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) } });
   await new Promise((r) => setTimeout(r, 0));
   const db = {};
   Object.assign(page.ctx, {

@@ -1,6 +1,6 @@
 Spyder KPI Dashboard
-Version: 2v6.7
-Package date: 2026-11-09
+Version: 2v6.8
+Package date: 2026-11-12
 
 Main file: index.html
 Type: Static offline-capable browser dashboard

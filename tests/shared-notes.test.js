@@ -15,8 +15,8 @@ const tick = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 const handlers = {};
 async function handler(name) {
   if (!handlers[name]) {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'functions', 'api', `${name}.js`), 'utf8');
-    ({ onRequest: handlers[name] } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64')));
+    // By file URL: report.js and history.js import ../../shared/history.mjs.
+    ({ onRequest: handlers[name] } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'functions', 'api', `${name}.js`)).href));
   }
   return handlers[name];
 }
@@ -68,7 +68,11 @@ function fakeSite() {
   return site;
 }
 // A browser on its own computer: its own localStorage (storage) and IndexedDB stand-in.
+// Uploads and the shared report belong to Settings > Data Source > Import files (2v6.8: live SAP is the default and is
+// never uploaded), so these browsers use import mode unless a test sets its own settings.
+const IMPORT_SETTINGS = JSON.stringify({ dataSource: 'import' });
 async function openBrowser(site, { storage = {} } = {}) {
+  if (!('spyderKpiSettings' in storage)) storage.spyderKpiSettings = IMPORT_SETTINGS;
   const page = loadPage({ storage });
   await tick(0);
   const db = {};
