@@ -6536,7 +6536,11 @@ async function liveRead({manual=false}={}){
     const wasDown=liveState.status==='down';
     liveState.dataAt=kpi.refreshedAt||(same&&liveState.dataAt)||Date.now();
     liveState.rows=kpi.rows;
-    if(!same)liveSave();
+    if(!same){
+      liveSave();
+      // New SAP data can bring new tracking numbers: send the list to the AfterShip Worker even if nobody opens Shipping.
+      if(typeof shpAsQueueSend==='function'&&typeof shpAs==='object'){if(shpAs.data)shpAsQueueSend();else if(typeof shpAsLoad==='function')shpAsLoad(false);}
+    }
     if(kpi.stale){liveDown(new Error('SAP not reachable'),{manual,stale:true});return;}
     Object.assign(liveState,{status:'ok',okAt:Date.now(),downSince:0,fails:0,stale:false,message:''});
     liveRecordHistory();
