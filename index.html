@@ -1031,7 +1031,7 @@ details.about>summary:hover{color:var(--gray-900)}
   .sk-about:not([open]){display:none!important}
   .sk-card details.sk-about{border:0!important;border-top:1px solid var(--gray-300)!important;border-radius:0!important}
 }
-/* --- Stream E: Shipping page (2v4: checked by hand, demo data) --- */
+/* --- Stream E: Shipping page (2v4; statuses from AfterShip or set by hand since 2v6.8) --- */
 .ship-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--gray-200);border-radius:var(--r-bar);padding:12px 16px;box-shadow:var(--sh-rest)}
 .ship-updated{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--gray-700)}
 .ship-tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
@@ -1064,13 +1064,11 @@ button.ship-kpi{width:100%}
 .ship-state{display:grid;gap:4px;justify-items:end;text-align:right;min-width:0}
 .ship-eta{font-size:12px;color:var(--gray-500)}
 .ship-eta.crit-text{color:var(--crit-text)}.ship-eta.good-text{color:var(--good-text)}.ship-eta.warn-text{color:var(--warn-text)}
-/* 2v4 ship: a row is the head button plus its Check link; the demo banner; the status form */
+/* 2v4 ship: a row is the head button plus its link; the status form */
 .ship-line{display:flex;align-items:center;min-width:0}
 .ship-line>.ship-head{flex:1 1 auto;min-width:0}
 .ship-go{flex:none;padding:0 18px 0 4px}
 .ship-check{text-decoration:none;padding:6px 14px;font-size:12.5px}
-.ship-demo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;padding:12px 16px;border-radius:var(--r-bar);background:var(--warn-tint);border:1px solid var(--warn-border);color:var(--warn-text);font-size:13px;line-height:1.5}
-.ship-demo-tag{flex:none;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:#fff;border:1px solid var(--warn-border)}
 .ship-update{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;padding:12px 14px;background:#fff;border:1px solid var(--gray-200);border-radius:10px}
 .ship-update label{display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--gray-600)}
 .ship-update select,.ship-update input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--gray-500);border-radius:var(--r-ctl);background:#fff;color:var(--gray-900)}
@@ -2559,15 +2557,13 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end monthly-wh-metrics */
 
 /* 2v6:shipping */
-/* Shipping (designs/Shipping.dc.html + shipping-map.html): filter row, demo banner, status tiles, delivery map, Shipments
+/* Shipping (designs/Shipping.dc.html + shipping-map.html): filter row, notes, status tiles, delivery map, Shipments
    table with the three-segment progress bar, Cross-border and Delayed lists. All names are shp-*; dz-* primitives
    (dz-card, dz-seg, dz-filter, dz-btn, dz-pillinput, dz-prog, dz-th, dz-fade, dz-chip) come from the foundation. */
 .dz-btn.shp-pill,.dz-btn.shp-addbtn{height:38px;padding:0 16px}
 .dz-btn.shp-pill{background:var(--dz-glass-55);border-color:#fff;font-weight:400}
 .dz-btn.shp-pill:hover{background:var(--dz-glass-75)}
-.shp-demo,.shp-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;padding:10px 14px 10px 16px;border-radius:18px;background:var(--dz-glass-60);border:1px solid #fff;font-size:13px;line-height:1.45;color:var(--dz-ink-3)}
-.shp-demo-t{flex:1 1 260px;min-width:0}
-.shp-demo .dz-btn{height:32px;flex:none}
+.shp-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0;padding:10px 14px 10px 16px;border-radius:18px;background:var(--dz-glass-60);border:1px solid #fff;font-size:13px;line-height:1.45;color:var(--dz-ink-3)}
 
 /* Status tiles */
 .shp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
@@ -2654,8 +2650,7 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-st.warn{color:var(--dz-amber-text)}
 .shp-stage{font-size:11.5px;color:var(--dz-ink-5);white-space:nowrap}
 .shp-go{display:flex;justify-content:flex-end}
-a.dz-btn.shp-check,a.dz-btn{text-decoration:none}
-a.dz-btn.shp-check{height:30px;padding:0 14px;font-size:12.5px}
+a.dz-btn{text-decoration:none}
 .shp-none{margin:14px 0 6px;font-size:13px;color:var(--dz-ink-4)}
 .shp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0 4px;font-size:12.5px;color:var(--dz-ink-4)}
 .shp-more{border:0;background:transparent;padding:4px 0;font:inherit;font-size:13px;font-weight:500;color:var(--dz-indigo-link);cursor:pointer}
@@ -3640,7 +3635,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 /* ---------- White page: cards keep white, so they get a hairline and a soft shadow; pills and panels that sat on the
    blue page get the same hairline (their #fff border vanished on white) ---------- */
 .dz-card,.mwm-kpi,.shp-tile,.sup-tile,.sup-cmcard,.misc-tile,#upload-screen .upload-side,#loading-screen .reading{background:var(--dz-surface);border-color:var(--dz-line-8)}
-.dz-filter,.dz-seg,.dz-btn.shp-pill,.shp-demo,.shp-note,.mwm-more>summary,.sup-detail,.sup-page details.about,.misc-about details.about,#loading-screen .skeleton{border-color:var(--dz-line-8)}
+.dz-filter,.dz-seg,.dz-btn.shp-pill,.shp-note,.mwm-more>summary,.sup-detail,.sup-page details.about,.misc-about details.about,#loading-screen .skeleton{border-color:var(--dz-line-8)}
 .dz-filter{background:var(--dz-surface)}
 .dz-filter:hover,.dz-btn.shp-pill:hover,.mwm-more>summary:hover{background:var(--dz-surface-2)}
 .dz-seg{background:var(--dz-surface)}
@@ -3727,7 +3722,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 :where([data-theme=dark]) .editable-rows .row-cause,:where([data-theme=dark]) .sc-group-head,:where([data-theme=dark]) .editor-form input,
 :where([data-theme=dark]) .editor-form input:focus,:where([data-theme=dark]) .editor-pick,:where([data-theme=dark]) .editor-chip,:where([data-theme=dark]) .editor-chip-x,
 :where([data-theme=dark]) .bp-thumb,:where([data-theme=dark]) .ship-bar,:where([data-theme=dark]) .ship-add input,:where([data-theme=dark]) .ship-list,
-:where([data-theme=dark]) .ship-demo-tag,:where([data-theme=dark]) .ship-update,:where([data-theme=dark]) .ship-update select,:where([data-theme=dark]) .ship-update input,
+:where([data-theme=dark]) .ship-update,:where([data-theme=dark]) .ship-update select,:where([data-theme=dark]) .ship-update input,
 :where([data-theme=dark]) .ship-alert.calm,:where([data-theme=dark]) .ship-step>i,:where([data-theme=dark]) .ship-strip.unknown .ship-step>i,
 :where([data-theme=dark]) .ship-detail .table-scroll,:where([data-theme=dark]) .rsn-chip,:where([data-theme=dark]) .oh24-age,:where([data-theme=dark]) .oh-cause-btn,
 :where([data-theme=dark]) .ai-tier,:where([data-theme=dark]) .ai-tier.free,:where([data-theme=dark]) .ovr-tile,:where([data-theme=dark]) details.oh-more>summary,
@@ -3907,6 +3902,19 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v8:ship */
+/* Shipping (2v6.8): the row's external-link icon (opens the AfterShip tracking page), a 30px round button like the
+   other row buttons, in a narrower last column; the text version in the open row's actions; a warning note tone. */
+.shp-line{grid-template-columns:minmax(0,1fr) 30px}
+a.dz-btn.shp-open{width:30px;height:30px;padding:0;flex:none;color:var(--dz-ink-3)}
+a.dz-btn.shp-open:hover{color:var(--dz-indigo);border-color:var(--dz-indigo)}
+a.dz-btn.shp-open svg,a.dz-btn.shp-open-t svg{display:block;flex:none}
+a.dz-btn.shp-open-t{gap:6px}
+a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.shp-note.warn{color:var(--dz-amber-text)}
+@media (max-width:640px){.shp-line{grid-template-columns:minmax(0,1fr)}}
+@media (forced-colors:active){a.dz-btn.shp-open{border:1px solid LinkText;color:LinkText}}
+/* 2v8:end ship */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -4065,7 +4073,6 @@ details.about,.inline-controls{font-size:13.5px}
 .sk-swipe,.ship-add label{font-size:13px}
 .ship-add input{font-size:14px}
 .ship-check{font-size:13.5px}
-.ship-demo{font-size:14px}
 @media (max-width:640px){
 .ship-add input{font-size:17px}
 }
@@ -4226,7 +4233,7 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .mwm-trow-d{font-size:19px}
 }
 .shp-checked{font-size:13.5px}
-.shp-demo,.shp-note,.shp-tile-l{font-size:14px}
+.shp-note,.shp-tile-l{font-size:14px}
 .shp-tile-s{font-size:13px}
 .shp-lbl{font-size:12px}
 .shp-legend,.shp-pillnote,.shp-chipbtn{font-size:13px}
@@ -4234,7 +4241,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .shp-trk em,.shp-ord em,.shp-eta em{font-size:12.5px}
 .shp-ord em,.shp-st{font-size:13px}
 .shp-stage{font-size:12.5px}
-a.dz-btn.shp-check{font-size:13.5px}
 .shp-none{font-size:14px}
 .shp-foot{font-size:13.5px}
 .shp-more{font-size:14px}
@@ -4821,7 +4827,7 @@ async function exportShareSnapshot(){
     reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
     excludedQuarantineRows,
-    // Shipping page: the manual statuses and hand-added tracking numbers on screen (and whether demo data was on).
+    // Shipping page: the hand-added tracking numbers and statuses on screen (hand-set and AfterShip).
     shipping:shippingSnapshotData(),
     // Purchase Orders and Forecast: the Logican sheet tabs on screen.
     cmSheet:cmSnapshotData(),
@@ -9849,7 +9855,7 @@ function supBuildRisk(m){
 // (others are left alone), and a value that fails its check counts as the default, as does a store that cannot be
 // read. A value equal to its default is not stored, so "Reset to defaults" only removes keys.
 // Declarations further up read the store while the page loads (AT_RISK_TARGET, ON_TRACK_TOLERANCE_DAYS,
-// NOTE_COMMENTS_SO / _PO, SHIP_DEMO_DEFAULT, weeklyView), before this block runs: the functions they call are
+// NOTE_COMMENTS_SO / _PO, weeklyView), before this block runs: the functions they call are
 // function declarations (hoisted) and stgMemo is a var, so nothing there is in a let / const's dead zone.
 // A change rebuilds what depends on it: the target, the tolerance and the window feed getMetrics' risk buckets and
 // every page cache (cachedByFilter, ohRowMemo are keyed on the metrics object), so invalidateMetrics() + renderResults()
@@ -9883,7 +9889,6 @@ function stgSpec(){
     openingView:{def:()=>'leading',check:oneOf(['leading','lagging'])},
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
-    shipDemoDefault:{def:()=>true,check:v=>typeof v==='boolean'?v:undefined},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])}
   };
@@ -9927,7 +9932,6 @@ function stgSync(){
   ON_TRACK_TOLERANCE_DAYS=stgValue('toleranceDays');
   NOTE_COMMENTS_SO=stgValue('noteCommentsSo');
   NOTE_COMMENTS_PO=stgValue('noteCommentsPo');
-  SHIP_DEMO_DEFAULT=stgValue('shipDemoDefault');
 }
 const STG_CALC_KEYS=['atRiskTarget','toleranceDays','horizon'];
 function stgWrite(next){
@@ -9956,11 +9960,6 @@ function stgAfterChange(keys){
   stgSync();
   if(keys.includes('theme')||keys.includes('background'))applyTheme();
   if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
-  // The Shipping page's own Show demo data / Show real shipments choice gives way to the new default.
-  if(keys.includes('shipDemoDefault')&&typeof SHIP_DEMO_KEY==='string'){
-    shippingDemoChoice=null;
-    try{localStorage.removeItem(SHIP_DEMO_KEY);}catch(err){/* the choice stays */}
-  }
   const results=document.getElementById('results-screen');
   if(results&&results.style.display==='block')renderResults();else renderSidebar();
 }
@@ -9976,8 +9975,7 @@ function stgResetAll(){
   showToast(saved?'Settings back to their defaults':'Defaults for now: this browser does not keep settings');
 }
 // Settings changed in another tab of this browser apply here too.
-// Only the settings that really changed are passed on (so the Shipping page's own demo choice is not dropped for an
-// unrelated change).
+// Only the settings that really changed are passed on.
 window.addEventListener('storage',e=>{
   if(e.key!==null&&e.key!==stgKey())return;
   const before=Object.fromEntries(Object.keys(stgSpec()).map(k=>[k,JSON.stringify(stgValue(k))]));
@@ -10131,13 +10129,6 @@ function stgNotesCard(dis,i){
     <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">None: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
   return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
-}
-function stgShippingCard(dis,i){
-  const on=stgValue('shipDemoDefault');
-  const now=typeof shippingDemoOn==='function'?shippingDemoOn():on;
-  const body=stgRow('Show demo shipments',`On: Shipping opens on 12 made-up shipments. Off: your real shipments (demo shows until one has a status). Default on.`,stgSwitch('stg-shipdemo','Show demo shipments by default',on,`stgSet('shipDemoDefault',${on?'false':'true'})`,dis))
-    +`<p class="stg-now">Shipping page now shows ${now?'demo data':'real shipments'}${hasLoadedData()?'':' once an export is loaded'}.</p>`;
-  return stgCard({id:'ship',title:'Shipping',icon:'truck',color:'#0fa08e',i,changed:!stgIsDefault('shipDemoDefault'),body});
 }
 function stgDataCard(i,dc){
   const loaded=hasLoadedData();
@@ -10319,7 +10310,7 @@ function stgRenderPage(){
   // Data Check card (only while the Data check reports something) sits above both, full width, so they stay even.
   const dc=dcReport(),check=stgDataCheckCard(dc,0),k=check?1:0;
   const left=[stgProfileCard(dis,k),stgOrderHealthCard(dis,k+2),stgPagesCard(dis,k+4),stgDataCard(k+6,dc)].join('');
-  const right=[stgNotesCard(dis,k+1),stgShippingCard(dis,k+3),stgAiCard(dis,k+5),stgConnectCard(k+7),stgAboutCard(k+8)].join('');
+  const right=[stgNotesCard(dis,k+1),stgAiCard(dis,k+5),stgConnectCard(k+7),stgAboutCard(k+8)].join('');
   const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
   return `${note}${check?`<div class="stg-top">${check}</div>`:''}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
 }
@@ -13150,7 +13141,7 @@ const PAGE_TIPS={
   supplyweekly:'Open demand against open PO supply.',
   supplydemand:'Demand and supply at a glance.',
   buildrisk:'Clear To Build report against open orders.',
-  shipping:'Recent deliveries, checked by hand on tracking pages.',
+  shipping:'Recent deliveries, tracked through AfterShip every 2 hours.',
   forecast:'Logican forecast against open orders.',
   connect:'Ask an AI about this export.'
 };
@@ -15211,18 +15202,16 @@ function bigPictureMemory(){
 function rememberBigPicture(tab,on){
   try{localStorage.setItem(BIG_PICTURE_KEY,JSON.stringify({...bigPictureStored(),[tab]:!!on}));}catch(err){}
 }
-// --- 2v4 ship: Shipping (manual checking, demo data) ---
+// --- 2v4 ship: Shipping (AfterShip every 2 hours, hand-set statuses as an override) ---
 // The Shipping page lists the sales deliveries in the export that carry a tracking number (TrackingNumber = SAP
-// ODLN.TrackNo, ShipMethod = the delivery's shipping type), for any carrier, plus numbers added by hand. Nothing here
-// asks a carrier: each shipment has a "Check" link to AfterShip's public tracking page, and whoever looks it up sets the
-// status by hand (Shipped / In transit / Delayed / Delivered, a date and a short note). Statuses are saved in the shared
-// notes store (sharedNotesPatchShipments, id 'st:<number>'), so everyone who signs in sees them; on a static host or a
-// file they stay in this browser (the store keeps localStorage spyderKpiShipmentsV1). The page cards (in transit,
-// delayed, delivered this week, not checked in 2+ days) and the progress strip come from those statuses.
-// Demo data: until anyone has set a real status, the page shows ~12 made-up shipments (built below, no customer data)
-// under a "Demo data" banner with a toggle; they never reach the store, search, snapshots' real data or other pages.
-// The FedEx API code (shared/fedex.mjs, functions/api/shipping.js, workers/shipping-poller) stays in the repo, unused:
-// this page never calls /api/shipping. See docs/SHIPPING.md.
+// ODLN.TrackNo, ShipMethod = the delivery's shipping type), for any carrier, plus numbers added by hand. On the hosted
+// site the scheduled Worker (workers/shipping-poller, shared/aftership.mjs) asks AfterShip every 2 hours and the page
+// reads the results from /api/shipping (2v8 ship below). A status can also be set by hand (Shipped / In transit /
+// Delayed / Delivered, a date and a short note) for numbers AfterShip cannot track; a newer AfterShip status wins.
+// Hand-set statuses are saved in the shared notes store (sharedNotesPatchShipments, id 'st:<number>'), so everyone who
+// signs in sees them; on a static host or a file they stay in this browser (localStorage spyderKpiShipmentsV1). The
+// page cards (in transit, delayed, delivered this week, no update in 2+ days) and the progress strip come from those
+// statuses. Each row has an icon that opens AfterShip's public tracking page. See docs/SHIPPING.md.
 (NAV_GROUPS.find(g=>g[0]==='Sales')||NAV_GROUPS[0])[1].push(['shipping','Shipping',PAGE_TIPS.shipping]);
 PAGE_TITLES.shipping='Shipping';
 // The process strip: three steps; Delayed marks the In transit step.
@@ -15232,22 +15221,20 @@ const SHIP_STATUS_TEXT={shipped:'Shipped',transit:'In transit',delayed:'Delayed'
 const SHIP_STATUS_PREFIX='st:';    // shared-store id of a shipment's manual status: 'st:<tracking number>'
 const SHIP_WINDOW_DAYS=30;         // deliveries shipped this many days before the export date are listed
 const SHIP_MANUAL_DAYS=45;         // numbers added by hand are listed this long
-const SHIP_STALE_DAYS=2;           // not delivered and not checked for this many days -> "Not checked in 2+ days"
+const SHIP_STALE_DAYS=2;           // not delivered and no AfterShip or hand update for this many days -> "No update in 2+ days"
 const SHIP_HOME_COUNTRY='CA';      // shipments leave Canada
 const SHIP_LIST_LIMIT=40;
 const SHIP_DAY=24*60*60*1000;
 const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // the shared notes store's own copy in this browser
-const SHIP_DEMO_KEY='spyderKpiShipDemo';         // this viewer's Demo data choice: '1' on, '0' off, none = automatic
 const shipTrackUrl=n=>`https://www.aftership.com/track/${encodeURIComponent(n)}`;
-// rowsRef: the rows the view was reset for; snapshotManual / snapshotDemo: what a shared snapshot carried;
-// demoEdits: statuses set on demo shipments (this page only, never saved).
-let shippingState={rowsRef:null,snapshotManual:null,snapshotDemo:null,demoEdits:{}};
+// rowsRef: the rows the view was reset for; snapshotManual / snapshotAs: what a shared snapshot carried (the saved
+// numbers and hand-set statuses, and the AfterShip statuses on screen).
+let shippingState={rowsRef:null,snapshotManual:null,snapshotAs:null};
 let shippingFilter='';
 let shippingExpanded=new Set();
 let shippingExportCache={rows:null,list:[],byOrder:new Map()};
 let shippingSearchIndex=null;
-let shippingDemoChoice;
-// 2v6 view state (this page only, reset when a report loads or the demo switch is used): carrier and customer
+// 2v6 view state (this page only, reset when a report loads): carrier and customer
 // filters, the destination picked on the map, the search text, and whether the Add tracking # form is open.
 let shipCarrierSel='',shipCustomerSel='',shipDestSel='',shipQuery='',shipAddOpen=false;
 // 2v6.5: the Shipments table's Status filter ('' = all, a SHIP_STATUS_OPTIONS key, or 'none' = not checked) and its
@@ -15255,7 +15242,7 @@ let shipCarrierSel='',shipCustomerSel='',shipDestSel='',shipQuery='',shipAddOpen
 let shipStatusSel='',shipSortCol='',shipSortDir=1;
 function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';shipStatusSel='';shipSortCol='';shipSortDir=1;}
 
-// Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/fedex.mjs.
+// Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/aftership.mjs.
 // At least one digit: words typed into TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
 function shipClean(v){
   const s=String(v??'').replace(/[\s-]+/g,'').toUpperCase();
@@ -15299,13 +15286,19 @@ function shipYmd(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.ge
 const SHIP_DATE_RE=/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 // The carrier, from the delivery's ship method (or a UPS 1Z number); only a label, nothing is sent anywhere.
 const SHIP_CARRIERS=[[/fed\s*ex|fdx|fxf/i,'FedEx'],[/\bups\b/i,'UPS'],[/purolator/i,'Purolator'],[/canpar/i,'Canpar'],[/\bdhl\b/i,'DHL'],[/loomis/i,'Loomis'],[/canada\s*post/i,'Canada Post'],[/dicom/i,'Dicom'],[/day\s*&?\s*ross/i,'Day & Ross'],[/manitoulin/i,'Manitoulin']];
+// The carrier the SAP ship method names ('' = none of the known ones).
+function shipMethodCarrier(s){
+  const m=String(s&&s.shipMethod||'');
+  const hit=SHIP_CARRIERS.find(([re])=>re.test(m));
+  return hit?(hit[1]==='FedEx'&&/freight|ltl/i.test(m)?'FedEx Freight':hit[1]):'';
+}
 function shipCarrier(s){
   if(s.carrier)return s.carrier;
-  const m=String(s.shipMethod||'');
-  const hit=SHIP_CARRIERS.find(([re])=>re.test(m));
-  if(hit)return hit[1]==='FedEx'&&/freight|ltl/i.test(m)?'FedEx Freight':hit[1];
+  const named=shipMethodCarrier(s);
+  if(named)return named;
+  if(s.as&&s.as.carrier)return s.as.carrier; // AfterShip worked it out from the number
   if(/^1Z[0-9A-Z]{16}$/.test(String(s.number||'')))return 'UPS';
-  return m||'Carrier not set';
+  return String(s.shipMethod||'')||'Carrier not set';
 }
 
 // --- What is saved: hand-added numbers and manual statuses, in the shared notes store (Stream B) ---
@@ -15379,7 +15372,8 @@ function shippingAddManual(ev){
   if(orderEl)orderEl.value='';
   invalidateMetrics();
   renderResults();
-  const msg=`Tracking # ${number} added${order?` to order ${order}`:''}. Click Check to look it up, then set its status.`;
+  shpAsQueueSend();
+  const msg=`Tracking # ${number} added${order?` to order ${order}`:''}.${shpAsOn()?' AfterShip picks it up at the next check.':' Open its tracking page, then set its status.'}`;
   // One announcement: the toast when the page has one, else the status line under the form.
   if(typeof showToast==='function'){say('');showToast(msg);}else say(msg);
   return false;
@@ -15391,14 +15385,14 @@ function shippingRemoveManual(number){
   shippingExpanded.delete(n);
   invalidateMetrics();
   renderResults();
+  shpAsQueueSend();
   if(typeof showToast==='function')showToast(`Removed ${n}.`);
 }
-// Saves a manual status. Demo shipments keep it on this page only (never in the store).
+// Saves a hand-set status (it counts until AfterShip has a newer one).
 function shippingSetStatus(number,{status,statusDate='',note=''}={}){
   const n=shipClean(number);
   if(!n||!SHIP_STATUS_OPTIONS.includes(status)||isSnapshotView)return false;
   const entry={status,statusDate:SHIP_DATE_RE.test(String(statusDate))?statusDate:'',note:String(note||'').replace(/[\u0000-\u001f\u007f]+/g,' ').trim().slice(0,200),by:shippingEditor(),at:new Date().toISOString()};
-  if(shippingDemoOn()){shippingState.demoEdits[n]=entry;return true;}
   const s=shippingRealList().find(x=>x.number===n);
   return shippingSaveManual({[SHIP_STATUS_PREFIX+n]:{order:s?[...s.orders][0]||'':'',number:n,...entry}});
 }
@@ -15412,11 +15406,10 @@ function shippingStatusSubmit(ev,number){
   const note=String(get('ship-sn')&&get('ship-sn').value||'');
   if(!SHIP_STATUS_OPTIONS.includes(status)){say('Pick a status: Shipped, In transit, Delayed or Delivered.');return false;}
   if(statusDate&&!SHIP_DATE_RE.test(statusDate)){say('Type the date as YYYY-MM-DD, or leave it blank.');return false;}
-  const demo=shippingDemoOn();
   if(!shippingSetStatus(n,{status,statusDate,note}))return false;
   shippingExpanded.add(n);
   renderResults();
-  const msg=`${n}: ${SHIP_STATUS_TEXT[status]}${statusDate?` ${shipDateLabel(statusDate)}`:''} saved${demo?' (demo only, not kept)':shippingSharedStore()?' for everyone':' in this browser'}.`;
+  const msg=`${n}: ${SHIP_STATUS_TEXT[status]}${statusDate?` ${shipDateLabel(statusDate)}`:''} saved${shippingSharedStore()?' for everyone':' in this browser'}.`;
   if(typeof showToast==='function')showToast(msg);else say(msg);
   return false;
 }
@@ -15466,28 +15459,44 @@ function shippingExportData(){
 function shippingHasTrackingColumn(){
   return ['trackingnumber','trackno','tracknumber','trackingno'].some(h=>exportHeaders.has(h))||allLoadedRows.some(r=>r&&r.trackingNumber);
 }
-// Adds the manual status and what the page shows: strip position, delayed mark, stale flag, cross-border, promised.
-function shippingDecorate(s,mark,now){
+// Adds the status and what the page shows: strip position, delayed mark, stale flag, cross-border, promised. hand is
+// the status set by hand, as the AfterShip one (shared/aftership.mjs); the newer of the two wins (an AfterShip status
+// with no carrier event yet only counts when nobody set one by hand). mark is the one shown, with its source.
+function shippingDecorate(s,hand,now,as){
+  const asState=as&&SHIP_STATUS_OPTIONS.includes(as.state)?as.state:'';
+  const asAt=as?Date.parse(as.changedAt||''):NaN;
+  const handAt=hand?Date.parse(hand.at||''):NaN;
+  const useAs=!!asState&&(!hand||(isFinite(asAt)&&(!isFinite(handAt)||asAt>=handAt)));
+  const day=v=>{const m=/^\d{4}-\d{2}-\d{2}/.exec(String(v||''));return m?m[0]:'';};
+  const mark=useAs?{status:asState,statusDate:day(asState==='delivered'?as.deliveredAt:as.lastEvent&&as.lastEvent.at),note:shpAsNote(as),by:'AfterShip',at:isFinite(asAt)?String(as.changedAt):'',source:'aftership'}
+    :hand?{...hand,source:'hand'}:null;
   const status=mark?mark.status:'';
   const pos=status==='delivered'?2:status==='transit'||status==='delayed'?1:0;
-  const at=mark?Date.parse(mark.at||''):NaN;
-  const stale=status!=='delivered'&&(!isFinite(at)||now-at>=SHIP_STALE_DAYS*SHIP_DAY);
+  // Last update: the newest hand-set or AfterShip change. "No update in 2+ days" also counts from the ship date (or
+  // when the number was added by hand), so a shipment that left yesterday is not flagged yet.
+  const updates=[handAt,asAt].filter(t=>isFinite(t));
+  const updatedAt=updates.length?Math.max(...updates):null;
+  const manualAt=s.manual?Date.parse(s.manual.at||''):NaN;
+  const since=Math.max(updatedAt??-Infinity,s.shipDate?+s.shipDate:-Infinity,isFinite(manualAt)?manualAt:-Infinity);
+  const stale=status!=='delivered'&&(!isFinite(since)||now-since>=SHIP_STALE_DAYS*SHIP_DAY);
   const dest=String(s.country||'').toUpperCase();
   const crossBorder=!!dest&&dest!==SHIP_HOME_COUNTRY;
   // Promised: the earliest working date of the lines on the delivery (reschedule date, else line delivery date).
   const promisedTimes=(s.rows||[]).map(r=>parseDate(r.effectiveDueDate)||parseDate(r.lineDueDate)||parseDate(r.dueDate)).filter(Boolean).map(d=>d.getTime());
   const promised=s.promised||(promisedTimes.length?new Date(Math.min(...promisedTimes)):null);
   const statusDay=mark&&mark.statusDate?parseDate(mark.statusDate):null;
-  const deliveredDate=status==='delivered'?(statusDay||(isFinite(at)?new Date(at):null)):null;
+  const markAt=mark?Date.parse(mark.at||''):NaN;
+  const deliveredDate=status==='delivered'?(statusDay||(isFinite(markAt)?new Date(markAt):null)):null;
   const lateDays=promised&&deliveredDate?daysBetweenDates(promised,deliveredDate):null;
-  return {...s,mark:mark||null,status,pos,marker:status==='delayed',stale,checkedAt:isFinite(at)?at:null,crossBorder,dest,promised,deliveredDate,lateDays,customer:s.customer||[...(s.names||[])][0]||''};
+  const eta=as&&as.eta&&status!=='delivered'?parseDate(day(as.eta)):null;
+  return {...s,mark,hand:hand||null,as:as||null,status,pos,marker:status==='delayed',stale,checkedAt:updatedAt,crossBorder,dest,promised,deliveredDate,lateDays,eta,customer:s.customer||[...(s.names||[])][0]||''};
 }
 function shippingWeek(now){
   const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
   const weekEnd=new Date(weekStart);weekEnd.setDate(weekEnd.getDate()+7);
   return {weekStart,weekEnd};
 }
-// The real shipments (never demo data), each with its saved status.
+// The shipments, each with its hand-set and AfterShip status.
 function shippingRealList(now=Date.now()){
   const today=reportToday();
   const since=new Date(today);since.setDate(since.getDate()-SHIP_WINDOW_DAYS);
@@ -15503,64 +15512,12 @@ function shippingRealList(now=Date.now()){
     all.set(e.number,{number:e.number,source:'manual',manual:e,rows:rows.filter(isOrderLineRow),orders:new Set(e.order?[e.order]:[]),deliveries:new Set(),names:new Set(rows.map(r=>r.name).filter(Boolean)),shipMethod:'',country:String((rows.find(r=>r.shipToCountry)||{}).shipToCountry||''),shipDate:null,value:0});
   }
   const marks=shippingStatusEntries();
-  return [...all.values()].map(s=>shippingDecorate(s,marks.get(s.number)||null,now));
-}
-// --- Demo data: ~12 made-up shipments covering every stage (fake names and numbers, dates relative to today) ---
-// [number, customer, ship method, ship-to, shipped days ago, value, status, status days ago, checked hours ago, note,
-//  promised days after shipping, ship-to region (US state / CA province, shown on the map; '' = the country)]
-const SHIP_DEMO_ROWS=[
-  ['DEMO10000001','Demo RV Co','FedEx Ground','CA',1,4200,'shipped',1,3,'Picked up from the dock',4,'CA-ON'],
-  ['DEMO10000002','Demo Trailer Works','FedEx Freight LTL','CA',3,18500,'transit',2,5,'Two skids, at the Winnipeg terminal',5,'CA-MB'],
-  ['DEMO10000003','Demo Marine Supply','UPS Standard','US',4,7600,'transit',1,20,'Cleared customs at Blaine',6,'US-WA'],
-  ['DEMO10000004','Demo Coach Builders','Purolator Ground','CA',5,3100,'delayed',1,4,'Weather hold in Thunder Bay',3,'CA-ON'],
-  ['DEMO10000005','Demo Off-Road Ltd','FedEx International Priority','US',6,12900,'delayed',2,26,'Held at customs: commercial invoice missing',4,'US-TX'],
-  ['DEMO10000006','Demo Camper Parts','Canpar Ground','CA',3,2400,'delivered',0,2,'Signed by K. Lee',3,'CA-BC'],
-  ['DEMO10000007','Demo Fleet Services','FedEx Ground','CA',5,5800,'delivered',2,30,'Left at receiving',3,'CA-QC'],
-  ['DEMO10000008','Demo RV Co','DHL Express','MX',4,9300,'transit',3,74,'In Laredo, waiting to cross',5,''],
-  ['DEMO10000009','Demo Boat Works','FedEx Ground','CA',0,1650,'',0,0,'',3,'CA-NB'],
-  ['DEMO10000010','Demo Truck Bodies','UPS Ground','US',12,6700,'delivered',8,190,'Signed at receiving',6,'US-IN'],
-  ['DEMO10000011','Demo Van Conversions','Day & Ross','CA',6,8800,'transit',4,98,'Expected Friday',5,'CA-SK'],
-  ['DEMO10000012','Demo Trailer Works','Loomis Express','CA',3,2950,'shipped',3,70,'',3,'CA-ON'],
-];
-function shippingDemoList(now=Date.now()){
-  const day=n=>{const d=new Date(now);d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d;};
-  return SHIP_DEMO_ROWS.map(([number,customer,shipMethod,country,shipAgoDays,value,status,statusAgo,checkedH,note,promiseDays,region],i)=>{
-    const shipDate=day(shipAgoDays);
-    const promised=new Date(shipDate);promised.setDate(promised.getDate()+promiseDays);
-    const base={number,source:'demo',demo:true,manual:null,rows:[],orders:new Set([String(90101+i)]),deliveries:new Set([String(70101+i)]),names:new Set([customer]),customer,shipMethod,country,region,shipDate,promised,value};
-    const mark=shippingState.demoEdits[number]||(status?{status,statusDate:shipYmd(day(statusAgo)),note,by:'Demo user',at:new Date(now-checkedH*3600000).toISOString()}:null);
-    return shippingDecorate(base,mark,now);
-  });
-}
-function shippingHasRealStatuses(){return shippingStatusEntries().size>0;}
-function shippingDemoStored(){
-  if(shippingDemoChoice===undefined){
-    shippingDemoChoice=null;
-    try{const v=localStorage.getItem(SHIP_DEMO_KEY);if(v==='1'||v==='0')shippingDemoChoice=v==='1';}catch(e){}
-  }
-  return shippingDemoChoice;
-}
-// On by default until anyone has set a real status; this viewer's toggle wins (kept in this browser).
-// Demo shipments show by default, even once real statuses exist; set to false (or remove) when the owner asks.
-// The default is true; Settings (Shipping) can set it per browser.
-let SHIP_DEMO_DEFAULT=stgValue('shipDemoDefault');
-function shippingDemoOn(){
-  if(isSnapshotView)return !!shippingState.snapshotDemo;
-  const pick=shippingDemoStored();
-  return pick===null?(SHIP_DEMO_DEFAULT||!shippingHasRealStatuses()):pick;
-}
-function setShippingDemo(on){
-  shippingDemoChoice=!!on;
-  try{localStorage.setItem(SHIP_DEMO_KEY,on?'1':'0');}catch(e){}
-  shippingFilter='';
-  shipResetView();
-  shippingExpanded=new Set();
-  renderResults();
+  const as=shpAsStatuses();
+  return [...all.values()].map(s=>shippingDecorate(s,marks.get(s.number)||null,now,Object.prototype.hasOwnProperty.call(as,s.number)?as[s.number]:null));
 }
 function shippingModel(){
   const now=Date.now();
-  const demo=shippingDemoOn();
-  const list=demo?shippingDemoList(now):shippingRealList(now);
+  const list=shippingRealList(now);
   const {weekStart,weekEnd}=shippingWeek(now);
   const groups={
     transit:list.filter(s=>s.status==='shipped'||s.status==='transit'),
@@ -15568,7 +15525,7 @@ function shippingModel(){
     delivered:list.filter(s=>s.status==='delivered'&&s.deliveredDate&&s.deliveredDate>=weekStart&&s.deliveredDate<weekEnd),
     stale:list.filter(s=>s.stale),
   };
-  return {demo,list,groups,today:reportToday(),weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length};
+  return {list,groups,today:reportToday(),weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length};
 }
 // Called on every redraw: a newly loaded report resets this page's view.
 function shippingWatchRows(){
@@ -15605,25 +15562,147 @@ function openShipment(number){
   if(head&&head.scrollIntoView)head.scrollIntoView({block:'center'});
 }
 
-// --- Snapshots: the saved numbers and statuses (and whether demo data was on) travel with a shared snapshot ---
+// --- Snapshots: the saved numbers, hand-set statuses and the AfterShip statuses on screen travel with a snapshot ---
 function shippingSnapshotData(){
   try{
     const raw=shippingManualRaw();
     const manual={};
     if(raw&&typeof raw==='object'&&!Array.isArray(raw))Object.keys(raw).forEach(k=>{const e=raw[k];if(e&&typeof e==='object'&&!e.deleted)manual[k]={...e};});
-    return {manual,demo:shippingDemoOn()};
+    const all=shpAsStatuses(),statuses={};
+    shippingRealList().forEach(s=>{if(Object.prototype.hasOwnProperty.call(all,s.number))statuses[s.number]=all[s.number];});
+    return {manual,aftership:shpAsOn()?{on:true,polledAt:shpAsPolledAt(),statuses}:null};
   }catch(err){console.warn('Shipments left out of the snapshot:',err);return null;}
 }
 function shippingFromSnapshot(d){
   const x=d&&typeof d==='object'?d:{};
-  Object.assign(shippingState,{snapshotManual:x.manual&&typeof x.manual==='object'&&!Array.isArray(x.manual)?x.manual:{},snapshotDemo:!!x.demo,demoEdits:{}});
+  const a=x.aftership&&typeof x.aftership==='object'&&x.aftership.statuses&&typeof x.aftership.statuses==='object'&&!Array.isArray(x.aftership.statuses)?x.aftership:null;
+  Object.assign(shippingState,{snapshotManual:x.manual&&typeof x.manual==='object'&&!Array.isArray(x.manual)?x.manual:{},snapshotAs:a?{on:true,polledAt:String(a.polledAt||''),statuses:a.statuses}:null});
   shippingSearchIndex=null;
 }
 
+// --- 2v8 ship: AfterShip statuses, read from /api/shipping ---
+// The scheduled Worker (workers/shipping-poller) asks AfterShip every 2 hours on the even UTC hour and saves the
+// results in Workers KV; the page reads them through GET /api/shipping on the hosted site: when Shipping opens (at most
+// every 5 minutes), when its browser tab comes back into view, and a few minutes after each scheduled check while it
+// stays open. It also sends the list it shows (PUT, only when it changed), so the Worker knows what to track. A file
+// copy or a static host has no /api/shipping: statuses are then set by hand only, and one note says so.
+const SHP_AS_EVERY_MS=2*3600000;  // schedule '0 */2 * * *' (shared/aftership.mjs, the Worker's wrangler.toml)
+const SHP_AS_FRESH_MS=5*60000;    // a re-read at most this often (page open, tab back in view)
+const SHP_AS_AFTER_MS=3*60000;    // re-read this long after each scheduled check, so its results are in
+// state: '' not read yet, 'off' no /api/shipping here, 'ok' read. sent: the last list sent (PUT).
+let shpAs={data:null,at:0,loading:false,state:'',timer:null,sent:'',sendTimer:null,sig:''};
+function shpAsStatuses(){
+  if(isSnapshotView)return shippingState.snapshotAs&&shippingState.snapshotAs.statuses||{};
+  const d=shpAs.data;
+  return d&&d.statuses&&typeof d.statuses==='object'&&!Array.isArray(d.statuses)?d.statuses:{};
+}
+// True while AfterShip statuses come in: the key is set on this site, or a check ran in the last 6 hours.
+function shpAsOn(){
+  if(isSnapshotView)return !!(shippingState.snapshotAs&&shippingState.snapshotAs.on);
+  const d=shpAs.data;
+  return !!(d&&(d.configured||d.active));
+}
+function shpAsPolledAt(){
+  if(isSnapshotView)return shippingState.snapshotAs&&shippingState.snapshotAs.polledAt||'';
+  return String(shpAs.data&&shpAs.data.polledAt||'');
+}
+// A carrier scan time as the carrier gives it (the scan's own local time, "Oct 8, 2:00 PM"), whatever this
+// browser's time zone.
+function shpAsLocalTime(v){
+  const m=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(String(v||''));
+  if(!m)return '';
+  const d=new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));
+  return m[4]?shipTimeLabel(`${shipYmd(d)}T${m[4]}:${m[5]}:00`):shipDateLabel(`${m[1]}-${m[2]}-${m[3]}`);
+}
+// The next scheduled check: the next even hour, UTC.
+function shpAsNextCheck(now=Date.now()){return (Math.floor(now/SHP_AS_EVERY_MS)+1)*SHP_AS_EVERY_MS;}
+// The short text a status from AfterShip carries: the latest scan, else AfterShip's own words.
+function shpAsNote(a){
+  if(!a)return '';
+  const ev=a.lastEvent&&a.lastEvent.desc?String(a.lastEvent.desc):'';
+  return (ev||String(a.detail||'')).slice(0,200);
+}
+// One line under the filters: tracking not set up (or a file copy), or why the last check stopped.
+function shpAsNoteLine(){
+  if(isSnapshotView)return null;
+  if(!shippingApiPossible()||shpAs.state==='off'||(shpAs.state==='ok'&&!shpAsOn()))return ['','Automatic tracking isn’t set up, so statuses are set by hand.'];
+  const e=shpAs.data&&shpAs.data.lastError;
+  const at=shpAs.data?Date.parse(shpAs.data.polledAt||''):NaN;
+  if(shpAsOn()&&e&&e.message&&!(Date.parse(e.at||'')<at))return ['warn',`AfterShip check stopped: ${String(e.message).slice(0,160)}`];
+  return null;
+}
+function shpAsLoad(force){
+  if(isSnapshotView||shpAs.loading||!shippingApiPossible())return;
+  if(!force&&shpAs.at&&Date.now()-shpAs.at<SHP_AS_FRESH_MS)return;
+  shpAs.loading=true;
+  shpAs.at=Date.now();
+  const done=d=>{
+    shpAs.loading=false;
+    if(d!==undefined){shpAs.data=d&&typeof d==='object'&&d.store?d:null;shpAs.state=shpAs.data?'ok':'off';}
+    shpAsSchedule();
+    if(shpAs.data)shpAsQueueSend(0);
+    // Redraw only when something on the page changes, so typing and focus are left alone.
+    const d2=shpAs.data||{};
+    const sig=JSON.stringify([shpAs.state,d2.polledAt,d2.configured,d2.active,d2.lastError,Object.keys(d2.statuses||{}).length,d2.statuses&&Object.values(d2.statuses).map(x=>x&&x.checkedAt).join()]);
+    if(sig!==shpAs.sig){shpAs.sig=sig;if(activeTab==='shipping'&&!isSnapshotView)renderResults();}
+  };
+  let req;
+  try{req=fetch('/api/shipping',{headers:{accept:'application/json'},cache:'no-store',credentials:'same-origin'});}catch(e){done(null);return;}
+  Promise.resolve(req)
+    .then(r=>{
+      const type=String(r&&r.headers&&typeof r.headers.get==='function'&&r.headers.get('content-type')||'');
+      return r&&r.ok&&/json/.test(type)?r.json():null;
+    })
+    .then(d=>done(d),()=>done(shpAs.data?undefined:null)); // a network blip keeps what was read
+}
+// The next read: a few minutes after the next scheduled check, while Shipping is open and in view.
+function shpAsSchedule(){
+  if(shpAs.timer)clearTimeout(shpAs.timer);
+  shpAs.timer=null;
+  if(shpAs.state!=='ok')return;
+  const now=Date.now();
+  shpAs.timer=setTimeout(()=>{
+    shpAs.timer=null;
+    const hidden=typeof document!=='undefined'&&document.visibilityState==='hidden';
+    if(activeTab==='shipping'&&!hidden)shpAsLoad(true);
+  },shpAsNextCheck(now)-now+SHP_AS_AFTER_MS);
+  if(shpAs.timer&&typeof shpAs.timer.unref==='function')shpAs.timer.unref();
+}
+try{
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&activeTab==='shipping')shpAsLoad(false);});
+}catch(e){/* no document events (tests) */}
+// Sends the tracking list the page shows (export numbers newest first, then hand-added ones, with the carrier the
+// ship method names), so the Worker asks AfterShip about them. Only when it changed since the last send.
+function shpAsQueueSend(delay=1500){
+  if(!shpAs.data||isSnapshotView)return;
+  if(shpAs.sendTimer)clearTimeout(shpAs.sendTimer);
+  shpAs.sendTimer=setTimeout(shpAsSendWanted,delay);
+  if(shpAs.sendTimer&&typeof shpAs.sendTimer.unref==='function')shpAs.sendTimer.unref();
+}
+function shpAsSendWanted(){
+  shpAs.sendTimer=null;
+  if(!shpAs.data||!shpAs.data.store||isSnapshotView||!shippingApiPossible()||!hasLoadedData())return;
+  const list=shippingRealList();
+  const carriers={};
+  list.forEach(s=>{const c=shipMethodCarrier(s);if(c)carriers[s.number]=c;});
+  const body=JSON.stringify({
+    asOf:shipYmd(reportToday()),
+    export:list.filter(s=>s.source==='export').sort((a,b)=>(b.shipDate||0)-(a.shipDate||0)).map(s=>s.number).slice(0,500),
+    manual:list.filter(s=>s.manual).map(s=>s.number).slice(0,200),
+    carriers
+  });
+  if(body===shpAs.sent)return;
+  shpAs.sent=body;
+  try{
+    Promise.resolve(fetch('/api/shipping',{method:'PUT',headers:{'content-type':'application/json'},body,credentials:'same-origin'}))
+      .then(r=>{if(!r||!r.ok)shpAs.sent='';},()=>{shpAs.sent='';});
+  }catch(e){shpAs.sent='';}
+}
+
 // --- Rendering ---
-// 2v6 layout: filter row (carrier, customer, Add tracking #), demo banner, status tiles, delivery map, Shipments table
-// with the three-segment progress bar, and the Cross-border / Delayed lists. Data, manual statuses and Check links are
-// the 2v4 ones above; nothing here asks a carrier.
+// 2v6 layout: filter row (carrier, customer, Add tracking #), status tiles, delivery map, Shipments table with the
+// three-segment progress bar, and the Cross-border / Delayed lists. Statuses come from AfterShip (read from
+// /api/shipping) or are set by hand; nothing here asks a carrier.
 
 // --- Delivery map ---
 // SHIP_MAP.land and .borders are the 110m Natural Earth land and interior country borders of the world-atlas package
@@ -15638,7 +15717,7 @@ const SHIP_MAP={S:492.333,TX:1009.472,TY:539.955,W:1140,H:420,
 const SHIP_HUB={name:'Lacombe, AB',lon:-113.73,lat:52.47};
 // Where a destination dot goes: code|longitude|latitude|name. The SAP export carries only the ship-to country
 // (ShipToCountry), so a dot sits at a country marker point (the middle of its main market for the big ones); a US state
-// or Canadian province (key US-IN, CA-ON, set on the demo shipments) is used when a shipment carries one.
+// or Canadian province (key US-IN, CA-ON, when a shipment carries one) is used.
 const SHIP_PLACES=(()=>{
   const m={};
   ('US|-95.7|38.5|United States;CA|-97.1|49.9|Canada;MX|-102.5|23.6|Mexico;GB|-1.5|52.8|United Kingdom;IE|-8|53.2|Ireland;FR|2.5|46.6|France;DE|10.4|51.1|Germany;NL|5.6|52.2|Netherlands;BE|4.6|50.6|Belgium;LU|6.1|49.8|Luxembourg;CH|8.2|46.8|Switzerland;AT|14.1|47.6|Austria;IT|12.5|42.8|Italy;ES|-3.7|40.2|Spain;PT|-8|39.6|Portugal;SE|15.3|61.5|Sweden;NO|9|61|Norway;DK|9.5|56|Denmark;FI|26|63.5|Finland;IS|-19|64.9|Iceland;PL|19.4|52.1|Poland;CZ|15.5|49.8|Czechia;SK|19.5|48.7|Slovakia;HU|19.4|47.1|Hungary;RO|25|45.9|Romania;BG|25.2|42.7|Bulgaria;GR|22|39|Greece;HR|16|45.1|Croatia;SI|14.8|46.1|Slovenia;RS|20.8|44|Serbia;EE|25.5|58.7|Estonia;LV|24.9|56.9|Latvia;LT|23.9|55.3|Lithuania;UA|31.4|49|Ukraine;TR|35.2|39|Turkey;RU|37.6|55.7|Russia;CN|104|35|China;JP|138|36.5|Japan;KR|127.8|36.4|South Korea;TW|121|23.7|Taiwan;HK|114.2|22.3|Hong Kong;SG|103.8|1.35|Singapore;MY|102|4.2|Malaysia;TH|101|15|Thailand;VN|106|16|Vietnam;ID|113.9|-0.8|Indonesia;PH|122|12.9|Philippines;IN|78.9|22|India;PK|69.3|30.4|Pakistan;AU|134|-25.7|Australia;NZ|172.5|-41|New Zealand;AE|54|24|United Arab Emirates;SA|45|24|Saudi Arabia;IL|35|31.5|Israel;EG|30|26.8|Egypt;ZA|24.7|-29|South Africa;NG|8.1|9.6|Nigeria;KE|37.9|0.2|Kenya;MA|-6.3|31.8|Morocco;BR|-52|-10.8|Brazil;AR|-64|-34|Argentina;CL|-71|-33.5|Chile;CO|-73|4|Colombia;PE|-75|-9.2|Peru;EC|-78.4|-1.5|Ecuador;UY|-56|-32.8|Uruguay;VE|-66|7|Venezuela;CR|-84.2|9.9|Costa Rica;PA|-80|8.5|Panama;GT|-90.4|15.7|Guatemala;HN|-86.6|14.8|Honduras;SV|-88.9|13.7|El Salvador;NI|-85|12.9|Nicaragua;CU|-79|21.6|Cuba;DO|-70.5|18.9|Dominican Republic;JM|-77.3|18.1|Jamaica;PR|-66.5|18.2|Puerto Rico;BS|-77.4|24.7|Bahamas;'
@@ -15823,24 +15902,32 @@ function renderShipMap(list){
 }
 
 // --- Page pieces ---
+// "Updated 10:00 · next 12:00" while AfterShip statuses come in (no next time in a snapshot or once checks have
+// stopped), else how many shipments are listed.
 function shippingHeadMeta(){
-  const model=shippingModel();
-  return model.demo?`demo data · ${shipPlural(model.list.length,'made-up shipment','made-up shipments')}`
-    :`as of ${displayDate(reportToday())} · ${shipPlural(model.list.length,'shipment','shipments')} with a tracking number`;
+  const at=shpAsOn()?Date.parse(shpAsPolledAt()):NaN;
+  if(isFinite(at)){
+    const now=Date.now();
+    const when=new Date(at);
+    const label=shipYmd(when)===shipYmd(now)?shipClock(when):shipTimeLabel(when.toISOString());
+    const next=!isSnapshotView&&now-at<6*3600000?` · next ${shipClock(new Date(shpAsNextCheck(now)))}`:'';
+    return `Updated ${label}${next}`;
+  }
+  return shipPlural(shippingModel().list.length,'shipment','shipments');
 }
-function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'Not checked';}
+function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'No status';}
 function shipLateText(days){
   if(days===null||days===undefined)return '';
   return days>0?`${shipPlural(days,'day','days')} late`:days<0?`${shipPlural(-days,'day','days')} early`:'on time';
 }
-// What the Check line says: delivered date against promised, else when it was last checked.
+// The line under the ETA: delivered date against promised, else when the status last changed.
 function shipCheckedText(s,now=Date.now()){
   if(s.status==='delivered'&&s.deliveredDate){const late=shipLateText(s.lateDays);return {text:`${shipDateLabel(s.deliveredDate)}${late?` · ${late}`:''}`,tone:s.lateDays>0?'crit-text':s.lateDays!==null?'good-text':''};}
-  if(s.checkedAt===null)return {text:'Never checked',tone:'warn-text'};
-  return {text:`Checked ${shipAgo(now-s.checkedAt)}`,tone:s.stale?'warn-text':''};
+  if(s.checkedAt===null||s.checkedAt===undefined)return {text:'No update yet',tone:s.stale?'warn-text':''};
+  return {text:`Updated ${shipAgo(now-s.checkedAt)}`,tone:s.stale?'warn-text':''};
 }
 function shipStateLabel(s){return shipStatusLabel(s);}
-// Delayed first, then not checked for 2+ days, then the furthest along; delivered last (newest first).
+// Delayed first, then no update for 2+ days, then the furthest along; delivered last (newest first).
 function shippingSortedList(list){
   const rank=s=>s.status==='delayed'?0:s.status==='delivered'?9:s.stale?1:5-s.pos;
   return [...list].sort((a,b)=>rank(a)-rank(b)||((b.deliveredDate||b.shipDate||0)-(a.deliveredDate||a.shipDate||0))||a.number.localeCompare(b.number));
@@ -15865,12 +15952,13 @@ function shipPickDest(key){shipDestSel=shipDestSel===key?'':String(key||'');rend
 function shipSearch(v){shipQuery=String(v||'');renderResults();}
 function shipClearFilters(){shipResetView();shippingFilter='';renderResults();}
 // --- 2v6.5 r5c: Shipments table sort and Status / Destination filters ---
-const SHP_STATUS_FILTERS=[['shipped','Shipped'],['transit','In transit'],['delayed','Delayed'],['delivered','Delivered'],['none','Not checked']];
+const SHP_STATUS_FILTERS=[['shipped','Shipped'],['transit','In transit'],['delayed','Delayed'],['delivered','Delivered'],['none','No status']];
 const shpStatusMatch=(s,sel)=>!sel||(sel==='none'?!s.status:s.status===sel);
-// Progress order: not checked, then shipped, in transit, delayed, delivered.
+// Progress order: no status, then shipped, in transit, delayed, delivered.
 const SHP_PROGRESS_RANK={'':0,shipped:1,transit:2,delayed:3,delivered:4};
-// ETA sort date: the delivery date of a delivered shipment, else the promised date (null = none, listed last).
-function shpEtaTime(s){const d=s.status==='delivered'?(s.deliveredDate||s.promised):s.promised;return d?+d:null;}
+// ETA sort date: the delivery date of a delivered shipment, else AfterShip's expected date, else the promised date
+// (null = none, listed last).
+function shpEtaTime(s){const d=s.status==='delivered'?(s.deliveredDate||s.promised):(s.eta||s.promised);return d?+d:null;}
 // The table's order: the default (delayed first ... delivered last) or the picked column; shipments with no order or
 // no date stay last either way, and ties keep the default order.
 function shpSortList(list){
@@ -15922,15 +16010,18 @@ function shipToggleAdd(){
 }
 // 12-digit FedEx numbers are written in groups of four, like the design.
 const shipFmtTrack=n=>/^\d{12}$/.test(n)?n.replace(/(\d{4})(?=\d)/g,'$1 '):n;
-function renderShipCheck(s,cls='dz-btn shp-check'){
-  const tip=s.demo?`Demo number: opens AfterShip in a new tab, which will not find it.`:`Opens AfterShip’s public tracking page for ${s.number} (${shipCarrier(s)}) in a new tab; then set the status here.`;
-  return `<a class="${cls}" href="${esc(shipTrackUrl(s.number))}" target="_blank" rel="noopener" data-focus-key="ship-check-${esc(s.number)}" data-tip="${esc(tip)}">Check</a>`;
+// An arrow out of a box: opens the shipment's AfterShip tracking page in a new tab (any carrier).
+const SHP_EXT_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>';
+function renderShipOpen(s,withText=false){
+  const href=esc(shipTrackUrl(s.number));
+  if(withText)return `<a class="dz-btn shp-open-t" href="${href}" target="_blank" rel="noopener" data-focus-key="ship-open-d-${esc(s.number)}"${tipAttr('Open AfterShip’s tracking page in a new tab.')}>${SHP_EXT_SVG}Open tracking page</a>`;
+  return `<a class="dz-btn shp-open" href="${href}" target="_blank" rel="noopener" data-focus-key="ship-open-${esc(s.number)}" aria-label="Open tracking page"${tipAttr('Open tracking page')}>${SHP_EXT_SVG}</a>`;
 }
 // 2v7 e: one or two short facts under a tile's count, new information only (its orders and value stay in the tip).
 // In transit: the next promised date (or how many are past it) and the carriers (top two, +N more; a phone shows the
 // top one). Delayed: how late the worst one is against its promised date and the customer with the most (+N more).
-// Delivered this week: on time against the promised date, and the latest delivery. Not checked in 2+ days: how long
-// ago the oldest check was, and how many were never checked. An empty tile says "None right now". The carrier and
+// Delivered this week: on time against the promised date, and the latest delivery. No update in 2+ days: how long
+// ago the oldest update was, and how many have none yet. An empty tile says "None right now". The carrier and
 // customer lines are left out while the Carrier / Customer pill already names one. Each fact is {html, tone}; tone
 // 'warn' tints it amber.
 function shpTileFacts(id,group,now=Date.now()){
@@ -15968,10 +16059,10 @@ function shpTileFacts(id,group,now=Date.now()){
     const days=group.map(s=>parseDate(s.deliveredDate)).filter(Boolean);
     if(days.length){const last=new Date(Math.max(...days.map(d=>d.getTime())));out.push({html:esc(`${group.length===1?'Delivered':'Latest'} ${shipDateLabel(last)}`)});}
   }else if(id==='stale'){
-    const checked=group.filter(s=>s.checkedAt!==null&&s.checkedAt!==undefined).map(s=>s.checkedAt);
-    const never=group.length-checked.length;
-    if(checked.length)out.push({html:esc(`${checked.length===1?'Checked':'Oldest'} ${shipAgo(now-Math.min(...checked))}`)});
-    if(never)out.push({html:esc(never===group.length?(never===1?'Never checked':'None checked yet'):`${fmtNum(never)} never checked`)});
+    const updated=group.filter(s=>s.checkedAt!==null&&s.checkedAt!==undefined).map(s=>s.checkedAt);
+    const never=group.length-updated.length;
+    if(updated.length)out.push({html:esc(`${updated.length===1?'Updated':'Oldest update'} ${shipAgo(now-Math.min(...updated))}`)});
+    if(never)out.push({html:esc(never===group.length?'No update yet':`${fmtNum(never)} with no update yet`)});
   }
   return out.slice(0,2);
 }
@@ -15992,14 +16083,16 @@ function renderShipCard(id,label,group,color,tipLead,tone=''){
     <span class="shp-tile-facts">${shpTileFacts(id,group).map(f=>`<span class="shp-tile-s${f.tone?` ${f.tone}`:''}">${f.html}</span>`).join('')}</span>
   </button>`;
 }
-// ETA cell: delivered shipments show the delivery date over "promised ..."; the others the promised date (no carrier
-// ETA exists: statuses are set by hand) over when the status was last checked.
+// ETA cell: delivered shipments show the delivery date over "promised ..."; the others AfterShip's expected date (else
+// the promised date) over when the status last changed.
 function shipEta(s){
   if(s.status==='delivered'){
     return {top:s.deliveredDate?`Delivered ${shipDateLabel(s.deliveredDate)}`:'Delivered',topTone:s.lateDays>0?'late':'',sub:s.promised?`promised ${shipDateLabel(s.promised)}`:'',subTone:''};
   }
   const when=shipCheckedText(s);
-  return {top:s.promised?shipDateLabel(s.promised):'—',topTone:s.status==='delayed'?'late':'',sub:when.text,subTone:s.stale?'warn':''};
+  const top=s.eta||s.promised;
+  const late=s.status==='delayed'||(s.eta&&s.promised&&daysBetweenDates(s.promised,s.eta)>0);
+  return {top:top?shipDateLabel(top):'—',topTone:late?'late':'',sub:when.text,subTone:s.stale?'warn':''};
 }
 function renderShipRow(s,idx=0){
   const n=s.number,open=shippingExpanded.has(n);
@@ -16010,8 +16103,8 @@ function renderShipRow(s,idx=0){
   const stage=s.status?s.pos+1:1;
   const tone=s.status==='delayed'?'red':s.status==='delivered'?'teal':'';
   const stTone=s.status==='delayed'?' late':s.status==='delivered'?' done':!s.status?' warn':'';
-  const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:'Not checked yet.';
-  const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}; click to ${open?'hide':'show'} the details and set the status.`;
+  const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:'No status yet.';
+  const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}; click to ${open?'hide':'show'} the details.`;
   const i=Math.min(idx,14);
   const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
   return `<div class="shp-row${open?' open':''} dz-fade" style="--i:${i}">
@@ -16023,7 +16116,7 @@ function renderShipRow(s,idx=0){
         <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b><em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em></span>
         <span class="sr-only">${esc(stepText)}</span>
       </button>
-      <span class="shp-go print-hide">${renderShipCheck(s)}</span>
+      <span class="shp-go print-hide">${renderShipOpen(s)}</span>
     </div>
     ${open?renderShipDetail(s):''}
   </div>`;
@@ -16031,39 +16124,46 @@ function renderShipRow(s,idx=0){
 // The order lines a shipment covers: the delivery's lines (by delivery document number) or, for a number added by
 // hand, the lines of its sales order.
 function shippingLinkedRows(s){
-  if(s.demo)return [];
   if(!s.deliveries.size)return s.rows;
   const docs=s.deliveries;
   return allLoadedRows.filter(r=>r&&!r.isDeleted&&shipIsSales(r)&&isShipmentRow(r)&&docs.has(String(r.deliveryDocNumber||'').trim()));
 }
 function renderShipUpdateForm(s){
   if(isSnapshotView)return '';
-  const n=s.number,m=s.mark||{};
+  const n=s.number,m=s.hand||{};
   const opts=SHIP_STATUS_OPTIONS.map(k=>`<option value="${k}"${(m.status||'')===k?' selected':''}>${esc(SHIP_STATUS_TEXT[k])}</option>`).join('');
-  const where=s.demo?'demo only, not kept':shippingSharedStore()?'shared with everyone':'kept in this browser';
+  const where=shippingSharedStore()?'shared with everyone':'kept in this browser';
   return `<form class="shp-update print-hide" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
-      <span class="shp-update-t"${tipAttr(`After checking the carrier’s page, record what it says (${where}).`)}>Update status</span>
+      <span class="shp-update-t"${tipAttr(`Set a status by hand, for example when AfterShip cannot track it (${where}). A newer AfterShip update replaces it.`)}>Update status</span>
       <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${tipAttr('Shipped (left Spyder Controls), In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
-      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('When it happened: the delivery date for Delivered, else the day you checked.')}></label>
+      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('When it happened: the delivery date for Delivered, else today.')}></label>
       <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${tipAttr('A short note anyone can read (up to 200 characters).')}></label>
-      <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${tipAttr(`Save this status (${where}); saving again also marks it as checked now.`)}>Save</button>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${tipAttr(`Save this status (${where}).`)}>Save</button>
       <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status"></span>
     </form>`;
 }
 function renderShipDetail(s){
-  const n=s.number,m=s.mark;
+  const n=s.number,m=s.mark,a=s.as;
   const fact=(label,value,tipText)=>value?`<div class="shp-fact"${tipAttr(tipText)}><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`:'';
+  // Which status counts: AfterShip's, or the one set by hand (newer than AfterShip's, or AfterShip has none).
+  const source=!m?'':m.source==='aftership'?'From AfterShip':[`Set by ${m.by||'hand'}`,shipTimeLabel(m.at)].filter(Boolean).join(' · ');
+  const ev=a&&a.lastEvent;
+  const scan=ev?[ev.desc,ev.city,shpAsLocalTime(ev.at)].filter(Boolean).join(' · '):'';
+  const asText=!a?'':a.error?a.error:[a.status,a.detail&&a.detail!==a.status?a.detail:''].filter(Boolean).join(' · ');
   const facts=[
-    fact('Status',m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${s.status==='delivered'&&shipLateText(s.lateDays)?` · ${shipLateText(s.lateDays)}`:''}`:'Not checked yet','The status set by hand after checking the carrier’s page, and its date.'),
-    fact('Last checked',m?[m.by,shipTimeLabel(m.at)].filter(Boolean).join(' · '):'','Who set the status and when.'),
+    fact('Status',m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${s.status==='delivered'&&shipLateText(s.lateDays)?` · ${shipLateText(s.lateDays)}`:''}`:'No status yet','The status shown on this row, and its date.'),
+    fact('Source',source,'AfterShip’s status, or one set by hand; the newer one counts.'),
+    fact('AfterShip',asText,'What AfterShip says, read every 2 hours.'),
+    fact('Last scan',scan,'The carrier’s latest scan, from AfterShip.'),
+    fact('Expected',s.eta?shipDateLabel(s.eta):'','The expected delivery date, from AfterShip.'),
     fact('Promised',s.promised?shipDateLabel(s.promised):'','The earliest reschedule or delivery date of its order lines.'),
     fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','The delivery date in SAP.'),
-    fact('Carrier',shipCarrier(s),'From the ship method on the SAP delivery.'),
+    fact('Carrier',shipCarrier(s),'From the ship method on the SAP delivery, else from AfterShip.'),
     fact('Ship method (SAP)',s.shipMethod,'The shipping type on the SAP delivery.'),
     fact('Ship to',shipCountryName(s.dest),'Ship-to country in SAP.'),
     fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added this tracking number and when.'),
   ].join('');
-  const noteText=m&&m.note?`<p class="shp-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
+  const noteText=m&&m.source==='hand'&&m.note?`<p class="shp-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
   const rows=shippingLinkedRows(s).slice(0,60);
   const lineRow=r=>{
     const shipped=isShipmentRow(r)?shipDateLabel(r.shipDate||r.closeDate):'';
@@ -16078,8 +16178,8 @@ function renderShipDetail(s){
       <th scope="col"${tipAttr('The line’s reschedule date, else its delivery date.')}>Promised</th>
       <th scope="col"${tipAttr('The delivery date in SAP; blank until shipped.')}>Shipped</th>
     </tr></thead><tbody>${rows.map(lineRow).join('')}</tbody></table></div>`
-    :`<p class="shp-note-p">${s.demo?'A demo shipment: it has no order lines.':s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
-  const actions=`<div class="shp-actions print-hide">${renderShipCheck(s,'dz-btn')}${s.manual&&!isSnapshotView?`<button type="button" class="dz-btn shp-remove" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')"${tipAttr('Remove this number (only numbers added by hand can be removed).')}>Remove tracking #</button>`:''}</div>`;
+    :`<p class="shp-note-p">${s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
+  const actions=`<div class="shp-actions print-hide">${renderShipOpen(s,true)}${s.manual&&!isSnapshotView?`<button type="button" class="dz-btn shp-remove" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')"${tipAttr('Remove this number (only numbers added by hand can be removed).')}>Remove tracking #</button>`:''}</div>`;
   return `<div class="shp-detail" id="ship-detail-${esc(n)}">
     ${facts?`<div class="shp-facts">${facts}</div>`:''}
     ${noteText}
@@ -16117,12 +16217,13 @@ function renderShipDelayed(list){
         <span class="shp-li-why${note?'':' none'}">${esc(note||'No note yet')}</span></button>`;
     }).join('')}</div>${all>rows.length?`<p class="shp-more-n">+ ${fmtNum(all-rows.length)} more in the table</p>`:''}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card',body,tip:'Shipments marked Delayed, newest first, with the note left with the status (for example a customs hold).'});
+  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card',body,tip:'Delayed shipments, newest first, with AfterShip’s latest scan or the note set by hand (for example a customs hold).'});
 }
 const SHIP_TRUCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5h12v9.5H2z"/><path d="M14 10h4.2l3.3 3.4V16H14z"/><circle cx="6.2" cy="17.6" r="1.9"/><circle cx="17.4" cy="17.6" r="1.9"/></svg>';
 function renderShippingPage(m){
   if(isSnapshotView&&shippingState.snapshotManual===null)shippingFromSnapshot(null);
-  if(!isSnapshotView&&shippingState.snapshotManual!==null)Object.assign(shippingState,{snapshotManual:null,snapshotDemo:null});
+  if(!isSnapshotView&&shippingState.snapshotManual!==null)Object.assign(shippingState,{snapshotManual:null,snapshotAs:null});
+  if(!isSnapshotView)shpAsLoad(false);
   const model=shippingModel();
   const asOf=displayDate(model.today);
   const shared=shippingSharedStore();
@@ -16147,35 +16248,30 @@ function renderShippingPage(m){
   const destPill=destKeys.length>1?dzFilterPill({id:'ship-dest',label:'Destination',value:shipPlaceName(shipDestSel)||'All',set:!!shipDestSel,tip:'List only the shipments to this place in the Shipments table (the same as clicking its dot on the map).',
     options:[{label:'All',selected:!shipDestSel,onclick:"shpPickDest('')"},{sep:true},...destKeys.map(([k,name])=>({label:name,selected:shipDestSel===k,onclick:`shpPickDest(${dzJs(k)})`}))]}):'';
 
-  // Filter row: Carrier, Customer, Status and Destination pills, the demo switch, Add tracking # and Clear.
-  const demoBtn=isSnapshotView?'':model.demo
-    ?`<button type="button" class="dz-btn" data-focus-key="ship-demo" aria-pressed="true" onclick="setShippingDemo(false)"${tipAttr('Hide the made-up shipments and list the real deliveries from this export.')}>Show real shipments</button>`
-    :`<button type="button" class="dz-btn shp-pill" data-focus-key="ship-demo" aria-pressed="false" onclick="setShippingDemo(true)"${tipAttr(`Show ${SHIP_DEMO_ROWS.length} made-up shipments to see how the page works; nothing real is changed.`)}>Show demo data</button>`;
+  // Filter row: Carrier, Customer, Status and Destination pills, Add tracking # and Clear.
   // Carrier is a menu like Customer (most shipments first), shown when there are two carriers or more.
   const carrierCtl=carriers.length<2?'':dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,tip:'Show only one carrier’s shipments: the tiles, the map and the lists.',
     options:[{label:'All',selected:!shipCarrierSel,onclick:"shipPickCarrier('')"},{sep:true},...carriers.map(c=>({label:c,selected:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`}))]});
   const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,tip:'Show only one customer’s shipments: the tiles, the map and the lists.',options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
-  const canAdd=!isSnapshotView&&!model.demo;
+  const canAdd=!isSnapshotView;
   const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add tracking #</button>`:'';
-  const filterRow=`<div class="shp-frow">${dzFilterRow('',`${carrierCtl}${custPill}${statusPill}${destPill}${model.demo?'':demoBtn}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
+  const filterRow=`<div class="shp-frow">${dzFilterRow('',`${carrierCtl}${custPill}${statusPill}${destPill}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
 
-  const realStatuses=!model.demo||isSnapshotView?0:shippingStatusEntries().size;
-  const banner=model.demo?`<div class="shp-demo" role="note" aria-label="Demo data"><span class="dz-chip amber">Demo data</span><span class="shp-demo-t">${esc(`These ${model.list.length} shipments are made up (fake customers and tracking numbers) to show how the page works. Statuses set here are not kept.${realStatuses?` ${shipPlural(realStatuses,'real status has','real statuses have')} been saved.`:''}`)}</span>${demoBtn}</div>`:'';
-
-  // Notes: what this export can and cannot give.
+  // Notes: what this export can and cannot give, and whether AfterShip statuses come in (one short line).
   const notes=[];
-  if(!model.demo&&!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand with Add tracking #.']);
+  if(!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand with Add tracking #.']);
+  const asNote=shpAsNoteLine();
+  if(asNote)notes.push(asNote);
   const notesHtml=notes.map(([tone,text])=>`<p class="shp-note${tone?` ${tone}`:''}">${esc(text)}</p>`).join('');
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
       `Tracking numbers come from SAP deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)} (any carrier), or from <strong>Add tracking #</strong>.`,
-      '<strong>Check</strong> opens AfterShip’s public tracking page in a new tab; nothing on this page asks a carrier.',
-      `Statuses are set by hand (Shipped, In transit, Delayed, Delivered, with a date and note) and ${shared?'shared with everyone who signs in':'kept in this browser'}.`,
-      `<strong>Not checked in 2+ days</strong>: not delivered, and nobody has saved a status for ${SHIP_STALE_DAYS} days or more.`,
-      'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.',
-      '<strong>Demo data</strong> shows made-up shipments until real statuses exist; it never counts anywhere else.'
+      'Statuses come from AfterShip every 2 hours. A status set by hand counts until AfterShip has a newer one.',
+      `<strong>No update in 2+ days</strong>: not delivered, and no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more.`,
+      'The arrow icon opens AfterShip’s tracking page in a new tab.',
+      'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.'
     ])}</ul></div></details>`;
-  const head=`${filterRow}${banner}${notesHtml}`;
+  const head=`${filterRow}${notesHtml}`;
 
   // Nothing to list at all: one quiet card instead of empty tiles and an empty map.
   if(!model.list.length){
@@ -16186,10 +16282,10 @@ function renderShippingPage(m){
 
   // Tiles (a click lists just these in the table); first in the page order, drawn left of the map on a wide screen.
   const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
-      ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: marked Shipped or In transit')}
-      ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','marked Delayed','red')}
-      ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`marked Delivered since Monday ${shipDateLabel(model.weekStart)}`)}
-      ${renderShipCard('stale','Not checked in 2+ days',g.stale,'var(--dz-amber)',`not delivered and not checked for ${SHIP_STALE_DAYS} days or more (or never)`,'amber')}
+      ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: Shipped or In transit')}
+      ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','held up: an exception, a failed delivery or marked Delayed','red')}
+      ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`delivered since Monday ${shipDateLabel(model.weekStart)}`)}
+      ${renderShipCard('stale','No update in 2+ days',g.stale,'var(--dz-amber)',`not delivered and no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more`,'amber')}
     </div>`;
 
   // Shipments table: status tile, map dot and search narrow it; delayed first, delivered last.
@@ -16201,7 +16297,7 @@ function renderShippingPage(m){
   const shown=shpSortList(matched);
   const more=!!tableMore['ship-list']||printMode;
   const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
-  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'not checked in 2+ days'}[shippingFilter];
+  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'with no update in 2+ days'}[shippingFilter];
   const tablePicks=[filterName,q,shipDestSel,shipStatusSel].filter(Boolean).length;
   const emptyMsg=tablePicks>1?'No shipments match these filters.':filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:shipStatusSel?`No shipments with the status ${statusLabel} right now.`:'No shipments match these filters.';
   const chip=(text,onclick,tip)=>`<button type="button" class="shp-chipbtn" data-focus-key="ship-chip-${esc(text)}" onclick="${esc(onclick)}"${tipAttr(tip)}>${esc(text)}<span aria-hidden="true">×</span></button>`;
@@ -16209,21 +16305,21 @@ function renderShippingPage(m){
   const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):'';
   const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
   // Column titles sort the table (again to reverse); aria-sort is on each column header.
-  const etaTip='Delivered shipments: the delivery date and the promised date. Others: the promised date from the order lines and when the status was last checked (statuses are set by hand, so there is no carrier ETA).';
-  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','Not checked, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip]].map(([id,label,tip])=>{
+  const etaTip='Delivered: the delivery date and the promised date. Others: AfterShip’s expected date (else the promised date) and the last update.';
+  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip]].map(([id,label,tip])=>{
     const on=shipSortCol===id;
     return `<span role="columnheader"${id==='eta'?' class="dz-num"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
   }).join('');
   const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
-  const listSub=model.demo?'made-up demo shipments':`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
+  const listSub=`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
   const tableBody=`<div class="shp-tools print-hide">${search}${chips}</div>
     ${canAdd&&shipAddOpen?renderShipAddForm(shared):''}
     <div class="dz-table shp-table">
-      <div class="shp-thwrap" role="table" aria-label="Sort the shipments"><div class="dz-th shp-th" role="row">${sortHead}<span class="sr-only" role="columnheader">Check</span></div></div>
+      <div class="shp-thwrap" role="table" aria-label="Sort the shipments"><div class="dz-th shp-th" role="row">${sortHead}<span class="sr-only" role="columnheader">Tracking page</span></div></div>
       <div class="shp-rows">${visible.map(renderShipRow).join('')||`<p class="shp-none">${esc(emptyMsg)}</p>`}</div>
     </div>
     ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
-  const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then shipments not checked for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
+  const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then those with no update for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
   // One row: the four tiles as a 2 x 2 grid on the left half, the map on the right (stacked, tiles first, below 981px).
   return head+`<div class="shp-top">${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
@@ -16233,7 +16329,7 @@ function renderShipAddForm(shared){
   return `<form class="shp-add print-hide" onsubmit="return shippingAddManual(event)">
       <label>Sales order # <input class="dz-pillinput" id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345"${tipAttr('The sales order it belongs to, so its lines show (optional).')}></label>
       <label>Tracking # <input class="dz-pillinput" id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678"${tipAttr('Any carrier’s tracking or PRO number; spaces and dashes are fine.')}></label>
-      <button type="submit" class="dz-btn primary" data-focus-key="ship-add"${tipAttr(`Save this number for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}; then use Check and set its status.`)}>Add</button>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-add"${tipAttr(`Save this number for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add</button>
       <span id="ship-add-status" class="shp-msg" role="status"></span>
     </form>`;
 }

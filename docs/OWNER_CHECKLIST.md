@@ -43,7 +43,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - OpenRouter: decide on Settings > Privacy. Free models only work if the account allows providers that may train on or publish prompts; otherwise OpenRouter models say they "could not be used with this account's privacy settings". Treat anything sent to OpenRouter as public.
    - Redeploy (push, or Deployments > latest > Retry deployment) so new secrets take effect. Details: [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
-5. **Shipping needs no setup (FedEx tracking is off since 2v4).** The Shipping page is checked by hand: a **Check** link per shipment opens AfterShip, and statuses are saved with the shared notes (step 3). Do **not** deploy `workers/shipping-poller`, and skip the `FEDEX_CLIENT_ID` / `FEDEX_CLIENT_SECRET` secrets; that code stays in the repo unused. Details: [SHIPPING.md](SHIPPING.md).
+5. **Shipping: AfterShip every 2 hours.** Create an AfterShip API key, then add it as a Worker secret and deploy the Worker (`cd workers/shipping-poller`, `npx wrangler secret put AFTERSHIP_API_KEY`, `npx wrangler deploy`) and as a Pages secret (`npx wrangler pages secret put AFTERSHIP_API_KEY --project-name spyder-kpi-dashboard`). Without it the page works with statuses set by hand. Details: [SHIPPING.md](SHIPPING.md).
 
 6. **Re-run the updated SQL in SAP.** Replace the saved KPI query with `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql` (it adds `TrackingNumber`, `ShipMethod`, `ShipToCountry` and `ShipDate` to delivery rows), run it and Export to Excel. The supply / demand query is unchanged. Ask the shipping team to fill **Tracking No.** on deliveries.
 
@@ -51,7 +51,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - With the same export as last time, the Order Health **At risk** card still shows **62 orders / 124 lines / $836,876**.
    - With the new export: on the **Leading** tab the open order states (On track, Due this week, Rescheduled, Past due, No commit) add up to **All open**.
    - **Big picture** on Order Health: each column (including the middle status column) adds up to **All open**, the at-risk status boxes add up to the **At risk** card, and the at-risk chart totals the At risk value. On Build Risk the three middle boxes (Clear to build, At risk, Late) match the cards above.
-   - The **Shipping** page shows **Demo data**; **Show real shipments** lists the tracking numbers from the new export, each with a **Check** link.
+   - The **Shipping** page lists the tracking numbers from the new export, each with an arrow icon that opens its tracking page.
    - The MCP connector still reads it: `node mcp/spyder-kpi-mcp.mjs --check "C:\path\to\kpi_export.xls"` prints the overview with the same at-risk numbers.
 
 8. **After deploy, on https://spyder-kpi-dashboard.pages.dev:**
@@ -59,6 +59,6 @@ Never commit the SAP export, the Clear To Build workbook or any key.
    - Add a note on a line (pick or type your name when asked); the sidebar says "Notes shared · last edit ...". In the second browser below, your name is listed in the "Your name" dialog.
    - Open the site in a second browser (or a private window) and sign in: the same report opens without uploading, with your note on the line.
    - Ask AI: for each provider with a key, tick its box in Settings and ask one question, such as "What is at risk right now?". The answer should match the At risk card. Providers without a key show "(not set up)".
-   - Shipping: click **Show real shipments**, open a row, set **In transit** and **Save**; the toast says "saved for everyone", and the second browser shows the same status (with demo data off).
+   - Shipping: after the next even hour the header says "Updated … · next …" and rows show AfterShip statuses. Open a row, set **Delayed** and **Save**; the toast says "saved for everyone", and the second browser shows the same status.
 
 If something does not work, the troubleshooting tables in [SHIPPING.md](SHIPPING.md), [AI_ASSISTANT.md](AI_ASSISTANT.md) and [IT_HOSTING_README.md](IT_HOSTING_README.md) list messages and fixes.

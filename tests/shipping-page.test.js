@@ -1,9 +1,10 @@
-// The Shipping page (index.html), 2v4: shipments from SAP deliveries (any carrier) and numbers added by hand, a
-// "Check" link per shipment to AfterShip's public tracking page, a manual status per shipment (Shipped / In transit /
-// Delayed / Delivered + date + note) saved through the shared notes store, cards and the progress strip from those
-// statuses, demo data mode, search, snapshots, and no tracking API calls from the page.
-// Run: node tests/shipping-page.test.js. Fixtures are synthetic (harness.js); /api/notes is the real Pages Function
-// over a Workers KV stand-in, so nothing leaves the machine.
+// The Shipping page (index.html), 2v6.8: shipments from SAP deliveries (any carrier) and numbers added by hand;
+// statuses from AfterShip (read from /api/shipping, which the scheduled Worker fills every 2 hours) with a hand-set
+// status (Shipped / In transit / Delayed / Delivered + date + note, saved through the shared notes store) as an
+// override when it is newer; cards and the progress strip from those statuses; an external-link icon per row to
+// AfterShip's public tracking page; search; snapshots; no demo data.
+// Run: node tests/shipping-page.test.js. Fixtures are synthetic (harness.js); /api/notes and /api/shipping are the real
+// Pages Functions over a Workers KV stand-in, so nothing leaves the machine.
 'use strict';
 const assert = require('node:assert/strict');
 const { loadPage, upload, SAP_HEADERS, sapRow, utf16Tsv, createSuite } = require('./harness');
@@ -39,31 +40,61 @@ const exportFile = (rows = ROWS) => ({ name: 'kpi.xls', bytes: utf16Tsv(SHIP_HEA
 const html = (page) => page.els['results-screen'].innerHTML;
 const field = (page, id) => page.ctx.document.getElementById(id);
 const listed = (page) => page.run('shippingSortedList(shippingModel().list).map(s=>s.number)');
-const card = (page, id) => (html(page).match(new RegExp(`data-focus-key="ship-kpi-${id}"[\\s\\S]*?<span class="kpi-value[^"]*">([^<]*)<`)) || [])[1];
-// The classes of the three steps of one shipment's strip.
-function strip(page, number) {
+const card = (page, id) => (html(page).match(new RegExp(`data-focus-key="ship-kpi-${id}"[\\s\\S]*?<span class="shp-tile-v"[^>]*>([^<]*)<`)) || [])[1];
+const cards = (page) => ['transit', 'delayed', 'delivered', 'stale'].map((id) => card(page, id));
+const status = (page, n) => page.run(`(()=>{const s=shippingModel().list.find(x=>x.number==='${n}');return [s.status,s.mark&&s.mark.source||'']})()`);
+// One shipment's row: its head button (strip, status text, ETA) and its open details, if open.
+function rowOf(page, number) {
   const m = html(page);
   const at = m.indexOf(`data-focus-key="ship-${number}"`);
   assert.ok(at > 0, `row ${number} is listed`);
-  const head = m.slice(at, m.indexOf('</button>', at));
-  return [...head.matchAll(/class="ship-step ([^"]*)"/g)].map((x) => x[1]);
+  const end = m.indexOf('<div class="shp-row', at);
+  return m.slice(at, end < 0 ? undefined : end);
 }
-// A page with the export loaded, on the Shipping page; `real` turns demo data off (as the toggle does).
-async function shipPage({ real = true, storage = {}, files = [exportFile()], today = TODAY } = {}) {
+// The strip: how many of its three steps are filled, and its tone (red = delayed, teal = delivered).
+function strip(page, number) {
+  const head = rowOf(page, number);
+  const h = head.slice(0, head.indexOf('</button>'));
+  return [(h.match(/dz-prog-fill/g) || []).length, (h.match(/class="dz-prog( (red|teal))?"/) || [])[2] || ''];
+}
+const stateText = (page, number) => (rowOf(page, number).match(/<span class="shp-st[^"]*">([^<]*)</) || [])[1];
+const etaText = (page, number) => (rowOf(page, number).match(/<span class="shp-eta"><b[^>]*>([^<]*)<\/b><em[^>]*>([^<]*)</) || []).slice(1);
+const factOf = (page, number, label) => (rowOf(page, number).match(new RegExp(`<span>${label}</span><strong>([^<]*)</strong>`)) || [])[1];
+const tick = () => new Promise((r) => setTimeout(r, 30));
+async function settle() { for (let i = 0; i < 4; i++) await tick(); }
+// A page with the export loaded, on the Shipping page (a file copy: no /api/shipping).
+async function shipPage({ storage = {}, files = [exportFile()], today = TODAY } = {}) {
   const page = loadPage({ today, storage });
   await upload(page, files);
   page.run("setTab('shipping')");
-  if (real) page.run('setShippingDemo(false)');
   return page;
 }
 // Fills in a shipment's status form (it must be open) and submits it.
-function setStatus(page, number, status, date = '', note = '') {
+function setStatus(page, number, st, date = '', note = '') {
   if (!page.run(`shippingExpanded.has('${number}')`)) page.run(`toggleShipment('${number}')`);
-  field(page, `ship-st-${number}`).value = status;
+  field(page, `ship-st-${number}`).value = st;
   field(page, `ship-sd-${number}`).value = date;
   field(page, `ship-sn-${number}`).value = note;
   page.run(`shippingStatusSubmit(null,'${number}')`);
 }
+
+// AfterShip results as the Worker saves them (shared/aftership.mjs normalizeTracking).
+const TAG = { shipped: 'InfoReceived', transit: 'InTransit', delayed: 'Exception', delivered: 'Delivered' };
+const asStatus = (number, state, o = {}) => ({
+  number, id: `as-${number}`, slug: 'fedex', carrier: 'FedEx', tag: TAG[state], subtag: '', status: { shipped: 'Label created', transit: 'In transit', delayed: 'Exception', delivered: 'Delivered' }[state],
+  detail: '', state, stage: '', lastEvent: null, eta: '', deliveredAt: '', shippedAt: '', originCountry: '', destCountry: '', changedAt: '', updatedAt: '',
+  notFound: false, error: '', checkedAt: '2026-10-09T08:00:00.000Z', ...o,
+});
+const AS = {
+  [N.parcel]: asStatus(N.parcel, 'transit', { changedAt: '2026-10-08T12:10:00.000Z', eta: '2026-10-12T17:00:00-05:00', lastEvent: { at: '2026-10-08T06:10:00-06:00', city: 'Regina, SK, CAN', desc: 'Arrived at FedEx location' } }),
+  [N.ups]: asStatus(N.ups, 'delayed', { slug: 'ups', carrier: 'UPS', detail: 'Customs clearance delay', changedAt: '2026-10-08T18:00:00.000Z', lastEvent: { at: '2026-10-08T14:00:00-04:00', city: 'Blaine, WA, US', desc: 'Clearance delay: commercial invoice missing' } }),
+  [N.delivered]: asStatus(N.delivered, 'delivered', { deliveredAt: '2026-10-08T10:12:00-04:00', changedAt: '2026-10-08T14:12:00.000Z', lastEvent: { at: '2026-10-08T10:12:00-04:00', city: 'Columbus, OH, USA', desc: 'Delivered' } }),
+  [N.freight]: asStatus(N.freight, 'shipped', { slug: 'fedex-freight', carrier: 'FedEx Freight', tag: 'Pending', status: 'Pending' }),
+  [N.usa]: asStatus(N.usa, 'transit', { changedAt: '2026-10-05T10:00:00.000Z', lastEvent: { at: '2026-10-05T04:00:00-06:00', city: 'Calgary, AB, CAN', desc: 'Departed FedEx hub' } }),
+};
+// Read by the Worker two hours before the page's pinned clock (TODAY 10:00 local), whatever the time zone.
+const POLLED_AT = new Date(new Date(`${TODAY}T10:00:00`).getTime() - 2 * 3600e3).toISOString();
+const INDEX = { v: 2, provider: 'aftership', polledAt: POLLED_AT, source: 'cron', count: 6, polled: 5, created: 0, waiting: 0, statuses: AS, errors: [] };
 
 test('delivery rows read TrackingNumber, ShipMethod, ShipToCountry and ShipDate; an export without them loads as before', async () => {
   const page = loadPage({ today: TODAY });
@@ -75,9 +106,11 @@ test('delivery rows read TrackingNumber, ShipMethod, ShipToCountry and ShipDate;
   const old = loadPage({ today: TODAY });
   await upload(old, [{ name: 'old.xls', bytes: utf16Tsv(OLD_HEADERS, [sapRow({}), sapRow({ DocumentNumber: '3', OrderType: 'Sales Delivery', Status: 'Closed', ClosedDate: '08/28/2026', CloseDateSource: 'Delivery', DeliveryDocNumber: '77', OpenQuantity: '0' })]) }]);
   assert.deepEqual(old.run('allLoadedRows.map(r=>[r.trackingNumber,r.shipMethod,r.shipToCountry,r.shipDate])'), [['', '', '', ''], ['', '', '', '']]);
-  old.run("setTab('shipping');setShippingDemo(false)");
+  old.run("setTab('shipping')");
   assert.match(html(old), /This export has no TrackingNumber column/);
   assert.match(html(old), /No tracking numbers on deliveries shipped in the 30 days to 2026-09-03/);
+  // With no shipments the page shows its one empty card (no demo shipments any more).
+  assert.match(html(old), /<h2 class="shp-empty-t">No shipments to show<\/h2>/);
   assert.deepEqual(old.errors, []);
 });
 
@@ -86,92 +119,197 @@ test('every carrier is listed: sales deliveries shipped in the 30 days to the ex
   assert.deepEqual(listed(page).sort(), [...REAL].sort());
   const s = page.run(`(()=>{const s=shippingModel().list.find(x=>x.number==='${N.parcel}');return {rows:s.rows.length,orders:[...s.orders],deliveries:[...s.deliveries],value:s.value,method:s.shipMethod,ship:displayDate(s.shipDate),promised:displayDate(s.promised)}})()`);
   assert.deepEqual(s, { rows: 2, orders: ['600'], deliveries: ['9001'], value: 1500, method: 'FedEx Ground', ship: '2026-10-06', promised: '2026-10-10' });
-  // The carrier is a label from the ship method (or a UPS 1Z number); nothing is skipped any more.
   const carrier = (n) => page.run(`shipCarrier(shippingModel().list.find(x=>x.number==='${n}'))`);
   assert.deepEqual([N.parcel, N.freight, N.ups, N.puro].map(carrier), ['FedEx', 'FedEx Freight', 'UPS', 'Purolator']);
   assert.equal(page.run("shipCarrier({number:'1Z999AA10123456785',shipMethod:''})"), 'UPS');
   assert.equal(page.run("shipCarrier({number:'123456789',shipMethod:''})"), 'Carrier not set');
-  assert.equal(page.run('typeof shipOtherCarrier'), 'undefined');
+  assert.equal(page.run("shipCarrier({number:'123456789',shipMethod:'Customer truck',as:{carrier:'Canpar'}})"), 'Canpar', 'AfterShip names the carrier the ship method does not');
   const m = html(page);
-  assert.match(m, /<h1 class="page-title"[^>]*>Shipping<\/h1>/);
-  assert.match(m, /as of 2026-10-08 · 6 shipments with a tracking number/);
-  assert.doesNotMatch(m, /another carrier/);
+  assert.match(m, /<h1 class="dz-h1"[^>]*>Shipping<\/h1>/);
+  // The page meta is quiet: how many shipments (no AfterShip here), no as-of clutter.
+  assert.equal(page.run('shippingHeadMeta()'), '6 shipments');
+  assert.match(m, /<span class="page-meta"[^>]*>6 shipments<\/span>/);
 });
 
-test('each shipment has a Check link to AfterShip in a new tab, in its row and in its details', async () => {
+test('each row has an external-link icon (not a Check button) that opens the AfterShip tracking page in a new tab', async () => {
   const page = await shipPage();
   let m = html(page);
   for (const n of REAL) {
-    assert.match(m, new RegExp(`<a class="btn ship-check" href="https://www\\.aftership\\.com/track/${n}" target="_blank" rel="noopener" data-focus-key="ship-check-${n}" data-tip="Opens AfterShip’s public tracking page for ${n} \\([^)]+\\) in a new tab; then set the status here\\.">Check</a>`), n);
+    assert.match(m, new RegExp(`<a class="dz-btn shp-open" href="https://www\\.aftership\\.com/track/${n}" target="_blank" rel="noopener" data-focus-key="ship-open-${n}" aria-label="Open tracking page" data-tip="Open tracking page"><svg [^>]*aria-hidden="true"[^>]*><path d="M14 4h6v6"/>`));
   }
+  assert.doesNotMatch(m, />Check<|shp-check|renderShipCheck/);
+  assert.equal(page.run('typeof renderShipCheck'), 'undefined');
   // Never inside the row's button (a link in a button is invalid markup).
-  for (const [head] of m.matchAll(/<button type="button" class="ship-head"[\s\S]*?<\/button>/g)) assert.doesNotMatch(head, /<a /);
-  assert.doesNotMatch(m, /fedex\.com\/fedextrack/);
+  for (const [head] of m.matchAll(/<button type="button" class="shp-head"[\s\S]*?<\/button>/g)) assert.doesNotMatch(head, /<a /);
   page.run(`toggleShipment('${N.ups}')`);
   m = html(page);
-  assert.match(m.slice(m.indexOf(`id="ship-detail-${N.ups}"`)), new RegExp(`<a class="btn" href="https://www\\.aftership\\.com/track/${N.ups}" target="_blank" rel="noopener"`));
+  assert.match(m.slice(m.indexOf(`id="ship-detail-${N.ups}"`)), new RegExp(`<a class="dz-btn shp-open-t" href="https://www\\.aftership\\.com/track/${N.ups}" target="_blank" rel="noopener"[^>]*>[\\s\\S]*?Open tracking page</a>`));
   assert.equal(page.run("shipTrackUrl('A B/1')"), 'https://www.aftership.com/track/A%20B%2F1');
+  // The CSS: the icon is a 30px round button in its own marker block.
+  const css = page.ctx.document.documentElement.outerHTML;
+  assert.match(css, /\/\* 2v8:ship \*\/[\s\S]*a\.dz-btn\.shp-open\{width:30px;height:30px;[\s\S]*\/\* 2v8:end ship \*\/\n\/\* 2v7:motion \*\//);
 });
 
-test('the page never calls a tracking API: no /api/shipping (GET, PUT or refresh) and no carrier site', async () => {
+test('a file copy or a static host: no AfterShip, one short note, statuses by hand; the page never calls a carrier or AfterShip itself', async () => {
+  const file = await shipPage();
+  const note = /<p class="shp-note">Automatic tracking isn’t set up, so statuses are set by hand\.<\/p>/;
+  assert.match(html(file), note);
+  assert.equal((html(file).match(/Automatic tracking/g) || []).length, 1, 'said once');
+  // A static web server: /api/shipping answers 404, so the note shows after the first read and nothing else is asked.
   const calls = [];
   const page = loadPage({ today: TODAY });
-  Object.assign(page.ctx, { fetch: async (u, init = {}) => { calls.push(`${init.method || 'GET'} ${u}`); return new Response('{}', { status: 404, headers: { 'content-type': 'application/json' } }); }, location: { href: ORIGIN + '/', protocol: 'https:' } });
+  Object.assign(page.ctx, { fetch: async (u, init = {}) => { calls.push(`${init.method || 'GET'} ${u}`); return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } }); }, location: { href: 'http://intranet/', protocol: 'http:' } });
   await upload(page, [exportFile()]);
   page.run("setTab('shipping')");
-  page.run('setShippingDemo(false)');
+  await settle();
+  assert.match(html(page), note);
+  assert.deepEqual(calls.filter((c) => /shipping|fedex|aftership|track/i.test(c)), ['GET /api/shipping'], 'one read, no list sent, no carrier site');
   page.run(`toggleShipment('${N.parcel}')`);
-  await new Promise((r) => setTimeout(r, 600));
-  assert.deepEqual(calls.filter((c) => /shipping|fedex|aftership|track/i.test(c)), []);
-  for (const fn of ['shippingLoad', 'shippingSync', 'shippingRefresh', 'shippingQueueSync']) assert.equal(page.run(`typeof ${fn}`), 'undefined', fn);
-  assert.doesNotMatch(html(page), /Refresh now|data-focus-key="ship-refresh"/);
+  page.run("setTab('weekly');setTab('shipping')");
+  await settle();
+  assert.equal(calls.filter((c) => /shipping/.test(c)).length, 1, 'not read again within 5 minutes');
+  assert.deepEqual(page.errors, []);
 });
 
-test('manual status: saved in this browser on a static host, drives the chip, the strip and the cards', async () => {
+test('hosted: reads /api/shipping on open, sends the list once, and AfterShip statuses drive the cards, strip, ETA and details', async () => {
+  const site = await hostedSite({ index: INDEX });
+  const page = await hostedBrowser(site, 'Pat');
+  const reads = site.calls.filter((c) => c === 'GET /api/shipping');
+  assert.equal(reads.length, 1);
+  assert.deepEqual(site.calls.filter((c) => c === 'PUT /api/shipping').length, 1);
+  // The list sent: export numbers newest first, with the carriers the ship methods name.
+  const wanted = site.kv.json('tracking:wanted');
+  assert.deepEqual(wanted.export, [N.freight, N.ups, N.parcel, N.usa, N.delivered, N.puro]);
+  assert.deepEqual(wanted.carriers, { [N.freight]: 'FedEx Freight', [N.ups]: 'UPS', [N.parcel]: 'FedEx', [N.usa]: 'FedEx', [N.delivered]: 'FedEx', [N.puro]: 'Purolator' });
+  assert.equal(wanted.exportAsOf, '2026-10-08');
+
+  // In transit: parcel, usa (transit), freight (label created); Delayed: ups; Delivered this week: delivered;
+  // No update in 2+ days: usa (last scan Oct 5) and puro (no AfterShip record, shipped Sep 15).
+  assert.deepEqual(cards(page), ['3', '1', '1', '2']);
+  assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.usa, N.puro].sort());
+  assert.deepEqual([strip(page, N.parcel), strip(page, N.ups), strip(page, N.delivered), strip(page, N.freight), strip(page, N.puro)], [[2, ''], [2, 'red'], [3, 'teal'], [1, ''], [1, '']]);
+  assert.deepEqual([stateText(page, N.parcel), stateText(page, N.ups), stateText(page, N.puro)], ['In transit', 'Delayed', 'No status']);
+  // ETA: AfterShip's expected date (Oct 12, past the promised Oct 10: late) over when it last changed.
+  assert.equal(etaText(page, N.parcel)[0], 'Oct 12');
+  assert.match(etaText(page, N.parcel)[1], /^Updated \d+ h ago$/);
+  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'promised Oct 7']);
+  assert.match(rowOf(page, N.parcel), /<span class="shp-eta"><b class="late">Oct 12<\/b>/);
+  assert.deepEqual(etaText(page, N.freight)[1], 'No update yet');
+  // Details: the status, where it came from, AfterShip's words, the last scan and the expected date.
+  page.run(`toggleShipment('${N.ups}')`);
+  assert.equal(factOf(page, N.ups, 'Status'), 'Delayed · Oct 8');
+  assert.equal(factOf(page, N.ups, 'Source'), 'From AfterShip');
+  assert.equal(factOf(page, N.ups, 'AfterShip'), 'Exception · Customs clearance delay');
+  assert.match(factOf(page, N.ups, 'Last scan'), /^Clearance delay: commercial invoice missing · Blaine, WA, US · Oct 8, 2:00 PM$/);
+  assert.equal(page.run(`shipCarrier(shippingModel().list.find(x=>x.number==='${N.ups}'))`), 'UPS');
+  // The Delayed list shows AfterShip's latest scan.
+  assert.match(html(page), /class="shp-li exc" data-focus-key="ship-d-1Z999AA10123456784"[\s\S]*?<span class="shp-li-why">Clearance delay: commercial invoice missing<\/span>/);
+  // The quiet meta: when AfterShip was last read and the next check (every 2 hours, even UTC hours).
+  assert.match(page.run('shippingHeadMeta()'), /^Updated 8:00 AM · next \d{1,2}:\d{2} [AP]M$/);
+  assert.doesNotMatch(html(page), /Automatic tracking isn’t set up/);
+  // A second read with the same list sends nothing again.
+  page.run('shpAs.at=0;shpAsLoad(true)');
+  await settle();
+  assert.equal(site.calls.filter((c) => c === 'PUT /api/shipping').length, 1);
+  assert.ok(site.calls.every((c) => !/aftership\.com|fedex|ups\.com/i.test(c)));
+  assert.deepEqual(page.errors, []);
+});
+
+test('a hand-set status newer than AfterShip\'s wins; an AfterShip update newer than the hand-set one wins; details say which', async () => {
+  const site = await hostedSite({ index: INDEX });
+  // An older hand-set Delayed on the parcel (Oct 7) is replaced by AfterShip's In transit (Oct 8).
+  await site.kv.put('overrides', JSON.stringify({ v: 1, rows: {}, shipments: { [`st:${N.parcel}`]: { order: '600', number: N.parcel, status: 'delayed', statusDate: '2026-10-07', note: 'Old note', by: 'Sam', at: '2026-10-07T10:00:00.000Z' } }, savedAt: '' }));
+  const page = await hostedBrowser(site, 'Pat');
+  assert.deepEqual(status(page, N.parcel), ['transit', 'aftership']);
+  // Pat checks the UPS one with the customs broker and sets In transit now (Oct 9): newer than AfterShip's Oct 8.
+  setStatus(page, N.ups, 'transit', '2026-10-09', 'Broker cleared it');
+  assert.deepEqual(status(page, N.ups), ['transit', 'hand']);
+  assert.match(page.els.toast.innerHTML, /1Z999AA10123456784: In transit Oct 9 saved for everyone\./);
+  assert.match(factOf(page, N.ups, 'Source'), /^Set by Pat · Oct 9, /);
+  assert.equal(factOf(page, N.ups, 'AfterShip'), 'Exception · Customs clearance delay', 'AfterShip\'s words stay visible');
+  assert.match(rowOf(page, N.ups), /<p class="shp-alert calm">Broker cleared it<\/p>/);
+  assert.deepEqual(cards(page), ['4', '0', '1', '2']);
+  // The form keeps the hand-set values.
+  assert.match(rowOf(page, N.ups), new RegExp(`<select class="dz-pillinput" id="ship-st-${N.ups}"[^>]*>[\\s\\S]*?<option value="transit" selected>In transit</option>`));
+  // AfterShip reports a newer scan (Oct 10, delivered): it wins again.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: '2026-10-10T08:00:00.000Z', statuses: { ...AS, [N.ups]: asStatus(N.ups, 'delivered', { slug: 'ups', carrier: 'UPS', deliveredAt: '2026-10-10T09:00:00-04:00', changedAt: '2026-10-10T13:00:00.000Z' }) } }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.deepEqual(status(page, N.ups), ['delivered', 'aftership']);
+  assert.equal(factOf(page, N.ups, 'Source'), 'From AfterShip');
+  assert.equal(factOf(page, N.ups, 'Status'), 'Delivered · Oct 10 · 2 days late');
+  // A number AfterShip does not recognise: its words say so, and a hand-set status is all there is.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', error: 'AfterShip does not recognise this tracking number.' } } }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  page.run(`toggleShipment('${N.puro}')`);
+  assert.equal(factOf(page, N.puro, 'AfterShip'), 'AfterShip does not recognise this tracking number.');
+  assert.deepEqual(status(page, N.puro), ['', '']);
+  assert.deepEqual(page.errors, []);
+});
+
+test('a refused key or a rate limit shows one short note; the next read comes a few minutes after the next 2-hourly check', async () => {
+  const site = await hostedSite({ index: { ...INDEX, lastError: { at: POLLED_AT, message: 'AfterShip refused the API key. Check AFTERSHIP_API_KEY (Worker and Pages secrets).' } } });
+  const page = await hostedBrowser(site, 'Pat');
+  assert.match(html(page), /<p class="shp-note warn">AfterShip check stopped: AfterShip refused the API key\. Check AFTERSHIP_API_KEY \(Worker and Pages secrets\)\.<\/p>/);
+  assert.equal(page.run('Boolean(shpAs.timer)'), true, 'a re-read is scheduled while the page is open');
+  // Every 2 hours on the even UTC hour; the page reads 3 minutes later.
+  assert.equal(page.run("new Date(shpAsNextCheck(Date.parse('2026-10-09T09:30:00Z'))).toISOString()"), '2026-10-09T10:00:00.000Z');
+  assert.equal(page.run("new Date(shpAsNextCheck(Date.parse('2026-10-09T10:00:00Z'))).toISOString()"), '2026-10-09T12:00:00.000Z');
+  assert.equal(page.run('SHP_AS_AFTER_MS'), 3 * 60000);
+  // The tab comes back into view: read again (when the last read is 5 minutes old or more).
+  const before = site.calls.filter((c) => c === 'GET /api/shipping').length;
+  page.ctx.document.visibilityState = 'visible';
+  page.dispatch('visibilitychange', {});
+  await settle();
+  assert.equal(site.calls.filter((c) => c === 'GET /api/shipping').length, before, 'just read: not again');
+  page.run('shpAs.at-=6*60000');
+  page.dispatch('visibilitychange', {});
+  await settle();
+  assert.equal(site.calls.filter((c) => c === 'GET /api/shipping').length, before + 1);
+  // Without the key on this site and no recent check: automatic tracking is not set up.
+  const off = await hostedSite({ index: null, key: false });
+  const p2 = await hostedBrowser(off, 'Pat');
+  assert.match(html(p2), /Automatic tracking isn’t set up, so statuses are set by hand\./);
+  assert.equal(p2.run('shippingHeadMeta()'), '6 shipments');
+});
+
+test('hand-set status on a static host: saved in this browser, drives the status, the strip and the cards', async () => {
   const page = await shipPage();
-  // Nothing checked yet: every shipment is "Not checked", the first step current, and all count as not checked.
-  assert.deepEqual(['transit', 'delayed', 'delivered', 'stale'].map((id) => card(page, id)), ['0', '0', '0', '6']);
-  assert.deepEqual(strip(page, N.parcel), ['current', 'todo', 'todo']);
-  assert.match(html(page), /<span class="status-chip warn">Not checked<\/span><span class="ship-eta warn-text">Never checked<\/span>/);
+  // Nothing set yet: every shipment has no status; the ones shipped 2+ days ago have had no update.
+  assert.deepEqual(cards(page), ['0', '0', '0', '5']);
+  assert.deepEqual(strip(page, N.parcel), [1, '']);
+  assert.equal(stateText(page, N.parcel), 'No status');
+  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'No update yet']);
 
   setStatus(page, N.parcel, 'transit', '2026-10-09', 'At the Regina hub');
   setStatus(page, N.freight, 'shipped', '2026-10-08');
   setStatus(page, N.ups, 'delayed', '2026-10-09', 'Weather hold');
   setStatus(page, N.delivered, 'delivered', '2026-10-08');
   setStatus(page, N.usa, 'delivered', '2026-10-01'); // delivered last week
-  // Saved through the shared notes store, which keeps it in this browser here (file / static host).
   const saved = JSON.parse(page.storage.spyderKpiShipmentsV1);
   assert.deepEqual(Object.keys(saved).sort(), [N.parcel, N.freight, N.ups, N.delivered, N.usa].map((n) => `st:${n}`).sort());
   assert.deepEqual({ ...saved[`st:${N.parcel}`], at: 'x' }, { order: '600', number: N.parcel, status: 'transit', statusDate: '2026-10-09', note: 'At the Regina hub', by: '', at: 'x' });
   assert.match(page.els.toast.innerHTML, /770099990001: Delivered Oct 1 saved in this browser\./);
-  // Hand-added number lists ignore status entries.
   assert.deepEqual(page.run('shippingManualEntries()'), []);
 
-  assert.deepEqual(['transit', 'delayed', 'delivered', 'stale'].map((id) => card(page, id)), ['2', '1', '1', '1']);
-  assert.match(html(page), /data-tip="In transit: 2 shipments on the way: marked Shipped or In transit, worth \$21,500; click to list only these\."/);
-  assert.deepEqual(strip(page, N.parcel), ['done', 'current', 'todo']);
-  assert.deepEqual(strip(page, N.freight), ['current', 'todo', 'todo']);
-  assert.deepEqual(strip(page, N.ups), ['done', 'current exception', 'todo']);
-  assert.deepEqual(strip(page, N.delivered), ['done', 'done', 'current']);
-  const m = html(page);
-  assert.match(m, /<span class="status-chip bad">Delayed<\/span>/);
-  assert.match(m, /<em>Delayed<\/em>/);
-  // Delivered against the promised date (Oct 7): one day late.
-  assert.match(m, /<span class="status-chip good">Delivered<\/span><span class="ship-eta crit-text">Oct 8 · 1 day late<\/span>/);
-  assert.match(m, /<span class="status-chip ">In transit<\/span><span class="ship-eta ">Checked just now<\/span>/);
-  // Delayed first, then not checked, delivered last.
-  assert.deepEqual(listed(page).slice(0, 2), [N.ups, N.puro]);
+  assert.deepEqual(cards(page), ['2', '1', '1', '1']);
+  assert.match(html(page), /data-tip="In transit: 2 shipments \(2 orders, worth \$21,500\) on the way: Shipped or In transit; click to list only these\."/);
+  assert.deepEqual([strip(page, N.parcel), strip(page, N.freight), strip(page, N.ups), strip(page, N.delivered)], [[2, ''], [1, ''], [2, 'red'], [3, 'teal']]);
+  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'promised Oct 7']);
+  assert.match(rowOf(page, N.delivered), /<b class="late">Delivered Oct 8<\/b>/);
+  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'Updated just now']);
+  assert.deepEqual(listed(page).slice(0, 2), [N.ups, N.puro], 'delayed first, then no update for 2+ days');
   assert.deepEqual(listed(page).slice(-2), [N.delivered, N.usa], 'delivered last, newest first');
-  // The open row shows the status, note and who checked, and its form keeps the saved values.
-  const detail = m.slice(m.indexOf(`id="ship-detail-${N.parcel}"`));
-  assert.match(detail, /<span>Status<\/span><strong>In transit · Oct 9<\/strong>/);
-  assert.match(detail, /<p class="ship-alert calm">At the Regina hub<\/p>/);
-  assert.match(detail, new RegExp(`<select id="ship-st-${N.parcel}"[^>]*>[\\s\\S]*?<option value="transit" selected>In transit</option>`));
+  const detail = rowOf(page, N.parcel);
+  assert.equal(factOf(page, N.parcel, 'Status'), 'In transit · Oct 9');
+  assert.match(factOf(page, N.parcel, 'Source'), /^Set by hand · Oct 9, /);
+  assert.match(detail, /<p class="shp-alert calm">At the Regina hub<\/p>/);
   assert.match(detail, /<span class="m">SPY-100<\/span>/);
   assert.deepEqual(page.errors, []);
 });
 
-test('cards filter the list; Not checked in 2+ days counts statuses saved 2 or more days ago and never-checked ones', async () => {
+test('cards filter the list; No update in 2+ days counts statuses set 2 or more days ago and shipments with none since shipping', async () => {
   const at = (d) => `${d}T10:00:00.000Z`;
   const storage = { spyderKpiShipmentsV1: JSON.stringify({
     [`st:${N.parcel}`]: { order: '600', number: N.parcel, status: 'transit', statusDate: '2026-10-06', note: '', by: 'Ann', at: at('2026-10-06') },
@@ -179,52 +317,47 @@ test('cards filter the list; Not checked in 2+ days counts statuses saved 2 or m
     [`st:${N.delivered}`]: { order: '604', number: N.delivered, status: 'delivered', statusDate: '2026-10-03', note: '', by: 'Ann', at: at('2026-10-03') },
     [`st:${N.usa}`]: { order: '601', number: N.usa, status: 'delayed', statusDate: '', note: 'customs', by: 'Ann', at: at('2026-10-01'), deleted: true },
   }) };
-  // Demo data stays on by default even when real statuses exist (SHIP_DEMO_DEFAULT); the toggle shows the real list.
-  const page = await shipPage({ real: false, storage });
-  assert.equal(page.run('shippingDemoOn()'), true);
-  page.run('setShippingDemo(false)');
-  assert.equal(page.run('shippingDemoOn()'), false);
-  assert.deepEqual(['transit', 'delayed', 'delivered', 'stale'].map((id) => card(page, id)), ['2', '0', '0', '4']);
+  const page = await shipPage({ storage });
+  assert.deepEqual(cards(page), ['2', '0', '0', '4']);
   assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.parcel, N.usa, N.ups, N.puro].sort());
+  assert.match(html(page), /data-focus-key="ship-kpi-stale"[^>]*data-tip="No update in 2\+ days: 4 shipments \(4 orders, worth \$[\d,]+\) not delivered and no AfterShip or hand update for 2 days or more; click to list only these\."/);
+  assert.match(html(page), /<span class="shp-tile-s">Updated \d days ago<\/span><span class="shp-tile-s">3 with no update yet<\/span>/);
   page.run("setShippingFilter('stale')");
   let m = html(page);
   assert.match(m, /data-focus-key="ship-kpi-stale" aria-pressed="true"/);
-  assert.equal([...m.matchAll(/class="ship-num">([^<]+)</g)].length, 4);
-  assert.match(m, /only shipments not checked in 2\+ days/);
+  assert.equal((m.match(/class="shp-head"/g) || []).length, 4);
+  assert.match(m, /with no update in 2\+ days<span aria-hidden="true">×<\/span>/);
   page.run("setShippingFilter('stale')");
   m = html(page);
-  assert.equal([...m.matchAll(/class="ship-num">([^<]+)</g)].length, 6);
+  assert.equal((m.match(/class="shp-head"/g) || []).length, 6);
+  assert.doesNotMatch(m, /Not checked in 2\+ days|Never checked/);
 });
 
-test('a manual status round-trips through the shared notes store (/api/notes): every browser that signs in sees it', async () => {
-  const site = await notesSite();
-  const a = await notesBrowser(site, 'Kareena', '2026-10-07');
+test('a hand-set status round-trips through the shared notes store (/api/notes): every browser that signs in sees it', async () => {
+  const site = await hostedSite({ index: null, key: false });
+  const a = await hostedBrowser(site, 'Kareena', '2026-10-07');
   assert.equal(a.run('sharedNotes.state'), 'shared');
-  assert.doesNotMatch(html(a), /Checked by hand/); // 2v7: the owner had the "Checked by hand · statuses shared with everyone" line removed
   setStatus(a, N.ups, 'delayed', '2026-10-07', 'Held at the border');
   assert.match(a.els.toast.innerHTML, /1Z999AA10123456784: Delayed Oct 7 saved for everyone\./);
   await a.run('flushSharedNotes({all:true})');
   const stored = site.kv.json('overrides').shipments[`st:${N.ups}`];
   assert.deepEqual({ ...stored, at: 'x' }, { order: '603', number: N.ups, status: 'delayed', statusDate: '2026-10-07', note: 'Held at the border', by: 'Kareena', at: 'x' });
 
-  // A second browser (its own storage, the next day): demo on by default; Show real shipments shows the shared status.
-  const b = await notesBrowser(site, 'Jamie Cole', '2026-10-08', { real: false });
-  assert.equal(b.run('shippingDemoOn()'), true);
-  b.run('setShippingDemo(false)');
+  const b = await hostedBrowser(site, 'Jamie Cole', '2026-10-08');
   assert.equal(card(b, 'delayed'), '1');
-  assert.match(html(b), /<span class="status-chip bad">Delayed<\/span>/);
+  assert.equal(stateText(b, N.ups), 'Delayed');
   setStatus(b, N.ups, 'delivered', '2026-10-08', '');
   await b.run('flushSharedNotes({all:true})');
   a.run('sharedNotes.syncedAt=0');
   await a.ctx.syncSharedNotes();
   a.run('renderResults()');
   assert.equal(a.run(`shippingStatusEntries().get('${N.ups}').status`), 'delivered');
-  assert.equal(site.calls.filter((c) => /shipping/.test(c)).length, 0, 'no /api/shipping call');
   assert.deepEqual([...a.errors, ...b.errors], []);
 });
 
 test('Add tracking #: any carrier, saved in this browser without a server, linked to its order, searchable, removable', async () => {
   const page = await shipPage();
+  page.run('shipToggleAdd()');
   field(page, 'ship-add-number').value = 'nope';
   page.run('shippingAddManual()');
   assert.match(field(page, 'ship-add-status').textContent, /Type a tracking number/);
@@ -234,13 +367,11 @@ test('Add tracking #: any carrier, saved in this browser without a server, linke
   const saved = JSON.parse(page.storage.spyderKpiShipmentsV1);
   assert.deepEqual(Object.keys(saved), ['770022223333']);
   assert.equal(saved['770022223333'].order, '600');
-  assert.match(page.els.toast.innerHTML, /Tracking # 770022223333 added to order 600\. Click Check to look it up, then set its status\./);
+  assert.match(page.els.toast.innerHTML, /Tracking # 770022223333 added to order 600\. Open its tracking page, then set its status\./);
   assert.equal(field(page, 'ship-add-status').textContent, '');
   page.run("toggleShipment('770022223333')");
-  const m = html(page);
-  assert.match(m, /class="ship-num">770022223333<\/span><span class="ship-sub">Carrier not set · Firefly RV · SO 600 · added by hand</);
-  assert.match(m.slice(m.indexOf('id="ship-detail-770022223333"')), /<td class="strong">600<\/td>/);
-  // A status on it is its own entry; the number stays listed as added by hand.
+  assert.match(rowOf(page, '770022223333'), /<span class="shp-trk"><b>7700 2222 3333<\/b><em>Carrier not set<\/em><\/span>\s*<span class="shp-ord"><b>SO 600<\/b><em>Firefly RV<\/em><\/span>/);
+  assert.match(rowOf(page, '770022223333'), /<td class="strong">600<\/td>/);
   setStatus(page, '770022223333', 'shipped', '2026-10-09');
   assert.deepEqual(page.run('shippingManualEntries().map(e=>e.number)'), ['770022223333']);
   page.run("onGlobalSearchInput('770022223333');applyGlobalSearch()");
@@ -250,63 +381,25 @@ test('Add tracking #: any carrier, saved in this browser without a server, linke
   assert.ok(!listed(page).includes('770022223333'));
 });
 
-test('demo data: on by default with no real statuses, clearly labelled, 12 made-up shipments covering every stage', async () => {
-  const page = await shipPage({ real: false });
-  assert.equal(page.run('shippingDemoOn()'), true);
-  const m = html(page);
-  assert.match(m, /<div class="ship-demo" role="note" aria-label="Demo data"><span class="ship-demo-tag">Demo data<\/span><span>These 12 shipments are made up \(fake customers and tracking numbers\) to show how the page works\. Statuses set here are not kept\.<\/span><\/div>/);
-  assert.match(m, /data-focus-key="ship-demo" aria-pressed="true" onclick="setShippingDemo\(false\)"[^>]*>Show real shipments</);
-  assert.match(page.run('shippingHeadMeta()'), /^demo data · 12 made-up shipments$/);
-  const list = page.run('shippingModel().list.map(s=>({n:s.number,c:s.customer,st:s.status,x:s.crossBorder,stale:s.stale}))');
-  assert.equal(list.length, 12);
-  assert.ok(list.every((s) => /^DEMO\d+$/.test(s.n) && /^Demo /.test(s.c)), 'fake names and numbers only');
-  for (const st of ['shipped', 'transit', 'delayed', 'delivered', '']) assert.ok(list.some((s) => s.st === st), `covers ${st || 'not checked'}`);
-  assert.ok(list.some((s) => s.x && s.st === 'delayed'), 'a cross-border delay');
-  assert.ok(list.some((s) => s.x && s.st === 'transit'), 'cross-border in transit');
-  assert.ok(list.some((s) => s.stale && s.st), 'one checked more than 2 days ago');
-  const counts = ['transit', 'delayed', 'delivered', 'stale'].map((id) => Number(card(page, id)));
-  assert.ok(counts.every((c) => c > 0), `every card has a demo count: ${counts}`);
-  assert.ok(!listed(page).some((n) => REAL.includes(n)), 'real deliveries are not mixed in');
-  assert.match(m, /class="data-table ship-cross"[\s\S]*Demo Off-Road Ltd/);
-  // Demo shipments have no order lines; the Check link warns that AfterShip will not find a demo number.
-  page.run("toggleShipment('DEMO10000005')");
-  assert.match(html(page), /A demo shipment: it has no order lines\./);
-  assert.match(html(page), /data-tip="Demo number: opens AfterShip in a new tab, which will not find it\.">Check</);
-  // No Add tracking # form in demo mode.
-  assert.doesNotMatch(html(page), /ship-add-number/);
-});
-
-test('demo data: statuses set on demo shipments stay on the page, never in the store; toggle off shows the real list', async () => {
-  const page = await shipPage({ real: false });
-  setStatus(page, 'DEMO10000009', 'transit', '2026-10-09', 'trying it out');
-  assert.equal(page.run("shippingModel().list.find(s=>s.number==='DEMO10000009').status"), 'transit');
-  assert.match(page.els.toast.innerHTML, /DEMO10000009: In transit Oct 9 saved \(demo only, not kept\)\./);
-  assert.equal(page.storage.spyderKpiShipmentsV1, undefined, 'nothing saved');
-  assert.equal(page.run('getSharedShipments()["st:DEMO10000009"]'), undefined);
-  page.run('setShippingDemo(false)');
-  assert.equal(page.storage.spyderKpiShipDemo, '0');
-  assert.doesNotMatch(html(page), /class="ship-demo"/);
-  assert.match(html(page), /data-focus-key="ship-demo" aria-pressed="false" onclick="setShippingDemo\(true\)"[^>]*>Show demo data</);
-  assert.deepEqual(listed(page).sort(), [...REAL].sort());
-  // The viewer's choice is remembered in this browser.
-  const again = await shipPage({ real: false, storage: { spyderKpiShipDemo: '0' } });
-  assert.equal(again.run('shippingDemoOn()'), false);
-  const on = await shipPage({ real: false, storage: { spyderKpiShipDemo: '1', spyderKpiShipmentsV1: JSON.stringify({ [`st:${N.parcel}`]: { order: '600', number: N.parcel, status: 'transit', by: '', at: '2026-10-08T10:00:00.000Z' } }) } });
-  assert.equal(on.run('shippingDemoOn()'), true);
-  assert.match(html(on), /1 real status has been saved\./);
-});
-
-test('demo data never reaches search, Order Health or other pages', async () => {
-  const page = await shipPage({ real: false });
-  page.run("onGlobalSearchInput('DEMO10000005');applyGlobalSearch()");
-  assert.deepEqual(page.run('globalSearchResults(currentMetrics()).rows.length'), 0);
-  page.run("onGlobalSearchInput('Demo RV Co');applyGlobalSearch()");
-  assert.deepEqual(page.run('globalSearchResults(currentMetrics()).rows.length'), 0);
-  for (const tab of ['weekly', 'monthly', 'warehouses']) {
-    page.run(`clearGlobalSearch();setTab('${tab}')`);
-    assert.doesNotMatch(html(page), /DEMO1000|Demo RV Co|Demo data/, tab);
+test('no demo data: no made-up shipments, no switch or banner, no Settings choice; an old stored choice does nothing', async () => {
+  const page = await shipPage({ storage: { spyderKpiShipDemo: '1', spyderKpiSettings: JSON.stringify({ shipDemoDefault: true }) } });
+  for (const name of ['SHIP_DEMO_ROWS', 'SHIP_DEMO_DEFAULT', 'SHIP_DEMO_KEY', 'shippingDemoOn', 'shippingDemoList', 'setShippingDemo', 'stgShippingCard', 'shippingDemoChoice']) {
+    assert.equal(page.run(`typeof ${name}`), 'undefined', name);
   }
-  assert.doesNotMatch(JSON.stringify(page.run('currentMetrics().allRows.map(r=>[r.name,r.trackingNumber])')), /DEMO|Demo /);
+  assert.deepEqual(listed(page).sort(), [...REAL].sort());
+  const m = html(page);
+  assert.doesNotMatch(m, /demo|DEMO1000|made-up|Show real shipments/i);
+  assert.equal(page.run("'shipDemoDefault' in stgSpec()"), false);
+  assert.equal(page.run('shippingModel().demo'), undefined);
+  page.run("setTab('settings')");
+  assert.doesNotMatch(html(page), /stg-shipdemo|demo shipments|Shipping page now shows/i);
+  page.run("onGlobalSearchInput('Demo RV Co');applyGlobalSearch()");
+  assert.equal(page.run('globalSearchResults(currentMetrics()).rows.length'), 0);
+  // With no shipments the empty card shows instead.
+  const none = await shipPage({ files: [exportFile(ROWS.filter((r) => !r.TrackingNumber || r.SourceType === 'Purchase Order'))] });
+  assert.match(html(none), /No shipments to show/);
+  assert.equal(none.run('shippingModel().list.length'), 0);
+  assert.deepEqual([...page.errors, ...none.errors], []);
 });
 
 test('one TrackNo field with several numbers: commas, &, + or "and", or two whole numbers with a space between', async () => {
@@ -317,10 +410,9 @@ test('one TrackNo field with several numbers: commas, &, + or "and", or two whol
   assert.deepEqual(split('770012345678 and 770012345679'), ['770012345678', '770012345679']);
   assert.deepEqual(split('7700 1234 5678, 7700-1234-5679 + 1234567890'), ['770012345678', '770012345679', '1234567890']);
   assert.deepEqual(split('7700 1234 5678'), ['770012345678'], 'grouped digits are one number');
-  // Same rule as the dormant server module (shared/fedex.mjs splitTrackingNumbers).
-  const { splitTrackingNumbers } = await import('../shared/fedex.mjs');
+  // Same rule as the server module (shared/aftership.mjs splitTrackingNumbers).
+  const { splitTrackingNumbers } = await import('../shared/aftership.mjs');
   for (const v of ['770012345678 770012345679', '7700 1234 5678 and 7700 1234 5679', 'a & b', '1234567890 + 7700-1234-5678', ' SANDBOX123 ']) assert.deepEqual(split(v), splitTrackingNumbers(v), v);
-  // A delivery row keeps both numbers; the two parcels share its value, so a card total counts the delivery once.
   const two = await shipPage({ files: [exportFile([delivery({ DocumentNumber: '700', DeliveryDocNumber: '9700', ShipDate: '10/06/2026', TrackingNumber: '770012345678 770012345679', AmountLocal: '1,000.00', ...due('10/10/2026') })])] });
   assert.deepEqual(listed(two).sort(), ['770012345678', '770012345679']);
   assert.deepEqual(two.run('shippingModel().list.map(s=>s.value)'), [500, 500]);
@@ -347,16 +439,19 @@ test('search covers export tracking numbers of every carrier, typed with or with
   assert.deepEqual(search(N.ups), [['Delivery', '603', 'SPY-100']]);
 });
 
-test('a shared snapshot keeps the saved statuses (and the demo choice), shows no form and never calls the server', async () => {
-  const page = await shipPage();
-  setStatus(page, N.ups, 'delayed', '2026-10-09', 'Weather hold');
+test('a shared snapshot keeps the hand-set and AfterShip statuses, shows no form and never calls the server', async () => {
+  const site = await hostedSite({ index: INDEX });
+  const page = await hostedBrowser(site, 'Pat');
+  setStatus(page, N.puro, 'delayed', '2026-10-09', 'Weather hold');
   let payload = '';
   Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
   await page.ctx.exportShareSnapshot();
   const data = JSON.parse(payload);
   assert.equal(data.activeTab, 'shipping');
-  assert.equal(data.shipping.manual[`st:${N.ups}`].status, 'delayed');
-  assert.equal(data.shipping.demo, false);
+  assert.equal(data.shipping.manual[`st:${N.puro}`].status, 'delayed');
+  assert.equal(data.shipping.demo, undefined);
+  assert.deepEqual(Object.keys(data.shipping.aftership.statuses).sort(), Object.keys(AS).sort());
+  assert.equal(data.shipping.aftership.polledAt, INDEX.polledAt);
 
   const snap = loadPage({ today: '2026-10-20' });
   const calls = [];
@@ -365,9 +460,11 @@ test('a shared snapshot keeps the saved statuses (and the demo choice), shows no
   snap.els['embedded-snapshot-data'].textContent = payload;
   await snap.run('loadEmbeddedSnapshot()');
   const m = html(snap);
-  assert.doesNotMatch(m, /Checked by hand|statuses as they were/); // 2v7: that status line is gone, snapshot or not
-  assert.match(m, /<span class="status-chip bad">Delayed<\/span>/);
-  assert.doesNotMatch(m, /ship-add-number|ship-st-|data-focus-key="ship-demo"/);
+  assert.equal(stateText(snap, N.puro), 'Delayed');
+  assert.equal(stateText(snap, N.parcel), 'In transit');
+  assert.deepEqual(strip(snap, N.delivered), [3, 'teal']);
+  assert.match(snap.run('shippingHeadMeta()'), /^Updated Oct 9, 8:00 AM$/, 'no next time in a snapshot');
+  assert.doesNotMatch(m, /ship-add-number|ship-st-|Automatic tracking/);
   assert.deepEqual(calls, []);
 });
 
@@ -383,37 +480,43 @@ test('notes store page helpers keep status, statusDate and note, and clean bad v
   assert.equal(page.run("shippingStatusEntries().get('770012345678').note"), 'At hub');
 });
 
-test('every card, button, link, column header and shipment row has a plain-English tooltip; markup is balanced', async () => {
-  for (const real of [true, false]) {
-    const page = await shipPage({ real });
-    const n = real ? N.usa : 'DEMO10000005';
-    page.run(`toggleShipment('${n}')`);
+test('every tile, button, link, field and shipment row on the page has a plain-English tooltip or name; markup is balanced', async () => {
+  for (const hosted of [false, true]) {
+    const page = hosted ? await hostedBrowser(await hostedSite({ index: INDEX }), 'Pat') : await shipPage();
+    page.run(`toggleShipment('${N.usa}')`);
     const m = html(page);
-    const own = m.slice(m.indexOf('class="ship-bar'));
-    for (const tag of own.match(/<(button|th|a|select|input)\b[^>]*>/g)) assert.match(tag, /data-tip="[^"]{12,}"/, tag);
-    const kpis = own.match(/<[a-z]+ [^>]*class="(?:[^"]*\s)?kpi(?:\s[^"]*)?"[^>]*>/g);
-    assert.equal(kpis.length, 4);
-    assert.match(page.els['app-sidebar'].innerHTML, /<button [^>]*data-focus-key="nav-shipping"[^>]*data-tip="Recent deliveries, checked by hand on tracking pages\."/);
+    const own = m.slice(m.indexOf('class="shp-frow'));
+    for (const tag of own.match(/<(button|a|select|input)\b[^>]*>/g)) {
+      if (/class="dz-menu-item/.test(tag)) continue; // menu choices: their text is the name
+      assert.match(tag, /data-tip="[^"]{12,}"|aria-label="[^"]{6,}"/, tag);
+    }
+    assert.equal((own.match(/<button type="button" class="shp-tile/g) || []).length, 4);
+    assert.match(page.run('PAGE_TIPS.shipping'), /AfterShip every 2 hours/);
     assert.doesNotMatch(m.replace(/<[^>]+>/g, ' '), /\bundefined\b|\bNaN\b|Invalid Date|\[object Object\]/);
-    assert.doesNotMatch(m, /FedEx statuses|Live FedEx|In customs|Out for delivery/);
+    assert.doesNotMatch(m, /FedEx statuses|Live FedEx|Not checked/);
     const count = (needle) => m.split(needle).length - 1;
     for (const tag of ['div', 'table', 'tr', 'td', 'section', 'button', 'span', 'form', 'label', 'details', 'select', 'a', 'p']) {
-      assert.equal(count(`<${tag} `) + count(`<${tag}>`) + count(`<${tag}\n`), count(`</${tag}>`), `unbalanced <${tag}> (${real ? 'real' : 'demo'})`);
+      assert.equal(count(`<${tag} `) + count(`<${tag}>`) + count(`<${tag}\n`), count(`</${tag}>`), `unbalanced <${tag}> (${hosted ? 'hosted' : 'file'})`);
     }
     assert.deepEqual(page.errors, []);
   }
 });
 
-test('SAP text and notes cannot inject markup into the Shipping page', async () => {
+test('SAP text, notes and AfterShip text cannot inject markup into the Shipping page', async () => {
   const evil = '<img src=x onerror=alert(1)>';
   const page = await shipPage({ files: [exportFile([delivery({ DocumentNumber: '700', CustomerVendorName: evil, ShipMethod: evil, ShipToCountry: '<b>', DeliveryDocNumber: '9100', TrackingNumber: `${N.parcel}, ${evil}`, ShipDate: '10/06/2026', 'Item No.': evil })])] });
   setStatus(page, N.parcel, 'delayed', '2026-10-09', `"><script>x</script>${evil}`);
   page.run(`toggleShipment('${N.parcel}');toggleShipment('${N.parcel}')`);
   assert.doesNotMatch(html(page), /<img src=x|<script>x/);
   assert.deepEqual(listed(page), [N.parcel]);
+  const site = await hostedSite({ index: { ...INDEX, statuses: { [N.parcel]: asStatus(N.parcel, 'delayed', { carrier: evil, detail: evil, changedAt: '2026-10-09T12:00:00.000Z', lastEvent: { at: evil, city: evil, desc: evil } }) }, lastError: { at: '2026-10-09T09:00:00.000Z', message: evil } } });
+  const hosted = await hostedBrowser(site, 'Pat');
+  hosted.run(`toggleShipment('${N.parcel}')`);
+  assert.doesNotMatch(html(hosted), /<img src=x|<script>x/);
+  assert.match(html(hosted), /&lt;img src=x/);
 });
 
-// --- The hosted site: /api/notes and /api/people over one KV stand-in (no /api/shipping) ---
+// --- The hosted site: /api/notes, /api/people and /api/shipping over one KV stand-in ---
 function memoryKv() {
   const map = new Map();
   return {
@@ -424,10 +527,16 @@ function memoryKv() {
     json(k) { return map.has(k) ? JSON.parse(map.get(k)) : null; },
   };
 }
-async function notesSite() {
+// index: the AfterShip results the Worker saved (tracking:index); key: whether this Pages project has the AfterShip key.
+async function hostedSite({ index = null, key = true } = {}) {
   const kv = memoryKv();
-  const env = { REPORT_STORE: kv };
-  const fns = { '/api/notes': (await import('../functions/api/notes.js')).onRequest, '/api/people': (await import('../functions/api/people.js')).onRequest };
+  if (index) await kv.put('tracking:index', JSON.stringify(index));
+  const env = { REPORT_STORE: kv, ...(key ? { AFTERSHIP_API_KEY: 'test-key' } : {}) };
+  const fns = {
+    '/api/notes': (await import('../functions/api/notes.js')).onRequest,
+    '/api/people': (await import('../functions/api/people.js')).onRequest,
+    '/api/shipping': (await import('../functions/api/shipping.js')).onRequest,
+  };
   const site = { kv, env, calls: [] };
   site.fetch = async (url, init = {}) => {
     site.calls.push(`${init.method || 'GET'} ${url}`);
@@ -436,13 +545,13 @@ async function notesSite() {
   };
   return site;
 }
-async function notesBrowser(site, name, today = TODAY, { real = true } = {}) {
+async function hostedBrowser(site, name, today = TODAY) {
   const page = loadPage({ today, storage: { spyderKpiEditorName: name } });
   Object.assign(page.ctx, { fetch: site.fetch, location: { href: ORIGIN + '/', protocol: 'https:' } });
   await upload(page, [exportFile()]);
   await page.ctx.syncSharedNotes();
   page.run("setTab('shipping')");
-  if (real) page.run('setShippingDemo(false)');
+  await settle();
   return page;
 }
 

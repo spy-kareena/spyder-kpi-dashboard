@@ -30,7 +30,7 @@ KPIs are calculated as of the export's `ExportDate`, so an older file or a share
 | Monthly | Top | Shipped and open sales-order value by month, year over year, and a ship target scenario |
 | Warehouses | Top | Open value, late lines and risk by warehouse and due month |
 | Metrics | Top | Order quality rates (on track, perfect order, backorder, partial ship) by due month |
-| Shipping | Top | Recent SAP deliveries for every carrier, checked by hand: a Check link to each tracking page and a shared status. Demo data shows until a real status is saved. |
+| Shipping | Top | Recent SAP deliveries for every carrier, with statuses from AfterShip every 2 hours (or set by hand) and an icon to open each tracking page |
 | Purchase Orders | Supply ▾ | Late, unconfirmed and no-commit PO lines, PO At Risk with its owners, Kits Clean / Kits Not Clean, receiving and late POs by vendor |
 | Supply / Demand | Supply ▾ | Open demand against open PO supply by warehouse and month (needs the supply / demand snapshot, `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`) |
 | Supply Mix | Supply ▾ | Net quantity by month, demand by warehouse and risk by item group (needs the snapshot) |
@@ -44,7 +44,6 @@ The gear opens Settings, also before an export is loaded:
 - **Profile:** your name, stamped on the notes you save.
 - **Order Health:** at-risk target, on-track tolerance, look-ahead window, lines shown, opening view.
 - **Notes:** the ready-made comments for sales-order and purchase-order lines.
-- **Shipping:** whether the page opens on demo shipments.
 - **Pages & Display:** theme (light, dark, match system), background colour, line lists folded or open, when the Import report shows.
 - **Data:** the loaded files, export date and where the report is saved. **Ask AI:** provider and model.
 - **Data Check** (only when there is something to report): rows to fix in SAP, non-inventory charges, deleted lines with Restore.
@@ -69,7 +68,7 @@ Secrets are set with `npx wrangler pages secret put <NAME> --project-name spyder
 - `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): required. Without them every page returns "not configured", and changing either one signs everyone out.
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`: optional. Set at least one to turn on Ask AI.
 - `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Load from SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
-- `FEDEX_CLIENT_ID`, `FEDEX_CLIENT_SECRET`: not used. The FedEx module (`shared/fedex.mjs`, `functions/api/shipping.js`, `workers/shipping-poller`) stays in the repo, undeployed; Shipping is checked by hand ([docs/SHIPPING.md](docs/SHIPPING.md)).
+- `AFTERSHIP_API_KEY`: optional, also a Worker secret in `workers/shipping-poller`. Shipping statuses from AfterShip every 2 hours ([docs/SHIPPING.md](docs/SHIPPING.md)).
 
 Keep these as encrypted secrets: the repo has a `wrangler.toml`, so plain-text variables typed into the Cloudflare dashboard are replaced on each deploy. On IIS or another static host, serve `index.html` as the default document; there is no sign-in gate, shared data or Ask AI there ([docs/IT_HOSTING_README.md](docs/IT_HOSTING_README.md)).
 
@@ -92,7 +91,7 @@ This runs every `tests/*.test.js` and `*.test.mjs` file: the page's scripts, the
 - `docs/`: user quick start, owner checklist, hosting notes, Ask AI, MCP connector, Shipping and Live SAP
 - `tests/`: the test suite; `samples/`: a tiny fake export for a smoke test
 - `assets/`: the logo for the sign-in page (the only file served before sign-in)
-- `shared/`, `workers/`: the unused FedEx code; `web.config`: IIS; `wrangler.toml`: Pages config; `VERSION.txt`: release notes
+- `shared/`, `workers/`: the AfterShip code and the Worker that checks it every 2 hours; `web.config`: IIS; `wrangler.toml`: Pages config; `VERSION.txt`: release notes
 
 ## Changing the page
 

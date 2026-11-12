@@ -20,7 +20,7 @@ test('Pages wrangler.toml: project name, whole folder served, no plain vars or s
   assert.match(pages, /^pages_build_output_dir = "\."$/m);
   // A [vars] table here would replace variables typed into the Cloudflare dashboard; secrets stay encrypted secrets.
   assert.doesNotMatch(pages, /^\s*\[vars\]/m);
-  assert.doesNotMatch(pages, /^\s*(DASHBOARD_PASSWORD|SESSION_SECRET|[A-Z_]+_API_KEY|FEDEX_CLIENT_(ID|SECRET))\s*=/m);
+  assert.doesNotMatch(pages, /^\s*(DASHBOARD_PASSWORD|SESSION_SECRET|[A-Z_]+_API_KEY)\s*=/m);
 });
 
 test('REPORT_STORE: Pages block commented with the placeholder (or filled in), same namespace id as the poller', () => {
@@ -58,12 +58,12 @@ test('docs name Node.js 20 or newer for the MCP connector and tests, never Node 
 });
 
 test('README, IT hosting notes and the owner checklist name every secret, the KV binding and the Worker cron', () => {
-  const secrets = ['DASHBOARD_PASSWORD', 'SESSION_SECRET', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'FEDEX_CLIENT_ID', 'FEDEX_CLIENT_SECRET'];
+  const secrets = ['DASHBOARD_PASSWORD', 'SESSION_SECRET', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'GROQ_API_KEY', 'OPENROUTER_API_KEY', 'AFTERSHIP_API_KEY'];
   for (const file of ['README.md', 'docs/IT_HOSTING_README.md', 'docs/OWNER_CHECKLIST.md']) {
     const text = read(file);
     for (const name of [...secrets, 'REPORT_STORE']) assert.ok(text.includes(name), `${file} names ${name}`);
   }
-  assert.match(read('docs/IT_HOSTING_README.md'), /crons = \["0 \*\/4 \* \* \*"\]/);
+  assert.match(read('docs/IT_HOSTING_README.md'), /crons = \["0 \*\/2 \* \* \*"\]/);
   assert.match(read('README.md'), /\(docs\/OWNER_CHECKLIST\.md\)/);
 });
 

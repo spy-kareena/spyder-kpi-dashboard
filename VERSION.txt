@@ -228,3 +228,13 @@ snapshot cannot be read the last one stays; if SAP cannot be read the report on 
 New: functions/api/sap/[[path]].js (GET /api/sap/status, /api/sap/kpi, /api/sap/supply-demand behind the sign-in gate;
 Pages secrets SAP_BRIDGE_URL, SAP_BRIDGE_KEY, CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET), tests/sap-api.test.mjs and
 tests/sap-live.test.js. Without the secrets nothing changes.
+
+2v6.8 (shipping): Shipping statuses come from AfterShip every 2 hours. The scheduled Worker (workers/shipping-poller,
+cron 0 */2 * * *) adds each listed tracking number to AfterShip once and reads the rest in batches of 50
+(shared/aftership.mjs, plain fetch); the page reads them from /api/shipping on open, when its tab comes back into view
+and after each check, and shows "Updated 10:00 · next 12:00". AfterShip tags map to Shipped, In transit, Delayed and
+Delivered; a status set by hand still works for numbers AfterShip cannot track, and the newer of the two counts (the
+row details say "From AfterShip" or "Set by ..."). The Check button is now an arrow icon that opens the AfterShip
+tracking page in a new tab. "Not checked in 2+ days" is now "No update in 2+ days". Demo shipments, their switch and
+the Settings choice are gone. The FedEx code and its secrets are removed; new secret AFTERSHIP_API_KEY (Worker and
+Pages). Tests: tests/aftership.test.mjs (replaces the FedEx tests), shipping-api, shipping-worker and shipping-page.

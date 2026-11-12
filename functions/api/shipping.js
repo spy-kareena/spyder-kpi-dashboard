@@ -1,35 +1,38 @@
 /**
- * Live FedEx shipping for the Shipping page (see docs/SHIPPING.md). Needs the Workers KV namespace bound to this
+ * AfterShip tracking for the Shipping page (see docs/SHIPPING.md). Needs the Workers KV namespace bound to this
  * Pages project as REPORT_STORE (the same one as functions/api/report.js). The password gate in
  * functions/_middleware.js runs first.
- *   GET  /api/shipping -> the last FedEx results: {configured, fedex, polledAt, statuses, lastError, errors,
- *                         wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule}
- *   PUT  /api/shipping -> body {asOf:'YYYY-MM-DD', export:[numbers], manual:[numbers]}: the tracking numbers the page
- *                         picked from the export (deliveries of the last 30 days that are not long delivered) and the
- *                         ones added by hand. An older export never replaces a newer export's numbers. asOf must
- *                         be a real date, at most two days ahead.
- *   POST /api/shipping -> checks FedEx now ("Refresh now"), at most once per 10 minutes for the whole site (a try
- *                         that failed can be repeated after 1 minute). Like each 4-hourly check it asks FedEx about
- *                         up to 60 numbers that are still moving, stalest first (MAX_PER_RUN in shared/fedex.mjs).
- * The 4-hourly checks run in the scheduled Worker workers/shipping-poller. FedEx keys (FEDEX_CLIENT_ID,
- * FEDEX_CLIENT_SECRET, optional FEDEX_API_BASE) are only needed here for "Refresh now"; without them it answers 503.
- * Nothing here ever returns the keys or the FedEx sign-in token.
+ *   GET  /api/shipping -> the last AfterShip results: {configured, store, active, polledAt, source, statuses, lastError,
+ *                         errors, wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule, everyHours}
+ *                         configured: the AfterShip key is set here; active: a check ran in the last 6 hours (the
+ *                         Worker can have the key without this site having it).
+ *   PUT  /api/shipping -> body {asOf:'YYYY-MM-DD', export:[numbers], manual:[numbers], carriers?:{[number]: label}}:
+ *                         the tracking numbers the page lists from the export and the ones added by hand, with the
+ *                         carrier named by the SAP ship method (only known carriers become AfterShip slugs). An older
+ *                         export never replaces a newer export's numbers. asOf must be a real date, at most two days
+ *                         ahead.
+ *   POST /api/shipping -> checks AfterShip now ("Refresh now"), at most once per 10 minutes for the whole site (a try
+ *                         that failed can be repeated after 1 minute). Like each 2-hourly check it asks about the
+ *                         numbers still moving, stalest first, within the per-check limits of shared/aftership.mjs.
+ * The 2-hourly checks run in the scheduled Worker workers/shipping-poller. The AfterShip key (AFTERSHIP_API_KEY) is
+ * only needed here for "Refresh now" and the configured flag; nothing here ever returns it.
  */
 import {
-  pollTracking, fedexConfigured, cleanTrackingNumber, readJsonStrict, INDEX_KEY, WANTED_KEY, REFRESH_KEY, REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL,
-} from '../../shared/fedex.mjs';
+  pollTracking, aftershipConfigured, cleanTrackingNumber, slugForCarrier, readJsonStrict, INDEX_KEY, WANTED_KEY, REFRESH_KEY,
+  REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL, SCHEDULE,
+} from '../../shared/aftership.mjs';
 
 const MAX_BODY = 64 * 1024;
 const MAX_LIST = 2000; // longer lists are refused rather than cut
-const SCHEDULE = '0 */4 * * *'; // keep in step with workers/shipping-poller/wrangler.toml
+const ACTIVE_HOURS = 6; // a check this recent means the Worker is running
 
 export async function onRequest(context) {
   const { request, env } = context;
   const store = env.REPORT_STORE;
   if (!['GET', 'PUT', 'POST'].includes(request.method)) return json(405, { error: 'Use GET, PUT or POST.' }, { Allow: 'GET, PUT, POST' });
-  if (!store) return json(503, { configured: false, error: 'Shared storage is not set up on this site (REPORT_STORE).' });
+  if (!store) return json(503, { configured: false, store: false, error: 'Shared storage is not set up on this site (REPORT_STORE).' });
   if (request.method === 'GET') return readStatuses(store, env);
-  // The session cookie is SameSite=Lax, and only the dashboard page itself may change the list or spend FedEx calls.
+  // The session cookie is SameSite=Lax, and only the dashboard page itself may change the list or spend AfterShip calls.
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json(403, { error: 'Cross-site request refused.' });
   if (request.method === 'PUT') return saveWanted(request, store);
   return refreshNow(store, env);
@@ -47,17 +50,23 @@ async function readStatuses(store, env) {
   const [index, wanted, last] = await Promise.all([readJson(store, INDEX_KEY), readJson(store, WANTED_KEY), readText(store, REFRESH_KEY)]);
   const i = index || {};
   const w = wanted || {};
+  // Only AfterShip results: the FedEx results of an older version (no provider) are not shown.
+  const ours = i.provider === 'aftership';
+  const polledAt = ours ? String(i.polledAt || '') : '';
+  const t = Date.parse(polledAt);
   return json(200, {
-    configured: true,
-    fedex: fedexConfigured(env),
-    polledAt: String(i.polledAt || ''),
-    source: String(i.source || ''),
-    statuses: i.statuses && typeof i.statuses === 'object' ? i.statuses : {},
-    errors: Array.isArray(i.errors) ? i.errors : [],
-    lastError: i.lastError || null,
+    configured: aftershipConfigured(env),
+    store: true,
+    active: Number.isFinite(t) && Date.now() - t < ACTIVE_HOURS * 3600 * 1000,
+    polledAt,
+    source: ours ? String(i.source || '') : '',
+    statuses: ours && i.statuses && typeof i.statuses === 'object' ? i.statuses : {},
+    errors: ours && Array.isArray(i.errors) ? i.errors : [],
+    lastError: ours ? i.lastError || null : null,
     wanted: { exportAsOf: String(w.exportAsOf || ''), export: Array.isArray(w.export) ? w.export : [], manual: Array.isArray(w.manual) ? w.manual : [], updatedAt: String(w.updatedAt || '') },
     refreshAfter: refreshAfter(last),
     schedule: SCHEDULE,
+    everyHours: 2,
   });
 }
 
@@ -77,6 +86,11 @@ function exportDate(v) {
 const sameList = (a, b) => {
   const x = [...(a || [])].sort(), y = [...(b || [])].sort();
   return x.length === y.length && x.every((v, i) => v === y[i]);
+};
+const sameMap = (a, b) => {
+  const x = a && typeof a === 'object' ? a : {}, y = b && typeof b === 'object' ? b : {};
+  const kx = Object.keys(x), ky = Object.keys(y);
+  return kx.length === ky.length && kx.every((k) => x[k] === y[k]);
 };
 
 async function saveWanted(request, store) {
@@ -105,15 +119,27 @@ async function saveWanted(request, store) {
     export: older ? (Array.isArray(prev.export) ? prev.export : []) : exp,
     manual,
   };
-  const unchanged = next.exportAsOf === prev.exportAsOf && sameList(next.export, prev.export) && sameList(next.manual, prev.manual);
+  // Carrier labels, kept only for listed numbers and carriers with a known AfterShip slug (an older export keeps the
+  // stored ones for its numbers).
+  const listed = new Set([...next.export, ...manual]);
+  const carriers = {};
+  const sent = body.carriers && typeof body.carriers === 'object' && !Array.isArray(body.carriers) ? body.carriers : {};
+  const prevCarriers = prev.carriers && typeof prev.carriers === 'object' ? prev.carriers : {};
+  for (const [raw, label] of Object.entries(sent).slice(0, MAX_LIST)) {
+    const n = cleanTrackingNumber(raw);
+    if (n && listed.has(n) && slugForCarrier(String(label))) carriers[n] = String(label);
+  }
+  if (older) for (const n of next.export) if (prevCarriers[n] && !carriers[n]) carriers[n] = prevCarriers[n];
+  next.carriers = carriers;
+  const unchanged = next.exportAsOf === prev.exportAsOf && sameList(next.export, prev.export) && sameList(next.manual, prev.manual) && sameMap(next.carriers, prev.carriers);
   // One KV write only when something changed (every browser that opens the page sends the list).
   if (!unchanged) await store.put(WANTED_KEY, JSON.stringify({ ...next, updatedAt: new Date().toISOString() }));
   return json(200, { saved: !unchanged, keptNewerExport: older, exportAsOf: next.exportAsOf, export: next.export.length, manual: next.manual.length });
 }
 
 async function refreshNow(store, env) {
-  if (!fedexConfigured(env)) {
-    return json(503, { configured: true, fedex: false, error: 'FedEx keys are not set up on this site yet (FEDEX_CLIENT_ID and FEDEX_CLIENT_SECRET), so it cannot check now. The checks every 4 hours run if the shipping poller Worker has its keys.' });
+  if (!aftershipConfigured(env)) {
+    return json(503, { configured: false, error: 'The AfterShip key is not set up on this site yet (AFTERSHIP_API_KEY), so it cannot check now. The checks every 2 hours run if the shipping poller Worker has its key.' });
   }
   const now = Date.now();
   const after = refreshAfter(await readText(store, REFRESH_KEY), now);
@@ -121,7 +147,7 @@ async function refreshNow(store, env) {
     const wait = Math.max(1, Math.ceil((Date.parse(after) - now) / 1000));
     return json(429, { error: `Refresh now was used less than 10 minutes ago. Try again in ${Math.ceil(wait / 60)} min.`, retryAfter: wait, refreshAfter: after }, { 'Retry-After': String(wait) });
   }
-  // Taken before the check, so two quick clicks (or two people) never make two rounds of FedEx calls. It holds for
+  // Taken before the check, so two quick clicks (or two people) never make two rounds of AfterShip calls. It holds for
   // 1 minute only (KV's shortest expiry) until the check has worked, so a check that fails, or that Cloudflare stops
   // part-way, never blocks the next try for 10 minutes. The stored time is set back so refreshAfter() gives retryAt.
   const retryAt = now + 60 * 1000;
@@ -129,9 +155,9 @@ async function refreshNow(store, env) {
   try {
     const doc = await pollTracking(env, { now, source: 'refresh' });
     try { await store.put(REFRESH_KEY, new Date(now).toISOString(), { expirationTtl: REFRESH_SECONDS }); } catch (err) { /* the 1-minute hold stays */ }
-    return json(200, { polledAt: doc.polledAt, statuses: doc.statuses, errors: doc.errors, count: doc.count, polled: doc.polled, waiting: doc.waiting, refreshAfter: refreshAfter(new Date(now).toISOString(), now) });
+    return json(200, { polledAt: doc.polledAt, statuses: doc.statuses, errors: doc.errors, lastError: doc.lastError || null, count: doc.count, polled: doc.polled, created: doc.created, waiting: doc.waiting, refreshAfter: refreshAfter(new Date(now).toISOString(), now) });
   } catch (err) {
-    return json(err && err.status === 503 ? 503 : 502, { error: String(err && err.message || 'FedEx tracking failed.'), refreshAfter: new Date(retryAt).toISOString() });
+    return json(err && err.status === 503 ? 503 : 502, { error: String(err && err.message || 'AfterShip tracking failed.'), refreshAfter: new Date(retryAt).toISOString() });
   }
 }
 
