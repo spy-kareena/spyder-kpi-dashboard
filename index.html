@@ -2240,12 +2240,10 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 }
 /* 2v6:end oh-lagging */
 /* 2v6:settings */
-/* The Settings page (stg*): one glass card per group on the shared .dz-grid (two per row, one on phones). Each setting
+/* The Settings page (stg*): one glass card per group, in categories (2v8:settings). Each setting
    is a row: label and help at the left, its control at the right (pill select, small number box, segmented pill,
    switch). Also the At risk card's target chip. */
 .stg-ro{margin:0 0 14px;padding:10px 16px;border-radius:14px;background:var(--dz-amber-bg,#fbf1d9);color:var(--dz-amber-text,#b45309);font-size:13px}
-.stg-grid{margin-top:6px;align-items:start}
-.stg-col{display:flex;flex-direction:column;gap:16px;min-width:0}
 .stg-card{display:flex;flex-direction:column}
 .stg-title{display:flex;align-items:center;gap:9px}
 .stg-rows{display:flex;flex-direction:column;flex:1;margin-top:6px}
@@ -2357,9 +2355,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-card{scroll-margin-top:16px}
 .stg-title:focus{outline:none}
 .stg-title:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-radius:6px}
-/* Data Check card: full width above the two columns; the summary at the left, lists and actions at the right */
-.stg-top{margin:6px 0 16px}
-.stg-top+.stg-grid{margin-top:0}
+/* Data Check card: full width at the top of the Data category; the summary at the left, lists and actions at the right */
 .stg-dc{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:12px 40px;align-items:start}
 .stg-dc.solo{grid-template-columns:minmax(0,1fr)}
 .stg-ico-dot{position:relative}
@@ -3902,6 +3898,49 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v8:settings */
+/* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
+   look, links instead of buttons; it sticks to the top while the page scrolls and scrolls sideways on phones. Cards
+   sit two to a row (one below 900px); Data Check, Profile, Notes and About take the whole row. */
+.stg-nav{position:sticky;top:12px;z-index:30;display:flex;margin:2px 0 26px;pointer-events:none}
+.stg-nav-in{display:flex;gap:2px;max-width:100%;padding:4px;border-radius:999px;background:var(--dz-surface);border:1px solid var(--dz-line-8);box-shadow:var(--dz-sh-card);overflow-x:auto;scrollbar-width:none;pointer-events:auto;font-size:13.5px;font-weight:500}
+.stg-nav-in::-webkit-scrollbar{display:none}
+.stg-nav-a{position:relative;flex:none;display:inline-flex;align-items:center;padding:7px 18px;border-radius:999px;color:var(--dz-seg-off-fg);text-decoration:none;white-space:nowrap;transition:background-color .15s ease,color .15s ease}
+.stg-nav-a:hover{color:var(--dz-ink-1)}
+.stg-nav-a.on{background:var(--dz-seg-on-bg);color:var(--dz-seg-on-fg)}
+.stg-nav-a:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:-2px}
+.stg-nav-a .hdr-dot{top:6px;right:9px;box-shadow:0 0 0 1.5px var(--dz-surface)}
+.stg-nav-a.on .hdr-dot{box-shadow:0 0 0 1.5px var(--dz-seg-on-bg)}
+.stg-cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.stg-cgrid>.stg-card{grid-column:auto}
+.stg-cgrid>#stg-card-dc,.stg-cgrid>#stg-card-about,.stg-cgrid>#stg-card-profile,.stg-cgrid>#stg-card-notes{grid-column:1/-1}
+/* Notes & People: Profile (one row) above Notes, both across the row; the comment list in two columns */
+#stg-card-notes .stg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+#stg-card-notes .stg-list>.stg-empty{grid-column:1/-1}
+.stg-cat,.stg-card{scroll-margin-top:80px}
+.stg-cat .pg-group-title:focus{outline:none}
+.stg-cat .pg-group-title:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-radius:4px}
+/* About across the row: Version and Changed side by side, Reset to defaults at the right of Export / Import */
+#stg-card-about .stg-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+#stg-card-about .stg-kv{border-top:0;padding-top:2px}
+.stg-reset{margin-left:auto;align-self:center}
+.stg-reset:disabled{opacity:.45;cursor:default}
+@media (prefers-reduced-motion:no-preference){
+  #results-screen.entering .stg-cgrid>:nth-child(2){--mo-i:1}
+  #results-screen.entering .stg-cgrid>:nth-child(3){--mo-i:2}
+}
+@media (prefers-reduced-motion:reduce){.stg-nav-a{transition:none}}
+@media (max-width:900px){.stg-cgrid,#stg-card-notes .stg-list{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){
+  .stg-nav{top:8px;margin:0 0 20px}
+  .stg-nav-a{padding:7px 14px}
+  .stg-cgrid{gap:14px}
+  .stg-cat,.stg-card{scroll-margin-top:68px}
+  #stg-card-about .stg-dl{grid-template-columns:minmax(0,1fr)}
+}
+@media (forced-colors:active){.stg-nav-a{border:2px solid Canvas}.stg-nav-a.on{border-color:Highlight}}
+@media print{.stg-cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* 2v8:end settings */
 /* 2v8:live */
 /* Live SAP (2v6.8): the dot left of the export date (green with a calm 2 s pulse while live reads work, red when
    disconnected; none in import mode), the short export-date popover, the Data Source card and the live load screen. */
@@ -10362,6 +10401,8 @@ function stgVersion(){
 let stgConnectOpen=false;
 function stgShowCard(card,focusId){
   if(card==='connect')stgConnectOpen=true;
+  // The card's category is the one marked in the category bar (every category is on the page; this picks the pill).
+  stgNavSet(stgCatOf(card),1500);
   setTab('settings');
   stgRevealCard(card,focusId);
 }
@@ -10369,11 +10410,103 @@ function stgRevealCard(card,focusId,tries=0){
   const el=document.getElementById(`stg-card-${card}`);
   // A click in the header draws Settings a frame later, inside moPage's cross-fade: wait for the card (about 0.5 s).
   if(!el){if(tries<30&&activeTab==='settings'&&typeof requestAnimationFrame==='function')requestAnimationFrame(()=>stgRevealCard(card,focusId,tries+1));return;}
-  let reduce=false;
-  try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(err){/* no matchMedia: jump */}
+  stgNavSet(stgCatOf(card),1200);
   const target=(focusId&&document.getElementById(focusId))||document.getElementById(`stg-h-${card}`);
   if(target&&target.focus)target.focus({preventScroll:true});
-  if(el.scrollIntoView)el.scrollIntoView({block:card==='profile'?'nearest':'start',behavior:reduce?'auto':'smooth'});
+  if(el.scrollIntoView)el.scrollIntoView({block:card==='profile'?'nearest':'start',behavior:stgReduceMotion()?'auto':'smooth'});
+}
+function stgReduceMotion(){
+  try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(err){return true;/* no matchMedia: jump */}
+}
+// --- 2v8 settings: categories ---
+// The page is five named categories (the shared .pg-group markup), in this order, each with its cards in a two-column
+// grid (one on phones). The category bar under the page title scrolls to a category and marks the one in view.
+const STG_CATS=[['data','Data'],['dash','Dashboard'],['notes','Notes & People'],['ai','AI'],['about','About']];
+const STG_CARD_CAT={source:'data',dc:'data',data:'data',oh:'dash',pages:'dash',profile:'notes',notes:'notes',ai:'ai',connect:'ai',about:'about'};
+let stgNavCat='data',stgNavHold=0,stgNavIo=null,stgNavScroll=null;
+function stgCatOf(card){return STG_CARD_CAT[card]||'data';}
+function stgNavHtml(dcLevel){
+  const dot=dcLevel==='red'||dcLevel==='yellow';
+  const links=STG_CATS.map(([id,title])=>{
+    const on=id===stgNavCat,mark=id==='data'&&dot;
+    return `<a class="stg-nav-a${on?' on':''}" href="#stg-cat-${id}" data-cat="${id}" data-focus-key="stg-nav-${id}"${on?' aria-current="true"':''} onclick="return stgNavGo('${id}',event)">${esc(title)}${mark?`<span class="hdr-dot ${dcLevel}" aria-hidden="true"></span><span class="sr-only">, data check needs a look</span>`:''}</a>`;
+  }).join('');
+  return `<nav class="stg-nav print-hide" aria-label="Settings categories"><div class="stg-nav-in">${links}</div></nav>`;
+}
+function stgCatHtml(id,title,cards){
+  return `<section class="pg-group stg-cat" id="stg-cat-${id}" aria-labelledby="pg-stg-${id}" data-group="stg-${id}" data-cat="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-stg-${id}" tabindex="-1">${esc(title)}</h2></div><div class="stg-cgrid">${cards}</div></section>`;
+}
+// Marks a category in the bar without a redraw. hold (ms): the scroll that follows does not move the mark.
+function stgNavSet(cat,hold=0){
+  if(!STG_CATS.some(c=>c[0]===cat))return;
+  stgNavCat=cat;
+  if(hold)stgNavHold=Date.now()+hold;
+  if(typeof document==='undefined'||!document.querySelectorAll)return;
+  document.querySelectorAll('.stg-nav-a').forEach(a=>{
+    const on=a.dataset.cat===cat;
+    a.classList.toggle('on',on);
+    if(on)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');
+    // Phones: the bar scrolls sideways; keep the marked pill in it (never scrolls the page).
+    const bar=on&&a.parentElement;
+    if(bar&&bar.scrollWidth>bar.clientWidth){
+      const l=a.offsetLeft-bar.offsetLeft,r=l+a.offsetWidth;
+      if(l<bar.scrollLeft||r>bar.scrollLeft+bar.clientWidth)bar.scrollLeft=Math.max(0,l-16);
+    }
+  });
+}
+function stgNavGo(cat,e){
+  if(e&&e.preventDefault)e.preventDefault();
+  stgNavSet(cat,1200);
+  const sec=document.getElementById(`stg-cat-${cat}`),h=document.getElementById(`pg-stg-${cat}`);
+  if(h&&h.focus)h.focus({preventScroll:true});
+  if(sec&&sec.scrollIntoView)sec.scrollIntoView({block:'start',behavior:stgReduceMotion()?'auto':'smooth'});
+  return false;
+}
+// The line a category's top has to pass to be the one in view: just under the bar where it sticks.
+function stgNavLine(){
+  const nav=document.querySelector('.stg-nav');
+  if(!nav)return 80;
+  return (parseFloat(getComputedStyle(nav).top)||0)+nav.offsetHeight+32;
+}
+// The category in view: the last one whose top has passed the line; at the foot of the page, the last one.
+function stgNavSpy(){
+  if(activeTab!=='settings'||Date.now()<stgNavHold)return;
+  const secs=[...document.querySelectorAll('.stg-cat')];
+  if(!secs.length)return;
+  const line=stgNavLine();
+  let cur=secs[0].dataset.cat;
+  secs.forEach(s=>{if(s.getBoundingClientRect().top<=line)cur=s.dataset.cat;});
+  const doc=document.documentElement;
+  if(window.scrollY>0&&window.innerHeight+window.scrollY>=doc.scrollHeight-4)cur=secs[secs.length-1].dataset.cat;
+  if(cur!==stgNavCat)stgNavSet(cur);
+}
+// After each Settings redraw: IntersectionObservers call the spy when a category's top crosses the line (a band from
+// the top of the window down to the line) and when the page foot comes into view; without them, a passive scroll
+// listener does. Both stop when another page draws; a resize measures the line again.
+let stgNavResize=false;
+function stgNavWatch(){
+  try{
+    if(stgNavIo){stgNavIo.forEach(o=>o.disconnect());stgNavIo=null;}
+    if(stgNavScroll){window.removeEventListener('scroll',stgNavScroll);stgNavScroll=null;}
+    if(activeTab!=='settings'||typeof document==='undefined'||!document.querySelectorAll)return;
+    const secs=[...document.querySelectorAll('.stg-cat')],end=document.querySelector('.stg-end');
+    if(!secs.length)return;
+    let queued=false;
+    const tick=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;stgNavSpy();});};
+    if(typeof IntersectionObserver==='function'){
+      const below=Math.max(0,Math.round(window.innerHeight-stgNavLine()));
+      const band=new IntersectionObserver(tick,{rootMargin:`0px 0px -${below}px 0px`,threshold:0});
+      secs.forEach(s=>band.observe(s));
+      const foot=new IntersectionObserver(tick,{threshold:0});
+      if(end)foot.observe(end);
+      stgNavIo=[band,foot];
+    }else{
+      stgNavScroll=tick;
+      window.addEventListener('scroll',stgNavScroll,{passive:true});
+    }
+    if(!stgNavResize){stgNavResize=true;window.addEventListener('resize',()=>{if(activeTab==='settings')stgNavWatch();},{passive:true});}
+    stgNavSpy();
+  }catch(err){/* no layout (tests, old browsers): the bar still scrolls on click */}
 }
 
 // --- The page ---
@@ -10541,8 +10674,8 @@ function stgPagesCard(dis,i){
   const body=[
     stgRow('Theme',`Match system follows this device. Default light.`,seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
     stgRow('Background',`Behind the cards: ${esc(bgName)}. Default Blue.`,swatches),
-    stgRow('Line lists start',`Lines, PO lines, Build Risk, Supply / Demand, Shipments. Each list keeps your choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
-    stgRow('Import report',`A short message when all is well, or the full report every time. Default with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
+    stgRow('Line lists start',`How line lists open; each list then keeps your choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
+    stgRow('Import report',`Only when a file has problems, or after every load. Default with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
   return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
@@ -10586,12 +10719,14 @@ function stgImport(input){
   reader.readAsText(f);
 }
 function stgAboutCard(i){
-  const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length;
-  const move=isSnapshotView?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) to a file for another browser or a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`;
+  const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length,ro=isSnapshotView;
+  const move=ro?'':`<button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) to a file for another browser or a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)">`;
+  // Reset to defaults (it was a link under the two columns) sits with Export and Import, at the right.
+  const reset=`<button type="button" class="link-btn stg-link stg-reset" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(changed?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button>`;
   const body=`<dl class="stg-dl">
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
       <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
-    </dl><p class="stg-now">Saved in this browser only. Export and Import move them.</p>${move}`;
+    </dl><p class="stg-now">Saved in this browser only. Export and Import move them.</p><div class="stg-actions print-hide">${move}${reset}</div>`;
   return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
 }
 // Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
@@ -10637,15 +10772,19 @@ function stgConnectCard(i){
 }
 function stgRenderPage(){
   const ro=isSnapshotView,dis=ro?' disabled':'';
-  const anyChanged=Object.keys(stgSpec()).some(k=>!stgIsDefault(k));
   const note=ro?`<p class="stg-ro rise">Shared snapshot: settings are read only. Open the dashboard to change them.</p>`:'';
-  // Two columns of cards (one on phones, left column first), so a short card never stretches beside a tall one. The
-  // Data Check card (only while the Data check reports something) sits above both, full width, so they stay even.
-  const dc=dcReport(),check=stgDataCheckCard(dc,0),k=check?1:0;
-  const left=[stgDataSourceCard(dis,k),stgProfileCard(dis,k),stgOrderHealthCard(dis,k+2),stgPagesCard(dis,k+4),stgDataCard(k+6,dc)].join('');
-  const right=[stgNotesCard(dis,k+1),stgAiCard(dis,k+5),stgConnectCard(k+7),stgAboutCard(k+8)].join('');
-  const reset=`<div class="stg-foot print-hide"><button type="button" class="link-btn stg-link" data-focus-key="stg-reset-all" onclick="stgResetAll()"${anyChanged&&!ro?'':' disabled'}${tipAttr(anyChanged?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button></div>`;
-  return `${note}${check?`<div class="stg-top">${check}</div>`:''}<div class="dz-grid stg-grid"><div class="dz-span-3 stg-col">${left}</div><div class="dz-span-3 stg-col">${right}</div></div>${reset}`;
+  // 2v8: five categories, in this order, under the category bar. The Data Check card (only while the Data check
+  // reports something) opens the Data category, full width, so the gear's dot leads straight to it.
+  const dc=dcReport(),check=stgDataCheckCard(dc,0);
+  let i=check?1:0;
+  const cats={
+    data:[check,stgDataSourceCard(dis,i++),stgDataCard(i++,dc)],
+    dash:[stgOrderHealthCard(dis,i++),stgPagesCard(dis,i++)],
+    notes:[stgProfileCard(dis,i++),stgNotesCard(dis,i++)],
+    ai:[stgAiCard(dis,i++),stgConnectCard(i++)],
+    about:[stgAboutCard(i++)]
+  };
+  return `${note}${stgNavHtml(dc.level)}<div class="stg-cats">${STG_CATS.map(([id,title])=>stgCatHtml(id,title,cats[id].join(''))).join('')}</div><div class="stg-end" aria-hidden="true"></div>`;
 }
 // ===== end 2v6 settings =====
 // Connect An AI App (Settings): the MCP server config the card shows and copies. Details: docs/MCP.md.
@@ -11033,7 +11172,7 @@ function hasLoadedData(){
 const NAV_GROUPS=[
   ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
-  ['Help',[['settings','Settings','Targets, comment lists, Data check and Connect an AI app.']]]
+  ['Help',[['settings','Settings','Data source, Data check, targets, display, comment lists and AI.']]]
 ];
 const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
@@ -12436,6 +12575,7 @@ function renderResults(){
   el.innerHTML=html;
   dzDecorateIcons(el);
   dzDecorateCollapse(el);
+  stgNavWatch(); // 2v8: the Settings category bar follows the scroll (stops on other pages)
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
   restoreFocus(el,focus);
   runCountUps(el,entering);

@@ -39,15 +39,13 @@ To print a page or save it as a PDF, use the browser's Print. In import mode, **
 
 ## Settings
 
-The gear opens Settings, also before an export is loaded:
+The gear opens Settings, also before an export is loaded. A category bar at the top jumps to each group and marks the one in view:
 
-- **Profile:** your name, stamped on the notes you save.
-- **Order Health:** at-risk target, on-track tolerance, look-ahead window, lines shown, opening view.
-- **Notes:** the ready-made comments for sales-order and purchase-order lines.
-- **Pages & Display:** theme (light, dark, match system), background colour, line lists folded or open, when the Import report shows.
-- **Data:** the loaded files, export date and where the report is saved. **Ask AI:** provider and model.
-- **Data Check** (only when there is something to report): rows to fix in SAP, non-inventory charges, deleted lines with Restore.
-- **Connect An AI App:** the MCP connector setup. **About:** the version, plus Export / Import settings as a small JSON file.
+- **Data:** Data Source (Live SAP or Import files), Data Check (only when there is something to report: rows to fix in SAP, non-inventory charges, deleted lines with Restore) and Data (the loaded files, export date, where the report is saved).
+- **Dashboard:** Order Health (at-risk target, on-track tolerance, look-ahead window, lines shown, opening view) and Pages & Display (theme, background, line lists folded or open, when the Import report shows).
+- **Notes & People:** your name, stamped on the notes you save, and the ready-made comments for sales-order and purchase-order lines.
+- **AI:** Ask AI provider and model, and Connect An AI App (the MCP connector setup).
+- **About:** the version, Export / Import settings as a small JSON file, and Reset to defaults.
 
 ## Shared or per browser
 

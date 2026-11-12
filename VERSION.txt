@@ -248,3 +248,5 @@ row details say "From AfterShip" or "Set by ..."). The Check button is now an ar
 tracking page in a new tab. "Not checked in 2+ days" is now "No update in 2+ days". Demo shipments, their switch and
 the Settings choice are gone. The FedEx code and its secrets are removed; new secret AFTERSHIP_API_KEY (Worker and
 Pages). Tests: tests/aftership.test.mjs (replaces the FedEx tests), shipping-api, shipping-worker and shipping-page.
+
+2v6.8 (settings): Settings grouped into Data, Dashboard, Notes & People, AI and About, with a category bar.

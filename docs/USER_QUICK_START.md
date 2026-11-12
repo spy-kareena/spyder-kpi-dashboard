@@ -24,7 +24,7 @@ The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line b
 
 **Ask AI** opens a chat on the right. Ask things like "What is at risk right now?" or "Which vendors have the most late POs?". The first time, pick a provider in **Settings** and tick its box: Anthropic or ChatGPT (paid; they do not train on your data) or Groq or OpenRouter (free; they may keep what you send, so use them only for data you may share). It sends your question and the data needed to answer it to that provider. Setup, costs and privacy: docs/AI_ASSISTANT.md.
 
-**Connect An AI App** (in Settings: the gear, top right) shows how to use the same data from an AI app on your computer (any app that supports MCP); Settings opens before an export is loaded.
+**Settings** (the gear, top right) is grouped into Data, Dashboard, Notes & People, AI and About; the bar at the top jumps to each. **Connect An AI App** (under AI) shows how to use the same data from an AI app on your computer (any app that supports MCP); Settings opens before an export is loaded.
 
 The page header shows the date the KPIs are calculated for (the export date). If the Settings gear shows a red or yellow dot, open Settings: the **Data Check** card lists the SAP rows with unreadable dates (for example a year typed as 0202 or 2626) and other problems; fix those in SAP and re-export.
 
