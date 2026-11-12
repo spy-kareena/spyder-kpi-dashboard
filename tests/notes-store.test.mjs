@@ -131,6 +131,22 @@ test('manual shipment status (2v4): status, statusDate and note are kept, checke
   assert.equal((await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '', number: '1', note: 'x'.repeat(200), status: 'shipped', statusDate: '2026-02-28', at: T(5) } } } })).status, 200);
 });
 
+test('Priority tick (2v6.9): pr:<number> keeps priority true or false, merged by time; anything else is refused', async () => {
+  const env = { REPORT_STORE: kv() };
+  const key = 'pr:770012345678';
+  let res = await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '600', number: '770012345678', priority: true, by: 'Pat', at: T(1) } } } });
+  assert.equal(res.status, 200);
+  assert.deepEqual((await stored(env)).shipments[key], { order: '600', number: '770012345678', priority: true, by: 'Pat', at: T(1) });
+  // An untick is stored (false), so it reaches every browser; an older tick does not undo it.
+  await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '600', number: '770012345678', priority: false, by: 'Sam', at: T(3) } } } });
+  await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '600', number: '770012345678', priority: true, by: 'Pat', at: T(2) } } } });
+  assert.deepEqual((await stored(env)).shipments[key], { order: '600', number: '770012345678', priority: false, by: 'Sam', at: T(3) });
+  for (const bad of [{ priority: 'yes' }, { priority: 1 }, { priority: null }]) {
+    const r = await call({ method: 'PATCH', env, body: { shipments: { [key]: { order: '', number: '1', ...bad, at: T(5) } } } });
+    assert.equal(r.status, 400, JSON.stringify(bad));
+  }
+});
+
 test('only the dashboard page itself can change the notes', async () => {
   const env = { REPORT_STORE: kv() };
   const body = { rows: { [KEY_A]: { notes: 'x', at: T(1) } } };

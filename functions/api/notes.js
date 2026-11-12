@@ -17,10 +17,12 @@
  * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause, deleted flag or
  * kitClean tick records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
  * dropped on every save). When storage runs full (2 MB), the entries edited longest ago go (`pruned` in the reply).
- * Shipment entry: {order, number, carrier?, status?, statusDate?, note?, deleted?, by, at}. A tracking number added by
- * hand is keyed by the number; the manual delivery status someone set on the Shipping page is keyed 'st:<number>'
- * (status 'shipped' | 'transit' | 'delayed' | 'delivered' | '' for none, statusDate YYYY-MM-DD or '', note up to 200
- * characters). Nothing here talks to a carrier: people check the carrier's page and type what they saw.
+ * Shipment entry: {order, number, carrier?, status?, statusDate?, note?, priority?, deleted?, by, at}. A tracking number
+ * added by hand is keyed by the number; the manual delivery status someone set on the Shipping page is keyed
+ * 'st:<number>' (status 'shipped' | 'transit' | 'delayed' | 'delivered' | '' for none, statusDate YYYY-MM-DD or '', note
+ * up to 200 characters); the Priority tick (2v6.9) is keyed 'pr:<number>' (priority true or false, both stored so an
+ * untick reaches every browser). Nothing here talks to a carrier: people check the carrier's page and type what they
+ * saw.
  * One KV read per page open and one KV write per batch of edits (the page waits 800 ms after the last change to a
  * line, and at least 1.1 s between PATCHes). GET hands back the stored text without parsing it (every entry was
  * checked before it was saved), so a page open costs almost no CPU whatever the size; only a PATCH reads and
@@ -199,6 +201,7 @@ function shipmentEntry(raw) {
   if (raw.status !== undefined) { if (!SHIP_STATUSES.has(raw.status)) return { error: 'Shipment status must be shipped, transit, delayed, delivered or blank.' }; entry.status = raw.status; }
   if (raw.statusDate !== undefined) { if (raw.statusDate !== '' && !(typeof raw.statusDate === 'string' && DATE_RE.test(raw.statusDate))) return { error: 'Status date must be YYYY-MM-DD or blank.' }; entry.statusDate = raw.statusDate; }
   if (raw.note !== undefined) { if (!text(raw.note, SHIP_NOTE_MAX)) return { error: `A shipment note must be text of at most ${SHIP_NOTE_MAX} characters.` }; entry.note = raw.note; }
+  if (raw.priority !== undefined) { if (typeof raw.priority !== 'boolean') return { error: 'priority must be true or false.' }; entry.priority = raw.priority; }
   if (raw.deleted !== undefined) { if (typeof raw.deleted !== 'boolean') return { error: 'deleted must be true or false.' }; if (raw.deleted) entry.deleted = true; }
   return { ...entry, by: head.by, at: head.at };
 }

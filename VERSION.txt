@@ -250,3 +250,11 @@ the Settings choice are gone. The FedEx code and its secrets are removed; new se
 Pages). Tests: tests/aftership.test.mjs (replaces the FedEx tests), shipping-api, shipping-worker and shipping-page.
 
 2v6.8 (settings): Settings grouped into Data, Dashboard, Notes & People, AI and About, with a category bar.
+
+2v6.9 (shipping): the map card spans the page and fades out on its right, with five smaller status cards over that
+part (stacked above the map below 981px). "No update in 2+ days" is now Not delivered (its fact line keeps the 2+ day
+count); new Priority card with Delivered / Undelivered, from a new Priority tick column (shared through /api/notes as
+pr:<number>, read-only in snapshots, sortable). Rows get a state icon and a quiet "Last location"; the per-row
+"Updated ... ago" is gone: "Updated · next" moved to the Shipments title row with Update all (POST /api/shipping,
+10-minute limit message). Shipments 10 a page, Cross-border and Delayed 5 a page, with page numbers. Tests:
+shipping-page, notes-store.

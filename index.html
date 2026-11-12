@@ -3987,6 +3987,116 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 @media (max-width:640px){.shp-line{grid-template-columns:minmax(0,1fr)}}
 @media (forced-colors:active){a.dz-btn.shp-open{border:1px solid LinkText;color:LinkText}}
 /* 2v8:end ship */
+/* 2v9:ship */
+/* Shipping (2v6.9). The map card spans the page from 981px; the map runs to its right edge and fades out there like at
+   its top and bottom (the same mask on the map, so the card shows through), and the five status cards sit small over
+   the faded part (--pw wide, set with the map's view so no dot or arc falls under them). Below 981px the cards stack
+   above the map, two a row, Priority across both. The Priority card has Delivered / Undelivered on its right (like PO
+   At Risk's owners). Shipments rows: a state icon before the number, the Priority tick (Kit Clean?'s look, in indigo,
+   a short pop when ticked), "Last location" under the progress bar. The pager under each list; Update all by the count. */
+@media screen and (min-width:981px){
+  .shp-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"map"}
+  .shp-top>.shp-map{grid-area:map}
+  .shp-top>.shp-tiles{grid-area:map;z-index:4;justify-self:end;align-self:stretch;width:var(--pw,340px);margin:14px 14px 14px 0;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px}
+  .shp-top .shp-map-head{padding-right:calc(var(--pw,340px) + 40px)}
+  .shp-top .shp-map-foot{margin-right:calc(var(--pw,340px) + 40px)}
+  .shp-top .shp-map-stage.wide{width:100%;margin-left:0;margin-right:0}
+  .shp-top .shp-map-stage.wide .shp-map-svg{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent),linear-gradient(to right,#000 var(--fa,70%),transparent var(--fb,92%));-webkit-mask-composite:source-in;mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent),linear-gradient(to right,#000 var(--fa,70%),transparent var(--fb,92%));mask-composite:intersect}
+  .shp-top .shp-tile{padding:12px 14px;border-radius:18px}
+  .shp-top .shp-tile-l{font-size:12.5px;gap:6px}
+  .shp-top .shp-tile-l i{width:7px;height:7px}
+  .shp-top .shp-tile-v{font-size:26px;line-height:1;padding-top:6px}
+  .shp-top .shp-tile-facts{margin-top:5px}
+  .shp-top .shp-tile-s{font-size:12px}
+}
+.shp-top .shp-tile.shp-pri{grid-column:1/-1;position:relative;flex-direction:row;align-items:stretch;cursor:default}
+.shp-pri-main{appearance:none;display:flex;flex-direction:column;align-items:flex-start;flex:1 1 0;min-width:0;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.shp-pri-main::after{content:"";position:absolute;inset:0;border-radius:inherit}
+.shp-pri-main:focus-visible{outline:none}
+.shp-tile.shp-pri:has(.shp-pri-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
+.shp-pri-side{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:center;flex:1 1 0;min-width:0;margin:-2px 0 -2px 14px;padding-left:14px;border-left:1px solid var(--dz-line-8);font-size:12.5px;line-height:1.3}
+.shp-pri-row{appearance:none;display:flex;align-items:baseline;gap:6px;width:calc(100% + 12px);min-width:0;margin:0 -6px;padding:3px 6px;border:0;border-radius:8px;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:background-color .16s ease}
+.shp-pri-row+.shp-pri-row{margin-top:2px}
+.shp-pri-row:hover{background:var(--dz-hover)}
+.shp-pri-row.on{background:var(--dz-indigo-bg)}
+.shp-pri-row.on .shp-pri-name{color:var(--dz-ink-1);font-weight:600}
+.shp-pri-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.shp-pri-name{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-2)}
+.shp-pri-lead{flex:1 1 10px;min-width:10px;border-bottom:1px dotted var(--dz-ink-6);opacity:.8;transform:translateY(-3px)}
+.shp-pri-n{flex:none;min-width:2ch;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dz-ink-3)}
+.shp-pri-n.done{color:var(--dz-teal)}
+.shp-pri-n.open{color:var(--dz-amber-text)}
+/* Shipments: Tracking (icon + number), Order, Progress, ETA, Priority, the tracking-page link */
+.shp-table{--cols:186px minmax(0,1fr) minmax(0,1.15fr) 112px 56px 30px}
+@media (min-width:641px){
+  .shp-head{grid-template-columns:186px minmax(0,1fr) minmax(0,1.15fr) 112px}
+  .shp-line{grid-template-columns:minmax(0,1fr) 56px 30px}
+}
+.shp-th-pri{text-align:center}
+.shp-trk{display:flex;align-items:flex-start;gap:8px}
+.shp-trk-t{display:block;min-width:0}
+.shp-ico{flex:none;display:grid;place-items:center;width:22px;height:22px;margin-top:-2px;border-radius:50%;background:color-mix(in srgb,currentColor 11%,transparent)}
+.shp-ico svg{display:block;width:12px;height:12px}
+.shp-ico.go{color:var(--dz-indigo)}
+.shp-ico.late{color:var(--dz-risk)}
+.shp-ico.done{color:var(--dz-teal)}
+.shp-ico.none{color:var(--dz-ink-5)}
+.shp-loc{display:block;margin-top:3px;font-size:11.5px;line-height:1.3;color:var(--dz-ink-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shp-pri-cell{display:flex;justify-content:center;align-items:center}
+.shp-pri-check .kit-box{color:#fff;transition-duration:.18s}
+.shp-pri-check .kit-box svg{transition:stroke-dashoffset .2s ease .04s}
+.shp-pri-check:hover .kit-box{border-color:var(--dz-indigo);box-shadow:0 0 0 4px color-mix(in srgb,var(--dz-indigo) 12%,transparent)}
+.shp-pri-check .kit-cb:checked+.kit-box{border-color:var(--dz-indigo);background:var(--dz-indigo)}
+.shp-pri-check:hover .kit-cb:checked+.kit-box{box-shadow:0 0 0 4px color-mix(in srgb,var(--dz-indigo) 18%,transparent)}
+.shp-pri-check:hover .kit-cb:disabled:checked+.kit-box{border-color:var(--dz-indigo)}
+.shp-pri-check .kit-box.shp-pop{animation:shpPriPop .22s cubic-bezier(.3,1.6,.5,1)}
+@keyframes shpPriPop{0%{transform:scale(.72)}100%{transform:scale(1)}}
+.shp-row{transition:opacity .2s ease}
+.shp-row.shp-left{opacity:.45}
+/* The title row: "N shipments · Updated 8:04 PM · next 10:00 PM" and Update all */
+.shp-ships>.dz-card-head{align-items:center}
+.shp-ships>.dz-card-head .dz-meta{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:6px 0}
+.shp-upd::before{content:"·";margin:0 7px}
+.dz-btn.shp-updall{height:30px;margin-left:12px;padding:0 12px;gap:6px;font-size:12.5px}
+.dz-btn.shp-updall svg{display:block;flex:none;width:14px;height:14px}
+.dz-btn.shp-updall.busy{cursor:progress;opacity:.75}
+.dz-btn.shp-updall.busy svg{animation:shpSpin .9s linear infinite}
+@keyframes shpSpin{to{transform:rotate(360deg)}}
+/* Pager: quiet page numbers, the current one a filled indigo pill */
+.shp-pager{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px;margin-top:12px}
+.shp-side-card .shp-pager{margin-top:10px}
+.shp-pg{min-width:28px;height:28px;padding:0 8px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:12.5px;font-weight:500;line-height:28px;color:var(--dz-ink-3);font-variant-numeric:tabular-nums;cursor:pointer;transition:background-color .15s ease,color .15s ease}
+.shp-pg:hover{background:var(--dz-hover);color:var(--dz-ink-1)}
+.shp-pg.on,.shp-pg.on:hover{background:var(--dz-indigo);color:#fff}
+.shp-pg.arrow{font-size:17px;color:var(--dz-ink-4)}
+.shp-pg[aria-disabled="true"],.shp-pg[aria-disabled="true"]:hover{opacity:.35;background:transparent;cursor:default}
+.shp-pg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.shp-pg-gap{min-width:16px;text-align:center;font-size:12.5px;color:var(--dz-ink-5)}
+@media (max-width:980px){
+  .shp-top>.shp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:640px){
+  .shp-pri-cell{position:absolute;right:38px;top:9px}
+  .shp-pri-cell .kit-check{margin:0}
+  .dz-btn.shp-updall{margin-left:0}
+  .shp-pri-side{margin-left:12px;padding-left:12px}
+  .shp-ships>.dz-card-head .dz-meta{justify-content:flex-start}
+  .shp-pg{min-width:32px;height:32px;line-height:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  .shp-pri-check .kit-box svg,.shp-pri-row,.shp-pg,.shp-row{transition:none}
+  .shp-pri-check .kit-box.shp-pop,.dz-btn.shp-updall.busy svg{animation:none}
+}
+@media screen{
+  [data-theme=dark] .shp-pg.on,[data-theme=dark] .shp-pg.on:hover{color:var(--dz-on-ink)}
+}
+@media print{
+  .shp-top>.shp-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .shp-top .shp-tile.shp-pri{grid-column:span 2}
+  .shp-pri-cell .kit-print{font-size:11px;color:var(--dz-ink-3)}
+}
+@media (forced-colors:active){.shp-pg.on{border:1px solid Highlight}}
+/* 2v9:end ship */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -14113,12 +14223,13 @@ function sharedRowEntry(e){
   return out;
 }
 // Manual delivery status (2v4, Shipping page): status 'shipped'|'transit'|'delayed'|'delivered'|'', statusDate
-// YYYY-MM-DD, note up to 200 characters; the same rules as functions/api/notes.js.
+// YYYY-MM-DD, note up to 200 characters; 2v6.9 priority true|false (the Priority tick, id 'pr:<number>'); the same
+// rules as functions/api/notes.js.
 const SHIPMENT_STATUSES=['','shipped','transit','delayed','delivered'];
 function sharedShipmentEntry(e){
   const status=SHIPMENT_STATUSES.includes(e.status)?e.status:undefined;
   const statusDate=typeof e.statusDate==='string'&&/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(e.statusDate)?e.statusDate:(e.statusDate!==undefined?'':undefined);
-  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(status!==undefined?{status}:{}),...(statusDate!==undefined?{statusDate}:{}),...(e.note!==undefined?{note:cleanNoteText(e.note,200)}:{}),...(e.deleted?{deleted:true}:{}),by:cleanEditorTag(e.by),at:noteTime(e)?e.at:noteNowIso()};
+  return {order:cleanNoteText(e.order,40),number:cleanNoteText(e.number,60).trim(),...(e.carrier?{carrier:cleanNoteText(e.carrier,40)}:{}),...(status!==undefined?{status}:{}),...(statusDate!==undefined?{statusDate}:{}),...(e.note!==undefined?{note:cleanNoteText(e.note,200)}:{}),...(typeof e.priority==='boolean'?{priority:e.priority}:{}),...(e.deleted?{deleted:true}:{}),by:cleanEditorTag(e.by),at:noteTime(e)?e.at:noteNowIso()};
 }
 // An entry that came from the server, as this page keeps it.
 function localRowEntry(e){
@@ -14707,6 +14818,8 @@ const DZ_ICON_PATHS={
   cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2"/>',
   target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
   layers:'<path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M2 13l10 5 10-5"/>',
+  flag:'<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>',
+  refresh:'<path d="M20 12a8 8 0 1 1-2.35-5.65"/><path d="M20 4v5h-5"/>',
   check:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
   gauge:'<path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/>',
   award:'<circle cx="12" cy="9" r="6"/><path d="M9 14l-2 7 5-3 5 3-2-7"/>',
@@ -15707,7 +15820,7 @@ function rememberBigPicture(tab,on){
 // Delayed / Delivered, a date and a short note) for numbers AfterShip cannot track; a newer AfterShip status wins.
 // Hand-set statuses are saved in the shared notes store (sharedNotesPatchShipments, id 'st:<number>'), so everyone who
 // signs in sees them; on a static host or a file they stay in this browser (localStorage spyderKpiShipmentsV1). The
-// page cards (in transit, delayed, delivered this week, no update in 2+ days) and the progress strip come from those
+// page cards (in transit, delayed, delivered this week, not delivered; 2v6.9 priority) and the progress strip come from those
 // statuses. Each row has an icon that opens AfterShip's public tracking page. See docs/SHIPPING.md.
 (NAV_GROUPS.find(g=>g[0]==='Sales')||NAV_GROUPS[0])[1].push(['shipping','Shipping',PAGE_TIPS.shipping]);
 PAGE_TITLES.shipping='Shipping';
@@ -15716,11 +15829,13 @@ const SHIP_STAGES=[['shipped','Shipped'],['transit','In transit'],['delivered','
 const SHIP_STATUS_OPTIONS=['shipped','transit','delayed','delivered'];
 const SHIP_STATUS_TEXT={shipped:'Shipped',transit:'In transit',delayed:'Delayed',delivered:'Delivered'};
 const SHIP_STATUS_PREFIX='st:';    // shared-store id of a shipment's manual status: 'st:<tracking number>'
+const SHIP_PRIORITY_PREFIX='pr:';  // 2v6.9: shared-store id of a shipment's Priority tick: 'pr:<tracking number>'
 const SHIP_WINDOW_DAYS=30;         // deliveries shipped this many days before the export date are listed
 const SHIP_MANUAL_DAYS=45;         // numbers added by hand are listed this long
 const SHIP_STALE_DAYS=2;           // not delivered and no AfterShip or hand update for this many days -> "No update in 2+ days"
 const SHIP_HOME_COUNTRY='CA';      // shipments leave Canada
-const SHIP_LIST_LIMIT=40;
+// 2v6.9: rows per page (Shipments table, Cross-border and Delayed lists); print shows every row.
+const SHP_PAGE_SIZE={list:10,cross:5,delayed:5};
 const SHIP_DAY=24*60*60*1000;
 const SHIPPING_LOCAL_KEY='spyderKpiShipmentsV1'; // the shared notes store's own copy in this browser
 const shipTrackUrl=n=>`https://www.aftership.com/track/${encodeURIComponent(n)}`;
@@ -15737,7 +15852,10 @@ let shipCarrierSel='',shipCustomerSel='',shipDestSel='',shipQuery='',shipAddOpen
 // 2v6.5: the Shipments table's Status filter ('' = all, a SHIP_STATUS_OPTIONS key, or 'none' = not checked) and its
 // column sort ('' = the default order of shippingSortedList; 1 = ascending, -1 = descending).
 let shipStatusSel='',shipSortCol='',shipSortDir=1;
-function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';shipStatusSel='';shipSortCol='';shipSortDir=1;}
+// 2v6.9: the page each list shows (1-based); sig is the filters, sort and search they were paged for (a change starts
+// every list at page 1 again).
+let shpPg={sig:'',sigSide:'',list:1,cross:1,delayed:1};
+function shipResetView(){shipCarrierSel='';shipCustomerSel='';shipDestSel='';shipQuery='';shipStatusSel='';shipSortCol='';shipSortDir=1;shpPg={sig:'',sigSide:'',list:1,cross:1,delayed:1};}
 
 // Same rules as cleanTrackingNumber / splitTrackingNumbers in shared/aftership.mjs.
 // At least one digit: words typed into TrackNo ("Customer Pickup", "Will Call") are not tracking numbers.
@@ -15809,10 +15927,11 @@ function shippingManualRaw(){
   try{return JSON.parse(localStorage.getItem(SHIPPING_LOCAL_KEY)||'{}')||{};}catch(e){return {};}
 }
 const shipIsStatusKey=k=>String(k).startsWith(SHIP_STATUS_PREFIX);
+const shipIsPriorityKey=k=>String(k).startsWith(SHIP_PRIORITY_PREFIX);
 // {number, order, by, at} for each hand-added number still listed, newest first; the newest entry per number wins.
 function shippingManualEntries(){
   const raw=shippingManualRaw();
-  const list=Array.isArray(raw)?raw.filter(e=>e&&e.status===undefined):Object.entries(raw).filter(([k])=>!shipIsStatusKey(k)).map(([k,e])=>({number:k,...(e&&typeof e==='object'?e:{})}));
+  const list=Array.isArray(raw)?raw.filter(e=>e&&e.status===undefined):Object.entries(raw).filter(([k])=>!shipIsStatusKey(k)&&!shipIsPriorityKey(k)).map(([k,e])=>({number:k,...(e&&typeof e==='object'?e:{})}));
   const seen=new Map();
   for(const e of list){
     const number=shipClean(e&&e.number);
@@ -15833,6 +15952,19 @@ function shippingStatusEntries(){
     const number=shipClean(k.slice(SHIP_STATUS_PREFIX.length));
     if(!number||!SHIP_STATUS_OPTIONS.includes(e.status))continue;
     out.set(number,{status:e.status,statusDate:SHIP_DATE_RE.test(String(e.statusDate||''))?e.statusDate:'',note:String(e.note||'').slice(0,200),by:String(e.by||'').slice(0,40),at:String(e.at||'')});
+  }
+  return out;
+}
+// 2v6.9 Priority ticks: Map number -> {on, by, at}, from the 'pr:<number>' entries (the newest one counts; an untick
+// is saved as priority:false so it reaches every browser).
+function shippingPriorityEntries(){
+  const raw=shippingManualRaw();
+  const out=new Map();
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))return out;
+  for(const [k,e] of Object.entries(raw)){
+    if(!shipIsPriorityKey(k)||!e||typeof e!=='object'||e.deleted)continue;
+    const number=shipClean(k.slice(SHIP_PRIORITY_PREFIX.length));
+    if(number)out.set(number,{on:e.priority===true,by:String(e.by||'').slice(0,40),at:String(e.at||'')});
   }
   return out;
 }
@@ -16009,19 +16141,22 @@ function shippingRealList(now=Date.now()){
     all.set(e.number,{number:e.number,source:'manual',manual:e,rows:rows.filter(isOrderLineRow),orders:new Set(e.order?[e.order]:[]),deliveries:new Set(),names:new Set(rows.map(r=>r.name).filter(Boolean)),shipMethod:'',country:String((rows.find(r=>r.shipToCountry)||{}).shipToCountry||''),shipDate:null,value:0});
   }
   const marks=shippingStatusEntries();
+  const prio=shippingPriorityEntries();
   const as=shpAsStatuses();
-  return [...all.values()].map(s=>shippingDecorate(s,marks.get(s.number)||null,now,Object.prototype.hasOwnProperty.call(as,s.number)?as[s.number]:null));
+  return [...all.values()].map(s=>{
+    const d=shippingDecorate(s,marks.get(s.number)||null,now,Object.prototype.hasOwnProperty.call(as,s.number)?as[s.number]:null);
+    const p=prio.get(s.number);
+    d.priority=!!(p&&p.on);
+    d.priorityBy=p?p.by:'';
+    d.priorityAt=p?p.at:'';
+    return d;
+  });
 }
 function shippingModel(){
   const now=Date.now();
   const list=shippingRealList(now);
   const {weekStart,weekEnd}=shippingWeek(now);
-  const groups={
-    transit:list.filter(s=>s.status==='shipped'||s.status==='transit'),
-    delayed:list.filter(s=>s.status==='delayed'),
-    delivered:list.filter(s=>s.status==='delivered'&&s.deliveredDate&&s.deliveredDate>=weekStart&&s.deliveredDate<weekEnd),
-    stale:list.filter(s=>s.stale),
-  };
+  const groups=shpGroupsOf(list,weekStart,weekEnd);
   return {list,groups,today:reportToday(),weekStart,cross:list.filter(s=>s.crossBorder),exportCount:list.filter(s=>s.source==='export').length,manualCount:list.filter(s=>s.manual).length};
 }
 // Called on every redraw: a newly loaded report resets this page's view.
@@ -16050,8 +16185,10 @@ function openShipment(number){
   shippingFilter='';
   shipDestSel='';shipQuery='';shipStatusSel='';
   shippingExpanded.add(n);
+  // The Shipments table shows the page the shipment is on.
   const i=shpSortList(shipFilteredList(shippingModel().list)).findIndex(s=>s.number===n);
-  if(i>=SHIP_LIST_LIMIT)tableMore={...tableMore,'ship-list':true};
+  shpPageSync();
+  if(i>=0)shpPg.list=Math.floor(i/SHP_PAGE_SIZE.list)+1;
   renderResults();
   shpOpenList();
   const head=document.querySelector(`[data-focus-key="ship-${n}"]`);
@@ -16087,7 +16224,7 @@ const SHP_AS_EVERY_MS=2*3600000;  // schedule '0 */2 * * *' (shared/aftership.mj
 const SHP_AS_FRESH_MS=5*60000;    // a re-read at most this often (page open, tab back in view)
 const SHP_AS_AFTER_MS=3*60000;    // re-read this long after each scheduled check, so its results are in
 // state: '' not read yet, 'off' no /api/shipping here, 'ok' read. sent: the last list sent (PUT).
-let shpAs={data:null,at:0,loading:false,state:'',timer:null,sent:'',sendTimer:null,sig:''};
+let shpAs={data:null,at:0,loading:false,state:'',timer:null,sent:'',sendTimer:null,sig:'',refreshing:false};
 function shpAsStatuses(){
   if(isSnapshotView)return shippingState.snapshotAs&&shippingState.snapshotAs.statuses||{};
   const d=shpAs.data;
@@ -16291,19 +16428,36 @@ function shipDotTip(p,selected){
   const who=names.length?` · ${names.slice(0,3).join(', ')}${names.length>3?` +${names.length-3}`:''}`:'';
   return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')} (${parts})${who}; ${selected?'click to show all destinations.':'click to list only these.'}`;
 }
-// How wide the map is drawn, for its label placer (the CSS in 2v7:pages and 2v7:e): the map card is the right half of
-// the page from 981px (the tiles take the left half), the full width below; its stage is the card's width, at most 420px tall
-// on a wide screen, and zoomed past the card (--zoom) on a phone (640px or less). Printing draws it full width.
+// How wide the map is drawn, for its label placer (the CSS in 2v7:pages, 2v7:e and 2v9:ship). 2v6.9: the map card
+// spans the page; from 981px its stage is the card's full width (shpMapLayout) with the small status cards over its
+// right part, where the map fades out. Below 981px the card is full width too, its stage at most 420px tall, and
+// zoomed past the card (--zoom) on a phone (640px or less). Printing draws it full width.
 // shpMapScale -> rendered pixels per map unit for a view box vw x vh.
 let shpMapDrawn=null,shpMapTimer=null;
 function shpMapPhone(){return !printMode&&typeof innerWidth==='number'&&innerWidth>0&&innerWidth<=640;}
-function shpMapScale(vw,vh,zoom=1){
+function shpMapCol(){
   const vpw=typeof innerWidth==='number'&&innerWidth>0?innerWidth:1440;
   let col=0;
   try{const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('results-screen'):null;col=el&&el.clientWidth>0?el.clientWidth:0;}catch(err){col=0;}
   if(printMode)col=700;
   else if(!col)col=vpw-(vpw<=640?32:64);
-  const card=(!printMode&&vpw>980?(col-16)/2:col)-2;
+  return col;
+}
+// The wide layout (981px and up, not printing), in pixels: w the stage (the card's inner width), h its height, pw the
+// width of the status cards laid over its right edge (14px in), a the width on the left where the dots and arcs go (the
+// map fades out from there to under the cards). null below 981px or when printing.
+function shpMapLayout(){
+  const vpw=typeof innerWidth==='number'&&innerWidth>0?innerWidth:1440;
+  if(printMode||vpw<=980)return null;
+  const w=Math.max(600,Math.round(shpMapCol()-2));
+  const pw=Math.round(Math.max(320,Math.min(380,w*.28)));
+  const h=Math.round(Math.max(360,Math.min(430,w*.3)));
+  return {w,h,pw,a:w-pw-14-56};
+}
+function shpMapScale(vw,vh,zoom=1){
+  const lay=shpMapLayout();
+  if(lay)return Math.max(.2,lay.w/vw);
+  const card=shpMapCol()-2;
   const stage=shpMapPhone()?card*zoom:Math.min(card,420*vw/vh);
   return Math.max(.2,stage/vw);
 }
@@ -16314,8 +16468,11 @@ function shpMapRefit(){
   shpMapTimer=setTimeout(()=>{
     const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('results-screen'):null;
     if(printMode||activeTab!=='shipping'||!shpMapDrawn||!el||el.style.display!=='block'||!el.querySelector('.shp-map'))return;
-    const {vw,vh,zoom,k}=shpMapDrawn;
-    if(Math.abs(shpMapScale(vw,vh,zoom)-k)/k>.12)renderResults();
+    const {vw,vh,zoom,k,w}=shpMapDrawn;
+    const lay=shpMapLayout();
+    // The wide layout is drawn for one card width (the dots keep clear of the cards over the map): a small change
+    // is enough to draw it again.
+    if(!!lay!==!!w||(lay&&Math.abs(lay.w-w)/w>.03)||Math.abs(shpMapScale(vw,vh,zoom)-k)/k>.12)renderResults();
   },300);
 }
 if(typeof addEventListener==='function')addEventListener('resize',shpMapRefit);
@@ -16332,6 +16489,16 @@ function renderShipMap(list){
   const cy=(Math.min(...pts.map(q=>q[1]))+Math.max(...pts.map(q=>q[1])))/2;
   let x0=cx-SHIP_MAP.W/2,x1=cx+SHIP_MAP.W/2,y0=cy-SHIP_MAP.H/2,y1=cy+SHIP_MAP.H/2;
   for(const {xy} of dots){x0=Math.min(x0,xy[0]-40);x1=Math.max(x1,xy[0]+40);y0=Math.min(y0,xy[1]-40);y1=Math.max(y1,xy[1]+40);}
+  // 2v6.9 wide layout: the same view, fitted into the left part of a stage as wide as the card (centred there), the
+  // stage running on to the right under the status cards, where the map fades out (--fa to --fb).
+  const lay=shpMapLayout();
+  let fade='';
+  if(lay){
+    const ccx=(x0+x1)/2,ccy=(y0+y1)/2,kk=Math.min(lay.a/(x1-x0),lay.h/(y1-y0));
+    x0=ccx-lay.a/2/kk;x1=x0+lay.w/kk;
+    y0=ccy-lay.h/2/kk;y1=y0+lay.h/kk;
+    fade=`;--fa:${(lay.a/lay.w*100).toFixed(2)}%;--fb:${((lay.w-lay.pw*.3)/lay.w*100).toFixed(2)}%`;
+  }
   const vw=x1-x0,vh=y1-y0;
   const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;
   // On a phone the stage is wider than the card (zoomed up to 2.2x, centred on the hub and the dots) so the dots
@@ -16345,10 +16512,11 @@ function renderShipMap(list){
   // pixels while the stage scales, so the placer works in map units of u = 1 / (pixels per map unit) at the width the
   // map will be drawn (shpMapScale), and keeps each label inside the part of the stage that shows.
   const scale=shpMapScale(vw,vh,zoom);
-  shpMapDrawn={vw,vh,zoom,k:scale};
+  shpMapDrawn={vw,vh,zoom,k:scale,w:lay?lay.w:0};
   const u=1/scale;
   const phone=shpMapPhone();
-  const vx0=phone?x0+(-shift/zoom)*vw:x0,vx1=phone?x0+((1-shift)/zoom)*vw:x1;
+  // Labels stay left of the cards on a wide screen (a little into the fade at most).
+  const vx0=phone?x0+(-shift/zoom)*vw:x0,vx1=phone?x0+((1-shift)/zoom)*vw:lay?x0+(lay.a+40)*u:x1;
   const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u]];
   const inside=r=>r[0]>=vx0+2*u&&r[0]+r[2]<=vx1-2*u&&r[1]>=y0+2*u&&r[1]+r[3]<=y1-2*u;
   const free=r=>inside(r)&&!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
@@ -16384,7 +16552,7 @@ function renderShipMap(list){
   const foot=noPlace?`<div class="shp-map-foot">${noPlace}</div>`:'';
   return `<section class="dz-card shp-map" aria-label="Where orders are headed">
     <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div>${legend}</div>
-    <div class="shp-map-stage" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%">
+    <div class="shp-map-stage${lay?' wide':''}" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%${fade}">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
         <g class="shp-routes">${routes}</g>
@@ -16399,29 +16567,60 @@ function renderShipMap(list){
 }
 
 // --- Page pieces ---
-// "Updated 10:00 · next 12:00" while AfterShip statuses come in (no next time in a snapshot or once checks have
-// stopped), else how many shipments are listed.
+// The page head: how many shipments are listed. 2v6.9: when AfterShip was read moved to the Shipments card's title
+// row (shpAsUpdatedText), next to its count and Update all.
 function shippingHeadMeta(){
-  const at=shpAsOn()?Date.parse(shpAsPolledAt()):NaN;
-  if(isFinite(at)){
-    const now=Date.now();
-    const when=new Date(at);
-    const label=shipYmd(when)===shipYmd(now)?shipClock(when):shipTimeLabel(when.toISOString());
-    const next=!isSnapshotView&&now-at<6*3600000?` · next ${shipClock(new Date(shpAsNextCheck(now)))}`:'';
-    return `Updated ${label}${next}`;
-  }
   return shipPlural(shippingModel().list.length,'shipment','shipments');
+}
+// "Updated 10:00 AM · next 12:00 PM" while AfterShip statuses come in (no next time in a snapshot or once checks have
+// stopped), else ''.
+function shpAsUpdatedText(){
+  const at=shpAsOn()?Date.parse(shpAsPolledAt()):NaN;
+  if(!isFinite(at))return '';
+  const now=Date.now();
+  const when=new Date(at);
+  const label=shipYmd(when)===shipYmd(now)?shipClock(when):shipTimeLabel(when.toISOString());
+  const next=!isSnapshotView&&now-at<6*3600000?` · next ${shipClock(new Date(shpAsNextCheck(now)))}`:'';
+  return `Updated ${label}${next}`;
+}
+// 2v6.9 Update all: asks AfterShip about every shipment now (POST /api/shipping, "refresh now": once per 10 minutes
+// for the whole site), then reads the results again and redraws. Only where this site has the AfterShip key.
+function shpAsCanRefresh(){return !isSnapshotView&&shippingApiPossible()&&!!(shpAs.data&&shpAs.data.configured);}
+function renderShipUpdateAll(){
+  if(!shpAsCanRefresh())return '';
+  const busy=!!shpAs.refreshing;
+  return `<button type="button" class="dz-btn shp-updall${busy?' busy':''}" data-focus-key="ship-update-all" onclick="shpAsRefreshAll()"${busy?' aria-busy="true" aria-disabled="true"':''}${tipAttr(busy?'Asking AfterShip about every shipment now.':'Ask AfterShip about every shipment now (once every 10 minutes for the whole site).')}>${dzIconSvg('refresh')}<span>${busy?'Updating…':'Update all'}</span></button>`;
+}
+function shpAsRefreshAll(){
+  if(shpAs.refreshing||!shpAsCanRefresh())return;
+  shpAs.refreshing=true;
+  renderResults();
+  const fail='The update did not go through. Try again in a minute.';
+  let req;
+  try{req=fetch('/api/shipping',{method:'POST',headers:{accept:'application/json'},cache:'no-store',credentials:'same-origin'});}catch(e){req=Promise.reject(e);}
+  Promise.resolve(req)
+    .then(r=>Promise.resolve(r&&typeof r.json==='function'?r.json():null).catch(()=>null).then(d=>{
+      if(r&&r.status===429){
+        const t=Date.parse(d&&d.refreshAfter||'');
+        return {msg:`Updated less than 10 minutes ago, try again at ${shipClock(new Date(isFinite(t)?t:Date.now()+10*60000))}.`};
+      }
+      if(!r||!r.ok)return {msg:String(d&&d.error||fail).slice(0,200)};
+      return {ok:true};
+    }),()=>({msg:fail}))
+    .then(({ok,msg})=>{
+      shpAs.refreshing=false;
+      // Read the results again; the redraw also ends the busy state.
+      shpAs.sig='';
+      shpAsLoad(true);
+      if(!shpAs.loading&&activeTab==='shipping')renderResults();
+      const text=ok?'Every shipment updated from AfterShip.':msg;
+      if(typeof showToast==='function')showToast(text);else if(typeof announce==='function')announce(text);
+    });
 }
 function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'No status';}
 function shipLateText(days){
   if(days===null||days===undefined)return '';
   return days>0?`${shipPlural(days,'day','days')} late`:days<0?`${shipPlural(-days,'day','days')} early`:'on time';
-}
-// The line under the ETA: delivered date against promised, else when the status last changed.
-function shipCheckedText(s,now=Date.now()){
-  if(s.status==='delivered'&&s.deliveredDate){const late=shipLateText(s.lateDays);return {text:`${shipDateLabel(s.deliveredDate)}${late?` · ${late}`:''}`,tone:s.lateDays>0?'crit-text':s.lateDays!==null?'good-text':''};}
-  if(s.checkedAt===null||s.checkedAt===undefined)return {text:'No update yet',tone:s.stale?'warn-text':''};
-  return {text:`Updated ${shipAgo(now-s.checkedAt)}`,tone:s.stale?'warn-text':''};
 }
 function shipStateLabel(s){return shipStatusLabel(s);}
 // Delayed first, then no update for 2+ days, then the furthest along; delivered last (newest first).
@@ -16436,11 +16635,22 @@ function shipFilteredList(list){
 }
 function shipGroups(list,now=Date.now()){
   const {weekStart,weekEnd}=shippingWeek(now);
+  return shpGroupsOf(list,weekStart,weekEnd);
+}
+// The card groups. 2v6.9: Not delivered (open: every shipment not Delivered, with or without a status) replaces "No
+// update in 2+ days" as a card (stale stays: its count is a fact on that card, and the table's order uses it); Priority
+// (ticked by hand) and its Delivered / Undelivered halves.
+function shpGroupsOf(list,weekStart,weekEnd){
+  const prio=list.filter(s=>s.priority);
   return {
     transit:list.filter(s=>s.status==='shipped'||s.status==='transit'),
     delayed:list.filter(s=>s.status==='delayed'),
     delivered:list.filter(s=>s.status==='delivered'&&s.deliveredDate&&s.deliveredDate>=weekStart&&s.deliveredDate<weekEnd),
+    open:list.filter(s=>s.status!=='delivered'),
     stale:list.filter(s=>s.stale),
+    priority:prio,
+    'prio-done':prio.filter(s=>s.status==='delivered'),
+    'prio-open':prio.filter(s=>s.status!=='delivered'),
   };
 }
 function shipPickCarrier(c){shipCarrierSel=String(c||'');shipDestSel='';renderResults();}
@@ -16465,7 +16675,8 @@ function shpSortList(list){
   const pos=new Map(base.map((s,i)=>[s,i]));
   const txt=(x,y)=>String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'});
   const missing=s=>col==='order'?!s.orders.size:col==='eta'?shpEtaTime(s)===null:false;
-  const cmp=(a,b)=>col==='track'?txt(a.number,b.number)
+  const cmp=(a,b)=>col==='priority'?(b.priority?1:0)-(a.priority?1:0)
+    :col==='track'?txt(a.number,b.number)
     :col==='order'?txt([...a.orders][0],[...b.orders][0])||txt(a.customer||'',b.customer||'')
     :col==='progress'?(SHP_PROGRESS_RANK[a.status||'']??0)-(SHP_PROGRESS_RANK[b.status||'']??0)
     :shpEtaTime(a)-shpEtaTime(b);
@@ -16475,9 +16686,9 @@ function shpSortList(list){
     return (ma?0:cmp(a,b)*dir)||pos.get(a)-pos.get(b);
   });
 }
-// A column title: first click sorts ascending, the next one reverses.
+// A column title: first click sorts ascending (Priority: ticked first), the next one reverses.
 function shpSort(col){
-  if(!['track','order','progress','eta'].includes(col))return;
+  if(!['track','order','progress','eta','priority'].includes(col))return;
   shipSortDir=shipSortCol===col?-shipSortDir:1;
   shipSortCol=col;
   renderResults();
@@ -16500,6 +16711,75 @@ function shpPickDest(key){
   if(shipDestSel)shpOpenList();
 }
 // --- end 2v6.5 r5c ---
+// --- 2v6.9: pages (Shipments 10 a page, Cross-border and Delayed 5) ---
+// A change of the filters, the sort or the search starts the table at page 1; a carrier or customer pick does the same
+// for the two side lists.
+function shpPageSigs(){
+  return {list:JSON.stringify([shipCarrierSel,shipCustomerSel,shipDestSel,shipQuery.trim(),shippingFilter,shipStatusSel,shipSortCol,shipSortDir]),side:JSON.stringify([shipCarrierSel,shipCustomerSel])};
+}
+function shpPageSync(){
+  const g=shpPageSigs();
+  if(g.list!==shpPg.sig)shpPg={...shpPg,sig:g.list,list:1};
+  if(g.side!==shpPg.sigSide)shpPg={...shpPg,sigSide:g.side,cross:1,delayed:1};
+}
+// One page of a list: {rows, page, pages}. Printing shows every row.
+function shpPageOf(id,list){
+  const size=SHP_PAGE_SIZE[id]||10;
+  const pages=Math.max(1,Math.ceil(list.length/size));
+  const page=Math.min(Math.max(1,Math.floor(shpPg[id])||1),pages);
+  shpPg[id]=page;
+  shpPg[`${id}N`]=pages;
+  return printMode?{rows:list,page:1,pages:1}:{rows:list.slice((page-1)*size,page*size),page,pages};
+}
+// The page numbers shown: every one up to 7 pages, else the first, the last and the ones around the current page,
+// with a gap (…) between ("1 … 4 5 6 … 12").
+function shpPageNums(page,pages){
+  if(pages<=7)return Array.from({length:pages},(_,i)=>i+1);
+  let a=page-1,b=page+1;
+  if(page<=3){a=2;b=4;}else if(page>=pages-2){a=pages-3;b=pages-1;}
+  if(a===3)a=2;
+  if(b===pages-2)b=pages-1;
+  const out=[1];
+  if(a>2)out.push('…');
+  for(let p=a;p<=b;p++)out.push(p);
+  if(b<pages-1)out.push('…');
+  out.push(pages);
+  return out;
+}
+// The pager under a list: ‹ 1 2 3 ›, the current page a filled pill; arrow keys step through the pages too. Nothing
+// when there is one page, or when printing.
+function shpPager(id,page,pages,what){
+  if(pages<2||printMode)return '';
+  const arrow=(p,dir,text)=>{
+    const off=p<1||p>pages;
+    return `<button type="button" class="shp-pg arrow" data-focus-key="ship-pg-${id}-${dir}" aria-label="${dir==='prev'?'Previous page':'Next page'}"${off?' aria-disabled="true"':''} onclick="shpGoPage('${id}',${off?page:p})">${text}</button>`;
+  };
+  const nums=shpPageNums(page,pages).map(p=>p==='…'?'<span class="shp-pg-gap" aria-hidden="true">…</span>'
+    :`<button type="button" class="shp-pg${p===page?' on':''}" data-focus-key="ship-pg-${id}-${p}" aria-label="Page ${p} of ${pages}"${p===page?' aria-current="page"':''} onclick="shpGoPage('${id}',${p})">${p}</button>`).join('');
+  return `<nav class="shp-pager print-hide" aria-label="${esc(`${what} pages`)}" onkeydown="shpPagerKey(event,'${id}')">${arrow(page-1,'prev','‹')}${nums}${arrow(page+1,'next','›')}</nav>`;
+}
+function shpGoPage(id,p,focus=false){
+  if(!Object.prototype.hasOwnProperty.call(SHP_PAGE_SIZE,id))return;
+  const n=Math.max(1,Math.floor(+p)||1);
+  if(n===shpPg[id])return;
+  shpPg[id]=n;
+  // The card keeps its place on screen: when its top has scrolled away, it comes back into view.
+  const sel={list:'.shp-ships',cross:'.shp-cross',delayed:'.shp-delayed'}[id];
+  renderResults();
+  if(typeof document==='undefined'||!document.querySelector)return;
+  const card=document.querySelector(`#results-screen ${sel}`);
+  if(card&&card.getBoundingClientRect&&card.getBoundingClientRect().top<0&&card.scrollIntoView)card.scrollIntoView({block:'start',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
+  if(focus){const b=document.querySelector(`[data-focus-key="ship-pg-${id}-${shpPg[id]}"]`);if(b&&b.focus)b.focus();}
+}
+function shpPagerKey(ev,id){
+  const k=ev&&ev.key;
+  if(k!=='ArrowLeft'&&k!=='ArrowRight'&&k!=='Home'&&k!=='End')return;
+  if(ev.preventDefault)ev.preventDefault();
+  const pages=shpPg[`${id}N`]||1;
+  const cur=shpPg[id]||1;
+  const to=k==='Home'?1:k==='End'?pages:k==='ArrowLeft'?cur-1:cur+1;
+  if(to>=1&&to<=pages)shpGoPage(id,to,true);
+}
 function shipToggleAdd(){
   shipAddOpen=!shipAddOpen;
   renderResults();
@@ -16517,8 +16797,8 @@ function renderShipOpen(s,withText=false){
 // 2v7 e: one or two short facts under a tile's count, new information only (its orders and value stay in the tip).
 // In transit: the next promised date (or how many are past it) and the carriers (top two, +N more; a phone shows the
 // top one). Delayed: how late the worst one is against its promised date and the customer with the most (+N more).
-// Delivered this week: on time against the promised date, and the latest delivery. No update in 2+ days: how long
-// ago the oldest update was, and how many have none yet. An empty tile says "None right now". The carrier and
+// Delivered this week: on time against the promised date, and the latest delivery. Not delivered (2v6.9): how many have
+// had no update in 2+ days (amber), and how many have no status yet. An empty tile says "None right now". The carrier and
 // customer lines are left out while the Carrier / Customer pill already names one. Each fact is {html, tone}; tone
 // 'warn' tints it amber.
 function shpTileFacts(id,group,now=Date.now()){
@@ -16555,17 +16835,17 @@ function shpTileFacts(id,group,now=Date.now()){
     else if(scored.length)out.push({html:esc(onTime===group.length?'All on time':`${fmtNum(onTime)} of ${fmtNum(scored.length)} on time`)});
     const days=group.map(s=>parseDate(s.deliveredDate)).filter(Boolean);
     if(days.length){const last=new Date(Math.max(...days.map(d=>d.getTime())));out.push({html:esc(`${group.length===1?'Delivered':'Latest'} ${shipDateLabel(last)}`)});}
-  }else if(id==='stale'){
-    const updated=group.filter(s=>s.checkedAt!==null&&s.checkedAt!==undefined).map(s=>s.checkedAt);
-    const never=group.length-updated.length;
-    if(updated.length)out.push({html:esc(`${updated.length===1?'Updated':'Oldest update'} ${shipAgo(now-Math.min(...updated))}`)});
-    if(never)out.push({html:esc(never===group.length?'No update yet':`${fmtNum(never)} with no update yet`)});
+  }else if(id==='open'){
+    const stale=group.filter(s=>s.stale).length;
+    const none=group.filter(s=>!s.status).length;
+    out.push(stale?{html:esc(`${fmtNum(stale)} with no update in 2+ days`),tone:'warn'}:{html:esc('All updated in 2 days')});
+    if(none)out.push({html:esc(none===group.length?'No status yet':`${fmtNum(none)} with no status yet`)});
   }
   return out.slice(0,2);
 }
 // Tile: dot + label and the shipment count, then its facts (shpTileFacts); its orders and value are in the tip (a click
 // lists just these in the table).
-function renderShipCard(id,label,group,color,tipLead,tone=''){
+function renderShipCard(id,label,group,color,tipLead,tone='',ico=''){
   const count=group.length;
   const value=group.reduce((sum,s)=>sum+(s.value||0),0);
   const orders=new Set();
@@ -16575,21 +16855,108 @@ function renderShipCard(id,label,group,color,tipLead,tone=''){
   const tipText=`${label}: ${shipPlural(count,'shipment','shipments')}${detail?` (${detail})`:''} ${tipLead}; ${selected?'click to show all.':'click to list only these.'}`;
   const vcol=count&&tone==='red'?'var(--dz-risk-text)':count&&tone==='amber'?'var(--dz-amber-text)':'';
   return `<button type="button" class="shp-tile${selected?' sel':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
-    <span class="shp-tile-l"><i style="background:${color}"></i>${esc(label)}</span>
+    ${shpTileLabel(label,color,ico)}
     <span class="shp-tile-v"${vcol?` style="color:${vcol}"`:''}>${fmtNum(count)}</span>
     <span class="shp-tile-facts">${shpTileFacts(id,group).map(f=>`<span class="shp-tile-s${f.tone?` ${f.tone}`:''}">${f.html}</span>`).join('')}</span>
   </button>`;
 }
-// ETA cell: delivered shipments show the delivery date over "promised ..."; the others AfterShip's expected date (else
-// the promised date) over when the status last changed.
+// A tile's label: a coloured dot that dzDecorateIcons turns into the icon its words call for, or (2v6.9) the icon
+// given (Not delivered, Priority: words that would get the wrong one).
+function shpTileLabel(label,color,ico=''){
+  return ico?`<span class="shp-tile-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:${color}">${dzIconSvg(ico)}</span>${esc(label)}</span>`
+    :`<span class="shp-tile-l"><i style="background:${color}"></i>${esc(label)}</span>`;
+}
+// 2v6.9 Priority card: the count of shipments ticked as priority, and on its right (like PO At Risk's owners) two
+// rows, Delivered and Undelivered, each a button that lists those. The card is a group: its main button lists every
+// priority shipment.
+function renderShipPriorityCard(g){
+  const all=g.priority||[],done=g['prio-done']||[],open=g['prio-open']||[];
+  const sel=shippingFilter==='priority';
+  const tipText=`Priority: ${shipPlural(all.length,'shipment','shipments')} ticked in the Priority column (${fmtNum(done.length)} delivered, ${fmtNum(open.length)} not yet); ${sel?'click to show all.':'click to list only these.'}`;
+  const row=(id,label,list,tone)=>{
+    const on=shippingFilter===id;
+    return `<button type="button" class="shp-pri-row${on?' on':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${on?'true':'false'}" onclick="setShippingFilter('${id}')"${tipAttr(`Priority, ${label.toLowerCase()}: ${shipPlural(list.length,'shipment','shipments')}. ${on?'Click to show all.':'Click to list them.'}`)}><span class="shp-pri-name">${esc(label)}</span><span class="shp-pri-lead" aria-hidden="true"></span><span class="shp-pri-n${list.length&&tone?` ${tone}`:''}">${fmtNum(list.length)}</span></button>`;
+  };
+  return `<div class="shp-tile shp-pri${sel?' sel':''}" role="group" aria-label="Priority shipments">
+    <button type="button" class="shp-pri-main" data-focus-key="ship-kpi-priority" aria-pressed="${sel?'true':'false'}" onclick="setShippingFilter('priority')" data-tip="${esc(tipText)}">
+      ${shpTileLabel('Priority','var(--dz-indigo)','flag')}
+      <span class="shp-tile-v">${fmtNum(all.length)}</span>
+      <span class="shp-tile-facts"><span class="shp-tile-s">${esc(all.length?(open.length?`${fmtNum(open.length)} still on the way`:'All delivered'):'Tick one in the table')}</span></span>
+    </button>
+    <div class="shp-pri-side">${row('prio-done','Delivered',done,'done')}${row('prio-open','Undelivered',open,'open')}</div>
+  </div>`;
+}
+// The Priority card again after a tick, in place (the rest of the page is not redrawn, so the tick's animation runs).
+function shpPriUpdateCard(){
+  if(typeof document==='undefined'||!document.querySelector)return;
+  const el=document.querySelector('#results-screen .shp-tile.shp-pri');
+  if(!el)return;
+  const box=document.createElement('div');
+  box.innerHTML=renderShipPriorityCard(shipGroups(shipFilteredList(shippingModel().list)));
+  const card=box.firstElementChild;
+  if(card&&el.parentNode)el.parentNode.replaceChild(card,el);
+}
+function shpPriTip(s){
+  if(isSnapshotView)return `${s.priority?'Priority':'Not priority'}. A shared snapshot cannot change the tick.`;
+  if(!s.priority)return `Tick to mark ${s.number} as priority (${shippingSharedStore()?'everyone who signs in sees it':'kept in this browser'}).`;
+  const when=s.priorityAt?shipTimeLabel(s.priorityAt):'';
+  return `Priority${s.priorityBy||when?` (ticked${s.priorityBy?` by ${s.priorityBy}`:''}${when?`, ${when}`:''})`:''}. Click to clear.`;
+}
+// The Priority tick: a round check like Kit Clean? on Purchase Orders, in indigo. Saved like a hand-set status (shared
+// store id 'pr:<number>'); read-only in a snapshot.
+function renderShipPriority(s){
+  const n=s.number,on=!!s.priority;
+  return `<label class="kit-check shp-pri-check"${tipAttr(shpPriTip(s))}><input type="checkbox" class="kit-cb shp-pri-cb" data-n="${esc(n)}" data-focus-key="ship-pri-${esc(n)}"${on?' checked':''}${isSnapshotView?' disabled':''} aria-label="${esc(`Priority: ${n}`)}" onchange="shpPriToggle(this)"><span class="kit-box" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M5.6 10.4l3 3 5.8-6.6"/></svg></span><span class="kit-print">${on?'Priority':''}</span></label>`;
+}
+function shpPriToggle(el){
+  if(!el)return;
+  if(isSnapshotView){el.checked=!el.checked;return;}
+  const n=shipClean(el.dataset&&el.dataset.n);
+  if(!n)return;
+  const on=!!el.checked;
+  const s=shippingRealList().find(x=>x.number===n);
+  if(!shippingSaveManual({[SHIP_PRIORITY_PREFIX+n]:{order:s?[...s.orders][0]||'':'',number:n,priority:on,by:shippingEditor(),at:new Date().toISOString()}})){el.checked=!on;return;}
+  const label=el.closest?el.closest('.kit-check'):null;
+  const box=label&&label.querySelector?label.querySelector('.kit-box'):null;
+  if(box&&box.classList){
+    box.classList.remove('shp-pop');
+    if(on&&(typeof motionAllowed!=='function'||motionAllowed())){void box.offsetWidth;box.classList.add('shp-pop');}
+  }
+  const now=shippingRealList().find(x=>x.number===n)||{number:n,priority:on};
+  if(label&&typeof tip==='function')tip(label,shpPriTip(now));
+  const print=label&&label.querySelector?label.querySelector('.kit-print'):null;
+  if(print)print.textContent=on?'Priority':'';
+  // On a Priority list an unticked row belongs elsewhere: it fades now and leaves on the next redraw.
+  const left=!on&&['priority','prio-done','prio-open'].includes(shippingFilter);
+  const row=el.closest?el.closest('.shp-row'):null;
+  if(row&&row.classList)row.classList.toggle('shp-left',left);
+  shpPriUpdateCard();
+  if(typeof announce==='function')announce(`${n}: ${on?'priority':'not priority'}${shippingSharedStore()?', saved for everyone':''}.`);
+}
+// ETA cell: delivered shipments show the delivery date over "promised ..."; the others AfterShip's expected date over
+// "promised ..." (else the promised date over "promised"). 2v6.9: when the status last changed is no longer on each
+// row; the Shipments card's title row says when AfterShip was read.
 function shipEta(s){
   if(s.status==='delivered'){
     return {top:s.deliveredDate?`Delivered ${shipDateLabel(s.deliveredDate)}`:'Delivered',topTone:s.lateDays>0?'late':'',sub:s.promised?`promised ${shipDateLabel(s.promised)}`:'',subTone:''};
   }
-  const when=shipCheckedText(s);
   const top=s.eta||s.promised;
   const late=s.status==='delayed'||(s.eta&&s.promised&&daysBetweenDates(s.promised,s.eta)>0);
-  return {top:top?shipDateLabel(top):'—',topTone:late?'late':'',sub:when.text,subTone:s.stale?'warn':''};
+  const sub=s.eta?(s.promised?`promised ${shipDateLabel(s.promised)}`:'expected'):s.promised?'promised':'';
+  return {top:top?shipDateLabel(top):'—',topTone:late?'late':'',sub,subTone:''};
+}
+// 2v6.9: the small icon before each tracking number (its state at a glance; the state is in the row's text too).
+const SHP_ROW_ICONS={shipped:['truck','go'],transit:['truck','go'],delayed:['alert','late'],delivered:['check','done'],'':['clock','none']};
+function shpRowIcon(s){
+  const [name,tone]=SHP_ROW_ICONS[s.status||'']||SHP_ROW_ICONS[''];
+  return `<span class="shp-ico ${tone}" aria-hidden="true">${dzIconSvg(name)}</span>`;
+}
+// The carrier's last scan place from AfterShip ("Winnipeg, MB, CAN" -> "Winnipeg, MB"; '' when unknown).
+function shpLastLocation(s){
+  const ev=s&&s.as&&s.as.lastEvent;
+  const parts=String(ev&&ev.city||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(parts.length>=3&&/^[A-Z]{2,3}$/.test(parts[parts.length-1]))parts.pop();
+  return parts.join(', ').slice(0,60);
 }
 function renderShipRow(s,idx=0){
   const n=s.number,open=shippingExpanded.has(n);
@@ -16604,15 +16971,17 @@ function renderShipRow(s,idx=0){
   const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}; click to ${open?'hide':'show'} the details.`;
   const i=Math.min(idx,14);
   const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
+  const loc=shpLastLocation(s);
   return `<div class="shp-row${open?' open':''} dz-fade" style="--i:${i}">
     <div class="shp-line">
       <button type="button" class="shp-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
-        <span class="shp-trk"><b>${esc(shipFmtTrack(n))}</b><em>${esc(shipCarrier(s))}</em></span>
+        <span class="shp-trk">${shpRowIcon(s)}<span class="shp-trk-t"><b>${esc(shipFmtTrack(n))}</b><em>${esc(shipCarrier(s))}</em></span></span>
         <span class="shp-ord"><b>${esc(orderTop)}</b><em>${esc(orderSub)}</em></span>
-        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span></span>
-        <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b><em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em></span>
+        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span>${loc?`<span class="shp-loc">Last location: ${esc(loc)}</span>`:''}</span>
+        <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b>${eta.sub?`<em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em>`:''}</span>
         <span class="sr-only">${esc(stepText)}</span>
       </button>
+      <span class="shp-pri-cell">${renderShipPriority(s)}</span>
       <span class="shp-go print-hide">${renderShipOpen(s)}</span>
     </div>
     ${open?renderShipDetail(s):''}
@@ -16691,20 +17060,22 @@ function shipSideRow(s,top,sub,right,tone,keyPrefix){
     <span class="shp-li-l"><b>${esc(top)}</b><em>${esc(sub)}</em></span>${right}</button>`;
 }
 function renderShipCross(list,today){
-  const rows=shippingSortedList(list.filter(s=>s.crossBorder&&s.status!=='delivered')).sort((a,b)=>(a.status==='delayed'?0:1)-(b.status==='delayed'?0:1)||((a.shipDate||0)-(b.shipDate||0))).slice(0,5);
-  const all=list.filter(s=>s.crossBorder&&s.status!=='delivered').length;
+  const sorted=shippingSortedList(list.filter(s=>s.crossBorder&&s.status!=='delivered')).sort((a,b)=>(a.status==='delayed'?0:1)-(b.status==='delayed'?0:1)||((a.shipDate||0)-(b.shipDate||0)));
+  const all=sorted.length;
+  const {rows,page,pages}=shpPageOf('cross',sorted);
   const body=rows.length?`<div class="shp-list">${rows.map(s=>{
       const days=s.shipDate?daysBetweenDates(s.shipDate,today):null;
       const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
       const right=`<span class="shp-li-r"><b${s.status==='delayed'?' class="late"':''}>${days===null?'—':esc(shipPlural(Math.max(0,days),'day','days'))}</b><em>${days===null?'no ship date':'since shipped'}</em></span>`;
       return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'unknown'}`,right,'','ship-x');
-    }).join('')}</div>${all>rows.length?`<p class="shp-more-n">+ ${fmtNum(all-rows.length)} more in the table</p>`:''}`
+    }).join('')}</div>${shpPager('cross',page,pages,'Cross-border')}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card',body,tip:'Shipments to an address outside Canada that are not delivered yet: customer, order, destination, and the days since the delivery shipped. Delayed ones first.'});
+  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Shipments to an address outside Canada that are not delivered yet: customer, order, destination, and the days since the delivery shipped. Delayed ones first.'});
 }
 function renderShipDelayed(list){
-  const rows=list.filter(s=>s.status==='delayed').sort((a,b)=>((b.mark&&b.mark.statusDate)||'').localeCompare((a.mark&&a.mark.statusDate)||'')||(b.checkedAt||0)-(a.checkedAt||0)).slice(0,4);
-  const all=list.filter(s=>s.status==='delayed').length;
+  const sorted=list.filter(s=>s.status==='delayed').sort((a,b)=>((b.mark&&b.mark.statusDate)||'').localeCompare((a.mark&&a.mark.statusDate)||'')||(b.checkedAt||0)-(a.checkedAt||0));
+  const all=sorted.length;
+  const {rows,page,pages}=shpPageOf('delayed',sorted);
   const body=rows.length?`<div class="shp-list">${rows.map(s=>{
       const note=s.mark&&s.mark.note;
       const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
@@ -16712,9 +17083,9 @@ function renderShipDelayed(list){
       return `<button type="button" class="shp-li exc" data-focus-key="ship-d-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} with its status form in the Shipments table.`)}>
         <span class="shp-li-top"><b>${esc(so)}${s.customer?` · ${esc(s.customer)}`:''}</b><em>${esc(when)}</em></span>
         <span class="shp-li-why${note?'':' none'}">${esc(note||'No note yet')}</span></button>`;
-    }).join('')}</div>${all>rows.length?`<p class="shp-more-n">+ ${fmtNum(all-rows.length)} more in the table</p>`:''}`
+    }).join('')}</div>${shpPager('delayed',page,pages,'Delayed')}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card',body,tip:'Delayed shipments, newest first, with AfterShip’s latest scan or the note set by hand (for example a customs hold).'});
+  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card shp-delayed',body,tip:'Delayed shipments, newest first, with AfterShip’s latest scan or the note set by hand (for example a customs hold).'});
 }
 const SHIP_TRUCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5h12v9.5H2z"/><path d="M14 10h4.2l3.3 3.4V16H14z"/><circle cx="6.2" cy="17.6" r="1.9"/><circle cx="17.4" cy="17.6" r="1.9"/></svg>';
 function renderShippingPage(m){
@@ -16764,7 +17135,8 @@ function renderShippingPage(m){
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
       `Tracking numbers come from SAP deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)} (any carrier), or from <strong>Add tracking #</strong>.`,
       'Statuses come from AfterShip every 2 hours. A status set by hand counts until AfterShip has a newer one.',
-      `<strong>No update in 2+ days</strong>: not delivered, and no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more.`,
+      `<strong>Not delivered</strong>: every shipment without a Delivered status; its card also counts those with no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more.`,
+      `<strong>Priority</strong>: tick a shipment in the Priority column (${shared?'shared with everyone':'kept in this browser'}); the card splits them into delivered and undelivered.`,
       'The arrow icon opens AfterShip’s tracking page in a new tab.',
       'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.'
     ])}</ul></div></details>`;
@@ -16777,24 +17149,27 @@ function renderShippingPage(m){
     return head+empty+about;
   }
 
-  // Tiles (a click lists just these in the table); first in the page order, drawn left of the map on a wide screen.
+  // Tiles (a click lists just these in the table); first in the page order. 2v6.9: on a wide screen they are small
+  // cards laid over the right of the map card, where the map fades out (shpMapLayout); below 981px they sit above it.
   const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
       ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: Shipped or In transit')}
       ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','held up: an exception, a failed delivery or marked Delayed','red')}
       ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`delivered since Monday ${shipDateLabel(model.weekStart)}`)}
-      ${renderShipCard('stale','No update in 2+ days',g.stale,'var(--dz-amber)',`not delivered and no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more`,'amber')}
+      ${renderShipCard('open','Not delivered',g.open,'var(--dz-amber)','not delivered yet: shipped, in transit, delayed or no status','','box')}
+      ${renderShipPriorityCard(g)}
     </div>`;
 
   // Shipments table: status tile, map dot and search narrow it; delayed first, delivered last.
-  const byStatus=shippingFilter&&g[shippingFilter]?g[shippingFilter]:fl;
+  if(shippingFilter&&!g[shippingFilter])shippingFilter='';
+  shpPageSync();
+  const byStatus=shippingFilter?g[shippingFilter]:fl;
   const byDest=shipDestSel?byStatus.filter(s=>shipPlaceKey(s)===shipDestSel):byStatus;
   const byPill=shipStatusSel?byDest.filter(s=>shpStatusMatch(s,shipStatusSel)):byDest;
   const q=shipQuery.trim().toLowerCase(),qn=q.replace(/[\s-]+/g,'');
   const matched=q?byPill.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byPill;
   const shown=shpSortList(matched);
-  const more=!!tableMore['ship-list']||printMode;
-  const visible=more?shown:shown.slice(0,SHIP_LIST_LIMIT);
-  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',stale:'with no update in 2+ days'}[shippingFilter];
+  const {rows:visible,page,pages}=shpPageOf('list',shown);
+  const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',open:'not delivered',stale:'with no update in 2+ days',priority:'priority','prio-done':'priority, delivered','prio-open':'priority, undelivered'}[shippingFilter];
   const tablePicks=[filterName,q,shipDestSel,shipStatusSel].filter(Boolean).length;
   const emptyMsg=tablePicks>1?'No shipments match these filters.':filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:shipStatusSel?`No shipments with the status ${statusLabel} right now.`:'No shipments match these filters.';
   const chip=(text,onclick,tip)=>`<button type="button" class="shp-chipbtn" data-focus-key="ship-chip-${esc(text)}" onclick="${esc(onclick)}"${tipAttr(tip)}>${esc(text)}<span aria-hidden="true">×</span></button>`;
@@ -16802,10 +17177,10 @@ function renderShippingPage(m){
   const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):'';
   const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
   // Column titles sort the table (again to reverse); aria-sort is on each column header.
-  const etaTip='Delivered: the delivery date and the promised date. Others: AfterShip’s expected date (else the promised date) and the last update.';
-  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip]].map(([id,label,tip])=>{
+  const etaTip='Delivered: the delivery date and the promised date. Others: AfterShip’s expected date (else the promised date) and the promised date.';
+  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip],['priority','Priority','Ticked as priority (first click lists them first).']].map(([id,label,tip])=>{
     const on=shipSortCol===id;
-    return `<span role="columnheader"${id==='eta'?' class="dz-num"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
+    return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
   }).join('');
   const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
   const listSub=`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
@@ -16815,11 +17190,16 @@ function renderShippingPage(m){
       <div class="shp-thwrap" role="table" aria-label="Sort the shipments"><div class="dz-th shp-th" role="row">${sortHead}<span class="sr-only" role="columnheader">Tracking page</span></div></div>
       <div class="shp-rows">${visible.map(renderShipRow).join('')||`<p class="shp-none">${esc(emptyMsg)}</p>`}</div>
     </div>
-    ${shown.length>SHIP_LIST_LIMIT?`<div class="shp-foot print-hide"><span>Showing ${fmtNum(visible.length)} of ${fmtNum(shown.length)}</span><button type="button" class="shp-more" data-focus-key="more-ship-list" data-table-key="ship-list" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(more?`Show the first ${SHIP_LIST_LIMIT} shipments only.`:`Show all ${fmtNum(shown.length)} shipments.`)}>${more?'Show fewer':'Show all'}</button></div>`:''}`;
-  const list=dzCard({title:'Shipments',meta:esc(shipPlural(shown.length,'shipment','shipments')),cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then those with no update for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
+    ${shpPager('list',page,pages,'Shipments')}`;
+  // The title row: the count, when AfterShip was read and the next check, and Update all.
+  const upd=shpAsUpdatedText();
+  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('When AfterShip was last read, and its next scheduled check (every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
+  const list=dzCard({title:'Shipments',meta:listMeta,cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then those with no update for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
-  // One row: the four tiles as a 2 x 2 grid on the left half, the map on the right (stacked, tiles first, below 981px).
-  return head+`<div class="shp-top">${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
+  // 2v6.9: the map card across the page with the small cards over its faded right part (stacked, cards first, below
+  // 981px); --pw is the cards' width the map was laid out for.
+  const lay=shpMapLayout();
+  return head+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
