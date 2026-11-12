@@ -190,7 +190,7 @@ test('long lists open on request and always print: All open lines, the scenario 
 test('page header: title, then the as-of line and Data check; the actions on the right; phones keep the full button names', async () => {
   const page = await loadedAll();
   const h = open(page, 'purchaseorders');
-  assert.match(h, /<div class="page-head-main"><h1 class="page-title" tabindex="-1">Purchase Orders<\/h1><div class="page-sub"><span class="page-meta"[^>]*>as of 2026-09-03 · \d+ open PO lines<\/span><\/div><\/div>\s*<div class="actions">/);
+  assert.match(h, /<div class="page-head-main"><h1 class="page-title" tabindex="-1">Purchase Orders<\/h1><div class="page-sub"><span class="page-meta"[^>]*>As of 2026-09-03 · \d+ open PO lines<\/span><\/div><\/div>\s*<div class="actions">/);
   assert.match(h, />Share<span class="btn-long"> snapshot<\/span><\/button>/);
   // The long part of a label is clipped, not display:none, so it stays in the button's accessible name.
   const phone = CSS.slice(CSS.indexOf('/* --- 2v2 (pages)'));
@@ -199,7 +199,7 @@ test('page header: title, then the as-of line and Data check; the actions on the
   assert.match(CSS, /\.page-head \.actions\{flex-wrap:wrap;justify-content:flex-end;align-items:center\}/);
   // Filter bars: no line that repeats the picked values on screen (print keeps it), Reset at the far right.
   assert.match(h, /<button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"/);
-  assert.match(h, /<div class="print-only">Filters: All warehouses · all vendors<\/div>/);
+  assert.match(h, /<div class="print-only">Filters: All warehouses · All vendors<\/div>/);
   assert.match(CSS, /\.filter-reset\{margin-left:auto\}/);
 });
 
@@ -232,7 +232,7 @@ test('load screen: one drop area until a report is loaded, then the loaded repor
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }]);
   page.run('showUpload()');
   assert.equal(page.els['upload-side'].hidden, false);
-  assert.match(page.els['upload-current'].innerHTML, /Currently loaded<\/span><strong>kpi\.xls · export date 2026-09-03<\/strong>/);
+  assert.match(page.els['upload-current'].innerHTML, /Currently loaded<\/span><strong>kpi\.xls · Export date 2026-09-03<\/strong>/);
   // On a phone the empty "No export loaded" card is not drawn as a blank box.
   assert.match(CSS, /\.loaded-card\.empty\{display:none\}/);
   assert.deepEqual(page.errors, []);
@@ -301,7 +301,7 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
   assert.match(group(), /<h2>Supply at risk<\/h2><div class="inline-controls"><button type="button" class="chip active" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="true"/);
   assert.deepEqual(subHeads(group()).map((x) => x[0]), ['CM - Alta']);
   assert.doesNotMatch(group(), /pill bad/);
-  assert.match(results(page), /<div class="print-only">Filters: All warehouses · supply at risk only<\/div>/);
+  assert.match(results(page), /<div class="print-only">Filters: All warehouses · Supply at risk only<\/div>/);
   // The Coverage numbers do not move with the chip.
   assert.match(results(page), />Shortage lines<\/span><span class="kpi-value crit">1</);
   page.run('resetViewState()');

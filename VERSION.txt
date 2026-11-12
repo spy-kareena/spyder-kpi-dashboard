@@ -258,3 +258,4 @@ pr:<number>, read-only in snapshots, sortable). Rows get a state icon and a quie
 "Updated ... ago" is gone: "Updated · next" moved to the Shipments title row with Update all (POST /api/shipping,
 10-minute limit message). Shipments 10 a page, Cross-border and Delayed 5 a page, with page numbers. Tests:
 shipping-page, notes-store.
+Follow-up: carrier logos (Simple Icons, CC0), legend at the map's bottom, "Last:", "Due", no next time, calm pager.

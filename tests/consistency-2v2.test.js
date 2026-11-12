@@ -213,10 +213,10 @@ test('lines, not rows: page text and pills say lines; the page header counts wha
   for (const [tab, view] of PAGES) {
     const h = open(page, tab, view);
     const m = meta(h);
-    if (tab === 'purchaseorders') assert.equal(m, `as of 2026-09-03 · ${counts.po} open PO lines`);
-    else if (tab === 'supplyweekly' || tab === 'supplydemand') assert.equal(m, `as of 2026-09-03 · ${counts.sd} supply / demand lines`, tab);
-    else if (tab === 'buildrisk') assert.equal(m, 'as of 2026-09-03', tab);
-    else assert.equal(m, `as of 2026-09-03 · ${counts.so} open SO lines`, tab);
+    if (tab === 'purchaseorders') assert.equal(m, `As of 2026-09-03 · ${counts.po} open PO lines`);
+    else if (tab === 'supplyweekly' || tab === 'supplydemand') assert.equal(m, `As of 2026-09-03 · ${counts.sd} supply / demand lines`, tab);
+    else if (tab === 'buildrisk') assert.equal(m, 'As of 2026-09-03', tab);
+    else assert.equal(m, `As of 2026-09-03 · ${counts.so} open SO lines`, tab);
     const t = text(h);
     assert.doesNotMatch(t, /\b\d[\d,]* (?:[\w/-]+ ){0,2}rows?\b|% of rows|Sort rows|Open rows|Closed rows|rows shipped|Rows needing|SO rows|report rows/, `${tab}${view ? ` ${view}` : ''}: ${(t.match(/.{40}\brows?\b.{20}/) || [''])[0]}`);
   }

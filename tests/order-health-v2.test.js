@@ -72,7 +72,7 @@ test('cause precedence: picked cause, then override status, then the first SAP s
   // The shipped KPI query never sends such a flag.
   const sql = fs.readFileSync(path.join(__dirname, '..', 'queries', 'sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql'), 'utf8');
   assert.doesNotMatch(sql, /'[^']*Customer[^']*Reschedul[^']*'/i);
-  assert.deepEqual(page.run(`ohCauseRule(${row('100')})`), { cause: 'us', rule: 'SAP: Past due · no reschedule' });
+  assert.deepEqual(page.run(`ohCauseRule(${row('100')})`), { cause: 'us', rule: 'SAP: Past due · No reschedule' });
   assert.deepEqual(page.run(`ohCauseRule(${row('106')})`), { cause: 'them', rule: 'override Hold' });
   // A cause picked on the line beats the override and the SAP signal; blank means "use the rules".
   pickCause(page, key(page, '106'), 'us');
@@ -106,11 +106,11 @@ test('reasons: every signal on an at-risk line counts, ranked by open value; top
   setStatus(page, '101', 'No Commit');
   const d = lead(page);
   // Only the CM - DSM line has a shortage (that warehouse's snapshot row is short; the Lacombe row is not).
-  assert.deepEqual(page.run(`[${row('100')},${row('102')}].map(lineReasons)`), [['Past due · no reschedule', 'Supply shortage'], ['Rescheduled later']]);
+  assert.deepEqual(page.run(`[${row('100')},${row('102')}].map(lineReasons)`), [['Past due · No reschedule', 'Supply shortage'], ['Rescheduled later']]);
   // "No Commit" override and the SAP no-commit signal are one reason.
   assert.deepEqual(page.run(`lineReasons(${row('101')})`), ['No commit date']);
   assert.deepEqual(d.reasons, [
-    ['Past due · no reschedule', 3, 15700, 'us'], // 108 counts too: no Not At Risk override in this test
+    ['Past due · No reschedule', 3, 15700, 'us'], // 108 counts too: no Not At Risk override in this test
     ['Rescheduled later', 3, 12500, 'unknown'],
     ['Supply shortage', 1, 10000, 'us'],
     ['No commit date', 1, 8000, 'us'],
@@ -120,7 +120,7 @@ test('reasons: every signal on an at-risk line counts, ranked by open value; top
   ]);
   assert.equal(d.top, 6);
   const bars = [...html(page).matchAll(/class="oh-bar-row[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(bars, ['Past due · no reschedule', 'Rescheduled later', 'Supply shortage', 'No commit date', 'Hold', 'Missed commit']);
+  assert.deepEqual(bars, ['Past due · No reschedule', 'Rescheduled later', 'Supply shortage', 'No commit date', 'Hold', 'Missed commit']);
   // Lines not at risk have no reasons, even when unconfirmed.
   setStatus(page, '103', 'Not At Risk');
   assert.deepEqual(page.run(`lineReasons(${row('103')})`), []);
@@ -177,9 +177,9 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   page.run("setWeeklyCauseFilter('us')");
   assert.deepEqual(risk(), ['100', '101', '103']);
   assert.notEqual(page.run('weeklyFilterKey()'), keyBefore);
-  page.run("setWeeklyReasonFilter('Past due · no reschedule')");
+  page.run("setWeeklyReasonFilter('Past due · No reschedule')");
   assert.deepEqual(risk(), ['100']);
-  page.run("setWeeklyReasonFilter('Past due · no reschedule');setWeeklyAgeFilter('3-4')");
+  page.run("setWeeklyReasonFilter('Past due · No reschedule');setWeeklyAgeFilter('3-4')");
   assert.deepEqual(risk(), ['100', '103']);
   // Open lines follow too (All open orders, states, linked lines); the at-risk list shows below.
   assert.deepEqual(docs(page, 'orderHealthData(currentMetrics()).allOrderRows'), ['100', '103']);
@@ -440,10 +440,10 @@ test('Search finds lines by reason or cause, and tables show each line\'s cause 
   assert.deepEqual(found('caused by them'), ['102', '106', '107']);
   page.run("searchQuery='106';setTab('search')");
   // The other reasons and the first-flagged upload are visible text (a muted second line), not only in the tip.
-  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · no reschedule, Hold\.">Them · Past due · no reschedule<\/span><span class="timing oh-why-more">Hold<\/span>/);
+  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · No reschedule, Hold\.">Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span>/);
   page.ctx.firstFlagged = { [key(page, '106')]: '2026-07-02' };
   page.run('renderResults()');
-  assert.match(html(page), /Them · Past due · no reschedule<\/span><span class="timing oh-why-more">Hold · first at risk in the 2026-07-02 upload<\/span>/);
+  assert.match(html(page), /Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold · first at risk in the 2026-07-02 upload<\/span>/);
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   assert.match(html(page), /<span class="oh-why cause-text-us"[^>]*>Us · No commit date<\/span>(?!<span class="timing oh-why-more">)/);
 });
@@ -496,7 +496,7 @@ test('get_overview gains leading / lagging and cause fields that match the page;
   assert.deepEqual(oh.leading.at_risk_by_cause, oh.at_risk.cause);
   assert.deepEqual(Object.keys(oh.leading.states), ['on_track', 'due_this_week', 'rescheduled', 'past_due', 'no_commit']);
   assert.equal(Object.values(oh.leading.states).reduce((s, x) => s + x.lines, 0), oh.all_open.lines);
-  assert.deepEqual(oh.leading.top_reasons[0], { reason: 'Past due · no reschedule', usual_cause: 'us', orders: 2, lines: 2, open_value: 15000 });
+  assert.deepEqual(oh.leading.top_reasons[0], { reason: 'Past due · No reschedule', usual_cause: 'us', orders: 2, lines: 2, open_value: 15000 });
   assert.deepEqual(oh.leading.when_flagged.buckets.map((b) => b.bucket), ['New this week', '1–2 wk', '3–4 wk', '5–8 wk', '9+ wk']);
   assert.equal(oh.leading.when_flagged.history_available, false);
   assert.deepEqual(oh.lagging.perfect_order_12mo, { rate_pct: 25, perfect_lines: 1, completed_lines: 4, not_perfect_by_cause: { us: 3, them: 0, neutral: 0, not_set: 0 }, target_pct: 90 });
@@ -505,7 +505,7 @@ test('get_overview gains leading / lagging and cause fields that match the page;
   assert.equal(oh.lagging.fill_rate.by_original_due_month.length, 12);
   const them = page.run("aiRunTool('search_lines',{scope:'at_risk',cause:'them'})");
   assert.deepEqual(them.rows.map((r) => r.doc).sort(), ['106', '107']);
-  assert.deepEqual(them.rows.find((r) => r.doc === '106').reasons, ['Past due · no reschedule', 'Hold']);
+  assert.deepEqual(them.rows.find((r) => r.doc === '106').reasons, ['Past due · No reschedule', 'Hold']);
   assert.equal(page.run("aiRunTool('search_lines',{scope:'at_risk',cause:'not_set'})").rows[0].doc, '102');
   assert.match(page.run("aiRunTool('search_lines',{scope:'open',cause:'maybe'})").error, /cause must be one of/);
   // Lines with nothing to explain carry no cause.

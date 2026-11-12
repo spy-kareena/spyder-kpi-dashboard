@@ -148,7 +148,7 @@ test('an override, note and cause set in one browser show in another browser, wi
   const b = await openHosted(site);
   assert.deepEqual(line(b, '900'), { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', deleted: false });
   assert.equal(atRiskCount(b), 1, 'Not At Risk from the other browser takes the line off At Risk');
-  assert.match(sidebar(b), /Notes shared · last edit Kareena · Oct 8/);
+  assert.match(sidebar(b), /Notes shared · Last edit Kareena · Oct 8/);
   assert.match(sidebar(b), /data-tip="Notes, overrides and causes are saved for everyone who signs in; last edit by Kareena: Oct 8, 2026/);
   // The copy is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(saved(b)[k], entry);
@@ -182,7 +182,7 @@ test('changes go out 800 ms after the last change to a line, many lines in one r
   assert.equal(site.patches(), 3);
   assert.equal(Object.keys(site.bodies[2].rows).length, a.run('linkedListKeys.length'));
   // While the request is out the sidebar says so; afterwards it names the last edit.
-  assert.match(sidebar(a), /Notes shared · last edit Kareena · /);
+  assert.match(sidebar(a), /Notes shared · Last edit Kareena · /);
 });
 
 test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a busy or failed save is sent again', async () => {
@@ -754,7 +754,7 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   edit(page, '901', 'notes', 'second');
   await tick(5);
   assert.equal(dialogs.length, 1);
-  assert.match(sidebar(page), /Notes shared · last edit Kareena · Sep \d+/);
+  assert.match(sidebar(page), /Notes shared · Last edit Kareena · Sep \d+/);
   assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName\(true\)" data-tip="Your notes show “Kareena”; click to change it\.">Change name<\/button>/);
   // The status and the button have their own row, outside .loaded-meta (hidden at 980px and below), which stays
   // visible under the file name and buttons in the compact card.

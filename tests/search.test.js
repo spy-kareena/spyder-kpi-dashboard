@@ -232,7 +232,7 @@ test('first 100 matches, "Show up to 500" shows the rest', async () => {
   const page = await loaded(rows);
   search(page, 'bulk-1');
   assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 100);
-  assert.match(html(page), /Showing 100 of 120 · add another word/);
+  assert.match(html(page), /Showing 100 of 120 · Add another word/);
   assert.match(html(page), /Show up to 500/);
   page.run('toggleTableMore("search")');
   assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 120);

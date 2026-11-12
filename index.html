@@ -3992,14 +3992,15 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
    its top and bottom (the same mask on the map, so the card shows through), and the five status cards sit small over
    the faded part (--pw wide, set with the map's view so no dot or arc falls under them). Below 981px the cards stack
    above the map, two a row, Priority across both. The Priority card has Delivered / Undelivered on its right (like PO
-   At Risk's owners). Shipments rows: a state icon before the number, the Priority tick (Kit Clean?'s look, in indigo,
-   a short pop when ticked), "Last location" under the progress bar. The pager under each list; Update all by the count. */
+   At Risk's owners). Shipments rows: the carrier's logo chip before the number (2v6.9b; it replaced a state icon), the
+   Priority tick (Kit Clean?'s look, in indigo, a short pop when ticked), "Last: …" under the progress bar. The pager
+   under each list; Update all by the count. */
 @media screen and (min-width:981px){
   .shp-top{grid-template-columns:minmax(0,1fr);grid-template-areas:"map"}
   .shp-top>.shp-map{grid-area:map}
   .shp-top>.shp-tiles{grid-area:map;z-index:4;justify-self:end;align-self:stretch;width:var(--pw,340px);margin:14px 14px 14px 0;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px}
   .shp-top .shp-map-head{padding-right:calc(var(--pw,340px) + 40px)}
-  .shp-top .shp-map-foot{margin-right:calc(var(--pw,340px) + 40px)}
+  .shp-top .shp-map-foot{max-width:calc(100% - var(--pw,340px) - 80px)}
   .shp-top .shp-map-stage.wide{width:100%;margin-left:0;margin-right:0}
   .shp-top .shp-map-stage.wide .shp-map-svg{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent),linear-gradient(to right,#000 var(--fa,70%),transparent var(--fb,92%));-webkit-mask-composite:source-in;mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 calc(100% - 26px),transparent),linear-gradient(to right,#000 var(--fa,70%),transparent var(--fb,92%));mask-composite:intersect}
   .shp-top .shp-tile{padding:12px 14px;border-radius:18px}
@@ -4008,6 +4009,18 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
   .shp-top .shp-tile-v{font-size:26px;line-height:1;padding-top:6px}
   .shp-top .shp-tile-facts{margin-top:5px}
   .shp-top .shp-tile-s{font-size:12px}
+}
+/* 2v6.9b: the legend (and the no-ship-to-country note) small at the bottom left of the map, over its faded bottom edge;
+   the label placer keeps that corner free (renderShipMap) */
+.shp-top .shp-map-foot{position:absolute;left:22px;right:auto;bottom:14px;z-index:3;display:flex;flex-wrap:wrap-reverse;align-items:center;gap:6px 12px;max-width:calc(100% - 44px);margin:0;padding:0;pointer-events:none}
+.shp-top .shp-map-foot .shp-legend{margin:0;padding:0;background:none}
+.shp-top .shp-map-foot .shp-pillnote{pointer-events:auto}
+/* 2v6.9b: each small card picks the short form of a fact line when it is narrow (the cards over the map, phones) */
+.shp-top .shp-tile{container:shptile/inline-size}
+.shp-top .shp-tile-l{white-space:nowrap}
+@container shptile (max-width:230px){
+  .shp-tile-s .shp-ts-w{display:none}
+  .shp-tile-s .shp-ts-n{display:inline}
 }
 .shp-top .shp-tile.shp-pri{grid-column:1/-1;position:relative;flex-direction:row;align-items:stretch;cursor:default}
 .shp-pri-main{appearance:none;display:flex;flex-direction:column;align-items:flex-start;flex:1 1 0;min-width:0;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
@@ -4027,21 +4040,26 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 .shp-pri-n.done{color:var(--dz-teal)}
 .shp-pri-n.open{color:var(--dz-amber-text)}
 /* Shipments: Tracking (icon + number), Order, Progress, ETA, Priority, the tracking-page link */
-.shp-table{--cols:186px minmax(0,1fr) minmax(0,1.15fr) 112px 56px 30px}
+.shp-table{--cols:226px minmax(0,1fr) minmax(0,1.15fr) 112px 56px 30px}
 @media (min-width:641px){
-  .shp-head{grid-template-columns:186px minmax(0,1fr) minmax(0,1.15fr) 112px}
+  .shp-head{grid-template-columns:226px minmax(0,1fr) minmax(0,1.15fr) 112px}
   .shp-line{grid-template-columns:minmax(0,1fr) 56px 30px}
 }
 .shp-th-pri{text-align:center}
-.shp-trk{display:flex;align-items:flex-start;gap:8px}
+.shp-trk{display:flex;align-items:center;gap:10px}
 .shp-trk-t{display:block;min-width:0}
-.shp-ico{flex:none;display:grid;place-items:center;width:22px;height:22px;margin-top:-2px;border-radius:50%;background:color-mix(in srgb,currentColor 11%,transparent)}
-.shp-ico svg{display:block;width:12px;height:12px}
-.shp-ico.go{color:var(--dz-indigo)}
-.shp-ico.late{color:var(--dz-risk)}
-.shp-ico.done{color:var(--dz-teal)}
-.shp-ico.none{color:var(--dz-ink-5)}
-.shp-loc{display:block;margin-top:3px;font-size:11.5px;line-height:1.3;color:var(--dz-ink-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 2v6.9b carrier chip before the number: a light chip in both themes so the brand colours stay true; the mark sized by
+   its height (view box cropped to it), a name in the same chip where there is no mark */
+.shp-cr{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:60px;height:20px;padding:0 4px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px rgba(15,23,42,.1);overflow:hidden}
+.shp-cr svg{display:block;width:auto;height:12px}
+.shp-cr svg.shp-cr-fedex{height:11px}
+.shp-cr svg.shp-cr-ups{height:17px}
+.shp-cr svg.shp-cr-dhl{height:7px}
+.shp-cr.fill{box-shadow:none}
+.shp-cr.text>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:600;line-height:1;letter-spacing:-.01em;color:#334155}
+.shp-cr.none>span{font-weight:500;color:#64748b}
+.shp-loc{display:block;margin-top:3px;font-size:10.5px;line-height:1.3;color:var(--dz-ink-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shp-head .shp-eta em{font-size:11.5px}
 .shp-pri-cell{display:flex;justify-content:center;align-items:center}
 .shp-pri-check .kit-box{color:#fff;transition-duration:.18s}
 .shp-pri-check .kit-box svg{transition:stroke-dashoffset .2s ease .04s}
@@ -4053,7 +4071,7 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 @keyframes shpPriPop{0%{transform:scale(.72)}100%{transform:scale(1)}}
 .shp-row{transition:opacity .2s ease}
 .shp-row.shp-left{opacity:.45}
-/* The title row: "N shipments · Updated 8:04 PM · next 10:00 PM" and Update all */
+/* The title row: "N shipments · Updated 8:04 PM" and Update all */
 .shp-ships>.dz-card-head{align-items:center}
 .shp-ships>.dz-card-head .dz-meta{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:6px 0}
 .shp-upd::before{content:"·";margin:0 7px}
@@ -4062,12 +4080,12 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 .dz-btn.shp-updall.busy{cursor:progress;opacity:.75}
 .dz-btn.shp-updall.busy svg{animation:shpSpin .9s linear infinite}
 @keyframes shpSpin{to{transform:rotate(360deg)}}
-/* Pager: quiet page numbers, the current one a filled indigo pill */
+/* Pager: quiet page numbers, the current one a soft neutral pill with a hairline (2v6.9b: no strong indigo fill) */
 .shp-pager{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px;margin-top:12px}
 .shp-side-card .shp-pager{margin-top:10px}
 .shp-pg{min-width:28px;height:28px;padding:0 8px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:12.5px;font-weight:500;line-height:28px;color:var(--dz-ink-3);font-variant-numeric:tabular-nums;cursor:pointer;transition:background-color .15s ease,color .15s ease}
 .shp-pg:hover{background:var(--dz-hover);color:var(--dz-ink-1)}
-.shp-pg.on,.shp-pg.on:hover{background:var(--dz-indigo);color:#fff}
+.shp-pg.on,.shp-pg.on:hover{background:var(--dz-surface-2);box-shadow:inset 0 0 0 1px var(--dz-line-8);color:var(--dz-ink-1);font-weight:600}
 .shp-pg.arrow{font-size:17px;color:var(--dz-ink-4)}
 .shp-pg[aria-disabled="true"],.shp-pg[aria-disabled="true"]:hover{opacity:.35;background:transparent;cursor:default}
 .shp-pg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
@@ -4075,7 +4093,14 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 @media (max-width:980px){
   .shp-top>.shp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+@media (min-width:641px) and (max-width:980px){
+  .shp-top .shp-tile.shp-pri .shp-pri-side{flex:0 0 232px;margin-left:auto}
+}
 @media (max-width:640px){
+  .shp-top .shp-tile{padding-left:14px;padding-right:12px}
+  .shp-top .shp-tile-l{font-size:12.5px;gap:6px}
+  .shp-top .shp-map-foot{left:18px;bottom:12px;max-width:calc(100% - 36px)}
+  .shp-top .shp-map-foot .shp-legend{gap:12px}
   .shp-pri-cell{position:absolute;right:38px;top:9px}
   .shp-pri-cell .kit-check{margin:0}
   .dz-btn.shp-updall{margin-left:0}
@@ -4088,7 +4113,7 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
   .shp-pri-check .kit-box.shp-pop,.dz-btn.shp-updall.busy svg{animation:none}
 }
 @media screen{
-  [data-theme=dark] .shp-pg.on,[data-theme=dark] .shp-pg.on:hover{color:var(--dz-on-ink)}
+  [data-theme=dark] .shp-cr{background:#f1f5f9;box-shadow:none}
 }
 @media print{
   .shp-top>.shp-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -6590,12 +6615,12 @@ function liveStatusText(){
   const s=liveState,from=liveClock(s.dataAt);
   if(!liveMode())return {tone:'',short:'',line:''};
   if(s.status==='off')return {tone:hasLoadedData()&&s.sig.kpi?'down':'',short:'Live SAP is not set up on this site',line:'Live SAP is not set up on this site'};
-  if(s.status==='ok')return {tone:'ok',short:`Live · updated ${liveAgo(s.dataAt||s.okAt)}`,line:`Connected · updated ${liveClock(s.dataAt||s.okAt)}`};
+  if(s.status==='ok')return {tone:'ok',short:`Live · Updated ${liveAgo(s.dataAt||s.okAt)}`,line:`Connected · Updated ${liveClock(s.dataAt||s.okAt)}`};
   if(s.status==='down'){
     const what=s.stale?'SAP not reachable':'Disconnected';
-    return {tone:'down',short:`${what}${from?` · showing data from ${from}`:''}`,line:`${s.stale?'SAP not reachable':'Disconnected'} since ${liveClock(s.downSince)}${from?` · showing data from ${from}`:''}`};
+    return {tone:'down',short:`${what}${from?` · Showing data from ${from}`:''}`,line:`${s.stale?'SAP not reachable':'Disconnected'} since ${liveClock(s.downSince)}${from?` · Showing data from ${from}`:''}`};
   }
-  if(s.sig.kpi)return {tone:'down',short:`Connecting · showing data from ${from||'the last visit'}`,line:`Connecting… showing the last live data${from?` (${from})`:''}`};
+  if(s.sig.kpi)return {tone:'down',short:`Connecting · Showing data from ${from||'the last visit'}`,line:`Connecting… showing the last live data${from?` (${from})`:''}`};
   return {tone:'',short:'Connecting',line:'Connecting to SAP…'};
 }
 function liveStore(mode,use){
@@ -7217,7 +7242,7 @@ function impBuildReport(imp){
     }
     f.kindLabel=e.kind==='kpi'?'SAP KPI export':e.kind==='sd'?'Supply / demand snapshot':e.kind==='ctb'?'Clear To Build':f.kindLabel;
     if(e.leftOut){
-      f.unused=true;f.meta=[f.meta,'left out'].filter(Boolean).join(' · ');
+      f.unused=true;f.meta=[f.meta,'Left out'].filter(Boolean).join(' · ');
       const note=imp.olderNotes.find(n=>n.startsWith(`Left out ${file.name} `))||`Left out ${file.name}: a newer export of the same lines is loaded.`;
       issue('warn',`${note}`,['Nothing to do if you meant to use the newest export.','To use this one instead, load it on its own with New file.']);
     }
@@ -7243,7 +7268,7 @@ function impBuildReport(imp){
   });
   // A failed load leaves the report as it was: files of the report on screen stay loaded, new files read without a
   // problem were not loaded either.
-  if(imp.error)files.forEach(f=>{if(f.status==='ok'&&!(imp.hadReport&&f.earlier)){f.status='idle';f.meta=[f.meta,'not loaded because of the problem above'].filter(Boolean).join(' · ');}});
+  if(imp.error)files.forEach(f=>{if(f.status==='ok'&&!(imp.hadReport&&f.earlier)){f.status='idle';f.meta=[f.meta,'Not loaded because of the problem above'].filter(Boolean).join(' · ');}});
   const checks=[];
   if(!imp.error){
     const dates=(dataQualityIssues||[]).filter(x=>x.kind==='date');
@@ -7406,7 +7431,7 @@ function impRender(){
 function impFileHtml(f){
   const [chipTone,chipText]=IMP_TONE[f.status];
   const rows=f.rows===null?'':impCount(f.rows,f.rowWord);
-  const meta=[f.kindLabel,rows,f.meta,f.earlier?'loaded earlier':''].filter(Boolean).join(' · ');
+  const meta=[f.kindLabel,rows,f.meta,f.earlier?'Loaded earlier':''].filter(Boolean).join(' · ');
   const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(`Renamed by the AI before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with AI: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
   const issues=f.issues.map(x=>`<div class="imp-issue ${x.tone}"><p class="imp-lbl">${x.tone==='info'?'Good to know':'What happened'}</p><p>${esc(x.what)}</p>${x.missing&&x.missing.length?`<p class="imp-missing">${x.missing.map(m=>`<code>${esc(m)}</code>`).join('')}</p>`:''}<p class="imp-lbl">${x.tone==='info'?'To add them':'How to fix'}</p><ol class="imp-fix">${x.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${x.ai?impAiHtml(f):''}</div>`).join('');
   return `<section class="imp-file ${f.status}" aria-label="${esc(`${f.name}: ${chipText}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[f.status]}">${dzIconSvg('file')}</span><div class="imp-file-main"><p class="imp-name" title="${esc(f.name)}">${esc(f.name)}</p><p class="imp-meta">${esc(meta)}</p></div>${dzChip(chipText,chipTone)}</div>${mapped}${issues}</section>`;
@@ -9667,7 +9692,7 @@ function supPurchaseOrders(m){
   if(poRiskOwner&&(sel!=='poatrisk'||!poAtRisk.byOwner.has(poRiskOwner)))poRiskOwner='';
   const riskOwnerName=poRiskOwner?((poAtRiskOwners(poAtRisk).find(o=>o.key===poRiskOwner)||{}).name||''):'';
   const linked=poRiskOwner?(tileRows.poatrisk||[]).filter(r=>(atRiskBy.get(r)||{}).owner===poRiskOwner):(tileRows[sel]||[]);
-  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
+  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · Expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
   const view=supGet('po-view','open')==='received'?'received':'open';
   const value=rows=>rowOpenAmount(rows),qty=rows=>rowOpenQty(rows);
   const vendorLabel=code=>{const label=poVendorOptionMap.get(code)||code;return label.replace(/^[^-]+ - /,'')||label;};
@@ -9692,7 +9717,7 @@ function supPurchaseOrders(m){
   const seg=dzSeg([{label:'Open',on:view==='open',onclick:"supSet('po-view','open')",key:'po-view-open',tip:'Open purchase orders: commitments, the vendors that are late and the PO lines.'},
     {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving performance: on time, received this week, fill rate and reschedule hit.'}],{label:'Purchase order view'});
   const filterRow=dzFilterRow(seg,vendorPill+warehousePill,(!whAll||!venAll)?dzClear('resetPoFilters()','Show every warehouse and vendor again.'):'');
-  const filterNote=`${whAll?'All warehouses':whHit?whHit.label:poWarehouseFilter.length===1?poWarehouseFilter[0]:`${fmtNum(poWarehouseFilter.length)} warehouses`} · ${venAll?'all vendors':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} vendors`}`;
+  const filterNote=`${whAll?'All warehouses':whHit?whHit.label:poWarehouseFilter.length===1?poWarehouseFilter[0]:`${fmtNum(poWarehouseFilter.length)} warehouses`} · ${venAll?'All vendors':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} vendors`}`;
 
   // Receiving: the 3-month on-time rate, six months of it as columns, the 12 receipt weeks.
   const series=monthlyRateSeries(poReceiptRows,poReschedulePerf.closed,poReschedulePerf.met);
@@ -9839,7 +9864,7 @@ function supPurchaseOrders(m){
   }).join('')+`<th class="print-hide"${tipAttr('Add note sets an override or a note on the line.')}><span class="sr-only">Note</span></th>`;
   const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-own"><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-kit"><col class="c-act"></colgroup>
     <thead><tr>${colHead}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
-    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
+    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · Narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
   const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
@@ -10095,7 +10120,7 @@ function supSupplyDemand(m){
     <div class="sup-bigrow"><span class="dz-big"${tipAttr(`Share of open demand covered by usable open PO supply, after each item and warehouse's worst running shortfall (${fmtNum(shortQty)} qty short of ${fmtNum(demandQty)}); stock on hand is not included.`)}>${cover===null?'—':`${cover}%`}</span><span class="dz-sub">of demand has open PO supply</span></div>
     <div class="sup-meters">
       <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}${hasOC?`, ${fmtNum(demandOrders)} orders counted once per item, warehouse and month`:''}.`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
-      <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}); stock on hand is not included.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">usable supply · stock on hand not included</div></div>
+      <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}); stock on hand is not included.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">Usable supply · Stock on hand not included</div></div>
     </div>
     <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list only those.`})}</div></section>`;
 
@@ -10138,7 +10163,7 @@ function supSupplyDemand(m){
     ${list.length>limit?`<div class="sup-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(list.length)} lines</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sd-rows" data-table-key="sd-rows"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(list.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
     :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
   const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table});
-  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}${riskOnly&&view==='risk'?' · supply at risk only':''}</div>
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}${riskOnly&&view==='risk'?' · Supply at risk only':''}</div>
     <div class="dz-grid">${coverCard}${heatCard}${tableCard}</div>
     ${renderAbout(['sd-coverage','sd-shortages'])}</div>`;
 }
@@ -10204,7 +10229,7 @@ function supSupplyMix(m){
     :'<p class="sup-empty">No item groups in these months.</p>';
   const groupsCard=dzCard({title:'Item groups',span:6,cls:'dz-fade',tip:sectionTipText('mix-groups'),body:gTable});
   const warehouseNote=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
-  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)} · next ${n} months</div>
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)} · Next ${n} months</div>
     <div class="dz-grid">${matrixCard}${leastCard}${whCard}${groupsCard}</div>
     ${renderAbout(['mix-net','mix-demand','mix-groups'])}</div>`;
 }
@@ -10287,7 +10312,7 @@ function supBuildRisk(m){
   };
   const orders=all.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
     <thead><tr><th>SO #</th><th>Customer</th><th>CM</th><th>Item</th><th${tipAttr('The effective due date: the reschedule date, else the original due date.')}>Build date</th><th>Status</th><th${tipAttr('Your override, its cause and note; Edit sets them.')}>Override</th><th class="num">Amount</th></tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
-    ${cap.length>8?`<div class="sup-foot"><span>Showing ${fmtNum(vis.length)} of ${fmtNum(cap.length)}${all.length>60?` · first 60 of ${fmtNum(all.length)} lines`:''}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-br-risk" data-table-key="br-risk"${tipAttr(open?'Show only the first 8 rows.':`Show all ${fmtNum(cap.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
+    ${cap.length>8?`<div class="sup-foot"><span>Showing ${fmtNum(vis.length)} of ${fmtNum(cap.length)}${all.length>60?` · First 60 of ${fmtNum(all.length)} lines`:''}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-br-risk" data-table-key="br-risk"${tipAttr(open?'Show only the first 8 rows.':`Show all ${fmtNum(cap.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
     :`<p class="sup-empty">${riskRows.length?'No orders match the search or the customer.':'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}</p>`;
   const nOrders=supDocs(all);
   const ordersCard=supTableCard({title:'Orders at risk or late',tip:sectionTipText('br-risk'),chip:dzChip(`${fmtNum(nOrders)} ${nOrders===1?'order':'orders'}`,nOrders?'red':''),tools:supSearchBox('br','Search order, item'),body:orders});
@@ -10381,6 +10406,8 @@ function stgHorizonEnd(today){
   const e=new Date(today);e.setDate(e.getDate()+(h==='w2'?14:42));
   return e;
 }
+// The same at the start of a " · " segment ("At risk · Next month").
+function stgHorizonTitle(){const t=stgHorizonLabel();return t.charAt(0).toUpperCase()+t.slice(1);}
 function stgHorizonLabel(){return {w2:'next 2 weeks',m1:'next month',w6:'next 6 weeks',m2:'next 2 months'}[stgValue('horizon')]||'next month';}
 // The let copies the rest of the page reads.
 function stgSync(){
@@ -10716,8 +10743,8 @@ function stgDataCard(i,dc){
   const so=allLoadedRows.filter(r=>!/purchase order/i.test(String(r.sourceType||''))).length,po=allLoadedRows.length-so;
   const lines=[so?ohN(so,'sales line'):'',po?ohN(po,'PO line'):'',supplyDemandRows.length?ohN(supplyDemandRows.length,'supply / demand line'):'',buildRiskRows.length?ohN(buildRiskRows.length,'CTB line'):''].filter(Boolean).join(' · ');
   const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
-  const kept=isSnapshotView?`Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}`
-    :liveMode()&&liveState.sig.kpi?'Live from SAP · the last read is kept in this browser'
+  const kept=isSnapshotView?`Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}`
+    :liveMode()&&liveState.sig.kpi?'Live from SAP · The last read is kept in this browser'
     :{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||(loaded?'Saved in this browser only':'—');
   const notes=loaded?sharedNotesSidebarLine():'';
   const cm=loaded?cmSidebarLine():'';
@@ -11051,7 +11078,7 @@ function renderUploadState(){
   if(!box)return;
   box.hidden=!loaded;
   const names=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'Loaded export');
-  box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
+  box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · Export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
 }
 // The load screen in live mode: what is happening, and the way to import files instead.
 function liveLoadHtml(){
@@ -11241,7 +11268,7 @@ function renderGlobalSearchPage(m){
         <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
-      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
+      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · Add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
     </div>`;
   // 2v6: one glass card per kind of match (Order lines, Supply / demand, Clear To Build); a kind with no match is left out.
   // The legacy table cards inside are flattened by .misc-flat so they sit in the glass card without a second frame.
@@ -11576,7 +11603,7 @@ function renderSidebar(){
   const live=liveMode(),st=live?liveStatusText():{tone:'',short:'',line:''};
   const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${loaded?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
   const addFile=isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr(live?'Add a Clear To Build workbook or the Logican sheet to the live data.':'Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`;
-  const quiet=`${ohN(rowCount,'line')}${asOf?` · export date ${esc(displayDate(asOf))}`:''}`;
+  const quiet=`${ohN(rowCount,'line')}${asOf?` · Export date ${esc(displayDate(asOf))}`:''}`;
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   let popLabel,popBody,popActions;
   if(live){
@@ -11845,7 +11872,7 @@ function renderShipTargetScenario(sd,today,{controls=true}={}){
       ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Still open by target: ${fmtNum(sd.stillOpenByTarget.length)} booked lines not yet shipped, ${money(rowOpenAmount(sd.stillOpenByTarget))}.`)}
     </div>
     ${sd.forward?`<div class="card chart-card tight">
-      <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · first ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
+      <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · First ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
         ${sd.days.map(d=>{
           const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
@@ -11871,7 +11898,7 @@ function ohGroupOpen(id,title,{cls='',domId='',info='',tools='',tip='',badge=''}
 function ohRenderMore(key,what,body,tipText){
   if(!body)return '';
   const open=!!tableMore[`more-${key}`]||printMode;
-  return `<details class="oh-more"${open?' open':''} data-more="${esc(key)}" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="oh-more-show">Show more · ${esc(what)}</span><span class="oh-more-less">Show less</span></summary><div class="oh-more-body">${body}</div></details>`;
+  return `<details class="oh-more"${open?' open':''} data-more="${esc(key)}" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="oh-more-show">Show more · ${esc(what.charAt(0).toUpperCase()+what.slice(1))}</span><span class="oh-more-less">Show less</span></summary><div class="oh-more-body">${body}</div></details>`;
 }
 // Remembers a disclosure's state without a redraw (the browser has already opened or closed it).
 function ohSetMoreOpen(key,open){
@@ -11885,7 +11912,7 @@ function renderResults(){
   cmLoadIfStale();
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
-  const asOfText=(reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?`As of ${displayDate(reportAsOfDate)}, the day the snapshot was saved (no ExportDate column)`:`As of export date ${displayDate(reportAsOfDate)}`):`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
+  const asOfText=(reportAsOfDate?(isSnapshotView&&snapshotAsOfSaveDay?`As of ${displayDate(reportAsOfDate)}, the day the snapshot was saved (no ExportDate column)`:`As of export date ${displayDate(reportAsOfDate)}`):`As of today ${displayDate(reportToday())} (no ExportDate column)`)+(isSnapshotView?` · Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` saved ${displayDate(new Date(snapshotCreatedAt))}`:''} (note changes here are not saved)`:'');
 
   renderSidebar();
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
@@ -11899,18 +11926,18 @@ function renderResults(){
     // Each page counts what it is about: supply / demand lines, or open sales-order lines; Build Risk shows its CTB
     // report line count in its own bar.
     : activeTab==='supplyweekly'||activeTab==='supplydemand'
-    ? `as of ${asOfShort}${supplyDemandRows.length?` · ${ohN(supplyDemandRows.length,'supply / demand line')}`:''}`
+    ? `As of ${asOfShort}${supplyDemandRows.length?` · ${ohN(supplyDemandRows.length,'supply / demand line')}`:''}`
     : activeTab==='buildrisk'
-    ? `as of ${asOfShort}`
+    ? `As of ${asOfShort}`
     : activeTab==='forecast'
-    ? `as of ${asOfShort}${cmTab('forecast')?` · Logican forecast ${cmTab('forecast').source==='file'?'from file':cmTab('forecast').at?`read ${shipTimeLabel(cmTab('forecast').at)}`:''}`:''}`
-    : `as of ${asOfShort}`;
+    ? `As of ${asOfShort}${cmTab('forecast')?` · Logican forecast ${cmTab('forecast').source==='file'?'from file':cmTab('forecast').at?`read ${shipTimeLabel(cmTab('forecast').at)}`:''}`:''}`
+    : `As of ${asOfShort}`;
   // The page head is rebuilt on every redraw, so screen readers hear the search count from one persistent
   // status node, and only when the text changes.
   const announce=document.getElementById('search-announce');
   const said=activeTab==='search'?headMeta:'';
   if(announce&&announce.textContent!==said)announce.textContent=said;
-  const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
+  const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Ask AI and
   // Export PDF live in the header, Share snapshot in its export-date popover, Data check in Settings (the gear's dot).
   const showTitle=activeTab!=='weekly';
@@ -11950,7 +11977,7 @@ function renderResults(){
     const pickLabel=(filter,labelOf,noun)=>filter.includes('ALL')?'':filter.length===1?labelOf(filter[0]):`${fmtNum(filter.length)} ${noun}`;
     const filterNote=[
       activePreset?(activePreset[0]==='ALL'?'All warehouses':activePreset[1]):customWarehouseLabel,
-      weeklySegmentFilter.includes('ALL')?'all segments':pickLabel(weeklySegmentFilter,v=>v,'segments'),
+      weeklySegmentFilter.includes('ALL')?'All segments':pickLabel(weeklySegmentFilter,v=>v,'segments'),
       pickLabel(weeklyCustomerFilter,v=>weeklyCustomerOptionMap.get(v)||v,'customers'),
       pickLabel(weeklyOrderTypeFilter,v=>v,'order types'),
       pickLabel(weeklyDepartmentFilter,v=>v,'departments'),
@@ -12013,8 +12040,8 @@ function renderResults(){
       const card=(key,label,tone,count,sub,value)=>drillCard('setWeeklyOtdFilter','otd',weeklyOtdFilter,key,label,tone,typeof count==='string'?count:fmtNum(count),`${sub} · ${money(value)}`);
       return `<div class="drill-grid">
         ${card('total','Total shipped','',stats.scored.length,`${fmtNum(stats.rate)}% original-date OTD`,rowShippedAmount(stats.scored))}
-        ${card('early','Early','good',`${pct(stats.early.length,stats.scored.length)}%`,`${ohN(stats.early.length,'line')} · before original date`,rowShippedAmount(stats.early))}
-        ${card('ontime','On time','good',`${pct(stats.onTime.length,stats.scored.length)}%`,`${ohN(stats.onTime.length,'line')} · on original date`,rowShippedAmount(stats.onTime))}
+        ${card('early','Early','good',`${pct(stats.early.length,stats.scored.length)}%`,`${ohN(stats.early.length,'line')} · Before original date`,rowShippedAmount(stats.early))}
+        ${card('ontime','On time','good',`${pct(stats.onTime.length,stats.scored.length)}%`,`${ohN(stats.onTime.length,'line')} · On original date`,rowShippedAmount(stats.onTime))}
         ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.scored.length)}%`,`${ohN(stats.tolerance.length,'line')} · 1-2 days late`,rowShippedAmount(stats.tolerance))}
         ${card('late','Late','crit',`${pct(stats.late.length,stats.scored.length)}%`,`${ohN(stats.late.length,'line')} · 3+ days late`,rowShippedAmount(stats.late))}
       </div>`;
@@ -12033,10 +12060,10 @@ function renderResults(){
       const card=(key,label,tone,count,sub,value)=>drillCard('setWeeklyRescheduleFilter','resched',weeklyRescheduleFilter,key,label,tone,typeof count==='string'?count:fmtNum(count),`${sub} · ${money(value)}`);
       return `<div class="drill-grid">
         ${card('total','All rescheduled','',stats.rescheduled.length,`${fmtNum(stats.rate)}% hit rate`,stats.rescheduled.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0))}
-        ${card('met','Met commit','good',`${pct(stats.met.length,stats.closed.length)}%`,`${ohN(stats.met.length,'line')} · met commit`,stats.met.reduce((s,r)=>s+r.amountLocal,0))}
+        ${card('met','Met commit','good',`${pct(stats.met.length,stats.closed.length)}%`,`${ohN(stats.met.length,'line')} · Met commit`,stats.met.reduce((s,r)=>s+r.amountLocal,0))}
         ${card('tolerance','2-day tolerance','warn',`${pct(stats.tolerance.length,stats.closed.length)}%`,`${ohN(stats.tolerance.length,'line')} · 1-2 days after commit`,stats.tolerance.reduce((s,r)=>s+r.amountLocal,0))}
         ${card('missed','Missed commit','crit',`${pct(stats.missed.length,stats.closed.length)}%`,`${ohN(stats.missed.length,'line')} · 3+ days after commit`,stats.missed.reduce((s,r)=>s+r.amountLocal,0))}
-        ${card('openpast','Still open past commit','crit',`${pct(stats.stillOpenPast.length,stats.rescheduled.length)}%`,`${ohN(stats.stillOpenPast.length,'line')} · open qty remains`,rowOpenAmount(stats.stillOpenPast))}
+        ${card('openpast','Still open past commit','crit',`${pct(stats.stillOpenPast.length,stats.rescheduled.length)}%`,`${ohN(stats.stillOpenPast.length,'line')} · Open qty remains`,rowOpenAmount(stats.stillOpenPast))}
       </div>`;
     };
     const renderRescheduleWarehouseSummary=(rows)=>{
@@ -12265,7 +12292,7 @@ function renderResults(){
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines only.`:`Show up to ${linesAll} lines; Export PDF prints every line.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
+        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · Narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines only.`:`Show up to ${linesAll} lines; Export PDF prints every line.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
       </section>`;
     };
     // 2v4 oh: the cards on the page are At risk and On track (next month), OTD and Fill rate.
@@ -12281,8 +12308,8 @@ function renderResults(){
     };
     // The picked card's name in the Lines to act on pill, as its card writes it (Purchase Orders does the same).
     const weeklyTileTitles={
-      late:`At risk · ${stgHorizonLabel()}`,
-      ontrack:`On track · ${stgHorizonLabel()}`,
+      late:`At risk · ${stgHorizonTitle()}`,
+      ontrack:`On track · ${stgHorizonTitle()}`,
       fillrate:'Fill rate',
       otd3mo:'OTD · 3 mo',
       nocommit:'No commit date',
@@ -12412,7 +12439,7 @@ function renderResults(){
       const lateOpen=isPast&&g.openAmount>0;
       return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(`${g.label}: ${money(g.openAmount)} open${lateOpen?' and now late':''}, ${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines closed); ${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled.`)}>
         <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
-        <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · now late':'open'}</span></div>
+        <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · Now late':'open'}</span></div>
         <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
         <div class="month-stats">
           <div><span class="stat-label">${isPast?'Closed':'Open'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
@@ -12510,7 +12537,7 @@ function renderResults(){
     ${pageGroupHtml('mo-months','Open and shipped, month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
     ${pageGroupHtml('mo-shipped','By delivery month',`
     <section class="mini-strip cols-3" aria-label="Shipped to date">
-      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${ohN(mtd.rows,'delivery line')} (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'no earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${ohN(mtd.rows,'delivery line')} (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'No earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
       <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${ohN(ytd.rows,'delivery line')}${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:`; no ${lastYear} data, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
       <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data, ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
     </section>
@@ -13289,7 +13316,7 @@ function mwmSetMoreOpen(key,open){
 function mwmMore(key,what,body,tipText){
   if(!body)return '';
   const open=!!tableMore[`more-${key}`]||printMode;
-  return `<details class="mwm-more"${open?' open':''} data-more="${esc(key)}" ontoggle="mwmSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="mwm-more-show">Show more · ${esc(what)}</span><span class="mwm-more-less">Show less</span></summary><div class="mwm-more-body">${body}</div></details>`;
+  return `<details class="mwm-more"${open?' open':''} data-more="${esc(key)}" ontoggle="mwmSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-${esc(key)}"${tipAttr(tipText)}><span class="mwm-more-show">Show more · ${esc(what.charAt(0).toUpperCase()+what.slice(1))}</span><span class="mwm-more-less">Show less</span></summary><div class="mwm-more-body">${body}</div></details>`;
 }
 function mwmPct(v){return v===null||v===undefined?'—':`${fmtNum(v)}%`;}
 // A rate as the designs colour it: 85 and up teal, below the floor red, otherwise slate; no data is grey.
@@ -13354,7 +13381,7 @@ function mwmFilterRow(m,seg,{customer=false,groupPill=false,extra=''}={}){
     +optional(false,'order-type','Order type','All order types',weeklyOrderTypeFilter,oh.weeklyOrderTypeOptions,'setWeeklyOrderTypeFilter')
     +extra;
   const pick=(filter,labelOf,noun)=>isAll(filter)?'':filter.length===1?labelOf(filter[0]):`${fmtNum(filter.length)} ${noun}`;
-  const note=[whAll?'All warehouses':custom,isAll(weeklySegmentFilter)?'all segments':pick(weeklySegmentFilter,v=>v,'segments'),pick(weeklyCustomerFilter,custLabel,'customers'),
+  const note=[whAll?'All warehouses':custom,isAll(weeklySegmentFilter)?'All segments':pick(weeklySegmentFilter,v=>v,'segments'),pick(weeklyCustomerFilter,custLabel,'customers'),
     pick(weeklyOrderTypeFilter,v=>v,'order types'),pick(weeklyDepartmentFilter,v=>v,'departments'),pick(weeklyProjectFilter,v=>v,'projects')].filter(Boolean).join(' · ');
   return dzFilterRow(seg,pills,mwmFiltered()?dzClear('resetWeeklyFilters()','Clear every filter on this page.'):'')+`<div class="print-only">Filters: ${esc(note)}</div>`;
 }
@@ -13469,7 +13496,7 @@ function mwmRenderMonthly(m,ctx){
   const targetCard=dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,span:3,cls:'dz-fade',
     tip:'The ship target range: lines due by the end date that are still open, and the past-due ones that would close the gap.',
     meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the start date, the end date or the date basis of this ship target.')}>Dates</button>`,
-    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
+    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">Past due · ${moneyShort(pdValue)} open</span></div>
       <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 
@@ -14539,7 +14566,7 @@ function recomputeLastEdit(){
   [...Object.values(rowOverrides),...Object.values(sharedShipments)].forEach(e=>{if(e&&noteTime(e)&&(!last||noteTime(e)>noteTime(last)))last=e;});
   sharedNotes.last=last?{by:String(last.by||''),at:last.at}:null;
 }
-// Sidebar line under the report status (its own .loaded-notes row): "Notes shared · last edit Kareena · Oct 8", and
+// Sidebar line under the report status (its own .loaded-notes row): "Notes shared · Last edit Kareena · Oct 8", and
 // the Set your name / Change name in Settings link.
 function sharedNotesSidebarLine(){
   if(isSnapshotView)return '';
@@ -14548,9 +14575,9 @@ function sharedNotesSidebarLine(){
   if(s.state==='shared'){
     const last=s.last&&noteTime(s.last)?new Date(noteTime(s.last)):null;
     const lastBy=last&&s.last.by?`${s.last.by} · `:'';
-    if(s.saving)text='Notes shared · saving…';
+    if(s.saving)text='Notes shared · Saving…';
     else if(s.message)text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
-    else text=last?`Notes shared · last edit ${esc(lastBy)}${esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric'}))}`:'Notes shared';
+    else text=last?`Notes shared · Last edit ${esc(lastBy)}${esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric'}))}`:'Notes shared';
     tip=`Notes, overrides and causes are saved for everyone who signs in${last?`; last edit${s.last.by?` by ${s.last.by}`:''}: ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}`:''}.`;
   }else if(s.state==='offline'){
     text='Notes saved in this browser only (server not reachable)';
@@ -15900,7 +15927,7 @@ const shipPlural=(n,one,many)=>`${fmtNum(n)} ${n===1?one:many}`;
 function shipYmd(d){const x=new Date(d);return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`;}
 const SHIP_DATE_RE=/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 // The carrier, from the delivery's ship method (or a UPS 1Z number); only a label, nothing is sent anywhere.
-const SHIP_CARRIERS=[[/fed\s*ex|fdx|fxf/i,'FedEx'],[/\bups\b/i,'UPS'],[/purolator/i,'Purolator'],[/canpar/i,'Canpar'],[/\bdhl\b/i,'DHL'],[/loomis/i,'Loomis'],[/canada\s*post/i,'Canada Post'],[/dicom/i,'Dicom'],[/day\s*&?\s*ross/i,'Day & Ross'],[/manitoulin/i,'Manitoulin']];
+const SHIP_CARRIERS=[[/fed\s*ex|fdx|fxf/i,'FedEx'],[/\bups\b/i,'UPS'],[/purolator/i,'Purolator'],[/canpar/i,'Canpar'],[/\bdhl\b/i,'DHL'],[/loomis/i,'Loomis'],[/canada\s*post/i,'Canada Post'],[/dicom/i,'Dicom'],[/day\s*&?\s*ross/i,'Day & Ross'],[/manitoulin/i,'Manitoulin'],[/\busps\b|postal service/i,'USPS'],[/amazon/i,'Amazon']];
 // The carrier the SAP ship method names ('' = none of the known ones).
 function shipMethodCarrier(s){
   const m=String(s&&s.shipMethod||'');
@@ -16444,13 +16471,14 @@ function shpMapCol(){
   return col;
 }
 // The wide layout (981px and up, not printing), in pixels: w the stage (the card's inner width), h its height, pw the
-// width of the status cards laid over its right edge (14px in), a the width on the left where the dots and arcs go (the
+// width of the status cards laid over its right edge (14px in; 2v6.9b: at least 364px so "Delivered this week" keeps
+// to one line at 1180px), a the width on the left where the dots and arcs go (the
 // map fades out from there to under the cards). null below 981px or when printing.
 function shpMapLayout(){
   const vpw=typeof innerWidth==='number'&&innerWidth>0?innerWidth:1440;
   if(printMode||vpw<=980)return null;
   const w=Math.max(600,Math.round(shpMapCol()-2));
-  const pw=Math.round(Math.max(320,Math.min(380,w*.28)));
+  const pw=Math.round(Math.max(364,Math.min(384,w*.28)));
   const h=Math.round(Math.max(360,Math.min(430,w*.3)));
   return {w,h,pw,a:w-pw-14-56};
 }
@@ -16499,25 +16527,44 @@ function renderShipMap(list){
     y0=ccy-lay.h/2/kk;y1=y0+lay.h/kk;
     fade=`;--fa:${(lay.a/lay.w*100).toFixed(2)}%;--fb:${((lay.w-lay.pw*.3)/lay.w*100).toFixed(2)}%`;
   }
-  const vw=x1-x0,vh=y1-y0;
-  const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;
   // On a phone the stage is wider than the card (zoomed up to 2.2x, centred on the hub and the dots) so the dots
   // are not squeezed together; the card clips the rest.
   const xs=[hub[0],...dots.map(d=>d.xy[0])];
   const bx0=Math.min(...xs)-90,bx1=Math.max(...xs)+90;
-  const zoom=Math.max(1,Math.min(2.2,vw/(bx1-bx0)));
-  const shift=Math.max(1-zoom,Math.min(0,.5-zoom*((bx0+bx1)/2-x0)/vw));
+  const phone=shpMapPhone();
   // Labels: above the dot, else below, right or left, whichever is free; a label that fits nowhere is left out (the
   // dot's tip still names the place). The busiest few stay on a phone. Labels, dots and the hub keep their size in
   // pixels while the stage scales, so the placer works in map units of u = 1 / (pixels per map unit) at the width the
   // map will be drawn (shpMapScale), and keeps each label inside the part of the stage that shows.
-  const scale=shpMapScale(vw,vh,zoom);
+  const viewOf=()=>{
+    const vw=x1-x0,vh=y1-y0;
+    const zoom=Math.max(1,Math.min(2.2,vw/(bx1-bx0)));
+    const shift=Math.max(1-zoom,Math.min(0,.5-zoom*((bx0+bx1)/2-x0)/vw));
+    const scale=shpMapScale(vw,vh,zoom);
+    return {vw,vh,zoom,shift,scale,u:1/scale};
+  };
+  // 2v6.9b: the legend (and the no-ship-to-country note) sit small over the faded bottom-left of the map (owner): the
+  // labels keep out of that corner, and a dot that would fall in it moves the view's bottom down.
+  const noPlaceText=unplaced?`${shipPlural(unplaced,'shipment','shipments')} with no ship-to country`:'';
+  const footBox=v=>{
+    const vx=phone?x0+(-v.shift/v.zoom)*v.vw:x0;
+    const room=(phone?shpMapCol():lay?lay.w-lay.pw:shpMapCol())-60;
+    const lw=244,nw=noPlaceText?noPlaceText.length*6.4+36:0;
+    const one=!nw||lw+12+nw<=room;
+    const w=(one?lw+(nw?12+nw:0):Math.max(lw,nw))+(phone?18:22)+8,h=one?40:68;
+    return [vx,y1-h*v.u,w*v.u,h*v.u];
+  };
+  {
+    const v=viewOf(),f=footBox(v);
+    const low=dots.filter(({xy,d})=>xy[0]-d*v.u/2<f[0]+f[2]&&xy[0]+d*v.u/2>f[0]&&xy[1]+d*v.u/2>f[1]).map(({xy,d})=>xy[1]+d*v.u/2);
+    if(low.length)y1+=Math.max(...low)-f[1]+4*v.u;
+  }
+  const {vw,vh,zoom,shift,scale,u}=viewOf();
+  const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;
   shpMapDrawn={vw,vh,zoom,k:scale,w:lay?lay.w:0};
-  const u=1/scale;
-  const phone=shpMapPhone();
   // Labels stay left of the cards on a wide screen (a little into the fade at most).
   const vx0=phone?x0+(-shift/zoom)*vw:x0,vx1=phone?x0+((1-shift)/zoom)*vw:lay?x0+(lay.a+40)*u:x1;
-  const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u]];
+  const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u],footBox({vw,vh,zoom,shift,u})];
   const inside=r=>r[0]>=vx0+2*u&&r[0]+r[2]<=vx1-2*u&&r[1]>=y0+2*u&&r[1]+r[3]<=y1-2*u;
   const free=r=>inside(r)&&!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
   const place=(cx,cy,rad,px)=>{
@@ -16545,13 +16592,12 @@ function renderShipMap(list){
     return `<button type="button" class="shp-dot ${p.state}${sel?' sel':''}" style="${at(xy)};width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;margin:${(-d/2).toFixed(2)}px 0 0 ${(-d/2).toFixed(2)}px;--i:${i}" data-focus-key="ship-dot-${esc(p.key)}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(`${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}`)}" onclick="shipPickDest('${esc(p.key)}')" data-tip="${esc(tip)}"></button>`;
   }).join('');
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
-  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('The SAP delivery has no ship-to country (or one this map does not know), so these shipments are in the table but not on the map.')}>${esc(`${shipPlural(unplaced,'shipment','shipments')} with no ship-to country`)}</span>`:'';
-  // 2v7 e: the legend sits in the title row (right of the title, under it when there is no room), so the card is
-  // shorter; the foot is left only for the no-ship-to-country note.
+  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('The SAP delivery has no ship-to country (or one this map does not know), so these shipments are in the table but not on the map.')}>${esc(noPlaceText)}</span>`:'';
+  // 2v6.9b: the legend sits at the bottom left of the map (it was in the title row), with the no-ship-to-country note.
   const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
-  const foot=noPlace?`<div class="shp-map-foot">${noPlace}</div>`:'';
+  const foot=`<div class="shp-map-foot">${legend}${noPlace}</div>`;
   return `<section class="dz-card shp-map" aria-label="Where orders are headed">
-    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div>${legend}</div>
+    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Where orders are headed</h2><div class="dz-meta">${esc(meta)}</div></div></div>
     <div class="shp-map-stage${lay?' wide':''}" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%${fade}">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
@@ -16572,16 +16618,12 @@ function renderShipMap(list){
 function shippingHeadMeta(){
   return shipPlural(shippingModel().list.length,'shipment','shipments');
 }
-// "Updated 10:00 AM · next 12:00 PM" while AfterShip statuses come in (no next time in a snapshot or once checks have
-// stopped), else ''.
+// "Updated 10:00 AM" while AfterShip statuses come in, else ''. 2v6.9b: no next check time (owner).
 function shpAsUpdatedText(){
   const at=shpAsOn()?Date.parse(shpAsPolledAt()):NaN;
   if(!isFinite(at))return '';
-  const now=Date.now();
   const when=new Date(at);
-  const label=shipYmd(when)===shipYmd(now)?shipClock(when):shipTimeLabel(when.toISOString());
-  const next=!isSnapshotView&&now-at<6*3600000?` · next ${shipClock(new Date(shpAsNextCheck(now)))}`:'';
-  return `Updated ${label}${next}`;
+  return `Updated ${shipYmd(when)===shipYmd(Date.now())?shipClock(when):shipTimeLabel(when.toISOString())}`;
 }
 // 2v6.9 Update all: asks AfterShip about every shipment now (POST /api/shipping, "refresh now": once per 10 minutes
 // for the whole site), then reads the results again and redraws. Only where this site has the AfterShip key.
@@ -16812,7 +16854,7 @@ function shpTileFacts(id,group,now=Date.now()){
   if(id==='transit'){
     const past=promised.filter(d=>d<today).length;
     const next=earliest(promised.filter(d=>d>=today));
-    if(past)out.push({html:esc(`${fmtNum(past)} past promised date`),tone:'warn'});
+    if(past)out.push({html:esc(`${fmtNum(past)} past due date`),tone:'warn'});
     else if(next)out.push({html:esc(`Next due ${shipDateLabel(next)}`)});
     const cs=shipCarrierSel?[]:ranked(shipCarrier); // one carrier picked: the pill already names it
     if(cs.length===1)out.push({html:esc(group.length===1?cs[0][0]:`All ${cs[0][0]}`)});
@@ -16824,7 +16866,7 @@ function shpTileFacts(id,group,now=Date.now()){
     }
   }else if(id==='delayed'){
     const late=group.map(s=>s.promised?daysBetweenDates(s.promised,today):null).filter(n=>n!==null&&n>0);
-    if(late.length){const mx=Math.max(...late);out.push({html:esc(group.length===1?`${shipPlural(mx,'day','days')} past promised`:`Up to ${shipPlural(mx,'day','days')} late`)});}
+    if(late.length){const mx=Math.max(...late);out.push({html:esc(group.length===1?`${shipPlural(mx,'day','days')} past due`:`Up to ${shipPlural(mx,'day','days')} late`)});}
     else if(promised.length)out.push({html:esc(`Next due ${shipDateLabel(earliest(promised))}`)});
     const cust=shipCustomerSel?[]:ranked(s=>s.customer);
     if(cust.length)out.push({html:nameMore(cust[0][0],cust.length-1)});
@@ -16838,7 +16880,8 @@ function shpTileFacts(id,group,now=Date.now()){
   }else if(id==='open'){
     const stale=group.filter(s=>s.stale).length;
     const none=group.filter(s=>!s.status).length;
-    out.push(stale?{html:esc(`${fmtNum(stale)} with no update in 2+ days`),tone:'warn'}:{html:esc('All updated in 2 days')});
+    // 2v6.9b: a narrow card (the small cards over the map) says it shorter, like the carriers line.
+    out.push(stale?{html:`<span class="shp-ts-w">${esc(`${fmtNum(stale)} with no update in 2+ days`)}</span><span class="shp-ts-n">${esc(`${fmtNum(stale)} no update 2+ days`)}</span>`,tone:'warn'}:{html:esc('All updated in 2 days')});
     if(none)out.push({html:esc(none===group.length?'No status yet':`${fmtNum(none)} with no status yet`)});
   }
   return out.slice(0,2);
@@ -16933,23 +16976,38 @@ function shpPriToggle(el){
   shpPriUpdateCard();
   if(typeof announce==='function')announce(`${n}: ${on?'priority':'not priority'}${shippingSharedStore()?', saved for everyone':''}.`);
 }
-// ETA cell: delivered shipments show the delivery date over "promised ..."; the others AfterShip's expected date over
-// "promised ..." (else the promised date over "promised"). 2v6.9: when the status last changed is no longer on each
+// ETA cell: delivered shipments show the delivery date over "Due ..."; the others AfterShip's expected date over
+// "Due ..." (else the due date over "Due"). 2v6.9b: "Due" for "promised" (owner). 2v6.9: when the status last changed is no longer on each
 // row; the Shipments card's title row says when AfterShip was read.
 function shipEta(s){
   if(s.status==='delivered'){
-    return {top:s.deliveredDate?`Delivered ${shipDateLabel(s.deliveredDate)}`:'Delivered',topTone:s.lateDays>0?'late':'',sub:s.promised?`promised ${shipDateLabel(s.promised)}`:'',subTone:''};
+    return {top:s.deliveredDate?`Delivered ${shipDateLabel(s.deliveredDate)}`:'Delivered',topTone:s.lateDays>0?'late':'',sub:s.promised?`Due ${shipDateLabel(s.promised)}`:'',subTone:''};
   }
   const top=s.eta||s.promised;
   const late=s.status==='delayed'||(s.eta&&s.promised&&daysBetweenDates(s.promised,s.eta)>0);
-  const sub=s.eta?(s.promised?`promised ${shipDateLabel(s.promised)}`:'expected'):s.promised?'promised':'';
+  const sub=s.eta?(s.promised?`Due ${shipDateLabel(s.promised)}`:'Expected'):s.promised?'Due':'';
   return {top:top?shipDateLabel(top):'—',topTone:late?'late':'',sub,subTone:''};
 }
-// 2v6.9: the small icon before each tracking number (its state at a glance; the state is in the row's text too).
-const SHP_ROW_ICONS={shipped:['truck','go'],transit:['truck','go'],delayed:['alert','late'],delivered:['check','done'],'':['clock','none']};
-function shpRowIcon(s){
-  const [name,tone]=SHP_ROW_ICONS[s.status||'']||SHP_ROW_ICONS[''];
-  return `<span class="shp-ico ${tone}" aria-hidden="true">${dzIconSvg(name)}</span>`;
+// 2v6.9b: the carrier's logo before each tracking number (it replaces 2v6.9's state icons; owner). Marks from the
+// Simple Icons project (simpleicons.org, CC0), with its brand colours; vb crops the 24x24 icon to the mark so a wordmark
+// fills the chip's height (sized by height, never stretched). Carriers it has no mark for get their name in the same
+// chip (never a made-up logo); the name is always in the chip's label and the row's tip.
+const SHP_CARRIER_LOGOS={
+  fedex:{title:'FedEx',color:'#4D148C',bg:'',vb:'0 8.5 24 7',path:'M22.498 14.298c-.016-.414.345-.751.75-.755a.745.745 0 0 1 .752.755.755.755 0 0 1-.751.745c-.395.002-.759-.346-.751-.745zm.759-.083c.067-.02.164-.042.162-.13.007-.09-.086-.133-.162-.134h-.163v.263c0 .001.165-.002.163.001zm-.163.107v.418h-.14v-.91h.327c.156-.021.294.092.286.253a.218.218 0 0 1-.156.19c.162.083.108.322.173.467h-.156a2.355 2.355 0 0 1-.04-.205c-.018-.093-.047-.229-.17-.213h-.124zm.76-.024a.603.603 0 0 0-.605-.632c-.338-.012-.62.302-.605.632a.619.619 0 0 0 .605.622.61.61 0 0 0 .605-.622zm-5.052-.579l-.878 1.008h-1.306l1.559-1.745-1.56-1.75h1.355l.902.997.878-.998h1.306l-1.543 1.743 1.559 1.753h-1.371l-.901-1.008zm-4.703-.352v-.827h1.904v-1.506l1.724 1.948-1.724 1.941v-1.556h-1.904zm1.56 1.36h-3.2V9.044h3.224v1.024H13.77v1.163h1.888v.958h-1.904v1.522h1.904v1.016zm-5.705-.655c-.54.017-.878-.552-.877-1.04-.01-.507.307-1.123.878-1.105.579-.025.871.6.845 1.103.023.501-.29 1.062-.846 1.042zM4.743 12.41c.076-.358.403-.67.78-.663a.788.788 0 0 1 .803.663H4.743zm15.182.564l1.815-2.047h-2.125l-.74.844-.763-.844h-4.037v-.548h1.912V8.741H10.84v2.58c-.362-.448-.981-.559-1.526-.492-.782.123-1.427.762-1.634 1.514-.254-.958-1.179-1.588-2.157-1.554-.781.009-1.6.365-1.987 1.071v-.818h-1.87v-.9h2.043v-1.4H0v6.287h1.666v-2.644h1.666a7.59 7.59 0 0 0-.082.622c-.013 1.232 1.042 2.27 2.274 2.236a2.204 2.204 0 0 0 2.157-1.432H6.254c-.14.268-.441.38-.73.36-.457.009-.83-.417-.829-.86h2.914c.083 1.027.988 1.966 2.043 1.947a1.53 1.53 0 0 0 1.19-.639v.41h7.215l.754-.86.754.86h2.192l-1.832-2.055z'},
+  ups:{title:'UPS',color:'#150400',bg:'',vb:'1.7 -.1 20.6 24.2',path:'M11.668 14.544l-.028-5.226c.138-.055.387-.111.608-.111.995 0 1.41.774 1.41 2.682 0 1.853-.47 2.765-1.438 2.765-.22 0-.441-.055-.552-.11zM3.124 7.438c4.203-3.843 9.29-4.866 14.018-4.866 1.3 0 2.544.083 3.76.194h-.028v11.253c0 2.184-.774 3.926-2.295 5.171-1.355 1.134-5.447 2.959-6.581 3.456-1.161-.525-5.253-2.378-6.581-3.456-1.493-1.244-2.295-3.014-2.295-5.171V7.438zm12.664 2.599c.028.912.276 1.576 1.687 2.406.747.442 1.051.747 1.051 1.272 0 .581-.387.94-1.023.94-.553 0-1.189-.304-1.631-.691v1.576c.553.304 1.217.525 1.88.525 1.687 0 2.433-1.189 2.461-2.267.028-.995-.249-1.742-1.659-2.571-.608-.387-1.134-.636-1.106-1.244 0-.581.525-.802.995-.802.581 0 1.161.332 1.521.691V8.378c-.304-.221-.94-.581-1.88-.553-1.135.028-2.296.829-2.296 2.212zm-5.834 9.484h1.714l-.028-3.594c.166.028.415.083.774.083 1.908 0 2.986-1.687 2.986-4.175 0-2.461-1.106-4.009-3.152-4.009-.94 0-1.687.221-2.295.608v11.087zm-5.945-6.166c0 1.797.829 2.71 2.516 2.71 1.051 0 1.908-.249 2.571-.691V7.991H7.41v6.387c-.194.138-.47.221-.802.221-.774 0-.885-.719-.885-1.189V7.991H4.009v5.364zM22.12 2.295v11.723c0 2.516-.94 4.645-2.765 6.111-1.549 1.3-6.332 3.429-7.355 3.871-1.023-.442-5.806-2.571-7.355-3.843-1.797-1.465-2.765-3.594-2.765-6.111V2.295C4.756.747 8.074 0 12 0s7.244.747 10.12 2.295zm-.304.221c-2.71-1.465-6-2.184-9.788-2.184s-7.079.746-9.788 2.184v11.502c0 2.433.912 4.452 2.627 5.862 1.576 1.3 6.581 3.484 7.161 3.76.581-.249 5.585-2.433 7.161-3.733 1.714-1.41 2.627-3.429 2.627-5.862V2.516zm-2.433 20.295c0 .47-.387.829-.829.829a.831.831 0 0 1-.829-.829c0-.47.387-.829.829-.829.441 0 .801.359.829.829zm-.166 0a.679.679 0 0 0-.664-.691c-.359 0-.664.332-.664.691 0 .359.304.664.664.664a.673.673 0 0 0 .664-.664zm-.553.055c.028.055.304.442.304.442h-.221s-.276-.387-.276-.415h-.028v.415h-.194v-.995l.304-.028c.249 0 .332.166.332.304s-.083.25-.221.277zm.027-.276c0-.055 0-.138-.166-.138h-.083v.304h.028c.194 0 .221-.083.221-.166z'},
+  dhl:{title:'DHL',color:'#D40511',bg:'#FFCC00',vb:'0 10.1 24 3.8',path:'M4.22 10.303l-.767 1.043h4.18c.21 0 .208.078.105.218-.105.142-.28.39-.386.534-.054.073-.154.207.171.207h1.71l.505-.69c.314-.426.028-1.312-1.095-1.312H4.22zm7.204 0l-1.475 2.002h5.39l1.473-2.002H14.61l-.843 1.146h-.985l.846-1.146h-2.203zm6.105 0l-1.474 2.002h2.334l1.472-2.002H17.53zm-12.845 1.3l-1.54 2.094h3.754c1.24 0 1.932-.844 2.145-1.136h-2.56c-.326 0-.226-.133-.172-.207.107-.143.283-.388.388-.53.104-.14.107-.22-.105-.22h-1.91zM0 12.562v.242h3.398l.176-.242H0zm9.762 0l-.836 1.136h2.203l.836-1.136H9.762zm3.185 0l-.836 1.136h2.203l.836-1.136h-2.203zm2.918 0s-.159.22-.238.326c-.276.374-.033.81.87.81h3.538l.834-1.136h-5.004zm5.408 0l-.177.242H24v-.242h-2.727zM0 13.01v.24h3.068l.178-.24H0zm20.943 0l-.175.24H24v-.24h-3.057zM0 13.457v.24h2.74l.176-.24H0zm20.615 0l-.177.24H24v-.24h-3.385z'},
+  usps:{title:'USPS',color:'#333366',bg:'',vb:'0 4.4 24 15.2',path:'M3.145 4.577L0 19.423h20.855L24 4.577H3.145zm-.157 3.806h9.436c.157 0 5.064 0 5.159.975H9.09l1.321 4.026c1.51-.723 5.222-2.233 7.455-2.328.944-.031 1.321.126 1.132.252-.126.063-1.038.189-1.761.377-1.258.315-1.321.315-2.642.755-1.478.503-2.705 1.069-4.53 1.919L.723 18.983l2.265-10.6zm16.483 1.698c-.535-.094-2.768.063-3.334.063-.126 0-.472.031-.472-.063 0-.063.126-.063.377-.094s1.006-.157 1.258-.283c.063-.063.22-.157.315-.252.031-.063.063-.094.157-.094h1.164c.755 0 1.195.094 1.132.723-.031.315-.472 1.132-.629 1.384-.063.094-.189.189-.157 0 .126-.503.597-1.321.189-1.384zm.88 8.902H2.076s17.363-6.794 17.552-6.92c0 0 1.541-2.076.629-2.925-.283-.283-.692-.283-2.265-.283 0 0-.063-.598-2.485-1.164-.283-.063-11.858-2.517-11.858-2.517h19.628l-2.926 13.809zm2.925-.695c0-.195-.114-.293-.358-.293h-.406v1.008h.146v-.439h.179l.276.455h.179L23 18.564c.162-.016.276-.097.276-.276zm-.455.146h-.163v-.341h.211c.114 0 .228.016.228.163 0 .162-.13.178-.276.178zm.016-.829a.868.868 0 0 0-.894.878c0 .504.406.894.894.894s.894-.39.894-.894a.878.878 0 0 0-.894-.878zm0 1.642c-.423 0-.731-.325-.731-.764 0-.423.325-.748.731-.748.406 0 .731.325.731.748 0 .439-.325.764-.731.764z'},
+};
+const SHP_CARRIER_MARKS=[[/fed\s*ex|fdx|fxf/i,'fedex'],[/^ups\b|\bups\b/i,'ups'],[/\bdhl\b/i,'dhl'],[/\busps\b|postal service/i,'usps']];
+const SHP_CARRIER_WORDS=[[/purolator/i,'Purolator'],[/canada\s*post/i,'Canada Post'],[/canpar/i,'Canpar'],[/loomis/i,'Loomis'],[/day\s*&?\s*ross/i,'Day & Ross'],[/dicom/i,'Dicom'],[/manitoulin/i,'Manitoulin'],[/amazon/i,'Amazon']];
+function shpCarrierBadge(s){
+  const name=shipCarrier(s);
+  const mark=(SHP_CARRIER_MARKS.find(([re])=>re.test(name))||[])[1];
+  const logo=mark&&SHP_CARRIER_LOGOS[mark];
+  if(logo)return `<span class="shp-cr logo${logo.bg?' fill':''}" role="img" aria-label="${esc(name)}"${logo.bg?` style="background:${logo.bg}"`:''}><svg class="shp-cr-${mark}" viewBox="${logo.vb}" aria-hidden="true" focusable="false"><path fill="${logo.color}" d="${logo.path}"/></svg></span>`;
+  const none=name==='Carrier not set';
+  const word=none?'No carrier':(SHP_CARRIER_WORDS.find(([re])=>re.test(name))||[])[1]||name;
+  return `<span class="shp-cr text${none?' none':''}" role="img" aria-label="${esc(name)}"><span aria-hidden="true">${esc(word)}</span></span>`;
 }
 // The carrier's last scan place from AfterShip ("Winnipeg, MB, CAN" -> "Winnipeg, MB"; '' when unknown).
 function shpLastLocation(s){
@@ -16963,7 +17021,7 @@ function renderShipRow(s,idx=0){
   const eta=shipEta(s);
   const orders=[...s.orders];
   const orderTop=orders.length?`SO ${orders.slice(0,2).join(', ')}${orders.length>2?` +${orders.length-2}`:''}`:'No order';
-  const orderSub=s.customer||(s.manual?'added by hand':'');
+  const orderSub=s.customer||(s.manual?'Added by hand':'');
   const stage=s.status?s.pos+1:1;
   const tone=s.status==='delayed'?'red':s.status==='delivered'?'teal':'';
   const stTone=s.status==='delayed'?' late':s.status==='delivered'?' done':!s.status?' warn':'';
@@ -16975,9 +17033,9 @@ function renderShipRow(s,idx=0){
   return `<div class="shp-row${open?' open':''} dz-fade" style="--i:${i}">
     <div class="shp-line">
       <button type="button" class="shp-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
-        <span class="shp-trk">${shpRowIcon(s)}<span class="shp-trk-t"><b>${esc(shipFmtTrack(n))}</b><em>${esc(shipCarrier(s))}</em></span></span>
+        <span class="shp-trk">${shpCarrierBadge(s)}<span class="shp-trk-t"><b>${esc(shipFmtTrack(n))}</b></span></span>
         <span class="shp-ord"><b>${esc(orderTop)}</b><em>${esc(orderSub)}</em></span>
-        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span>${loc?`<span class="shp-loc">Last location: ${esc(loc)}</span>`:''}</span>
+        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span>${loc?`<span class="shp-loc">Last: ${esc(loc)}</span>`:''}</span>
         <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b>${eta.sub?`<em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em>`:''}</span>
         <span class="sr-only">${esc(stepText)}</span>
       </button>
@@ -17008,21 +17066,28 @@ function renderShipUpdateForm(s){
       <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status"></span>
     </form>`;
 }
+// 2v6.9b (owner): no Source or AfterShip rows; Status is AfterShip's own status (its tag in words, then its detail,
+// else the carrier's latest scan words: "In transit · Arrived at FedEx location") when AfterShip has one, else the
+// status set by hand as before; "Due" for "Promised".
+function shpAsStatusText(a){
+  if(!a||a.error||!a.tag||!a.status)return '';
+  const detail=String(a.detail||(a.lastEvent&&a.lastEvent.desc)||'').trim();
+  const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+  return [a.status,detail&&detail.toLowerCase()!==String(a.status).toLowerCase()?cap(detail):''].filter(Boolean).join(' · ');
+}
 function renderShipDetail(s){
   const n=s.number,m=s.mark,a=s.as;
   const fact=(label,value,tipText)=>value?`<div class="shp-fact"${tipAttr(tipText)}><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`:'';
-  // Which status counts: AfterShip's, or the one set by hand (newer than AfterShip's, or AfterShip has none).
-  const source=!m?'':m.source==='aftership'?'From AfterShip':[`Set by ${m.by||'hand'}`,shipTimeLabel(m.at)].filter(Boolean).join(' · ');
   const ev=a&&a.lastEvent;
   const scan=ev?[ev.desc,ev.city,shpAsLocalTime(ev.at)].filter(Boolean).join(' · '):'';
-  const asText=!a?'':a.error?a.error:[a.status,a.detail&&a.detail!==a.status?a.detail:''].filter(Boolean).join(' · ');
+  const asStatus=shpAsStatusText(a);
+  const late=s.status==='delivered'?shipLateText(s.lateDays):'';
+  const handStatus=m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${late?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:'';
   const facts=[
-    fact('Status',m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${s.status==='delivered'&&shipLateText(s.lateDays)?` · ${shipLateText(s.lateDays)}`:''}`:'No status yet','The status shown on this row, and its date.'),
-    fact('Source',source,'AfterShip’s status, or one set by hand; the newer one counts.'),
-    fact('AfterShip',asText,'What AfterShip says, read every 2 hours.'),
+    fact('Status',asStatus?`${asStatus}${late&&a.tag==='Delivered'?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:handStatus||(a&&a.error)||'No status yet',asStatus?'AfterShip’s status for this shipment, read every 2 hours.':'The status set by hand, and its date.'),
     fact('Last scan',scan,'The carrier’s latest scan, from AfterShip.'),
     fact('Expected',s.eta?shipDateLabel(s.eta):'','The expected delivery date, from AfterShip.'),
-    fact('Promised',s.promised?shipDateLabel(s.promised):'','The earliest reschedule or delivery date of its order lines.'),
+    fact('Due',s.promised?shipDateLabel(s.promised):'','The earliest reschedule or delivery date of its order lines.'),
     fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','The delivery date in SAP.'),
     fact('Carrier',shipCarrier(s),'From the ship method on the SAP delivery, else from AfterShip.'),
     fact('Ship method (SAP)',s.shipMethod,'The shipping type on the SAP delivery.'),
@@ -17041,7 +17106,7 @@ function renderShipDetail(s){
       <th scope="col"${tipAttr('Item number and description.')}>Item / description</th>
       <th scope="col" class="num"${tipAttr(s.deliveries.size?'Quantity shipped on this delivery.':'Quantity ordered on the line.')}>Qty</th>
       <th scope="col" class="num"${tipAttr(s.deliveries.size?'Shipped value of the line.':'Open value of the line.')}>Value</th>
-      <th scope="col"${tipAttr('The line’s reschedule date, else its delivery date.')}>Promised</th>
+      <th scope="col"${tipAttr('The line’s reschedule date, else its delivery date.')}>Due</th>
       <th scope="col"${tipAttr('The delivery date in SAP; blank until shipped.')}>Shipped</th>
     </tr></thead><tbody>${rows.map(lineRow).join('')}</tbody></table></div>`
     :`<p class="shp-note-p">${s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
@@ -17066,8 +17131,8 @@ function renderShipCross(list,today){
   const body=rows.length?`<div class="shp-list">${rows.map(s=>{
       const days=s.shipDate?daysBetweenDates(s.shipDate,today):null;
       const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
-      const right=`<span class="shp-li-r"><b${s.status==='delayed'?' class="late"':''}>${days===null?'—':esc(shipPlural(Math.max(0,days),'day','days'))}</b><em>${days===null?'no ship date':'since shipped'}</em></span>`;
-      return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'unknown'}`,right,'','ship-x');
+      const right=`<span class="shp-li-r"><b${s.status==='delayed'?' class="late"':''}>${days===null?'—':esc(shipPlural(Math.max(0,days),'day','days'))}</b><em>${days===null?'No ship date':'Since shipped'}</em></span>`;
+      return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'Unknown'}`,right,'','ship-x');
     }).join('')}</div>${shpPager('cross',page,pages,'Cross-border')}`
     :`<p class="shp-none">None right now.</p>`;
   return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Shipments to an address outside Canada that are not delivered yet: customer, order, destination, and the days since the delivery shipped. Delayed ones first.'});
@@ -17177,7 +17242,7 @@ function renderShippingPage(m){
   const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):'';
   const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
   // Column titles sort the table (again to reverse); aria-sort is on each column header.
-  const etaTip='Delivered: the delivery date and the promised date. Others: AfterShip’s expected date (else the promised date) and the promised date.';
+  const etaTip='Delivered: the delivery date and the due date. Others: AfterShip’s expected date (else the due date) and the due date.';
   const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip],['priority','Priority','Ticked as priority (first click lists them first).']].map(([id,label,tip])=>{
     const on=shipSortCol===id;
     return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
@@ -17191,9 +17256,9 @@ function renderShippingPage(m){
       <div class="shp-rows">${visible.map(renderShipRow).join('')||`<p class="shp-none">${esc(emptyMsg)}</p>`}</div>
     </div>
     ${shpPager('list',page,pages,'Shipments')}`;
-  // The title row: the count, when AfterShip was read and the next check, and Update all.
+  // The title row: the count, when AfterShip was read, and Update all.
   const upd=shpAsUpdatedText();
-  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('When AfterShip was last read, and its next scheduled check (every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
+  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('When AfterShip was last read (it checks every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
   const list=dzCard({title:'Shipments',meta:listMeta,cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then those with no update for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
   // 2v6.9: the map card across the page with the small cards over its faded right part (stacked, cards first, below
@@ -17621,18 +17686,18 @@ function cmSidebarLine(){
   const open=cmTab('openOrders'),fc=cmTab('forecast');
   let text='',tip='Open Orders and Forecast from the Logican sheet.',refresh=false;
   const src=open||fc;
-  if(src&&src.source==='file')text='Logican sheet · from file',tip=`Logican sheet from ${[cmState.files.openOrders,cmState.files.forecast].filter(Boolean).map(f=>f.name).join(', ')}.`;
-  else if(src&&src.source==='snapshot')text=`Logican sheet · as of ${esc(shipTimeLabel(src.at))}`;
+  if(src&&src.source==='file')text='Logican sheet · From file',tip=`Logican sheet from ${[cmState.files.openOrders,cmState.files.forecast].filter(Boolean).map(f=>f.name).join(', ')}.`;
+  else if(src&&src.source==='snapshot')text=`Logican sheet · As of ${esc(shipTimeLabel(src.at))}`;
   else if(src){
     const t=Date.parse(src.at);
-    text=`Logican sheet · updated ${isFinite(t)?shipAgo(Date.now()-t):'earlier'}`;
+    text=`Logican sheet · Updated ${isFinite(t)?shipAgo(Date.now()-t):'earlier'}`;
     if(cmState.state==='stale')text=`<span class="warn-text">${text}</span>`,tip=cmState.message||tip;
     else tip='Open Orders and Forecast from the Logican sheet, read every 5 minutes.';
     refresh=true;
   }else if(isSnapshotView)return '';
-  else if(cmState.state==='error')text='<span class="warn-text">Logican sheet · could not be read</span>',tip=cmState.message||'The Logican sheet could not be read.',refresh=true;
-  else if(cmState.state==='loading'||cmState.loading)text='Logican sheet · reading…';
-  else text='Logican sheet · not set up',tip='Not linked on this site. Use Add file with a download of its tabs.';
+  else if(cmState.state==='error')text='<span class="warn-text">Logican sheet · Could not be read</span>',tip=cmState.message||'The Logican sheet could not be read.',refresh=true;
+  else if(cmState.state==='loading'||cmState.loading)text='Logican sheet · Reading…';
+  else text='Logican sheet · Not set up',tip='Not linked on this site. Use Add file with a download of its tabs.';
   const link=refresh&&!isSnapshotView?` <button type="button" class="link-btn cm-refresh" data-focus-key="cm-refresh" onclick="cmRefreshNow()"${cmState.loading?' disabled':''}${tipAttr('Read the Logican sheet from Google now (at most once a minute).')}>${cmState.loading?'Reading…':'Refresh'}</button>`:'';
   return `<span class="cm-sync" data-tip="${esc(tip)}">${text}</span>${link}`;
 }
@@ -17875,7 +17940,7 @@ function renderForecastPage(m){
       <div class="dz-th">${heads.map(([label,cls,short])=>`<span${cls?` class="${cls}"`:''}${tipAttr(columnTip('fc-items',label))}>${short?`<span class="misc-lg">${label}</span><span class="misc-sm">${short}</span>`:label}</span>`).join('')}</div>
       ${rows||'<p class="misc-none">No forecast lines with quantity in the next 12 months match a SAP item.</p>'}
     </div>${more}`;
-  const meta=`${above.length?dzChip(`${fmtNum(above.length)} over forecast`,'amber'):dzChip('None over forecast','teal')} <span${tipAttr(unmatchedTip)}>${fmtNum(f.items.length)} items · ${fmtNum(f.unmatched.length)} not matched${src&&src.source==='file'?' · from file':''}</span>`;
+  const meta=`${above.length?dzChip(`${fmtNum(above.length)} over forecast`,'amber'):dzChip('None over forecast','teal')} <span${tipAttr(unmatchedTip)}>${fmtNum(f.items.length)} items · ${fmtNum(f.unmatched.length)} not matched${src&&src.source==='file'?' · From file':''}</span>`;
   return `${tiles}
     <div class="dz-grid">
       ${renderForecastChart(f)}
@@ -17887,7 +17952,7 @@ function renderForecastPage(m){
 // Who a late line is waiting on. Us = Spyder (production, quality, supply, planning); Them = the customer or the carrier.
 // The labels are override statuses (OVERRIDE_OPTIONS) and the SAP signals below; matching ignores case.
 const CAUSE_MAP={
-  us:['Waiting on Production','QC Delay','Supply Chain','Supplier Late','Waiting on PO','Partial Coverage','R&D Hold','No Commit','No Commit (override)','No commit date','Past due · no reschedule','Missed commit','Unconfirmed','Supply shortage','CM commit late'],
+  us:['Waiting on Production','QC Delay','Supply Chain','Supplier Late','Waiting on PO','Partial Coverage','R&D Hold','No Commit','No Commit (override)','No commit date','Past due · No reschedule','Missed commit','Unconfirmed','Supply shortage','CM commit late'],
   them:['Hold','Urgent','Close Short','Short Ship','Shipping Delay','Customer reschedule'],
   neutral:['Not At Risk','Covered']
 };
@@ -17897,7 +17962,7 @@ const OH_CAUSES=[['us','Us','Spyder: production, quality, supply or planning'],[
 const OH_CAUSE_IDS=OH_CAUSES.map(c=>c[0]);
 const OH_CAUSE_LABEL=Object.fromEntries(OH_CAUSES.map(([id,label])=>[id,label]));
 // SAP signals, in the order that decides a line's cause when no override says otherwise.
-const OH_SAP_REASONS=[['nocommit','No commit date'],['pastdue','Past due · no reschedule'],['customer','Customer reschedule'],['missed','Missed commit'],['reschedlater','Rescheduled later'],['resched','Rescheduled'],['unconfirmed','Unconfirmed'],['shortage','Supply shortage'],['cmlate','CM commit late']];
+const OH_SAP_REASONS=[['nocommit','No commit date'],['pastdue','Past due · No reschedule'],['customer','Customer reschedule'],['missed','Missed commit'],['reschedlater','Rescheduled later'],['resched','Rescheduled'],['unconfirmed','Unconfirmed'],['shortage','Supply shortage'],['cmlate','CM commit late']];
 const OH_REASON_LABEL=Object.fromEntries(OH_SAP_REASONS);
 // Reason labels for override statuses that read too close to a SAP signal. The No Commit override is its own reason,
 // "No Commit (override)": "No commit date" is only SAP's 1111-11-11 date (r5SalesNoCommit).
@@ -18598,7 +18663,7 @@ function ohgRender(m){
     tip:`Quarterly: orders shipped in ${q.label}, the last complete quarter at the report date, and the change against ${d.quarter.prev.label}. ${common}`});
   const whName=n=>String(n).replace(/ - /g,' · ');
   const focused=whFocusedWarehouse();
-  const warehouses=ohgOffenderCard({title:'Top offenders · warehouses',meta:`late orders · ${q.short}`,span:3,i:2,
+  const warehouses=ohgOffenderCard({title:'Top offenders · Warehouses',meta:`Late orders · ${q.short}`,span:3,i:2,
     tip:`Warehouses with the most late orders in ${q.label}: orders with a delivery more than 2 days after its original date. Click a warehouse to filter the page to it; click it again to show every warehouse.`,
     rows:d.warehouses.map(r=>({...r,label:whName(r.name)})),
     sub:r=>r.rate===null?'':`${fmtNum(r.rate)}% on time`,
@@ -18606,7 +18671,7 @@ function ohgRender(m){
     onclick:r=>`setWeeklyScorecardWarehouse(${dzJs(r.name)})`,
     focusKey:r=>`ohg-wh-${r.name}`,selected:r=>focused===r.name,
     empty:d.quarter.cur.scored?`No late shipments in ${q.label}: every delivery shipped within 2 days of its original date.`:`No deliveries in ${q.label} for these filters.`});
-  const vendors=ohgOffenderCard({title:'Top offenders · vendors',meta:`late orders · ${q.short}`,span:3,i:3,
+  const vendors=ohgOffenderCard({title:'Top offenders · Vendors',meta:`Late orders · ${q.short}`,span:3,i:3,
     tip:`Vendors with the most late purchase orders in ${q.label}: orders with a receipt more than 2 days after the original date. The Warehouse filter applies; Segment and Customer do not (they belong to sales orders).`,
     rows:d.vendors.map(r=>({...r,label:r.name})),
     sub:r=>`${ohN(r.lines,'late line')}${r.rate===null?'':` · ${fmtNum(r.rate)}% on time`}`,
@@ -18997,7 +19062,7 @@ function ohlAtRiskCard(c){
   // The share of orders due in the next month that are at risk: small and quiet, for the manager's review.
   const dueOrders=rowDocCount(d.all),riskPct=dueOrders?Math.round(orders/dueOrders*100):null;
   // The target (Settings, 5% by default) is on the at-risk share of the open value: green under it, amber up to twice it.
-  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${d.riskPct===null?'':`${d.riskPct}% of value · `}target under ${AT_RISK_TARGET}%</span>`;
+  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${d.riskPct===null?'':`${d.riskPct}% of value · `}Target under ${AT_RISK_TARGET}%</span>`;
   const riskPctHtml=`<span class="ohl-hero-quiet">${riskPct===null?'':`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span><span class="ohl-hero-dot" aria-hidden="true"> · </span>`}${targetHtml}</span>`;
   const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${shortDay(d.end)}: ${ohN(orders,'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(risk))} open; click to list the lines.`)}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
@@ -19046,7 +19111,7 @@ function ohlAtRiskCard(c){
   }).join('');
   const none=!ovr.some(t=>t.lines);
   const ovrHtml=`<div class="ohl-sec">
-      <div class="ohl-sec-head"><span class="ohl-sec-title">By override · all warehouses</span>${none?'<span class="ohl-note">none set this week</span>':''}</div>
+      <div class="ohl-sec-head"><span class="ohl-sec-title">By override · All warehouses</span>${none?'<span class="ohl-note">none set this week</span>':''}</div>
       <div class="ohl-tiles" role="group" aria-label="At-risk orders by override">${ovrCells}</div>
     </div>`;
   return dzCard({title:'At risk',sm:true,meta:newChip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
@@ -19102,7 +19167,7 @@ function ohlDueCard(c){
   const wkText=(w,i)=>i?shortDay(w.s):'this week';
   const total=counts.reduce((a,b)=>a+b,0);
   const dots=pts.map((p,i)=>`<span class="ohl-pt" style="left:${(p[0]/W*100).toFixed(2)}%;top:${(p[1]/H*100).toFixed(2)}%"${tipAttr(`${i?`Week of ${wkText(weeks[i],i)}`:'This week'}: ${ohN(counts[i],'open line')} due, ${money(rowOpenAmount(weeks[i].rows))}.`)}></span>`).join('');
-  const pill=total?`<span class="ohl-peak" style="--x:${(pts[peak][0]/W*100).toFixed(2)}%;top:${(pts[peak][1]/H*100).toFixed(2)}%">${fmtNum(counts[peak])} ${counts[peak]===1?'line':'lines'} peak · ${esc(peak?shortDay(weeks[peak].s):'this week')}</span>`:'';
+  const pill=total?`<span class="ohl-peak" style="--x:${(pts[peak][0]/W*100).toFixed(2)}%;top:${(pts[peak][1]/H*100).toFixed(2)}%">${fmtNum(counts[peak])} ${counts[peak]===1?'line':'lines'} peak · ${esc(peak?shortDay(weeks[peak].s):'This week')}</span>`:'';
   const labels=weeks.map((w,i)=>`<span>${i%2?'':i?`${w.s.getMonth()+1}/${w.s.getDate()}`:'Now'}</span>`).join('');
   const chip=past.length?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyTileFilter==='st-pastdue'?' sel':''}" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter('st-pastdue')" aria-pressed="${weeklyTileFilter==='st-pastdue'}"${tipAttr(`${ohN(past.length,'open line')} (${ohN(rowDocCount(past),'order')}, ${money(rowOpenAmount(past))}) already past due; click to list them.`)}>${fmtNum(past.length)} ${past.length===1?'line':'lines'} already past due</button>`:'';
   const summary=weeks.map((w,i)=>`${wkText(w,i)}: ${counts[i]}`).join(', ');
@@ -19241,7 +19306,7 @@ function ohlSupplyCard(c){
   }).join('');
   const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
   return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
-    meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonLabel())}`,
+    meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonTitle())}`,
     tip:'Each at-risk sales order is traced to the supply of its item: the CM sheet (Logican short, on hold or committing after the due date), an open vendor PO (late, no commit date or expected after the due date), or stock short in the supply / demand snapshot. Numbers are orders; hover a number for the lines behind it; click a customer to filter.',
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>

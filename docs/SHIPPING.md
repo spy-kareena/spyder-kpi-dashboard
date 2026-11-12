@@ -27,14 +27,15 @@ a number AfterShip cannot track. There is no demo data.
     hand-set status for 2 days or more since they shipped ("3 with no update in 2+ days").
   - **Priority**: the shipments ticked in the Priority column; on its right **Delivered N** and **Undelivered N**,
     each a button that lists those.
-- **Shipments:** the title row says how many, when AfterShip was last read and the next check ("Updated 8:04 PM ·
-  next 10:00 PM"), and has **Update all** (below). One row per tracking number: a small icon for its state (truck on
-  the way, alert delayed, check delivered, clock no status yet), a 3-step strip, Shipped → In transit → Delivered
-  (**Delayed** turns the middle step red) with "Last location: Winnipeg, MB" under it in small grey (AfterShip's last
-  scan place; nothing when unknown), the ETA (AfterShip's expected date, else the promised date, over "promised …";
-  for a delivered one its date over the promised date) and the **Priority** tick. Delayed ones first, then the ones
+- **Shipments:** the title row says how many and when AfterShip was last read ("22 shipments · Updated 8:04 PM"),
+  and has **Update all** (below). One row per tracking number: the carrier's logo before the number (FedEx, UPS, DHL
+  and USPS marks from the Simple Icons project, CC0; other carriers such as Purolator, Canada Post, Canpar, Loomis or
+  Day & Ross get their name in the same chip), a 3-step strip, Shipped → In transit → Delivered (**Delayed** turns the
+  middle step red) with "Last: Winnipeg, MB" under it in small grey (AfterShip's last scan place; nothing when
+  unknown), the ETA (AfterShip's expected date, else the due date, over "Due …"; for a delivered one its date over the
+  due date) and the **Priority** tick. Delayed ones first, then the ones
   with no update for 2+ days, delivered ones last; the column titles sort (Priority: ticked first). 10 a page: the
-  page numbers under the table (‹ 1 2 3 ›; arrow keys work too); a new filter, search or sort starts at page 1;
+  page numbers under the table (‹ 1 2 3 ›, the current one a soft grey pill; arrow keys work too); a new filter, search or sort starts at page 1;
   printing lists every row.
   - **Priority tick:** a round check like Kit Clean? on Purchase Orders. Saved for everyone (below); read-only in a
     snapshot.
@@ -43,9 +44,9 @@ a number AfterShip cannot track. There is no demo data.
     than 10 minutes ago, try again at 8:14 PM". Shown only where the site has the AfterShip key, never in a snapshot.
   - **Arrow icon** (an arrow out of a box) at the end of each row: opens `https://www.aftership.com/track/<tracking
     number>` in a new tab. AfterShip works out the carrier from the number.
-  - Click a row (or press Enter) for its details: the status and its date, **Source** ("From AfterShip" or "Set by
-    Pat · Oct 9, 10:40 AM"), what AfterShip says, the last scan (message, place, time), the expected, promised and SAP
-    ship dates, carrier and ship method, ship-to country, the delivery's order lines, **Open tracking page** and
+  - Click a row (or press Enter) for its details: **Status** (AfterShip's own status, e.g. "In transit · Arrived at
+    FedEx location", else the status set by hand and its date), the last scan (message, place, time), the expected,
+    due and SAP ship dates, carrier and ship method, ship-to country, the delivery's order lines, **Open tracking page** and
     **Update status**.
 - **Update status:** pick **Shipped**, **In transit**, **Delayed** or **Delivered**, a date and an optional note up to
   200 characters, then **Save**. It counts until AfterShip reports something newer (a later scan); then AfterShip's
@@ -125,7 +126,7 @@ carries the hand-set and AfterShip statuses on screen and the Priority ticks (re
 ## Checking that it works
 
 1. After the setup above, wait for the next even hour (or check the Worker's **Logs**), then open **Shipping** on the
-   hosted site: the Shipments title row says "Updated … · next …" and rows show AfterShip statuses.
+   hosted site: the Shipments title row says "Updated …" and rows show AfterShip statuses.
 2. Click the arrow icon on a row: AfterShip's tracking page opens in a new tab.
 3. Open a row, set **Delayed** with a note and **Save**: the Delayed card goes up by one and the row says "Set by …".
    When AfterShip has a newer scan for it, its status shows again ("From AfterShip").

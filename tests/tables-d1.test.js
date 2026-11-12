@@ -33,7 +33,7 @@ test('Order Health lines: one status, its timing and one cause line; the other r
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   const row = lineRow(html(page), '100');
   // The status cell: chip, timing, cause line; the extra reason ("Hold") stays in the markup for screen readers only.
-  assert.match(row, /<td class="c-st"><div class="c-status"><span class="status-chip bad">Late<\/span><span class="timing">\d+d overdue<\/span><span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · no reschedule, Hold\.">Them · Past due · no reschedule<\/span><span class="timing oh-why-more">Hold<\/span><span class="print-ovr">Hold<\/span><\/div><\/td>/);
+  assert.match(row, /<td class="c-st"><div class="c-status"><span class="status-chip bad">Late<\/span><span class="timing">\d+d overdue<\/span><span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · No reschedule, Hold\.">Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span><span class="print-ovr">Hold<\/span><\/div><\/td>/);
   assert.match(CSS, /\.lines-table \.oh-why-more\{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect\(0 0 0 0\);white-space:nowrap\}/);
   assert.doesNotMatch(CSS, /\.search-results \.oh-why-more\{display:none\}/);
   // Chip and timing share a line when they fit; the cause line is one line (its tip has the rest).
@@ -66,7 +66,7 @@ test('Search: no "Line 0" or customer / warehouse code under every row; the timi
   // Past due: "Late by …" says how late, which neither the chip nor the cause line says.
   assert.match(lineRow(h, '100'), /<span class="status-chip bad">Past Due<\/span><span class="timing">Late by [^<]+<\/span><span class="oh-why/);
   assert.equal(page.run("searchTimingRepeats('No commit date',['No Commit',''])"), true);
-  assert.equal(page.run("searchTimingRepeats('Late by 3 weeks',['Past Due','Past due · no reschedule'])"), false);
+  assert.equal(page.run("searchTimingRepeats('Late by 3 weeks',['Past Due','Past due · No reschedule'])"), false);
   // A code still shows when it is why the row matched.
   page.run("onGlobalSearchInput('aquhot');applyGlobalSearch()");
   assert.match(html(page), /<td class="c-name" title="Aqua Hot"><span class="clip">Aqua Hot<\/span><span class="sub"><mark>AQUHOT<\/mark><\/span><\/td>/);

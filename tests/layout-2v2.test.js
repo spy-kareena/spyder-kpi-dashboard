@@ -407,7 +407,7 @@ test('Order Health reads as a few named groups: Leading, Lagging, then the break
 test('open order states sit behind Show more (kept across redraws and snapshots, open in print); the group CSS is the contract', async () => {
   const page = await withStatuses();
   const more = () => html(page).match(/<details class="oh-more"[^>]*>[\s\S]*?<\/details>/)[0];
-  assert.match(more(), /^<details class="oh-more" data-more="oh-states" ontoggle="ohSetMoreOpen\(this\.dataset\.more,this\.open\)"><summary data-focus-key="more-oh-states" data-tip="[^"]{20,}"><span class="oh-more-show">Show more · open order states<\/span><span class="oh-more-less">Show less<\/span><\/summary>/);
+  assert.match(more(), /^<details class="oh-more" data-more="oh-states" ontoggle="ohSetMoreOpen\(this\.dataset\.more,this\.open\)"><summary data-focus-key="more-oh-states" data-tip="[^"]{20,}"><span class="oh-more-show">Show more · Open order states<\/span><span class="oh-more-less">Show less<\/span><\/summary>/);
   assert.match(more(), /class="mini-strip cols-5 oh-states"/);
   assert.ok(html(page).indexOf('<details class="oh-more"') > html(page).indexOf('>By reason and cause</h2>'));
   page.run("ohSetMoreOpen('oh-states',true);renderResults()");

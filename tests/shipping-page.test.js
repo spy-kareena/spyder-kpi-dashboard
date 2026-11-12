@@ -60,10 +60,11 @@ function strip(page, number) {
 }
 const stateText = (page, number) => (rowOf(page, number).match(/<span class="shp-st[^"]*">([^<]*)</) || [])[1];
 const etaText = (page, number) => (rowOf(page, number).match(/<span class="shp-eta"><b[^>]*>([^<]*)<\/b>(?:<em[^>]*>([^<]*)<\/em>)?<\/span>/) || []).slice(1).map((x) => x ?? '');
-const lastLoc = (page, number) => (rowOf(page, number).match(/<span class="shp-loc">Last location: ([^<]*)</) || [])[1] || '';
+const lastLoc = (page, number) => (rowOf(page, number).match(/<span class="shp-loc">Last: ([^<]*)</) || [])[1] || '';
 // The Priority tick, as its checkbox does it (the test page has no real DOM: a stand-in element).
 const tickPriority = (page, number, on) => page.run(`shpPriToggle({checked:${on},dataset:{n:'${number}'}})`);
-const rowIcon = (page, number) => (rowOf(page, number).match(/<span class="shp-ico ([a-z]+)" aria-hidden="true">/) || [])[1];
+// 2v6.9b: the carrier chip before the number: 'logo:<mark>' (a Simple Icons mark) or 'text:<name>' (the name in the chip).
+const carrierChip = (page, number) => { const m = rowOf(page, number).match(/<span class="shp-trk"><span class="shp-cr (logo|text)[^"]*" role="img" aria-label="([^"]*)"[^>]*>(?:<svg class="shp-cr-([a-z]+)"|<span aria-hidden="true">([^<]*)<)/); return m ? `${m[1]}:${m[3] || m[4]}` : undefined; };
 const factOf = (page, number, label) => (rowOf(page, number).match(new RegExp(`<span>${label}</span><strong>([^<]*)</strong>`)) || [])[1];
 const tick = () => new Promise((r) => setTimeout(r, 30));
 async function settle() { for (let i = 0; i < 4; i++) await tick(); }
@@ -192,36 +193,48 @@ test('hosted: reads /api/shipping on open, sends the list once, and AfterShip st
   // Not delivered: the five others, two of them with no update in 2+ days: usa (last scan Oct 5) and puro (no
   // AfterShip record, shipped Sep 15); Priority: none ticked.
   assert.deepEqual(cards(page), ['3', '1', '1', '5', '0']);
-  assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s warn">2 with no update in 2\+ days<\/span><span class="shp-tile-s">1 with no status yet<\/span>/);
+  // 2v6.9b: a narrow card shows the short form (the small cards over the map, phones).
+  assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s warn"><span class="shp-ts-w">2 with no update in 2\+ days<\/span><span class="shp-ts-n">2 no update 2\+ days<\/span><\/span><span class="shp-tile-s">1 with no status yet<\/span>/);
   assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.usa, N.puro].sort());
   assert.deepEqual([strip(page, N.parcel), strip(page, N.ups), strip(page, N.delivered), strip(page, N.freight), strip(page, N.puro)], [[2, ''], [2, 'red'], [3, 'teal'], [1, ''], [1, '']]);
   assert.deepEqual([stateText(page, N.parcel), stateText(page, N.ups), stateText(page, N.puro)], ['In transit', 'Delayed', 'No status']);
-  // ETA: AfterShip's expected date (Oct 12, past the promised Oct 10: late) over the promised date; no "Updated ... ago"
-  // on the rows any more (2v6.9: the Shipments card's title row says when AfterShip was read).
-  assert.deepEqual(etaText(page, N.parcel), ['Oct 12', 'promised Oct 10']);
-  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'promised Oct 7']);
+  // ETA: AfterShip's expected date (Oct 12, past the due Oct 10: late) over the due date ("Due", 2v6.9b); no "Updated
+  // ... ago" on the rows any more (2v6.9: the Shipments card's title row says when AfterShip was read).
+  assert.deepEqual(etaText(page, N.parcel), ['Oct 12', 'Due Oct 10']);
+  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'Due Oct 7']);
   assert.match(rowOf(page, N.parcel), /<span class="shp-eta"><b class="late">Oct 12<\/b>/);
-  assert.deepEqual(etaText(page, N.freight), ['Oct 9', 'promised']);
+  assert.deepEqual(etaText(page, N.freight), ['Oct 9', 'Due']);
+  assert.doesNotMatch(html(page), /romised/);
   assert.doesNotMatch(html(page), /class="shp-eta">[\s\S]{0,120}(Updated|No update yet)/);
-  // Under the progress bar, quietly: the carrier's last scan place (country code left off); nothing when unknown.
+  // Under the progress bar, quietly: "Last:" and the carrier's last scan place (country code left off); nothing when
+  // unknown.
   assert.deepEqual([lastLoc(page, N.parcel), lastLoc(page, N.ups), lastLoc(page, N.delivered), lastLoc(page, N.puro), lastLoc(page, N.freight)], ['Regina, SK', 'Blaine, WA', 'Columbus, OH', '', '']);
-  // A state icon before each number: truck on the way, alert delayed, check delivered, clock with no status.
-  assert.deepEqual([rowIcon(page, N.parcel), rowIcon(page, N.freight), rowIcon(page, N.ups), rowIcon(page, N.delivered), rowIcon(page, N.puro)], ['go', 'go', 'late', 'done', 'none']);
-  assert.match(rowOf(page, N.ups), /<span class="shp-ico late" aria-hidden="true"><svg [^>]*><path d="M12 3 2 20h20L12 3z"\/>/);
-  // Details: the status, where it came from, AfterShip's words, the last scan and the expected date.
+  // 2v6.9b: the carrier's logo before each number (no state icons): FedEx (FedEx Freight too) and UPS marks, a name
+  // chip for Purolator; the carrier's name is the chip's label, and the old carrier line under the number is gone.
+  assert.deepEqual([carrierChip(page, N.parcel), carrierChip(page, N.freight), carrierChip(page, N.ups), carrierChip(page, N.puro)], ['logo:fedex', 'logo:fedex', 'logo:ups', 'text:Purolator']);
+  assert.match(rowOf(page, N.freight), /<span class="shp-cr logo" role="img" aria-label="FedEx Freight"><svg class="shp-cr-fedex" viewBox="[\d. -]+" aria-hidden="true" focusable="false"><path fill="#4D148C" d="M/);
+  assert.match(rowOf(page, N.ups), /<span class="shp-trk-t"><b>1Z999AA10123456784<\/b><\/span>/);
+  assert.doesNotMatch(html(page), /shp-ico|SHP_ROW_ICONS/);
+  assert.match(page.ctx.document.documentElement.outerHTML, /Simple Icons project \(simpleicons\.org, CC0\)/);
+  // Details: AfterShip's own status (its tag in words, then its detail), the last scan and the expected date; no
+  // Source or AfterShip rows (2v6.9b).
   page.run(`toggleShipment('${N.ups}')`);
-  assert.equal(factOf(page, N.ups, 'Status'), 'Delayed · Oct 8');
-  assert.equal(factOf(page, N.ups, 'Source'), 'From AfterShip');
-  assert.equal(factOf(page, N.ups, 'AfterShip'), 'Exception · Customs clearance delay');
+  assert.equal(factOf(page, N.ups, 'Status'), 'Exception · Customs clearance delay');
+  assert.equal(factOf(page, N.ups, 'Source'), undefined);
+  assert.equal(factOf(page, N.ups, 'AfterShip'), undefined);
+  assert.equal(factOf(page, N.ups, 'Due'), 'Oct 8');
+  assert.equal(factOf(page, N.ups, 'Promised'), undefined);
+  page.run(`toggleShipment('${N.parcel}')`);
+  assert.equal(factOf(page, N.parcel, 'Status'), 'In transit · Arrived at FedEx location', 'no detail: the latest scan words');
   assert.match(factOf(page, N.ups, 'Last scan'), /^Clearance delay: commercial invoice missing · Blaine, WA, US · Oct 8, 2:00 PM$/);
   assert.equal(page.run(`shipCarrier(shippingModel().list.find(x=>x.number==='${N.ups}'))`), 'UPS');
   // The Delayed list shows AfterShip's latest scan.
   assert.match(html(page), /class="shp-li exc" data-focus-key="ship-d-1Z999AA10123456784"[\s\S]*?<span class="shp-li-why">Clearance delay: commercial invoice missing<\/span>/);
-  // When AfterShip was last read and the next check (every 2 hours, even UTC hours): in the Shipments card's title row
-  // next to the count and Update all; the page head keeps only the count.
-  assert.match(page.run('shpAsUpdatedText()'), /^Updated 8:00 AM · next \d{1,2}:\d{2} [AP]M$/);
+  // When AfterShip was last read (2v6.9b: no next check time): in the Shipments card's title row next to the count and
+  // Update all; the page head keeps only the count.
+  assert.equal(page.run('shpAsUpdatedText()'), 'Updated 8:00 AM');
   assert.equal(page.run('shippingHeadMeta()'), '6 shipments');
-  assert.match(html(page), /<span class="dz-meta"><span class="shp-count">6 shipments<\/span><span class="shp-upd"[^>]*>Updated 8:00 AM · next \d{1,2}:\d{2} [AP]M<\/span><button type="button" class="dz-btn shp-updall" data-focus-key="ship-update-all" onclick="shpAsRefreshAll\(\)"[^>]*><svg[\s\S]*?<span>Update all<\/span><\/button><\/span>/);
+  assert.match(html(page), /<span class="dz-meta"><span class="shp-count">6 shipments<\/span><span class="shp-upd"[^>]*>Updated 8:00 AM<\/span><button type="button" class="dz-btn shp-updall" data-focus-key="ship-update-all" onclick="shpAsRefreshAll\(\)"[^>]*><svg[\s\S]*?<span>Update all<\/span><\/button><\/span>/);
   assert.doesNotMatch(html(page).slice(0, html(page).indexOf('shp-frow')), /Updated/);
   assert.doesNotMatch(html(page), /Automatic tracking isn’t set up/);
   // A second read with the same list sends nothing again.
@@ -242,8 +255,9 @@ test('a hand-set status newer than AfterShip\'s wins; an AfterShip update newer 
   setStatus(page, N.ups, 'transit', '2026-10-09', 'Broker cleared it');
   assert.deepEqual(status(page, N.ups), ['transit', 'hand']);
   assert.match(page.els.toast.innerHTML, /1Z999AA10123456784: In transit Oct 9 saved for everyone\./);
-  assert.match(factOf(page, N.ups, 'Source'), /^Set by Pat · Oct 9, /);
-  assert.equal(factOf(page, N.ups, 'AfterShip'), 'Exception · Customs clearance delay', 'AfterShip\'s words stay visible');
+  // 2v6.9b: the Status row keeps AfterShip's own status; the note set by hand shows under the facts.
+  assert.equal(factOf(page, N.ups, 'Status'), 'Exception · Customs clearance delay', 'AfterShip\'s words stay visible');
+  assert.equal(factOf(page, N.ups, 'Source'), undefined);
   assert.match(rowOf(page, N.ups), /<p class="shp-alert calm">Broker cleared it<\/p>/);
   assert.deepEqual(cards(page), ['4', '0', '1', '5', '0']);
   // The form keeps the hand-set values.
@@ -253,14 +267,13 @@ test('a hand-set status newer than AfterShip\'s wins; an AfterShip update newer 
   page.run('shpAsLoad(true)');
   await settle();
   assert.deepEqual(status(page, N.ups), ['delivered', 'aftership']);
-  assert.equal(factOf(page, N.ups, 'Source'), 'From AfterShip');
-  assert.equal(factOf(page, N.ups, 'Status'), 'Delivered · Oct 10 · 2 days late');
+  assert.equal(factOf(page, N.ups, 'Status'), 'Delivered · 2 days late');
   // A number AfterShip does not recognise: its words say so, and a hand-set status is all there is.
   await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', error: 'AfterShip does not recognise this tracking number.' } } }));
   page.run('shpAsLoad(true)');
   await settle();
   page.run(`toggleShipment('${N.puro}')`);
-  assert.equal(factOf(page, N.puro, 'AfterShip'), 'AfterShip does not recognise this tracking number.');
+  assert.equal(factOf(page, N.puro, 'Status'), 'AfterShip does not recognise this tracking number.', 'no status: AfterShip\'s words say why');
   assert.deepEqual(status(page, N.puro), ['', '']);
   assert.deepEqual(page.errors, []);
 });
@@ -297,8 +310,8 @@ test('hand-set status on a static host: saved in this browser, drives the status
   assert.deepEqual(cards(page), ['0', '0', '0', '6', '0']);
   assert.deepEqual(strip(page, N.parcel), [1, '']);
   assert.equal(stateText(page, N.parcel), 'No status');
-  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'promised']);
-  assert.equal(rowIcon(page, N.parcel), 'none');
+  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'Due']);
+  assert.equal(carrierChip(page, N.parcel), 'logo:fedex');
   assert.equal(lastLoc(page, N.parcel), '', 'no AfterShip scan: no last location');
 
   setStatus(page, N.parcel, 'transit', '2026-10-09', 'At the Regina hub');
@@ -315,15 +328,15 @@ test('hand-set status on a static host: saved in this browser, drives the status
   assert.deepEqual(cards(page), ['2', '1', '1', '4', '0']);
   assert.match(html(page), /data-tip="In transit: 2 shipments \(2 orders, worth \$21,500\) on the way: Shipped or In transit; click to list only these\."/);
   assert.deepEqual([strip(page, N.parcel), strip(page, N.freight), strip(page, N.ups), strip(page, N.delivered)], [[2, ''], [1, ''], [2, 'red'], [3, 'teal']]);
-  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'promised Oct 7']);
+  assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'Due Oct 7']);
   assert.match(rowOf(page, N.delivered), /<b class="late">Delivered Oct 8<\/b>/);
-  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'promised']);
-  assert.deepEqual([rowIcon(page, N.parcel), rowIcon(page, N.ups), rowIcon(page, N.delivered)], ['go', 'late', 'done']);
+  assert.deepEqual(etaText(page, N.parcel), ['Oct 10', 'Due']);
+  assert.deepEqual([carrierChip(page, N.parcel), carrierChip(page, N.ups), carrierChip(page, N.delivered)], ['logo:fedex', 'logo:ups', 'logo:fedex']);
   assert.deepEqual(listed(page).slice(0, 2), [N.ups, N.puro], 'delayed first, then no update for 2+ days');
   assert.deepEqual(listed(page).slice(-2), [N.delivered, N.usa], 'delivered last, newest first');
   const detail = rowOf(page, N.parcel);
-  assert.equal(factOf(page, N.parcel, 'Status'), 'In transit · Oct 9');
-  assert.match(factOf(page, N.parcel, 'Source'), /^Set by hand · Oct 9, /);
+  assert.equal(factOf(page, N.parcel, 'Status'), 'In transit · Oct 9', 'no AfterShip: the status set by hand, and its date');
+  assert.equal(factOf(page, N.parcel, 'Source'), undefined);
   assert.match(detail, /<p class="shp-alert calm">At the Regina hub<\/p>/);
   assert.match(detail, /<span class="m">SPY-100<\/span>/);
   assert.deepEqual(page.errors, []);
@@ -344,7 +357,7 @@ test('cards filter the list; Not delivered (it replaced No update in 2+ days) co
   assert.deepEqual(page.run('shippingModel().groups.open.map(s=>s.number)').sort(), [N.parcel, N.usa, N.ups, N.puro, N.freight].sort());
   assert.doesNotMatch(html(page), /ship-kpi-stale|>No update in 2\+ days</);
   assert.match(html(page), /data-focus-key="ship-kpi-open"[^>]*data-tip="Not delivered: 5 shipments \(5 orders, worth \$[\d,]+\) not delivered yet: shipped, in transit, delayed or no status; click to list only these\."/);
-  assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s warn">4 with no update in 2\+ days<\/span><span class="shp-tile-s">3 with no status yet<\/span>/);
+  assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s warn"><span class="shp-ts-w">4 with no update in 2\+ days<\/span><span class="shp-ts-n">4 no update 2\+ days<\/span><\/span><span class="shp-tile-s">3 with no status yet<\/span>/);
   page.run("setShippingFilter('open')");
   let m = html(page);
   assert.match(m, /data-focus-key="ship-kpi-open" aria-pressed="true"/);
@@ -393,7 +406,7 @@ test('Add tracking #: any carrier, saved in this browser without a server, linke
   assert.match(page.els.toast.innerHTML, /Tracking # 770022223333 added to order 600\. Open its tracking page, then set its status\./);
   assert.equal(field(page, 'ship-add-status').textContent, '');
   page.run("toggleShipment('770022223333')");
-  assert.match(rowOf(page, '770022223333'), /<span class="shp-trk"><span class="shp-ico none" aria-hidden="true"><svg[^>]*>[\s\S]*?<\/svg><\/span><span class="shp-trk-t"><b>7700 2222 3333<\/b><em>Carrier not set<\/em><\/span><\/span>\s*<span class="shp-ord"><b>SO 600<\/b><em>Firefly RV<\/em><\/span>/);
+  assert.match(rowOf(page, '770022223333'), /<span class="shp-trk"><span class="shp-cr text none" role="img" aria-label="Carrier not set"><span aria-hidden="true">No carrier<\/span><\/span><span class="shp-trk-t"><b>7700 2222 3333<\/b><\/span><\/span>\s*<span class="shp-ord"><b>SO 600<\/b><em>Firefly RV<\/em><\/span>/);
   assert.match(rowOf(page, '770022223333'), /<td class="strong">600<\/td>/);
   setStatus(page, '770022223333', 'shipped', '2026-10-09');
   assert.deepEqual(page.run('shippingManualEntries().map(e=>e.number)'), ['770022223333']);
@@ -697,7 +710,7 @@ test('Update all: asks AfterShip now (POST /api/shipping), busy while it runs, t
   assert.equal(posts.length, 1, 'a click while busy does nothing');
   assert.equal(reads(), before + 1, 'read again after the check');
   assert.match(html(page), /<span>Update all<\/span>/);
-  assert.match(page.run('shpAsUpdatedText()'), /^Updated \d{1,2}:04 [AP]M · next /);
+  assert.match(page.run('shpAsUpdatedText()'), /^Updated \d{1,2}:04 [AP]M$/);
   assert.match(page.els.toast.innerHTML, /Every shipment updated from AfterShip\./);
   page.run('shpAsRefreshAll()');
   await settle();
@@ -736,6 +749,19 @@ test('2v6.9 layout: on a wide screen the map card spans the page, the cards lie 
   page.run('renderResults()');
   assert.equal(page.run('shpMapLayout()'), null);
   assert.doesNotMatch(html(page), /shp-map-stage wide|--pw:/);
+  // 2v6.9b: the legend sits at the bottom left of the map (not in the title row); the current page is a soft neutral
+  // pill; the Priority card keeps its two rows compact on its right at 641-980px; a narrow card picks the short fact
+  // lines; the small cards over the map are at least 364px wide together (one-line labels at 1180px).
+  const mm = html(page);
+  assert.match(mm, /<div class="shp-map-foot"><div class="shp-legend" aria-hidden="true"><span><i style="background:var\(--dz-indigo\)"><\/i>In transit<\/span>/);
+  assert.doesNotMatch(mm.slice(mm.indexOf('<div class="shp-map-head">'), mm.indexOf('<div class="shp-map-stage')), /shp-legend/);
+  assert.match(block, /\.shp-top \.shp-map-foot\{position:absolute;left:22px;right:auto;bottom:14px;/);
+  assert.match(block, /\.shp-pg\.on,\.shp-pg\.on:hover\{background:var\(--dz-surface-2\);box-shadow:inset 0 0 0 1px var\(--dz-line-8\);color:var\(--dz-ink-1\);font-weight:600\}/);
+  assert.doesNotMatch(block, /\.shp-pg\.on[^{]*\{[^}]*background:var\(--dz-indigo\)/);
+  assert.match(block, /@media \(min-width:641px\) and \(max-width:980px\)\{\s*\.shp-top \.shp-tile\.shp-pri \.shp-pri-side\{flex:0 0 232px;margin-left:auto\}/);
+  assert.match(block, /@container shptile \(max-width:230px\)\{\s*\.shp-tile-s \.shp-ts-w\{display:none\}/);
+  page.ctx.innerWidth = 1180;
+  assert.ok(page.run('shpMapLayout().pw') >= 364);
 });
 
 // --- The hosted site: /api/notes, /api/people and /api/shipping over one KV stand-in ---

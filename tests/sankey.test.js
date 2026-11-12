@@ -357,7 +357,7 @@ test('Us / Them and reasons come from the Order Health cause engine (Stream D) a
   assert.deepEqual(Object.fromEntries(risk().nodes.filter((n) => n.level === 1).map((n) => [n.label, n.tone])), { Them: 'them', Us: 'us', 'Not set': 'unknown' });
   assert.match(HTML, /\.sk-link\.sk-us,\.sk-node\.sk-us \.sk-rect\{fill:var\(--cause-us\)\}/);
   // Each line's first reason from lineReasons (SAP signal first, then the override).
-  assert.deepEqual(byLevel(risk(), 0), { 'Past due · no reschedule': 1000, 'No commit date': 2500, 'Rescheduled later': 4000, Urgent: 1721806 });
+  assert.deepEqual(byLevel(risk(), 0), { 'Past due · No reschedule': 1000, 'No commit date': 2500, 'Rescheduled later': 4000, Urgent: 1721806 });
   const actions = Object.fromEntries(risk().nodes.filter((n) => n.level === 0).map((n) => [n.label, n.action]));
   assert.deepEqual(actions['Rescheduled later'], { type: 'reason', value: 'Rescheduled later', main: true });
   // Clicking a reason or a cause box applies Order Health's own reason / cause filters (chips under the tabs).
