@@ -238,3 +238,13 @@ popover is short (live: status, Refresh now, Add file, Share snapshot; import: f
 snapshot). The Upload and Export PDF icons are gone from the header (print from the browser). Bridge data types (date-
 times, floats such as 1e-05, -0.0, whole numbers as 12.0) read exactly like a Query Manager export; the function passes
 on X-Stale. New: tests/bridge-data.test.js and tests/fixtures/kpi_from_bridge.txt.
+
+2v6.8 (shipping): Shipping statuses come from AfterShip every 2 hours. The scheduled Worker (workers/shipping-poller,
+cron 0 */2 * * *) adds each listed tracking number to AfterShip once and reads the rest in batches of 50
+(shared/aftership.mjs, plain fetch); the page reads them from /api/shipping on open, when its tab comes back into view
+and after each check, and shows "Updated 10:00 · next 12:00". AfterShip tags map to Shipped, In transit, Delayed and
+Delivered; a status set by hand still works for numbers AfterShip cannot track, and the newer of the two counts (the
+row details say "From AfterShip" or "Set by ..."). The Check button is now an arrow icon that opens the AfterShip
+tracking page in a new tab. "Not checked in 2+ days" is now "No update in 2+ days". Demo shipments, their switch and
+the Settings choice are gone. The FedEx code and its secrets are removed; new secret AFTERSHIP_API_KEY (Worker and
+Pages). Tests: tests/aftership.test.mjs (replaces the FedEx tests), shipping-api, shipping-worker and shipping-page.

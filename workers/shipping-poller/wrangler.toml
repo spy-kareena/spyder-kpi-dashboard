@@ -1,4 +1,4 @@
-# Spyder shipping poller: checks FedEx every 4 hours for the dashboard's Shipping page.
+# Spyder shipping poller: checks AfterShip every 2 hours for the dashboard's Shipping page.
 # Deploy from this folder: npx wrangler deploy   (see README.md here and docs/SHIPPING.md)
 name = "spyder-shipping-poller"
 main = "index.mjs"
@@ -8,9 +8,9 @@ compatibility_date = "2026-10-01"
 workers_dev = false
 
 [triggers]
-# Every 4 hours on the hour, UTC (00:00, 04:00, 08:00, 12:00, 16:00, 20:00). The page's
-# "next check" time and functions/api/shipping.js assume this schedule.
-crons = ["0 */4 * * *"]
+# Every 2 hours on the hour, UTC (00:00, 02:00, 04:00 ... 22:00). The page's "next" time and
+# functions/api/shipping.js (SCHEDULE in shared/aftership.mjs) assume this schedule.
+crons = ["0 */2 * * *"]
 
 # The SAME KV namespace the Pages project binds as REPORT_STORE (shared report, notes, tracking).
 # Replace the placeholder with its id: npx wrangler kv namespace list  (or Cloudflare dashboard >
@@ -20,16 +20,12 @@ crons = ["0 */4 * * *"]
 binding = "REPORT_STORE"
 id = "41f70fd7289e461b87cdf81d45350c74"
 
-# Secrets (never put them in this file):
-#   npx wrangler secret put FEDEX_CLIENT_ID
-#   npx wrangler secret put FEDEX_CLIENT_SECRET
+# Secret (never put it in this file):
+#   npx wrangler secret put AFTERSHIP_API_KEY
 # Optional settings: uncomment [vars] and the lines you need.
-#   FEDEX_API_BASE: only with FedEx sandbox (test) keys.
-#   FEDEX_MAX_PER_RUN: numbers asked per check (default 60, stalest first, so it fits the Workers Free plan's
-#   10 ms of CPU per run). On Workers Paid, raise it (up to 600) and uncomment [limits] so a check of the whole
-#   list in one run has the CPU time it needs.
+#   AFTERSHIP_MAX_PER_RUN: numbers read per check (default 150, stalest first).
+#   AFTERSHIP_MAX_CALLS: AfterShip requests per check (default 40, under the Workers Free plan's 50 subrequests).
+#   On Workers Paid, raise both (up to 600 and 900) to read the whole list every time.
 # [vars]
-# FEDEX_API_BASE = "https://apis-sandbox.fedex.com"
-# FEDEX_MAX_PER_RUN = "600"
-# [limits]
-# cpu_ms = 1000
+# AFTERSHIP_MAX_PER_RUN = "600"
+# AFTERSHIP_MAX_CALLS = "200"
