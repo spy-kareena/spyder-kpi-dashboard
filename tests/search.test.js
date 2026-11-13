@@ -227,16 +227,31 @@ test('notes and overrides can be edited from search results', async () => {
   assert.deepEqual(search(page, 'cpo-778'), [['Sales order', '800']]);
 });
 
-test('first 100 matches, "Show up to 500" shows the rest', async () => {
+test('order lines go 10 a page within the first 500 matches; a new search starts at page 1', async () => {
   const rows = Array.from({ length: 120 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i), 'Item No.': 'BULK-1' }));
   const page = await loaded(rows);
   search(page, 'bulk-1');
-  assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 100);
-  assert.match(html(page), /Showing 100 of 120 · Add another word/);
-  assert.match(html(page), /Show up to 500/);
-  page.run('toggleTableMore("search")');
-  assert.equal((html(page).match(/<tr class="line-row/g) || []).length, 120);
-  assert.match(html(page), /Show fewer/);
+  const docs = () => [...html(page).matchAll(/<td class="c-doc">(\d+)/g)].map((m) => m[1]);
+  const first = docs();
+  assert.equal(first.length, 10);
+  assert.match(html(page), /<span class="dz-pagecount">1–10 of 120 lines<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="search-lines" aria-label="Order lines found pages"/);
+  assert.doesNotMatch(html(page), /Show up to 500|Show fewer|toggleTableMore\("search"\)/);
+  page.run('dzGoPage("search-lines",2)');
+  assert.equal(docs().length, 10);
+  assert.ok(docs().every((d) => !first.includes(d)), 'page 2 lists the next ten lines');
+  assert.match(html(page), /11–20 of 120 lines/);
+  assert.match(html(page), /aria-label="Page 2 of 12" aria-current="page"/);
+  // Another search starts at page 1.
+  search(page, 'bulk');
+  assert.match(html(page), /1–10 of 120 lines/);
+  // Over 500 matches: the first 500 are paged and the foot says so.
+  const many = await loaded(Array.from({ length: 505 }, (_, i) => sapRow({ DocumentNumber: String(5000 + i), 'Item No.': 'BULK-2' })));
+  search(many, 'bulk-2');
+  assert.match(html(many), /1–10 of 500 lines · First 500 of 505 · Add another word to narrow the results/);
+  // Print lists the 500.
+  many.run('printMode=true;renderResults()');
+  assert.equal((html(many).match(/<tr class="line-row/g) || []).length, 500);
+  assert.doesNotMatch(html(many), /dz-pagefoot/);
 });
 
 test('supply / demand and Clear To Build matches are listed when those files are loaded', async () => {

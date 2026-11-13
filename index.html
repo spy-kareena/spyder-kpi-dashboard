@@ -163,7 +163,6 @@ a{color:var(--accent)}a:hover{color:var(--accent-strong)}
 .trow:hover{background:var(--gray-50)}.trow.selected{background:var(--accent-tint);box-shadow:inset 2px 0 0 var(--accent)}
 .trow>div{padding:12px 10px}.thead>div:first-child,.trow>div:first-child{padding-left:24px}.thead>div:last-of-type,.trow>div:last-of-type{padding-right:24px}
 .num{text-align:right}
-.tfoot{display:flex;justify-content:space-between;align-items:center;padding:12px 24px;font-size:12px;color:var(--gray-500);background:var(--gray-50)}
 .note-btn{font:inherit;font-size:12px;font-weight:500;padding:4px 10px;border-radius:var(--r-pill);border:1px solid var(--gray-300);background:#fff;color:var(--gray-700);cursor:pointer}
 .note-btn.has-note{background:var(--accent-tint);border-color:var(--accent-border);color:var(--accent-strong)}
 .note-editor{display:grid;grid-template-columns:210px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 20px 14px 84px;background:var(--gray-50);border-top:1px solid var(--gray-200)}
@@ -437,7 +436,6 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .note-editor select{font:inherit;font-size:12px;font-weight:500;padding:6px 28px 6px 9px;border:1px solid var(--gray-300);border-radius:var(--r-ctl);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236e6e78' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 6.5 8 10l3.5-3.5'/%3E%3C/svg%3E") no-repeat right 8px center/14px 14px;color:var(--gray-900);cursor:pointer;-webkit-appearance:none;appearance:none}
 .note-editor textarea{font-size:12px;min-height:54px;padding:7px 9px;color:var(--gray-900)}
 .note-editor .btn-primary{align-self:end;box-shadow:none}
-.tfoot .link-btn{font-size:12px}
 .table-tools label{display:flex;align-items:center;gap:8px;font-weight:600}
 .table-tools .hint{color:var(--gray-500)}
 /* Every table's (and the ship calendar's) scroll box is a named region with tabindex="0", so a keyboard can scroll it
@@ -754,7 +752,7 @@ details.about .about-list{margin:0;padding-left:18px;display:grid;gap:4px}
   *{box-shadow:none!important;animation:none!important;transition:none!important}
   html,body{background:#fff}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .app-header,.page-head .actions,.filter-bar,details.data-check,.data-check,#upload-screen,#loading-screen,.snapshot-download-box,.section-tools,.table-tools,.tfoot .link-btn,.print-hide,.segmented.full,.filter-more,input[type=date]{display:none!important}
+  .app-header,.page-head .actions,.filter-bar,details.data-check,.data-check,#upload-screen,#loading-screen,.snapshot-download-box,.section-tools,.table-tools,.print-hide,.segmented.full,.filter-more,input[type=date]{display:none!important}
   .main{background:#fff;border:0;padding:0;gap:.16in}
   .page-head{border-bottom:1px solid var(--gray-300);padding-bottom:.08in}
   .page-title{font-size:18pt}
@@ -928,7 +926,7 @@ details.about>summary:hover{color:var(--gray-900)}
   .card-head,.card-head.lg{padding:.08in .12in .06in}
   .chart-card.tight,.list-card{padding:.1in .12in}
   .thead>div:first-child,.trow>div:first-child{padding-left:.12in}
-  .table-tools,.tfoot{padding:.06in .12in}
+  .table-tools{padding:.06in .12in}
   .sc-group-head{padding:.06in .12in .04in}
 }
 /* --- end Stream A --- */
@@ -2157,9 +2155,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .ohl-card table.ohl-lines .c-status .dz-cell-sub{margin-top:4px;font-size:12px}
 .ohl-card table.ohl-lines .c-status .oh-why{margin-top:3px;font-size:11.5px;font-weight:500}
 .ohl-card table.ohl-lines .note-btn{border-color:var(--dz-line-8);font-weight:500}
-.ohl-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--dz-ink-4)}
-.ohl-card .ohl-more{font-size:12.5px;font-weight:500;color:var(--dz-indigo-link)}
-.ohl-card .ohl-more:hover{color:var(--dz-indigo-hover);text-decoration:underline}
 @media (max-width:640px){
   .ohl-card{padding-bottom:20px}
   .ohl-search{width:100%;flex:1 1 100%}
@@ -2365,14 +2360,12 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-dc-list{margin:0;padding:10px 14px 10px 30px;max-height:220px;overflow:auto;border-radius:14px;background:var(--dz-surface-2);font-size:12.5px;line-height:1.55;color:var(--dz-ink-3);overflow-wrap:anywhere}
 .stg-dc-list li+li{margin-top:2px}
 .stg-dc-list:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
-.stg-dc-more{list-style:none;margin-left:-16px;color:var(--dz-ink-4)}
 .stg-dc-lead>.stg-now{margin-top:10px}
 .stg-dc-list+.stg-row{margin-top:10px}
 .stg-dc-row .dz-btn{height:32px;padding:0 14px}
 .stg-dc-deleted{list-style:none;margin:-4px 0 0;padding:0 0 2px;max-height:220px;overflow:auto}
 .stg-dc-deleted li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:5px 0;font-size:12.5px;color:var(--dz-ink-3)}
 .stg-dc-deleted li+li{border-top:1px solid var(--dz-line-5)}
-.stg-dc-deleted .stg-dc-more{margin:0}
 .stg-dc-line{min-width:0;overflow-wrap:anywhere}
 .stg-dc-deleted .link-btn{flex:none;font-size:12.5px;font-weight:500;color:var(--dz-indigo-link)}
 .stg-dc-deleted .link-btn:hover{color:var(--dz-indigo-hover)}
@@ -2418,7 +2411,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .mwm-more[open] .mwm-more-less{display:inline}
 .mwm-more-body{margin-top:22px;display:flex;flex-direction:column;gap:22px}
 @media print{.mwm-more>summary{display:none}}
-.mwm-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;font-size:12.5px;color:var(--dz-ink-4)}
 /* Monthly: hero card, target bar, ship target card */
 .mwm-hero{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-top:10px}
 .mwm-bar{position:relative;height:10px;border-radius:5px;background:var(--dz-line-6);margin-top:18px}
@@ -2939,8 +2931,6 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-grp b{font-size:14px;font-weight:600}
 .sup-grp span{margin-left:10px;font-size:12px;color:var(--dz-ink-4)}
 .sup-grp+.sup-row td{border-top:1px solid var(--dz-line-5)}
-.sup-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 2px;font-size:12px;color:var(--dz-ink-4)}
-.sup-more{height:auto;padding:4px 0;font-size:12.5px}
 .sup-status .dz-chip{margin:0}
 .sup-ovr-in{display:flex;align-items:center;gap:10px;min-width:0}
 .sup-ovr-t{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-3)}
@@ -3120,7 +3110,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
   .sup-tbl .sup-clip,.sup-item strong,.sup-desc{white-space:normal;overflow:visible}
   .sup-tbl td,.sup-tbl th{padding-top:4px;padding-bottom:4px}
   .sup-tbl tr{break-inside:avoid;page-break-inside:avoid}
-  .sup-search,.sup-toggle,.sup-more,.sup-seg-sm{display:none!important}
+  .sup-search,.sup-toggle,.sup-seg-sm{display:none!important}
   .sup-detail>summary{display:none}
   .sup-detail[open] .sup-detail-less{display:none}
   .sup-heat-in{min-width:0!important}
@@ -3342,8 +3332,6 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
 .misc-fc-spark{display:inline-flex;align-items:flex-end;gap:2px;height:22px}
 .misc-fc-spark>i{display:block;width:5px;border-radius:2px 2px 0 0;background:#cdd5f6}
 .misc-fc-spark>i.over{background:#fda4af}
-.misc-more{display:flex;justify-content:space-between;align-items:center;padding:12px 0 6px;font-size:12px;color:var(--dz-ink-4)}
-.misc-more .link-btn{color:var(--dz-indigo-link);font-weight:500;font-size:12.5px}
 .misc-none{margin:0;padding:18px 0;font-size:13px;color:var(--dz-ink-4)}
 .misc-fc-items .dz-meta{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
 .misc-about details.about{padding:14px 22px;border:1px solid #fff;border-radius:18px;background:var(--dz-glass-60);color:var(--dz-ink-3)}
@@ -3414,8 +3402,7 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
 .misc-flat .status-chip.bad,.misc-flat .pill.bad{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
 .misc-flat .status-chip.warn,.misc-flat .pill.warn{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
 .misc-flat .status-chip.good,.misc-flat .pill.good{background:var(--dz-teal-bg);color:var(--dz-teal)}
-.misc-flat .tfoot{padding:12px 0 0;background:none;font-size:12px;color:var(--dz-ink-4)}
-.misc-flat .tfoot .link-btn,.misc-flat .link-btn{color:var(--dz-indigo-link);font-weight:500;font-size:12.5px}
+.misc-flat .link-btn{color:var(--dz-indigo-link);font-weight:500;font-size:12.5px}
 @media (max-width:640px){
   /* Phones draw each line as a small card (legacy rules): keep their rows, drop my cell borders, line up with the card's edge */
   .misc-flat .lines-table>tbody>tr.line-row>td{border:0}
@@ -4303,7 +4290,12 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 .dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
 .dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
 .dz-pagefoot .shp-pager{margin-top:0}
-@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}}
+/* The older framed table cards (renderTableCard, the scorecard, the heat grid, the Lagging warehouse summaries): the foot sits inside the frame's
+   padding, flat in the glass cards (.misc-flat), and inside the phone cards' gutters. */
+.table>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+.misc-flat .table>.dz-pagefoot{padding:12px 0 0}
+.card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
 /* 2v9:end pager */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
@@ -4370,7 +4362,7 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 .late-badge{font-size:12px}
 .thead{font-size:13px}
 .trow{font-size:13.5px}
-.tfoot,.note-btn{font-size:13px}
+.note-btn{font-size:13px}
 .note-editor textarea{font-size:14px}
 .btn-lg{font-size:15px}
 .btn-sm,details.data-check>summary{font-size:13px}
@@ -4402,7 +4394,7 @@ button.trow{font-size:13.5px}
 .lines-table{font-size:13.5px}
 .lines-table th,.lines-table .c-doc,.lines-table .c-item .desc,.lines-table .c-date,.lines-table .c-qty,.lines-table .c-val{font-size:13px}
 .status-chip{font-size:12.5px}
-.timing,.note-editor label,.note-editor select,.note-editor textarea,.tfoot .link-btn{font-size:13px}
+.timing,.note-editor label,.note-editor select,.note-editor textarea{font-size:13px}
 .data-table{font-size:14px}
 .data-table th,.data-table .sub,.data-table .item-desc,.lines-table .c-type,.lines-table .sub{font-size:13px}
 .month-tag{font-size:12.5px}
@@ -4568,7 +4560,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .ohl-card table.ohl-lines .c-date,.ohl-card table.ohl-lines .c-qty,.ohl-card table.ohl-lines .c-val{font-size:14px}
 .ohl-card table.ohl-lines .c-status .dz-cell-sub{font-size:13px}
 .ohl-card table.ohl-lines .c-status .oh-why{font-size:12.5px}
-.ohl-foot,.ohl-card .ohl-more{font-size:13.5px}
 .ohl-note-by{font-size:12.5px}
 .ohl-sup-pill{font-size:13px}
 .ohl-sup-row{font-size:14px}
@@ -4592,7 +4583,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .shp-sort-arrow{font-size:12px}
 .mwm-legend{font-size:13px}
 .mwm-more>summary{font-size:14px}
-.mwm-foot{font-size:13.5px}
 .mwm-bar-l{font-size:13px}
 .mwm-stats .dz-stat-v{font-size:21px}
 .mwm-closer{font-size:14px}
@@ -4684,8 +4674,7 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .sup-tbl th{font-size:12.5px}
 .sup-desc,.sup-sub{font-size:13px}
 .sup-grp b{font-size:15px}
-.sup-grp span,.sup-foot{font-size:13px}
-.sup-more{font-size:13.5px}
+.sup-grp span{font-size:13px}
 .sup-page .status-chip.cm{font-size:12px}
 .sup-page .cm-line .timing,.sup-page .print-ovr,.sup-page .note-btn,.sup-page .note-editor label{font-size:13px}
 .sup-page .note-editor select,.sup-page .note-editor textarea,.sup-page .note-editor .note-done{font-size:14px}
@@ -4748,8 +4737,7 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .misc-tile-l{font-size:14px}
 .misc-tile-s,.misc-fc-legend{font-size:13px}
 .misc-fc-max{font-size:12.5px}
-.misc-fc-months,.misc-more{font-size:13px}
-.misc-more .link-btn{font-size:13.5px}
+.misc-fc-months{font-size:13px}
 .misc-none{font-size:14px}
 .misc-intro{font-size:15px}
 .misc-opt-sub{font-size:14.5px}
@@ -4763,8 +4751,7 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .misc-flat .lines-table th,.misc-flat .data-table th,.misc-flat .lines-table.search th,.misc-flat .lines-table.so th{font-size:12.5px}
 .misc-flat .lines-table td,.misc-flat .data-table td,.misc-flat .lines-table.search td,.misc-flat .lines-table .c-doc,.misc-flat .lines-table .c-date,.misc-flat .lines-table .c-val,.misc-flat .lines-table .c-qty{font-size:14px}
 .misc-flat .status-chip,.misc-flat .pill{font-size:12.5px}
-.misc-flat .tfoot{font-size:13px}
-.misc-flat .tfoot .link-btn,.misc-flat .link-btn{font-size:13.5px}
+.misc-flat .link-btn{font-size:13.5px}
 details.data-check>summary{font-size:13px}
 .data-check-pop{font-size:13.5px}
 .data-check-pop .btn,.snapshot-note{font-size:13px}
@@ -5029,8 +5016,6 @@ let weeklyLeadingCollapsed = false;
 let weeklyLaggingCollapsed = false;
 let weeklyAdvancedOpen = false;
 let weeklyOffenderView = 'customers';
-let weeklyLinkedShowAll = false;
-let weeklyScorecardAll = false;
 // 2v4 wh: Monthly | Quarterly on "Which warehouse is defaulting" ('month' | 'quarter').
 let whDefaultPeriod = 'month';
 let dataCheckOpen = false;
@@ -5039,8 +5024,6 @@ let poVendorFilter = ['ALL'];
 let poTileFilter = '';
 let poRiskOwner = '';      // PO At Risk card: one PO owner picked from its list ('' = every owner)
 let poLineSort = 'default';
-let poLinkedShowAll = false;
-let poWarehouseAll = false;
 let supplyWarehouseFilter = ['ALL'];
 let shipScenarioStartDate = '';
 let shipScenarioTargetDate = '';
@@ -5187,16 +5170,12 @@ async function exportShareSnapshot(){
     weeklyLaggingCollapsed,
     weeklyAdvancedOpen,
     weeklyOffenderView,
-    weeklyLinkedShowAll,
-    weeklyScorecardAll,
     whDefaultPeriod,
     ...ohSnapshotView(rowKeys),
     poWarehouseFilter,
     poVendorFilter,
     poTileFilter,
     poLineSort,
-    poLinkedShowAll,
-    poWarehouseAll,
     tableMore,
     dataCheckOpen,
     supplyWarehouseFilter,
@@ -5316,16 +5295,12 @@ async function loadEmbeddedSnapshot(){
     weeklyLaggingCollapsed=false;
     weeklyAdvancedOpen=!!data.weeklyAdvancedOpen;
     weeklyOffenderView=String(data.weeklyOffenderView||'customers');
-    weeklyLinkedShowAll=!!data.weeklyLinkedShowAll;
-    weeklyScorecardAll=!!data.weeklyScorecardAll;
     whDefaultPeriod=data.whDefaultPeriod==='quarter'?'quarter':'month';
     ohRestoreView(data);
     poWarehouseFilter=data.poWarehouseFilter||['ALL'];
     poVendorFilter=data.poVendorFilter||['ALL'];
     poTileFilter=data.poTileFilter||'';
     poLineSort=data.poLineSort||'default';
-    poLinkedShowAll=!!data.poLinkedShowAll;
-    poWarehouseAll=!!data.poWarehouseAll;
     tableMore=data.tableMore&&typeof data.tableMore==='object'&&!Array.isArray(data.tableMore)?data.tableMore:{};
     dataCheckOpen=!!data.dataCheckOpen;
     supplyWarehouseFilter=data.supplyWarehouseFilter||['ALL'];
@@ -5901,7 +5876,6 @@ function setWeeklyWarehousePreset(kind){
 }
 function setWeeklyTileFilter(id){
   weeklyTileFilter=weeklyTileFilter===id?'':id;
-  weeklyLinkedShowAll=false;
   linkedSelection.clear();
   if(weeklyTileFilter==='otd3mo')weeklyOtdFilter='total';
   if(weeklyTileFilter==='reschedhit')weeklyRescheduleFilter='total';
@@ -5912,14 +5886,6 @@ function setWeeklyTileFilter(id){
 }
 function setWeeklyOffenderView(view){
   weeklyOffenderView=view||'customers';
-  renderResults();
-}
-function toggleWeeklyLinkedAll(){
-  weeklyLinkedShowAll=!weeklyLinkedShowAll;
-  renderResults();
-}
-function toggleWeeklyScorecardAll(){
-  weeklyScorecardAll=!weeklyScorecardAll;
   renderResults();
 }
 function toggleWeeklyMoreFilters(){
@@ -6011,7 +5977,6 @@ function setPoTileFilter(id){
   // On PO At Risk with one owner picked, a click on the card shows every owner's lines again.
   if(id==='poatrisk'&&poTileFilter==='poatrisk'&&poRiskOwner)poRiskOwner='';
   else{poTileFilter=poTileFilter===id?'':id;poRiskOwner='';}
-  poLinkedShowAll=false;
   renderResults();
   dzRevealList(poTileFilter&&'#po-linked-lines');
 }
@@ -6019,21 +5984,12 @@ function setPoTileFilter(id){
 function setPoRiskOwner(owner){
   const again=poTileFilter==='poatrisk'&&poRiskOwner===owner;
   poTileFilter='poatrisk';poRiskOwner=again?'':String(owner||'');
-  poLinkedShowAll=false;
   renderResults();
   dzRevealList('#po-linked-lines');
 }
 function resetPoFilters(){
   poWarehouseFilter=['ALL'];
   poVendorFilter=['ALL'];
-  renderResults();
-}
-function togglePoLinkedAll(){
-  poLinkedShowAll=!poLinkedShowAll;
-  renderResults();
-}
-function togglePoWarehouseAll(){
-  poWarehouseAll=!poWarehouseAll;
   renderResults();
 }
 // Clicking a warehouse row or a vendor bar filters the PO page; clicking it again clears that filter.
@@ -9020,7 +8976,8 @@ function renderToneCell(rate,good,warn){
 // assistive tech.
 function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNum(rate)}%`;}
 // Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
-// Card with a data table; long tables show their first rows with a "Show all" toggle (state kept per table key).
+// Card with a data table; more than 10 rows show 10 a page (dzPageOf, id = the table key). tableMore keeps the
+// remaining open / closed choices (Show more groups, the Supply view switches).
 let tableMore={};
 // --- Pages for long card lists (2v6.9, the owner's rule: a card with more than 10 items shows 10 a page) ---
 // dzPageOf(id, list, sig) gives one page of a list; a change of sig (the filters, search or view that made the list)
@@ -9038,6 +8995,14 @@ function dzPageOf(id,list,sig='',size=DZ_PAGE_SIZE){
   const from=(st.page-1)*size;
   return {rows:list.slice(from,from+size),page:st.page,pages,from:total?from+1:0,to:Math.min(from+size,total),total};
 }
+// A small fingerprint of a list (its length and its first and last items) for a list whose maker cannot name the
+// filters that built it (renderTableCard's default sig): when they change the list, it starts at page 1 again.
+function dzListSig(list){
+  const one=x=>typeof x==='string'?x:x&&typeof x==='object'?JSON.stringify(x,(k,v)=>k&&v&&typeof v==='object'?undefined:v):String(x);
+  const s=`${list.length}|${list.length?one(list[0]):''}|${list.length>1?one(list[list.length-1]):''}`;
+  let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;
+  return `${list.length}:${(h>>>0).toString(36)}`;
+}
 function dzPager(id,pg,what){
   if(!pg||pg.pages<2||printMode)return '';
   const page=pg.page,pages=pg.pages,jid=esc(JSON.stringify(id));
@@ -9050,9 +9015,19 @@ function dzPager(id,pg,what){
   return `<nav class="shp-pager dz-pager print-hide" data-dzpager="${esc(id)}" aria-label="${esc(`${what} pages`)}" onkeydown="dzPagerKey(event,${jid})">${arrow(page-1,'prev','‹')}${nums}${arrow(page+1,'next','›')}</nav>`;
 }
 // The foot of a paged list: the range on the left ("11–20 of 24 lines"), the pager on the right. Nothing for one page.
-function dzPageFoot(id,pg,what,noun='lines'){
+// extra (plain text) follows the range, for a list kept to a cap ("First 500 of 620 · Add another word").
+function dzPageFoot(id,pg,what,noun='lines',extra=''){
   if(!pg||pg.pages<2||printMode)return '';
-  return `<div class="dz-pagefoot"><span class="dz-pagecount">${fmtNum(pg.from)}–${fmtNum(pg.to)} of ${fmtNum(pg.total)} ${esc(noun)}</span>${dzPager(id,pg,what)}</div>`;
+  return `<div class="dz-pagefoot"><span class="dz-pagecount">${fmtNum(pg.from)}–${fmtNum(pg.to)} of ${fmtNum(pg.total)} ${esc(noun)}${extra?` · ${esc(extra)}`:''}</span>${dzPager(id,pg,what)}</div>`;
+}
+// A grouped list in pages: groups are [{rows,...}]; the flat rows go 10 a page, heading(g) repeats at the top of each
+// page, after(g) (a subtotal) follows a group's last row on whichever page it falls. item(row, i on the page).
+function dzPageGroups(id,groups,sig,item,heading,after=()=>''){
+  const flat=groups.flatMap(g=>g.rows.map((r,i)=>({r,g,last:i===g.rows.length-1})));
+  const pg=dzPageOf(id,flat,sig);
+  let cur=null;
+  const html=pg.rows.map(({r,g,last},i)=>{const h=g===cur?'':heading(g);cur=g;return h+item(r,i)+(last?after(g):'');}).join('');
+  return {html,pg};
 }
 function dzGoPage(id,p,focus=false){
   const st=dzPg[id];
@@ -9063,7 +9038,7 @@ function dzGoPage(id,p,focus=false){
   renderResults();
   if(typeof document==='undefined'||!document.querySelector)return;
   // The card keeps its place: when its top has scrolled away, it comes back into view.
-  const nav=document.querySelector(`[data-dzpager="${CSS&&CSS.escape?CSS.escape(id):id}"]`);
+  const nav=document.querySelector(`[data-dzpager="${typeof CSS!=='undefined'&&CSS.escape?CSS.escape(id):id}"]`);
   const card=nav&&nav.closest?nav.closest('.dz-card,section'):null;
   if(card&&card.getBoundingClientRect&&card.getBoundingClientRect().top<0&&card.scrollIntoView)card.scrollIntoView({block:'start',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
   if(focus){const b=document.querySelector(`[data-focus-key="pg-${id}-${n}"]`);if(b&&b.focus)b.focus();}
@@ -9093,20 +9068,21 @@ function labelTableCells(rowHtml,head){
     return `<td${attrs}${label?` data-label="${esc(label)}"`:''}${col[3]?` data-card="${col[3]}"`:''}>`;
   });
 }
-function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false}){
-  const open=!!tableMore[key]||printMode;
+// sig: the filters / view / sort that built the list (a change starts it at page 1); without one the list's own
+// fingerprint stands in. limit is kept for older callers and no longer used (10 a page). noun names the rows.
+function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false,sig,noun='rows'}){
   const all=items||rows;
-  const visible=open?all:all.slice(0,limit);
-  let shown=renderRow?visible.map(renderRow):visible;
+  const pg=dzPageOf(key,all,sig===undefined?dzListSig(all):sig);
+  const plain=String(title).replace(/<[^>]*>/g,'');
+  let shown=renderRow?pg.rows.map(renderRow):pg.rows;
   if(cards)shown=shown.map(row=>labelTableCells(row,head));
-  rows=all;
   return `<section class="table ${className}">
     <div class="card-head lg"><h2${sectionTip(info)}>${title}</h2>${headExtra||`<span class="section-sub">${note}</span>`}</div>
     <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table${cards?' cards':''}" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
     </table></div>
-    ${rows.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(rows.length)}</span><button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}"${tipAttr(open?`Show only the first ${fmtNum(limit)} rows.`:`Show all ${fmtNum(rows.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}
+    ${dzPageFoot(key,pg,plain,noun)}
   </section>`;
 }
 function renderBarCell(width,text,color='var(--accent)',size=''){
@@ -9157,7 +9133,9 @@ function renderRowsTable(rows,{key,title,note='',limit=12,editable=false,empty='
       <td class="num strong">${money(r.amountLocal)}</td>
     </tr>`;
   };
-  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?960:1000,className:editable?'editable-rows':'',empty,info,cards:true});
+  return renderTableCard({key,title,note,head,items:rows,renderRow,limit,minWidth:editable?960:1000,className:editable?'editable-rows':'',empty,info,cards:true,noun:'lines',
+    // The lines' keys (not their overrides) mark the list, so a saved override keeps the page.
+    sig:dzListSig(rows.map(r=>rowKey(r)))});
 }
 // --- Ask AI tools: plain-JSON views of the dashboard data, shared by the Ask AI chat and the MCP server (mcp/) ---
 // Numbers come from the same functions the pages use. Filters are set to All (or the tool's arguments) only for
@@ -10055,12 +10033,14 @@ function supPurchaseOrders(m){
       tip:`${v.name}: ${ordersN(v.n)} late · ${supLines(v.rows.length)} · ${money(v.value)}. ${focusedVendor===v.code?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
   }else{
     const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value);
-    const shown=poWarehouseAll?wg:wg.slice(0,8);
+    // 10 warehouses a page; a new warehouse or vendor filter starts at page 1.
+    const whPg=dzPageOf('po-warehouses',wg,JSON.stringify([poWarehouseFilter,poVendorFilter]));
+    const shown=whPg.rows;
     const mx=Math.max(1,...wg.map(g=>g.n));
     byTitle='Open POs by warehouse';
     byBody=shown.length?`<div class="dz-bars sup-bars">${shown.map((g,i)=>dzBarRow({label:supWh(g.key),sub:`${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit`,value:g.n,max:mx,color:'var(--dz-indigo)',num:fmtNum(g.n),onclick:`setPoWarehouseRow(${dzJs(g.key)})`,selected:focusedWh===g.key,attrs:` data-focus-key="powh-${esc(g.key)}"`,i,
       tip:`${g.key}: ${money(g.value)} open\n• ${ordersN(g.n)} · ${supLines(g.rows.length)}\n• ${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit\n${focusedWh===g.key?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
-    if(wg.length>8)byFoot=`<div class="sup-foot"><span>${fmtNum(shown.length)} of ${fmtNum(wg.length)} warehouses</span><button type="button" class="dz-clear sup-more" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show the top 8 only.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`;
+    byFoot=dzPageFoot('po-warehouses',whPg,'Open POs by warehouse','warehouses');
   }
   const byCard=dzCard({title:byTitle,sm:true,span:3,cls:'dz-fade',meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});
 
@@ -10087,7 +10067,9 @@ function supPurchaseOrders(m){
   const statusLabel=r=>{const st=poLineStatus(r);return (statusChip[st]||[st])[0];};
   const sortState=poSortState();
   const sorted=sortState?poSortRows(hits,sortState,{status:statusLabel,date:promisedDate,vendor:vendorName},defaultSort):[...hits].sort(defaultSort);
-  const shownLines=printMode?sorted:sorted.slice(0,poLinkedShowAll?100:20);
+  // 10 lines a page; a new card, owner, filter, search or sort starts at page 1.
+  const linesPg=dzPageOf('po-lines',sorted,JSON.stringify([sel,poRiskOwner,poWarehouseFilter,poVendorFilter,supGet('po-q',''),poLineSort,sortState]));
+  const shownLines=linesPg.rows;
   const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
   const sortCol=sortState&&!sortOptions.some(([v])=>v===poLineSort)?PO_LINE_COLS.find(c=>c[0]===sortState.col):null;
   // A title sort with no matching choice shows as an extra choice, so the other choices still switch back.
@@ -10129,7 +10111,7 @@ function supPurchaseOrders(m){
   }).join('')+`<th class="print-hide"${tipAttr('Set an override or a note.')}><span class="sr-only">Note</span></th>`;
   const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-own"><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-kit"><col class="c-act"></colgroup>
     <thead><tr>${colHead}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
-    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · Narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
+    ${dzPageFoot('po-lines',linesPg,'PO lines')}`
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
   const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
@@ -10421,11 +10403,13 @@ function supSupplyDemand(m){
   const heat=heatWh.map(w=>({w,cells:months.map(mo=>cellN.get(`${w}|${mo}`)||0)})).map(h=>({...h,t:h.cells.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t||a.w.localeCompare(b.w));
   const lc=n=>n===0?['#f1f5f9','#94a3b8']:n<=4?['#f6d2da','#e0244f']:n<=9?['#ff7a93','#0f172a']:['#ff3d68','#fff'];
   const cols=`grid-template-columns:minmax(120px,180px) repeat(${Math.max(1,months.length)},minmax(0,1fr))`;
+  // 10 warehouses a page; a new warehouse filter or item group starts at page 1.
+  const heatPg=dzPageOf('sd-heat',heat,JSON.stringify([supplyWarehouseFilter,supGet('sd-group','')]));
   const heatCard=`<section class="dz-card dz-span-4 sup-heatcard dz-fade" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm">Short items by warehouse and month</h2>${supLegend([['#f1f5f9','0'],['#f6d2da','1–4'],['#ff7a93','5–9'],['#ff3d68','10+']])}</div>
     <div class="sup-scroll sup-heat"><div class="sup-heat-in" style="min-width:${150+months.length*70}px">
       <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,monthLabel(months[0])))}</span>`).join('')}</div>
-      ${heat.map(h=>`<div class="sup-heat-row" style="${cols}"><span class="sup-heat-w" title="${esc(h.w)}">${esc(supWh(h.w))}</span>${h.cells.map((n,i)=>{const [bg,fg]=lc(n);const tp=`${h.w} · ${monthLabel(months[i])||months[i]}: ${n?`${fmtNum(n)} short ${n===1?'item':'items'}`:'no short items'}`;return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(tp)}"${n?' tabindex="0"':''}>${fmtNum(n)}</span>`;}).join('')}</div>`).join('')||'<p class="sup-empty">No warehouses in view.</p>'}
-    </div></div></section>`;
+      ${heatPg.rows.map(h=>`<div class="sup-heat-row" style="${cols}"><span class="sup-heat-w" title="${esc(h.w)}">${esc(supWh(h.w))}</span>${h.cells.map((n,i)=>{const [bg,fg]=lc(n);const tp=`${h.w} · ${monthLabel(months[i])||months[i]}: ${n?`${fmtNum(n)} short ${n===1?'item':'items'}`:'no short items'}`;return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(tp)}"${n?' tabindex="0"':''}>${fmtNum(n)}</span>`;}).join('')}</div>`).join('')||'<p class="sup-empty">No warehouses in view.</p>'}
+    </div></div>${dzPageFoot('sd-heat',heatPg,'Short items by warehouse and month','warehouses')}</section>`;
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}</div>
     <div class="dz-grid">${coverCard}${heatCard}</div>
@@ -10444,7 +10428,7 @@ function supSdGroupPill(id,grp,groups){
     options:[{label:'All item groups',selected:!grp,onclick:"supSet('sd-group','')"},...groups.map(g=>({label:g,selected:grp===g,onclick:`supSet('sd-group',${dzJs(g)})`}))]});
 }
 // Short or at-risk items (2v6.9 leading: on Sales Order Health, Supply / Demand view; it was on the Supply / Demand page):
-// warehouse sub-headings, the lines; Short or at risk (default) or All demand; search, Supply at risk only, Show all.
+// warehouse sub-headings, the lines; Short or at risk (default) or All demand; search, Supply at risk only, 10 lines a page.
 function supSdItemsCard(m){
   const sd=m.supplyDemand;
   if(!supplyDemandRows.length||!sd)return '';
@@ -10514,8 +10498,9 @@ function supSupplyMix(m){
   const dimKey=by==='wh'?supplyWarehouse:supGroup;
   const groupMap=(list,key)=>{const mp=new Map();list.forEach(r=>{const k=key(r);if(!mp.has(k))mp.set(k,[]);mp.get(k).push(r);});return mp;};
   const dims=[...groupMap(inM,dimKey)].map(([k,list])=>({k,list,a:agg(list),cells:months.map(mo=>agg(list.filter(r=>r.yearMonth===mo)))})).sort((a,b)=>b.a.orders-a.a.orders);
-  const matrixAll=!!tableMore['sup-mix-matrix'];
-  const matrixShown=matrixAll||printMode?dims:dims.slice(0,12);
+  // 10 rows a page; a new grouping, month range or warehouse filter starts at page 1.
+  const matrixPg=dzPageOf('sup-mix-matrix',dims,JSON.stringify([by,n,supplyWarehouseFilter]));
+  const matrixShown=matrixPg.rows;
   const label=k=>by==='wh'?supWh(k):k;
 
   const seg=dzSeg([{label:'By item group',on:by==='group',onclick:"supSet('mix-by','group')",key:'mix-by-group'},{label:'By warehouse',on:by==='wh',onclick:"supSet('mix-by','wh')",key:'mix-by-wh'}],{label:'Group demand'});
@@ -10531,7 +10516,7 @@ function supSupplyMix(m){
       <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,first))}</span>`).join('')}<span class="num">Total</span></div>
       ${matrixShown.map(d=>`<div class="sup-heat-row tall" style="${cols}"><span class="sup-heat-w" title="${esc(d.k)}">${esc(label(d.k))}</span>${d.cells.map((c,i)=>{const empty=!c.dem&&!c.orders;const [bg,fg]=empty?['#f1f5f9','#94a3b8']:band(c.pct);return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(`${d.k} · ${monthLabel(months[i])||months[i]}: ${empty?'no open demand':`${fmtNum(Math.round(c.orders))} ${unit}, ${Math.round(c.pct)}% covered, ${fmtNum(Math.round(c.short))} short`}`)}"${empty?'':' tabindex="0"'}>${empty?'—':fmtNum(Math.round(c.orders))}</span>`;}).join('')}<span class="sup-heat-t">${fmtNum(Math.round(d.a.orders))}</span></div>`).join('')||'<p class="sup-empty">No demand in these months.</p>'}
     </div></div>
-    ${dims.length>12&&!printMode?`<div class="sup-foot"><span>Showing ${fmtNum(matrixShown.length)} of ${fmtNum(dims.length)}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sup-mix-matrix" data-table-key="sup-mix-matrix" onclick="toggleTableMore(this.dataset.tableKey)">${matrixAll?'Show fewer':'Show all'}</button></div>`:''}</section>`;
+    ${dzPageFoot('sup-mix-matrix',matrixPg,by==='wh'?'Demand by warehouse and month':'Demand by item group and month',by==='wh'?'warehouses':'item groups')}</section>`;
 
   // Least covered (short orders) and demand by warehouse, covered against short.
   const least=dims.map(d=>({k:d.k,s:Math.round(d.a.short)})).filter(d=>d.s>0).sort((a,b)=>b.s-a.s).slice(0,5);
@@ -10546,13 +10531,13 @@ function supSupplyMix(m){
   // Item groups table: demand, value, coverage, short orders and the biggest shortage.
   const worst=list=>{const mp=new Map();list.forEach(r=>{const k=`${r.itemCode}|${supplyWarehouse(r)}`;const v=mp.get(k)||{item:r.itemCode,short:0};v.short=Math.max(v.short,-Math.min(0,r.cumulativeNetQty));mp.set(k,v);});return [...mp.values()].sort((a,b)=>b.short-a.short)[0];};
   const gdims=[...groupMap(inM,supGroup)].map(([k,list])=>({k,list,a:agg(list),w:worst(list)})).sort((a,b)=>b.a.orders-a.a.orders);
-  const gAll=!!tableMore['sup-mix-groups'];
-  const gShown=gAll||printMode?gdims:gdims.slice(0,12);
+  const gPg=dzPageOf('sup-mix-groups',gdims,JSON.stringify([n,supplyWarehouseFilter]));
+  const gShown=gPg.rows;
   const covColor=p=>p>=90?'var(--dz-teal)':p>=75?'var(--dz-amber)':'var(--dz-risk)';
   const gTable=gdims.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Item groups"><table class="sup-tbl sup-groups"><colgroup><col><col class="c-n"><col class="c-n"><col class="c-cov"><col class="c-n"><col class="c-big"></colgroup>
     <thead><tr><th>Item group</th><th class="num"${tipAttr(hasOC?'Open sales orders in the months shown.':'Open demand quantity in the months shown.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Open demand value in the months shown.')}>Value</th><th${tipAttr('Demand met by usable PO supply in the same month.')}>Coverage</th><th class="num"${tipAttr('Orders with no usable supply.')}>${hasOC?'Short orders':'Short qty'}</th><th${tipAttr('Item with the biggest running shortfall.')}>Biggest shortage</th></tr></thead>
     <tbody>${gShown.map(d=>{const p=Math.round(d.a.pct),s=Math.round(d.a.short);return `<tr class="sup-row"><td class="sup-strong" data-label="Item group">${esc(d.k)}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${fmtNum(Math.round(d.a.orders))}</td><td class="num sup-soft" data-label="Value">${moneyShort(d.a.value)}</td><td data-label="Coverage"><span class="sup-covcell"><span class="sup-meter thin"><i style="width:${p}%;background:${covColor(p)}"></i></span><span>${p}%</span></span></td><td class="num sup-strong${s?' red':' muted'}" data-label="Short">${fmtNum(s)}</td><td class="sup-clip sup-soft" data-label="Biggest shortage">${d.w&&d.w.short>0?`${esc(d.w.item)} · ${fmtNum(d.w.short)} short`:'—'}</td></tr>`;}).join('')}</tbody></table></div>
-    ${gdims.length>12&&!printMode?`<div class="sup-foot"><span>Showing ${fmtNum(gShown.length)} of ${fmtNum(gdims.length)}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sup-mix-groups" data-table-key="sup-mix-groups" onclick="toggleTableMore(this.dataset.tableKey)">${gAll?'Show fewer':'Show all'}</button></div>`:''}`
+    ${dzPageFoot('sup-mix-groups',gPg,'Item groups','item groups')}`
     :'<p class="sup-empty">No item groups in these months.</p>';
   const groupsCard=dzCard({title:'Item groups',span:6,cls:'dz-fade',tip:sectionTipText('mix-groups'),body:gTable});
   const warehouseNote=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
@@ -10620,8 +10605,9 @@ function supBuildRisk(m){
   const terms=supTerms(supGet('br-q',''));
   const all=riskRows.filter(r=>(!cust||String(r.name||'').trim()===cust)&&supHit(terms,[r.documentNumber,r.itemCode,r.itemDescription,r.name,rowWarehouse(r)]));
   const cap=all.slice(0,60);
-  const open=!!tableMore['br-risk']||printMode;
-  const vis=open?cap:cap.slice(0,8);
+  // 10 a page within the first 60 (the cap stays); a new report week, CM, customer or search starts at page 1.
+  const riskPg=dzPageOf('br-risk',cap,JSON.stringify([buildRiskSnapshot,buildRiskCmFilter,cust,supGet('br-q','')]));
+  const vis=riskPg.rows;
   const statusOf=s=>/late|past/i.test(s)?['Late','red']:/no commit/i.test(s)?['No commit','']:/resched/i.test(s)?['Rescheduled','amber']:/risk/i.test(s)?['At risk','amber']:[s||'Open',''];
   const orderRow=(r,i)=>{
     const effective=r.noCommitDate?'':(r.effectiveDueDate||r.dueDate);
@@ -10639,7 +10625,7 @@ function supBuildRisk(m){
   };
   const orders=all.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
     <thead><tr><th>SO #</th><th>Customer</th><th>CM</th><th>Item</th><th${tipAttr('Reschedule date, else the due date.')}>Build date</th><th>Status</th><th${tipAttr('Your override, cause and note.')}>Override</th><th class="num">Amount</th></tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
-    ${cap.length>8?`<div class="sup-foot"><span>Showing ${fmtNum(vis.length)} of ${fmtNum(cap.length)}${all.length>60?` · First 60 of ${fmtNum(all.length)} lines`:''}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-br-risk" data-table-key="br-risk"${tipAttr(open?'Show only the first 8 rows.':`Show all ${fmtNum(cap.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
+    ${dzPageFoot('br-risk',riskPg,'Orders at risk or late','lines',all.length>cap.length?`First ${fmtNum(cap.length)} of ${fmtNum(all.length)} lines`:'')}`
     :`<p class="sup-empty">${riskRows.length?'No orders match the search or the customer.':'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}</p>`;
   const nOrders=supDocs(all);
   const ordersCard=supTableCard({title:'Orders at risk or late',tip:sectionTipText('br-risk'),chip:dzChip(`${fmtNum(nOrders)} ${nOrders===1?'order':'orders'}`,nOrders?'red':''),tools:supSearchBox('br','Search order, item'),body:orders});
@@ -10647,8 +10633,11 @@ function supBuildRisk(m){
   // CTB detail: the report's own CM / month lines and the CTB % trend, kept under Show more.
   const tone=(part,total)=>!total?'':pct(part,total)>=90?'teal':pct(part,total)>=70?'amber':'red';
   const detailOpen=!!tableMore['more-br-ctb']||printMode;
-  const ctbTable=`<h3 class="sup-h3"${tipAttr(sectionTipText('br-ctb'))}>Clear To Build by CM / month</h3><div class="sup-scroll" tabindex="0" role="region" aria-label="Clear To Build by CM / month"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th><th>Month</th><th class="num">Total</th><th class="num">Clear to build</th><th class="num">At risk</th><th class="num">Late</th><th class="num">Matched SO lines</th><th class="num">Matched open qty</th><th class="num">Matched open value</th><th>Notes</th></tr></thead><tbody>${br.matched.map(r=>`<tr class="sup-row"><td class="sup-strong">${esc(r.cm)}</td><td class="sup-soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${r.total?dzChip(`${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)`,tone(r.clearToBuild,r.total)):'—'}</td><td class="num${r.atRisk?' amber':' muted'}">${fmtNum(r.atRisk)}</td><td class="num${r.late?' red':' muted'}">${fmtNum(r.late)}</td><td class="num">${fmtNum(r.matchedRows.length)}</td><td class="num sup-soft">${fmtNum(r.matchedOpenQty)}</td><td class="num sup-strong">${money(r.matchedOpenValue)}</td><td class="sup-soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td></tr>`).join('')||'<tr><td colspan="10" class="sup-soft">No CM / month lines.</td></tr>'}</tbody></table></div>`;
-  const trendTable=weeks.length>1?`<h3 class="sup-h3"${tipAttr(sectionTipText('br-trend'))}>CTB % by CM <span class="dz-meta">last ${fmtNum(weeks.length)} report weeks, oldest first</span></h3><div class="sup-scroll" tabindex="0" role="region" aria-label="CTB % by CM"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th>${weeks.map(s=>`<th class="num">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>${trend.map(t=>`<tr class="sup-row"><td class="sup-strong">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>':`<td class="num">${dzChip(`${pct(c.clearToBuild,c.total)}%`,tone(c.clearToBuild,c.total))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
+  // The report's CM / month lines and the CM trend: 10 a page each; a new report week or CM starts at page 1.
+  const ctbPg=dzPageOf('br-ctb-lines',br.matched,JSON.stringify([buildRiskSnapshot,buildRiskCmFilter]));
+  const trendPg=dzPageOf('br-trend',trend,JSON.stringify([buildRiskSnapshot,buildRiskCmFilter]));
+  const ctbTable=`<h3 class="sup-h3"${tipAttr(sectionTipText('br-ctb'))}>Clear To Build by CM / month</h3><div class="sup-scroll" tabindex="0" role="region" aria-label="Clear To Build by CM / month"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th><th>Month</th><th class="num">Total</th><th class="num">Clear to build</th><th class="num">At risk</th><th class="num">Late</th><th class="num">Matched SO lines</th><th class="num">Matched open qty</th><th class="num">Matched open value</th><th>Notes</th></tr></thead><tbody>${ctbPg.rows.map(r=>`<tr class="sup-row"><td class="sup-strong">${esc(r.cm)}</td><td class="sup-soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${r.total?dzChip(`${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)`,tone(r.clearToBuild,r.total)):'—'}</td><td class="num${r.atRisk?' amber':' muted'}">${fmtNum(r.atRisk)}</td><td class="num${r.late?' red':' muted'}">${fmtNum(r.late)}</td><td class="num">${fmtNum(r.matchedRows.length)}</td><td class="num sup-soft">${fmtNum(r.matchedOpenQty)}</td><td class="num sup-strong">${money(r.matchedOpenValue)}</td><td class="sup-soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td></tr>`).join('')||'<tr><td colspan="10" class="sup-soft">No CM / month lines.</td></tr>'}</tbody></table></div>${dzPageFoot('br-ctb-lines',ctbPg,'Clear To Build by CM / month','CM / month lines')}`;
+  const trendTable=weeks.length>1?`<h3 class="sup-h3"${tipAttr(sectionTipText('br-trend'))}>CTB % by CM <span class="dz-meta">last ${fmtNum(weeks.length)} report weeks, oldest first</span></h3><div class="sup-scroll" tabindex="0" role="region" aria-label="CTB % by CM"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th>${weeks.map(s=>`<th class="num">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>${trendPg.rows.map(t=>`<tr class="sup-row"><td class="sup-strong">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>':`<td class="num">${dzChip(`${pct(c.clearToBuild,c.total)}%`,tone(c.clearToBuild,c.total))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${dzPageFoot('br-trend',trendPg,'CTB % by CM','CMs')}`:'';
   const detail=`<details class="sup-detail"${detailOpen?' open':''} data-more="br-ctb" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-br-ctb"${tipAttr('Report lines with matched sales orders, and CTB % by CM.')}><span class="sup-detail-show">Show more · Clear To Build by CM and month</span><span class="sup-detail-less">Show less</span></summary><div class="sup-detail-body">${ctbTable}${trendTable}</div></details>`;
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(brAll.label)} report${cmIn?` · CM ${esc(cmMap.get(buildRiskCmFilter).cm)}`:''}${cust?` · ${esc(cust)}`:''}</div>
     <div class="sup-cmcards">${cmCards}</div>
@@ -10692,7 +10681,7 @@ function stgSpec(){
     atRiskTarget:{def:()=>5,check:num(1,50)},
     toleranceDays:{def:()=>2,check:num(0,14)},
     horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
-    linesShown:{def:()=>20,check:oneOf([10,20,50])},
+    linesShown:{def:()=>10,check:oneOf([10,20,50])},
     openingView:{def:()=>'leading',check:oneOf(['leading','lagging','supply'])},
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
@@ -11026,7 +11015,7 @@ function stgOrderHealthCard(dis,i){
     stgRow('At-risk target',`Share of open value at risk; amber up to twice it, red above. Default 5%.`,stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
     stgRow('On-track tolerance',`Days late that still count as on track. Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
     stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
-    stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
+    stgRow('Lines a page',`Lines on each page of the Lines card. Default 10.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines a page')),
     stgRow('Opening view',`Where Sales Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view'))
   ].join('');
   return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
@@ -11226,12 +11215,15 @@ function stgDataCheckCard(dc,i){
   if(!dc.parts.length)return '';
   const mark=t=>t==='red'?'red':t==='yellow'?'yellow':'note';
   const sum=`<ul class="stg-dc-sum">${dc.parts.map(p=>`<li class="${mark(p.tone)}"><span class="stg-dc-mark" aria-hidden="true"></span><span>${esc(p.text)}</span></li>`).join('')}</ul>`;
-  const issues=dc.issues.length?`<ul class="stg-dc-list" tabindex="0" aria-label="Rows and files that need attention in SAP">${dc.issues.slice(0,50).map(x=>`<li>${esc(x.message)}</li>`).join('')}${dc.issues.length>50?`<li class="stg-dc-more">…and ${fmtNum(dc.issues.length-50)} more</li>`:''}</ul>`:'';
+  // The two lists go 10 a page (the deleted lines keep their page when one is restored).
+  const issuePg=dzPageOf('stg-dc-issues',dc.issues,String(dc.issues.length));
+  const issues=dc.issues.length?`<ul class="stg-dc-list" tabindex="0" aria-label="Rows and files that need attention in SAP">${issuePg.rows.map(x=>`<li>${esc(x.message)}</li>`).join('')}</ul>${dzPageFoot('stg-dc-issues',issuePg,'Rows and files that need attention','rows and files')}`:'';
   const dateHelp=dc.issues.some(x=>x.kind==='date')?'<p class="stg-now">Dates outside 1990–2099 count as missing until fixed in SAP.</p>':'';
   const scope=dc.nonInventory?stgRow('Non-inventory charges','PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave these charges out again (the default).':'Count these charges in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
   const d=dc.deleted;
+  const delPg=dzPageOf('stg-dc-deleted',d,'');
   const deleted=d.length?stgRow('Deleted lines',`Left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.`,`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back ${d.length===1?'the deleted line':`all ${fmtNum(d.length)} deleted lines`}.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
-    +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${d.slice(0,50).map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${d.length>50?`<li class="stg-dc-more">…and ${fmtNum(d.length-50)} more</li>`:''}</ul>`:'';
+    +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${delPg.rows.map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}</ul>${dzPageFoot('stg-dc-deleted',delPg,'Deleted lines')}`:'';
   const meta=dc.level==='red'?dzChip(`${fmtNum(dc.red)} to fix in SAP`,'red'):dc.level==='yellow'?dzChip(`${fmtNum(dc.yellow)} to review`,'amber'):'<span class="dz-meta">By design</span>';
   const color=dc.level==='red'?'#ff3d68':dc.level==='yellow'?'#ffae1a':'#64748b';
   return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,meta:`<span class="dz-meta">${meta}</span>`,
@@ -11333,16 +11325,17 @@ function supplyStatusCell(r){
   return `<td${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''}><span class="pill ${st.tone}">${esc(st.label)}</span>${st.detail?`<span class="sub">${esc(st.detail)}</span>`:''}</td>`;
 }
 // Supply / Demand: one table of supply lines with a sub-heading row per warehouse (its line count, demand qty and
-// value), like the Warehouse scorecard. limit counts data lines only; Show all (tableMore[key]) and print list all.
+// value), like the Warehouse scorecard. 10 data lines a page (dzPageOf, id = key; sig = the filters that built rows,
+// else the rows' fingerprint); the warehouse sub-heading repeats at the top of each page and counts all its lines.
+// Print lists all. limit is no longer used.
 // Phones: each data line is a label / value card (data-label / data-card, as renderTableCard's cards:true).
-function renderSupplyRowsTable({key,title,rows,limit=20,headExtra='',empty='No lines.'}){
+function renderSupplyRowsTable({key,title,rows,limit=20,headExtra='',empty='No lines.',sig}){
   const head=[['Month','','','key'],['Item','','26%','item'],['Demand qty','num'],['Demand value','num','','amt'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Supply risk','','22%','st'],['Risk qty','num']];
-  const open=!!tableMore[key]||printMode;
-  let left=open?Infinity:limit,shown=0;
-  const body=groupSupplyRowsByWarehouse(rows).map(g=>{
-    if(left<=0)return '';
-    const vis=g.rows.slice(0,left);
-    left-=vis.length;shown+=vis.length;
+  const groups=groupSupplyRowsByWarehouse(rows);
+  const pg=dzPageOf(key,groups.flatMap(g=>g.rows.map(r=>({r,g}))),sig===undefined?dzListSig(rows):sig);
+  const onPage=new Map();
+  pg.rows.forEach(({r,g})=>{if(!onPage.has(g))onPage.set(g,[]);onPage.get(g).push(r);});
+  const body=[...onPage].map(([g,vis])=>{
     const qty=g.rows.reduce((t,r)=>t+r.demandOpenQty,0),value=g.rows.reduce((t,r)=>t+r.demandOpenValue,0);
     return `<tr class="grp-row"><td colspan="${head.length}"><span class="grp-name" role="heading" aria-level="3">${esc(g.warehouse)}</span><span class="grp-sub">${fmtNum(g.rows.length)} ${g.rows.length===1?'line':'lines'} · ${fmtNum(qty)} demand qty · ${money(value)}</span></td></tr>${vis.map(r=>labelTableCells(`<tr>
       <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'No month')}</td>
@@ -11362,12 +11355,12 @@ function renderSupplyRowsTable({key,title,rows,limit=20,headExtra='',empty='No l
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${body||`<tr><td colspan="${head.length}" class="soft">${esc(empty)}</td></tr>`}</tbody>
     </table></div>
-    ${rows.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown)} of ${fmtNum(rows.length)}</span><button type="button" class="link-btn" data-focus-key="more-${esc(key)}" data-table-key="${esc(key)}"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(rows.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}
+    ${dzPageFoot(key,pg,title)}
   </section>`;
 }
 // Supply / demand rows elsewhere (Search). 2v2: the risky-supply quantities are in the Risk column (supplyRowStatus,
 // the same status as Supply / Demand) so the table fits the page without scrolling.
-function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows.',info=''}){
+function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows.',info='',sig}){
   const body=rows.map(r=>`<tr>
       <td class="date soft">${esc(monthLabel(r.yearMonth)||r.yearMonth||'')}</td>
       <td class="soft">${esc(r.warehouseName)}</td>
@@ -11378,7 +11371,7 @@ function renderSupplyDemandTable(rows,{key,title,note='',limit=12,empty='No rows
       <td class="num ${r.cumulativeNetQty<0?'crit-strong':'good-soft'}">${fmtNum(r.cumulativeNetQty)}</td>
       ${supplyStatusCell(r)}
     </tr>`);
-  return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,cards:true,
+  return renderTableCard({key,title,note,rows:body,limit,minWidth:860,empty,info,cards:true,noun:'lines',sig,
     head:[['Month','','','key'],['Warehouse','','16%','sub'],['Item','','18%','sub'],['Demand qty','num'],['Usable supply','num'],['Monthly net','num'],['Cumulative net','num'],['Risk','','18%','st']]});
 }
 // --- Screen switching and shared chart/table markup ---
@@ -11450,7 +11443,7 @@ function showUploadError(msg){
 }
 // View settings that belong to one report: page, filters, picked cards, sorts, scenario dates, open notes.
 function resetViewState(){
-  activeTab='weekly';weeklyWarehouseFilter=['ALL'];weeklyCustomerFilter=['ALL'];weeklySegmentFilter=['ALL'];weeklyOwnerFilter=['ALL'];weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyTileFilter='late';weeklyOtdFilter='total';weeklyRescheduleFilter='total';weeklyLineSort='default';weeklyLeadingCollapsed=false;weeklyLaggingCollapsed=false;weeklyAdvancedOpen=false;weeklyOffenderView='customers';weeklyLinkedShowAll=false;weeklyScorecardAll=false;whDefaultPeriod='month';poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='';poLineSort='default';poLinkedShowAll=false;poWarehouseAll=false;supplyWarehouseFilter=['ALL'];shipScenarioStartDate='';shipScenarioTargetDate='';shipScenarioDateBasis='effective';originalDeliveryMonthFilter='ALL';tableMore={};includeNonInventory=false;dataCheckOpen=false;expandedNoteRows=new Set();collapsedNoteRows=new Set();
+  activeTab='weekly';weeklyWarehouseFilter=['ALL'];weeklyCustomerFilter=['ALL'];weeklySegmentFilter=['ALL'];weeklyOwnerFilter=['ALL'];weeklyOrderTypeFilter=['ALL'];weeklyDepartmentFilter=['ALL'];weeklyProjectFilter=['ALL'];weeklyTileFilter='late';weeklyOtdFilter='total';weeklyRescheduleFilter='total';weeklyLineSort='default';weeklyLeadingCollapsed=false;weeklyLaggingCollapsed=false;weeklyAdvancedOpen=false;weeklyOffenderView='customers';whDefaultPeriod='month';poWarehouseFilter=['ALL'];poVendorFilter=['ALL'];poTileFilter='';poLineSort='default';supplyWarehouseFilter=['ALL'];shipScenarioStartDate='';shipScenarioTargetDate='';shipScenarioDateBasis='effective';originalDeliveryMonthFilter='ALL';tableMore={};dzPg={};includeNonInventory=false;dataCheckOpen=false;expandedNoteRows=new Set();collapsedNoteRows=new Set();
   linkedSelection=new Set();linkedBulkStatus='';searchQuery='';searchPrevTab='weekly';clearTimeout(searchTimer);buildRiskSnapshot='';
   sankeyOpen=bigPictureMemory();sankeyFlowPick={};sankeyPinned={};buildRiskCmFilter=''; // Stream F: switches go back to this browser's choice
   ohResetView();
@@ -11580,9 +11573,10 @@ function renderGlobalSearchPage(m){
   const matched=v=>s.terms.some(t=>String(v||'').toLowerCase().includes(t));
   const has=v=>String(v??'').trim()!=='';
   const tone={Late:'bad','Past Due':'bad','No Commit':'bad',Rescheduled:'warn'};
-  const more=!!tableMore.search||printMode;
-  const shown=s.rows.slice(0,more?500:100);
-  const body=shown.map(({r,open})=>{
+  // 10 a page within the first 500 matches (the cap keeps a one-letter search quick); a new search starts at page 1.
+  const capped=s.rows.slice(0,500);
+  const pg=dzPageOf('search-lines',capped,JSON.stringify([s.q,s.week]));
+  const body=pg.rows.map(({r,open})=>{
     const type=searchRowType(r);
     const po=/purchase/i.test(String(r.sourceType||''));
     const status=open?r.statusBucket:type==='Delivery'?'Shipped':type==='Receipt'?'Received':'Closed';
@@ -11608,8 +11602,8 @@ function renderGlobalSearchPage(m){
     </tr>${renderNoteEditorRow(r,10)}${renderPrintNoteRow(r,10)}`;
   }).join('');
   const firstOf=list=>list.length>20?`first 20 of ${fmtNum(list.length)} matching lines`:`${fmtNum(list.length)} matching ${list.length===1?'line':'lines'}`;
-  const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand lines match.'}):'';
-  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report`:''),limit:20,minWidth:760,empty:'No Clear To Build lines match.',
+  const supplyTable=supplyDemandRows.length?renderSupplyDemandTable(s.supply.slice(0,20),{key:'search-sd',title:'Supply / demand',note:firstOf(s.supply),limit:20,empty:'No supply / demand lines match.',sig:JSON.stringify([s.q])}):'';
+  const ctbTable=buildRiskRows.length?renderTableCard({key:'search-ctb',title:'Clear To Build',note:firstOf(s.ctb)+(s.ctbWeek&&s.ctbWeek.dated?` · ${esc(s.ctbWeek.label)} report`:''),limit:20,minWidth:760,empty:'No Clear To Build lines match.',sig:JSON.stringify([s.q,s.week]),
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
   // Order lines first (how they are sorted is in the count's tip), then the supply / demand and Clear To Build matches.
@@ -11619,7 +11613,7 @@ function renderGlobalSearchPage(m){
         <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
-      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · Add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matches.':'Show up to 500 matches.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
+      ${dzPageFoot('search-lines',pg,'Order lines found','lines',s.rows.length>capped.length?`First ${fmtNum(capped.length)} of ${fmtNum(s.rows.length)} · Add another word to narrow the results`:'')}
     </div>`;
   // 2v6: one glass card per kind of match (Order lines, Supply / demand, Clear To Build); a kind with no match is left out.
   // The legacy table cards inside are flattened by .misc-flat so they sit in the glass card without a second frame.
@@ -12199,7 +12193,7 @@ function renderShippedByWarehouseCard(sd,today){
   return renderTableCard({key:'monthly-wh',info:'mo-warehouse',title:`Shipped by warehouse / CM · ${esc(rangeLabel)}`,
     note:`${sd.isDefaultRange?`Deliveries dated ${esc(today.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}`:'Deliveries in the ship target scenario range'} · ${money(sd.shippedWeekValue)} across ${fmtNum(sd.shippedWeekOrders)} SOs · ${fmtNum(sd.shippedWeekOtd)}% on time`,
     head:[['Warehouse / CM'],['SO count','num'],['Lines','num'],['Qty shipped','num'],['Shipped value','','30%'],['OTD','num'],['Early','num'],['On time','num'],['Late','num']],
-    rows,limit:9,minWidth:820,empty:'No shipped or closed sales order delivery lines in this range.'});
+    rows,limit:9,minWidth:820,noun:'warehouses / CMs',empty:'No shipped or closed sales order delivery lines in this range.'});
 }
 // controls:false leaves out the date inputs (the Monthly page's ship target card carries them).
 function renderShipTargetScenario(sd,today,{controls=true}={}){
@@ -12228,7 +12222,7 @@ function renderShipTargetScenario(sd,today,{controls=true}={}){
   const linesToggle=sd.openLines.length&&!printMode?groupMoreButton('monthly-scenario-lines',sd.openLines.length,'scenario lines','Show lines'):'';
   const scenarioLines=linesOpen?renderTableCard({key:'monthly-scenario',title:'Scenario lines',headExtra:`<div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div>`,
       head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,empty:'No open lines are booked by this end date.'})
+      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(sd.openLines.map(r=>rowKey(r))),empty:'No open lines are booked by this end date.'})
     :`<section class="table pg-collapsed"><div class="card-head lg"><h2>Scenario lines</h2><div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div></div></section>`;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return pageGroupHtml('mo-scenario','Ship target scenario',`
@@ -12417,7 +12411,12 @@ function renderResults(){
     // ---------- Linked lines for the selected card ----------
     const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(ohlTip(`${label}: ${valueText}`,String(sub).split(' · '),'Click to list them.'))}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
     const pctPill=(rate,good,warn)=>`<span class="pill ${rate>=good?'good':rate>=warn?'warn':'bad'}">${fmtNum(rate)}%</span>`;
-    const summaryTable=(head,rows)=>`<div class="card flush"><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`${head[1]} by ${String(head[0]).toLowerCase()}`)}"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
+    // A Lagging card's warehouse summary: 10 warehouses a page (id per card); a new card, drill or filter starts at page 1.
+    const summaryTable=(head,rows,id)=>{
+      const what=`${head[1]} by ${String(head[0]).toLowerCase()}`;
+      const pg=dzPageOf(id,rows,JSON.stringify([weeklyTileFilter,weeklyOtdFilter,weeklyRescheduleFilter,weeklyFilterKey()]));
+      return `<div class="card flush"><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(what)}"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${pg.rows.join('')}</tbody></table></div>${dzPageFoot(id,pg,what,'warehouses')}</div>`;
+    };
     const renderOtdDrillCards=(rows)=>{
       if(weeklyTileFilter!=='otd3mo')return '';
       const stats=otdStats(rows);
@@ -12436,7 +12435,7 @@ function renderResults(){
         const stats=otdStats(g.rows);
         return {...g,otdRate:stats.rate,earlyCount:stats.early.length,onTimeCount:stats.onTime.length,toleranceCount:stats.tolerance.length,lateCount:stats.late.length,scoredCount:stats.scored.length};
       }).sort((a,b)=>a.otdRate-b.otdRate||b.scoredCount-a.scoredCount);
-      return summaryTable(['Warehouse','3 mo OTD','Early','On time','2-day tolerance','Late','Total deliveries','Value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.otdRate,90,75)}</td><td class="num">${fmtNum(g.earlyCount)}</td><td class="num">${fmtNum(g.onTimeCount)}</td><td class="num">${fmtNum(g.toleranceCount)}</td><td class="num">${fmtNum(g.lateCount)}</td><td class="num">${fmtNum(g.scoredCount)}</td><td class="num strong">${money(g.amount)}</td></tr>`));
+      return summaryTable(['Warehouse','3 mo OTD','Early','On time','2-day tolerance','Late','Total deliveries','Value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.otdRate,90,75)}</td><td class="num">${fmtNum(g.earlyCount)}</td><td class="num">${fmtNum(g.onTimeCount)}</td><td class="num">${fmtNum(g.toleranceCount)}</td><td class="num">${fmtNum(g.lateCount)}</td><td class="num">${fmtNum(g.scoredCount)}</td><td class="num strong">${money(g.amount)}</td></tr>`),'oh-otd-wh');
     };
     const renderRescheduleDrillCards=(rows)=>{
       if(weeklyTileFilter!=='reschedhit')return '';
@@ -12456,7 +12455,7 @@ function renderResults(){
         const stats=rescheduleStats(g.rows);
         return {...g,hitRate:stats.rate,metCount:stats.met.length,toleranceCount:stats.tolerance.length,missedCount:stats.missed.length,stillOpenPastCount:stats.stillOpenPast.length,closedCount:stats.closed.length};
       }).sort((a,b)=>a.hitRate-b.hitRate||b.rows.length-a.rows.length);
-      return summaryTable(['Warehouse','Hit rate','Met','2-day tolerance','Missed','Still open past commit','Closed reschedules','Value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.hitRate,90,75)}</td><td class="num">${fmtNum(g.metCount)}</td><td class="num">${fmtNum(g.toleranceCount)}</td><td class="num">${fmtNum(g.missedCount)}</td><td class="num">${fmtNum(g.stillOpenPastCount)}</td><td class="num">${fmtNum(g.closedCount)}</td><td class="num strong">${money(g.rows.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0))}</td></tr>`));
+      return summaryTable(['Warehouse','Hit rate','Met','2-day tolerance','Missed','Still open past commit','Closed reschedules','Value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.hitRate,90,75)}</td><td class="num">${fmtNum(g.metCount)}</td><td class="num">${fmtNum(g.toleranceCount)}</td><td class="num">${fmtNum(g.missedCount)}</td><td class="num">${fmtNum(g.stillOpenPastCount)}</td><td class="num">${fmtNum(g.closedCount)}</td><td class="num strong">${money(g.rows.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0))}</td></tr>`),'oh-resched-wh');
     };
     const renderFillWarehouseSummary=(rows)=>{
       if(weeklyTileFilter!=='fillrate'||!rows.length)return '';
@@ -12466,7 +12465,7 @@ function renderResults(){
         const open=rowOpenQty(g.rows);
         return {...g,fillRate:rate,qty,openQty:open,filledQty:Math.max(0,qty-open),openValue:rowOpenAmount(g.rows)};
       }).sort((a,b)=>a.fillRate-b.fillRate||b.openQty-a.openQty);
-      return summaryTable(['Warehouse','Fill rate','Filled qty','Open qty','Open value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.fillRate,90,70)}</td><td class="num">${fmtNum(g.filledQty)}</td><td class="num">${fmtNum(g.openQty)}</td><td class="num strong">${money(g.openValue)}</td></tr>`));
+      return summaryTable(['Warehouse','Fill rate','Filled qty','Open qty','Open value'],groups.map(g=>`<tr><td class="m">${esc(g.key)}</td><td class="num">${pctPill(g.fillRate,90,70)}</td><td class="num">${fmtNum(g.filledQty)}</td><td class="num">${fmtNum(g.openQty)}</td><td class="num strong">${money(g.openValue)}</td></tr>`),'oh-fill-wh');
     };
     // 2v6 oh-leading: the Lines card (design "Lines": title, count chip, search and sort pills, the table, Showing X of N).
     const renderTileLineTable=(tileRows)=>{
@@ -12585,10 +12584,11 @@ function renderResults(){
         if(weeklyLineSort==='date')return sortDate(a)-sortDate(b)||defaultSort(a,b);
         return defaultSort(a,b);
       });
-      // Print lists every line (the screen caps stay for speed).
-      // The first count is Settings' "Lines shown" (20 by default); Show more lists up to 80 (4x when more are shown).
-      const linesFirst=stgValue('linesShown'),linesAll=Math.max(80,linesFirst*4);
-      const shown=printMode?sorted:sorted.slice(0,weeklyLinkedShowAll?linesAll:linesFirst);
+      // Pages of Settings' "Lines a page" (10 by default); print lists every line. Any filter, card, tab, search or
+      // sort change (or a new line count) starts at page 1.
+      const linesSig=JSON.stringify([weeklyView,weeklyTileFilter,weeklyOtdFilter,weeklyRescheduleFilter,weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,weeklyReasonFilter,weeklyReasonMain,weeklyCauseFilter,weeklyAgeFilter,ohlLineQuery,ohlSupPick,weeklyLineSort,sorted.length]);
+      const linesPg=dzPageOf('oh-lines',sorted,linesSig,stgValue('linesShown'));
+      const shown=linesPg.rows;
       const sortOptions=[['default','Default'],['warehouse','Warehouse'],['customer','Customer'],['owner','Document Owner'],['date','Date'],['status','Status'],['value','Value high to low']];
       const arrow=sortDir>0?'↑':'↓';
       // While a header sort is on, the select shows it as an extra choice so the other choices still switch back.
@@ -12677,7 +12677,7 @@ function renderResults(){
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · Narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines.`:`Show up to ${linesAll} lines. Export PDF prints all.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
+        ${dzPageFoot('oh-lines',linesPg,'Lines')}
       </section>`;
     };
     // 2v4 oh: the cards on the page are At risk and On track (next month), OTD and Fill rate.
@@ -12930,16 +12930,16 @@ function renderResults(){
     ${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
       note:anyLastYear?'':`No ${lastYear} months in the export for year over year`,
       head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% lines shipped','','14%'],['Open lines','num'],['Closed lines','num'],['At risk / late','num']],
-      rows:summaryRows,limit:12,minWidth:anyLastYear?980:820})}
+      rows:summaryRows,limit:12,minWidth:anyLastYear?980:820,noun:'months'})}
     ${renderShippedByWarehouseCard(scenario,today)}`,{rise:'rise-2'})}
     ${pageGroupHtml('mo-open','By original delivery date',`
     ${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect}</div>`,
       head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open lines','num'],['Closed lines','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
-      rows:originalRows,limit:14,minWidth:980,empty:'No original SO line delivery dates were found in this export.'})}
+      rows:originalRows,limit:14,minWidth:980,noun:'months',empty:'No original SO line delivery dates were found in this export.'})}
     ${renderTableCard({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
       note:`${originalDeliveryMonthFilter==='ALL'?'By original line delivery month':esc(monthLabel(originalDeliveryMonthFilter)||originalDeliveryMonthFilter)} · ${fmtNum(openOriginalRows.length)} open lines`,
       head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,empty:'Every line in these months has shipped.'})}
+      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(openOriginalRows.map(r=>rowKey(r))),empty:'Every line in these months has shipped.'})}
     `,{rise:'rise-3'})}
     ${renderShipTargetScenario(scenario,today,{controls:false})}
     <details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}${aboutItems(notes.map(esc))}</ul></div></details>`;
@@ -12959,8 +12959,9 @@ function renderResults(){
     const byWarehouseMonth=new Map(whTimeline.map(g=>[`${g.warehouse}|||${g.month}`,g]));
     const gridWarehouses=[...new Set(whTimeline.map(g=>g.warehouse))].map(w=>({w,total:whTimeline.filter(g=>g.warehouse===w).reduce((s,g)=>s+g.openValue,0),late:whTimeline.filter(g=>g.warehouse===w).reduce((s,g)=>s+g.lateRows,0)}))
       .filter(x=>x.total>0||x.late>0).sort((a,b)=>b.total-a.total);
-    const heatOpen=!!tableMore['wh-heat']||printMode;
-    const heatShown=heatOpen?gridWarehouses:gridWarehouses.slice(0,10);
+    // 10 warehouses a page, most open value first; a new warehouse pick starts at page 1.
+    const heatPg=dzPageOf('wh-heat',gridWarehouses,JSON.stringify(weeklyWarehouseFilter));
+    const heatShown=heatPg.rows;
     const heatLevel=v=>{if(!v)return 0;const q=v/cellMax;return q>.5?4:q>.2?3:q>.06?2:1;};
     const heatCols=`grid-template-columns:minmax(0,1.6fr) repeat(${Math.max(1,months.length)},minmax(0,1fr))`;
     const summaryRows=kpis.map(g=>{
@@ -12998,11 +12999,11 @@ function renderResults(){
           return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(ohlPlain(tip))}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
-      ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show the 10 with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
+      ${dzPageFoot('wh-heat',heatPg,'Open value by warehouse and due month','warehouses')}
     </section>`,{rise:'rise-3'})}
     ${pageGroupHtml('wh-kpis','By warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',
       head:[['Warehouse'],['Open lines','num'],['On-track (open)','','14%'],['Perfect order','','14%'],['Backorder','num'],['Partial ship','num'],['Open qty','num'],['Open value','num'],['Late','num'],['No commit','num'],['Rescheduled','num']],
-      rows:summaryRows,limit:12,minWidth:1040}),{rise:'rise-3'})}
+      rows:summaryRows,limit:12,minWidth:1040,noun:'warehouses'}),{rise:'rise-3'})}
     ${renderAbout(['wh-scorecard','wh-late','wh-heat','wh-summary'])}`;
     html+=mwmRenderWarehouses(m,legacy);
   }
@@ -13446,11 +13447,12 @@ function showToast(message){
 // Warehouse scorecard groups (Order Health): CM SFG warehouses and every other warehouse, each with a subtotal.
 // Subtotals add up every warehouse in the group (not just the rows shown); OTD is scored over the group's deliveries.
 const SFG_WAREHOUSE=/^CM SFG - /i;
-function scorecardGroups(scorecard,showAll){
+// The scorecard's two groups (CM SFG, all others), each with its subtotal; both scorecards page them (dzPageGroups).
+function scorecardGroups(scorecard){
   return [['sfg','CM SFG',g=>SFG_WAREHOUSE.test(g.name)],['other','All other warehouses',g=>!SFG_WAREHOUSE.test(g.name)]].map(([id,label,test])=>{
     const rows=scorecard.filter(test);
     const otd=otdStats(rows.flatMap(g=>g.otd));
-    return {id,label,rows,shown:showAll?rows:rows.slice(0,9),subtotal:{
+    return {id,label,rows,subtotal:{
       openAmt:rows.reduce((s,g)=>s+g.openAmt,0),
       riskAmt:rows.reduce((s,g)=>s+g.riskAmt,0),
       pastDue:rows.reduce((s,g)=>s+g.pastDue,0),
@@ -13507,8 +13509,7 @@ function whFocusedWarehouse(){
 }
 function renderWarehouseScorecard(m){
   const scorecard=warehouseScorecardData(m);
-  const scGroups=scorecardGroups(scorecard,weeklyScorecardAll);
-  const scShown=scGroups.reduce((s,g)=>s+g.shown.length,0);
+  const scGroups=scorecardGroups(scorecard);
   const focused=whFocusedWarehouse();
   // The tip, with the amounts in full, is also the row's accessible name, so screen readers hear it once.
   const scRowTip=g=>`${g.name}: open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}, ${fmtNum(g.pastDue)} past due, OTD ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}; ${focused===g.name?'click to show all.':'click to filter.'}`;
@@ -13527,13 +13528,14 @@ function renderWarehouseScorecard(m){
     const text=`${grp.label} subtotal (${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}): open ${money(t.openAmt)}, at risk ${money(t.riskAmt)}, ${fmtNum(t.pastDue)} ${t.pastDue===1?'line':'lines'} past due, OTD 3 mo ${rateLabel(t.otdRate)}`;
     return `<div class="trow sc-cols sc-subtotal" data-group="${grp.id}"${tipAttr(text)}><div class="name" aria-hidden="true">Subtotal</div><div class="num soft-cell" aria-hidden="true">${moneyShort(t.openAmt)}</div><div class="num ${t.riskAmt?'risk-cell':'muted'}" aria-hidden="true">${t.riskAmt?moneyShort(t.riskAmt):'—'}</div><div class="num ${t.pastDue?'':'muted'}" aria-hidden="true">${t.pastDue?fmtNum(t.pastDue):'—'}</div><div class="cell-tone" aria-hidden="true">${renderToneCell(t.otdRate,90,75)}</div><div aria-hidden="true"></div><div aria-hidden="true"></div><span class="sr-only">${esc(text)}</span></div>`;
   };
+  // 10 warehouses a page (the whole report, so no filter resets it); the group heading repeats at the top of a page.
+  const scPaged=dzPageGroups('wh-scorecard',scGroups,String(scorecard.length),scRow,
+    grp=>`<div class="sc-group-head" role="heading" aria-level="3" data-group="${grp.id}">${esc(grp.label)}<span class="muted">${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>`,scSubtotal);
   return `<section class="table" aria-label="Warehouse scorecard">
       <div class="card-head"><h2${sectionTip('wh-scorecard')}>Warehouse scorecard</h2><span class="section-sub">whole report</span></div>
       <div class="thead sc-cols" aria-hidden="true"><div${tipAttr('Warehouse, grouped CM SFG and all others.')}>Warehouse</div><div class="num"${tipAttr('Open value: what is still to ship on open lines.')}>Open</div><div class="num"${tipAttr('Open value of at-risk lines.')}>At risk</div><div class="num"${tipAttr('Lines past their original date with no reschedule or no commit date.')}>Past due</div><div class="num"${tipAttr('Deliveries (3 months) shipped by the original date; green 90%+, amber 75%+.')}>OTD 3 mo</div><div class="num"${tipAttr('Delivered or closed share of ordered quantity; green 90%+, amber 70%+.')}>Fill</div><div class="num"${tipAttr('Rescheduled deliveries (12 months) shipped by their reschedule date; green 90%+, amber 75%+.')}>Resched</div></div>
-      ${scGroups.map(grp=>`<div class="sc-group-head" role="heading" aria-level="3" data-group="${grp.id}">${esc(grp.label)}<span class="muted">${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>
-      ${grp.shown.map(scRow).join('')}
-      ${scSubtotal(grp)}`).join('')||'<div class="empty-note" style="padding:14px 24px">No open lines or recent deliveries in this report.</div>'}
-      ${scGroups.some(g=>g.rows.length>9)?`<div class="tfoot"><span>Showing ${fmtNum(scShown)} of ${fmtNum(scorecard.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show the top 9 of each group.':'Show every warehouse.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}
+      ${scPaged.html||'<div class="empty-note" style="padding:14px 24px">No open lines or recent deliveries in this report.</div>'}
+      ${dzPageFoot('wh-scorecard',scPaged.pg,'Warehouse scorecard','warehouses')}
     </section>`;
 }
 // Late shipments by warehouse: delivery lines shipped more than 2 days after their original date (the OTD tolerance,
@@ -13592,17 +13594,17 @@ function warehouseLateByPeriod(m,period,rows){
 }
 // "Which warehouse is defaulting": the warehouseLateByPeriod ranking as a card with a Monthly | Quarterly toggle.
 // opts: period ('month' | 'quarter', default the page's whDefaultPeriod), rows (delivery rows; default the whole
-// report), limit (warehouses shown before Show all, default 8), context (prefix for focus keys and the table key).
+// report), context (prefix for focus keys and the page id `<context>-late`; 10 warehouses a page, a new period or
+// Order Health filter starts at page 1).
 // title:false leaves out the card heading where a group title already names it (Order Health's Warehouse defaulting).
 // Order Health's Lagging panel calls it with its own filtered delivery rows.
 function renderWarehouseDefaulting(m,opts={}){
   const period=(opts.period||whDefaultPeriod)==='quarter'?'quarter':'month';
   const ctx=String(opts.context||'wh').replace(/[^\w-]/g,'');
-  const limit=opts.limit||8;
   const data=warehouseLateByPeriod(m,period,opts.rows);
-  const moreKey=`${ctx}-late`;
-  const showAll=!!tableMore[moreKey]||printMode;
-  const shown=showAll?data.warehouses:data.warehouses.slice(0,limit);
+  const pageId=`${ctx}-late`;
+  const latePg=dzPageOf(pageId,data.warehouses,JSON.stringify([period,opts.rows?weeklyFilterKey():'']));
+  const shown=latePg.rows;
   const focused=whFocusedWarehouse();
   const colLabel=c=>period==='quarter'?`${c.label.slice(0,2)} ’${c.label.slice(-2)}`:`${shortMonth(c.start)} ’${String(c.start.getFullYear()).slice(2)}`;
   // Late lines and Late $ sit next to the name, so a phone (the row scrolls sideways) sees the ranking first.
@@ -13624,7 +13626,7 @@ function renderWarehouseDefaulting(m,opts={}){
       ${data.warehouses.length?`<div class="thead wl-cols" style="${cols}" aria-hidden="true"><div${tipAttr('Most late lines first.')}>Warehouse</div><div class="num"${tipAttr('Lines shipped more than 2 days late.')}>Late lines</div><div class="num"${tipAttr('Shipped value of the late lines.')}>Late $</div>${data.columns.map(c=>`<div class="num"${tipAttr(`${c.label}${c.partial?' to date':''}: late lines.`)}>${esc(colLabel(c))}</div>`).join('')}<div class="num"${tipAttr('Late lines as a share of deliveries.')}>Late %</div></div>
       ${shown.map(row).join('')}
       <div class="trow wl-cols sc-subtotal" style="${cols}"${tipAttr(totalText)}><div class="name" aria-hidden="true">All warehouses</div><div class="num strong" aria-hidden="true">${fmtNum(data.total.lines)}</div><div class="num soft-cell" aria-hidden="true">${moneyShort(data.total.amount)}</div>${data.total.cells.map(cell=>`<div class="num" aria-hidden="true">${cell.lines?fmtNum(cell.lines):'—'}</div>`).join('')}<div class="num" aria-hidden="true">${data.total.rate===null?'—':`${fmtNum(data.total.rate)}%`}</div><span class="sr-only">${esc(ohlPlain(totalText))}</span></div>
-      ${data.warehouses.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(data.warehouses.length)} warehouses with late shipments</span><button type="button" class="link-btn" data-focus-key="more-${moreKey}" data-table-key="${moreKey}" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(showAll?`Show the top ${fmtNum(limit)}.`:'Show every warehouse with a late line.')}>${showAll?`Show top ${fmtNum(limit)}`:'Show all'}</button></div>`:''}`
+      ${dzPageFoot(pageId,latePg,'Which warehouse is defaulting','warehouses')}`
       :`<div class="empty-note" style="padding:14px 24px">${data.total.scored?`No late shipments in the ${span}: all ${ohN(data.total.scored,'delivery line')} shipped within 2 days of their original date.`:`No delivery lines in the ${span}.`}</div>`}
     </section>`;
 }
@@ -13821,17 +13823,18 @@ function mwmRenderMonthly(m,ctx){
     body:`<div class="mwm-cols" data-tip-notab style="--n:12">${d.entries.map((x,i)=>`<div class="mwm-col dz-fade${i===11?' now':''}" style="--i:${i}"${tipAttr(`${monthText(x,i)}: ${mwmOrders(x[key].orders)} ${verb}, ${money(x[key].value)} on ${ohN(x[key].lines,'line')}.`)}><span class="mwm-col-n">${fmtNum(x[key].orders)}</span><span class="mwm-col-bar" style="height:${(x[key].orders/max*80).toFixed(1)}%"></span></div>`).join('')}</div>
       <div class="mwm-collabels" style="--n:12">${d.entries.map(x=>`<span>${esc(shortMonth(x.date))}</span>`).join('')}</div>`});
 
-  // Month by month, newest first.
+  // Month by month, newest first, 10 a page (a new view or filter starts at page 1).
   const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
+  const moPg=dzPageOf('mwm-months',[...d.entries].reverse().map((x,ri)=>({x,ri})),JSON.stringify([key,weeklyFilterKey()]));
   const table=dzCard({title:'Month by month',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
       <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Shipped by the original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Ordered qty delivered, lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
-      ${[...d.entries].reverse().map((x,ri)=>{
+      ${moPg.rows.map(({x,ri})=>{
         const i=11-ri,v=x[key],cur=i===11;
         const label=x.date.toLocaleDateString('en-US',{month:'short'})+(x.date.getMonth()===0||i===0?` ${x.date.getFullYear()}`:'');
         return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(label)}${cur&&partial?' <span class="mwm-todate">to date</span>':''}</span><b role="cell" class="dz-num">${fmtNum(v.orders)}</b><span role="cell" class="dz-num mwm-soft">${moneyShort(v.value)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${fmtNum(v.lines)}</span><b role="cell" class="dz-num" style="color:${mwmRateColor(v.otd)}">${mwmPct(v.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(x.fill)}</span><span role="cell" class="dz-num ${v.late?'mwm-lateN':'mwm-soft'}">${fmtNum(v.late)}</span></div>`;
       }).join('')}
-    </div></div>`});
+    </div></div>${dzPageFoot('mwm-months',moPg,'Month by month','months')}`});
 
   const more=mwmMore('mwm-monthly','year over year, original dates, items not shipped yet and the ship calendar',legacy,
     'Ship target parts follow the filters; the rest is the whole report.');
@@ -13870,8 +13873,7 @@ function mwmWeekData(m,n){
 // The warehouse list with the two groups (everything but CM SFG, then CM SFG), each with its subtotal; sorted by at-risk value.
 function mwmWatchCard(m){
   const sc=warehouseScorecardData(m,mwmFiltered());
-  const groups=scorecardGroups(sc,weeklyScorecardAll).sort((a,b)=>(a.id==='sfg')-(b.id==='sfg'));
-  const shown=groups.reduce((s,g)=>s+g.shown.length,0);
+  const groups=scorecardGroups(sc).sort((a,b)=>(a.id==='sfg')-(b.id==='sfg'));
   const focused=whFocusedWarehouse();
   const rowTip=g=>ohlTip(g.name,[`Open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}`,`${fmtNum(g.pastDue)} past due`,`OTD ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}`],focused===g.name?'':'Click to filter to it.');
   const badgeOf=g=>/^CM SFG - /i.test(g.name)?'':/^CM - /i.test(g.name)?'CM':'Spyder';
@@ -13889,12 +13891,15 @@ function mwmWatchCard(m){
     const text=ohlTip(`${grp.label} subtotal (${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'})`,[`Open ${money(t.openAmt)}, at risk ${money(t.riskAmt)}`,`${fmtNum(t.pastDue)} ${t.pastDue===1?'line':'lines'} past due`,`OTD 3 mo ${rateLabel(t.otdRate)}`]);
     return `<div class="dz-tr mwm-sub" role="group" aria-label="${esc(ohlPlain(text))}"${tipAttr(text)}><span class="mwm-wname" aria-hidden="true"><span class="mwm-wtxt">Subtotal</span></span><span class="dz-num" aria-hidden="true">${moneyShort(t.openAmt)}</span><b class="dz-num" aria-hidden="true">${t.riskAmt?moneyShort(t.riskAmt):'—'}</b><span class="dz-num" aria-hidden="true">${t.pastDue?fmtNum(t.pastDue):'—'}</span><b class="dz-num" style="color:${mwmRateColor(t.otdRate,60)}" aria-hidden="true">${mwmPct(t.otdRate)}</b><span class="mwm-hs" aria-hidden="true"></span><span class="mwm-hs" aria-hidden="true"></span></div>`;
   };
+  // 10 warehouses a page; a new Order Health filter starts at page 1; the group heading repeats at the top of a page.
+  const watch=dzPageGroups('mwm-watch',groups,weeklyFilterKey(),row,
+    grp=>`<div class="mwm-ghead" role="heading" aria-level="3">${esc(grp.label==='CM SFG'?'CM SFG':'Spyder and CM warehouses')}<span>${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>`,subtotal);
   const cols='minmax(0,2fr) repeat(6,minmax(0,.7fr))';
   const body=groups.length?`<div class="dz-table mwm-tablewrap"><div class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,2.1fr) repeat(4,minmax(0,.8fr));--gap:10px">
       <div class="dz-th"><span>Warehouse</span><span class="dz-num"${tipAttr('Value still to ship.')}>Open</span><span class="dz-num"${tipAttr('Open value of at-risk lines.')}>At risk</span><span class="dz-num"${tipAttr('Past the original date, no reschedule or commit.')}>Past due</span><span class="dz-num"${tipAttr('Shipped by the original date, 3 months. Teal 85%+, red under 60%.')}>OTD 3 mo</span><span class="dz-num mwm-hs"${tipAttr('Ordered qty delivered or closed.')}>Fill</span><span class="dz-num mwm-hs"${tipAttr('Rescheduled deliveries shipped by the new date, 12 months.')}>Resched</span></div>
-      ${groups.map(grp=>`<div class="mwm-ghead" role="heading" aria-level="3">${esc(grp.label==='CM SFG'?'CM SFG':'Spyder and CM warehouses')}<span>${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>${grp.shown.map(row).join('')}${subtotal(grp)}`).join('')}
+      ${watch.html}
     </div></div>
-    ${groups.some(g=>g.rows.length>9)?`<div class="mwm-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(sc.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show the top 9 of each group.':'Show every warehouse.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}`
+    ${dzPageFoot('mwm-watch',watch.pg,'Warehouses to watch','warehouses')}`
     :'<p class="empty-note">No open lines or recent deliveries in this report.</p>';
   return dzCard({title:'Warehouses to watch',sm:true,span:6,meta:'sorted by at-risk value',tip:'Open, at-risk and past-due value plus delivery rates. Click a row to filter.',body});
 }
@@ -13909,8 +13914,9 @@ function mwmRenderWarehouses(m,legacy){
   if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
   const w=mwmWeekData(m,n);
   const rows=late?w.rows.filter(r=>r.lateTotal>0):w.rows;
-  const heatOpen=!!tableMore['mwm-heat']||printMode;
-  const shown=heatOpen?rows:rows.slice(0,10);
+  // 10 warehouses a page; a new measure, week range or Order Health filter starts at page 1.
+  const heatPg=dzPageOf('mwm-heat',rows,JSON.stringify([mwmWhMetric,n,weeklyFilterKey()]));
+  const shown=heatPg.rows;
   const lateC=v=>v===0?['#f1f5f9','#94a3b8']:v<=2?['#fbe3e8','#e0244f']:v<=5?['#f6d2da','#e0244f']:v<=9?['#ff7a93','#0f172a']:['#ff3d68','#fff'];
   const otdC=v=>v===null?['rgba(15,23,42,.03)','#cbd5e1']:v>=85?['#d6f2ec','#0fa08e']:v>=70?['#f1f5f9','#334155']:v>=40?['#fbe3e8','#e0244f']:['#ff7a93','#0f172a'];
   const legend=(late?[['0','#f1f5f9'],['1–5','#f6d2da'],['6–9','#ff7a93'],['10+','#ff3d68']]:[['85%+','#d6f2ec'],['70–84%','#f1f5f9'],['40–69%','#fbe3e8'],['under 40%','#ff7a93']])
@@ -13928,7 +13934,7 @@ function mwmRenderWarehouses(m,legacy){
     body:rows.length?`<div class="mwm-scroll"><div class="mwm-heat${n>12?' dense':''}" role="table" aria-label="${late?'Late orders':'On-time delivery'} by warehouse and week" data-tip-notab style="--n:${n};min-width:calc(var(--mwm-name) + ${n}*var(--mwm-col))">
         <div class="mwm-heat-row mwm-heat-head" role="row"><span role="columnheader">Warehouse</span>${w.wins.map((x,i)=>`<span role="columnheader" aria-label="Week of ${esc(shortDay(x.s))}">${i%step===0||i===n-1&&step===1?esc(shortDay(x.s)):''}</span>`).join('')}</div>${heatRows}
       </div></div>
-      ${rows.length>10?`<div class="mwm-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(rows.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-mwm-heat" onclick="toggleTableMore('mwm-heat')"${tipAttr(heatOpen?'Show the 10 with the most late orders.':`Show all ${fmtNum(rows.length)} warehouses.`)}>${heatOpen?'Show fewer':'Show all'}</button></div>`:''}`
+      ${dzPageFoot('mwm-heat',heatPg,late?'Late orders by week':'On-time delivery by week','warehouses')}`
       :`<p class="empty-note">${late?`No late orders in the last ${n} weeks.`:`No deliveries in the last ${n} weeks.`}</p>`});
   // Getting worse / better: the first week against the newest week of the window (the newest may still be filling).
   const trend=w.rows.map(r=>{
@@ -14074,7 +14080,7 @@ function ohgMetricsLegacy(m){
   </div>
   ${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
     head:[['Month'],['Open value','num'],['Open qty','num'],['Open lines','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
-    rows:timelineRows,limit:10,minWidth:900})}`,{rise:'rise-2'})}
+    rows:timelineRows,limit:10,minWidth:900,noun:'months'})}`,{rise:'rise-2'})}
   ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',title:'Lines needing attention',note:'most overdue first',limit:10}),{info:'mt-attention',rise:'rise-3',
     badge:`<span class="count-badge${attention.length?' bad':''}">${ohN(attention.length,'line')}</span>`})}
   ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
@@ -14139,14 +14145,16 @@ function mwmRenderMetrics(m,legacy){
     body:`<div class="mwm-cause-head"><span class="mwm-cause-n">${fmtNum(x.lateOrders)}</span><span class="dz-meta">late ${x.lateOrders===1?'order':'orders'} in ${esc(monthName(mo[x.L].date))}</span></div>
       <div class="dz-bars mwm-cause-bars">${shownCauses.map(([label,c],i)=>dzBarRow({label,value:c,max:causeMax,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',i,tip:`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late.`})).join('')||'<p class="empty-note">No late orders.</p>'}</div>`});
   const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
+  // Newest first, 10 months a page; a new range or filter starts at page 1.
+  const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]));
   const table=dzCard({title:'Monthly metrics',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
       <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
-      ${[...slice(mo)].reverse().map((r,ri)=>{
+      ${metPg.rows.map(({r,ri})=>{
         const cur=ri===0&&slice(mo).length&&r===mo[11];
         return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
       }).join('')}
-    </div></div>`});
+    </div></div>${dzPageFoot('mwm-metric-months',metPg,'Monthly metrics','months')}`});
   return wrap(`<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Covers the whole report.')}`);
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
@@ -18077,7 +18085,6 @@ function cmFromSnapshot(d){
 // new expected date. "What we can deliver" comes from the Logican sheet for the item's supply: CTB -> ready by the
 // commit date, Short / Hold -> blocked (Logican's comment goes in the tip), else unknown (not built at Logican or no
 // status). A slip of up to ON_TRACK_TOLERANCE_DAYS (2 days) is on track and left out. Lines follow the Order Health filters; grouped by customer (lines, $, worst slip in days).
-const DC_SHOW_CUSTOMERS=5;
 const dcIso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 function dcItemSupply(code){
   const x=cmIndex();
@@ -18136,7 +18143,7 @@ function soDateChangeImpact(m){
     return {lines,customers,totals:{lines:lines.length,customers:customers.length,orders:new Set(lines.map(l=>l.order)).size,value:lines.reduce((s,l)=>s+l.value,0),ready:count('ready'),blocked:count('blocked'),unknown:count('unknown')}};
   });
 }
-// The card for Order Health (At risk group): a short list of customers, the rest behind Show more. Clicking a
+// The card for Order Health (At risk group): customers 10 a page. Clicking a
 // customer filters Order Health to it (again shows all). Nothing to show -> '' (opts.showEmpty draws a note instead).
 function renderDateChangeImpact(m,opts={}){
   const d=soDateChangeImpact(m);
@@ -18156,13 +18163,13 @@ function renderDateChangeImpact(m,opts={}){
         <span class="dc-sub">${chip(c.ready,'good','ready')}${chip(c.blocked,'bad','blocked')}${chip(c.unknown,'','unknown')}<span class="dc-line muted">SO ${esc(worst.order)} · ${esc(worst.item||'no item')} · ${esc(cmShort(worst.due))} → ${esc(cmShort(worst.expected))}</span></span>
       </button>`;
   };
-  const shown=d.customers.slice(0,DC_SHOW_CUSTOMERS),rest=d.customers.slice(DC_SHOW_CUSTOMERS);
+  const pg=dzPageOf('dc-customers',d.customers,weeklyFilterKey());
   const info='Open sales-order lines whose expected date moved later than due (SAP reschedule or Logican commit), and whether Logican can build them: CTB ready, Short or Hold blocked.';
   return `<section class="card dc-card" aria-labelledby="dc-title" data-card="date-change">
     <div class="list-head"><h2 id="dc-title"${tipAttr(info)}>Date changes — what we can deliver</h2><span class="section-sub">${ohN(t.lines,'line')} · ${ohN(t.customers,'customer')} · ${money(t.value)}</span></div>
     ${t.lines?`<div class="dc-sum">${chip(t.ready,'good','ready')}${chip(t.blocked,'bad','blocked')}${chip(t.unknown,'','unknown')}</div>
-    <div class="dc-list" role="group" aria-label="Customers with later dates">${shown.map(row).join('')}</div>
-    ${rest.length?ohRenderMore('datechange',ohN(rest.length,'more customer'),`<div class="dc-list" role="group" aria-label="More customers with later dates">${rest.map(row).join('')}</div>`,`Show the other ${ohN(rest.length,'customer')} with later dates.`):''}`:'<div class="empty-note">No open lines moved later than their due date.</div>'}
+    <div class="dc-list" role="group" aria-label="Customers with later dates">${pg.rows.map(row).join('')}</div>
+    ${dzPageFoot('dc-customers',pg,'Date changes','customers')}`:'<div class="empty-note">No open lines moved later than their due date.</div>'}
   </section>`;
 }
 // --- end 2v4 cm ---
@@ -18280,8 +18287,9 @@ function renderForecastPage(m){
     ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'#ff3d68':'#0fa08e',above.length?'#e0244f':'',`Items over forecast: ${fmtNum(above.length)} items with more on order than forecast in a month.`)}
   </div>`;
   const spark=g=>{const mx=Math.max(1,...g.fc,...g.so);return `<span class="misc-fc-spark" aria-hidden="true">${g.fc.map((v,i)=>`<i style="height:${Math.max(v||g.so[i]>v?3:0,v/mx*22).toFixed(1)}px"${g.so[i]>v?' class="over"':''}></i>`).join('')}</span>`;};
-  const open=!!tableMore['fc-items']||printMode;
-  const limit=20,shown=open?f.items:f.items.slice(0,limit);
+  // 10 items a page; a new forecast (another month range or item count) starts at page 1.
+  const fcPg=dzPageOf('fc-items',f.items,JSON.stringify([f.months[0],f.items.length]));
+  const shown=fcPg.rows;
   const heads=[['Item'],['Months','misc-fc-mo'],['Forecast','dz-num'],['Open SO','dz-num'],['Open PO / CM','dz-num','PO / CM'],['Gap','dz-num']];
   const rows=shown.map((g,i)=>{
     const peak=g.fc.indexOf(Math.max(...g.fc));
@@ -18292,7 +18300,7 @@ function renderForecastPage(m){
       <span class="dz-num">${g.gap>0?`<span class="dz-chip red">+${fmtNum(g.gap)}</span>`:`<span class="misc-soft">${fmtNum(g.gap)}</span>`}</span>
     </div>`;
   }).join('');
-  const more=f.items.length>limit?`<div class="misc-more print-hide"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(f.items.length)}</span><button type="button" class="link-btn" data-focus-key="more-fc-items" data-table-key="fc-items"${tipAttr(open?`Show only the first ${fmtNum(limit)} items.`:`Show all ${fmtNum(f.items.length)} items of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:'';
+  const more=dzPageFoot('fc-items',fcPg,'Forecast by item','items');
   const table=`<div class="dz-table misc-fc-table" role="region" tabindex="0" aria-label="Forecast by item">
       <div class="dz-th">${heads.map(([label,cls,short])=>`<span${cls?` class="${cls}"`:''}${tipAttr(columnTip('fc-items',label))}>${short?`<span class="misc-lg">${label}</span><span class="misc-sm">${short}</span>`:label}</span>`).join('')}</div>
       ${rows||'<p class="misc-none">No forecast lines with quantity in the next 12 months match a SAP item.</p>'}
@@ -18562,7 +18570,6 @@ function ohDrillRows(rows){
   return rows.filter(ohDrillMatch);
 }
 function ohDrillChanged(){
-  weeklyLinkedShowAll=false;
   linkedSelection.clear();
   // The filters narrow open lines, so the list below shows the at-risk lines unless a Leading card is picked.
   if(ohDrillActive()&&(!weeklyTileFilter||OH_LAGGING_TILES.has(weeklyTileFilter)))weeklyTileFilter='late';
@@ -18592,7 +18599,6 @@ function setWeeklyView(v,render=true){
   if(weeklyTileFilter&&(next==='lagging')!==OH_LAGGING_TILES.has(weeklyTileFilter)){
     weeklyTileFilter=next==='lagging'?'otd3mo':'late';
     weeklyOtdFilter='total';
-    weeklyLinkedShowAll=false;
     linkedSelection.clear();
   }
   if(render)renderResults();
@@ -19144,7 +19150,7 @@ function ohWaffleBlocks(value,usValue=0,themValue=0){
 function setWeeklyOffenderFilter(view,key){
   const k=String(key||'');
   const toggle=cur=>cur.length===1&&cur[0]===k?['ALL']:[k];
-  if(view==='vendors'){poVendorFilter=[k];poTileFilter='late';poLinkedShowAll=false;setTab('purchaseorders');return;}
+  if(view==='vendors'){poVendorFilter=[k];poTileFilter='late';setTab('purchaseorders');return;}
   if(view==='customers')weeklyCustomerFilter=toggle(weeklyCustomerFilter);
   else if(view==='warehouses')weeklyWarehouseFilter=toggle(weeklyWarehouseFilter);
   else return; // owners rank only (2v2: no owner filter)
@@ -19330,7 +19336,7 @@ let ohlLineQuery='',ohlQueryTimer=0;
 function ohlSetQuery(v){
   ohlLineQuery=String(v||'');
   clearTimeout(ohlQueryTimer);
-  ohlQueryTimer=setTimeout(()=>{weeklyLinkedShowAll=false;renderResults();},220);
+  ohlQueryTimer=setTimeout(()=>{renderResults();},220);
 }
 // Every word typed has to be in the line's order number, customer, warehouse, item code or description.
 function ohlLineMatches(r,q){
@@ -19581,7 +19587,7 @@ function ohlShipTargetCard(m){
 // 2v6.9 leading: no CM sheet source (its lines go to the open PO, stock or none like any other line); a click on a
 // customer, a number or a source pill lists exactly those at-risk lines in the Lines card (the "ohlsup" tile).
 const OHL_SUPPLY_SOURCES=[['po','Vendor PO','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
-const OHL_SUPPLY_SHOWN=8;
+// ohlSupplyAll: every at-risk customer, else only those held up by supply; either list is 10 a page.
 let ohlSupplyAll=false;
 // The picked customer and / or source ({cust, src}; '' = all), listed by the Lines card while its tile is "ohlsup".
 let ohlSupPick=null;
@@ -19661,7 +19667,6 @@ function ohlSupplyPick(cust,src){
   const same=ohlSupPicked(k,s);
   ohlSupPick=same?null:{cust:k,src:s};
   weeklyTileFilter=same?'late':'ohlsup';
-  weeklyLinkedShowAll=false;
   linkedSelection.clear();
   renderResults();
   dzRevealList(!same&&'#results-screen .ohl-lines-card');
@@ -19670,7 +19675,6 @@ function ohlSupplyPick(cust,src){
 function ohlSupplyClear(){
   ohlSupPick=null;
   if(weeklyTileFilter==='ohlsup')weeklyTileFilter='late';
-  weeklyLinkedShowAll=false;
   linkedSelection.clear();
   renderResults();
   const back=typeof document!=='undefined'&&document.querySelector&&document.querySelector('.ohl-sup .ohl-sup-name');
@@ -19687,8 +19691,10 @@ function ohlSupplyCard(c){
   }).join('')}</div>`;
   if(!d.hasSources)return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
     body:`${head}<div class="empty-note">Load purchase-order lines or the supply / demand snapshot to see which supply source puts each customer's orders at risk.</div>`});
-  const list=ohlSupplyAll?d.customers:d.customers.filter(x=>x.supply>0).slice(0,OHL_SUPPLY_SHOWN);
-  const rows=list.map((x,i)=>{
+  const list=ohlSupplyAll?d.customers:d.customers.filter(x=>x.supply>0);
+  // A new list, Order Health filter or look-ahead window starts at page 1 (a pick in the card does not).
+  const supPg=dzPageOf('ohl-supply',list,JSON.stringify([ohlSupplyAll,weeklyFilterKey(),stgValue('horizon')]));
+  const rows=supPg.rows.map((x,i)=>{
     const sel=weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&ohlSupPick.cust===x.key;
     const total=Math.max(1,x.all.size);
     const cells=OHL_SUPPLY_SOURCES.map(([id,label])=>{
@@ -19712,7 +19718,7 @@ function ohlSupplyCard(c){
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>
       ${rows||'<div class="empty-note">No customer has an at-risk order held up by supply.</div>'}
-    </div>${more?`<div class="ohl-sup-foot">${more}</div>`:''}`});
+    </div>${dzPageFoot('ohl-supply',supPg,'Customers at risk by supply source','customers')}${more?`<div class="ohl-sup-foot">${more}</div>`:''}`});
 }
 
 // Date changes: customers whose open sales-order lines slipped more than 2 days past due (SAP reschedule or Logican
@@ -19736,16 +19742,15 @@ function ohlDateChangesCard(c){
       <span class="ohl-dc-tags">${tags(cu,true)}</span>
     </button>`;
   };
-  const shown=dc.customers.slice(0,DC_SHOW_CUSTOMERS),rest=dc.customers.slice(DC_SHOW_CUSTOMERS);
-  const open=!!tableMore['ohl-datechange']||printMode;
-  const more=rest.length?`<div class="ohl-foot"><span>${open?`Showing all ${fmtNum(dc.customers.length)} customers`:`Showing ${fmtNum(shown.length)} of ${fmtNum(dc.customers.length)} customers`}</span><button type="button" class="link-btn ohl-more print-hide" data-focus-key="more-ohl-datechange" data-table-key="ohl-datechange" aria-expanded="${open}"${tipAttr(open?'Show the first customers only.':`Show the other ${ohN(rest.length,'customer')} with later dates.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show more →'}</button></div>`:'';
+  // 10 customers a page; a new Order Health filter (a click on a customer is one) starts at page 1.
+  const dcPg=dzPageOf('ohl-datechange',dc.customers,weeklyFilterKey());
   const meta=`<span class="ohl-dc-meta">${esc(ohN(t.lines,'line'))} · ${esc(ohN(t.customers,'customer'))} · ${esc(money(t.value))}</span>${tags(t,true)}`;
   return dzCard({title:'Date changes',sm:true,meta,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
     tip:ohlTip(`Lines whose date moved over ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due`,['Ready: clear to build','Blocked: short or on hold']),
     body:`<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
         <div class="dz-th ohl-dc-th"><span>Customer</span><span>Lines</span><span class="dz-num">Slip</span><span>Worst line</span><span>What we can deliver</span></div>
-        ${(open?dc.customers:shown).map(row).join('')}
-      </div>${more}`});
+        ${dcPg.rows.map(row).join('')}
+      </div>${dzPageFoot('ohl-datechange',dcPg,'Date changes','customers')}`});
 }
 // Lagging: Warehouse defaulting comes from the Warehouse page's helper (renderWarehouseDefaulting) when it is there.
 function ohRenderWarehouseDefaulting(m){

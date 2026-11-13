@@ -185,14 +185,15 @@ test('a snapshot of an export without ExportDate keeps the numbers of the day it
 test('a snapshot opens with the Top offenders ranking and expanded lists it was saved with', async () => {
   const saver = loadPage();
   await upload(saver, [{ name: 'kpi.xls', bytes: sapExport([sapRow({})]) }]);
-  const VIEW = '({weeklyOffenderView,weeklyLinkedShowAll,weeklyScorecardAll,weeklyAdvancedOpen,tableMore,dataCheckOpen,poWarehouseAll,poLinkedShowAll})';
-  saver.run('weeklyOffenderView="vendors";weeklyLinkedShowAll=true;weeklyScorecardAll=true;weeklyAdvancedOpen=true;tableMore={"br-ctb":true};dataCheckOpen=true;poWarehouseAll=true;poLinkedShowAll=true');
+  // 2v6.9: the Show all switches (Order Health lines, the scorecard, PO lines and warehouses) gave way to pages.
+  const VIEW = '({weeklyOffenderView,weeklyAdvancedOpen,tableMore,dataCheckOpen})';
+  saver.run('weeklyOffenderView="vendors";weeklyAdvancedOpen=true;tableMore={"br-ctb":true};dataCheckOpen=true');
   const viewer = await openSnapshot(await saveSnapshot(saver), '2026-09-24');
   assert.deepEqual(viewer.run(VIEW), saver.run(VIEW));
 
   // An older snapshot without these fields opens on the defaults.
   const old = await openSnapshot(viewer.run('JSON.stringify({parsedRows:allLoadedRows})'), '2026-09-24');
-  assert.deepEqual(old.run(VIEW), { weeklyOffenderView: 'customers', weeklyLinkedShowAll: false, weeklyScorecardAll: false, weeklyAdvancedOpen: false, tableMore: {}, dataCheckOpen: false, poWarehouseAll: false, poLinkedShowAll: false });
+  assert.deepEqual(old.run(VIEW), { weeklyOffenderView: 'customers', weeklyAdvancedOpen: false, tableMore: {}, dataCheckOpen: false });
 });
 
 test('without a save picker, "Snapshot ready" is a status message screen readers announce', async () => {

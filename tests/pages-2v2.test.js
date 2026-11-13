@@ -306,13 +306,18 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
   assert.match(results(page), />Shortage lines<\/span><span class="kpi-value crit">1</);
   page.run('resetViewState()');
   assert.equal(page.run("!!tableMore['sd-risk-only']"), false);
-  // A warehouse pick narrows the table and its sub-headings; more than 20 lines end in Show all.
+  // A warehouse pick narrows the table and its sub-headings; more than 10 lines go 10 a page, the sub-heading repeating.
   page.run("setTab('supplyweekly');setSupplyWarehouseFilter(['Spyder - Lacombe'])");
   assert.deepEqual(subHeads(group()).map((x) => x[0]), ['Spyder - Lacombe']);
-  const many = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:Array.from({length:25},(_,i)=>({...supplyDemandRows[0],itemCode:'X'+i,warehouseName:i<15?'A':'B'})),limit:20})`);
-  assert.equal((many.match(/<tr>\s*<td class="date soft"[ >]/g) || []).length, 20);
-  assert.deepEqual(subHeads(many), [['A', '15 lines · 150 demand qty · $15,000'], ['B', '10 lines · 100 demand qty · $10,000']], 'a sub-heading counts all its lines');
-  assert.match(many, /<div class="tfoot"><span>Showing 20 of 25<\/span><button type="button" class="link-btn" data-focus-key="more-t-many"[^>]*>Show all<\/button>/);
+  const manyRows = "Array.from({length:25},(_,i)=>({...supplyDemandRows[0],itemCode:'X'+i,warehouseName:i<15?'A':'B'}))";
+  const many = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:${manyRows}})`);
+  assert.equal((many.match(/<tr>\s*<td class="date soft"[ >]/g) || []).length, 10);
+  assert.deepEqual(subHeads(many), [['A', '15 lines · 150 demand qty · $15,000']], 'a sub-heading counts all its lines');
+  assert.match(many, /<span class="dz-pagecount">1–10 of 25 lines<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="t-many"/);
+  page.run("dzPg['t-many'].page=2");
+  const many2 = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:${manyRows}})`);
+  assert.deepEqual(subHeads(many2), [['A', '15 lines · 150 demand qty · $15,000'], ['B', '10 lines · 100 demand qty · $10,000']], 'the heading repeats on page 2');
+  assert.match(many2, /11–20 of 25 lines/);
   assert.match(CSS, /\.data-table tr\.grp-row>td\{/);
   assert.deepEqual(page.errors, []);
 });

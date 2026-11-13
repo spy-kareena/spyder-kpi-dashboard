@@ -625,7 +625,7 @@ test('warehouse scorecard: CM SFG and all other warehouses in one card, each wit
   const sfgPart = card.split('data-group="other"')[0];
   assert.deepEqual([...sfgPart.matchAll(/data-wh="([^"]+)"/g)].map((m) => m[1]).sort(), ['CM SFG - Delta', 'CM SFG - Gamma']);
   assert.equal((card.match(/onclick="setWeeklyScorecardWarehouse\(this\.dataset\.wh\)"/g) || []).length, 5);
-  const groups = page.run(`scorecardGroups(filterCache.entries.get(\`oh|\${weeklyFilterKey()}|scorecard\`),false)`);
+  const groups = page.run(`scorecardGroups(filterCache.entries.get(\`oh|\${weeklyFilterKey()}|scorecard\`))`);
   for (const g of groups) {
     const sum = (k) => g.rows.reduce((s, r) => s + r[k], 0);
     assert.equal(g.subtotal.openAmt, sum('openAmt'));
@@ -647,25 +647,32 @@ test('warehouse scorecard: CM SFG and all other warehouses in one card, each wit
   assert.ok(sfgPart.indexOf('sc-subtotal') > sfgPart.lastIndexOf('data-wh='), 'the subtotal closes its group');
 });
 
-test('warehouse scorecard: the top 9 show per group, Show all lists every warehouse, a group with no warehouses is left out', async () => {
+test('warehouse scorecard: 10 warehouses a page, the group heading repeats on the next page, a group with no warehouses is left out', async () => {
   const rows = [
     sapRow({ DocumentNumber: '1', Warehouse: 'CM SFG - A', ...due('08/10/2026') }),
     sapRow({ DocumentNumber: '2', Warehouse: 'CM SFG - B', ...due('08/10/2026') }),
     ...Array.from({ length: 11 }, (_, i) => sapRow({ DocumentNumber: String(100 + i), Warehouse: `CM - W${String(i).padStart(2, '0')}`, AmountLocal: String(1000 + i), ...due('08/10/2026') })),
   ];
   const page = await scorecardPage(rows);
-  const rowsShown = () => (results(page).match(/class="trow sc-cols(?: selected)?" data-focus-key="sc-/g) || []).length;
-  assert.equal(rowsShown(), 11);
-  assert.match(results(page), /<div class="tfoot"><span>Showing 11 of 13 warehouses<\/span><button type="button" class="link-btn" data-focus-key="scorecard-all"/);
-  page.run('toggleWeeklyScorecardAll()');
+  const card = () => page.run('renderWarehouseScorecard(currentMetrics())');
+  const rowsShown = () => (card().match(/class="trow sc-cols(?: selected)?" data-focus-key="sc-/g) || []).length;
+  const heads = () => [...card().matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]);
+  assert.equal(rowsShown(), 10);
+  assert.deepEqual(heads(), ['sfg', 'other']);
+  assert.match(card(), /<span class="dz-pagecount">1–10 of 13 warehouses<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="wh-scorecard"/);
+  assert.doesNotMatch(card(), /scorecard-all|Show top 9|Show all/);
+  // Page 2: the rest of the other group under its heading again, then its subtotal (the whole group, not the page).
+  page.run('dzGoPage("wh-scorecard",2)');
+  assert.equal(rowsShown(), 3);
+  assert.deepEqual(heads(), ['other']);
+  assert.match(card(), /11–13 of 13 warehouses/);
+  assert.match(card(), /data-group="other" data-tip="All other warehouses subtotal \(11 warehouses\): open \$11,055,/);
+  // Print lists every warehouse.
+  page.run('printMode=true');
   assert.equal(rowsShown(), 13);
-  assert.match(results(page), />Show top 9<\/button>/);
-  // Subtotals always cover the whole group, not just the rows shown.
-  page.run('toggleWeeklyScorecardAll()');
-  assert.match(results(page), /data-group="other" data-tip="All other warehouses subtotal \(11 warehouses\): open \$11,055,/);
+  page.run('printMode=false');
   const noSfg = await scorecardPage(SC_ROWS.filter((r) => !/SFG/.test(r.Warehouse)));
-  assert.deepEqual([...results(noSfg).matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]), ['other']);
-  assert.ok(Array.isArray(scorecardData(noSfg)));
+  assert.deepEqual([...noSfg.run('renderWarehouseScorecard(currentMetrics())').matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]), ['other']);
 });
 
 test('wide tables and the ship calendar scroll from the keyboard: every scroll box is a named region with tabindex 0', async () => {

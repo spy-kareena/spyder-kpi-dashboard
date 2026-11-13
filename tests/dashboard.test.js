@@ -312,15 +312,16 @@ test('workbooks in the 1904 date system keep their dates', async () => {
 });
 
 // --- Redesigned pages ---------------------------------------------------------------------------------
-test('supply warehouse names cannot break out of the "Show all" button', async () => {
+test('supply warehouse names cannot break out of the pager or the markup', async () => {
   const page = loadPage();
   const evil = "O'Neil\");alert(1);('";
   const headers = ['#', 'ExportDate', 'Item No.', 'ItemDescription', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'DemandOpenValue', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'RiskSupplyQty', 'SupplyRiskFlag'];
   const rows = Array.from({ length: 12 }, (_, i) => ({ '#': String(i + 1), ExportDate: '09/03/2026', 'Item No.': `SPY-${i}`, WarehouseCode: '11', WarehouseName: evil, YearMonth: '2026-10', DemandOpenQty: '10', DemandOpenValue: '100', UsableSupplyQty: '0', MonthlyNetQty: '-10', CumulativeNetQty: '-10', RiskSupplyQty: '0', SupplyRiskFlag: 'OK' }));
   await upload(page, [{ name: 'supply.xls', bytes: utf16Tsv(headers, rows) }]);
   page.run('setTab("supplyweekly")');
-  const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /onclick="toggleTableMore\(this\.dataset\.tableKey\)"/);
+  const html = page.els['results-screen'].innerHTML + page.run('supSdItemsCard(currentMetrics())');
+  // 12 lines (the Supply / Demand view): two pages; the pager's ids are fixed names, never the warehouse text.
+  assert.match(html, /<nav class="shp-pager dz-pager print-hide" data-dzpager="sd-rows"[^>]*onkeydown="dzPagerKey\(event,&quot;sd-rows&quot;\)">/);
   // The name only ever appears HTML-escaped (its quotes as &#39; / &quot;).
   assert.ok(!html.includes("O'Neil") && !html.includes('Neil")'), 'raw warehouse text in markup');
   assert.match(html, /O&#39;Neil&quot;\);alert\(1\);\(&#39;/);
@@ -341,16 +342,18 @@ test('a replacement report opens on the default view; Add file keeps the view', 
   assert.equal(page.run('weeklyTileFilter'), 'allorders');
 });
 
-test('Export PDF prints the long linked-lines list; the screen shows the first 20', async () => {
+test('Export PDF prints the long linked-lines list; the screen shows it 10 a page', async () => {
   const page = loadPage();
   await upload(page, [{ name: 'e.xls', bytes: sapExport(Array.from({ length: 25 }, (_, i) => sapRow({ DocumentNumber: String(100 + i) }))) }]);
   const lines = () => page.els['results-screen'].innerHTML.split('class="line-row').length - 1;
   page.run('setTab("weekly")');
-  assert.equal(lines(), 20);
+  assert.equal(lines(), 10);
+  page.run('dzGoPage("oh-lines",3)');
+  assert.equal(lines(), 5);
   page.run('refreshForPrint()');
   assert.equal(lines(), 25);
   page.run('endPrintMode()');
-  assert.equal(lines(), 20);
+  assert.equal(lines(), 5, 'back on screen, the page is kept');
 });
 
 run();

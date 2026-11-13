@@ -36,9 +36,9 @@ function fakeControls(page, pattern, focused) {
   return [...html(page).matchAll(pattern)].map((m) => ({ dataset: { key: m[1].replace(/&amp;/g, '&') }, focus() { focused.push(this.dataset.key); } }));
 }
 
-test('select all covers every row of the list, not just the 20 shown; partial selection is indeterminate', async () => {
+test('select all covers every row of the list, not just the 10 on the page; partial selection is indeterminate', async () => {
   const page = await atRiskPage(pastDue(25));
-  assert.equal(shownDocs(page).length, 20);
+  assert.equal(shownDocs(page).length, 10);
   page.run('selectAllLinked(true)');
   assert.equal(page.run('linkedSelection.size'), 25);
   assert.match(html(page), /id="linked-select-all" class="row-check" checked/);

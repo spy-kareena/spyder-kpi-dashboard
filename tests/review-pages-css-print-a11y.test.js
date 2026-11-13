@@ -227,22 +227,26 @@ test('chart axis labels wrap at their space instead of being clipped mid-word', 
   }
 });
 
-test('Export PDF prints every linked line past the on-screen caps (80 Order Health, 100 Purchase Orders)', async () => {
+test('Export PDF prints every linked line, not just the page on screen (Order Health, Purchase Orders)', async () => {
   const so = Array.from({ length: 90 }, (_, i) => sapRow({ DocumentNumber: String(1000 + i) }));
   const po = Array.from({ length: 105 }, (_, i) => PO({ DocumentNumber: String(5000 + i), DueDate: '08/10/2026', LineDueDate: '08/10/2026' }));
   const page = await loaded([...so, ...po]);
   const lines = () => html(page).split('class="line-row').length - 1;
-  page.run('setTab("weekly");toggleWeeklyLinkedAll()');
-  assert.equal(lines(), 80);
+  page.run('setTab("weekly")');
+  assert.equal(lines(), 10);
+  assert.match(html(page), /1–10 of 90 lines/);
+  page.run('dzGoPage("oh-lines",9)');
+  assert.match(html(page), /81–90 of 90 lines/);
   page.run('refreshForPrint()');
   assert.equal(lines(), 90);
-  assert.match(html(page), /Showing 90 of 90 lines/);
+  assert.doesNotMatch(html(page), /dz-pagefoot/);
   page.run('endPrintMode();setTab("purchaseorders")');
-  assert.equal(lines(), 20);
+  const poLines = () => (html(page).match(/<td class="sup-strong" data-label="PO #">/g) || []).length;
+  assert.equal(poLines(), 10);
   page.run('refreshForPrint()');
-  assert.equal(lines(), 105);
+  assert.equal(poLines(), 105);
   page.run('endPrintMode()');
-  assert.equal(lines(), 20);
+  assert.equal(poLines(), 10);
 });
 
 run();
