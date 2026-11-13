@@ -14910,7 +14910,8 @@ const OHG_TREND={
   lateOrders:{label:'Late Orders',long:'Late orders',fmt:v=>fmtNum(v),unit:'',int:true,inv:true,color:'var(--dz-risk)',tip:'Orders shipped 1+ days late.'},
   orders:{label:'Orders Shipped',long:'Orders shipped',fmt:v=>fmtNum(v),unit:'',int:true,inv:false,color:'var(--dz-teal)',tip:'Orders shipped in the month.'}
 };
-function ohgSetTrendMetric(k){ohgTrendMetric=OHG_TREND[k]?k:'otd';renderResults();}
+const ohgTrendKey=k=>Object.prototype.hasOwnProperty.call(OHG_TREND,k)?k:'otd'; // only the five metrics, never an inherited name
+function ohgSetTrendMetric(k){ohgTrendMetric=ohgTrendKey(k);renderResults();}
 // The chart: the months shown on one scale (percent metrics from 50 %, or lower when a month needs it, to 100 %; counts
 // and days from 0 to a round top), a dot per scored month with its value, the 90 % target for on-time delivery.
 function ohgTrendChart(pts,k){
@@ -14942,7 +14943,7 @@ function ohgDetailSection(m){
   const x=mwmMetricsData(m),mo=x.months,L=x.L;
   const d=mwmMonthlyData(m);
   const p=moMonthlyParts(m,momSource(m),today);
-  const n=mwmRange,k=OHG_TREND[ohgTrendMetric]?ohgTrendMetric:'otd',c=OHG_TREND[k];
+  const n=mwmRange,k=ohgTrendKey(ohgTrendMetric),c=OHG_TREND[k];
   const partial=today.getDate()<new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
   const monthName=dt=>dt.toLocaleDateString('en-US',{month:'long'});
   const toDate=L===11&&partial;
