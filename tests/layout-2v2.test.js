@@ -462,7 +462,7 @@ test('override names show in the owner\'s words everywhere; stored values, saved
 
 // --- Page layout ---------------------------------------------------------------------------------------
 // 2v6: the views are bento grids of cards (dzCard): each card is named by its title, or by its aria-label when the
-// card has no title (Leading's Status, its "Why, and When?" card and its Delivery months card; Lagging's Trend).
+// card has no title (Leading's Status, its "Why, and When?" card and its Lists card; Lagging's Trend).
 // Lagging has no named groups any more: its Metrics and Shipments groups became four cards (Version 1, the owner's pick).
 const cardNames = (m) => [...m.matchAll(/<section class="dz-card[^"]*"([^>]*)>(?:<div class="dz-card-head[^"]*">\s*(?:<div class="ohl-lines-title">)?<h2 class="dz-title[^"]*"[^>]*>([^<]+)<\/h2>)?/g)]
   .map((x) => x[2] || (/aria-label="([^"]+)"/.exec(x[1]) || [])[1] || '(no name)');
@@ -473,19 +473,20 @@ const panel = (m, view) => m.match(new RegExp(`<div class="oh-panel" role="tabpa
 // Leading's numbered questions, in page order: [number, question].
 const questions = (m) => [...m.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d+)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((x) => [+x[1], x[2]]);
 
-test('Sales Order Health reads as cards in a set order: Leading is four questions, the delivery months and its Lines card; Lagging is Monthly, Quarterly, then Trend, Month by month, By warehouse and Booked vs shipped', async () => {
+test('Sales Order Health reads as cards in a set order: Leading is four questions, then one Lists card (the two month folds and Lines); Lagging is Monthly, Quarterly, then Trend, Month by month, By warehouse and Booked vs shipped', async () => {
   const page = await withStatuses();
   const lead = panel(html(page), 'leading');
   // Version 1 (owner's pick, "Four Questions"): 1 At risk beside the ship target over Status; 2 Top reasons beside Open
   // lines by due week, one card; 3 Customers at risk (their supply sources are columns of the same table); 4 Supply to
-  // pull in and Date changes, one card; then the two month lists in one card, and the Lines card last.
+  // pull in and Date changes, one card; then one Lists card: the two month lists as folds and, as its last child, the
+  // Lines card (it is no longer a card of the grid).
   assert.deepEqual(cardNames(lead), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk',
-    'Date changes', 'Delivery months', 'Lines']);
+    'Date changes', 'Lists', 'Lines']);
   assert.deepEqual(questions(lead), [[1, 'What Is at Risk?'], [2, 'Why, and When?'], [3, 'Who?'], [4, 'What Can We Do?']]);
   // Each question sits right above its cards, inside the one grid.
   assert.match(lead, /^<div[^>]*>\s*<div class="dz-grid ohl-grid">\s*<div class="ohl-q dz-span-6">/);
   const at = ['>What Is at Risk?</h2>', '>At risk</h2>', 'class="dz-card dz-fade ohl-ship"', 'aria-label="Status"', '>Why, and When?</h2>', 'aria-label="Top reasons and open lines by due week"',
-    '>Who?</h2>', '>Customers at risk</h2>', '>What Can We Do?</h2>', 'aria-label="Date changes"', 'aria-label="Delivery months"', 'id="linked-lines"'].map((s) => lead.indexOf(s));
+    '>Who?</h2>', '>Customers at risk</h2>', '>What Can We Do?</h2>', 'aria-label="Date changes"', 'aria-label="Lists"', 'id="linked-lines"'].map((s) => lead.indexOf(s));
   assert.deepEqual(at, [...at].sort((a, b) => a - b), 'questions and cards in page order');
   assert.ok(at.every((i) => i > 0));
   assert.match(lead, /<div class="ohl-col dz-span-3">\s*<section class="dz-card dz-fade ohl-ship"[\s\S]*?<\/section>\s*<section class="dz-card ohl-card ohl-status-card/);
@@ -500,7 +501,7 @@ test('Sales Order Health reads as cards in a set order: Leading is four question
   assert.match(who, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th/, 'no src class, no group row');
   assert.deepEqual([...who.matchAll(/<th scope="col"[^>]*>(?:<i[^>]*><\/i>)?([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
   assert.match(who, /data-focus-key="offrow-FIREFLY"[\s\S]*?<\/button><\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td><\/tr>/);
-  assert.match(who, /<tfoot><tr class="ohc3-all"><th scope="row"[^>]*>All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td><\/tr><\/tfoot>/);
+  assert.match(who, /<tfoot><tr class="ohc3-all"><th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td><\/tr><\/tfoot>/);
   assert.doesNotMatch(who, /ohc3-n|ohc3-grp|ohl-sup-bar/);
   assert.match(who, /<p class="ohl-note ohl-foot-note">Load purchase-order lines or the supply \/ demand snapshot to see which supply source holds each customer's orders\.<\/p><\/section>$/);
   // 4 What can we do: with no purchase orders there is nothing to pull in, so Date changes shows alone, with no switch
@@ -511,10 +512,14 @@ test('Sales Order Health reads as cards in a set order: Leading is four question
   assert.deepEqual([...act.matchAll(/<button type="button" class="dz-tr ohl-dc-row" data-focus-key="dc-(\w+)"[^>]*data-tip="([^"]+)">/g)].map((x) => [x[1], x[2]]),
     [['FIREFLY', 'FIREFLY - Firefly RV\n• 1 line, $6,000 moved later\n• Worst: SO 303 SPY-100 due Aug 20, now Sep 20 (SAP)\nClick to filter to it.']]);
   assert.match(act, /<span class="dz-num ohl-dc-slip">\+31d<\/span>/);
-  // The delivery months card: two folds, shut on load (the third test below opens them).
-  const months = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Delivery months">[\s\S]*?<\/section>/)[0];
+  // The Lists card: the two month folds, shut on load, then the Lines card as its last child (the third test below opens them).
+  const months = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Lists">[\s\S]*?<\/section>/)[0];
   assert.deepEqual([...months.matchAll(/<details class="ohl-fold"( open)? data-more="(ohl-fold-\w+)" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="more-\2" data-tip="[^"]{20,}">[\s\S]*?<span class="dz-title sm ohl-fold-t">([^<]+)<\/span><span class="ohl-fold-m">([^<]+)<\/span><\/summary>/g)].map((x) => [x[2], !!x[1], x[3], x[4]]),
     [['ohl-fold-months', false, 'Open orders by delivery month', '2026'], ['ohl-fold-items', false, 'Items not shipped yet', '8 lines']]);
+  assert.match(lead, /<\/details>\s*<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">[\s\S]*<\/section>\s*<\/section>\s*<\/div>\s*<\/div>\s*$/, 'Lines is the last child of the Lists card, after the folds');
+  assert.equal(lead.split('id="linked-lines"').length - 1, 1);
+  assert.match(HTML, /\.ohl-months>\.ohl-fold\+\.ohl-lines-card\{border-top:1px solid var\(--dz-line-8\)\}/);
+  assert.doesNotMatch(HTML, /\.ohl-grid\s*>\s*\.ohl-lines-card/);
   // No Hide link: the tabs do that job.
   assert.doesNotMatch(html(page), /toggle-leading|toggle-lagging|toggleLaggingIndicators|>Hide</);
   // Lines: its title, a chip with the picked card's lines and value, the search box and the sort.
@@ -553,7 +558,7 @@ test('Sales Order Health reads as cards in a set order: Leading is four question
   const calm = await loaded([ROWS[6], ...ROWS.slice(8)]);
   const calmLead = panel(html(calm), 'leading');
   assert.deepEqual(questions(calmLead), [[1, 'What Is at Risk?'], [2, 'Why, and When?'], [3, 'Who?']]);
-  assert.deepEqual(cardNames(calmLead), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Delivery months', 'Lines']);
+  assert.deepEqual(cardNames(calmLead), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Lists', 'Lines']);
   assert.doesNotMatch(calmLead, /class="(?:[^"]* )?ohl-do[ "]|What Can We Do\?/);
   assert.equal(calm.errors.length, 0, calm.errors.join('\n'));
 });
@@ -562,14 +567,14 @@ test('open order states always show in the Status card (no Show more); the two m
   const page = await withStatuses();
   // Status: every open order in one of the five states, as a row of cells that list their lines; on screen and on paper.
   const states = () => [...html(page).matchAll(/<button type="button" class="ohs3-cell[^"]*" data-focus-key="status-st-([a-z]+)"/g)].map((x) => x[1]);
-  // The delivery months card's two folds: [key, open].
+  // The Lists card's two folds: [key, open].
   const folds = () => [...html(page).matchAll(/<details class="ohl-fold"( open)? data-more="ohl-fold-(\w+)" ontoggle="ohlFoldToggle\(this\)">/g)].map((x) => [x[2], !!x[1]]);
   assert.deepEqual(states(), ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
   assert.doesNotMatch(html(page), /<details class="oh-more"|class="ohs2-row/);
   assert.deepEqual(folds(), [['months', false], ['items', false]]);
   // A fold's lists are in the page while it is shut (the browser hides them): the monthly table with the note on the
   // undated line (302, $8,000, no commit date), and the Month pick over the eight open lines.
-  const months = html(page).match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Delivery months">[\s\S]*?<\/section>/)[0];
+  const months = html(page).match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Lists">[\s\S]*?<\/section>/)[0];
   const [byMonth, items] = months.split('<details class="ohl-fold"').slice(1);
   assert.match(byMonth, /<div class="ohl-fold-body"><div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div>/);
   assert.match(byMonth, /<td class="m">Aug 2026<\/td>[\s\S]*?<span>\$3,000<\/span>[\s\S]*?<td class="num">\$21,700<\/td>/);

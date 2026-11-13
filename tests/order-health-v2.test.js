@@ -478,6 +478,8 @@ test('Customers at risk is one ranked table: each customer\'s open orders and th
   assert.deepEqual(heads(cols).map((x) => [x[4], !!x[3]]), [['Customer', false], ['Past due', false], ['At risk', false], ['Open', false],
     ['Pull in', true], ['Late / no commit', true], ['Stock short', true], ['Not supply', true], ['Split', false]]);
   assert.equal((card.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 11, 'every heading is one of the eleven tipped ones');
+  // Every heading cell of the table, the row headings too, has a tip of its own or holds a tipped button.
+  assert.deepEqual([...card.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)].filter((x) => !/\sdata-tip="[^"]{20,}"/.test(x[1]) && !/^<button [^>]*\sdata-tip="[^"]{20,}"/.test(x[2])).map((x) => x[0]), []);
   const row = (code) => tbl().match(new RegExp(`<tr class="ohc2-tr[^"]*"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-${code}"[\\s\\S]*?</tr>`))[0];
   const nums = (tr) => [...tr.matchAll(/<td class="num[^"]*">(\d+)<\/td>/g)].map((x) => +x[1]);
   // The four source cells of a row: a dash where the customer has none, else a button with its orders.
@@ -500,7 +502,7 @@ test('Customers at risk is one ranked table: each customer\'s open orders and th
   // The last row is every customer: distinct orders (5 past due, 3 at risk otherwise, 11 open), then the source totals
   // as buttons (the old source pills) and their split: 1 of the 8 at-risk orders waits on a late PO.
   const foot = () => tbl().match(/<tfoot>([\s\S]*?)<\/tfoot>/)[1];
-  assert.match(foot(), /^<tr class="ohc3-all"><th scope="row"[^>]*>All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">3<\/td><td class="num">11<\/td>/);
+  assert.match(foot(), /^<tr class="ohc3-all"><th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">3<\/td><td class="num">11<\/td>/);
   assert.deepEqual(sources(foot()), ['—', 'po 1', '—', 'none 7']);
   assert.deepEqual([...foot().matchAll(/data-focus-key="(ohl-sup-src-\w+)"/g)].map((x) => x[1]), ['ohl-sup-src-po', 'ohl-sup-src-none']);
   assert.ok(foot().includes('<button type="button" class="ohc3-n" data-focus-key="ohl-sup-src-po" aria-pressed="false" aria-label="All Customers, Late / no commit: 1 order" onclick="ohlSupplyPick(\'\',\'po\')" data-tip="Late / no commit: 1 order\n• The PO that covers it is late or has no commit date.\n• Click to list the lines.">1</button>'));
