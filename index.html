@@ -4003,6 +4003,36 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 .ohl-sd .dz-chip.teal{color:var(--dz-teal)}
 .ohl-sd .sup-seg-sm{flex:none}
 .ohs-need-row{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-top:8px}
+/* 2v6.9: the card in three clear layers: the numbers under the title (plain data), the options in a tinted bar with
+   small labels (View, Filter, search: the things to click), then the list, its warehouse sub-headings on a soft band and
+   each status a dot and a word (data, so no pill). 10 lines a page. */
+.ohl-sd .sup-tsub{margin-top:4px}
+.ohs-sum{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--dz-ink-4)}
+.ohs-sum-i b{font-weight:600;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.ohs-sum-i.red b{color:var(--dz-risk-text)}
+.ohs-sum-i.amber b{color:var(--dz-amber-text)}
+.ohs-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px;margin:16px 0 6px;padding:8px 10px 8px 14px;border-radius:16px;background:var(--dz-surface-2);box-shadow:inset 0 0 0 1px var(--dz-line-5)}
+.ohs-tgroup{display:flex;align-items:center;gap:10px;min-width:0}
+.ohs-tlabel{font-size:12px;font-weight:500;color:var(--dz-ink-4)}
+.ohs-find{margin-left:auto}
+.ohs-tools .dz-seg,.ohs-tools .dz-pillinput,.ohs-tools input{background:var(--dz-surface)}
+.ohs-toggle{display:inline-flex;align-items:center;gap:6px}
+.ohs-toggle svg{width:14px;height:14px;color:var(--dz-indigo)}
+.ohs-toggle[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--dz-indigo);color:var(--dz-indigo-deep)}
+.ohs-toggle-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--dz-amber-bg,var(--dz-fill-1));color:var(--dz-amber-text);font-size:11.5px;font-weight:600;line-height:18px;text-align:center}
+.ohl-sd .sup-grp td{padding:8px 12px;background:var(--dz-fill-1);border-radius:10px}
+.ohl-sd tr.sup-grp:not(:first-child) td{border-top:10px solid transparent;background-clip:padding-box}
+.ohl-sd .sup-grp+.sup-row td{border-top:0}
+.ohs-st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--dz-ink-2)}
+.ohs-st i{width:7px;height:7px;border-radius:50%;background:var(--dz-ink-5);flex:none}
+.ohs-st.red{color:var(--dz-risk-text)}.ohs-st.red i{background:var(--dz-risk)}
+.ohs-st.amber{color:var(--dz-amber-text)}.ohs-st.amber i{background:var(--dz-amber,#f79009)}
+.ohl-sd .sup-status .sup-sub{display:block;margin-top:2px}
+@media (max-width:760px){
+  .ohs-tools{padding:10px;gap:10px}
+  .ohs-find{margin-left:0;flex:1 1 100%}
+  .ohs-find>*{flex:1}
+}
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v9:end pages */
 /* 2v8:settings */
@@ -4267,6 +4297,14 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 }
 @media (forced-colors:active){.shp-pg.on{border:1px solid Highlight}}
 /* 2v9:end ship */
+/* 2v9:pager */
+/* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
+   stacked and centred on phones. */
+.dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
+.dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.dz-pagefoot .shp-pager{margin-top:0}
+@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}}
+/* 2v9:end pager */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -8984,6 +9022,59 @@ function rateLabel(rate){return rate===null||rate===undefined?'no data':`${fmtNu
 // Warehouse Timeline heat map: the focused or hovered cell's breakdown, shown under the grid.
 // Card with a data table; long tables show their first rows with a "Show all" toggle (state kept per table key).
 let tableMore={};
+// --- Pages for long card lists (2v6.9, the owner's rule: a card with more than 10 items shows 10 a page) ---
+// dzPageOf(id, list, sig) gives one page of a list; a change of sig (the filters, search or view that made the list)
+// starts it at page 1 again. dzPageFoot draws "1–10 of 24 lines" and the ‹ 1 2 3 › pager under the list (the Shipping
+// pager's look); arrow keys, Home and End step through the pages. Printing shows every row and no pager.
+const DZ_PAGE_SIZE=10;
+let dzPg={};
+function dzPageOf(id,list,sig='',size=DZ_PAGE_SIZE){
+  const st=dzPg[id]&&dzPg[id].sig===String(sig)?dzPg[id]:{page:1,sig:String(sig)};
+  const total=list.length,pages=Math.max(1,Math.ceil(total/size));
+  st.page=Math.min(Math.max(1,Math.floor(st.page)||1),pages);
+  st.pages=pages;
+  dzPg[id]=st;
+  if(printMode)return {rows:list,page:1,pages:1,from:total?1:0,to:total,total};
+  const from=(st.page-1)*size;
+  return {rows:list.slice(from,from+size),page:st.page,pages,from:total?from+1:0,to:Math.min(from+size,total),total};
+}
+function dzPager(id,pg,what){
+  if(!pg||pg.pages<2||printMode)return '';
+  const page=pg.page,pages=pg.pages,jid=esc(JSON.stringify(id));
+  const arrow=(p,dir,text)=>{
+    const off=p<1||p>pages;
+    return `<button type="button" class="shp-pg arrow" data-focus-key="pg-${esc(id)}-${dir}" aria-label="${dir==='prev'?'Previous page':'Next page'}"${off?' aria-disabled="true"':''} onclick="dzGoPage(${jid},${off?page:p})">${text}</button>`;
+  };
+  const nums=shpPageNums(page,pages).map(p=>p==='…'?'<span class="shp-pg-gap" aria-hidden="true">…</span>'
+    :`<button type="button" class="shp-pg${p===page?' on':''}" data-focus-key="pg-${esc(id)}-${p}" aria-label="Page ${p} of ${pages}"${p===page?' aria-current="page"':''} onclick="dzGoPage(${jid},${p})">${p}</button>`).join('');
+  return `<nav class="shp-pager dz-pager print-hide" data-dzpager="${esc(id)}" aria-label="${esc(`${what} pages`)}" onkeydown="dzPagerKey(event,${jid})">${arrow(page-1,'prev','‹')}${nums}${arrow(page+1,'next','›')}</nav>`;
+}
+// The foot of a paged list: the range on the left ("11–20 of 24 lines"), the pager on the right. Nothing for one page.
+function dzPageFoot(id,pg,what,noun='lines'){
+  if(!pg||pg.pages<2||printMode)return '';
+  return `<div class="dz-pagefoot"><span class="dz-pagecount">${fmtNum(pg.from)}–${fmtNum(pg.to)} of ${fmtNum(pg.total)} ${esc(noun)}</span>${dzPager(id,pg,what)}</div>`;
+}
+function dzGoPage(id,p,focus=false){
+  const st=dzPg[id];
+  if(!st)return;
+  const n=Math.min(Math.max(1,Math.floor(+p)||1),st.pages||1);
+  if(n===st.page)return;
+  st.page=n;
+  renderResults();
+  if(typeof document==='undefined'||!document.querySelector)return;
+  // The card keeps its place: when its top has scrolled away, it comes back into view.
+  const nav=document.querySelector(`[data-dzpager="${CSS&&CSS.escape?CSS.escape(id):id}"]`);
+  const card=nav&&nav.closest?nav.closest('.dz-card,section'):null;
+  if(card&&card.getBoundingClientRect&&card.getBoundingClientRect().top<0&&card.scrollIntoView)card.scrollIntoView({block:'start',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
+  if(focus){const b=document.querySelector(`[data-focus-key="pg-${id}-${n}"]`);if(b&&b.focus)b.focus();}
+}
+function dzPagerKey(ev,id){
+  const k=ev&&ev.key,st=dzPg[id];
+  if(!st||(k!=='ArrowLeft'&&k!=='ArrowRight'&&k!=='Home'&&k!=='End'))return;
+  if(ev.preventDefault)ev.preventDefault();
+  const to=k==='Home'?1:k==='End'?st.pages:k==='ArrowLeft'?st.page-1:st.page+1;
+  if(to>=1&&to<=st.pages)dzGoPage(id,to,true);
+}
 function toggleTableMore(key){
   tableMore={...tableMore,[key]:!tableMore[key]};
   renderResults();
@@ -10370,28 +10461,37 @@ function supSdItemsCard(m){
   const terms=supTerms(supGet('sd-q',''));
   const listAll=view==='all'?demandRows:(riskOnly?riskRows:actRows);
   const list=terms.length?listAll.filter(r=>supHit(terms,[r.itemCode,r.itemDescription,r.itemGroup])):listAll;
-  const limit=20,open=!!tableMore['sd-rows']||printMode;
-  let left=open?Infinity:limit,shown=0;
+  // 2v6.9: 10 lines a page (the board's rule for long lists); a new view, filter or search starts at page 1. The
+  // warehouse sub-heading repeats at the top of each page.
   const curLbl=monthLabel(monthKey(reportToday()));
   const orderCell=r=>hasOC?`${fmtNum(r.demandOrderCount)} ${r.demandOrderCount===1?'order':'orders'}`:`${fmtNum(r.demandOpenQty)} qty`;
-  const groupsHtml=groupSupplyRowsByWarehouse(list).map(g=>{
-    if(left<=0)return '';
-    const vis=g.rows.slice(0,left);left-=vis.length;shown+=vis.length;
-    const n=new Set(g.rows.map(r=>r.itemCode)).size;
-    return `<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${esc(supWh(g.warehouse))}</b><span>${fmtNum(n)} ${n===1?'item':'items'}</span></td></tr>${vis.map(r=>{
-      const st=supSdStatus(r),shortBy=r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
-      return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply">${dzChip(st.label,st.tone)}${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
-    }).join('')}`;
+  const groups=groupSupplyRowsByWarehouse(list);
+  const itemsIn=new Map(groups.map(g=>[g.warehouse,new Set(g.rows.map(r=>r.itemCode)).size]));
+  const flat=groups.flatMap(g=>g.rows.map(r=>({r,wh:g.warehouse})));
+  const pg=dzPageOf('sd-rows',flat,JSON.stringify([view,riskOnly,supGet('sd-q',''),supplyWarehouseFilter,supGet('sd-group','')]));
+  let lastWh=null;
+  const rowsHtml=pg.rows.map(({r,wh})=>{
+    const n=itemsIn.get(wh)||0;
+    const head=wh===lastWh?'':`<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${esc(supWh(wh))}</b><span>${fmtNum(n)} ${n===1?'item':'items'}</span></td></tr>`;
+    lastWh=wh;
+    const st=supSdStatus(r),shortBy=r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
+    // The status is data, not a control: a coloured dot and its word, no pill.
+    return `${head}<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply"><span class="ohs-st${st.tone?` ${st.tone}`:''}"><i aria-hidden="true"></i>${esc(st.label)}</span>${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
   }).join('');
-  const riskChip=`<button type="button" class="dz-pillinput sup-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show all short or at-risk lines.':'List only lines with supply at risk.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
+  const shortN=new Set(shortageRows.map(itemKey)).size,riskN=new Set(riskRows.map(itemKey)).size;
+  const check='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+  const riskChip=`<button type="button" class="dz-pillinput sup-toggle ohs-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show all short or at-risk lines.':'List only lines with supply at risk.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">${riskOnly?check:''}Supply at risk only<span class="ohs-toggle-n">${fmtNum(riskN)}</span></button>`;
   const nItems=new Set(list.map(itemKey)).size;
   const chip=view==='all'?dzChip(supLines(list.length),''):dzChip(`${fmtNum(nItems)} ${nItems===1?'item':'items'}`,shortageRows.length?'red':'amber');
+  // The numbers (data) under the title; the options (what can be clicked) in their own tinted bar; then the list.
+  const sum=`<span class="ohs-sum"><span class="ohs-sum-i red"><b>${fmtNum(shortN)}</b> short</span><span class="ohs-sum-i amber"><b>${fmtNum(riskN)}</b> supply at risk</span><span class="ohs-sum-i"><b>${fmtNum(list.length)}</b> ${list.length===1?'line':'lines'} in view</span></span>`;
+  const tools=`<div class="ohs-tools print-hide" role="group" aria-label="List options"><div class="ohs-tgroup"><span class="ohs-tlabel">View</span>${seg}</div>${view==='risk'?`<div class="ohs-tgroup"><span class="ohs-tlabel">Filter</span>${riskChip}</div>`:''}<div class="ohs-tgroup ohs-find">${supSearchBox('sd','Search item')}</div></div>`;
   const table=list.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
-    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month.':'Open demand quantity.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Qty on confirmed, committed POs.')}>Supply qty</th><th class="num"${tipAttr('Running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the risk on its PO supply.')}>Supply</th></tr></thead><tbody>${groupsHtml}</tbody></table></div>
-    ${list.length>limit?`<div class="sup-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(list.length)} lines</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sd-rows" data-table-key="sd-rows"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(list.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
+    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month.':'Open demand quantity.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Qty on confirmed, committed POs.')}>Supply qty</th><th class="num"${tipAttr('Running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the risk on its PO supply.')}>Supply</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    ${dzPageFoot('sd-rows',pg,view==='all'?'All open demand':'Short or at-risk items')}`
     :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
-  const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${seg}${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table,cls:'ohl-sd dz-fade'});
-  return tableCard;
+  // No fold chevron on this card (owner, 2v6.9): it is the whole Supply / Demand view.
+  return supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:'',sub:sum,body:tools+table,cls:'ohl-sd dz-fade dz-nofold'});
 }
 
 
@@ -15191,7 +15291,7 @@ function dzDecorateCollapse(root){
   const folded=typeof stgValue!=='function'||stgValue('linesStart')!=='open';
   root.querySelectorAll(DZ_COLLAPSE_HEADS).forEach(head=>{
     const card=head.parentElement;
-    if(!card||head.querySelector('.dz-collapse-btn'))return;
+    if(!card||head.querySelector('.dz-collapse-btn')||card.classList.contains('dz-nofold'))return;
     const title=head.querySelector('.dz-title');
     const name=String(title?title.textContent:'Lines').trim();
     const key=`${activeTab}:${name.toLowerCase()}`;

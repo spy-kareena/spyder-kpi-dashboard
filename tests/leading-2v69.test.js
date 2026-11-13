@@ -113,8 +113,13 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   assert.equal(page.run('weeklyView'), 'supply');
   h = html(page);
   assert.match(h, /<div class="oh-panel" role="tabpanel" id="oh-panel-supply" aria-labelledby="oh-tab-supply">/);
-  assert.match(h, /<section class="dz-card sup-tcard dz-span-6 ohl-sd dz-fade"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"[^>]*>Short or at-risk items<\/h2><span class="dz-chip red">2 items<\/span>/);
-  assert.match(h, /data-focus-key="sd-view-risk"[\s\S]*data-focus-key="sup-q-sd"[\s\S]*data-focus-key="sd-risk-only"/);
+  assert.match(h, /<section class="dz-card sup-tcard dz-span-6 ohl-sd dz-fade dz-nofold"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"[^>]*>Short or at-risk items<\/h2><span class="dz-chip red">2 items<\/span>/);
+  assert.match(h, /data-focus-key="sd-view-risk"[\s\S]*data-focus-key="sd-risk-only"[\s\S]*data-focus-key="sup-q-sd"/);
+  // 2v6.9: the numbers under the title (data), the options in their own labelled bar (View, Filter, search), no fold
+  // chevron on the card, each status a dot and a word, not a pill.
+  assert.match(h, /<div class="dz-meta sup-tsub"><span class="ohs-sum"><span class="ohs-sum-i red"><b>\d+<\/b> short<\/span>/);
+  assert.match(h, /<div class="ohs-tools print-hide" role="group" aria-label="List options"><div class="ohs-tgroup"><span class="ohs-tlabel">View<\/span>/);
+  assert.match(h, /<span class="ohs-st red"><i aria-hidden="true"><\/i>Short<\/span>/);
   // The filters that apply to items: the supply warehouse and the item group (no Segment / Customer pills).
   const row = h.slice(h.indexOf('dz-filterrow'), h.indexOf('<div class="oh-panel"'));
   assert.match(row, /Warehouse/);
@@ -126,7 +131,7 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   page.run("supSet('sd-group','Electronics')");
   assert.match(html(page), /No shortages or supply risk found for this selection\./);
   page.run("supSet('sd-group','');supSdFocus('risk')");
-  assert.match(html(page), /data-focus-key="sd-risk-only" aria-pressed="true"[^>]*>Supply at risk only · 1</);
+  assert.match(html(page), /data-focus-key="sd-risk-only" aria-pressed="true"[^>]*>(?:<svg[^>]*>[\s\S]*?<\/svg>)?Supply at risk only<span class="ohs-toggle-n">1<\/span><\/button>/);
   assert.equal(page.run('activeTab'), 'weekly');
   // ArrowRight wraps to Leading.
   page.run("ohTabKey({key:'ArrowRight',preventDefault(){}})");
