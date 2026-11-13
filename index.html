@@ -19422,8 +19422,6 @@ function ohlAtRiskCard(c){
   const {m,oh,lead,d}=c;
   const sel=id=>weeklyTileFilter===id;
   const risk=d.risk,orders=rowDocCount(risk),lines=risk.length;
-  const fresh=ohFlagAges(risk)[0];
-  const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) newly at risk this week. Click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
   const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(ohlTip(`At risk, due by ${shortDay(d.end)}`,[`${ohN(orders,'order')}, ${ohN(lines,'line')}`,`${money(rowOpenAmount(risk))} open`],'Click to list them.'))}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span></button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
   const stat=(id,label,color,rows)=>{
@@ -19473,7 +19471,8 @@ function ohlAtRiskCard(c){
       <div class="ohl-sec-head"><span class="ohl-sec-title">By override · All warehouses</span>${none?'<span class="ohl-note">none set this week</span>':''}</div>
       <div class="ohl-tiles" role="group" aria-label="At-risk orders by override">${ovrCells}</div>
     </div>`;
-  return dzCard({title:'At risk',sm:true,meta:newChip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
+  // 2v6.9 (owner): no "+N new this week" chip in the head.
+  return dzCard({title:'At risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
     tip:`Lines due by ${shortDay(d.end)} that are past due, uncommitted, rescheduled or urgent.`,
     body:`<div class="ohl-hero-row">${hero}</div>${stats}${whHtml}${ovrHtml}`});
 }
@@ -19591,7 +19590,7 @@ function ohlShipTargetCard(m){
     </div>`:'';
   return dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,cls:'dz-fade ohl-ship',attrs:' style="--i:1"',
     tip:'Open lines due by the end date, and the largest past-due orders.',
-    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
+    meta:`<button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
     body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 }
@@ -19728,7 +19727,6 @@ function ohlSupplyCard(c){
   }).join('');
   const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
   return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
-    meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonTitle())}`,
     tip:'At-risk orders by supply source\n• Vendor PO: late, no commit or after due\n• Stock short in supply / demand\nClick a customer or number to list its lines.',
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>

@@ -153,9 +153,8 @@ test('open order states partition the open lines (count and value) and match the
 test('when flagged: weeks since first at risk from firstFlagged; missing history counts as new this week', async () => {
   const page = await withOverrides();
   assert.deepEqual(lead(page).ages, [['new', 7], ['1-2', 0], ['3-4', 0], ['5-8', 0], ['9+', 0]]);
-  // 2v6.9: the When flagged card is gone from Leading (the owner's ask); the history and the +N new chip stay.
-  assert.doesNotMatch(html(page), />When flagged<\/h2>|data-focus-key="oh-age-/);
-  assert.match(html(page), /data-focus-key="ohl-new"[^>]*>\+\d+ new this week</);
+  // 2v6.9: the When flagged card and the "+N new this week" chip are gone from Leading (the owner's asks); the history stays.
+  assert.doesNotMatch(html(page), />When flagged<\/h2>|data-focus-key="oh-age-|data-focus-key="ohl-new"|new this week</);
   assert.ok(!page.run('ohFirstFlagged()'), 'no upload history yet: every line counts as new');
   // The shared notes store fills the global firstFlagged map (rowKey -> export date of the first at-risk upload).
   page.ctx.firstFlagged = {
