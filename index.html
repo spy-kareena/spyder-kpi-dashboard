@@ -4259,6 +4259,49 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
   .por-tbl{min-width:0}
 }
 /* 2v9:end po-recv */
+/* 2v9:xmas */
+/* Christmas Theme (Settings > Pages & Display, off by default): applyTheme() puts data-xmas="on" on <html> and every
+   Christmas look hangs off that attribute. Screen only (print keeps the standard look); hidden in forced colours.
+   The Snowy Treeline (.xmas-ridge, placed once right after the header by xmasRidgeMount): a faint line of snowy hills
+   with a few small pines along the bottom edge of the header, full page width. It sits in the gap between the header's
+   text and the page title (a zero-height box after the header that cancels the column gap, the 40px drawing hanging
+   from it), under the header's content and the page title row, takes no clicks and does not move. Drawn in shades of
+   the page background (--dz-page): light mode a little lighter for the hills and a little deeper for the pines, dark
+   mode all a little lighter, about half the contrast of the approved options page, fading out at the bottom. Two-row
+   headers (900px and under) get a smaller drawing just under the page links. The page clips sideways so the full-width
+   drawing never adds a scrollbar.
+   The hidden snow (.xmas-snow, a canvas made for 5 seconds): fixed over the cards (z-index 39), under the filter row,
+   the page title row, the header and every menu, tip, panel and dialog; it never takes a click. */
+:root[data-xmas="on"]{
+  --xm-hill-far:color-mix(in srgb,var(--dz-page),#fff 16%);--xm-hill:color-mix(in srgb,var(--dz-page),#fff 32%);
+  --xm-pine:color-mix(in srgb,var(--dz-page),var(--dz-ink-1) 8%);--xm-pine-2:color-mix(in srgb,var(--dz-page),var(--dz-ink-1) 5%);
+  --xm-snow:#fff;--xm-snow-edge:var(--dz-ink-3);--xm-snow-edge-a:.46}
+:root[data-xmas="on"][data-theme=dark]{
+  --xm-hill-far:color-mix(in srgb,var(--dz-page),#fff 2.5%);--xm-hill:color-mix(in srgb,var(--dz-page),#fff 5%);
+  --xm-pine:color-mix(in srgb,var(--dz-page),#fff 9%);--xm-pine-2:color-mix(in srgb,var(--dz-page),#fff 6%);
+  --xm-snow:color-mix(in srgb,#fff 94%,var(--dz-page));--xm-snow-edge:var(--dz-page);--xm-snow-edge-a:.5}
+.xmas-ridge,.xmas-snow{display:none;pointer-events:none}
+@media screen{
+  :root[data-xmas="on"] .app-shell{overflow-x:clip}
+  :root[data-xmas="on"] .xmas-ridge{display:block;position:relative;z-index:0;height:0;margin-top:-22px}
+  :root[data-xmas="on"] .xmas-snow{display:block}
+  :root[data-xmas="on"] .hdr-logo{touch-action:manipulation}
+}
+.xmas-ridge svg{position:absolute;top:-10px;left:calc(50% - 50vw);display:block;width:100vw;height:40px;
+  -webkit-mask-image:linear-gradient(#000 40%,transparent 74%);mask-image:linear-gradient(#000 40%,transparent 74%)}
+.xmas-ridge .far{fill:var(--xm-hill-far)}.xmas-ridge .near{fill:var(--xm-hill)}
+.xmas-ridge .pine2{fill:var(--xm-pine-2)}.xmas-ridge .pine{fill:var(--xm-pine)}
+@media (max-width:900px){
+  .xmas-ridge svg{top:-1px;height:24px;-webkit-mask-image:linear-gradient(#000 38%,transparent 70%);mask-image:linear-gradient(#000 38%,transparent 70%)}
+}
+@media (max-width:640px){:root[data-xmas="on"] .xmas-ridge{margin-top:-18px}}
+.xmas-snow{position:fixed;inset:0;z-index:39;width:100%;height:100%}
+.xmas-snow.out{opacity:0;transition:opacity .6s ease}
+/* Reduced motion: the still snow keeps its short fade (a fade, not a movement) */
+@media (prefers-reduced-motion:reduce){.xmas-snow.out{transition-duration:.6s!important}}
+@media print{.xmas-ridge,.xmas-snow{display:none!important}}
+@media (forced-colors:active){.xmas-ridge,.xmas-snow{display:none!important}}
+/* 2v9:end xmas */
 /* 2v9:ship-btns */
 /* Ship target's Dates and Calendar & lines (owner): the same soft pill edge as the What can we do switch (Supply to
    pull in), not the darker field border. */
@@ -5647,8 +5690,8 @@ details.data-check>summary{font-size:13px}
 </style>
 </head>
 <body>
-<script id="thm-boot">/* Dark or light before the first paint, from the saved setting (applyTheme() takes over once the app runs) */
-(function(){try{var s=JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{};if(typeof s.background==='string'&&/^[a-z]+$/.test(s.background))document.documentElement.setAttribute('data-bg',s.background);var t=s.theme;if(t==='system')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';t=t==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();</script>
+<script id="thm-boot">/* Dark or light, the background and the Christmas Theme before the first paint, from the saved settings (applyTheme() takes over once the app runs) */
+(function(){try{var s=JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{};if(typeof s.background==='string'&&/^[a-z]+$/.test(s.background))document.documentElement.setAttribute('data-bg',s.background);if(s.christmas==='on')document.documentElement.setAttribute('data-xmas','on');else document.documentElement.removeAttribute('data-xmas');var t=s.theme;if(t==='system')t=window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';t=t==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t;}catch(e){}})();</script>
 <div class="app-shell">
   <div class="app-col">
   <header class="app-header" id="app-header"></header>
@@ -5979,6 +6022,9 @@ function buildSnapshotHtml(payload){
   const root=document.documentElement.cloneNode(true);
   root.querySelectorAll('#sheetjs-lib,#embedded-snapshot-data,#snapshot-download-box').forEach(n=>n.remove());
   aiResetClone(root);
+  // 2v9: the Christmas Theme is the viewer's own setting: no data-xmas, treeline or snow in the file.
+  root.removeAttribute('data-xmas');
+  root.querySelectorAll('.xmas-ridge,.xmas-snow').forEach(n=>n.remove());
   const results=root.querySelector('#results-screen');
   if(results){results.innerHTML='';results.style.display='none';}
   const upload=root.querySelector('#upload-screen');
@@ -11926,6 +11972,7 @@ function stgSpec(){
   return {
     theme:{def:()=>'light',check:v=>['light','dark','system'].includes(v)?v:undefined},
     background:{def:()=>'blue',check:oneOf(stgBackgrounds().map(b=>b[0]))},
+    christmas:{def:()=>'off',check:oneOf(['off','on'])}, // 2v9: the Christmas Theme (applyTheme puts data-xmas="on" on <html>)
     atRiskTarget:{def:()=>5,check:num(1,50)},
     toleranceDays:{def:()=>2,check:num(0,14)},
     horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
@@ -12032,7 +12079,7 @@ function stgSet(key,value){
 }
 function stgAfterChange(keys){
   stgSync();
-  if(keys.includes('theme')||keys.includes('background'))applyTheme();
+  if(keys.includes('theme')||keys.includes('background')||keys.includes('christmas'))applyTheme();
   if(keys.some(k=>STG_CALC_KEYS.includes(k)))invalidateMetrics();
   if(keys.includes('dataSource')&&typeof liveSwitch==='function')liveSwitch();
   const results=document.getElementById('results-screen');
@@ -12298,10 +12345,11 @@ function stgBgKey(e){
   const el=document.querySelector(`[data-focus-key="stg-bg-${next}"]`);
   if(el)el.focus();
 }
-// Pages & Display: the colour theme, how line lists open and when the Import report shows.
+// Pages & Display: the colour theme, the background, the Christmas Theme, how line lists open and when the Import report
+// shows.
 function stgPagesCard(dis,i){
   const seg=(key,items,label,fn=`stgSet('${key}',`)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`${fn}'${v}')`,attrs:dis})),{label,cls:'stg-seg'});
-  const keys=['theme','background','linesStart','importReport'];
+  const keys=['theme','background','christmas','linesStart','importReport'];
   // Background: one round swatch per choice (a radio group; arrow keys move, like the other choices on this page).
   const bgNow=stgValue('background'),bgs=stgBackgrounds();
   const swatches=`<div class="stg-bgs" role="radiogroup" aria-label="Background">${bgs.map(([v,name,lightSw,darkSw])=>{
@@ -12311,10 +12359,11 @@ function stgPagesCard(dis,i){
   const body=[
     stgRow('Theme','',seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
     stgRow('Background','',swatches),
+    stgRow('Christmas Theme','',seg('christmas',[['off','Off'],['on','On']],'Christmas Theme')),
     stgRow('Line lists start','',seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
     stgRow('Import report','',seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
-  const tip='Pages & Display\n• Match system follows this device\n• Each line list then keeps your choice\n• Import report: after a load with file problems, or every load';
+  const tip='Pages & Display\n• Match system follows this device\n• Christmas Theme: snowy hills under the header, Santa on the Live SAP mark\n• Each line list then keeps your choice\n• Import report: after a load with file problems, or every load';
   return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'var(--dz-teal)',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 // Hidden Pages (2v6.9): one row per page with a show / hide switch, hidden pages first (then menu order). Order Health
@@ -13099,6 +13148,13 @@ function applyTheme(){
     if(root.dataset.bg&&typeof moTransition==='function')moTransition(()=>{root.dataset.bg=bg;},true);
     else root.dataset.bg=bg;
   }
+  // 2v9: the Christmas Theme (Settings, Pages & Display): data-xmas="on" on <html>, removed when off (with any snow).
+  const xm=xmasOn();
+  if(root&&root.dataset){
+    if(xm&&root.dataset.xmas!=='on')root.dataset.xmas='on';
+    else if(!xm&&'xmas' in root.dataset)delete root.dataset.xmas;
+  }
+  if(xm)xmasRidgeMount();else{xmasClicks=[];xmasSnowStop();}
   const set=()=>{
     const now=thmIsDark()?'dark':'light';  // the choice when it applies (it may have changed back meanwhile)
     if(root&&root.dataset&&root.dataset.theme!==now)root.dataset.theme=now;
@@ -13113,6 +13169,178 @@ function applyTheme(){
   moTransition(()=>{delete root.dataset.moTheme;set();},true);
   return t;
 }
+// ===== 2v9 Christmas Theme =====
+// The Settings key 'christmas' ('off' default, 'on'; Pages & Display). applyTheme() puts data-xmas="on" on <html> (the
+// boot script at the top of <body> does it before the first paint) and the /* 2v9:xmas */ CSS block draws everything
+// from that attribute, so the header never needs to know the setting: the Snowy Treeline under the header here, Santa
+// on the Live SAP mark in its own block. A shared snapshot follows the viewer's own setting; buildSnapshotHtml leaves
+// all of it out. Screen only: nothing Christmas prints.
+function xmasOn(){return typeof stgValue==='function'&&stgValue('christmas')==='on';}
+// The Snowy Treeline: a faint line of snowy hills with a few small pines, drawn once and placed right after the header
+// (the header's own markup is redrawn often, so it cannot live inside it). 4800 wide and 40 high in px, so the middle
+// of it covers any screen at its real size; the shapes come from a fixed seed, so every visit draws the same ridge.
+// Far pines, far hills, near pines, near hills, each layer hiding the foot of the one before. No strokes.
+function xmasRidgeSVG(){
+  const W=4800,f1=n=>Math.round(n*10)/10;
+  let seed=11;
+  const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  // A hill line: knots every 200 to 400px, alternately high and low between lo and hi, joined by curves that are flat
+  // at each knot.
+  const hill=(lo,hi)=>{
+    const k=[],mid=(lo+hi)/2;
+    for(let x=0,up=rnd()<.5;x<W;x+=200+rnd()*200,up=!up)k.push([x,up?lo+rnd()*(mid-lo):mid+rnd()*(hi-mid)]);
+    k.push([W,mid]);
+    return k;
+  };
+  // The hill's height at x: on each curve x(t)=x0+dx(1.5t-1.5t²+t³) rises with t (found by halving), y(t)=y0+dy(3t²-2t³).
+  const crest=(k,x)=>{
+    let i=0;while(i<k.length-2&&k[i+1][0]<x)i++;
+    const [x0,y0]=k[i],[x1,y1]=k[i+1];let a=0,b=1;
+    for(let n=0;n<24;n++){const t=(a+b)/2;if(x0+(x1-x0)*(1.5*t-1.5*t*t+t*t*t)<x)a=t;else b=t;}
+    const t=(a+b)/2;return y0+(y1-y0)*(3*t*t-2*t*t*t);
+  };
+  const path=(k,cls)=>`<path class="${cls}" d="M0 40V${f1(k[0][1])}${k.slice(1).map(([x,y],i)=>{const [px,py]=k[i],h=(x-px)/2;return `C${f1(px+h)} ${f1(py)} ${f1(x-h)} ${f1(y)} ${f1(x)} ${f1(y)}`;}).join('')}V40Z"/>`;
+  // A small pine of three tiers, h high, its foot at b.
+  const pine=(x,b,h,cls)=>`<path class="${cls}" d="M${f1(x)} ${f1(b-h)}L${f1(x+.26*h)} ${f1(b-.58*h)}H${f1(x+.12*h)}L${f1(x+.34*h)} ${f1(b-.27*h)}H${f1(x+.16*h)}L${f1(x+.42*h)} ${f1(b)}H${f1(x-.42*h)}L${f1(x-.16*h)} ${f1(b-.27*h)}H${f1(x-.34*h)}L${f1(x-.12*h)} ${f1(b-.58*h)}H${f1(x-.26*h)}Z"/>`;
+  // Pines in groups of 1 to 3, their foot 2px into their hill; the tallest stop 3px below the top of the drawing.
+  const pines=(k,gapLo,gapHi,hLo,hHi,cls)=>{
+    let o='';
+    for(let x=40+rnd()*gapLo;x<W-20;x+=gapLo+rnd()*(gapHi-gapLo)){
+      const n=1+Math.floor(rnd()*3);
+      for(let j=0;j<n;j++){const px=x+j*(7+rnd()*8),b=crest(k,px)+2;o+=pine(px,b,Math.min(hLo+rnd()*(hHi-hLo),b-3),cls);}
+    }
+    return o;
+  };
+  const far=hill(7,17),near=hill(14,23);
+  const farPines=pines(far,170,330,8,14,'pine2'),nearPines=pines(near,260,460,7,11,'pine');
+  return `<div class="xmas-ridge" aria-hidden="true"><svg viewBox="0 0 ${W} 40" preserveAspectRatio="xMidYMin slice" focusable="false">${farPines}${path(far,'far')}${nearPines}${path(near,'near')}</svg></div>`;
+}
+function xmasRidgeMount(){
+  if(typeof document==='undefined'||!document.getElementById||(document.querySelector&&document.querySelector('.xmas-ridge')))return;
+  const hdr=document.getElementById('app-header');
+  if(hdr&&hdr.parentNode&&typeof hdr.insertAdjacentHTML==='function')hdr.insertAdjacentHTML('afterend',xmasRidgeSVG());
+}
+// The hidden snow: 5 clicks on the header logo within 4 seconds (Christmas Theme only) start 5 seconds of soft snow; 5
+// more while it snows start the 5 seconds again. The clicks still open Sales Order Health. One fixed canvas above the
+// cards and under the header, menus, tips and dialogs; it never takes a click and is removed when the snow ends.
+// Reduced motion: a still scatter of flakes that fades out at the end.
+const XMAS_CLICKS=5,XMAS_CLICK_MS=4000,XMAS_SNOW_MS=5000;
+let xmasClicks=[]; // times (ms) of the recent logo clicks
+let xmasSnow=null; // the snow showing now: {end, timer, fade, canvas, raf, still, a}
+// One logo click at time now; true when it started (or restarted) the snow.
+function xmasLogoClick(now=Date.now()){
+  if(!xmasOn()){xmasClicks=[];return false;}
+  xmasClicks=xmasClicks.filter(t=>t<=now&&now-t<=XMAS_CLICK_MS);
+  xmasClicks.push(now);
+  if(xmasClicks.length<XMAS_CLICKS)return false;
+  xmasClicks=[];
+  xmasSnowStart(now);
+  return true;
+}
+function xmasSnowing(){return !!xmasSnow;}
+function xmasSnowStart(now=Date.now()){
+  const s=xmasSnow||(xmasSnow={end:0,timer:0,fade:0,canvas:null,raf:0,still:false,a:0});
+  s.end=now+XMAS_SNOW_MS;
+  clearTimeout(s.timer);
+  s.timer=setTimeout(()=>{if(xmasSnow===s)xmasSnowStop();},XMAS_SNOW_MS);
+  if(!s.canvas)xmasSnowDraw(s);
+  else if(s.still)xmasSnowFadeLater(s);
+}
+function xmasSnowStop(){
+  const s=xmasSnow;
+  xmasSnow=null;
+  if(!s)return;
+  clearTimeout(s.timer);clearTimeout(s.fade);
+  if(s.raf&&typeof cancelAnimationFrame==='function')cancelAnimationFrame(s.raf);
+  if(s.canvas&&s.canvas.remove)s.canvas.remove();
+}
+// Still snow fades out over its last 0.6 s (the .out class).
+function xmasSnowFadeLater(s){
+  clearTimeout(s.fade);
+  if(s.canvas&&s.canvas.classList)s.canvas.classList.remove('out');
+  s.fade=setTimeout(()=>{if(s.canvas&&s.canvas.classList)s.canvas.classList.add('out');},XMAS_SNOW_MS-600);
+}
+// A computed colour (rgb(), rgba() or color(srgb ...)) as rgba() with its alpha times a, for the canvas; '' if unread.
+function xmasRgba(color,a){
+  const m=/^(rgba?|color)\((?:srgb\s+)?([^)]*)\)$/.exec(String(color||'').trim());
+  if(!m)return '';
+  const p=m[2].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);
+  if(p.length<3||p.slice(0,3).some(v=>!isFinite(v)))return '';
+  const k=m[1]==='color'?255:1,al=p.length>3&&isFinite(p[3])?p[3]:1;
+  return `rgba(${Math.round(p[0]*k)},${Math.round(p[1]*k)},${Math.round(p[2]*k)},${+(al*a).toFixed(3)})`;
+}
+function xmasSnowDraw(s){
+  if(typeof document==='undefined'||!document.body||typeof document.createElement!=='function'||typeof getComputedStyle!=='function')return;
+  const c=document.createElement('canvas'),g=c&&typeof c.getContext==='function'?c.getContext('2d'):null;
+  if(!g)return;
+  c.className='xmas-snow';
+  c.setAttribute('aria-hidden','true');
+  document.body.appendChild(c);
+  s.canvas=c;
+  // The flake (--xm-snow) and its soft rim (--xm-snow-edge at --xm-snow-edge-a), so a flake also shows on a white card.
+  c.style.color='var(--xm-snow)';
+  const fill=xmasRgba(getComputedStyle(c).color,1)||'rgba(255,255,255,1)';
+  c.style.color='var(--xm-snow-edge)';
+  const edgeA=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--xm-snow-edge-a'));
+  const edge=xmasRgba(getComputedStyle(c).color,isFinite(edgeA)?edgeA:.46)||'rgba(65,86,108,.46)';
+  c.style.color='';
+  let W=0,H=0,dpr=1;
+  // Each flake size is drawn once (a white dot with its blurred rim) and then copied: cheap enough for 160 flakes a frame.
+  const sprites=new Map();
+  const sprite=r=>{
+    const k=Math.round(r*10);
+    let sp=sprites.get(k);
+    if(sp)return sp;
+    const rr=k/10*dpr,blur=rr*2.2,S=Math.ceil(2*(rr+blur))+2,o=document.createElement('canvas'),og=o.getContext('2d');
+    o.width=o.height=S;
+    og.fillStyle=fill;og.shadowColor=edge;og.shadowBlur=blur;
+    og.beginPath();og.arc(S/2,S/2,rr,0,Math.PI*2);og.fill();
+    sp={o,S};sprites.set(k,sp);
+    return sp;
+  };
+  const size=()=>{
+    W=window.innerWidth||document.documentElement.clientWidth||800;H=window.innerHeight||document.documentElement.clientHeight||600;
+    const d=Math.min(window.devicePixelRatio||1,2);
+    if(d!==dpr)sprites.clear();
+    dpr=d;
+    c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);
+  };
+  size();
+  s.still=!motionAllowed();
+  // Small, soft, round flakes, 2 to 5px across, at most 0.84 opaque; about 1 per 6500px² of screen (52 to 160).
+  const n=Math.round(Math.max(52,Math.min(160,W*H/6500))*(s.still?.7:1));
+  const flakes=Array.from({length:n},()=>{const r=1.1+Math.random()*1.4;return {x:Math.random(),y:s.still?Math.random():Math.random()*1.15-.3,r,
+    vy:(26+Math.random()*30)*(r/2+.5),ph:Math.random()*6.3,sw:6+Math.random()*10,a:.72+Math.random()*.12};});
+  const flake=(x,y,f,a)=>{const sp=sprite(f.r);g.globalAlpha=a*f.a;g.drawImage(sp.o,x*dpr-sp.S/2,y*dpr-sp.S/2);};
+  if(s.still){flakes.forEach(f=>flake(f.x*W,f.y*H,f,1));xmasSnowFadeLater(s);return;}
+  // Falling: fades in over 0.5 s (and back in after a restart during the fade), out over the last second.
+  let t0=0,last=0;
+  const tick=now=>{
+    if(xmasSnow!==s||!c.isConnected)return;
+    if(!t0)t0=last=now;
+    if((window.innerWidth||W)!==W||(window.innerHeight||H)!==H)size();
+    const left=s.end-Date.now(),target=Math.max(0,Math.min(1,left/1000));
+    s.a=target<s.a?target:Math.min(target,s.a+(now-last)/500);
+    last=now;
+    const sec=(now-t0)/1000,span=H+16;
+    g.clearRect(0,0,c.width,c.height);
+    flakes.forEach(f=>{
+      let y=f.y*H+f.vy*sec;
+      if(y>=H+6)y=((y+10)%span)-10;
+      if(y>=-8)flake(f.x*W+Math.sin(sec*.9+f.ph)*f.sw,y,f,s.a);
+    });
+    if(left<=0){xmasSnowStop();return;}
+    s.raf=requestAnimationFrame(tick);
+  };
+  s.raf=requestAnimationFrame(tick);
+}
+// Clicks on the logo (Enter on it and taps send a click too) are counted before its own click opens Sales Order Health;
+// the header's markup is not touched.
+if(typeof document!=='undefined'&&typeof document.addEventListener==='function')document.addEventListener('click',e=>{
+  const t=e&&e.target;
+  if(t&&typeof t.closest==='function'&&t.closest('.hdr-logo'))xmasLogoClick();
+},true);
+// ===== end 2v9 Christmas Theme =====
 // The header's Dark mode icon: a moon in light mode, a sun in dark mode. One click switches light <-> dark (saved like
 // any other setting; a shared snapshot keeps it for this visit). The label stays "Dark mode" and aria-pressed says
 // whether it is on; the tip names what a click does. The new icon turns in once after a click (not with reduced motion).
