@@ -849,7 +849,7 @@ button.trow.po-wh-cols{font-size:13px}
 @media print{.draw{stroke-dashoffset:0!important}.lines-table{table-layout:auto}.print-only{display:block!important;font-size:9pt;color:var(--gray-600)}}
 /* --- Stream A: tooltips (section help on the titles), hints, toast, page descriptions, scorecard groups --- */
 /* Tooltip bubble: one shared element (#tip-layer) placed next to the element with data-tip by the page script */
-.tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:normal;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
+.tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:pre-line;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
 .tip-layer[data-side="bottom"]{transform:translateY(-2px)}
 .tip-layer.open{opacity:1;transform:none;pointer-events:auto}
 .tip-layer[hidden]{display:none}
@@ -859,6 +859,13 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer[data-side="left"] .tip-arrow{right:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-layer[data-side="right"] .tip-arrow{left:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-text{position:relative}
+/* A tip written as "Heading\n• fact\n• fact" shows one line each; a bullet's wrapped words line up under its text */
+.tip-text .tip-line,.tip-text .tip-li{display:block}
+.tip-text .tip-li{padding-left:.85em;text-indent:-.85em}
+.tip-text .tip-dot{display:inline-block;width:.85em;text-indent:0}
+.tip-text .tip-head{font-weight:600}
+.tip-text .tip-line+.tip-li{margin-top:3px}
+.tip-text .tip-li+.tip-line{margin-top:4px}
 /* Windows high-contrast mode drops backgrounds: keep the bubble's edge */
 @media (forced-colors:active){.tip-layer,.toast-item{border:1px solid CanvasText}}
 /* A long press shows the tip on touch screens, so it should not also open the phone's link / copy menu */
@@ -12948,6 +12955,32 @@ function wireTips(){
   });
 }
 function tipLayer(){return document.getElementById('tip-layer');}
+// Puts a tip's text in the bubble. A tip with line breaks ("Heading\n• fact\n• fact") gets one block per line, bullets
+// with a hanging indent; each block keeps its "\n" so the bubble's text still reads exactly as the data-tip.
+function tipFill(node,text){
+  if(!node)return;
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2||!document.createElement||!document.createTextNode){node.textContent=text;return;}
+  node.textContent='';
+  const bullet=l=>l.startsWith('• ');
+  lines.forEach((line,i)=>{
+    const row=document.createElement('span');
+    const end=i<lines.length-1?'\n':'';
+    if(bullet(line)){
+      row.className='tip-li';
+      const dot=document.createElement('span');
+      dot.className='tip-dot';
+      dot.textContent='• ';
+      row.appendChild(dot);
+      row.appendChild(document.createTextNode(line.slice(2)+end));
+    }else{
+      // A line that leads a list of bullets is its heading.
+      row.className=bullet(lines[i+1]||'')?'tip-line tip-head':'tip-line';
+      row.textContent=line+end;
+    }
+    node.appendChild(row);
+  });
+}
 function tipTarget(node){return node&&node.closest?node.closest('[data-tip]'):null;}
 function tipVisible(){const layer=tipLayer();return !!(layer&&!layer.hidden&&tipState.el);}
 // A modal <dialog> (the Your name question) sits in the browser's top layer, above any z-index. A tip for a control
@@ -12971,8 +13004,7 @@ function showTip(el){
   const text=String(tipGet(el,'data-tip')||'').trim();
   if(!layer||!text||!el.isConnected||!el.getBoundingClientRect)return;
   tipState.el=el;
-  const textNode=layer.querySelector('.tip-text');
-  if(textNode)textNode.textContent=text;
+  tipFill(layer.querySelector('.tip-text'),text);
   layer.classList.remove('open');
   const dialog=tipHost(el);
   if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}

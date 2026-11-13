@@ -358,6 +358,30 @@ function tipRig(page) {
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+test('a tip written as heading and bullets shows one line each; its text reads exactly as the data-tip', () => {
+  // The bubble keeps line breaks (pre-line), a bullet's wrapped words hang under its text.
+  assert.match(CSS, /\.tip-layer\{[^}]*white-space:pre-line/);
+  assert.match(CSS, /\.tip-text \.tip-li\{padding-left:\.85em;text-indent:-\.85em\}/);
+  const page = loadPage();
+  const mk = (tag) => ({ tagName: tag, className: '', textContent: '', kids: [], appendChild(k) { this.kids.push(k); return k; } });
+  page.ctx.document.createElement = mk;
+  page.ctx.document.createTextNode = (t) => ({ text: t });
+  const read = (n) => (n.kids.length ? n.kids.map((k) => (k.text !== undefined ? k.text : read(k))).join('') : n.textContent);
+  const box = mk('SPAN');
+  const text = 'Open orders: 12\n• 3 past due\n• 2 with no commit date';
+  page.ctx.tipFill(box, text);
+  assert.deepEqual(box.kids.map((k) => k.className), ['tip-line tip-head', 'tip-li', 'tip-li']);
+  assert.equal(read(box), text, 'the bubble text equals the tip (newlines kept)');
+  assert.equal(box.kids[1].kids[0].className, 'tip-dot');
+  // A one-line tip stays plain text.
+  const one = mk('SPAN');
+  page.ctx.tipFill(one, 'Click to sort by Value.');
+  assert.equal(one.textContent, 'Click to sort by Value.');
+  assert.equal(one.kids.length, 0);
+  // tipAttr keeps the line breaks in the attribute.
+  assert.equal(page.ctx.tipAttr('A\n• b'), ' data-tip="A\n• b"');
+});
+
 test('a tip queued on focus is dropped when focus moves on before it shows (no stray bubble, no swallowed Esc)', async () => {
   const page = loadPage();
   const rig = tipRig(page);
