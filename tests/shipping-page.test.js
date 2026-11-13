@@ -4,6 +4,8 @@
 // override when it is newer; cards and the progress strip from those statuses; an external-link icon per row to
 // AfterShip's public tracking page; search; snapshots; no demo data. 2v6.9: Not delivered and Priority cards, the
 // Priority tick (shared), a state icon and the last location on each row, Update all, and pages of 10 / 5 / 5.
+// 2v6.9 cities: the Order Map puts dots at AfterShip's destination cities (none until AfterShip has one), nearby ones
+// share a dot, and only the busiest are named.
 // Run: node tests/shipping-page.test.js. Fixtures are synthetic (harness.js); /api/notes and /api/shipping are the real
 // Pages Functions over a Workers KV stand-in, so nothing leaves the machine.
 'use strict';
@@ -89,7 +91,7 @@ function setStatus(page, number, st, date = '', note = '') {
 const TAG = { shipped: 'InfoReceived', transit: 'InTransit', delayed: 'Exception', delivered: 'Delivered' };
 const asStatus = (number, state, o = {}) => ({
   number, id: `as-${number}`, slug: 'fedex', carrier: 'FedEx', tag: TAG[state], subtag: '', status: { shipped: 'Label created', transit: 'In transit', delayed: 'Exception', delivered: 'Delivered' }[state],
-  detail: '', state, stage: '', lastEvent: null, eta: '', deliveredAt: '', shippedAt: '', originCountry: '', destCountry: '', changedAt: '', updatedAt: '',
+  detail: '', state, stage: '', lastEvent: null, eta: '', deliveredAt: '', shippedAt: '', originCountry: '', destCountry: '', destCity: '', destState: '', changedAt: '', updatedAt: '',
   notFound: false, error: '', checkedAt: '2026-10-09T08:00:00.000Z', ...o,
 });
 const AS = {
@@ -766,6 +768,296 @@ test('2v6.9 layout: on a wide screen the map card spans the page, the cards lie 
   assert.ok(page.run('shpMapLayout().pw') >= 364);
 });
 
+// --- 2v6.9 cities: the Order Map by AfterShip's destination ---
+// Ten deliveries shipped Oct 6 and the AfterShip destinations the Worker saved for them: six to three Indiana towns
+// within 25 km of each other (Elkhart 3, Goshen 2, Middlebury 1), one each to Red Deer, AB and Toronto, ON, one to the
+// US with no city, and one AfterShip has not checked yet. [city, state, AfterShip country, SAP ship-to country]
+const TOWNS = [['Elkhart', 'IN', 'USA', 'US'], ['Elkhart', 'IN', 'USA', 'US'], ['Elkhart', 'IN', 'USA', 'US'], ['Goshen', 'IN', 'USA', 'US'], ['Goshen', 'IN', 'USA', 'US'], ['Middlebury', 'IN', 'USA', 'US'], ['Red Deer', 'AB', 'CAN', 'CA'], ['Toronto', 'ON', 'CAN', 'CA'], ['', '', 'USA', 'US'], ['', '', null, 'US']];
+const townNum = (i) => `77005000${String(i).padStart(4, '0')}`;
+const TOWN_ROWS = TOWNS.map(([, , , sap], i) => delivery({ DocumentNumber: String(700 + i), DeliveryDocNumber: String(9700 + i), TrackingNumber: townNum(i), ShipToCountry: sap, ShipDate: '10/06/2026', ...due('10/12/2026') }));
+const TOWN_AS = Object.fromEntries(TOWNS.flatMap(([destCity, destState, destCountry], i) => (destCountry ? [[townNum(i), asStatus(townNum(i), 'transit', { destCity, destState, destCountry })]] : [])));
+// The one dot the three Indiana towns share on the wide map: their keys joined by "+", busiest first.
+const INDIANA = 'US-IN:elkhart+US-IN:goshen+US-IN:middlebury';
+// Eleven far-apart destinations shipped Oct 6, busiest first (Toronto 9 shipments ... Los Angeles 2, the last three 1).
+const FAR = [['Toronto', 'ON', 'CAN', 9], ['Vancouver', 'BC', 'CAN', 8], ['Columbus', 'OH', 'USA', 7], ['Dallas', 'TX', 'USA', 6], ['Denver', 'CO', 'USA', 5], ['Atlanta', 'GA', 'USA', 4], ['Phoenix', 'AZ', 'USA', 3], ['Los Angeles', 'CA', 'USA', 2], ['Miami', 'FL', 'USA', 1], ['Montréal', 'QC', 'CAN', 1], ['Halifax', 'NS', 'CAN', 1]];
+const farNum = (i, k) => `77006${String(i).padStart(2, '0')}${String(k).padStart(5, '0')}`;
+const FAR_ROWS = FAR.flatMap(([, , country, n], i) => Array.from({ length: n }, (_, k) => delivery({ DocumentNumber: String(900 + i * 10 + k), DeliveryDocNumber: String(9900 + i * 10 + k), TrackingNumber: farNum(i, k), ShipToCountry: country.slice(0, 2), ShipDate: '10/06/2026', ...due('10/12/2026') })));
+const FAR_AS = Object.fromEntries(FAR.flatMap(([destCity, destState, destCountry, n], i) => Array.from({ length: n }, (_, k) => [farNum(i, k), asStatus(farNum(i, k), 'transit', { destCity, destState, destCountry })])));
+// Their map names, busiest first.
+const FAR_NAMES = FAR.map(([city, state]) => `${city}, ${state}`);
+// A browser on the hosted site with this export, AfterShip having saved these statuses.
+async function asPage(rows, statuses) {
+  return hostedBrowser(await hostedSite({ index: { ...INDEX, statuses } }), 'Pat', TODAY, [exportFile(rows)]);
+}
+// The Order Map card, its dots (place key, pressed, name, what a click picks, tip, size) and its labels (not the hub's).
+function mapOf(page) {
+  const m = html(page);
+  const at = m.indexOf('<section class="dz-card shp-map"');
+  assert.ok(at >= 0, 'the Order Map is drawn');
+  return m.slice(at, m.indexOf('</section>', at));
+}
+const mapDots = (page) => [...mapOf(page).matchAll(/<button type="button" class="shp-dot [^"]*" style="[^"]*;width:([\d.]+)px[^"]*" data-focus-key="ship-dot-([^"]*)" aria-pressed="(true|false)" aria-label="([^"]*)" onclick="shipPickDest\('([^']*)'\)" data-tip="([^"]*)"/g)]
+  .map((x) => ({ key: x[2], pressed: x[3] === 'true', label: x[4], pick: x[5], tip: x[6], size: x[1] }));
+const mapLabels = (page) => [...mapOf(page).matchAll(/<span class="shp-lbl(?: minor)?" style="[^"]*">([^<]*)</g)].map((x) => x[1]);
+const mapNote = (page) => (mapOf(page).match(/<span class="shp-pillnote"[^>]*>([^<]*)</) || [])[1] || '';
+const placeOf = (page, n) => page.run(`shipPlaceKey(shippingModel().list.find(x=>x.number==='${n}'))`);
+// Where a shipment goes: [city, state / province, country, where it came from, place key].
+const toOf = (page, n) => page.run(`(s=>[s.toCity,s.toRegion,s.toCountry,s.toFrom,shipPlaceKey(s)])(shippingModel().list.find(x=>x.number==='${n}'))`);
+// The numbers the Shipments table lists (this page of it).
+const tableRows = (page) => [...html(page).matchAll(/class="shp-head" data-focus-key="ship-([^"]+)"/g)].map((x) => x[1]);
+// The Cross-border list: [number, its second line], every page of it.
+function crossRows(page) {
+  const rows = [];
+  for (let p = 1; p <= 5; p++) {
+    page.run(`shpGoPage('cross',${p})`);
+    if (page.run('shpPg.cross') !== p) break;
+    rows.push(...[...html(page).matchAll(/data-focus-key="ship-x-([^"]+)"[\s\S]*?<em>([^<]*)<\/em>/g)].map((x) => [x[1], x[2]]));
+  }
+  page.run("shpGoPage('cross',1)");
+  return rows;
+}
+// The Destination filter's choices, and one detail row's tip.
+function destOptions(page) {
+  const m = html(page);
+  const at = m.indexOf('role="menu" aria-label="Destination"');
+  assert.ok(at > 0, 'the Destination filter is shown');
+  return [...m.slice(at, m.indexOf('</div></div>', at)).matchAll(/<span class="dz-menu-txt">([^<]*)<\/span>/g)].map((x) => x[1]);
+}
+const factTip = (page, number, label) => (rowOf(page, number).match(new RegExp(`<div class="shp-fact" data-tip="([^"]*)"><span>${label}</span>`)) || [])[1];
+
+// The map takes AfterShip's destination only: a file copy (no AfterShip) puts nothing on it and says how many wait,
+// whatever ship-to address SAP has; Cross-border stays on the SAP ship-to country.
+test('2v6.9 cities: no AfterShip destination, no dot: a file copy\'s shipments wait for AfterShip; SAP\'s ship-to address is not used; Cross-border stays SAP\'s', async () => {
+  const withCity = [...SHIP_HEADERS, 'ShipToCity', 'ShipToState'];
+  const page = await shipPage({ files: [{ name: 'kpi.xls', bytes: utf16Tsv(withCity, ROWS.map((r) => ({ ...r, ShipToCity: 'Elkhart', ShipToState: 'IN' }))) }] });
+  assert.deepEqual(REAL.map((n) => toOf(page, n)), REAL.map(() => ['', '', '', '', '']));
+  assert.equal(page.run('allLoadedRows.some(r=>\'shipToCity\' in r||\'shipToState\' in r)'), false, 'the columns are not read');
+  assert.deepEqual(mapDots(page), []);
+  assert.equal(mapNote(page), '6 shipments waiting for AfterShip');
+  assert.match(mapOf(page), /<span class="shp-pillnote" data-tip="AfterShip has no destination for these yet \(not checked yet, or the carrier gives none\): in the table, not on the map\.">/);
+  assert.match(mapOf(page), /<div class="dz-meta">0 shipments from Lacombe · 0 destinations<\/div>/);
+  // Cross-border and the details' Ship to: the SAP ship-to country.
+  assert.deepEqual(page.run(`[${JSON.stringify(N.usa)},${JSON.stringify(N.parcel)}].map(n=>(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number===n)))`), [['US', true], ['CA', false]]);
+  page.run(`toggleShipment('${N.usa}')`);
+  assert.equal(factOf(page, N.usa, 'Ship to'), 'United States (US)');
+  assert.equal(factTip(page, N.usa, 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
+  assert.deepEqual(crossRows(page).sort(), [[N.usa, 'SO 601 · United States (US)'], [N.delivered, 'SO 604 · United States (US)']].sort());
+  assert.deepEqual(page.errors, []);
+});
+
+// Each shipment sits at AfterShip's destination city; towns whose dots would overlap on the wide map share one dot
+// (its key their keys joined by "+", sized by all their shipments, its tip naming each); a destination with no city
+// sits at its country; one AfterShip has not checked is not on the map.
+test('2v6.9 cities: the Order Map puts dots at AfterShip destination cities; nearby towns share one dot that names them; no city: the country', async () => {
+  const page = await asPage(TOWN_ROWS, TOWN_AS);
+  assert.ok(page.run('shpMapLayout()'), 'the wide layout');
+  assert.deepEqual(TOWNS.map((t, i) => placeOf(page, townNum(i))), ['US-IN:elkhart', 'US-IN:elkhart', 'US-IN:elkhart', 'US-IN:goshen', 'US-IN:goshen', 'US-IN:middlebury', 'CA-AB:reddeer', 'CA-ON:toronto', 'US', '']);
+  assert.deepEqual(toOf(page, townNum(6)), ['Red Deer', 'AB', 'CA', 'AfterShip', 'CA-AB:reddeer']);
+  // How a place is found: the state as a code or a name, or after the city ("Goshen, IN"); a US or Canadian city with
+  // no state only when its name is unique in the country ("Elkhart" is not); a city the table does not have: its
+  // state; a state the table does not know: the country (no look through the whole country, it could land in the
+  // wrong state); no known country: nowhere. Puerto Rico is its own place, even filed under the US.
+  const key = (s) => page.run(`shipPlaceKey(${JSON.stringify(s)})`);
+  assert.equal(key({ toCountry: 'US', toCity: 'Elkhart', toRegion: 'Indiana' }), 'US-IN:elkhart');
+  assert.equal(key({ toCountry: 'US', toCity: 'Goshen, IN' }), 'US-IN:goshen');
+  assert.equal(key({ toCountry: 'US', toCity: 'Elkhart' }), 'US', 'three Elkharts in the US');
+  assert.equal(key({ toCountry: 'CA', toCity: 'Red Deer' }), 'CA-AB:reddeer', 'one Red Deer in Canada');
+  assert.equal(key({ toCountry: 'CA', toCity: 'MONTREAL', toRegion: 'qc' }), 'CA-QC:montreal');
+  assert.equal(key({ toCountry: 'US', toCity: 'Nowhereville', toRegion: 'IN' }), 'US-IN');
+  assert.equal(key({ toCountry: 'US', toRegion: 'TX' }), 'US-TX', 'a state with no city');
+  assert.equal(key({ toCountry: 'US', toCity: 'Albuquerque' }), 'US-NM:albuquerque', 'one Albuquerque in the US');
+  assert.equal(key({ toCountry: 'US', toCity: 'Albuquerque', toRegion: 'ZZ' }), 'US');
+  assert.deepEqual([key({ toCountry: 'US', toCity: 'San Juan', toRegion: 'PR' }), key({ toCountry: 'US', toRegion: 'Puerto Rico' })], ['PR:sanjuan', 'PR']);
+  assert.equal(key({ toCountry: '', toCity: 'Elkhart', toRegion: 'IN' }), '');
+  assert.equal(key({ country: 'US', toCity: 'Elkhart', toRegion: 'IN' }), '', 'the SAP ship-to country alone places nothing');
+  // Letters with no separate accent compare as plain ones (Wrocław, Wroclaw).
+  assert.deepEqual(['Wrocław', 'Łódź', 'Malmö', 'Straße', 'Æbeltoft'].map((v) => page.run(`shipCityNorm(${JSON.stringify(v)})`)), ['wroclaw', 'lodz', 'malmo', 'strasse', 'aebeltoft']);
+  assert.deepEqual([key({ toCountry: 'PL', toCity: 'Wroclaw' }), key({ toCountry: 'PL', toCity: 'WROCŁAW' })], ['PL:wroclaw', 'PL:wroclaw']);
+  assert.deepEqual(['US-IN:elkhart', 'CA-QC:montreal', 'US-IN', 'US', INDIANA].map((k) => page.run(`shipPlaceName(${JSON.stringify(k)})`)),
+    ['Elkhart, IN', 'Montréal, QC', 'Indiana, United States', 'United States', 'Elkhart, IN + 2 nearby']);
+  // Four dots: the three Indiana towns share Elkhart's, sized by all six shipments; Red Deer, Toronto and the US.
+  const dots = mapDots(page);
+  assert.deepEqual(dots.map((d) => d.key), [INDIANA, 'CA-AB:reddeer', 'CA-ON:toronto', 'US']);
+  assert.deepEqual(dots.map((d) => d.label), ['Elkhart, IN + 2 nearby: 6 shipments', 'Red Deer, AB: 1 shipment', 'Toronto, ON: 1 shipment', 'United States: 1 shipment']);
+  assert.equal(dots[0].tip, 'Elkhart, IN +2: 6 shipments\n• 6 on the way\n• Elkhart, IN 3 · Goshen, IN 2 · Middlebury, IN 1\n• Firefly RV\nClick to list them.');
+  assert.equal(dots[0].pick, INDIANA);
+  assert.deepEqual([dots[0].size, dots[1].size], [page.run('shpDotSize(6)').toFixed(1), page.run('shpDotSize(1)').toFixed(1)]);
+  assert.match(dots[1].tip, /^Red Deer, AB: 1 shipment\n/);
+  // Labels name cities: the shared dot once, with how many towns share it; none is dimmed. (Red Deer's dot sits by
+  // Lacombe's: its label may find no room, and its dot names it.)
+  const labels = mapLabels(page);
+  for (const l of ['Elkhart, IN +2', 'Toronto, ON', 'United States']) assert.ok(labels.includes(l), `${l} in ${labels.join(', ')}`);
+  assert.ok(!labels.some((l) => /Goshen|Middlebury|Indiana/.test(l)), labels.join(', '));
+  assert.doesNotMatch(mapOf(page), /class="shp-lbl minor"/);
+  // On a phone (3 labels) every place is used: a label with no room gives its turn to the next dot.
+  page.ctx.innerWidth = 400;
+  page.run('renderResults()');
+  const names = ['Elkhart, IN +2', 'Red Deer, AB', 'Toronto, ON', 'United States'];
+  assert.equal(mapDots(page).length, 4);
+  assert.equal(mapLabels(page).length, 3, mapLabels(page).join(', '));
+  assert.ok(mapLabels(page).every((l) => names.includes(l)), mapLabels(page).join(', '));
+  page.ctx.innerWidth = undefined;
+  page.run('renderResults()');
+  // Nine on the map at six destinations (cities, and the one country) on four dots; the tenth waits for AfterShip.
+  assert.match(mapOf(page), /<div class="dz-meta">9 shipments from Lacombe · 6 destinations<\/div>/);
+  assert.equal(mapNote(page), '1 shipment waiting for AfterShip');
+  assert.deepEqual(page.errors, []);
+});
+
+// Where a dot goes is AfterShip's alone: its destination city and state; else once delivered the place of the
+// delivery scan; else its destination state or country; nothing for a number it has not checked or does not track.
+// The country is AfterShip's (three letters read as two); SAP's ship-to country only fills in one AfterShip leaves out.
+// The details say where it came from; Cross-border stays on the SAP ship-to country. A shared snapshot keeps them.
+test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once delivered, else its state or country; its country, not SAP\'s; nothing until it has one', async () => {
+  const statuses = {
+    ...AS,
+    // US delivery: AfterShip's destination.
+    [N.usa]: { ...AS[N.usa], destCity: 'Dallas', destState: 'TX', destCountry: 'USA' },
+    // SAP says Canada; AfterShip's destination is Seattle, WA: the map follows AfterShip, Cross-border stays SAP's.
+    [N.parcel]: { ...AS[N.parcel], destCity: 'Seattle', destState: 'WA', destCountry: 'USA' },
+    // No city, a province: the province.
+    [N.ups]: { ...AS[N.ups], destState: 'ON', destCountry: 'CAN' },
+    // On the way, no destination: the last scan (Winnipeg) is not where it goes.
+    [N.freight]: { ...AS[N.freight], lastEvent: { at: '2026-10-08T16:00:00-05:00', city: 'Winnipeg, MB, CAN', desc: 'Arrived at terminal' } },
+    // N.delivered (no destination): delivered at Columbus, OH, USA. N.puro: no AfterShip record.
+  };
+  const page = await asPage(ROWS, statuses);
+  assert.deepEqual(toOf(page, N.usa), ['Dallas', 'TX', 'US', 'AfterShip', 'US-TX:dallas']);
+  assert.deepEqual(toOf(page, N.parcel), ['Seattle', 'WA', 'US', 'AfterShip', 'US-WA:seattle']);
+  assert.deepEqual(toOf(page, N.ups), ['', 'ON', 'CA', 'AfterShip', 'CA-ON']);
+  assert.deepEqual(toOf(page, N.delivered), ['Columbus', 'OH', 'US', 'AfterShip', 'US-OH:columbus']);
+  assert.deepEqual(toOf(page, N.freight), ['', '', '', '', '']);
+  assert.deepEqual(toOf(page, N.puro), ['', '', '', '', '']);
+  assert.deepEqual(page.run(`(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number==='${N.parcel}'))`), ['CA', false]);
+  assert.deepEqual(mapDots(page).map((d) => d.label).sort(), ['Columbus, OH: 1 shipment', 'Dallas, TX: 1 shipment', 'Ontario, Canada: 1 shipment', 'Seattle, WA: 1 shipment']);
+  assert.equal(mapNote(page), '2 shipments waiting for AfterShip');
+  // The details say where it came from; the Cross-border list (SAP's: the US one on its way) names its city.
+  page.run(`toggleShipment('${N.usa}');toggleShipment('${N.parcel}');toggleShipment('${N.puro}')`);
+  assert.equal(factOf(page, N.usa, 'Ship to'), 'Dallas, TX · United States (US)');
+  assert.equal(factTip(page, N.usa, 'Ship to'), 'Destination from AfterShip (the carrier).');
+  assert.equal(factOf(page, N.parcel, 'Ship to'), 'Seattle, WA · United States (US)');
+  assert.equal(factOf(page, N.puro, 'Ship to'), 'Canada (CA)');
+  assert.equal(factTip(page, N.puro, 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
+  assert.deepEqual(crossRows(page), [[N.usa, 'SO 601 · Dallas, TX']]);
+  // The rule on its own: [city, state, country, from].
+  const place = (s, as) => page.run(`(p=>[p.city,p.region,p.country,p.from])(shipToPlace(${JSON.stringify(s)},${JSON.stringify(as)}))`);
+  assert.deepEqual(place({ country: 'US' }, null), ['', '', '', ''], 'not checked yet');
+  assert.deepEqual(place({ country: 'CA' }, { notFound: true, destCity: 'Toronto', destState: 'ON', destCountry: 'CAN' }), ['', '', '', ''], 'not tracked by AfterShip');
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Seattle', destState: 'WA', destCountry: 'USA' }), ['Seattle', 'WA', 'US', 'AfterShip']);
+  assert.deepEqual(place({ country: '' }, { destCity: 'London', destState: '', destCountry: 'GBR' }), ['London', '', 'GB', 'AfterShip']);
+  assert.deepEqual(place({ country: 'US' }, { destCity: 'Dallas', destState: 'TX', destCountry: 'US' }), ['Dallas', 'TX', 'US', 'AfterShip'], 'two letters too');
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Winnipeg', destState: 'MB', destCountry: '' }), ['Winnipeg', 'MB', 'CA', 'AfterShip'], 'no AfterShip country: SAP\'s');
+  assert.deepEqual(place({ country: 'CA' }, { state: 'delivered', destCity: '', destCountry: '', lastEvent: { city: 'Buffalo, NY, USA' } }), ['Buffalo', 'NY', 'US', 'AfterShip'], 'the scan\'s own country');
+  assert.deepEqual(place({ country: 'CA' }, { state: 'transit', destCity: '', destCountry: '', lastEvent: { city: 'Winnipeg, MB, CAN' } }), ['', '', '', '']);
+  assert.deepEqual(place({ country: 'US' }, { state: 'transit', destCity: '', destState: 'TX', destCountry: 'USA' }), ['', 'TX', 'US', 'AfterShip']);
+  // A shared snapshot keeps them: AfterShip's statuses travel with it.
+  let payload = '';
+  Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
+  await page.ctx.exportShareSnapshot();
+  const snap = loadPage({ today: '2026-10-20' });
+  Object.assign(snap.ctx, { fetch: async () => { throw new Error('no network'); }, location: { href: 'file:///snap.html', protocol: 'file:' } });
+  snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
+  snap.els['embedded-snapshot-data'].textContent = payload;
+  await snap.run('loadEmbeddedSnapshot()');
+  assert.deepEqual([N.usa, N.parcel, N.ups, N.delivered, N.freight].map((n) => placeOf(snap, n)), ['US-TX:dallas', 'US-WA:seattle', 'CA-ON', 'US-OH:columbus', '']);
+  assert.deepEqual([...page.errors, ...snap.errors], []);
+});
+
+// Only the busiest dots are named (SHP_MAP_LABELS, 8, on a wide screen or in print; 5 from 641 to 980px; 3 on a phone):
+// the others name their places in their tips. A picked dot is named first, in one of those places; a click on it again
+// shows every destination.
+test('2v6.9 cities: the 8 busiest dots are named on a wide screen or in print, 5 below 981px, 3 on a phone; a picked dot is named first; clicking it again clears the pick', async () => {
+  const page = await asPage(FAR_ROWS, FAR_AS);
+  assert.ok(page.run('shpMapLayout()'), 'the wide layout');
+  assert.equal(page.run('SHP_MAP_LABELS'), 8);
+  assert.deepEqual(mapDots(page).map((d) => d.key.includes('+')), Array(FAR.length).fill(false), 'far apart: a dot each');
+  assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, 8).sort());
+  assert.doesNotMatch(mapOf(page), /class="shp-lbl minor"/, 'city labels are not dimmed');
+  assert.match(mapOf(page), /<span class="shp-lbl hub" /, 'the hub keeps its label');
+  assert.match(mapDots(page).find((d) => d.key === 'CA-QC:montreal').tip, /^Montréal, QC: 1 shipment\n/, 'an unnamed dot names its city in its tip');
+  // Miami (one shipment) picked: pressed and named first, in place of the 8th busiest (Los Angeles); the table lists
+  // its shipment.
+  page.run("shipPickDest('US-FL:miami')");
+  assert.equal(mapLabels(page)[0], 'Miami, FL');
+  assert.deepEqual(mapLabels(page).sort(), ['Miami, FL', ...FAR_NAMES.slice(0, 7)].sort());
+  const miami = mapDots(page).find((d) => d.key === 'US-FL:miami');
+  assert.deepEqual([miami.pressed, miami.pick], [true, '']);
+  assert.match(miami.tip, /\nClick to show all\.$/);
+  assert.deepEqual(tableRows(page), [farNum(8, 0)]);
+  // A click on the picked dot clears the pick.
+  page.run(`shipPickDest('${miami.pick}')`);
+  assert.equal(page.run('shipDestSel'), '');
+  assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, 8).sort());
+  assert.equal(mapDots(page).find((d) => d.key === 'US-FL:miami').pressed, false);
+  // 641 to 980px: 5; a phone: 3; with Miami picked, Miami and the 4 (or 2) busiest.
+  for (const [w, n] of [[980, 5], [641, 5], [640, 3], [400, 3]]) {
+    page.ctx.innerWidth = w;
+    page.run('renderResults()');
+    assert.equal(page.run('shpMapLayout()'), null, `${w}px`);
+    assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, n).sort(), `${w}px`);
+    page.run("shipPickDest('US-FL:miami')");
+    assert.deepEqual(mapLabels(page).sort(), ['Miami, FL', ...FAR_NAMES.slice(0, n - 1)].sort(), `${w}px, Miami picked`);
+    page.run("shipPickDest('')");
+  }
+  // Printing: 8, whatever the window.
+  page.run('printMode=true;renderResults()');
+  assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, 8).sort(), 'print');
+  page.run('printMode=false;renderResults()');
+  assert.deepEqual(page.errors, []);
+});
+
+// The Destination filter lists cities; a shared dot's pick lists the shipments to all its towns; the details say where
+// a shipment goes; the Shipments search finds a city, not a country; the Cross-border list names the city.
+test('2v6.9 cities: the Destination filter, a shared dot\'s pick, the Ship to detail, the Shipments search and the Cross-border list use the cities', async () => {
+  const page = await asPage(TOWN_ROWS, TOWN_AS);
+  assert.deepEqual(destOptions(page), ['All', 'Elkhart, IN', 'Goshen, IN', 'Middlebury, IN', 'Red Deer, AB', 'Toronto, ON', 'United States']);
+  // The shared Indiana dot picked: the six shipments to its three towns; the filter says where.
+  page.run(`shipPickDest('${INDIANA}')`);
+  assert.deepEqual(tableRows(page).sort(), [0, 1, 2, 3, 4, 5].map(townNum).sort());
+  assert.match(html(page), /id="dzf-ship-dest"[^>]*>[\s\S]*?<span class="dz-filter-v">Elkhart, IN \+ 2 nearby<\/span>/);
+  const dot = mapDots(page)[0];
+  assert.deepEqual([dot.key, dot.pressed, dot.pick], [INDIANA, true, '']);
+  page.run(`shipPickDest('${dot.pick}')`);
+  assert.equal(tableRows(page).length, 10);
+  // One town from the filter: its shipments only; the shared dot holds it, so it shows the pick and a click clears it.
+  page.run("shpPickDest('US-IN:goshen')");
+  assert.deepEqual(tableRows(page).sort(), [townNum(3), townNum(4)].sort());
+  assert.match(html(page), /<span class="dz-filter-v">Goshen, IN<\/span>/);
+  assert.deepEqual([mapDots(page)[0].pressed, mapDots(page)[0].pick], [true, '']);
+  assert.equal(mapLabels(page)[0], 'Elkhart, IN +2');
+  // A pick of two places counts for the dot holding the first.
+  page.run("shpPickDest('US-IN:middlebury+CA-ON:toronto')");
+  assert.deepEqual(mapDots(page).filter((d) => d.pressed).map((d) => d.key), [INDIANA]);
+  page.run("shpPickDest('')");
+  // Details: Ship to names the city, its state and the country; a destination with no city: the country; not checked
+  // yet: the SAP country.
+  page.run(`toggleShipment('${townNum(0)}');toggleShipment('${townNum(8)}');toggleShipment('${townNum(9)}')`);
+  assert.equal(factOf(page, townNum(0), 'Ship to'), 'Elkhart, IN · United States (US)');
+  assert.equal(factTip(page, townNum(0), 'Ship to'), 'Destination from AfterShip (the carrier).');
+  assert.equal(factOf(page, townNum(8), 'Ship to'), 'United States (US)');
+  assert.equal(factOf(page, townNum(9), 'Ship to'), 'United States (US)');
+  assert.equal(factTip(page, townNum(9), 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
+  // A city the table does not have, as written (its state added once); a city in a country group, then the country.
+  const text = (s) => page.run(`shipToText(${JSON.stringify(s)})`);
+  assert.equal(text({ toCountry: 'US', dest: 'US', toCity: 'Nowhereville', toRegion: 'IN' }), 'Nowhereville, IN · United States (US)');
+  assert.equal(text({ toCountry: 'US', dest: 'US', toCity: 'Smallville, IN', toRegion: 'IN' }), 'Smallville, IN · United States (US)');
+  assert.equal(text({ toCountry: 'MX', dest: 'US', toCity: 'Monterrey' }), 'Monterrey · Mexico (MX)');
+  // The Shipments search finds the destination city, not the country names.
+  page.run("shipSearch('goshen')");
+  assert.deepEqual(tableRows(page).sort(), [townNum(3), townNum(4)].sort());
+  page.run("shipSearch('Red Deer')");
+  assert.deepEqual(tableRows(page), [townNum(6)]);
+  for (const q of ['united states', 'canada', 'us']) {
+    page.run(`shipSearch(${JSON.stringify(q)})`);
+    assert.deepEqual(tableRows(page), [], q);
+  }
+  page.run("shipSearch('')");
+  // Cross-border (SAP ship-to country outside Canada, not delivered): each names its city, else the country.
+  const where = (i) => (TOWNS[i][0] ? `${TOWNS[i][0]}, ${TOWNS[i][1]}` : i === 8 ? 'United States' : 'United States (US)');
+  assert.deepEqual(crossRows(page).sort(), [0, 1, 2, 3, 4, 5, 8, 9].map((i) => [townNum(i), `SO ${700 + i} · ${where(i)}`]).sort());
+  assert.deepEqual(page.errors, []);
+});
+
 // --- The hosted site: /api/notes, /api/people and /api/shipping over one KV stand-in ---
 function memoryKv() {
   const map = new Map();
@@ -795,10 +1087,10 @@ async function hostedSite({ index = null, key = true } = {}) {
   };
   return site;
 }
-async function hostedBrowser(site, name, today = TODAY) {
+async function hostedBrowser(site, name, today = TODAY, files = [exportFile()]) {
   const page = loadPage({ today, storage: { spyderKpiEditorName: name } });
   Object.assign(page.ctx, { fetch: site.fetch, location: { href: ORIGIN + '/', protocol: 'https:' } });
-  await upload(page, [exportFile()]);
+  await upload(page, files);
   await page.ctx.syncSharedNotes();
   page.run("setTab('shipping')");
   await settle();
