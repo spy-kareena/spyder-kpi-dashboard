@@ -149,7 +149,7 @@ test('an override, note and cause set in one browser show in another browser, wi
   assert.deepEqual(line(b, '900'), { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', deleted: false });
   assert.equal(atRiskCount(b), 1, 'Not At Risk from the other browser takes the line off At Risk');
   assert.match(sidebar(b), /Notes shared · Last edit Kareena · Oct 8/);
-  assert.match(sidebar(b), /data-tip="Notes, overrides and causes are saved for everyone who signs in; last edit by Kareena: Oct 8, 2026/);
+  assert.match(sidebar(b), /data-tip="Notes are shared with everyone who signs in; last edit by Kareena: Oct 8, 2026/);
   // The copy is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(saved(b)[k], entry);
   // Opening the page costs one read; nothing newer here, so nothing is sent back.

@@ -536,7 +536,7 @@ test('every tile, button, link, field and shipment row on the page has a plain-E
       assert.match(tag, /data-tip="[^"]{12,}"|aria-label="[^"]{6,}"/, tag);
     }
     assert.equal((own.match(/<button type="button" class="shp-tile/g) || []).length, 4);
-    assert.match(page.run('PAGE_TIPS.shipping'), /AfterShip every 2 hours/);
+    assert.match(page.run('PAGE_TIPS.shipping'), /every 2 hours/);
     assert.doesNotMatch(m.replace(/<[^>]+>/g, ' '), /\bundefined\b|\bNaN\b|Invalid Date|\[object Object\]/);
     assert.doesNotMatch(m, /FedEx statuses|Live FedEx|Not checked/);
     const count = (needle) => m.split(needle).length - 1;

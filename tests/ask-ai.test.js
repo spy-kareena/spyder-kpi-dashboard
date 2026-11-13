@@ -607,7 +607,7 @@ test('"company" is never used: Spyder Controls is named on Connect an AI, in the
   const files = ['functions/api/ai/[[path]].js', 'docs/AI_ASSISTANT.md', 'docs/MCP.md'].map((f) => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
   for (const [name, text] of [['Connect an AI', connect], ['Ask AI panel', panel], ['Ask AI code', app], ...files]) assert.doesNotMatch(text, /\bcompan(y|ies)\b/i, name);
   assert.match(connect, /Use only an AI app Spyder Controls approves\./);
-  assert.match(panel, /data-tip="Paid \(Anthropic, ChatGPT\): billed to Spyder Controls/);
+  assert.match(panel, /data-tip="Who answers\n• Paid: billed to Spyder Controls/);
   assert.match(files[2][1], /Use only an AI app Spyder Controls approves for this data\./);
   assert.match(files[1][1], /outside providers that host the models/);
 });

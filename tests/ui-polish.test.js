@@ -382,6 +382,16 @@ test('a tip written as heading and bullets shows one line each; its text reads e
   assert.equal(page.ctx.tipAttr('A\n• b'), ' data-tip="A\n• b"');
 });
 
+test('short tips: the gear lists two kinds of Data check issue as bullets; bulleted section help keeps its click line apart', () => {
+  const page = loadPage();
+  assert.equal(page.ctx.hdrGearTip(''), 'Settings');
+  assert.equal(page.ctx.hdrGearTip('1 row or file needs attention'), 'Settings · Data check: 1 row or file needs attention.');
+  assert.equal(page.ctx.hdrGearTip('2 rows or files need attention, 3 items to review'), 'Settings · Data check\n• 2 rows or files need attention\n• 3 items to review');
+  page.run(`SECTION_INFO['t3-a']={what:'Open lines\\n• 3 late',click:'Click to list them.'};SECTION_INFO['t3-b']={what:'Open lines.',click:'Click to list them.'}`);
+  assert.equal(page.ctx.sectionTipText('t3-a'), 'Open lines\n• 3 late\nClick to list them.');
+  assert.equal(page.ctx.sectionTipText('t3-b'), 'Open lines. Click to list them.');
+});
+
 test('a tip queued on focus is dropped when focus moves on before it shows (no stray bubble, no swallowed Esc)', async () => {
   const page = loadPage();
   const rig = tipRig(page);
