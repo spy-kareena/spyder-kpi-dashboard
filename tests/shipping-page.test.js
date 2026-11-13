@@ -834,7 +834,7 @@ test('2v6.9 cities: no AfterShip destination, no dot: a file copy\'s shipments w
   assert.equal(page.run('allLoadedRows.some(r=>\'shipToCity\' in r||\'shipToState\' in r)'), false, 'the columns are not read');
   assert.deepEqual(mapDots(page), []);
   assert.equal(mapNote(page), '6 shipments waiting for AfterShip');
-  assert.match(mapOf(page), /<span class="shp-pillnote" data-tip="AfterShip has no destination for these yet \(not checked yet, or the carrier gives none\): in the table, not on the map\.">/);
+  assert.match(mapOf(page), /<span class="shp-pillnote" data-tip="In the table, not on the map\.\n• Waiting: AfterShip has not checked these yet, or the carrier has not given a destination yet\.\n• Not tracked: AfterShip does not recognise the number\.">/);
   assert.match(mapOf(page), /<div class="dz-meta">0 shipments from Lacombe · 0 destinations<\/div>/);
   // Cross-border and the details' Ship to: the SAP ship-to country.
   assert.deepEqual(page.run(`[${JSON.stringify(N.usa)},${JSON.stringify(N.parcel)}].map(n=>(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number===n)))`), [['US', true], ['CA', false]]);

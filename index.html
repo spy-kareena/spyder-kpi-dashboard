@@ -2580,7 +2580,7 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-route{fill:none;stroke:var(--dz-indigo);stroke-width:1.2;stroke-linecap:round;opacity:.5;vector-effect:non-scaling-stroke}
 .shp-route.late{stroke:var(--dz-risk);opacity:.55}
 .shp-route.done{stroke:var(--dz-teal);opacity:.3}
-.shp-lbl{position:absolute;z-index:1;transform:translate(-50%,-50%);font-size:11px;line-height:14px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 2px #fff}
+.shp-lbl{position:absolute;z-index:2;transform:translate(-50%,-50%);font-size:11px;line-height:14px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 2px #fff}
 .shp-lbl.hub{font-weight:600}
 .shp-hub{position:absolute;z-index:1;width:22px;height:22px;margin:-11px 0 0 -11px;border:1.5px solid var(--dz-ink-1);border-radius:50%;box-sizing:border-box;pointer-events:none}
 .shp-hub::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--dz-ink-1)}
@@ -18630,7 +18630,10 @@ function shipNE(lon,lat){
 const SHIP_ISO3={USA:'US',CAN:'CA',MEX:'MX',GBR:'GB',IRL:'IE',FRA:'FR',DEU:'DE',NLD:'NL',BEL:'BE',LUX:'LU',CHE:'CH',AUT:'AT',
   ITA:'IT',ESP:'ES',PRT:'PT',SWE:'SE',NOR:'NO',DNK:'DK',FIN:'FI',ISL:'IS',POL:'PL',CZE:'CZ',AUS:'AU',NZL:'NZ',JPN:'JP',
   CHN:'CN',KOR:'KR',TWN:'TW',HKG:'HK',SGP:'SG',IND:'IN',BRA:'BR',ARG:'AR',CHL:'CL',COL:'CO',PER:'PE',ZAF:'ZA',ARE:'AE',
-  ISR:'IL',TUR:'TR',PRI:'PR'};
+  ISR:'IL',TUR:'TR',PRI:'PR',SVK:'SK',HUN:'HU',ROU:'RO',BGR:'BG',GRC:'GR',HRV:'HR',SVN:'SI',SRB:'RS',EST:'EE',LVA:'LV',
+  LTU:'LT',UKR:'UA',RUS:'RU',MYS:'MY',THA:'TH',VNM:'VN',IDN:'ID',PHL:'PH',PAK:'PK',SAU:'SA',EGY:'EG',NGA:'NG',KEN:'KE',
+  MAR:'MA',ECU:'EC',URY:'UY',VEN:'VE',CRI:'CR',PAN:'PA',GTM:'GT',HND:'HN',SLV:'SV',NIC:'NI',CUB:'CU',DOM:'DO',JAM:'JM',
+  BHS:'BS'};
 const SHIP_CITY_WORDS={saint:'st',sainte:'st',ste:'st',st:'st',mount:'mt',mt:'mt',fort:'ft',ft:'ft'};
 // Letters that do not split into a base letter and an accent.
 const SHIP_CITY_CHARS={'ł':'l','ø':'o','æ':'ae','œ':'oe','ß':'ss','ı':'i','đ':'d','ð':'d','þ':'th'};
@@ -18725,6 +18728,8 @@ function shipLocParts(v){
 function shipToPlace(s,as){
   const none={city:'',region:'',country:'',from:''};
   if(!as||as.notFound)return none;
+  // A country AfterShip names that the page does not know: no place (never SAP's country instead).
+  if(String(as.destCountry||'').trim()&&!shipCountryCode(as.destCountry))return {...none,from:'AfterShip'};
   const asCc=shipCountryCode(as.destCountry),cc=asCc||shipCountryCode(s&&s.country);
   const from='AfterShip';
   if(as.destCity)return {city:String(as.destCity),region:String(as.destState||''),country:cc,from};
@@ -18777,6 +18782,8 @@ function shipDestMatch(s){
 function shipToCityText(s){
   const key=shipPlaceKey(s),c=key.includes(':')?shipCityAt(key):null;
   if(c)return c.group.length===5?`${c.name}, ${c.group.slice(3)}`:c.name;
+  // A destination that is only a state or province: its name ("Texas").
+  if(!s.toCity&&key.length===5&&SHIP_PLACES[key])return SHIP_PLACES[key].name;
   const city=String(s.toCity||'').trim();
   if(!city)return '';
   const st=String(s.toRegion||'').trim();
@@ -18789,12 +18796,13 @@ function shipToText(s){
 }
 // Shipments grouped by place; a place is delayed (red) if any of its shipments is, else on the way (indigo) while any
 // is not delivered, else delivered (teal).
+// untracked: off the map because AfterShip does not track the number (the rest of unplaced wait for AfterShip).
 function shipMapPlaces(list){
   const map=new Map();
-  let unplaced=0;
+  let unplaced=0,untracked=0;
   for(const s of list){
     const key=shipPlaceKey(s);
-    if(!key){unplaced++;continue;}
+    if(!key){unplaced++;if(s.as&&s.as.notFound)untracked++;continue;}
     let g=map.get(key);
     if(!g){g={key,list:[],late:0,moving:0,done:0};map.set(key,g);}
     g.list.push(s);
@@ -18802,7 +18810,7 @@ function shipMapPlaces(list){
   }
   const places=[...map.values()].map(g=>({...g,n:g.list.length,state:g.late?'late':g.moving?'moving':'done'}));
   places.sort((a,b)=>b.n-a.n||a.key.localeCompare(b.key));
-  return {places,unplaced,placed:list.length-unplaced};
+  return {places,unplaced,untracked,placed:list.length-unplaced};
 }
 // A route from the hub: a great-circle arc lifted 4 degrees at its middle (like the design); across the date line one
 // gentle curve in the map plane.
@@ -18825,8 +18833,10 @@ function shipArcPath(a,b){
   }
   return d;
 }
-// 2v6.9 cities: how many dots are named on the map (busiest first; a picked one always is).
+// 2v6.9 cities: how many dots are named on the map (busiest first; a picked one first): SHP_MAP_LABELS on a wide screen
+// (lay: shpMapLayout()) or in print, 5 below 981px, 3 on a phone.
 const SHP_MAP_LABELS=8;
+function shpMapLabelCount(lay){return shpMapPhone()?3:lay||printMode?SHP_MAP_LABELS:5;}
 const shpDotSize=n=>2*(4+Math.sqrt(n)*1.3)+2.5;
 // A dot's label: "Elkhart, IN", or "Elkhart, IN +2" when nearby places share it.
 function shipPlaceLabel(p){
@@ -18907,7 +18917,9 @@ function shpMapRefit(){
   shpMapTimer=setTimeout(()=>{
     const el=typeof document!=='undefined'&&document.getElementById?document.getElementById('results-screen'):null;
     if(printMode||activeTab!=='shipping'||!shpMapDrawn||!el||el.style.display!=='block'||!el.querySelector('.shp-map'))return;
-    const {vw,vh,zoom,k,w}=shpMapDrawn;
+    const {vw,vh,zoom,k,w,labels}=shpMapDrawn;
+    // A phone turned (or the window dragged across 640px / 981px) names a different number of places.
+    if(shpMapLabelCount(shpMapLayout())!==labels){renderResults();return;}
     const lay=shpMapLayout();
     // The wide layout is drawn for one card width (the dots keep clear of the cards over the map): a small change
     // is enough to draw it again.
@@ -18918,7 +18930,7 @@ if(typeof addEventListener==='function')addEventListener('resize',shpMapRefit);
 // The map card. Dots, labels and the hub are HTML laid over the SVG (land, borders, routes) at % positions of one
 // stage whose aspect ratio is the view box's, so they keep their pixel size while the map scales on a narrow screen.
 function renderShipMap(list){
-  const {places,unplaced,placed}=shipMapPlaces(list);
+  const {places,unplaced,untracked,placed}=shipMapPlaces(list);
   const hub=shipNE(SHIP_HUB.lon,SHIP_HUB.lat);
   let dots=places.map(p=>{const c=shipPlaceCoord(p.key);return {p,c,xy:shipNE(c.lon,c.lat),d:shpDotSize(p.n)};});
   // The design's view (SHIP_MAP.W x SHIP_MAP.H map units: North America and the Atlantic), centred on Lacombe and the
@@ -18956,7 +18968,9 @@ function renderShipMap(list){
   };
   // 2v6.9b: the legend (and the no-ship-to-country note) sit small over the faded bottom-left of the map (owner): the
   // labels keep out of that corner, and a dot that would fall in it moves the view's bottom down.
-  const noPlaceText=unplaced?`${shipPlural(unplaced,'shipment','shipments')} waiting for AfterShip`:'';
+  // Off the map: waiting for AfterShip (not checked yet, or no destination from the carrier yet) or not tracked by it.
+  const waiting=unplaced-untracked;
+  const noPlaceText=[waiting?`${shipPlural(waiting,'shipment','shipments')} waiting for AfterShip`:'',untracked?`${fmtNum(untracked)} not tracked by AfterShip`:''].filter(Boolean).join(' · ');
   const footBox=v=>{
     const vx=phone?x0+(-v.shift/v.zoom)*v.vw:x0;
     const room=(phone?shpMapCol():lay?lay.w-lay.pw:shpMapCol())-60;
@@ -18973,7 +18987,7 @@ function renderShipMap(list){
   }
   const {vw,vh,zoom,shift,scale,u}=viewOf();
   const at=xy=>`left:${((xy[0]-x0)/vw*100).toFixed(2)}%;top:${((xy[1]-y0)/vh*100).toFixed(2)}%`;
-  shpMapDrawn={vw,vh,zoom,k:scale,w:lay?lay.w:0};
+  shpMapDrawn={vw,vh,zoom,k:scale,w:lay?lay.w:0,labels:shpMapLabelCount(lay)};
   // Labels stay left of the cards on a wide screen (a little into the fade at most).
   const vx0=phone?x0+(-shift/zoom)*vw:x0,vx1=phone?x0+((1-shift)/zoom)*vw:lay?x0+(lay.a+40)*u:x1;
   const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u],footBox({vw,vh,zoom,shift,u})];
@@ -18992,17 +19006,20 @@ function renderShipMap(list){
   // 2v6.9 cities: only the busiest places are named: up to SHP_MAP_LABELS on a wide screen or in print, 5 below 981px,
   // 3 on a phone, a picked one first; the other dots name their places in their tips. A dot whose label fits nowhere
   // gives its turn to the next. Labels keep clear of the hub, the legend, each other and the dots likely to be named;
-  // they may cover a small unnamed dot. The hub's label comes after them, where there is room.
-  const maxLabels=phone?3:lay||printMode?SHP_MAP_LABELS:5;
+  // they may cover a small unnamed dot (and are drawn over it). The hub's label comes after the first three.
+  const maxLabels=shpMapLabelCount(lay);
   const order=dots.map((dt,i)=>({...dt,i,sel:shpDotSel(dt.p)})).sort((a,b)=>(b.sel-a.sel)||(a.i-b.i));
   order.slice(0,maxLabels+4).forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
+  let hubLbl=null,hubTried=false;
+  const tryHub=()=>{hubTried=true;hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);};
   for(const {p,xy,d} of order){
     if(labels.length>=maxLabels)break;
+    if(labels.length===3&&!hubTried)tryHub();
     const text=shipPlaceLabel(p);
     const pos=place(xy[0],xy[1],d*u/2,text.length*6.4+8);
     if(pos)labels.push(`<span class="shp-lbl" style="${at(pos)}">${esc(text)}</span>`);
   }
-  const hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);
+  if(!hubTried)tryHub();
   const routes=dots.map(({p,c},i)=>{
     const d=shipArcPath([SHIP_HUB.lon,SHIP_HUB.lat],[c.lon,c.lat]);
     return d?`<path class="shp-route ${p.state}" style="--i:${i}" d="${d}"/>`:'';
@@ -19013,7 +19030,7 @@ function renderShipMap(list){
     return `<button type="button" class="shp-dot ${p.state}${sel?' sel':''}" style="${at(xy)};width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;margin:${(-d/2).toFixed(2)}px 0 0 ${(-d/2).toFixed(2)}px;--i:${i}" data-focus-key="ship-dot-${esc(p.key)}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(`${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}`)}" onclick="shipPickDest('${sel?'':esc(p.key)}')" data-tip="${esc(tip)}"></button>`;
   }).join('');
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
-  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('AfterShip has no destination for these yet (not checked yet, or the carrier gives none): in the table, not on the map.')}>${esc(noPlaceText)}</span>`:'';
+  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('In the table, not on the map.\n• Waiting: AfterShip has not checked these yet, or the carrier has not given a destination yet.\n• Not tracked: AfterShip does not recognise the number.')}>${esc(noPlaceText)}</span>`:'';
   // 2v6.9b: the legend sits at the bottom left of the map (it was in the title row), with the no-ship-to-country note.
   const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
   const foot=`<div class="shp-map-foot">${legend}${noPlace}</div>`;
@@ -19024,10 +19041,10 @@ function renderShipMap(list){
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
         <g class="shp-routes">${routes}</g>
       </svg>
-      ${labels.join('')}
-      ${hubLbl?`<span class="shp-lbl hub" style="${at(hubLbl)}">${esc(hubText)}</span>`:''}
       <span class="shp-hub" style="${at(hub)}" aria-hidden="true"></span>
       ${dotHtml}
+      ${labels.join('')}
+      ${hubLbl?`<span class="shp-lbl hub" style="${at(hubLbl)}">${esc(hubText)}</span>`:''}
     </div>
     ${foot}
   </section>`;
