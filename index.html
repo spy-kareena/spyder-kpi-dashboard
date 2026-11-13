@@ -849,7 +849,7 @@ button.trow.po-wh-cols{font-size:13px}
 @media print{.draw{stroke-dashoffset:0!important}.lines-table{table-layout:auto}.print-only{display:block!important;font-size:9pt;color:var(--gray-600)}}
 /* --- Stream A: tooltips (section help on the titles), hints, toast, page descriptions, scorecard groups --- */
 /* Tooltip bubble: one shared element (#tip-layer) placed next to the element with data-tip by the page script */
-.tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:normal;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
+.tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:pre-line;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
 .tip-layer[data-side="bottom"]{transform:translateY(-2px)}
 .tip-layer.open{opacity:1;transform:none;pointer-events:auto}
 .tip-layer[hidden]{display:none}
@@ -859,6 +859,13 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer[data-side="left"] .tip-arrow{right:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-layer[data-side="right"] .tip-arrow{left:-4px;top:calc(var(--arrow-y) - 4px)}
 .tip-text{position:relative}
+/* A tip written as "Heading\n• fact\n• fact" shows one line each; a bullet's wrapped words line up under its text */
+.tip-text .tip-line,.tip-text .tip-li{display:block}
+.tip-text .tip-li{padding-left:.85em;text-indent:-.85em}
+.tip-text .tip-dot{display:inline-block;width:.85em;text-indent:0}
+.tip-text .tip-head{font-weight:600}
+.tip-text .tip-line+.tip-li{margin-top:3px}
+.tip-text .tip-li+.tip-line{margin-top:4px}
 /* Windows high-contrast mode drops backgrounds: keep the bubble's edge */
 @media (forced-colors:active){.tip-layer,.toast-item{border:1px solid CanvasText}}
 /* A long press shows the tip on touch screens, so it should not also open the phone's link / copy menu */
@@ -4835,7 +4842,7 @@ details.data-check>summary{font-size:13px}
   <div id="upload-screen">
     <div class="dz-pagehead misc-uphead rise">
       <div class="page-head-main misc-uphead-main"><h1 class="dz-h1 page-title">Load KPI export</h1><p class="dz-sub page-lead">Load SAP exports into one offline summary.</p></div>
-      <div class="actions misc-uphead-side"><span class="page-meta" id="upload-current-meta"></span><span class="privacy-pill" data-tip="Files are read in this browser; the hosted site also keeps the last report for everyone who signs in.">Read in your browser</span></div>
+      <div class="actions misc-uphead-side"><span class="page-meta" id="upload-current-meta"></span><span class="privacy-pill" data-tip="Files are read here; the hosted site shares the last report with everyone who signs in.">Read in your browser</span></div>
     </div>
     <div class="upload-shell single rise rise-2" id="upload-shell">
       <label id="upload-zone" class="upload-zone" tabindex="0" role="button" aria-label="Add KPI export files" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('file-input').click();}" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
@@ -4847,18 +4854,18 @@ details.data-check>summary{font-size:13px}
         </div>
         <div class="upload-actions">
           <span class="upload-chip" data-tip="Sales-order lines from the SAP KPI query.">Sales Orders</span>
-          <span class="upload-chip" data-tip="Deliveries from the same KPI export; they drive on-time delivery.">Deliveries</span>
-          <span class="upload-chip" data-tip="Purchase-order lines and receipts from the same KPI export.">Purchase Orders</span>
-          <span class="upload-chip" data-tip="The weekly Orders At Risk - Clear to Build workbook, for Build Risk.">Clear To Build</span>
-          <span class="upload-chip" data-tip="The Open Orders and Forecast tabs of the Logican sheet, as .csv or .xlsx downloads.">Logican sheet</span>
-          <span class="upload-chip" data-tip="SAP Export to Excel .xls as it is, or .xlsx, .csv and .txt files.">SAP XLS, XLSX, CSV, or TXT</span>
+          <span class="upload-chip" data-tip="Deliveries in the KPI export; used for on-time delivery.">Deliveries</span>
+          <span class="upload-chip" data-tip="PO lines and receipts in the KPI export.">Purchase Orders</span>
+          <span class="upload-chip" data-tip="The weekly Clear To Build workbook, for Build Risk.">Clear To Build</span>
+          <span class="upload-chip" data-tip="Its Open Orders and Forecast tabs, as .csv or .xlsx.">Logican sheet</span>
+          <span class="upload-chip" data-tip="The SAP .xls as exported, or .xlsx, .csv and .txt.">SAP XLS, XLSX, CSV, or TXT</span>
         </div>
       </label>
       <aside class="upload-side" id="upload-side" hidden>
         <div class="upload-current" id="upload-current" hidden></div>
       </aside>
     </div>
-    <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the KPI query and the supply / demand snapshot straight from SAP now, instead of exporting them."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
+    <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the KPI query and supply / demand straight from SAP."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
     <div class="live-load rise rise-2" id="live-load" role="status" hidden></div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
     <section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
@@ -4869,24 +4876,26 @@ details.data-check>summary{font-size:13px}
   <p class="ai-sr" id="page-announce" role="status"></p>
   <input type="file" id="add-file-input" accept=".xlsx,.xls,.csv,.txt,.tsv" multiple style="display:none" onchange="addFiles([...this.files]);this.value=''">
   <aside id="ai-panel" class="ai-panel" role="dialog" aria-labelledby="ai-title" hidden onkeydown="aiPanelKey(event)">
-    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The provider and model answering. Change them in Settings."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Provider, model and what each one receives." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close Ask AI (Esc). The chat is kept." onclick="aiToggle(false)">×</button></div>
+    <div class="ai-head"><h2 id="ai-title">Ask AI</h2><span class="ai-mode" id="ai-mode" data-tip="The provider and model answering."></span><button type="button" class="link-btn" id="ai-settings-btn" data-tip="Provider, model and data terms." onclick="aiShowSettings(true)">Settings</button><button type="button" class="ai-close" id="ai-close" aria-label="Close Ask AI" data-tip="Close (Esc). The chat is kept." onclick="aiToggle(false)">×</button></div>
     <div class="ai-settings" id="ai-settings" hidden>
-      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Paid (Anthropic, ChatGPT): billed to Spyder Controls, not used for training. Free (Groq, OpenRouter): tight limits, may keep what you send." onchange="aiSetProvider(this.value)"></select></label>
-      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models answer better but are slower, and cost more on paid providers." onchange="aiSetModel(this.value)"></select></label>
+      <label class="ai-field" for="ai-provider">AI provider<select id="ai-provider" class="select" data-tip="Who answers
+• Paid: billed to Spyder Controls, not used for training
+• Free: tight limits, may keep what you send" onchange="aiSetProvider(this.value)"></select></label>
+      <label class="ai-field" for="ai-model">Model<select id="ai-model" class="select" data-tip="Bigger models answer better, but are slower and cost more." onchange="aiSetModel(this.value)"></select></label>
       <div class="ai-notice" id="ai-notice" hidden>
         <p class="ai-notice-head"><span class="ai-tier" id="ai-tier"></span><strong>Where the data goes</strong></p>
         <p id="ai-notice-text"></p>
         <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="This provider's own data terms (new tab).">Data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Providers, costs and data terms.">Ask AI guide</a></p>
-        <label class="ai-check" data-tip="Nothing is sent until this is ticked. Kept per provider in this browser; untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
+        <label class="ai-check" data-tip="Nothing is sent until ticked. Untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
       </div>
-      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Back to the chat with this provider and model." onclick="aiBackToChat()">Back to chat</button></div>
+      <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Chat with this provider and model." onclick="aiBackToChat()">Back to chat</button></div>
       <p class="ai-status" id="ai-settings-status" role="status"></p>
     </div>
     <div class="ai-setup" id="ai-setup" hidden>
       <h3 id="ai-setup-title" tabindex="-1">Ask AI is not set up</h3>
       <p id="ai-setup-why">No AI provider has a key on this site yet.</p>
       <p>See the <a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Setup steps and costs.">Ask AI guide</a>, or connect your own AI app.</p>
-      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Set up an AI app on your computer to read your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
+      <div class="ai-row"><button type="button" class="btn btn-sm" id="ai-setup-connect" data-tip="Use an AI app on your computer with your exports." onclick="aiToggle(false);stgShowCard('connect')">Connect an AI</button></div>
     </div>
     <div class="ai-chat" id="ai-chat">
       <div class="ai-log" id="ai-log"></div>
@@ -4899,7 +4908,7 @@ details.data-check>summary{font-size:13px}
       </div>
       <div class="ai-compose">
         <textarea id="ai-input" rows="2" aria-label="Question for Ask AI" placeholder="Ask about orders, POs, warehouses… (Enter sends)" data-tip="Shift+Enter starts a new line." onkeydown="aiInputKey(event)"></textarea>
-        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send. The AI looks up the numbers it needs." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat. Earlier messages are not sent again." onclick="aiClear()">Clear chat</button></div>
+        <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-send" data-tip="Send (Enter). The AI looks up the numbers." onclick="aiSend()">Send</button><button type="button" class="btn btn-sm" id="ai-stop" data-tip="Stop waiting for this answer." onclick="aiStop()" hidden>Stop</button><button type="button" class="link-btn" id="ai-clear" data-tip="Start a new chat." onclick="aiClear()">Clear chat</button></div>
         <span class="ai-foot" id="ai-foot">Answers can be wrong. Check key numbers.</span>
       </div>
     </div>
@@ -5595,14 +5604,14 @@ function commitOverrideSelect(sel){
 function renderOverrideSelect(r){
   const key=esc(rowKey(r));
   const current=String(r.overrideStatus||'');
-  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}"${tipAttr('Your status for this line in place of the SAP one; saved at once and shared on the hosted site.')}>
+  return `<select class="row-override" data-key="${key}" onkeydown="overrideSelectEvent(this,event)" onkeyup="overrideSelectEvent(this,event)" onchange="overrideSelectEvent(this,event)" onblur="overrideSelectEvent(this,event)" aria-label="Override status for ${esc(r.documentNumber)}"${tipAttr('Your status for this line, in place of SAP’s. Saved at once.')}>
     ${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===current?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}
   </select>`;
 }
 function renderOverrideNote(r){
   const key=esc(rowKey(r));
   const placeholder=/purchase order/i.test(String(r.sourceType||''))?'Vendor update, expected date, owner…':'Why is this line late? What is the plan?';
-  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" maxlength="${NOTE_MAX_LENGTH}" placeholder="${placeholder}"${tipAttr('Why the line is late and the plan; saved as you type and shared on the hosted site.')}>${esc(r.overrideNotes||'')}</textarea>`;
+  return `<textarea class="row-note" data-key="${key}" oninput="updateRowOverride(this.dataset.key,'notes',this.value)" aria-label="Notes for ${esc(r.documentNumber)}" maxlength="${NOTE_MAX_LENGTH}" placeholder="${placeholder}"${tipAttr('Why it is late and the plan. Saved as you type.')}>${esc(r.overrideNotes||'')}</textarea>`;
 }
 function isNoteEditorVisible(r){
   const key=rowKey(r);
@@ -5614,7 +5623,7 @@ function renderNoteButton(r,label=''){
   const key=esc(rowKey(r));
   const hasNote=!!(r.overrideStatus||r.overrideNotes);
   const visible=isNoteEditorVisible(r);
-  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${label?` aria-label="${esc(`${label} override, cause and note for ${r.documentNumber}`)}"`:''}${tipAttr(hasNote?[r.overrideStatus?`Override: ${overrideLabel(r.overrideStatus)}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:'','Click to edit.'].filter(Boolean).join(' '):'Set an override or a note on this line.')}>${label||(hasNote?'Edit note':'Add note')}</button>`;
+  return `<button type="button" class="note-btn${hasNote?' has-note':''}" data-key="${key}" onclick="toggleRowNote(this.dataset.key)" aria-expanded="${visible?'true':'false'}"${label?` aria-label="${esc(`${label} override, cause and note for ${r.documentNumber}`)}"`:''}${tipAttr(hasNote?[r.overrideStatus?`Override: ${overrideLabel(r.overrideStatus)}.`:'',r.overrideNotes?`Note: ${String(r.overrideNotes).slice(0,140)}${String(r.overrideNotes).length>140?'…':''}`:''].filter(Boolean).join('\n'):'Set an override or a note on this line.')}>${label||(hasNote?'Edit note':'Add note')}</button>`;
 }
 // Ready-made comments for the note editor (sales lines and purchase-order lines); "Custom comment" leaves the note
 // box for your own words, and anything typed there is saved as it is.
@@ -5633,7 +5642,7 @@ function renderNoteNameSelect(r){
   }
   const current=readEditor()||'';
   const names=[...new Set([current,...sharedPeople.map(p=>p.name)].filter(Boolean))];
-  return `<select class="note-name" data-key="${esc(rowKey(r))}" onchange="pickNoteName(this)" aria-label="Your name"${isSnapshotView?' disabled':''}${tipAttr('Who is writing this note; it is saved with the note.')}>
+  return `<select class="note-name" data-key="${esc(rowKey(r))}" onchange="pickNoteName(this)" aria-label="Your name"${isSnapshotView?' disabled':''}${tipAttr('Your name, saved with the note.')}>
     ${current?'':'<option value="" selected disabled>Pick your name</option>'}
     ${names.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('')}
     <option value="__new">Add a new name…</option>
@@ -5647,7 +5656,7 @@ function pickNoteName(sel){
 }
 function renderNoteCommentSelect(r){
   const list=/purchase order/i.test(String(r.sourceType||''))?NOTE_COMMENTS_PO:NOTE_COMMENTS_SO;
-  return `<select class="note-comment" data-key="${esc(rowKey(r))}" onchange="pickNoteComment(this)" aria-label="Add a comment"${isSnapshotView?' disabled':''}${tipAttr('Pick a ready-made comment, or Custom comment to write your own.')}>
+  return `<select class="note-comment" data-key="${esc(rowKey(r))}" onchange="pickNoteComment(this)" aria-label="Add a comment"${isSnapshotView?' disabled':''}${tipAttr('A ready-made comment, or Custom to write your own.')}>
     <option value="" selected>Pick a comment…</option>
     ${list.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
     <option value="__custom">Custom comment…</option>
@@ -5688,7 +5697,7 @@ function renderNoteEditorRow(r,colspan){
     <div class="note-editor">
       <div class="note-picks"><label>Your name${renderNoteNameSelect(r)}</label><label>Override${renderOverrideSelect(r)}</label></div>
       <div class="note-write"><label>Comment${renderNoteCommentSelect(r)}</label><label>Note${renderOverrideNote(r)}</label></div>
-      <button type="button" class="btn btn-primary btn-sm note-done" data-key="${esc(rowKey(r))}"${tipAttr('Close the editor; changes are already saved.')} onclick="toggleRowNote(this.dataset.key)">Done</button>
+      <button type="button" class="btn btn-primary btn-sm note-done" data-key="${esc(rowKey(r))}"${tipAttr('Close. Changes are already saved.')} onclick="toggleRowNote(this.dataset.key)">Done</button>
     </div>
   </td></tr>`;
 }
@@ -7533,9 +7542,9 @@ function impRender(){
     const [chipTone,chipText]=IMP_TONE[c.tone];
     return `<section class="imp-file ${c.tone}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[c.tone]}">${dzIconSvg(c.tone==='info'?'layers':'alert')}</span><div class="imp-file-main"><p class="imp-name">${esc(c.title)}</p></div>${dzChip(chipText,chipTone)}</div><div class="imp-issue"><p class="imp-lbl">What happened</p><p>${esc(c.what)}</p>${c.examples&&c.examples.length?`<ul class="imp-ex">${c.examples.map(x=>`<li>${esc(x)}</li>`).join('')}${c.more?`<li>…and ${fmtNum(c.more)} more (Data check lists them)</li>`:''}</ul>`:''}${c.fix.length?`<p class="imp-lbl">How to fix</p><ol class="imp-fix">${c.fix.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`:''}</div></section>`;
   }).join('')}`:'';
-  panel.innerHTML=`<div class="ai-head imp-head"><h2 id="imp-title" tabindex="-1">Import</h2><span class="ai-mode">${esc(counts)}</span><button type="button" class="ai-close" data-focus-key="imp-close" aria-label="Close import report" onclick="impClose()"${tipAttr('Close (Esc). Reopen it from the export date in the header.')}>×</button></div>
+  panel.innerHTML=`<div class="ai-head imp-head"><h2 id="imp-title" tabindex="-1">Import</h2><span class="ai-mode">${esc(counts)}</span><button type="button" class="ai-close" data-focus-key="imp-close" aria-label="Close import report" onclick="impClose()"${tipAttr('Close (Esc). Reopen it from the header date.')}>×</button></div>
     <div class="imp-body">${head}<h3 class="imp-h3">Files</h3>${files}${checks}<p class="imp-note">Drop files anywhere on the page to add them.</p></div>
-    <div class="imp-foot"><button type="button" class="dz-btn" data-focus-key="imp-add" onclick="impPick()"${tipAttr('Choose more files to add (several at once is fine).')}>${IMP_UPLOAD_SVG}Add files</button><button type="button" class="dz-btn primary" data-focus-key="imp-done" onclick="impClose()">${hasLoadedData()&&document.getElementById('results-screen').style.display==='block'?'View dashboard':'Close'}</button></div>`;
+    <div class="imp-foot"><button type="button" class="dz-btn" data-focus-key="imp-add" onclick="impPick()"${tipAttr('Add more files; several at once is fine.')}>${IMP_UPLOAD_SVG}Add files</button><button type="button" class="dz-btn primary" data-focus-key="imp-done" onclick="impClose()">${hasLoadedData()&&document.getElementById('results-screen').style.display==='block'?'View dashboard':'Close'}</button></div>`;
   const body=panel.querySelector('.imp-body');
   if(body)body.scrollTop=scroll;
   restoreFocus(panel,focus);
@@ -7544,7 +7553,7 @@ function impFileHtml(f){
   const [chipTone,chipText]=IMP_TONE[f.status];
   const rows=f.rows===null?'':impCount(f.rows,f.rowWord);
   const meta=[f.kindLabel,rows,f.meta,f.earlier?'Loaded earlier':''].filter(Boolean).join(' · ');
-  const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(`Renamed by the AI before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with AI: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
+  const mapped=f.mapped?`<p class="imp-mapped" tabindex="0"${tipAttr(f.mapped.pairs.length>2?`Renamed by AI before reading\n${f.mapped.pairs.map(([a,b])=>`• ${a} → ${b}`).join('\n')}`:`Renamed by AI before reading: ${f.mapped.pairs.map(([a,b])=>`${a} → ${b}`).join(', ')}.`)}>${IMP_SPARK}<span>Matched with AI: ${esc(`${f.mapped.pairs[0][0]} → ${f.mapped.pairs[0][1]}`)}${f.mapped.pairs.length>1?` and ${fmtNum(f.mapped.pairs.length-1)} more`:''}</span></p>`:'';
   const issues=f.issues.map(x=>`<div class="imp-issue ${x.tone}"><p class="imp-lbl">${x.tone==='info'?'Good to know':'What happened'}</p><p>${esc(x.what)}</p>${x.missing&&x.missing.length?`<p class="imp-missing">${x.missing.map(m=>`<code>${esc(m)}</code>`).join('')}</p>`:''}<p class="imp-lbl">${x.tone==='info'?'To add them':'How to fix'}</p><ol class="imp-fix">${x.fix.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>${x.ai?impAiHtml(f):''}</div>`).join('');
   return `<section class="imp-file ${f.status}" aria-label="${esc(`${f.name}: ${chipText}`)}"><div class="imp-file-head"><span class="imp-ico" style="--ico:${IMP_ICO[f.status]}">${dzIconSvg('file')}</span><div class="imp-file-main"><p class="imp-name" title="${esc(f.name)}">${esc(f.name)}</p><p class="imp-meta">${esc(meta)}</p></div>${dzChip(chipText,chipTone)}</div>${mapped}${issues}</section>`;
 }
@@ -7567,8 +7576,8 @@ function impAi(){
 }
 function impAiHtml(f){
   const a=impAi(),st=impState.ai.get(f.file)||{},i=f.i;
-  const sendTip='Sends only the file name, header row and first 5 rows to the AI to match the columns. Nothing changes until you click Apply.';
-  if(!a.ok)return `<div class="imp-ai"><button type="button" class="dz-btn imp-ai-btn" data-focus-key="imp-ai-${i}" aria-disabled="true"${tipAttr(`${a.why} ${a.checking?'':'The steps above work without it.'}`)}>${IMP_SPARK}${a.checking?'Fix with AI…':'Fix with AI (hosted site only)'}</button></div>`;
+  const sendTip='Sends the file name, header row and first 5 rows to match the columns. Nothing changes until Apply.';
+  if(!a.ok)return `<div class="imp-ai"><button type="button" class="dz-btn imp-ai-btn" data-focus-key="imp-ai-${i}" aria-disabled="true"${tipAttr(`${a.why} ${a.checking?'':'The steps above work without it.'}`.trim())}>${IMP_SPARK}${a.checking?'Fix with AI…':'Fix with AI (hosted site only)'}</button></div>`;
   if(st.step==='consent'){
     const ok=aiConsented('anthropic');
     return `<div class="imp-ai imp-box"><p><b>Fix with AI</b> sends only the file name, header row and first 5 rows to ${esc(a.p.short)}.</p>${a.p.dataNotice?`<p class="imp-small">${esc(a.p.dataNotice)}${/^https:\/\//.test(String(a.p.termsUrl||''))?` <a href="${esc(a.p.termsUrl)}" target="_blank" rel="noopener noreferrer">Data terms</a>`:''}</p>`:''}<label class="ai-check imp-check"><input type="checkbox" data-focus-key="imp-consent-${i}"${ok?' checked':''} onchange="impSetConsent(this.checked)"> <span>Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to ${esc(a.p.short)}.</span></label><div class="imp-actions"><button type="button" class="dz-btn primary" data-focus-key="imp-send-${i}" onclick="impAiSend(${i})"${ok?'':' disabled'}${tipAttr(sendTip)}>${IMP_SPARK}Send</button><button type="button" class="dz-btn" data-focus-key="imp-cancel-${i}" onclick="impAiCancel(${i})">Cancel</button></div></div>`;
@@ -9694,7 +9703,7 @@ function renderNeedsFile(kind){
       <h2 class="need-title">${esc(k.title)}</h2>
       <p class="need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>
       ${isSnapshotView?'':`<div class="steps">${k.steps.map(([text,code],i)=>`<div class="step"><span class="step-no">${i+1}</span><span class="step-text">${esc(text)}${code?`<code>${esc(code)}</code>`:''}</span></div>`).join('')}</div>`}
-      <div class="need-actions">${isSnapshotView?'':`<button type="button" class="btn btn-primary btn-lg" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}${kind==='weekly'?'':`<button type="button" class="btn btn-lg" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button>`}</div>
+      <div class="need-actions">${isSnapshotView?'':`<button type="button" class="btn btn-primary btn-lg" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Load a KPI export with its PO lines.':'Pick the file to add to this report.')}>${esc(k.cta)}</button>`}${kind==='weekly'?'':`<button type="button" class="btn btn-lg" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button>`}</div>
     </div>
     <div class="need-preview" aria-hidden="true">
       <span>What this screen will show</span>
@@ -10861,8 +10870,8 @@ function stgNotesCard(dis,i){
 function stgDataSourceCard(dis,i){
   const live=stgValue('dataSource')==='live',loaded=hasLoadedData();
   const seg=dzSeg([
-    {label:'Live SAP',on:live,key:'stg-ds-live',onclick:"stgSet('dataSource','live')",attrs:dis,tip:'Read SAP through the SAP bridge every 5 minutes.'},
-    {label:'Import files',on:!live,key:'stg-ds-import',onclick:"stgSet('dataSource','import')",attrs:dis,tip:'Upload Query Manager exports, as before.'}
+    {label:'Live SAP',on:live,key:'stg-ds-live',onclick:"stgSet('dataSource','live')",attrs:dis,tip:'Read SAP every 5 minutes.'},
+    {label:'Import files',on:!live,key:'stg-ds-import',onclick:"stgSet('dataSource','import')",attrs:dis,tip:'Upload Query Manager exports.'}
   ],{label:'Data source',cls:'stg-seg'});
   let status='',actions='';
   if(isSnapshotView)status=`<p class="stg-now">Shared snapshot: shows the data it was saved with.</p>`;
@@ -10875,7 +10884,7 @@ function stgDataSourceCard(dis,i){
   }else{
     const names=loadedFiles.map(f=>f.name);
     status=`<p class="stg-now">${loaded?`Loaded: ${esc(names.slice(0,2).join(', '))}${names.length>2?` + ${names.length-2} more`:''}`:'No files loaded.'}</p>`;
-    actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="stg-ds-upload" onclick="impPick()"${tipAttr('Pick one or more exports to load.')}>Upload files</button><button type="button" class="dz-btn" data-focus-key="stg-ds-add" onclick="document.getElementById('add-file-input').click()"${loaded?'':' disabled'}${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button><button type="button" class="dz-btn" data-focus-key="stg-ds-new" onclick="showUpload()"${tipAttr('Replace this report with a new export.')}>New file</button></div>`;
+    actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="stg-ds-upload" onclick="impPick()"${tipAttr('Pick one or more exports to load.')}>Upload files</button><button type="button" class="dz-btn" data-focus-key="stg-ds-add" onclick="document.getElementById('add-file-input').click()"${loaded?'':' disabled'}${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add file</button><button type="button" class="dz-btn" data-focus-key="stg-ds-new" onclick="showUpload()"${tipAttr('Replace this report with a new export.')}>New file</button></div>`;
   }
   const help=live?'Read from SAP every 5 minutes. The last data stays if the link drops.':'Upload Query Manager exports by hand.';
   return stgCard({id:'source',title:'Data Source',icon:'trend',color:'#12b76a',i,changed:!live,body:stgRow('Data source',esc(help),seg)+status+actions});
@@ -10905,7 +10914,7 @@ function stgDataCard(i,dc){
       ${cm?kv('Logican',cm):''}
       ${dc&&!dc.parts.length?kv('Data check',`<span class="stg-dc-ok">${dzIconSvg('check')}No data issues</span>`):''}
     </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
-  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
+  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
   return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,meta:'<span class="dz-meta">Read only</span>',body:body+actions});
 }
 function stgAiCard(dis,i){
@@ -10925,7 +10934,7 @@ function stgAiCard(dis,i){
       +(p?stgRow('Model','A new model starts a new chat.',stgSelect('stg-ai-model','',p.models.map(id=>[id,aiModelLabel(p,id)]),aiState.model,'stgAiModel(this.value)',{dis}),{labelFor:'stg-ai-model'}):'')
       +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
   }
-  const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Provider, model and what each one receives.')}>Open Ask AI settings</button></div>`;
+  const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Provider, model and data terms.')}>Open Ask AI settings</button></div>`;
   return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,body:body+open});
 }
 // Theme: saved like every setting; the page's colours follow it through applyTheme (the shell's theme code, which
@@ -11019,9 +11028,9 @@ function stgImport(input){
 }
 function stgAboutCard(i){
   const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length,ro=isSnapshotView;
-  const move=ro?'':`<button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save these settings (not your name) to a file for another browser or a colleague.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load settings from a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)">`;
+  const move=ro?'':`<button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save settings to a file; your name is left out.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)">`;
   // Reset to defaults (it was a link under the two columns) sits with Export and Import, at the right.
-  const reset=`<button type="button" class="link-btn stg-link stg-reset" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(changed?'Put every setting on this page back to its default (your name stays).':'Every setting is at its default.')}>Reset to defaults</button>`;
+  const reset=`<button type="button" class="link-btn stg-link stg-reset" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(changed?'Reset every setting; your name stays.':'Every setting is at its default.')}>Reset to defaults</button>`;
   const body=`<dl class="stg-dl">
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
       <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
@@ -11039,10 +11048,10 @@ function stgDataCheckCard(dc,i){
   const sum=`<ul class="stg-dc-sum">${dc.parts.map(p=>`<li class="${mark(p.tone)}"><span class="stg-dc-mark" aria-hidden="true"></span><span>${esc(p.text)}</span></li>`).join('')}</ul>`;
   const issues=dc.issues.length?`<ul class="stg-dc-list" tabindex="0" aria-label="Rows and files that need attention in SAP">${dc.issues.slice(0,50).map(x=>`<li>${esc(x.message)}</li>`).join('')}${dc.issues.length>50?`<li class="stg-dc-more">…and ${fmtNum(dc.issues.length-50)} more</li>`:''}</ul>`:'';
   const dateHelp=dc.issues.some(x=>x.kind==='date')?'<p class="stg-now">Dates outside 1990–2099 count as missing until fixed in SAP.</p>':'';
-  const scope=dc.nonInventory?stgRow('Non-inventory charges','PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave non-inventory charges out of the KPIs again (the default).':'Count non-inventory charges (PPV, tariff, NRE) in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
+  const scope=dc.nonInventory?stgRow('Non-inventory charges','PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave these charges out again (the default).':'Count these charges in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
   const d=dc.deleted;
-  const deleted=d.length?stgRow('Deleted lines',`Left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.`,`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back all ${fmtNum(d.length)} deleted ${d.length===1?'line':'lines'} on every page.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
-    +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${d.slice(0,50).map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back on every page.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${d.length>50?`<li class="stg-dc-more">…and ${fmtNum(d.length-50)} more</li>`:''}</ul>`:'';
+  const deleted=d.length?stgRow('Deleted lines',`Left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.`,`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back ${d.length===1?'the deleted line':`all ${fmtNum(d.length)} deleted lines`}.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
+    +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${d.slice(0,50).map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}${d.length>50?`<li class="stg-dc-more">…and ${fmtNum(d.length-50)} more</li>`:''}</ul>`:'';
   const meta=dc.level==='red'?dzChip(`${fmtNum(dc.red)} to fix in SAP`,'red'):dc.level==='yellow'?dzChip(`${fmtNum(dc.yellow)} to review`,'amber'):'<span class="dz-meta">By design</span>';
   const color=dc.level==='red'?'#ff3d68':dc.level==='yellow'?'#ffae1a':'#64748b';
   return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,meta:`<span class="dz-meta">${meta}</span>`,
@@ -11063,7 +11072,7 @@ function stgConnectCard(i){
           ${step(3,"In your AI app's MCP settings, add this server, then restart the app.")}
         </ol>
         <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">MCP server config</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the MCP server config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="MCP server config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
-        <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Paths, updates and troubleshooting (docs/MCP.md).')}>Setup guide</a></div>
+        <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Paths, updates and fixes.')}>Setup guide</a></div>
       </div>
     </details>
     <p class="misc-privacy stg-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI app receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
@@ -11240,11 +11249,11 @@ function renderUploadState(){
   if(!box)return;
   box.hidden=!loaded;
   const names=loadedFiles.length?loadedFiles.map(f=>f.name).join(', '):(isSnapshotView?'Shared snapshot':'Loaded export');
-  box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · Export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Go back to the report that is loaded now, without loading a new file.')} onclick="showResults()">Back to dashboard</button>`:'';
+  box.innerHTML=loaded?`<span><i class="live-dot" aria-hidden="true"></i>Currently loaded</span><strong>${esc(names)}${asOf?` · Export date ${esc(asOf)}`:''}</strong><button type="button" class="dz-btn primary"${tipAttr('Back to the loaded report.')} onclick="showResults()">Back to dashboard</button>`:'';
 }
 // The load screen in live mode: what is happening, and the way to import files instead.
 function liveLoadHtml(){
-  const s=liveState,useImport=`<button type="button" class="dz-btn${s.status==='off'?' primary':''}" data-focus-key="live-use-import" onclick="stgSet('dataSource','import')"${tipAttr('Switch to uploading Query Manager exports (Settings > Data Source).')}>Use import files</button>`;
+  const s=liveState,useImport=`<button type="button" class="dz-btn${s.status==='off'?' primary':''}" data-focus-key="live-use-import" onclick="stgSet('dataSource','import')"${tipAttr('Upload exports instead (Settings > Data Source).')}>Use import files</button>`;
   if(s.status==='off')return `<div class="live-load-box"><h2>Live SAP isn't set up on this site.</h2><p>Upload Query Manager exports instead.</p><div class="live-load-actions">${useImport}</div></div>`;
   if(s.status==='down')return `<div class="live-load-box"><h2><span class="live-pulse down" aria-hidden="true"></span>SAP could not be read</h2><p>${esc(s.message||'Unknown error')}. Trying again shortly.</p><div class="live-load-actions"><button type="button" class="dz-btn primary" data-focus-key="live-retry" onclick="loadFromSap()"${s.busy?' disabled':''}${tipAttr('Read SAP now.')}>Try again</button>${useImport}</div></div>`;
   return `<div class="live-load-box"><h2><span class="live-pulse" aria-hidden="true"></span>Connecting to SAP…</h2><p>The data shows as soon as it is read.</p></div>`;
@@ -11705,10 +11714,16 @@ applyTheme(); // the boot script at the top of <body> set it before the first pa
 // its corner is the Data check's level (stgDataCheckLevel): red = rows or files need attention in SAP, yellow = worth a
 // look (Logican lines, deleted lines); by-design notes give no dot. The label says what the dot means.
 const HDR_GEAR_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+// The gear's tip: one issue kind on one line, both kinds as bullets.
+function hdrGearTip(said){
+  if(!said)return 'Settings';
+  const parts=said.split(', ');
+  return parts.length>1?`Settings · Data check\n${parts.map(x=>`• ${x}`).join('\n')}`:`Settings · Data check: ${said}.`;
+}
 function hdrGearButton(current){
   const dc=dcReport(),said=dcSummary(dc);
   const label=said?`Settings, data check: ${said}`:'Settings';
-  return `<button type="button" class="hdr-icon hdr-gear${current?' on':''}" id="hdr-gear" data-focus-key="hdr-gear" aria-label="${esc(label)}"${current?' aria-current="page"':''} onclick="dzMenuClose();setTab('settings')"${tipAttr(said?`Settings · data check: ${said}.`:'Settings')}>${HDR_GEAR_SVG}${dc.level?`<span class="hdr-dot ${dc.level}" aria-hidden="true"></span>`:''}</button>`;
+  return `<button type="button" class="hdr-icon hdr-gear${current?' on':''}" id="hdr-gear" data-focus-key="hdr-gear" aria-label="${esc(label)}"${current?' aria-current="page"':''} onclick="dzMenuClose();setTab('settings')"${tipAttr(hdrGearTip(said))}>${HDR_GEAR_SVG}${dc.level?`<span class="hdr-dot ${dc.level}" aria-hidden="true"></span>`:''}</button>`;
 }
 // ===== end 2v6 theme =====
 let hdrSearchOpen=false;   // the search pill is expanded (it also stays open while the box holds text)
@@ -12115,7 +12130,7 @@ function renderResults(){
   const announce=document.getElementById('search-announce');
   const said=activeTab==='search'?headMeta:'';
   if(announce&&announce.textContent!==said)announce.textContent=said;
-  const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('A shared snapshot: numbers are frozen as of the day it was saved; note changes are not saved.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
+  const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('Numbers as of the day it was saved; note changes are not kept.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
   // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Ask AI and
   // Export PDF live in the header, Share snapshot in its export-date popover, Data check in Settings (the gear's dot).
   const showTitle=activeTab!=='weekly';
@@ -12982,6 +12997,32 @@ function wireTips(){
   });
 }
 function tipLayer(){return document.getElementById('tip-layer');}
+// Puts a tip's text in the bubble. A tip with line breaks ("Heading\n• fact\n• fact") gets one block per line, bullets
+// with a hanging indent; each block keeps its "\n" so the bubble's text still reads exactly as the data-tip.
+function tipFill(node,text){
+  if(!node)return;
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2||!document.createElement||!document.createTextNode){node.textContent=text;return;}
+  node.textContent='';
+  const bullet=l=>l.startsWith('• ');
+  lines.forEach((line,i)=>{
+    const row=document.createElement('span');
+    const end=i<lines.length-1?'\n':'';
+    if(bullet(line)){
+      row.className='tip-li';
+      const dot=document.createElement('span');
+      dot.className='tip-dot';
+      dot.textContent='• ';
+      row.appendChild(dot);
+      row.appendChild(document.createTextNode(line.slice(2)+end));
+    }else{
+      // A line that leads a list of bullets is its heading.
+      row.className=bullet(lines[i+1]||'')?'tip-line tip-head':'tip-line';
+      row.textContent=line+end;
+    }
+    node.appendChild(row);
+  });
+}
 function tipTarget(node){return node&&node.closest?node.closest('[data-tip]'):null;}
 function tipVisible(){const layer=tipLayer();return !!(layer&&!layer.hidden&&tipState.el);}
 // A modal <dialog> (the Your name question) sits in the browser's top layer, above any z-index. A tip for a control
@@ -13005,12 +13046,14 @@ function showTip(el){
   const text=String(tipGet(el,'data-tip')||'').trim();
   if(!layer||!text||!el.isConnected||!el.getBoundingClientRect)return;
   tipState.el=el;
-  const textNode=layer.querySelector('.tip-text');
-  if(textNode)textNode.textContent=text;
+  tipFill(layer.querySelector('.tip-text'),text);
   layer.classList.remove('open');
   const dialog=tipHost(el);
   if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}
   else tipGoHome(layer);
+  // Measured at the window's left edge: left where the last tip sat (near the right edge), the bubble would wrap
+  // into a narrow column.
+  if(layer.style){layer.style.left='0px';layer.style.top='0px';}
   layer.hidden=false;
   placeFloating(layer,el,tipGet(el,'data-tip-pos')||'top',8);
   // The class change after layout lets the bubble fade in (no motion when the viewer asked for less).
@@ -13162,7 +13205,7 @@ if(typeof window.addEventListener==='function')window.addEventListener('resize',
 // so the help needs no button of its own. Each page's short "About these numbers" list is ABOUT_NOTES.
 function sectionTipText(key){
   const i=key&&SECTION_INFO[key];
-  return i?stgText([i.what,i.click].filter(Boolean).join(' ')):'';
+  return i?stgText([i.what,i.click].filter(Boolean).join(String(i.what||'').includes('\n')?'\n':' ')):'';
 }
 // Help texts are written for the default settings (2-day tolerance, 5% target, a one-month window); with other
 // settings the numbers in them follow (Settings page).
@@ -13926,7 +13969,7 @@ const PAGE_TIPS={
   supplyweekly:'Open demand against open PO supply.',
   supplydemand:'Demand and supply at a glance.',
   buildrisk:'Clear To Build report against open orders.',
-  shipping:'Recent deliveries, tracked through AfterShip every 2 hours.',
+  shipping:'Recent deliveries, tracking updated every 2 hours.',
   forecast:'Logican forecast against open orders.',
   connect:'Ask an AI about this export.'
 };
@@ -14697,16 +14740,16 @@ function sharedNotesSidebarLine(){
     if(s.saving)text='Notes shared · Saving…';
     else if(s.message)text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
     else text=last?`Notes shared · Last edit ${esc(lastBy)}${esc(last.toLocaleDateString('en-US',{month:'short',day:'numeric'}))}`:'Notes shared';
-    tip=`Notes, overrides and causes are saved for everyone who signs in${last?`; last edit${s.last.by?` by ${s.last.by}`:''}: ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}`:''}.`;
+    tip=`Notes are shared with everyone who signs in${last?`; last edit${s.last.by?` by ${s.last.by}`:''}: ${last.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}`:''}.`;
   }else if(s.state==='offline'){
     text='Notes saved in this browser only (server not reachable)';
-    tip='The server did not answer; notes are kept here and shared once it does.';
+    tip='Server not reachable; notes are shared once it is.';
   }else if(s.state==='failed'){
     text=`<span class="warn-text">Notes not shared: ${esc(s.message)}</span>`;
-    tip='Notes are kept in this browser; reload the page to try again.';
+    tip='Kept in this browser. Reload to try again.';
   }else if(s.state==='local'||(!s.state&&!canShareNotes())){
     text='Notes saved in this browser only';
-    tip='This site has no shared storage; Share snapshot carries your notes to others.';
+    tip='No shared storage here; Share snapshot carries your notes.';
   }else return '';
   const name=readEditor();
   // The name lives in Settings (Profile card): the link opens it on the name picker.
@@ -14849,7 +14892,7 @@ function openEditorDialog(){
     <p class="editor-error" id="editor-error" role="alert"></p>
     <div class="editor-actions">
       <button type="submit" value="save" class="btn btn-primary btn-sm" data-tip="Save this name for your notes.">Save</button>
-      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Edit without a name. Set it later in Settings.">Not now</button>
+      <button type="button" class="btn btn-sm" data-editor-skip data-tip="Skip for now; set it later in Settings.">Not now</button>
     </div>
   </form>`;
   const form=d.querySelector('form'),input=d.querySelector('#editor-name'),error=d.querySelector('#editor-error');
@@ -17813,13 +17856,13 @@ function cmSidebarLine(){
     const t=Date.parse(src.at);
     text=`Logican sheet · Updated ${isFinite(t)?shipAgo(Date.now()-t):'earlier'}`;
     if(cmState.state==='stale')text=`<span class="warn-text">${text}</span>`,tip=cmState.message||tip;
-    else tip='Open Orders and Forecast from the Logican sheet, read every 5 minutes.';
+    else tip='Open Orders and Forecast, read every 5 minutes.';
     refresh=true;
   }else if(isSnapshotView)return '';
   else if(cmState.state==='error')text='<span class="warn-text">Logican sheet · Could not be read</span>',tip=cmState.message||'The Logican sheet could not be read.',refresh=true;
   else if(cmState.state==='loading'||cmState.loading)text='Logican sheet · Reading…';
   else text='Logican sheet · Not set up',tip='Not linked on this site. Use Add file with a download of its tabs.';
-  const link=refresh&&!isSnapshotView?` <button type="button" class="link-btn cm-refresh" data-focus-key="cm-refresh" onclick="cmRefreshNow()"${cmState.loading?' disabled':''}${tipAttr('Read the Logican sheet from Google now (at most once a minute).')}>${cmState.loading?'Reading…':'Refresh'}</button>`:'';
+  const link=refresh&&!isSnapshotView?` <button type="button" class="link-btn cm-refresh" data-focus-key="cm-refresh" onclick="cmRefreshNow()"${cmState.loading?' disabled':''}${tipAttr('Read the Logican sheet now (once a minute at most).')}>${cmState.loading?'Reading…':'Refresh'}</button>`:'';
   return `<span class="cm-sync" data-tip="${esc(tip)}">${text}</span>${link}`;
 }
 function cmSnapshotData(){
@@ -17995,7 +18038,7 @@ function miscNeedsFile(kind){
   const k=NEEDS_FILE[kind];
   const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
   const steps=isSnapshotView?'':`<ol class="misc-steps">${k.steps.map(([text,code],i)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${i+1}</span><span class="misc-step-text">${esc(text)}${code?`<code>${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
-  const add=isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`;
+  const add=isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Load a KPI export with its PO lines.':'Pick the file to add to this report.')}>${esc(k.cta)}</button>`;
   const back=kind==='weekly'?'':`<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button>`;
   return `<section class="dz-card misc-need dz-fade" aria-labelledby="misc-need-title">
     <div class="misc-need-main">

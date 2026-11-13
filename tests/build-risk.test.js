@@ -156,7 +156,7 @@ test('risk-bucket orders: the override as text with its cause, one Edit button o
   row = t.match(/<tr class="">\s*<td class="strong" data-label="Doc #" data-card="key">71001<\/td>[\s\S]*?<\/tr>/)[0];
   assert.match(row, /<td class="ovr-cell" data-label="Override" data-card="edit"><span class="ovr-line"><span class="ovr-text">Supplier Delay<\/span><span class="cause-tag us">Us<\/span><\/span><span class="ovr-note" title="Boards &lt;Friday&gt;">Boards &lt;Friday&gt;<\/span><\/td>/);
   assert.doesNotMatch(row, />Supplier Late</);
-  assert.match(row, /class="note-btn has-note"[^>]*data-tip="Override: Supplier Delay\. Note: Boards &lt;Friday&gt; Click to edit\."[^>]*>Edit<\/button>/);
+  assert.match(row, /class="note-btn has-note"[^>]*data-tip="Override: Supplier Delay\.\nNote: Boards &lt;Friday&gt;"[^>]*>Edit<\/button>/);
   assert.equal(page.run(`parsedRows.find(r=>r.documentNumber==='71001').overrideStatus`), 'Supplier Late', 'the stored value keeps the original words');
   // The bucket legend's Clear is green, like the Clear bars (blue is not a status colour here).
   const h = html(page);
