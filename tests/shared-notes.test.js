@@ -123,7 +123,15 @@ const keyOf = (page, doc) => page.run(`rowKey(allLoadedRows.find(r=>r.documentNu
 const edit = (page, doc, field, value) => page.run(`updateRowOverride(rowKey(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)})),${JSON.stringify(field)},${JSON.stringify(value)})`);
 const line = (page, doc) => page.run(`(r=>({status:r.overrideStatus,notes:r.overrideNotes,cause:r.overrideCause,deleted:r.isDeleted}))(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
 const saved = (page) => JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}');
-const sidebar = (page) => page.els['app-sidebar'].innerHTML;
+// The sidebar is gone (2v6 header). The notes status shows on the Data card in Settings, and only for a problem (a save
+// that failed, retrying, not reachable): the owner dropped the where-it-is-kept lines ("Notes shared · Last edit ...",
+// "Notes saved in this browser only"). Who saved a note and when is on the line itself (noteByline, under Add note), and
+// the name is picked in Settings > Profile.
+const sidebar = (page) => page.run('stgDataCard(0,null)');
+// (stgPeopleAsked: drawing the card here must not fetch the names list, which some tests count.)
+const profile = (page) => page.run("(stgPeopleAsked=true,stgProfileCard('',0))");
+const byline = (page, doc) => page.run(`noteByline(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
+const NO_NOTES_LINE = /Notes shared|Notes not shared|in this browser only|not reachable/;
 const html = (page) => page.els['results-screen'].innerHTML;
 const atRiskCount = (page) => page.run('orderHealthData(currentMetrics()).lateTileRows.length');
 
@@ -148,8 +156,8 @@ test('an override, note and cause set in one browser show in another browser, wi
   const b = await openHosted(site);
   assert.deepEqual(line(b, '900'), { status: 'Not At Risk', notes: 'Customer agreed to Oct 20', cause: 'them', deleted: false });
   assert.equal(atRiskCount(b), 1, 'Not At Risk from the other browser takes the line off At Risk');
-  assert.match(sidebar(b), /Notes shared · Last edit Kareena · Oct 8/);
-  assert.match(sidebar(b), /data-tip="Notes are shared with everyone who signs in; last edit by Kareena: Oct 8, 2026/);
+  assert.equal(byline(b, '900'), 'Kareena · Oct 8');
+  assert.doesNotMatch(sidebar(b), NO_NOTES_LINE, 'all is well: no notes line in Settings');
   // The copy is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(saved(b)[k], entry);
   // Opening the page costs one read; nothing newer here, so nothing is sent back.
@@ -181,8 +189,9 @@ test('changes go out 800 ms after the last change to a line, many lines in one r
   await settle(a);
   assert.equal(site.patches(), 3);
   assert.equal(Object.keys(site.bodies[2].rows).length, a.run('linkedListKeys.length'));
-  // While the request is out the sidebar says so; afterwards it names the last edit.
-  assert.match(sidebar(a), /Notes shared · Last edit Kareena · /);
+  // Afterwards each line names its last edit, and Settings has nothing to report.
+  assert.match(byline(a, '900'), /^Kareena · [A-Z][a-z]{2} \d+$/);
+  assert.doesNotMatch(sidebar(a), NO_NOTES_LINE);
 });
 
 test('PATCHes go out at least 1.1 s apart (Workers KV: one write a second); a busy or failed save is sent again', async () => {
@@ -480,8 +489,9 @@ test('a static host (no /api/notes) keeps notes in this browser only, as before'
   assert.equal(site.patches(), 0);
   assert.equal(saved(page)[keyOf(page, '901')].status, 'Hold');
   assert.equal(page.storage.spyderKpiNotesClearedV1 || '{}', '{}', 'no cleared-line markers without a server');
-  assert.match(sidebar(page), /Notes saved in this browser only/);
-  assert.doesNotMatch(sidebar(page), /Change name|Add your name/);
+  // Kept in this browser only: no longer said on screen (owner), and the name is never asked without shared notes.
+  assert.doesNotMatch(sidebar(page), NO_NOTES_LINE);
+  assert.equal(page.run('editorAsked'), false);
   let asked = '';
   page.ctx.confirm = (m) => { asked = m; return true; };
   page.run(`toggleLinkedRow(${JSON.stringify(keyOf(page, '900'))},true);deleteLinkedSelection()`);
@@ -560,7 +570,7 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
   assert.deepEqual(snap.storage, {});
   assert.equal(snap.run('firstFlagged')[k], '2026-09-03');
   assert.equal(snap.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideCause`), 'us');
-  assert.equal(sidebar(snap).includes('Notes shared'), false);
+  assert.doesNotMatch(sidebar(snap), NO_NOTES_LINE);
 
   // New file inside a snapshot leaves it: the site's at-risk history replaces the snapshot's first-flagged dates
   // (here made different on purpose) and the shared notes are read, as on a normal start.
@@ -581,7 +591,10 @@ test('a shared snapshot never reads or writes shared notes, and carries the merg
   assert.equal(old.run(`allLoadedRows.find(r=>r.documentNumber==='900').overrideNotes`), 'shared note');
 });
 
-test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () => {
+// Us / Them was removed on purpose (847c84e: the Cause control in the note editor, the row editors and the bulk bar,
+// the cause tags and wording). A cause already saved on a line is kept in the data (and shared, see the first test) for
+// Search / AI, but nothing on screen or on paper shows it or sets it.
+test('Us / Them cause is gone: no Cause in the note editor, Build Risk rows, bulk bar or print; a saved cause is kept', async () => {
   const site = fakeSite();
   site.mode = 'static';
   const page = await openBrowser(site);
@@ -589,51 +602,34 @@ test('Us / Them cause: note editor, Build Risk rows, bulk bar, print', async () 
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   const k = keyOf(page, '900');
   page.run(`toggleRowNote(${JSON.stringify(k)})`);
-  const select = html(page).match(/<label>Cause<select class="row-cause"[\s\S]*?<\/select><\/label>/);
-  assert.ok(select, 'the note editor has a labelled cause select next to the override');
-  assert.match(html(page), /<div class="note-picks"><label>Override<select class="row-override"/);
-  assert.match(select[0], /data-field="cause"/);
-  assert.match(select[0], /aria-label="Cause, us or them, for 900"/);
-  assert.match(select[0], /data-tip="Who the delay is on: Us \(Spyder\) or Them/);
-  assert.deepEqual([...select[0].matchAll(/<option value="([^"]*)"[^>]*>([^<]*)</g)].map((m) => [m[1], m[2]]), [['', 'Auto'], ['us', 'Us'], ['them', 'Them']]);
-  for (const ev of ['keydown', 'keyup', 'change', 'blur']) assert.match(select[0], new RegExp(`on${ev}="overrideSelectEvent\\(this,event\\)"`));
+  assert.match(html(page), /<div class="note-picks"><label>Your name<select class="note-name"[\s\S]*?<\/select><\/label><label>Override<select class="row-override"/);
+  assert.doesNotMatch(html(page), /row-cause|<label>Cause|data-field="cause"/);
 
-  // Same keyboard rule as the override select: stepping the closed select waits for Enter.
-  page.run(`var sel={dataset:{key:${JSON.stringify(k)},field:'cause'},value:''};overrideSelectEvent(sel,{type:'keydown',key:'ArrowDown',preventDefault(){}});sel.value='us';overrideSelectEvent(sel,{type:'change'})`);
-  assert.equal(line(page, '900').cause, '');
-  page.run("overrideSelectEvent(sel,{type:'keydown',key:'Enter',preventDefault(){}})");
+  // A cause saved before (or by another browser) stays on the line and in this browser's copy.
+  edit(page, '900', 'cause', 'us');
   assert.equal(line(page, '900').cause, 'us');
   assert.equal(saved(page)[k].cause, 'us');
-  assert.match(html(page), /<option value="us" selected>Us<\/option>/);
-  // A line with only a cause still counts as having a note, and prints its cause in its Status cell (no extra row).
-  assert.match(page.run(`renderNoteButton(allLoadedRows.find(r=>r.documentNumber==='900'))`), /has-note[\s\S]*Edit note/);
-  assert.equal(page.run(`renderPrintOverride(allLoadedRows.find(r=>r.documentNumber==='900'))`), '<span class="print-ovr">Cause: Us</span>');
+  // It prints nothing and adds no row on paper.
+  assert.equal(page.run(`renderPrintOverride(allLoadedRows.find(r=>r.documentNumber==='900'))`), '');
   assert.equal(page.run(`renderPrintNoteRow(allLoadedRows.find(r=>r.documentNumber==='900'),5)`), '');
 
-  // Build Risk's editable rows: the cause shows as a tag beside the override text; Edit opens the same note editor
-  // (override and cause selects), and print shows the text.
+  // Build Risk's editable rows: no cause tag and no cause select, closed or open.
   page.run('expandedNoteRows.clear()');
   let table = page.run("renderRowsTable(parsedRows.filter(r=>r.documentNumber==='900'),{key:'t',title:'T',editable:true})");
-  assert.match(table, /<span class="cause-tag us">Us<\/span>/);
-  assert.doesNotMatch(table, /<select/);
+  assert.doesNotMatch(table, /cause-tag|row-cause/);
   page.run(`toggleRowNote(${JSON.stringify(k)})`);
   table = page.run("renderRowsTable(parsedRows.filter(r=>r.documentNumber==='900'),{key:'t',title:'T',editable:true})");
-  assert.match(table, /<tr class="note-editor-row print-hide">[\s\S]*?<select class="row-override"[\s\S]*?<select class="row-cause"[\s\S]*?<option value="us" selected>Us<\/option>/);
+  assert.match(table, /<tr class="note-editor-row print-hide">[\s\S]*?<select class="row-override"/);
+  assert.doesNotMatch(table, /row-cause/);
   page.run(`toggleRowNote(${JSON.stringify(k)})`);
-  assert.match(HTML, /@media print\{\.editable-rows \.row-cause,\.editor-dialog\{display:none!important\}\}/);
 
-  // Bulk bar: Set cause on every selected line; statuses and notes stay; Auto clears the cause.
+  // Bulk bar: no Set cause.
   edit(page, '901', 'status', 'Hold');
   page.run('selectAllLinked(true)');
-  assert.match(html(page), /<label>Cause <select id="linked-bulk-cause" class="select"[^>]*data-tip="[^"]+"/);
-  assert.match(html(page), /<button type="button" class="btn btn-sm" id="linked-bulk-cause-apply" onclick="applyLinkedCause\(\)" data-tip="[^"]+">Set cause<\/button>/);
-  page.run("linkedBulkCause='them';applyLinkedCause()");
-  assert.deepEqual([line(page, '900').cause, line(page, '901').cause], ['them', 'them']);
-  assert.equal(line(page, '901').status, 'Hold');
-  page.run("selectAllLinked(true);linkedBulkCause='';applyLinkedCause()");
-  assert.deepEqual([line(page, '900').cause, line(page, '901').cause], ['', '']);
-  assert.equal(saved(page)[k], undefined, 'a line with nothing left has no entry');
-  assert.equal(saved(page)[keyOf(page, '901')].status, 'Hold');
+  assert.match(html(page), /<div class="bulk-actions[^"]*" role="group" aria-label="Selected lines">/);
+  assert.doesNotMatch(html(page), /linked-bulk-cause|Set cause/);
+  assert.equal(page.run('typeof applyLinkedCause'), 'undefined');
+  assert.deepEqual(page.errors, []);
 });
 
 // A stand-in for <dialog>: records listeners; close(value) fires 'close' like the browser. Setting innerHTML reads the
@@ -752,20 +748,15 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   assert.equal(peopleCalls(site, 'POST'), 1);
   assert.deepEqual((await site.people()).people.map((p) => p.name), ['Kareena', 'Jamie Cole']);
   assert.equal(JSON.parse(page.storage.spyderKpiNameSeenV1).name, 'Kareena');
-  // Asked once: later edits do not ask again; the sidebar names the last editor and the button changes the name.
+  // Asked once: later edits do not ask again; the line names its last editor and Settings > Profile shows the name
+  // (picking another there changes it).
   edit(page, '901', 'notes', 'second');
   await tick(5);
   assert.equal(dialogs.length, 1);
-  assert.match(sidebar(page), /Notes shared · Last edit Kareena · Sep \d+/);
-  assert.match(sidebar(page), /<button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="askEditorName\(true\)" data-tip="Your notes show “Kareena”; click to change it\.">Change name<\/button>/);
-  // The status and the button have their own row, outside .loaded-meta (hidden at 980px and below), which stays
-  // visible under the file name and buttons in the compact card.
-  assert.match(sidebar(page), /<div class="loaded-meta">(?:(?!<\/div>)[\s\S])*<\/div><div class="loaded-notes"><span class="notes-sync" data-tip="[^"]+">Notes shared[^<]*<\/span><br><button type="button" class="link-btn notes-editor-btn"/);
-  assert.doesNotMatch(sidebar(page).match(/<div class="loaded-meta">[\s\S]*?<\/div>/)[0], /notes-sync|notes-editor/);
-  const compact = HTML.match(/@media \(max-width:980px\)\{\n[\s\S]*?\n\}/)[0];
-  assert.match(compact, /\.loaded-card \.loaded-label,\.loaded-card \.loaded-meta\{display:none\}/);
-  assert.match(compact, /\.loaded-card \.loaded-notes\{grid-row:2;grid-column:1\/-1\}/);
-  assert.doesNotMatch(compact, /loaded-notes\{[^}]*display:none/);
+  assert.match(byline(page, '901'), /^Kareena · Sep \d+$/);
+  assert.match(profile(page), /<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName\(this\)" data-tip="Stamped on the notes you save\.">/);
+  assert.match(profile(page), /<option value="Kareena" selected>Kareena<\/option>/);
+  // (The sidebar's compact notes row went with the sidebar.)
 
   // Change name: the box holds the name and its button is marked; Esc keeps it.
   page.run('askEditorName(true)');
@@ -783,7 +774,7 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   await tick(10);
   assert.equal(page.storage.spyderKpiEditorName, "Zoë O'Brien-Smith");
   assert.deepEqual((await site.people()).people.map((p) => p.name), ["Zoë O'Brien-Smith", 'Kareena', 'Jamie Cole']);
-  assert.match(sidebar(page), /Change name/);
+  assert.match(profile(page), /<option value="Zoë O&#39;Brien-Smith" selected>Zoë O&#39;Brien-Smith<\/option>/);
   // A saved name typed in other capitals keeps the saved spelling (one person in the list).
   page.run('askEditorName(true)');
   await tick(5);
@@ -813,7 +804,8 @@ test('Your name is asked once, in a dialog: names saved for everyone are one cli
   assert.equal(more.length, 1);
   await sendNow(other);
   assert.equal((await site.doc()).rows[keyOf(other, '902')].by, '');
-  assert.match(sidebar(other), /data-tip="Add your name to the notes you save\.">Add your name<\/button>/);
+  // Settings > Profile still offers it: no name picked yet.
+  assert.match(profile(other), /<option value="" selected disabled>Pick your name<\/option>/);
 });
 
 test('Your name: a long list shows the 12 names seen most recently, Find your name narrows it and Enter picks the first match', async () => {
@@ -882,7 +874,7 @@ test('Your name: initials saved before 2v2 are stamped until the name is given, 
   edit(page, '901', 'notes', 'after');
   await tick(5);
   assert.equal(dialogs.length, 1);
-  // Not now to the initials question before 2v2 is kept: not asked again by itself; the sidebar offers it.
+  // Not now to the initials question before 2v2 is kept: not asked again by itself; Settings > Profile offers it.
   const reads = peopleCalls(site, 'GET');
   const skipped = await openBrowser(site, { storage: { spyderKpiEditor: '' } });
   const none = catchDialogs(skipped);
@@ -891,7 +883,7 @@ test('Your name: initials saved before 2v2 are stamped until the name is given, 
   edit(skipped, '902', 'notes', 'x');
   await tick(5);
   assert.equal(none.length, 0);
-  assert.match(sidebar(skipped), />Add your name<\/button>/);
+  assert.match(profile(skipped), /<option value="" selected disabled>Pick your name<\/option>/);
   assert.equal(peopleCalls(site, 'GET'), reads, 'the browser that answered before reads no names on open');
 });
 
@@ -1016,12 +1008,14 @@ test('every name shown is escaped (saved names, the last editor, this browser); 
   await site.env.REPORT_STORE.put('overrides', JSON.stringify({ v: 1, rows: { [k]: { notes: 'old', by: '"><svg/onload=1>', at: '2026-09-01T10:00:00.000Z' } }, shipments: {}, savedAt: '' }));
   // This browser's name was edited by hand into something that is not a name: it counts as never asked.
   const b = await openHosted(site, { storage: { spyderKpiEditorName: '<img src=x onerror=alert(1)>' } });
-  const full = sidebar(b);
-  const bar = full.slice(full.indexOf('<div class="loaded-notes">'));
-  assert.match(bar, /last edit &quot;&gt;&lt;svg\/onload=1&gt; · Sep 1/);
-  assert.match(bar, /data-tip="[^"]*last edit by &quot;&gt;&lt;svg\/onload=1&gt;:/);
+  // The last editor shows under the line's Add note button (its text and its tip), escaped.
+  const bar = b.run(`renderNoteByline(allLoadedRows.find(r=>r.documentNumber==='900'))`);
+  assert.match(bar, /<span class="ohl-note-w">&quot;&gt;&lt;svg\/onload=1&gt; · Sep 1<\/span>/);
+  assert.match(bar, /data-tip="old \(&quot;&gt;&lt;svg\/onload=1&gt; · Sep 1\)"/);
   assert.ok(!/<svg|<img/.test(bar), 'no markup from a stored name');
-  assert.match(bar, />Add your name<\/button>/);
+  const prof = profile(b).match(/<select class="dz-pillinput stg-select stg-name"[\s\S]*?<\/select>/)[0];
+  assert.ok(!/<svg|<img|onerror/.test(prof), `nor in Settings > Profile: ${prof}`);
+  assert.match(prof, /<option value="" selected disabled>Pick your name<\/option>/);
   assert.equal(b.run('readEditor()'), null);
   const dialogs = catchDialogs(b);
   edit(b, '901', 'notes', 'new');
@@ -1034,7 +1028,7 @@ test('every name shown is escaped (saved names, the last editor, this browser); 
   d.pick("Zoë O'Brien-Smith");
   await tick(10);
   assert.equal(b.storage.spyderKpiEditorName, "Zoë O'Brien-Smith");
-  assert.match(sidebar(b), /data-tip="Your notes show “Zoë O&#39;Brien-Smith”; click to change it\.">Change name<\/button>/);
+  assert.match(profile(b), /<option value="Zoë O&#39;Brien-Smith" selected>Zoë O&#39;Brien-Smith<\/option>/);
   assert.deepEqual(b.errors, []);
 });
 
@@ -1221,7 +1215,8 @@ test('only a reply that clearly says "no notes API" stops sharing; a platform 50
   await tick(900);
   await tick(20);
   assert.equal(d.run('sharedNotes.state'), 'local');
-  assert.match(sidebar(d), /Notes saved in this browser only/);
+  assert.equal(d.run('sharedNotes.state'), 'local');
+  assert.doesNotMatch(sidebar(d), NO_NOTES_LINE, 'this browser only is no longer said on screen');
 });
 
 test('a save the server refuses (sign-in expired) stays listed after a later save works, and the next read sends it', async () => {
