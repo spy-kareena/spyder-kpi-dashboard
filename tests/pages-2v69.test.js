@@ -453,6 +453,20 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   assert.deepEqual(page.errors, []);
 });
 
+// Left failing on purpose (an app bug, index.html ohgSetTrendMetric). It looks the metric up with OHG_TREND[k], so a
+// name every object has ('constructor', 'toString', 'hasOwnProperty') counts as a known metric; the card then has no
+// label or format to draw with, the redraw throws, and Lagging stays broken until a chip sets a real metric.
+test('BUG: ohgSetTrendMetric falls back to On Time for a name every object has (constructor, toString), not only for other unknown names', async () => {
+  const page = await loaded([...ROWS, delivery('801', '08/08/2026'), delivery('802', '08/15/2026')]);
+  page.run("setTab('metrics')");
+  for (const name of ['constructor', 'toString', 'hasOwnProperty']) {
+    assert.doesNotThrow(() => page.run(`ohgSetTrendMetric('${name}')`), name);
+    assert.equal(page.run('ohgTrendMetric'), 'otd', name);
+    assert.match(card(detail(page), 'Trend'), /On-time delivery · August<\/h3>/, name);
+  }
+  assert.deepEqual(page.errors, []);
+});
+
 test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirmed · Missing price card, each two columns wide', async () => {
   // 500: unconfirmed; 501: missing price; 502: both (counts once on the card); 503: neither.
   const page = await loaded([...ROWS.slice(0, 3), po('500', '08/01/2026', { Confirmed: 'N' }), po('501', '10/30/2026', { PriceFlag: 'Missing Price' }),
