@@ -71,7 +71,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   --dz-heat-r1:#fbe3e8;--dz-heat-r2:#f6d2da;--dz-heat-r3:#ff7a93;--dz-heat-r4:#ff3d68;
   --dz-heat-r1-fg:#b01c3f;--dz-heat-r2-fg:#b01c3f;--dz-heat-r3-fg:#0c1a2c;--dz-heat-r4-fg:#0c1a2c;
   --dz-fill-1:#eef4fa;--dz-glass-55:rgba(255,255,255,.55);--dz-glass-60:rgba(255,255,255,.6);--dz-glass-75:rgba(255,255,255,.75);--dz-glass-80:rgba(255,255,255,.8);
-  --dz-line-5:rgba(12,26,44,.05);--dz-line-6:rgba(12,26,44,.06);--dz-line-8:rgba(12,26,44,.08);
+  --dz-line-5:rgba(12,26,44,.05);--dz-line-6:rgba(12,26,44,.06);--dz-line-8:rgba(12,26,44,.08);--dz-field-line:#8293a5;
   --dz-r-pill:999px;--dz-r-card:24px;--dz-r-menu:14px;--dz-r-stat:14px;--dz-r-item:9px;--dz-r-seg:2px;
   --dz-sh-card:0 10px 40px rgba(22,56,100,.06);--dz-sh-menu:0 14px 40px rgba(22,56,100,.16);
   --dz-page-base:#eaf1fd;--dz-page-bg:#eaf1fd;
@@ -1835,7 +1835,7 @@ body{background:var(--dz-page-base)}
 .hdr-search .hdr-icon{border-radius:999px}
 .hdr-search input{display:none;width:0;min-width:0;height:100%;border:0;background:transparent;font:inherit;font-size:13px;color:var(--dz-ink-1);outline:none;padding:0}
 .hdr-search input::placeholder{color:var(--dz-ink-5)}
-.hdr-search.open{background:var(--dz-glass-80);border-color:var(--dz-line-8);padding-right:14px}
+.hdr-search.open{background:var(--dz-glass-80);border-color:var(--dz-field-line);padding-right:14px}
 .hdr-search.open:focus-within{border-color:rgba(var(--dz-indigo-rgb),.45)}
 .hdr-search.open input{display:block;width:230px}
 .hdr-search.open .hdr-icon:hover{background:transparent}
@@ -1964,7 +1964,7 @@ button.dz-stat:hover{background:var(--dz-glass-80)}
 .dz-btn:disabled{opacity:.5;cursor:default}
 
 /* Search / sort pill inside a card (also a select or a button) */
-.dz-pillinput{height:34px;border-radius:999px;background:var(--dz-glass-80);border:1px solid var(--dz-line-8);padding:0 14px;font:inherit;font-size:13px;color:var(--dz-ink-1);min-width:0}
+.dz-pillinput{height:34px;border-radius:999px;background:var(--dz-glass-80);border:1px solid var(--dz-field-line);padding:0 14px;font:inherit;font-size:13px;color:var(--dz-ink-1);min-width:0}
 .dz-pillinput::placeholder{color:var(--dz-ink-5)}
 .dz-pillinput:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.45)}
 select.dz-pillinput{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:14px}
@@ -2940,6 +2940,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-ovr-in{display:flex;align-items:center;gap:10px;min-width:0}
 .sup-ovr-t{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-3)}
 .sup-ovr-b{flex:none}
+@media print{.sup-ovr-t,.sup-ovr-t .sup-sub{white-space:normal;overflow:visible;text-overflow:clip}}
 .sup-ovr .cause-tag{font-size:11.5px;font-weight:500;padding:1px 8px}
 
 /* The Logican bits inside a PO line: chip, commit date */
@@ -2960,7 +2961,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-page .note-editor{display:grid;grid-template-columns:220px minmax(0,1fr) auto;gap:12px;align-items:start;margin:0 0 12px;padding:14px 16px;background:var(--dz-glass-60);border:1px solid var(--dz-line-6);border-radius:16px}
 .sup-page .note-editor label{display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--dz-ink-4)}
 .sup-page .note-picks{display:grid;gap:8px;align-content:start}
-.sup-page .note-editor select,.sup-page .note-editor textarea{font:inherit;font-size:13px;color:var(--dz-ink-1);background-color:var(--dz-glass-80);border:1px solid var(--dz-line-8);border-radius:12px;padding:7px 10px}
+.sup-page .note-editor select,.sup-page .note-editor textarea{font:inherit;font-size:13px;color:var(--dz-ink-1);background-color:var(--dz-glass-80);border:1px solid var(--dz-field-line);border-radius:12px;padding:7px 10px}
 .sup-page .note-editor select{height:34px;border-radius:999px}
 .sup-page .note-editor textarea{min-height:76px;resize:vertical}
 .sup-page .note-editor select:focus,.sup-page .note-editor textarea:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.45)}
@@ -3475,7 +3476,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .ai-chips .chip{padding:6px 12px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-2);font-size:12.5px;font-weight:500}
 .ai-chips .chip:hover{border-color:rgba(var(--dz-indigo-rgb),.35);background:#fff}
 .ai-compose{padding:12px 20px 16px;border-top:1px solid var(--dz-line-6)}
-.ai-compose textarea{padding:10px 14px;border:1px solid var(--dz-line-8);border-radius:16px;background:var(--dz-glass-80)}
+.ai-compose textarea{padding:10px 14px;border:1px solid var(--dz-field-line);border-radius:16px;background:var(--dz-glass-80)}
 .ai-compose textarea:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.5);box-shadow:0 0 0 3px rgba(var(--dz-indigo-rgb),.16)}
 @media (max-width:640px){.ai-panel{top:8px;right:8px;bottom:8px;left:8px;width:auto;max-width:none;border-radius:20px}}
 
@@ -3486,7 +3487,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .editor-form h2{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--dz-ink-1)}
 .editor-form p{color:var(--dz-ink-4)}
 .editor-form label,.editor-form .editor-sub{font-size:12.5px;font-weight:500;color:var(--dz-ink-4)}
-.editor-form input{height:42px;padding:0 16px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-1)}
+.editor-form input{height:42px;padding:0 16px;border:1px solid var(--dz-field-line);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-1)}
 .editor-form input:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.5);background:#fff;box-shadow:0 0 0 3px rgba(var(--dz-indigo-rgb),.16)}
 .editor-pick{border-color:var(--dz-line-8)}
 .editor-pick:hover{border-color:rgba(var(--dz-indigo-rgb),.35)}
@@ -3671,7 +3672,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
   --dz-heat-r1:#3b1824;--dz-heat-r2:#5a2234;--dz-heat-r3:#b8385a;--dz-heat-r4:#ff5c82;
   --dz-heat-r1-fg:#ff8aa3;--dz-heat-r2-fg:#ffb0c0;--dz-heat-r3-fg:#fff;--dz-heat-r4-fg:#0c1a29;
   --dz-fill-1:#22384e;--dz-glass-55:rgba(255,255,255,.03);--dz-glass-60:rgba(255,255,255,.035);--dz-glass-75:rgba(255,255,255,.05);--dz-glass-80:rgba(255,255,255,.06);
-  --dz-line-5:rgba(226,232,240,.07);--dz-line-6:rgba(226,232,240,.09);--dz-line-8:rgba(226,232,240,.13);
+  --dz-line-5:rgba(226,232,240,.07);--dz-line-6:rgba(226,232,240,.09);--dz-line-8:rgba(226,232,240,.13);--dz-field-line:#6c8196;
   --dz-sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.28);--dz-sh-menu:0 16px 44px rgba(0,0,0,.55);
   --dz-seg-on-bg:#eff4f9;--dz-seg-on-fg:#0c1a29;--dz-seg-off-fg:#bfcad6;
   /* the older scale (zinc), turned over */
@@ -11374,7 +11375,7 @@ function supBuildRisk(m){
   const cmCards=cms.map((c,i)=>{
     const t=Math.max(1,c.clear+c.risk+c.late),on=cmIn&&buildRiskCmFilter===c.id;
     const seg=(v,col,k)=>v>0?`<span class="dz-grow" style="flex:${v};background:${col};--i:${k}"></span>`:'';
-    return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.total)} orders (${brAll.label} report)\n• ${fmtNum(c.clear)} clear to build\n• ${fmtNum(c.risk)} at risk\n• ${fmtNum(c.late)} late\n${on?'Click to show all.':'Click to filter.'}`)}>
+    return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.total)} orders (${/report$/i.test(brAll.label)?brAll.label:brAll.label+' report'})\n• ${fmtNum(c.clear)} clear to build\n• ${fmtNum(c.risk)} at risk\n• ${fmtNum(c.late)} late\n${on?'Click to show all.':'Click to filter.'}`)}>
       <span class="sup-cmhead"><b>${esc(cmName(c.cm))}</b><span>${fmtNum(c.total)} ${c.total===1?'order':'orders'}</span></span>
       <span class="sup-cmbar">${seg(c.clear,'var(--dz-teal)',0)}${seg(c.risk,'var(--dz-amber)',1)}${seg(c.late,'var(--dz-risk)',2)}</span>
       <span class="sup-cmnums"><span><b class="teal">${fmtNum(c.clear)}</b><i>clear</i></span><span><b class="amber">${fmtNum(c.risk)}</b><i>at risk</i></span><span><b class="red">${fmtNum(c.late)}</b><i>late</i></span></span></button>`;
@@ -11433,7 +11434,7 @@ function supBuildRisk(m){
   const ctbTable=`<h3 class="sup-h3"${tipAttr(sectionTipText('br-ctb'))}>Clear To Build by CM / month</h3><div class="sup-scroll" tabindex="0" role="region" aria-label="Clear To Build by CM / month"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th><th>Month</th><th class="num">Total</th><th class="num">Clear to build</th><th class="num">At risk</th><th class="num">Late</th><th class="num">Matched SO lines</th><th class="num">Matched open qty</th><th class="num">Matched open value</th><th>Notes</th></tr></thead><tbody>${ctbPg.rows.map(r=>`<tr class="sup-row"><td class="sup-strong">${esc(r.cm)}</td><td class="sup-soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${r.total?dzChip(`${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)`,tone(r.clearToBuild,r.total)):'—'}</td><td class="num${r.atRisk?' amber':' muted'}">${fmtNum(r.atRisk)}</td><td class="num${r.late?' red':' muted'}">${fmtNum(r.late)}</td><td class="num">${fmtNum(r.matchedRows.length)}</td><td class="num sup-soft">${fmtNum(r.matchedOpenQty)}</td><td class="num sup-strong">${money(r.matchedOpenValue)}</td><td class="sup-soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td></tr>`).join('')||'<tr><td colspan="10" class="sup-soft">No CM / month lines.</td></tr>'}</tbody></table></div>${dzPageFoot('br-ctb-lines',ctbPg,'Clear To Build by CM / month','CM / month lines')}`;
   const trendTable=weeks.length>1?`<h3 class="sup-h3"${tipAttr(sectionTipText('br-trend'))}>CTB % by CM <span class="dz-meta">last ${fmtNum(weeks.length)} report weeks, oldest first</span></h3><div class="sup-scroll" tabindex="0" role="region" aria-label="CTB % by CM"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th>${weeks.map(s=>`<th class="num">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>${trendPg.rows.map(t=>`<tr class="sup-row"><td class="sup-strong">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>':`<td class="num">${dzChip(`${pct(c.clearToBuild,c.total)}%`,tone(c.clearToBuild,c.total))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${dzPageFoot('br-trend',trendPg,'CTB % by CM','CMs')}`:'';
   const detail=`<details class="sup-detail"${detailOpen?' open':''} data-more="br-ctb" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-br-ctb"${tipAttr('Report lines with matched sales orders, and CTB % by CM.')}><span class="sup-detail-show">Show more · Clear To Build by CM and month</span><span class="sup-detail-less">Show less</span></summary><div class="sup-detail-body">${ctbTable}${trendTable}</div></details>`;
-  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(brAll.label)} report${cmIn?` · CM ${esc(cmMap.get(buildRiskCmFilter).cm)}`:''}${cust?` · ${esc(cust)}`:''}</div>
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(/report$/i.test(brAll.label)?brAll.label:brAll.label+' report')}${cmIn?` · CM ${esc(cmMap.get(buildRiskCmFilter).cm)}`:''}${cust?` · ${esc(cust)}`:''}</div>
     <div class="sup-cmcards">${cmCards}</div>
     <div class="dz-grid">${monthsCard}${blockCard}${ordersCard}</div>
     ${detail}
@@ -13098,7 +13099,7 @@ function moMonthlyParts(m,src,today){
     const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
     const atRisk=g.lateRows+g.atRiskRows;
     const lateOpen=isPast&&g.openAmount>0;
-    return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(ohlTip(g.label,[`${money(g.openAmount)} open${lateOpen?', now late':''}`,`${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines)`,`${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled`]))}>
+    return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(ohlTip(g.label,[`${money(g.openAmount)} open${lateOpen?', now late':''}`,`${money(g.closedAmount)} shipped (${closedPct}% of ${ohN(totalRows,'line')})`,`${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled`]))}>
       <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
       <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · Now late':'open'}</span></div>
       <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
@@ -13978,7 +13979,7 @@ function wireTip(el){
   const ids=current.split(/\s+/).filter(id=>id&&!id.startsWith('tipd-'));
   // Text the element already shows or is named by (a heat-map cell's own breakdown) is not read twice; a div's
   // hidden copy counts as shown.
-  const shown=!text||String(el.textContent||'').includes(text)||tipGet(el,'aria-label')===text;
+  const shown=!text||String(el.textContent||'').includes(text)||(tipGet(el,'aria-label')===text||tipGet(el,'aria-label')===ohlPlain(text));
   const id=shown?'':tipDescId(text);
   if(id)ids.push(id);
   const next=ids.join(' ');
