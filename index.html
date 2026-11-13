@@ -4308,32 +4308,15 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
   --mo-glow:84,104,255;
 }
 
-/* ---------- The page: a fixed, very soft blue gradient behind the white cards (screen only; print stays white) ----------
-   Light: a pale blue to near-white vertical blend under two faint washes (indigo top left, sky top right).
-   Dark: the same in deep navy with faint indigo and teal washes. --dz-page (and --dz-page-bg / -base) stay one solid
-   colour, the top of the blend, for the places that use it as a ring or fill. */
+/* ---------- The page: one solid soft blue behind the white cards (screen only; print stays white) ----------
+   2v6.9 (owner): no purple / blue gradient; the whole page is the blue that was in its top right corner. Light #d7ebfc,
+   dark #102232. --dz-page is the same colour, for the places that use it as a ring or fill. */
 @media screen{
-  :root{--dz-page:#edf2fc}
-  html{
-    background-color:#edf2fc;
-    background-image:
-      radial-gradient(1100px 680px at 0% 0%,rgba(84,104,255,.10) 0%,rgba(84,104,255,.055) 38%,rgba(84,104,255,.018) 62%,rgba(84,104,255,0) 80%),
-      radial-gradient(1000px 640px at 100% 0%,rgba(56,189,248,.10) 0%,rgba(56,189,248,.05) 40%,rgba(56,189,248,.015) 64%,rgba(56,189,248,0) 82%),
-      radial-gradient(1400px 900px at 50% 115%,rgba(99,102,241,.05) 0%,rgba(99,102,241,.02) 45%,rgba(99,102,241,0) 75%),
-      linear-gradient(180deg,#e9f0fc 0%,#edf2fd 18%,#f1f5fd 40%,#f4f7fe 62%,#f7f9fe 82%,#f8fafe 100%);
-    background-attachment:fixed;background-repeat:no-repeat;
-    min-height:100%;
-  }
+  :root{--dz-page:#d7ebfc}
+  html{background:#d7ebfc;min-height:100%}
   body,.app-shell{background:transparent}
-  [data-theme=dark]{--dz-page:#0c1324}
-  html[data-theme=dark]{
-    background-color:#0c1324;
-    background-image:
-      radial-gradient(1100px 680px at 0% 0%,rgba(99,102,241,.13) 0%,rgba(99,102,241,.065) 38%,rgba(99,102,241,.02) 62%,rgba(99,102,241,0) 80%),
-      radial-gradient(1000px 640px at 100% 0%,rgba(45,212,191,.07) 0%,rgba(45,212,191,.035) 40%,rgba(45,212,191,.01) 64%,rgba(45,212,191,0) 82%),
-      radial-gradient(1400px 900px at 50% 115%,rgba(56,189,248,.04) 0%,rgba(56,189,248,.015) 45%,rgba(56,189,248,0) 75%),
-      linear-gradient(180deg,#0d1427 0%,#0c1324 20%,#0b1121 45%,#0a101e 70%,#090e1b 100%);
-  }
+  [data-theme=dark]{--dz-page:#102232}
+  html[data-theme=dark]{background:#102232}
   [data-theme=dark]{--mo-lift:0 1px 2px rgba(0,0,0,.35),0 12px 28px -10px rgba(0,0,0,.6);--mo-glow:115,131,255}
   /* Tiles that sit on the page itself (not in a card), their hovers and the map card: solid card colour, not glass */
   .dz-stat:not(.dz-card .dz-stat),button.dz-stat:not(.dz-card .dz-stat):hover,button.sup-tile:hover,.sup-cmcard:hover,
@@ -4847,7 +4830,7 @@ details.data-check>summary{font-size:13px}
 @media print{.mo-reveal{animation:none!important}}
 /* 2v7:end motion */
 /* 2v7:bg */
-/* Page background choices (Settings > Pages & Display > Background, html[data-bg]). Blue is the gradient in 2v7:motion;
+/* Page background choices (Settings > Pages & Display > Background, html[data-bg]). Blue is the solid colour in 2v7:motion;
    the others below, each in light and dark, with --dz-page set to a solid colour near the top of its blend. Screen only
    (print stays white). */
 @media screen{
@@ -10695,7 +10678,7 @@ function stgKey(){return 'spyderKpiSettings';}
 // is read.
 function stgBackgrounds(){
   return [
-    ['blue','Blue','linear-gradient(135deg,#c9d5ff,#d4ebfb 55%,#f3f7fe)','linear-gradient(135deg,#1b2350,#0c1324 60%,#0f2a33)'],
+    ['blue','Blue','#d7ebfc','#102232'],
     ['lavender','Lavender','linear-gradient(135deg,#dacdff,#f0d9f0 55%,#f8f6fe)','linear-gradient(135deg,#2a1d52,#120f24 60%,#2a1530)'],
     ['mint','Mint','linear-gradient(135deg,#c0ebe0,#d2ebf7 55%,#f3faf9)','linear-gradient(135deg,#0f3a36,#0a1a1a 60%,#0f2a3a)'],
     ['peach','Peach','linear-gradient(135deg,#fbd5bc,#f8d9e5 55%,#fdf6f2)','linear-gradient(135deg,#3d2416,#1a120d 60%,#33182a)'],
