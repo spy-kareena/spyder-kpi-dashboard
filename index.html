@@ -4183,6 +4183,36 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 @media (pointer:coarse){button.po-step-main,.po-step-rows .po-own{min-height:40px}}
 @media print{.po-v1top,.po-v1mid{break-inside:avoid}}
 /* 2v9:end po-v1 */
+/* 2v9 (owner): Open POs by warehouse as a heat table (Warehouses C) */
+.pow-tbl{display:flex;flex-direction:column;gap:3px}
+.pow-g{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,1fr) minmax(0,.75fr) minmax(0,.95fr);column-gap:6px;align-items:center}
+.pow-hd{padding:0 8px 4px;align-items:end;font-size:11.5px;line-height:14px;color:var(--dz-ink-5)}
+.pow-hd>span:not(:first-child){text-align:center}.pow-hd>span:last-child{text-align:right;padding-right:4px}
+button.pow-row{font:inherit;color:inherit;text-align:left;border:0;background:transparent;width:100%;padding:3px 8px;border-radius:12px;cursor:pointer;box-sizing:border-box}
+button.pow-row:hover{background:var(--dz-fill-1)}
+button.pow-row.sel{background:var(--dz-fill-1);box-shadow:inset 0 0 0 1.5px var(--dz-indigo)}
+button.pow-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.pow-name{font-size:13px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pow-row.sel .pow-name,.pow-tot .pow-name{color:var(--dz-ink-1);font-weight:600}
+.pow-n,.pow-pct,.pow-v{font-size:13px;text-align:center;color:var(--dz-ink-2);font-variant-numeric:tabular-nums}
+.pow-v{text-align:right;padding-right:4px}
+.pow-pct{font-weight:600}.pow-pct.bad{color:var(--dz-risk-text)}.pow-pct.ok{color:var(--dz-teal-text)}
+.pow-c{display:flex;align-items:center;justify-content:center;height:28px;border-radius:8px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.pow-c.ok,.pow-sw i.ok{background:var(--dz-teal-bg-2);color:var(--dz-teal-text);font-weight:500}
+.pow-c.r1,.pow-sw i.r1{background:var(--dz-heat-r1);color:var(--dz-heat-r1-fg)}
+.pow-c.r2,.pow-sw i.r2{background:var(--dz-heat-r2);color:var(--dz-heat-r2-fg)}
+.pow-c.r3,.pow-sw i.r3{background:var(--dz-heat-r4);color:var(--dz-heat-r4-fg)}
+.pow-c.a1,.pow-sw i.a1{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
+.pow-c.a2,.pow-sw i.a2{background:var(--dz-amber-bg-2);color:var(--dz-amber-text)}
+.pow-c.a3,.pow-sw i.a3{background:var(--dz-amber);color:#3a1d00}
+.pow-tot{padding:6px 8px 0;margin-top:3px;border-top:1px solid var(--dz-line-8)}
+.pow-tot .pow-n,.pow-tot .pow-v{font-weight:600;color:var(--dz-ink-1)}
+.pow-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:10px;font-size:11.5px;color:var(--dz-ink-3)}
+.pow-legend>span{display:inline-flex;align-items:center;gap:6px}
+.pow-legend-note{margin-left:auto;color:var(--dz-ink-5)}
+.pow-sw{display:inline-flex;gap:2px}.pow-sw i{width:12px;height:10px;display:inline-block}
+.pow-sw i:first-child{border-radius:3px 0 0 3px}.pow-sw i:last-child{border-radius:0 3px 3px 0}
+@media (max-width:480px){.pow-g{grid-template-columns:minmax(0,1.6fr) repeat(4,minmax(0,.8fr))}.pow-g>:last-child{display:none}}
 /* 2v9:spark */
 /* Sparklines (Style A): a small figure beside or under a number; focusable, its tip lists every period. */
 .dz-spark{display:inline-flex;flex:none;vertical-align:middle;border-radius:6px;line-height:0;cursor:crosshair;touch-action:pan-y}
@@ -11175,14 +11205,24 @@ function supPurchaseOrders(m){
       </button>`;}).join('')}</div><div class="ohc-legend" aria-hidden="true"><span><i class="pd"></i>Late</span><span><i class="ar"></i>No commit</span><span><i></i>On time</span><span class="ohc-unit">${unit>1?`Each square: ${unit} POs`:'Each square: 1 open PO'}</span></div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
     byFoot=dzPageFoot('po-vendors',vPg,'Vendors with the most late POs','vendors');
   }else{
-    const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value);
+    // 2v9 (owner's pick, Warehouses C · Heat table): one row per warehouse with its number of open POs, the late ones and
+    // the ones with no commit date (each tinted by its share of that warehouse's POs: under 10%, 10-20%, 20%+; a teal 0
+    // when none), % late and the open value; most late first; a totals row for every warehouse in view. A click filters
+    // the page (again clears it).
+    const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)}))
+      .sort((a,b)=>b.late-a.late||(b.n?b.late/b.n:0)-(a.n?a.late/a.n:0)||b.n-a.n||b.value-a.value);
     // 10 warehouses a page; a new warehouse or vendor filter starts at page 1.
     const whPg=dzPageOf('po-warehouses',wg,JSON.stringify([poWarehouseFilter,poVendorFilter]));
     const shown=whPg.rows;
-    const mx=Math.max(1,...wg.map(g=>g.n));
+    const heat=(x,n,p)=>!x?'ok':`${p}${x/n>=.2?3:x/n>=.1?2:1}`;
+    const pctOf=(x,n)=>n?Math.round(x/n*100):0;
+    const cells=g=>{const pc=pctOf(g.late,g.n);return `<span class="pow-n">${fmtNum(g.n)}</span><span class="pow-c ${heat(g.late,g.n,'r')}">${fmtNum(g.late)}</span><span class="pow-c ${heat(g.nc,g.n,'a')}">${fmtNum(g.nc)}</span><span class="pow-pct${g.late?' bad':' ok'}">${pc}%</span><span class="pow-v">${esc(moneyShort(g.value))}</span>`;};
+    const tot={n:wg.reduce((t,g)=>t+g.n,0),late:wg.reduce((t,g)=>t+g.late,0),nc:wg.reduce((t,g)=>t+g.nc,0),value:wg.reduce((t,g)=>t+g.value,0)};
     byTitle='Open POs by warehouse';
-    byBody=shown.length?`<div class="dz-bars sup-bars">${shown.map((g,i)=>dzBarRow({label:supWh(g.key),sub:`${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit`,value:g.n,max:mx,color:'var(--dz-indigo)',num:fmtNum(g.n),onclick:`setPoWarehouseRow(${dzJs(g.key)})`,selected:focusedWh===g.key,attrs:` data-focus-key="powh-${esc(g.key)}"`,i,
-      tip:`${g.key}: ${money(g.value)} open\n• ${ordersN(g.n)} · ${supLines(g.rows.length)}\n• ${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit\n${focusedWh===g.key?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
+    byBody=shown.length?`<div class="pow-tbl" role="group" aria-label="Open POs by warehouse"><div class="pow-g pow-hd" aria-hidden="true"><span>Warehouse</span><span># of POs</span><span>Late</span><span>No commit date</span><span>% late</span><span>Open $</span></div>${shown.map(g=>{
+      const on=focusedWh===g.key,pc=pctOf(g.late,g.n);
+      return `<button type="button" class="pow-g pow-row${on?' sel':''}" data-focus-key="powh-${esc(g.key)}" aria-pressed="${on}" onclick="${esc(`setPoWarehouseRow(${dzJs(g.key)})`)}" aria-label="${esc(`${supWh(g.key)}: ${g.n} open POs, ${g.late} late (${pc}%), ${g.nc} with no commit date, ${moneyShort(g.value)} open`)}"${tipAttr(`${g.key}: ${money(g.value)} open\n• ${ordersN(g.n)} · ${supLines(g.rows.length)}\n• ${fmtNum(g.late)} late (${pc}%) · ${fmtNum(g.nc)} no commit date\n${on?'Click to show all.':'Click to filter.'}`)}><span class="pow-name">${esc(supWh(g.key))}</span>${cells(g)}</button>`;}).join('')}<div class="pow-g pow-tot"><span class="pow-name">All warehouses</span>${cells(tot)}</div></div>
+      <div class="pow-legend" aria-hidden="true"><span><span class="pow-sw"><i class="r1"></i><i class="r2"></i><i class="r3"></i></span>Late</span><span><span class="pow-sw"><i class="a1"></i><i class="a2"></i><i class="a3"></i></span>No commit date</span><span class="pow-legend-note">Tint: share of the warehouse's POs, under 10% · 10–20% · 20%+</span></div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
     byFoot=dzPageFoot('po-warehouses',whPg,'Open POs by warehouse','warehouses');
   }
   const byCard=dzCard({title:byTitle,sm:true,span:3,cls:`dz-fade${by==='vendor'?' pov-card':''}`,meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});

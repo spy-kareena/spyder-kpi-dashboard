@@ -554,4 +554,33 @@ test('the new CSS sits in its own marker pair just before the Settings block, on
   assert.match(css, /prefers-reduced-motion:reduce\)\{button\.ohl-kv\{transition:none\}\}/);
 });
 
+// 2v9 (owner's pick, Warehouses C · Heat table): Open POs by warehouse is a table: # of POs, Late and No commit date
+// (tinted by their share of that warehouse's POs: under 10%, 10-20%, 20%+; a teal 0 when none), % late and Open $;
+// most late first; a totals row; a row filters the page.
+test('Purchase Orders: Open POs by warehouse is a heat table with # of POs, late, no commit date, % late and open value', async () => {
+  let n = 600;
+  const wh = (w, late, nc, rest) => [
+    ...Array.from({ length: late }, () => po(String(n++), '08/01/2026', { Warehouse: w })),
+    ...Array.from({ length: nc }, () => po(String(n++), '12/15/2026', { Warehouse: w, RescheduleDate: '1111-11-11' })),
+    ...Array.from({ length: rest }, () => po(String(n++), '12/15/2026', { Warehouse: w })),
+  ];
+  const page = await loaded([...ROWS.slice(0, 3), ...wh('CM - DSM', 0, 1, 4), ...wh('Spyder - Lacombe', 3, 1, 6), ...wh('CM - Alta', 1, 0, 3)]);
+  page.run("setTab('purchaseorders')");
+  page.run("supSet('po-by','wh')");
+  const h = html(page);
+  assert.doesNotMatch(h, /dz-bars sup-bars/, 'no bars');
+  assert.match(h, /<div class="pow-g pow-hd" aria-hidden="true"><span>Warehouse<\/span><span># of POs<\/span><span>Late<\/span><span>No commit date<\/span><span>% late<\/span><span>Open \$<\/span><\/div>/);
+  const rows = [...h.matchAll(/<button type="button" class="pow-g pow-row[^"]*" data-focus-key="powh-([^"]+)"[\s\S]*?<span class="pow-n">(\d+)<\/span><span class="pow-c ([a-z0-9]+)">(\d+)<\/span><span class="pow-c ([a-z0-9]+)">(\d+)<\/span><span class="pow-pct[^"]*">(\d+)%<\/span>/g)]
+    .map((m) => m.slice(1, 8).join(' '));
+  assert.deepEqual(rows.filter((r) => /Lacombe|Alta|DSM/.test(r)), [
+    'Spyder - Lacombe 10 r3 3 a2 1 30', // 3 of 10 late (30%: deepest), 1 of 10 no commit (10%: middle)
+    'CM - Alta 4 r3 1 ok 0 25',
+    'CM - DSM 5 ok 0 a3 1 0', // no late: teal 0; 1 of 5 no commit (20%: deepest)
+  ]);
+  assert.match(h, /<div class="pow-g pow-tot"><span class="pow-name">All warehouses<\/span><span class="pow-n">\d+<\/span>/);
+  assert.match(h, /onclick="setPoWarehouseRow\(&quot;Spyder - Lacombe&quot;\)"/);
+  assert.match(h, /<div class="pow-legend" aria-hidden="true">/);
+  assert.deepEqual(page.errors, []);
+});
+
 run();
