@@ -17,6 +17,20 @@ Any AI can be wrong. Check a number against the page before you act on it.
 - **Paid** providers are covered by Spyder Controls' agreement with them and do not train on what you send. **Free** providers have weaker terms; use them only for data Spyder Controls may share.
 - Nothing is sent until you tick the provider's consent box in **Settings**. The tick is saved in your browser for each provider (allowing Anthropic does not allow Groq); untick it to stop.
 - The AI keys stay on the server. They never reach the browser or a **Share snapshot** file. The chat is not saved anywhere.
+- With live SAP, what an SAP lookup returns (order, PO, stock, item or customer rows) goes to the same provider. Settings says so under the consent box.
+
+## Board first, then SAP (2v6.9)
+
+Ask AI answers from the board (the data loaded in the dashboard). When the board does not hold the answer (an order,
+PO, item or customer not on the board, stock on hand, deliveries, invoices, prices, lead times, production orders, older
+history) and the site has live SAP ([LIVE_SAP.md](LIVE_SAP.md)), it looks it up in SAP through the bridge. While it does,
+the chat shows **Asking SAP: order 45126…**. Each answer ends with its source: **From the board**, **From SAP · live at
+2:14 PM**, or **From SAP · last good read at …** when SAP could not be read and the bridge sent its last good result.
+At most 50 rows of one lookup go to the AI; it says when a list is cut.
+
+The SAP lookups are the bridge's named queries: `so_detail`, `po_detail`, `item_stock`, `customer_orders`,
+`order_deliveries`, `item_info`, `production_orders`, `open_sales_orders`, `sales_by_month`, `stock_by_warehouse`,
+`open_purchase_orders`. Ask AI offers one only when the bridge lists it. The AI app connection (MCP) has the board tools only.
 
 ## Using it
 

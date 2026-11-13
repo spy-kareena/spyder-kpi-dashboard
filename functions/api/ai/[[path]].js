@@ -26,7 +26,7 @@ const UPSTREAM_TIMEOUT_MS = 95 * 1000; // Cloudflare closes a request that waits
 const MODELS_TIMEOUT_MS = 4000;
 const MODELS_TTL_MS = 60 * 60 * 1000;
 const MAX_MESSAGES = 400;
-const MAX_TOOLS = 16;
+const MAX_TOOLS = 24; // 6 board tools + up to 11 SAP lookups (2v6.9), with room
 // Longest answer per model turn, in tokens (thinking / reasoning included). Free tiers count this against a few
 // thousand tokens per minute, so they get less room; a short data answer fits easily.
 const MAX_OUTPUT_TOKENS = 16000;

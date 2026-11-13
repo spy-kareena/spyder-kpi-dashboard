@@ -523,7 +523,8 @@ test('markdown renderer escapes HTML and renders the small markdown subset', () 
   assert.match(html, /&lt;img src=x onerror=alert\(1\)&gt;/);
   assert.match(html, /<strong>Bold<\/strong> and <em>it<\/em> <code>&lt;b&gt;code&lt;\/b&gt;<\/code>/);
   assert.match(html, /<ul><li>one<\/li><li>two<\/li><\/ul><ol><li>first<\/li><\/ol>/);
-  assert.match(html, /<th>Warehouse<\/th><th>Value<\/th>[\s\S]*<td>&lt;script&gt;x&lt;\/script&gt;<\/td><td>\$1<\/td>/);
+  // A money column is right-aligned (class="num"); text stays as it was.
+  assert.match(html, /<th>Warehouse<\/th><th class="num">Value<\/th>[\s\S]*<td>&lt;script&gt;x&lt;\/script&gt;<\/td><td class="num">\$1<\/td>/);
 });
 
 test('notices and model labels from the site are escaped; the provider names are the page\'s own', async () => {

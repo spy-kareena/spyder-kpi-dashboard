@@ -4262,6 +4262,25 @@ button.ohc2-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset
 .card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
 @media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
 /* 2v9:end pager */
+/* 2v9:ask */
+/* Ask AI from SAP: "Asking SAP…" with the live mark, the source line under each answer, the SAP privacy line, number
+   columns in chat tables (the table scrolls sideways inside the bubble). */
+.ai-msg.pending.sap{color:var(--dz-ink-2);font-weight:500}
+.ai-msg.pending.sap .live-pulse{width:16px;height:16px}
+.ai-src{display:flex;align-items:center;gap:6px;margin:8px 0 0;padding-top:7px;border-top:1px solid var(--dz-line-6);font-size:12px;font-weight:500;line-height:1.3;color:var(--dz-ink-4)}
+.ai-src svg{flex:none;width:13px;height:13px}
+.ai-src.sap .live-pulse{color:var(--live-ok)}
+.ai-src.sap .live-pulse .live-track{opacity:1}
+.ai-src.sap.stale .live-pulse{color:var(--dz-amber-text)}
+.ai-sap-note{margin:6px 0 0 21px;font-size:12px;line-height:1.4;color:var(--dz-ink-4)}
+.ai-msg .ai-table{--ai-shade:rgba(12,26,44,.16);max-width:100%;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(90deg,var(--dz-surface,#fff) 30%,transparent) 0 0/28px 100% no-repeat local,linear-gradient(270deg,var(--dz-surface,#fff) 30%,transparent) 100% 0/28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%,var(--ai-shade),transparent) 0 0/10px 100% no-repeat scroll,radial-gradient(farthest-side at 100% 50%,var(--ai-shade),transparent) 100% 0/10px 100% no-repeat scroll}
+.ai-msg .ai-table:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px;border-radius:4px}
+:where([data-theme=dark]) .ai-msg .ai-table{--ai-shade:rgba(0,0,0,.45)}
+.ai-msg td.num,.ai-msg th.num{text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:640px){.ai-src,.ai-sap-note{font-size:12.5px}}
+/* 2v9:end ask */
 /* 2v9:pages */
 /* Order Health, Leading (2v6.9): the ship target card over Status & top reasons, the two in one column beside At risk
    (the column stretches to At risk's height, Status takes the rest); Status & top reasons is a two-column list, no bars:
@@ -5422,6 +5441,7 @@ details.data-check>summary{font-size:13px}
         <p id="ai-notice-text"></p>
         <p class="ai-links"><a id="ai-terms" href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener noreferrer" data-tip="This provider's own data terms (new tab).">Data terms</a><a href="docs/AI_ASSISTANT.md" target="_blank" rel="noopener" data-tip="Providers, costs and data terms.">Ask AI guide</a></p>
         <label class="ai-check" data-tip="Nothing is sent until ticked. Untick to stop."><input type="checkbox" id="ai-consent" onchange="aiSetConsent(this.checked)"> <span id="ai-consent-text">Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to this provider.</span></label>
+        <p class="ai-sap-note" id="ai-sap-note" hidden>SAP lookups are sent to this provider too.</p>
       </div>
       <div class="ai-row"><button type="button" class="btn btn-primary btn-sm" id="ai-start" data-tip="Chat with this provider and model." onclick="aiBackToChat()">Back to chat</button></div>
       <p class="ai-status" id="ai-settings-status" role="status"></p>
@@ -9818,6 +9838,110 @@ function aiRunTool(name,args){
     return out&&typeof out==='object'&&!Array.isArray(out)?out:{result:out};
   }catch(err){return {error:String(err&&err.message||err)};}
 }
+// --- Ask AI: SAP lookups through the bridge (2v6.9) ---
+// One tool per SAP query (sap_<query>), offered only when this site has live SAP and /api/sap/catalog lists the query.
+// They run here with fetch('/api/sap/data/<query>?…'); functions/api/sap checks the names and params again. The board
+// tools come first (aiSystemPrompt). Not in KPI_TOOLS: the MCP server has no bridge.
+const SAP_AI_ROWS=50; // rows sent to the model per lookup; the counts say how many there were
+const SAP_AI_CATALOG_MS=10*60*1000;
+const sapAiDoc=what=>({type:'object',properties:{docnum:{type:'integer',description:`${what} number (DocNum), e.g. 45126`}},required:['docnum']});
+const sapAiItem={type:'object',properties:{item:{type:'string',description:'SAP item code (ItemCode)'}},required:['item']};
+const SAP_AI_TOOLS={
+  so_detail:{label:a=>`order ${a.docnum}`,parameters:sapAiDoc('Sales order'),
+    description:'SAP live: every line of one sales order: customer, order and due dates, status, item, quantity, open quantity, price, line and open value, warehouse, ship date.'},
+  po_detail:{label:a=>`PO ${a.docnum}`,parameters:sapAiDoc('Purchase order'),
+    description:'SAP live: every line of one purchase order: vendor, dates, status, item, quantity, open quantity, price, line and open value, warehouse, ship date.'},
+  item_stock:{label:a=>`stock of ${a.item}`,parameters:sapAiItem,
+    description:'SAP live: stock of one item in each warehouse: on hand, committed, on order and available.'},
+  customer_orders:{label:a=>`orders of ${a.cardcode}`,
+    parameters:{type:'object',properties:{cardcode:{type:'string',description:'SAP customer code (CardCode); find it with the board tools when only a name is known'},months:{type:'integer',description:'Months back (default 12, max 60)'}},required:['cardcode']},
+    description:"SAP live: one customer's sales orders over recent months: dates, status, total, open value, last delivery and days late."},
+  order_deliveries:{label:a=>`deliveries of order ${a.docnum}`,parameters:sapAiDoc('Sales order'),
+    description:'SAP live: the deliveries and invoices made from one sales order: kind, document, date, item, quantity, value.'},
+  item_info:{label:a=>`item ${a.item}`,parameters:sapAiItem,
+    description:'SAP live: one item: name, group, unit, lead time days, minimum stock, last purchase price, list price, default vendor.'},
+  production_orders:{label:a=>a.item?`production orders of ${a.item}`:'production orders',
+    parameters:{type:'object',properties:{item:{type:'string',description:'SAP item code; leave out for every item'},status:{type:'string',enum:['open','all'],description:'open (default) or all'}},required:[]},
+    description:'SAP live: production orders: item, planned and completed quantity, due date, status, warehouse.'},
+  open_sales_orders:{label:()=>'open sales orders',parameters:{type:'object',properties:{},required:[]},
+    description:'SAP live: every open sales order with its open value. Long; the board usually answers this.'},
+  sales_by_month:{label:()=>'sales by month',parameters:{type:'object',properties:{months:{type:'integer',description:'Months back (default 12, max 60)'}},required:[]},
+    description:'SAP live: net sales (invoices minus credit notes, before tax) per month.'},
+  stock_by_warehouse:{label:()=>'stock by warehouse',parameters:{type:'object',properties:{},required:[]},
+    description:'SAP live: on-hand quantity and stock value per warehouse.'},
+  open_purchase_orders:{label:()=>'open purchase orders',parameters:{type:'object',properties:{},required:[]},
+    description:'SAP live: every open purchase order with its open value. Long; the board usually answers this.'}
+};
+let sapAiCatalog={at:0,names:[],asking:null};
+const sapAiName=name=>/^sap_/.test(String(name))?String(name).slice(4):'';
+const sapAiIs=name=>!!sapAiName(name)&&Object.hasOwn(SAP_AI_TOOLS,sapAiName(name));
+// The SAP queries this site offers, from /api/sap/catalog (kept 10 minutes; asked again after a failure).
+async function sapAiCheck(){
+  if(!sapLive.configured||!sapLiveHosted()){sapAiCatalog={at:0,names:[],asking:null};return [];}
+  if(sapAiCatalog.at&&Date.now()-sapAiCatalog.at<SAP_AI_CATALOG_MS)return sapAiCatalog.names;
+  if(!sapAiCatalog.asking)sapAiCatalog.asking=(async()=>{
+    let names=[],ok=false;
+    try{
+      const res=await fetch('/api/sap/catalog',{cache:'no-store'});
+      const body=res&&res.ok?await res.json():null;
+      const q=body&&body.queries&&typeof body.queries==='object'?body.queries:null;
+      if(q){names=Object.keys(SAP_AI_TOOLS).filter(n=>Object.hasOwn(q,n));ok=true;}
+    }catch(err){}
+    sapAiCatalog={at:ok?Date.now():0,names,asking:null};
+    return names;
+  })();
+  return sapAiCatalog.asking;
+}
+const sapAiTools=()=>sapAiCatalog.names.map(n=>({name:`sap_${n}`,description:SAP_AI_TOOLS[n].description,parameters:SAP_AI_TOOLS[n].parameters}));
+// "order 45126", for "Asking SAP: order 45126".
+function sapAiLabel(name,args){
+  const t=SAP_AI_TOOLS[sapAiName(name)],a=args&&typeof args==='object'?args:{};
+  try{return String(t.label(a)).replace(/\b(undefined|null)\b/g,'').trim().slice(0,60);}catch(err){return '';}
+}
+// One lookup. Only the tool's own params are sent; at most SAP_AI_ROWS rows go to the model, long text cut.
+// reads collects {at, stale} for the answer's source line.
+async function sapAiRun(name,args,signal,reads){
+  const q=sapAiName(name),t=SAP_AI_TOOLS[q],a=args&&typeof args==='object'?args:{};
+  if(!t||!sapAiCatalog.names.includes(q))return {error:`SAP lookup ${name} is not available on this site.`};
+  const search={};
+  for(const [p,d] of Object.entries(t.parameters.properties)){
+    const v=a[p];
+    if(v===undefined||v===null||String(v).trim()==='')continue;
+    search[p]=d.type==='integer'&&Number.isFinite(Number(v))?String(Math.trunc(Number(v))):String(v).trim();
+  }
+  const qs=Object.entries(search).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+  let res,body=null;
+  try{res=await fetch(`/api/sap/data/${q}${qs?`?${qs}`:''}`,{cache:'no-store',signal});}
+  catch(err){
+    if(err&&err.name==='AbortError')throw err;
+    return {source:'SAP',error:'This site could not be reached for the SAP lookup. Say SAP could not be read.'};
+  }
+  try{body=await res.json();}catch(err){}
+  if(!res.ok||!body||typeof body!=='object'){
+    const why=body&&typeof body.error==='string'?body.error.slice(0,300):res.ok?'Your sign-in to this site has expired.':`The SAP lookup failed (error ${res.status}).`;
+    return {source:'SAP',lookup:q,error:why};
+  }
+  const rows=Array.isArray(body.rows)?body.rows:[];
+  const cell=v=>typeof v==='string'&&v.length>160?`${v.slice(0,160)}…`:v;
+  const sent=rows.slice(0,SAP_AI_ROWS).map(r=>r&&typeof r==='object'?Object.fromEntries(Object.entries(r).map(([k,v])=>[k,cell(v)])):r);
+  const total=Number.isFinite(Number(body.row_count))?Number(body.row_count):rows.length;
+  const cut=!!body.truncated||sent.length<rows.length;
+  const at=liveTime(body.refreshed_at)||Date.now(),stale=body.stale===true;
+  if(reads)reads.push({at,stale});
+  return {source:stale?'SAP (last good read: SAP could not be read just now)':'SAP (live)',lookup:q,params:body.params&&typeof body.params==='object'?body.params:search,
+    read_at:liveClock(at),stale,row_count:total,returned:sent.length,
+    ...(cut?{truncated:true,note:`Only the first ${sent.length} rows are here${body.truncated?' (SAP cut the list too)':''}; say the list is cut.`}:{}),
+    ...(rows.length?{}:{note:'SAP has no rows for this. Say so; do not guess.'}),
+    rows:sent};
+}
+// The answer's last line: "From the board", "From SAP · live at 2:14 PM", "From SAP · last good read at 2:14 PM",
+// or both sources. '' when the answer used no lookup.
+function aiSourceText(src){
+  if(!src||(!src.board&&!src.sap))return '';
+  const who=src.board&&src.sap?'From the board and SAP':src.board?'From the board':'From SAP';
+  if(!src.sap)return who;
+  return `${who} · ${src.sap.stale?'last good read at':'live at'} ${liveClock(src.sap.at)}`;
+}
 // --- Stream C: Ask AI with four providers (Anthropic, ChatGPT, Groq, OpenRouter) through /api/ai ---
 // The site's server holds the AI keys (functions/api/ai/[[path]].js); this page never sees them. The panel lists
 // the providers the site has set up, grouped Paid / Free, asks for consent per provider before anything is sent,
@@ -9843,7 +9967,7 @@ const AI_HISTORY_CHARS={paid:300000,free:24000},AI_RESULT_CHARS={paid:30000,free
 // whole chat again. Each request is kept under this (also well inside a 200k-token context): when a question's
 // lookups would pass it, their results are cut down further and the model answers with what it has (aiFitBody).
 const AI_BODY_BUDGET=800*1024;
-const aiState={open:false,opener:'',view:'chat',status:null,statusError:'',statusCheck:null,provider:'',model:'',chatKey:'',system:'',busy:false,controller:null,history:[],messages:[],rows:null};
+const aiState={open:false,opener:'',view:'chat',status:null,statusError:'',statusCheck:null,provider:'',model:'',chatKey:'',system:'',busy:false,progress:'',controller:null,history:[],messages:[],rows:null};
 const aiEl=id=>document.getElementById(id);
 const aiAnnounce=text=>{const el=aiEl('ai-announce');if(el)el.textContent=String(text||'').replace(/[*`#_]/g,'');};
 // A newly loaded export starts a new chat (showResults checks after every load), so follow-up questions never mix in
@@ -10037,6 +10161,8 @@ function aiSyncSettings(){
   aiEl('ai-consent').checked=consented;
   aiEl('ai-consent').disabled=!p;
   aiEl('ai-consent-text').textContent=`Allow Ask AI to send my questions and the data needed to answer them (order lines, customers, values, notes) to ${p?p.short:'this provider'}.`;
+  const sapNote=aiEl('ai-sap-note');
+  if(sapNote){sapNote.hidden=!(sapLive.configured&&sapLiveHosted());sapNote.textContent=`SAP lookups are sent to ${p?p.short:'this provider'} too.`;}
   aiEl('ai-mode').textContent=aiState.statusError?'Needs attention':!aiState.status?'':p?`${p.short} · ${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}`:'Not set up';
   aiEl('ai-foot').textContent=p?`Answers come from ${p.short} (${aiModelLabel(p,aiState.model).replace(/\s*\(.*\)$/,'')}) and can be wrong. Check key numbers.`:'Answers can be wrong. Check key numbers.';
   aiEl('ai-setup-why').textContent=aiState.status&&!aiState.status.hosted
@@ -10072,9 +10198,10 @@ async function aiPost(body,signal){
 }
 function aiSystemPrompt(){
   return `You are an operations KPI analyst for Spyder Controls. You answer questions about the SAP Business One KPI dashboard loaded in the user's browser: sales orders, purchase orders, deliveries, receipts, supply / demand and Clear To Build data. The report's as-of date is ${displayDate(reportToday())}.
-Answer only from tool results: call the tools for every number and never guess or use outside knowledge. Cite the numbers you use and the as-of date. If the data needed is not loaded, or a tool returns nothing, say so plainly. Keep answers short: a sentence or two, then a few bullets or a small table only when it helps. Write money in full with thousands separators (for example $1,721,806). Values are open (or shipped) value in the export's local currency. "At risk" means open lines past due with no reschedule, with no commit date, rescheduled, or marked Urgent.`;
+Answer only from tool results: call the tools for every number and never guess or use outside knowledge. Cite the numbers you use and the as-of date. If the data needed is not loaded, or a tool returns nothing, say so plainly. Keep answers short: a sentence or two, then a few bullets or a small table only when it helps. Write money in full with thousands separators (for example $1,721,806). Values are open (or shipped) value in the export's local currency. "At risk" means open lines past due with no reschedule, with no commit date, rescheduled, or marked Urgent.
+Sources: the board is the data loaded in this dashboard (every tool not named sap_…). Board first: answer from the board tools when they hold the answer. Use an sap_ tool (offered only when this site is linked to SAP) only when the board does not: an order, PO, item or customer not in the board's data, stock on hand, deliveries, invoices, prices, lead times, production orders, or history beyond the board. SAP results are SAP B1 read live; when a result is stale, say it is SAP's last good read. Never guess. Say which source the answer comes from (the board or SAP). Show several SAP rows as a small table; if a result is truncated, say the list is cut.`;
 }
-const aiToolDefs=()=>KPI_TOOLS.map(({name,description,parameters})=>({name,description,parameters}));
+const aiToolDefs=()=>[...KPI_TOOLS.map(({name,description,parameters})=>({name,description,parameters})),...sapAiTools()];
 // Free tiers count tokens per minute, so long tool results are cut (largest list first) and marked truncated.
 function aiFitResult(out,limit){
   if(!out||typeof out!=='object'||utf8Bytes(JSON.stringify(out))<=limit)return out;
@@ -10114,7 +10241,7 @@ function aiFitBody(body,start,limit){
 // One question: ask the model, run its tool calls here, send the results back, up to AI_MAX_ROUNDS turns.
 // Each assistant turn is kept exactly as the site returned it (Anthropic thinking blocks included).
 async function aiAsk(p,question,signal){
-  const history=aiState.history,start=history.length,used=[],limit=AI_RESULT_CHARS[p.tier==='free'?'free':'paid'];
+  const history=aiState.history,start=history.length,used=[],reads=[],limit=AI_RESULT_CHARS[p.tier==='free'?'free':'paid'];
   history.push({role:'user',content:question});
   try{
     for(let round=1;;round++){
@@ -10133,14 +10260,27 @@ async function aiAsk(p,question,signal){
       history.push(data.message);
       if(!calls.length){
         if(!text)throw aiFail(`${p.short} returned an empty answer. Try again or rephrase the question.`);
-        return {text:data.stop==='max_tokens'?`${text}\n\n_(The answer was cut off.)_`:text,used:[...new Set(used)],by:aiModelLabel(p,String(data.model||aiState.model)).replace(/\s*\(.*\)$/,'')};
+        // Source line: the board when a board tool ran; SAP when a lookup came back, at its oldest read time.
+        const sapRead=reads.length?reads.reduce((x,y)=>({at:Math.min(x.at,y.at),stale:x.stale||y.stale})):null;
+        return {text:data.stop==='max_tokens'?`${text}\n\n_(The answer was cut off.)_`:text,used:[...new Set(used)],by:aiModelLabel(p,String(data.model||aiState.model)).replace(/\s*\(.*\)$/,''),
+          source:{board:used.some(n=>!sapAiIs(n)&&KPI_TOOLS.some(t=>t.name===n)),sap:sapRead}};
       }
       if(last)throw aiFail('This question needed too many lookups. Try a narrower question.');
-      const results=calls.map(c=>{
+      const results=[];
+      for(const c of calls){
         used.push(c.name);
-        const out=c.invalid?{error:'The tool arguments were not valid JSON. Call the tool again with a JSON object.'}:aiRunTool(c.name,c.input);
-        return {id:String(c.id||''),out:aiFitResult(out,limit)};
-      });
+        let out;
+        if(c.invalid)out={error:'The tool arguments were not valid JSON. Call the tool again with a JSON object.'};
+        else if(sapAiIs(c.name)){
+          // "Asking SAP: order 45126" in the chat while the bridge answers.
+          const label=sapAiLabel(c.name,c.input);
+          aiState.progress=`Asking SAP${label?`: ${label}`:''}…`;
+          aiRenderLog();aiAnnounce(aiState.progress);
+          try{out=await sapAiRun(c.name,c.input,signal,reads);}finally{aiState.progress='';if(aiState.busy)aiRenderLog();}
+        }
+        else out=aiRunTool(c.name,c.input);
+        results.push({id:String(c.id||''),out:aiFitResult(out,limit)});
+      }
       // Anthropic: every result in one user turn; OpenAI style: one "tool" message per call.
       if(p.dialect==='anthropic')history.push({role:'user',content:results.map(({id,out})=>({type:'tool_result',tool_use_id:id,content:JSON.stringify(out),...(out&&out.error?{is_error:true}:{})}))});
       else results.forEach(({id,out})=>history.push({role:'tool',tool_call_id:id,content:JSON.stringify(out)}));
@@ -10179,7 +10319,9 @@ async function aiSend(text){
     if(!p){aiShowView('setup');return;}
     // Nothing leaves the browser for a provider until its consent box is ticked.
     if(!aiConsented(p.id)){aiShowView('settings');aiSettingsStatus(`Tick the box above to allow ${p.short} first.`,'bad');return;}
-    if(!hasLoadedData())throw aiFail('Load a KPI export first: Ask AI answers from the data loaded in this dashboard.');
+    // With live SAP, a question can still be answered from SAP before an export is loaded.
+    const sapNames=await sapAiCheck();
+    if(!hasLoadedData()&&!sapNames.length)throw aiFail('Load a KPI export first: Ask AI answers from the data loaded in this dashboard.');
     const key=`${p.id}|${aiState.model}`;
     if(aiState.chatKey!==key){aiState.history=[];aiState.system='';aiState.chatKey=key;}
     // The system prompt is fixed for the whole conversation (the Anthropic model re-checks earlier turns byte for byte).
@@ -10191,7 +10333,7 @@ async function aiSend(text){
     aiRenderLog();
     aiAnnounce('Looking it up…');
     const answer=await aiAsk(p,question,aiState.controller?aiState.controller.signal:undefined);
-    log.push({role:'model',text:answer.text,used:answer.used,by:answer.by});
+    log.push({role:'model',text:answer.text,used:answer.used,by:answer.by,source:answer.source});
   }catch(err){
     const stopped=err&&err.name==='AbortError';
     if(!stopped&&!(err&&err.aiFriendly))console.error('Ask AI request failed',err);
@@ -10215,15 +10357,21 @@ function aiRenderLog(){
   const log=aiEl('ai-log');
   if(!log)return;
   const messages=aiState.messages.map(m=>m.role==='user'?`<div class="ai-msg user">${esc(m.text)}</div>`
-    :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}<div class="ai-tools">${m.by?`${esc(m.by)}${m.used&&m.used.length?' · ':''}`:''}${m.used&&m.used.length?`Looked up: ${esc(m.used.join(', '))}`:''}</div></div>`
+    :m.role==='model'?`<div class="ai-msg model">${aiMarkdown(m.text)}<div class="ai-tools">${m.by?`${esc(m.by)}${m.used&&m.used.length?' · ':''}`:''}${m.used&&m.used.length?`Looked up: ${esc(m.used.join(', '))}`:''}</div>${aiSourceLine(m.source)}</div>`
     :m.role==='note'?`<div class="ai-msg note">${esc(m.text)}</div>`
     :`<div class="ai-msg error">${esc(m.text)}</div>`).join('');
   log.innerHTML=(messages||'<p class="ai-empty">Ask about the loaded export: risk, customers, vendors, warehouses, OTD or fill. Answers use the same numbers as these pages.</p>')
-    +(aiState.busy?'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>':'');
+    +(aiState.busy?(aiState.progress?`<div class="ai-msg model pending sap">${liveMark('ok')}${esc(aiState.progress)}</div>`:'<div class="ai-msg model pending"><span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>Looking it up…</div>'):'');
   log.scrollTop=log.scrollHeight;
   aiEl('ai-send').disabled=aiState.busy;
   aiEl('ai-stop').hidden=!aiState.busy;
   aiEl('ai-chips').hidden=aiState.messages.length>0;
+}
+// The small source line under an answer (aiSourceText), with the live mark for SAP (amber when it was a stale read).
+function aiSourceLine(src){
+  const text=aiSourceText(src);
+  if(!text)return '';
+  return `<p class="ai-src${src.sap?` sap${src.sap.stale?' stale':''}`:''}">${src.sap?liveMark(''):dzIconSvg('bars')}<span>${esc(text)}</span></p>`;
 }
 // Model text is escaped first; only these few markdown forms become tags, so the model cannot add markup.
 function aiInline(s){
@@ -10248,7 +10396,10 @@ function aiMarkdown(text){
       const head=cells(line),body=[];
       for(i+=2;isRow(lines[i]);i++)body.push(cells(lines[i]));
       i--;
-      out.push(`<div class="ai-table"><table><thead><tr>${head.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${body.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
+      // A column whose cells are all numbers (money, counts, %) is right-aligned.
+      const isNum=c=>/^[-+(]?[$€£]?\s?\d[\d,]*(\.\d+)?\s?%?\)?$/.test(c);
+      const num=head.map((_,j)=>body.length>0&&body.every(r=>!r[j]||isNum(r[j])||r[j]==='—')&&body.some(r=>isNum(r[j]||''))?' class="num"':'');
+      out.push(`<div class="ai-table" tabindex="0" role="region" aria-label="Table"><table><thead><tr>${head.map((c,j)=>`<th${num[j]}>${c}</th>`).join('')}</tr></thead><tbody>${body.map(r=>`<tr>${r.map((c,j)=>`<td${num[j]||''}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`);
       continue;
     }
     const bullet=line.match(/^\s*[-*•]\s+(.*)$/),numbered=line.match(/^\s*\d+[.)]\s+(.*)$/);
