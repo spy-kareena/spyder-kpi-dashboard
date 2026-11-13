@@ -124,7 +124,7 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   assert.deepEqual(lac, []);
   // ... and "About these numbers" says so.
   const h = html(page);
-  assert.match(h, /Lacombe firm orders block is for reference and is not matched/);
+  assert.match(h, /Lacombe firm orders are for reference only \(not matched\)/);
   assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
 });
 

@@ -328,7 +328,7 @@ test('hand-set status on a static host: saved in this browser, drives the status
   assert.deepEqual(page.run('shippingManualEntries()'), []);
 
   assert.deepEqual(cards(page), ['2', '1', '1', '4', '0']);
-  assert.match(html(page), /data-tip="In transit: 2 shipments \(2 orders, worth \$21,500\) on the way: Shipped or In transit; click to list only these\."/);
+  assert.match(html(page), /data-tip="In transit: 2 shipments\n• Shipped or in transit\n• 2 orders · \$21,500\nClick to list them\."/);
   assert.deepEqual([strip(page, N.parcel), strip(page, N.freight), strip(page, N.ups), strip(page, N.delivered)], [[2, ''], [1, ''], [2, 'red'], [3, 'teal']]);
   assert.deepEqual(etaText(page, N.delivered), ['Delivered Oct 8', 'Due Oct 7']);
   assert.match(rowOf(page, N.delivered), /<b class="late">Delivered Oct 8<\/b>/);
@@ -358,7 +358,7 @@ test('cards filter the list; Not delivered (it replaced No update in 2+ days) co
   assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.parcel, N.usa, N.ups, N.puro].sort());
   assert.deepEqual(page.run('shippingModel().groups.open.map(s=>s.number)').sort(), [N.parcel, N.usa, N.ups, N.puro, N.freight].sort());
   assert.doesNotMatch(html(page), /ship-kpi-stale|>No update in 2\+ days</);
-  assert.match(html(page), /data-focus-key="ship-kpi-open"[^>]*data-tip="Not delivered: 5 shipments \(5 orders, worth \$[\d,]+\) not delivered yet: shipped, in transit, delayed or no status; click to list only these\."/);
+  assert.match(html(page), /data-focus-key="ship-kpi-open"[^>]*data-tip="Not delivered: 5 shipments\n• Shipped, in transit, delayed or no status\n• 5 orders · \$[\d,]+\nClick to list them\."/);
   assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s warn"><span class="shp-ts-w">4 with no update in 2\+ days<\/span><span class="shp-ts-n">4 no update 2\+ days<\/span><\/span><span class="shp-tile-s">3 with no status yet<\/span>/);
   page.run("setShippingFilter('open')");
   let m = html(page);
@@ -565,7 +565,7 @@ test('Priority (2v6.9): a round tick per row, saved in this browser without a se
   const page = await shipPage();
   // The column and an unticked box on every row (outside the row's button), with a name and a tip.
   assert.match(html(page), /<span role="columnheader" class="shp-th-pri" aria-sort="none"><button type="button" class="shp-sort" data-focus-key="ship-sort-priority" onclick="shpSort\('priority'\)"[^>]*>Priority</);
-  assert.match(rowOf(page, N.ups), new RegExp(`<\\/button>\\s*<span class="shp-pri-cell"><label class="kit-check shp-pri-check" data-tip="Tick to mark ${N.ups} as priority \\(kept in this browser\\)\\."><input type="checkbox" class="kit-cb shp-pri-cb" data-n="${N.ups}" data-focus-key="ship-pri-${N.ups}" aria-label="Priority: ${N.ups}" onchange="shpPriToggle\\(this\\)">`));
+  assert.match(rowOf(page, N.ups), new RegExp(`<\\/button>\\s*<span class="shp-pri-cell"><label class="kit-check shp-pri-check" data-tip="Tick to mark as priority \\(this browser only\\)\\."><input type="checkbox" class="kit-cb shp-pri-cb" data-n="${N.ups}" data-focus-key="ship-pri-${N.ups}" aria-label="Priority: ${N.ups}" onchange="shpPriToggle\\(this\\)">`));
   assert.match(html(page), /data-focus-key="ship-kpi-priority"[\s\S]*?<span class="shp-tile-s">Tick one in the table<\/span>/);
   setStatus(page, N.delivered, 'delivered', '2026-10-08');
   tickPriority(page, N.ups, true);

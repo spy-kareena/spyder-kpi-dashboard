@@ -150,10 +150,11 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
     }
   });
   for (const [key, i] of Object.entries(info)) {
-    assert.ok(i.title && i.what && i.click, `${key} has a definition and a click text`);
+    // A definition, and a click text only where the click is not obvious (the owner's brevity rule).
+    assert.ok(i.title && i.what, `${key} has a definition`);
     // At most two short sentences: what the section shows, what clicking does.
-    assert.equal(sentences(i.what) + sentences(i.click), 2, `${key} is two sentences`);
-    assert.equal(i.tip, `${i.what} ${i.click}`);
+    assert.ok(sentences(i.what) + sentences(i.click || '') <= 2, `${key} is at most two sentences`);
+    assert.equal(i.tip, [i.what, i.click].filter(Boolean).join(' '));
     assert.ok(i.tip.split(/\s+/).length <= 30, `${key} is short`);
   }
   assert.ok(keys.size >= 35, `${keys.size} section titles carry their help`);

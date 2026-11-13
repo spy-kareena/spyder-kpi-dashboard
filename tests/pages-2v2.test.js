@@ -284,7 +284,7 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
   const group = () => { const x = results(page); return x.slice(x.indexOf('aria-labelledby="pg-sd-shortages"'), x.indexOf('<h2>All open lines</h2>')); };
   // One table (no card per warehouse with its own header row), the lines short or with risky supply; the group is
   // "Lines to act on" with its help as the title's tip and the line count in the pill (the card head keeps only the chip).
-  assert.match(group(), /^aria-labelledby="pg-sd-shortages" data-group="sd-shortages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-sd-shortages" data-tip="Lines short of usable open PO supply, or whose PO supply is at risk, by warehouse\. Supply at risk only lists the risky-supply lines; All open lines lists every line\.">Lines to act on<\/h2><span class="count-badge bad">2 lines<\/span><\/div>/);
+  assert.match(group(), /^aria-labelledby="pg-sd-shortages" data-group="sd-shortages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-sd-shortages" data-tip="Lines short of usable PO supply, or with supply at risk\.">Lines to act on<\/h2><span class="count-badge bad">2 lines<\/span><\/div>/);
   assert.equal((group().match(/<table class="data-table cards"/g) || []).length, 1);
   assert.equal((group().match(/<thead>/g) || []).length, 1);
   assert.match(group(), /<section class="table sd-rows">\s*<div class="card-head lg"><h2>Short or at risk<\/h2><div class="inline-controls"><button type="button" class="chip" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="false" data-tip="[^"]+" onclick="toggleTableMore\(this\.dataset\.tableKey\)">Supply at risk only · 1<\/button><\/div><\/div>/);
