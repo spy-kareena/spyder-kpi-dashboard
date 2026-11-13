@@ -18835,8 +18835,8 @@ function shipLocParts(v){
   return {city:parts[0]||'',region,country};
 }
 // Where a shipment goes on the map (owner, 2v6.9 cities): AfterShip's destination only, not SAP's address. The carrier's
-// destination city and state, else once delivered the place of the delivery scan, else AfterShip's destination state
-// or country. The country is AfterShip's; the SAP ship-to country only helps find a city AfterShip names without one.
+// destination city and state, else its destination as written (destRaw), else once delivered the place of the delivery
+// scan, else AfterShip's destination state or country. The country is AfterShip's; the SAP ship-to country only helps find a city AfterShip names without one.
 // {city, region, country (two letters), from: 'AfterShip' | ''}; nothing until AfterShip has checked the number.
 function shipToPlace(s,as){
   const none={city:'',region:'',country:'',from:''};
@@ -18846,6 +18846,11 @@ function shipToPlace(s,as){
   const asCc=shipCountryCode(as.destCountry),cc=asCc||shipCountryCode(s&&s.country);
   const from='AfterShip';
   if(as.destCity)return {city:String(as.destCity),region:String(as.destState||''),country:cc,from};
+  // The destination as the carrier writes it ("ELKHART, IN, US"), when AfterShip has no city of its own.
+  if(as.destRaw){
+    const p=shipLocParts(as.destRaw),pc=p.country?shipCountryCode(p.country):cc;
+    if(p.city&&pc)return {city:p.city,region:p.region||String(as.destState||''),country:pc,from};
+  }
   if(as.state==='delivered'&&as.lastEvent&&as.lastEvent.city){
     const p=shipLocParts(as.lastEvent.city),pc=p.country?shipCountryCode(p.country):cc;
     if(p.city&&pc)return {city:p.city,region:p.region,country:pc,from};

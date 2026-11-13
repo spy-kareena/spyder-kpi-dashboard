@@ -24,10 +24,11 @@
  * A status (one per tracking number, see normalizeTracking):
  *   {number, id, slug, carrier, tag, subtag, status, detail, state:'shipped'|'transit'|'delayed'|'delivered'|'',
  *    stage (the older shape: 'label'|'inTransit'|'outForDelivery'|'exception'|'delivered'), lastEvent:{at, city, desc}|null,
- *    eta, deliveredAt, shippedAt, originCountry, destCountry, destCity, destState, changedAt, updatedAt, notFound, error,
- *    checkedAt}
- * destCity / destState: the carrier's destination city and state or province ('' when the carrier gives none); the
- * page's Order Map uses them when the SAP delivery has no ship-to city.
+ *    eta, deliveredAt, shippedAt, originCountry, destCountry, destCity, destState, destRaw, changedAt, updatedAt,
+ *    notFound, error, checkedAt}
+ * destCity / destState: the carrier's destination city and state or province; destRaw: the destination as the carrier
+ * writes it ("ELKHART, IN, US"), when it gives no city on its own ('' when the carrier gives none). The page's Order Map
+ * places a shipment with them.
  * changedAt is the time of the newest carrier event (the page lets a newer hand-set status win over an older one).
  */
 
@@ -252,6 +253,7 @@ export function normalizeTracking(t, number, now = Date.now()) {
     destCountry: str(x.destination_country_region, 3).toUpperCase(),
     destCity: clip(x.destination_city, 60),
     destState: clip(x.destination_state, 40),
+    destRaw: clip(x.destination_raw_location, 120),
     changedAt,
     updatedAt: str(x.updated_at),
     notFound: false,
@@ -263,7 +265,7 @@ export function normalizeTracking(t, number, now = Date.now()) {
 function refusedStatus(number, message, now) {
   return {
     number, id: '', slug: '', carrier: '', tag: '', subtag: '', status: 'Not tracked by AfterShip', detail: '', state: '', stage: '',
-    lastEvent: null, eta: '', deliveredAt: '', shippedAt: '', originCountry: '', destCountry: '', destCity: '', destState: '', changedAt: '', updatedAt: '',
+    lastEvent: null, eta: '', deliveredAt: '', shippedAt: '', originCountry: '', destCountry: '', destCity: '', destState: '', destRaw: '', changedAt: '', updatedAt: '',
     notFound: true, error: clip(message, 160) || 'AfterShip does not recognise this tracking number.', checkedAt: iso(now),
   };
 }

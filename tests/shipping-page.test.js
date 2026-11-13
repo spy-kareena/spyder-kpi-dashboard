@@ -965,6 +965,10 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.equal(page.run("shipPlaceKey({toCountry:'PH',toCity:'Manila'})"), 'PH:manila');
   // ... and counts as no destination at all, so its details do not call SAP's country AfterShip's.
   assert.deepEqual(place({ country: 'CA' }, { destCity: 'Toronto', destState: 'ON', destCountry: 'ZZZ' }), ['', '', '', '']);
+  // No city of its own but the destination as the carrier writes it: that place (its country when it names one).
+  assert.deepEqual(place({ country: 'US' }, { destRaw: 'ELKHART, IN, USA' }), ['ELKHART', 'IN', 'US', 'AfterShip']);
+  assert.deepEqual(place({ country: 'US' }, { destRaw: 'Goshen, IN' }), ['Goshen', 'IN', 'US', 'AfterShip']);
+  assert.equal(page.run("shipPlaceKey({toCountry:'US',toCity:'ELKHART',toRegion:'IN'})"), 'US-IN:elkhart');
   // A shared snapshot keeps them: AfterShip's statuses travel with it.
   let payload = '';
   Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });

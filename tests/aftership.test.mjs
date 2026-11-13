@@ -61,6 +61,9 @@ test('destination city and state: from destination_city / destination_state, tid
   assert.equal(long.destCity.length, 60);
   assert.match(long.destCity, /^Saint-Jean-sur- Richelieu x+$/, 'spaces and line breaks tidied');
   assert.equal(long.destState, 'Q'.repeat(40));
+  // The destination as the carrier writes it, tidied ('' when absent).
+  assert.equal(normalizeTracking({ ...TRACKINGS.transit, destination_raw_location: '  ELKHART, IN,\n US ' }, NUMBERS.transit, NOW).destRaw, 'ELKHART, IN, US');
+  assert.equal(t.destRaw, '');
   // Through a check: a number read from AfterShip keeps them in the index; a refused one has them empty, with the
   // same fields as any other status.
   const e = env({ export: [NUMBERS.delivered, 'BAD000001'], manual: [] });
