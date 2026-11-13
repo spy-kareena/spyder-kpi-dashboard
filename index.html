@@ -4089,6 +4089,51 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
   .mom-cal .table-scroll>table :is(th,td){white-space:normal}
 }
 /* 2v9:end revise2 */
+/* 2v9:po-redesign */
+/* Purchase Order Health (owner, 2v6.9): the small cards (Due this month, Unconfirmed · Missing price, Kits, Build Risk)
+   share one line on wide screens; two lines below 1280px. Kits by CM and month: quiet cells, the not-clean count in its
+   tone with "/N" and a thin clean-share bar, a CM column with its own meter. Vendors: the unit chart of Customers at
+   risk (one square per open PO). */
+@media (min-width:981px){
+  .sup-more-views.po-fill{display:grid;grid-template-columns:repeat(var(--po-cols,4),minmax(0,1fr));gap:16px}
+  .sup-more-views.po-fill>*{min-width:0;flex:none}
+  .sup-more-views.po-fill>.po-pair{grid-column:span 2}
+}
+/* 981-1279px: two lines of two (a single card takes two columns) */
+@media (min-width:981px) and (max-width:1279px){
+  .sup-more-views.po-fill{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .sup-more-views.po-fill>:not(.po-pair){grid-column:span 2}
+}
+table.kc2-tbl{width:100%;min-width:var(--min,0);border-collapse:separate;border-spacing:0 6px;font-variant-numeric:tabular-nums}
+.kc2-tbl thead th{padding:0 6px 2px;font-size:11.5px;font-weight:500;color:var(--dz-ink-4);text-align:center;white-space:nowrap}
+.kc2-tbl thead th.kc2-th{text-align:left;padding-left:0}
+.kc2-tbl thead th.past{color:var(--dz-risk-text)}
+th.kc2-th{width:180px;min-width:150px;padding:0 12px 0 0;text-align:left;font-weight:400;position:sticky;left:0;z-index:1;background:var(--dz-surface)}
+button.kc2-cm{display:grid;grid-template-columns:1fr;gap:4px;width:100%;margin:0;padding:6px 8px 6px 0;border:0;border-radius:10px;background:transparent;font:inherit;text-align:left;cursor:pointer}
+button.kc2-cm:hover{background:var(--dz-hover)}button.kc2-cm.sel{background:var(--dz-indigo-bg)}
+.kc2-name{font-size:14px;font-weight:600;color:var(--dz-ink-1)}
+.kc2-meter,.kc2-bar{display:block;height:4px;border-radius:2px;background:var(--dz-fill-1);overflow:hidden}
+.kc2-meter i,.kc2-bar i{display:block;height:100%;border-radius:2px;background:var(--dz-teal)}
+.kc2-sub{font-size:11.5px;color:var(--dz-ink-4)}
+td.kc2-td{padding:0 4px;text-align:center;vertical-align:middle}
+button.kc2-cell{display:flex;flex-direction:column;align-items:stretch;gap:6px;width:100%;min-width:72px;padding:8px 10px;border:1px solid var(--dz-line-8);border-radius:12px;background:var(--dz-surface);font:inherit;cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease}
+button.kc2-cell:hover{border-color:var(--dz-indigo)}
+button.kc2-cell.sel{box-shadow:inset 0 0 0 2px var(--dz-indigo);border-color:var(--dz-indigo)}
+button.kc2-cell:focus-visible,button.kc2-cm:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.kc2-v{display:flex;align-items:baseline;justify-content:center;gap:2px}
+.kc2-v b{font-size:17px;font-weight:650}
+.kc2-of{font-size:12px;color:var(--dz-ink-4)}
+.kc2-cell.bad .kc2-v b{color:var(--dz-risk-text)}
+.kc2-cell.warn .kc2-v b{color:var(--dz-amber-text)}
+.kc2-cell.ok .kc2-v b{color:var(--dz-teal-text,var(--dz-teal))}
+.kc2-cell.bad{border-color:color-mix(in oklab,var(--dz-risk) 35%,var(--dz-line-8))}
+.kc2-none{color:var(--dz-ink-6)}
+.kc2-key{display:inline-block;min-width:14px;font-size:12.5px;font-weight:650;text-align:center}
+.kc2-key.bad{color:var(--dz-risk-text)}.kc2-key.warn{color:var(--dz-amber-text)}.kc2-key.ok{color:var(--dz-teal-text,var(--dz-teal))}
+.kc2-keybar{display:inline-block;width:18px;height:4px;border-radius:2px;background:var(--dz-teal)}
+.pov-card .pov-list{margin-top:4px}
+@media (prefers-reduced-motion:reduce){button.kc2-cell{transition:none}}
+/* 2v9:end po-redesign */
 /* 2v9:pager */
 /* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
    stacked and centred on phones. */
@@ -10351,13 +10396,30 @@ function supPurchaseOrders(m){
   const bySeg=dzSeg([{label:'Vendors',on:by==='vendor',onclick:"supSet('po-by','vendor')",key:'po-by-vendor'},{label:'Warehouses',on:by==='wh',onclick:"supSet('po-by','wh')",key:'po-by-wh'}],{label:'Group by',cls:'sup-seg-sm'});
   let byBody,byTitle,byFoot='';
   if(by==='vendor'){
+    // 2v6.9 redesign (owner: the bars meant nothing): each vendor measured against its own open POs. One square per
+    // open PO: red late, amber no commit date, grey on time; "4 of 9 late", the worst lateness and the late value.
+    // Vendors with late POs, most first; 5 a page.
+    const docKey=r=>String(r.documentNumber??'');
+    const lateDocs=new Set(poLateRows.map(docKey)),ncDocs=new Set(poNoCommitRows.map(docKey));
     const vg=new Map();
-    poLateRows.forEach(r=>{const k=poVendor(r);if(!vg.has(k))vg.set(k,{code:k,name:vendorName(r),rows:[]});vg.get(k).rows.push(r);});
-    const top=[...vg.values()].map(v=>({...v,n:supDocs(v.rows),value:value(v.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value).slice(0,8);
-    const mx=Math.max(1,...top.map(v=>v.n));
+    filteredPoOpen.forEach(r=>{const k=poVendor(r);if(!vg.has(k))vg.set(k,{code:k,name:vendorName(r),rows:[],docs:new Set()});const v=vg.get(k);v.rows.push(r);v.docs.add(docKey(r));});
+    const list=[...vg.values()].map(v=>{
+      const late=[...v.docs].filter(d=>lateDocs.has(d)),nc=[...v.docs].filter(d=>!lateDocs.has(d)&&ncDocs.has(d));
+      const lateRows=v.rows.filter(r=>lateDocs.has(docKey(r))&&poLateRows.includes(r));
+      const worst=Math.max(0,...lateRows.map(r=>daysFromToday(cmPoDue(r))||0));
+      return {...v,open:v.docs.size,late:late.length,nc:nc.length,worst,lateValue:value(lateRows)};
+    }).filter(v=>v.late).sort((a,b)=>b.late-a.late||b.late/b.open-a.late/a.open||b.lateValue-a.lateValue);
+    const unit=Math.max(1,Math.ceil(Math.max(1,...list.map(v=>v.open))/40));
+    const pips=v=>{const n=Math.max(1,Math.round(v.open/unit)),l=Math.min(n,Math.max(1,Math.round(v.late/unit))),c=Math.min(n-l,Math.round(v.nc/unit));return `${'<i class="pd"></i>'.repeat(l)}${'<i class="ar"></i>'.repeat(c)}${'<i></i>'.repeat(Math.max(0,n-l-c))}`;};
+    const vPg=dzPageOf('po-vendors',list,JSON.stringify([poWarehouseFilter,poVendorFilter]),5);
     byTitle='Vendors with the most late POs';
-    byBody=top.length?`<div class="dz-bars sup-bars">${top.map((v,i)=>dzBarRow({label:v.name,value:v.n,max:mx,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(v.n),onclick:`setPoVendorRow(${dzJs(v.code)})`,selected:focusedVendor===v.code,attrs:` data-focus-key="povendor-${esc(v.code)}"`,i,
-      tip:`${v.name}: ${ordersN(v.n)} late · ${supLines(v.rows.length)} · ${money(v.value)}. ${focusedVendor===v.code?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
+    byBody=list.length?`<div class="ohl-list ohc-list pov-list" role="group" aria-label="Vendors with late POs">${vPg.rows.map(v=>{
+      const on=focusedVendor===v.code,share=Math.round(v.late/v.open*100);
+      return `<button type="button" class="ohl-cust ohc-row${on?' sel':''}" data-focus-key="povendor-${esc(v.code)}" aria-pressed="${on}" onclick="setPoVendorRow(${esc(dzJs(v.code))})"${tipAttr(ohlTip(v.name,[`${v.late} of ${ordersN(v.open)} late (${share}%)`,v.nc?`${ordersN(v.nc)} with no commit date`:'',`Worst ${fmtNum(v.worst)}d late · ${money(v.lateValue)} late`],on?'Click to show all.':'Click to filter.'))}>
+        <span class="ohl-cust-top"><span class="ohl-cust-name">${esc(v.name)}</span><span class="ohc-fig"><b>${fmtNum(v.late)}</b> of ${fmtNum(v.open)} late</span></span>
+        <span class="ohc-strip"><span class="ohc-pips" role="img" aria-label="${esc(`${v.name}: ${v.late} of ${v.open} open POs late, ${v.nc} no commit date`)}">${pips(v)}</span><span class="ohl-cust-amt">${v.worst?`worst ${fmtNum(v.worst)}d · `:''}${esc(moneyShort(v.lateValue))}</span></span>
+      </button>`;}).join('')}</div><div class="ohc-legend" aria-hidden="true"><span><i class="pd"></i>Late</span><span><i class="ar"></i>No commit</span><span><i></i>On time</span><span class="ohc-unit">${unit>1?`Each square: ${unit} POs`:'Each square: 1 open PO'}</span></div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
+    byFoot=dzPageFoot('po-vendors',vPg,'Vendors with the most late POs','vendors');
   }else{
     const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value);
     // 10 warehouses a page; a new warehouse or vendor filter starts at page 1.
@@ -10369,7 +10431,7 @@ function supPurchaseOrders(m){
       tip:`${g.key}: ${money(g.value)} open\n• ${ordersN(g.n)} · ${supLines(g.rows.length)}\n• ${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit\n${focusedWh===g.key?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
     byFoot=dzPageFoot('po-warehouses',whPg,'Open POs by warehouse','warehouses');
   }
-  const byCard=dzCard({title:byTitle,sm:true,span:3,cls:'dz-fade',meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});
+  const byCard=dzCard({title:byTitle,sm:true,span:3,cls:`dz-fade${by==='vendor'?' pov-card':''}`,meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});
 
   // PO lines: the selected card's lines, a search box, the sort, Add note, show more.
   const terms=supTerms(supGet('po-q',''));
@@ -10446,7 +10508,7 @@ function supPurchaseOrders(m){
 
   return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
     <div class="sup-tiles po-strip">${tiles.map(tileHtml).join('')}</div>
-    <div class="dz-stats sup-more-views po-fill" style="--po-cols:${extraCount<=6?extraCount:Math.ceil(extraCount/2)}" role="group" aria-label="More purchase order views">${extraHtml}</div>
+    <div class="dz-stats sup-more-views po-fill" style="--po-cols:${extraCount<=8?extraCount:Math.ceil(extraCount/2)}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
     <div class="dz-grid po-kitcm-row">${poKitCmCardHtml(filteredPoOpen,today)}</div>
     ${linesWrap}
@@ -10672,24 +10734,28 @@ function poKitCmCardHtml(open,today){
   const shown=cols.filter(([k])=>list.some(x=>x.rows.some(r=>poKitColOf(r,today,cols)===k)));
   const pg=dzPageOf('po-kitcm',list,JSON.stringify([poWarehouseFilter,poVendorFilter,monthKey(today)]));
   const picked=(cm,col)=>poTileFilter==='kitcm'&&poKitPick&&poKitPick.cm===cm&&poKitPick.col===col;
+  // 2v6.9 redesign (owner): each CM is a row: its name with a clean-share meter, then one quiet cell per month: the
+  // kits NOT clean as the number (red when past due, amber otherwise, a teal ✓ when every kit is clean), "/N" beside it
+  // and a thin bar for the share already clean. No heavy colour blocks: the number is what needs work.
   const rows=pg.rows.map(x=>{
+    const cleanPct=x.rows.length?Math.round(x.clean/x.rows.length*100):0;
     const cells=shown.map(([k,label])=>{
       const rs=x.rows.filter(r=>poKitColOf(r,today,cols)===k);
-      if(!rs.length)return `<td class="kc-cell none">—</td>`;
-      const nc=rs.filter(r=>!r.kitClean).length,c=rs.length-nc;
-      const tone=!nc?'ok':k==='past'?'bad':'warn',on=picked(x.cm,k);
-      return `<td class="kc-cell ${tone}${on?' sel':''}"><button type="button" class="kc-btn" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(c)} clean · ${fmtNum(nc)} not clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}><span class="kc-ok"${c?'':' aria-hidden="true"'}>${c?`✓ ${fmtNum(c)} clean`:''}</span><span class="kc-no">${nc?`${fmtNum(nc)} not clean`:''}</span></button></td>`;
+      if(!rs.length)return `<td class="kc2-td"><span class="kc2-none" aria-label="No kits">–</span></td>`;
+      const nc=rs.filter(r=>!r.kitClean).length,c=rs.length-nc,on=picked(x.cm,k);
+      const tone=!nc?'ok':k==='past'?'bad':'warn';
+      return `<td class="kc2-td"><button type="button" class="kc2-cell ${tone}${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" aria-label="${esc(`${x.cm}, ${label}: ${nc} not clean of ${rs.length}`)}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(nc)} not clean · ${fmtNum(c)} clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}><span class="kc2-v">${nc?`<b>${fmtNum(nc)}</b><span class="kc2-of">/${fmtNum(rs.length)}</span>`:'<b>✓</b>'}</span><span class="kc2-bar" aria-hidden="true"><i style="width:${Math.round(c/rs.length*100)}%"></i></span></button></td>`;
     }).join('');
     const on=picked(x.cm,'');
-    return `<tr><th scope="row"><button type="button" class="kc-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.clean)} of ${ohN(x.rows.length,'kit')} clean`,`${fmtNum(x.not)} not clean`],'Click to list its lines.'))}>${esc(x.cm)}</button></th>${cells}<td class="num kc-tot"><b class="${x.not?'kc-warn':''}">${fmtNum(x.not)}</b><span> / ${fmtNum(x.rows.length)}</span></td></tr>`;
+    return `<tr><th scope="row" class="kc2-th"><button type="button" class="kc2-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.clean)} of ${ohN(x.rows.length,'kit')} clean (${cleanPct}%)`,`${fmtNum(x.not)} not clean`],'Click to list its lines.'))}><span class="kc2-name">${esc(x.cm)}</span><span class="kc2-meter" aria-hidden="true"><i style="width:${cleanPct}%"></i></span><span class="kc2-sub">${fmtNum(x.clean)} of ${fmtNum(x.rows.length)} clean</span></button></th>${cells}</tr>`;
   }).join('');
   function pos(rows){const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;}
   const tNot=list.reduce((t,x)=>t+x.not,0),tAll=list.reduce((t,x)=>t+x.rows.length,0);
   return dzCard({title:'Kits by CM and month',sm:true,cls:'po-kitcm dz-fade',span:6,
     meta:`<span class="kc-meta"><b>${fmtNum(tAll-tNot)}</b> of ${fmtNum(tAll)} kits clean</span>`,
     tip:'CM kits (open PO lines) by month\n• ✓ clean, or not clean yet\n• Green all clean, amber some not, red past due\nClick a cell or a CM to list its lines.',
-    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="sup-tbl kc-tbl" style="--min:${(shown.length+2)*110}px"><thead><tr><th scope="col">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc-mo">${esc(l)}</th>`).join('')}<th scope="col" class="num"${tipAttr('Not clean of all kits.')}>Not clean</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="kc-legend" aria-hidden="true"><span><i class="ok"></i>All clean</span><span><i class="warn"></i>Some not clean</span><span><i class="bad"></i>Past due, not clean</span></div>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="kc2-tbl" style="--min:${180+shown.length*92}px"><thead><tr><th scope="col" class="kc2-th">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc2-mo${k==='past'?' past':''}">${esc(l)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="kc-legend" aria-hidden="true"><span><b class="kc2-key bad">3</b>Not clean, past due</span><span><b class="kc2-key warn">3</b>Not clean</span><span><b class="kc2-key ok">✓</b>All clean</span><span><i class="kc2-keybar"></i>Share clean</span></div>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
 }
 // --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
 // A PO line counts when the date Spyder expects it (cmPoDue: its reschedule date, else its due date) is after the

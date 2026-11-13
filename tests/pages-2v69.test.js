@@ -131,7 +131,7 @@ test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirme
   assert.match(h, /data-focus-key="potile-unconfirmed" aria-pressed="false" onclick="setPoTileFilter\('unconfirmed'\)"[^>]*><span class="po-own-name">Unconfirmed<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
   assert.match(h, /data-focus-key="potile-missingprice" aria-pressed="false" onclick="setPoTileFilter\('missingprice'\)"[^>]*><span class="po-own-name">Missing price<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
   // The row's columns: Due this month (1) + the two cards (2 each).
-  assert.match(h, /class="dz-stats sup-more-views po-fill" style="--po-cols:4"/); // 2v6.9: Build Risk joins the row (a two-column card)
+  assert.match(h, /class="dz-stats sup-more-views po-fill" style="--po-cols:7"/); // 2v6.9 (owner): Due this month, Unconfirmed · Missing price, Kits and Build Risk on one line (1 + 2 + 2 + 2 columns)
   // The card lists both kinds, each row its own; the lines title says which.
   page.run("setPoTileFilter('followup')");
   h = html(page);
