@@ -3994,25 +3994,30 @@ button.kc3-n:focus-visible,button.kc3-cm:focus-visible{outline:2px solid var(--d
 @media (forced-colors:active){.kc4-stack i,.kc4-legend i{forced-color-adjust:none;outline:1px solid CanvasText}}
 /* 2v9:end kits-bars */
 /* 2v9:reasons-tiles */
-/* Top reasons as tiles (owner): a ring for the share of at-risk orders (one hue on a soft track, % in the middle), the
-   reason, its figures and where it is worst; two or three a row. */
-.ohr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
-button.ohr-tile{display:flex;align-items:center;gap:12px;min-width:0;margin:0;padding:12px;border:1px solid var(--dz-line-8);border-radius:14px;background:var(--dz-surface);font:inherit;text-align:left;color:inherit;cursor:pointer;transition:border-color .16s ease,background-color .16s ease}
-button.ohr-tile:hover{border-color:var(--dz-indigo)}
-button.ohr-tile.sel{background:var(--dz-indigo-bg);border-color:var(--dz-indigo)}
-button.ohr-tile:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
-.ohr-ringwrap{position:relative;flex:none;width:52px;height:52px}
-.ohr-ring{width:52px;height:52px}
-.ohr-track{fill:none;stroke:var(--dz-fill-1);stroke-width:5}
-.ohr-arc{fill:none;stroke:var(--dz-indigo);stroke-width:5;stroke-linecap:round}
-.ohr-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:650;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
-.ohr-pct small{font-size:9.5px;font-weight:600;margin-left:1px}
-.ohr-body{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ohr-name{font-size:14px;font-weight:600;color:var(--dz-ink-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ohr-fig{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}.ohr-fig b{font-weight:600;color:var(--dz-ink-1)}
-.ohr-wh{font-size:11.5px;color:var(--dz-ink-4)}
-@media (prefers-reduced-motion:reduce){button.ohr-tile{transition:none}}
-@media (forced-colors:active){.ohr-arc{forced-color-adjust:none;stroke:Highlight}}
+/* Top reasons as sets (owner, option S): reason names on the left with their line counts; one column per set of
+   reasons, a bar for its lines above a dot per reason (filled when the set has it, joined by a line). One hue. */
+.ohu{--bar:84px;--rh:24px;display:grid;grid-template-columns:minmax(96px,max-content) minmax(0,1fr);gap:8px;margin-top:12px}
+.ohu-names{display:grid;grid-template-rows:var(--bar) repeat(var(--rows),var(--rh));min-width:0}
+.ohu-corner{align-self:end;justify-self:end;padding:0 2px 4px;font-size:11px;color:var(--dz-ink-4)}
+button.ohu-name{display:flex;align-items:center;gap:8px;min-width:0;margin:0;padding:0 6px;border:0;border-radius:8px;background:none;font:inherit;font-size:12.5px;color:var(--dz-ink-1);text-align:left;cursor:pointer}
+button.ohu-name:hover,button.ohu-name.sel{background:var(--dz-indigo-bg)}
+.ohu-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.ohu-tot{flex:none;font-size:11.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.ohu-cols{display:grid;grid-template-columns:repeat(var(--cols),minmax(22px,1fr));gap:2px;min-width:0}
+button.ohu-col{display:grid;grid-template-rows:var(--bar) auto;min-width:0;margin:0;padding:0;border:0;border-radius:8px;background:none;font:inherit;color:inherit;cursor:pointer}
+button.ohu-col:hover,button.ohu-col.sel{background:var(--dz-indigo-bg)}
+.ohu-barbox{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;padding-top:2px}
+.ohu-n{font-size:11.5px;font-weight:650;color:var(--dz-ink-1);font-variant-numeric:tabular-nums;line-height:1}
+.ohu-bar{width:min(18px,70%);height:calc((var(--bar) - 20px) * var(--h));min-height:3px;border-radius:4px 4px 2px 2px;background:var(--dz-indigo);opacity:.85}
+.ohu-dots{position:relative;display:grid;grid-template-rows:repeat(var(--rows),var(--rh));justify-items:center;align-items:center}
+.ohu-dot{position:relative;z-index:0;width:9px;height:9px;border-radius:50%;background:var(--dz-fill-1)}
+.ohu-dot.on{z-index:2;width:11px;height:11px;background:var(--dz-indigo)}
+.ohu-link{position:absolute;left:50%;width:2px;margin-left:-1px;top:calc(var(--a) * var(--rh) + var(--rh) / 2);height:calc((var(--b) - var(--a)) * var(--rh));z-index:1;background:var(--dz-indigo)}
+button.ohu-col.sel .ohu-bar{opacity:1}
+button.ohu-col:focus-visible,button.ohu-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+@media (max-width:560px){.ohu{--rh:26px}.ohu{grid-template-columns:minmax(84px,40%) minmax(0,1fr)}}
+@media print{.ohu{break-inside:avoid}}
+@media (forced-colors:active){.ohu-bar,.ohu-dot.on,.ohu-link{forced-color-adjust:none;background:Highlight}.ohu-dot{forced-color-adjust:none;outline:1px solid CanvasText}}
 /* 2v9:end reasons-tiles */
 /* 2v9:kit-status */
 /* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
@@ -19515,7 +19520,7 @@ function ohDrillMatch(r){
   // The When flagged rows and the "+N new this week" chip count the At risk card's lines (ohLeadClass, ohAtRiskData),
   // so the age filter keeps exactly those lines.
   if(weeklyAgeFilter&&!(ohLeadClass(r)==='risk'&&ohAgeBucket(r)===weeklyAgeFilter))return false;
-  if(weeklyReasonFilter&&(weeklyReasonMain?!(ohIsAtRisk(r)&&ohMainReason(r)===weeklyReasonFilter):!ohRowInfo(r).reasons.includes(weeklyReasonFilter)))return false;
+  if(weeklyReasonFilter&&(weeklyReasonFilter.startsWith(OH_RSET)?!(ohIsAtRisk(r)&&ohReasonSetKey(r)===weeklyReasonFilter):weeklyReasonMain?!(ohIsAtRisk(r)&&ohMainReason(r)===weeklyReasonFilter):!ohRowInfo(r).reasons.includes(weeklyReasonFilter)))return false;
   if(weeklyCauseFilter&&ohRowInfo(r).causeFor!==weeklyCauseFilter)return false;
   return true;
 }
@@ -19621,7 +19626,7 @@ function ohRenderDrillChips(){
   const tile=!weeklyReasonMain&&OH_REASON_TILES.find(t=>t.reason===weeklyReasonFilter);
   return `<div class="oh-drill" role="group" aria-label="Sales Order Health chart filters">
     <span class="oh-drill-label">Filtered by</span>
-    ${weeklyReasonFilter?(tile?chip('reason','Reason',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',overrideLabel(weeklyReasonFilter))):''}
+    ${weeklyReasonFilter?(tile?chip('reason','Reason',tile.label):chip('reason',weeklyReasonMain?'Main reason':weeklyReasonFilter.startsWith(OH_RSET)?'Reasons':'Reason',ohReasonFilterLabel(weeklyReasonFilter))):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
     ${age?chip('age','When flagged',age[1]):''}
     <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove these filters; others stay.">Clear all</button>
@@ -20356,6 +20361,24 @@ function ohlReasons(m){
   return [...by].map(([label,rows])=>({label,rows,orders:rowDocCount(rows),lines:rows.length,value:rowOpenAmount(rows),on:!weeklyReasonMain&&weeklyReasonFilter===label}))
     .sort((a,b)=>b.orders-a.orders||b.value-a.value||a.label.localeCompare(b.label));
 }
+// Top reasons as sets (option S): at-risk lines grouped by their exact set of reasons. A set's filter key is
+// "set:" + the sorted reasons as JSON, kept in weeklyReasonFilter so it clears and saves with the reason filter.
+const OH_RSET='set:';
+function ohReasonSetKey(r){return OH_RSET+JSON.stringify([...ohRowInfo(r).reasons].sort());}
+function ohReasonFilterLabel(v){
+  const s=String(v||'');if(!s.startsWith(OH_RSET))return overrideLabel(s);
+  let l=[];try{l=JSON.parse(s.slice(OH_RSET.length));}catch(e){}
+  return l.map(overrideLabel).join(' + ')+(l.length===1?' only':'');
+}
+function ohlReasonSets(m){
+  const risk=ohlRiskWithout(m,'reason');
+  ohRowMemoFresh();
+  const by=new Map();
+  risk.forEach(r=>{const l=ohRowInfo(r).reasons;if(!l.length)return;const k=ohReasonSetKey(r);if(!by.has(k))by.set(k,{key:k,labels:[...l].sort(),rows:[]});by.get(k).rows.push(r);});
+  const rank=new Map(ohlReasons(m).map((r,i)=>[r.label,i]));
+  return [...by.values()].map(x=>({...x,labels:x.labels.sort((a,b)=>(rank.get(a)??99)-(rank.get(b)??99)),lines:x.rows.length,orders:rowDocCount(x.rows),value:rowOpenAmount(x.rows)}))
+    .sort((a,b)=>b.lines-a.lines||b.value-a.value||a.key.localeCompare(b.key));
+}
 const ohlMoney=rows=>`${money(rowOpenAmount(rows))} · ${ohN(rows.length,'line')}`;
 const ohlWhName=n=>String(n||'').replace(/ - /g,' · ');
 // A short tooltip: a heading line, then one bullet per fact ("• "), then an optional click hint (the tip bubble shows
@@ -20471,21 +20494,26 @@ function ohlStatusCard(c){
       <i class="ohl-dot" style="background:${OHL_COLOR[s.id]}" aria-hidden="true"></i><span class="ohs2-name">${esc(s.label)}</span>
       <span class="ohs2-lines">${fmtNum(s.rows.length)}</span><span class="ohs2-n">${fmtNum(s.orders)}</span></button>`;
   }).join('');
-  // Top reasons (2v6.9 redesign, owner): one tile per reason, a ring for its share of all at-risk orders (the % in the
-  // middle), then the reason, its orders / lines / value at risk and the warehouse where it is worst. A line can carry
-  // several reasons, so the shares can add up to more than 100%. A tile lists its lines (again: the at-risk lines).
-  const reasons=ohlReasons(m).slice(0,6);
-  const riskO=Math.max(1,rowDocCount(c.d.risk.filter(ohIsSalesRow)));
-  const ring=pct=>{const r=17,C=2*Math.PI*r,f=Math.max(0,Math.min(100,pct))/100*C;
-    return `<svg class="ohr-ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="ohr-track" cx="22" cy="22" r="${r}"/><circle class="ohr-arc" cx="22" cy="22" r="${r}" stroke-dasharray="${f.toFixed(2)} ${C.toFixed(2)}" transform="rotate(-90 22 22)"/></svg><span class="ohr-pct">${Math.round(pct)}<small>%</small></span>`;};
-  const worstWh=r=>{const by=new Map();r.rows.forEach(x=>{const w=rowWarehouse(x);if(!by.has(w))by.set(w,new Set());by.get(w).add(`${x.sourceType||''}-${x.documentNumber||''}`);});
-    const top=[...by].sort((a,b)=>b[1].size-a[1].size||a[0].localeCompare(b[0]))[0];return top?{name:ohlWhName(top[0]),n:top[1].size}:null;};
-  const heat=reasons.length?`<div class="ohr-grid" role="group" aria-label="Top at-risk reasons">${reasons.map(r=>{
-    const pct=r.orders/riskO*100,w=worstWh(r);
-    return `<button type="button" class="ohr-tile${r.on?' sel':''}" data-focus-key="oh-reason-${esc(r.label)}" aria-pressed="${!!r.on}" onclick="${esc(`setWeeklyReasonFilter(${dzJs(r.label)})`)}"${tipAttr(ohlTip(overrideLabel(r.label),[`${ohN(r.orders,'order')} of ${fmtNum(riskO)} at risk (${Math.round(pct)}%)`,`${ohN(r.lines,'line')} · ${money(r.value)} at risk`,w?`Most at ${w.name}: ${ohN(w.n,'order')}`:''],r.on?'Click to show every at-risk line again.':'Click to list them.'))}>
-      <span class="ohr-ringwrap">${ring(pct)}</span>
-      <span class="ohr-body"><span class="ohr-name">${esc(overrideLabel(r.label))}</span><span class="ohr-fig"><b>${fmtNum(r.orders)}</b> ${r.orders===1?'order':'orders'} · ${fmtNum(r.lines)} ${r.lines===1?'line':'lines'} · ${esc(moneyShort(r.value))}</span>${w?`<span class="ohr-wh">Most at ${esc(w.name)} · ${fmtNum(w.n)}</span>`:''}</span>
-    </button>`;}).join('')}</div>`:'';
+  // Top reasons (owner's pick, option S): which reasons come together. Each column is the at-risk lines carrying
+  // exactly one set of reasons (its bar and count); the dots under it mark the reasons in that set, joined by a line.
+  // The rows are the reasons, each with its own line count. A column lists its lines; a reason name lists every line
+  // with that reason, as before. Up to 8 sets, the biggest first.
+  const sets=ohlReasonSets(m),setsShown=sets.slice(0,8);
+  const allReasons=ohlReasons(m),byLabel=new Map(allReasons.map(r=>[r.label,r]));
+  const rowsUsed=allReasons.map(r=>r.label).filter(l=>setsShown.some(x=>x.labels.includes(l))).sort((a,b)=>byLabel.get(b).lines-byLabel.get(a).lines);
+  const maxN=Math.max(1,...setsShown.map(x=>x.lines));
+  const setName=x=>x.labels.map(overrideLabel).join(' + ')+(x.labels.length===1?' only':'');
+  const cols=setsShown.map(x=>{
+    const on=weeklyReasonFilter===x.key,h=Math.max(.04,x.lines/maxN).toFixed(3);
+    const dots=rowsUsed.map(l=>`<i class="ohu-dot${x.labels.includes(l)?' on':''}"></i>`).join('');
+    const first=rowsUsed.findIndex(l=>x.labels.includes(l)),last=rowsUsed.length-1-[...rowsUsed].reverse().findIndex(l=>x.labels.includes(l));
+    return `<button type="button" class="ohu-col${on?' sel':''}" style="--h:${h};--a:${first};--b:${last}" data-focus-key="oh-rset-${esc(x.key)}" aria-pressed="${on}" onclick="${esc(`setWeeklyReasonFilter(${dzJs(x.key)})`)}"${tipAttr(ohlTip(setName(x),[`${ohN(x.lines,'line')}, ${ohN(x.orders,'order')}`,`${money(x.value)} at risk`],on?'Click to show every at-risk line again.':'Click to list them.'))}>
+      <span class="ohu-barbox"><span class="ohu-n">${fmtNum(x.lines)}</span><span class="ohu-bar"></span></span>
+      <span class="ohu-dots">${x.labels.length>1?'<span class="ohu-link"></span>':''}${dots}</span></button>`;
+  }).join('');
+  const names=rowsUsed.map(l=>{const r=byLabel.get(l),on=!!(r&&r.on);
+    return `<button type="button" class="ohu-name${on?' sel':''}" data-focus-key="oh-reason-${esc(l)}" aria-pressed="${on}" onclick="${esc(`setWeeklyReasonFilter(${dzJs(l)})`)}"${tipAttr(ohlTip(overrideLabel(l),r?[`${ohN(r.lines,'line')}, ${ohN(r.orders,'order')} with this reason`,`${money(r.value)} at risk`]:[],on?'Click to show every at-risk line again.':'Click to list every line with this reason.'))}><span class="ohu-nm">${esc(overrideLabel(l))}</span><span class="ohu-tot">${r?fmtNum(r.lines):''}</span></button>`;}).join('');
+  const heat=setsShown.length?`<div class="ohu" style="--rows:${rowsUsed.length};--cols:${setsShown.length}" role="group" aria-label="Which reasons come together"><div class="ohu-names"><span class="ohu-corner" aria-hidden="true">Lines</span>${names}</div><div class="ohu-cols">${cols}</div></div>`:'';
   // 2v6.9 (owner): no card title; the two section titles (Status, Top reasons) lead, the card keeps its name for
   // screen readers.
   return dzCard({cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1" aria-label="Status and top reasons"',
@@ -20494,9 +20522,9 @@ function ohlStatusCard(c){
         <div class="ohs2-cols" aria-hidden="true"><span></span><span>Lines</span><span>Orders</span></div>
         <div class="ohs2-list" role="group" aria-label="Open orders by state, with figures">${statusRows}</div>
       </div>
-      <div class="ohl-sec"><div class="ohs2-head"><div class="ohl-sec-title"${tipAttr('The reasons on at-risk orders. Click one to list its lines.')}>Top reasons</div><span class="ohs2-meta">Share of <b>${fmtNum(riskO)}</b> at-risk orders</span></div>
+      <div class="ohl-sec"><div class="ohs2-head"><div class="ohl-sec-title"${tipAttr('Which reasons come together on at-risk lines. Each column is the lines with exactly the reasons dotted below it. Click a column or a reason to list its lines.')}>Top reasons</div><span class="ohs2-meta"><b>${fmtNum(sets.reduce((t,x)=>t+x.lines,0))}</b> at-risk lines</span></div>
         ${heat||'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
-        <div class="ohl-note ohl-foot-note">A line can have several reasons, so the shares can add up to more than 100%.</div>
+        ${sets.length>setsShown.length?`<div class="ohl-note ohl-foot-note">${ohN(sets.length-setsShown.length,'smaller set')} not shown.</div>`:''}
       </div>`});
 }
 
