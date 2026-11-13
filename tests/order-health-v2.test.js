@@ -231,7 +231,8 @@ test('a Big picture reason box filters to its own lines (first reason only); the
   assert.equal(page.run('orderHealthData(currentMetrics()).lateAmt'), box.value);
   assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['Rescheduled later', true]);
   assert.match(html(page), /class="chip active oh-chip" data-kind="reason"[^>]*>Main reason: Rescheduled later </);
-  assert.doesNotMatch(html(page), /class="ohs2-rname sel"/, 'the Top reasons row is a different filter');
+  assert.match(html(page), /<button type="button" class="ohu-name" data-focus-key="oh-reason-Rescheduled later" aria-pressed="false"/);
+  assert.doesNotMatch(html(page), /class="ohu-name sel"/, 'the Top reasons name is a different filter');
   assert.equal(page.run("sankeyNodeSelected(sankeyFlows('weekly')[1].nodes.find(n=>n.id==='0:Rescheduled later'))"), true);
   assert.deepEqual(page.run('ohSnapshotView()').weeklyReasonMain, true);
   // The Top 6 bar of the same reason: every at-risk line that has it.
@@ -239,6 +240,7 @@ test('a Big picture reason box filters to its own lines (first reason only); the
   assert.deepEqual(risk(), ['102', '103', '109']);
   assert.equal(page.run('weeklyReasonMain'), false);
   assert.match(html(page), /class="chip active oh-chip" data-kind="reason"[^>]*>Reason: Rescheduled later </);
+  assert.match(html(page), /<button type="button" class="ohu-name sel" data-focus-key="oh-reason-Rescheduled later" aria-pressed="true"/);
   // A second click on the box (main filter on) removes it; chips and Reset clear the mode too.
   page.run("sankeyNodeClick('weekly','risk','0:Rescheduled later');sankeyNodeClick('weekly','risk','0:Rescheduled later')");
   assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['', false]);
@@ -444,9 +446,12 @@ test('waffle blocks: one per $20,000, a half block under $10,000, capped at 50, 
   assert.equal(page.run('BLOCK_VALUE'), 20000);
 });
 
-// 2v6.9 (owner, 96c6ae9 / 6401b31): Top offenders and its $20k waffle left the page; Customers at risk is a unit
-// chart, one square per open order of the customer (red past due, amber at risk otherwise, grey fine).
-test('Customers at risk is a ranked table of each customer\'s open orders; clicking a row filters the page to it; a vendor pick opens Purchase Orders', async () => {
+// 2v6.9 (owner, 96c6ae9 / 6401b31): Top offenders and its $20k waffle left the page. Version 1 (owner's pick, "Who?"):
+// Customers at risk is one table: each customer's open orders (past due, at risk otherwise, all open) and, when
+// purchase-order lines or a supply / demand snapshot are loaded, their at-risk orders under the first supply source in
+// trouble. The separate "Customers at risk by supply source" card and its source pills are gone: the last row, All
+// Customers, carries the totals and the source numbers the pills were.
+test('Customers at risk is one ranked table: each customer\'s open orders and their at-risk orders by supply source; a row filters the page to it, a number lists its lines; a vendor pick opens Purchase Orders', async () => {
   const rows = [...ROWS,
     open('110', { ...due('08/02/2026'), AmountLocal: '45,000.00', CustomerVendorCode: 'PATRICK', CustomerVendorName: 'Patrick' }),
     sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...due('08/10/2026'), AmountLocal: '30,000.00' })];
@@ -454,22 +459,93 @@ test('Customers at risk is a ranked table of each customer\'s open orders; click
   setStatus(page, '106', 'Hold');
   const m = html(page);
   assert.doesNotMatch(m, /aria-label="Top offenders"|class="waffle-row/);
-  // Owner's pick (option F): a ranked table of past due, at risk otherwise and open orders; a thin split under each name.
-  const card = m.match(/<table class="ohc2-tbl">[\s\S]*?<\/table>/)[0];
-  const row = (code) => card.match(new RegExp(`<tr class="ohc2-tr[^"]*"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-${code}"[\\s\\S]*?</tr>`))[0];
-  const nums = (code) => [...row(code).matchAll(/<td class="num[^"]*">(\d+)<\/td>/g)].map((x) => +x[1]);
-  // Most at-risk orders first, then value. Firefly: 8 open orders, 5 at risk (100, 106, 108 past due; 102, 109 rescheduled).
-  assert.deepEqual([...card.matchAll(/data-off="(\w+)"/g)].map((x) => x[1]), ['FIREFLY', 'PATRICK', 'AQUHOT', 'BARLETTA']);
-  assert.deepEqual(nums('FIREFLY'), [3, 2, 8]);
-  assert.deepEqual(nums('PATRICK'), [1, 0, 1]);
-  assert.deepEqual(nums('AQUHOT').slice(0, 2), [0, 1]); // no commit date, not past due
-  assert.match(row('FIREFLY'), /data-tip="FIREFLY - Firefly RV\n• 5 of 8 open orders at risk \(63%\)\n• 3 orders past due · 2 orders at risk otherwise\n• 5 at-risk lines\nClick to filter to it\."/);
+  // The card: question 3, the full width, "Most at-risk orders first".
+  const who = () => html(page).match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  assert.match(who(), /^<section[^>]*><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]{20,}">Customers at risk<\/h2><span class="dz-meta">Most at-risk orders first<\/span><\/div><div class="sup-scroll" tabindex="0" role="region" aria-label="Customers at risk"><table class="ohc2-tbl ohc3-tbl src">/);
+  assert.ok(m.indexOf('<h2 class="ohl-q-t" data-tc-skip>Who?</h2>') > 0 && m.indexOf('<h2 class="ohl-q-t" data-tc-skip>Who?</h2>') < m.indexOf(who()));
+  // The old supply source card is gone (its numbers are columns here); one table on the card, no money in it.
+  assert.doesNotMatch(m, /Customers at risk by supply source|class="(?:[^"]* )?(?:ohl-sup|ohl-sup-sum|ohl-sup-pill|ohl-sup-row|ohl-sup-name|ohl-sup-n)[ "]|ohlToggleSupplyAll|data-dzpager="ohl-supply"/);
+  assert.equal(who().split('<table').length - 1, 1);
+  const tbl = () => who().match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
+  const card = tbl();
   assert.doesNotMatch(card, /\$/);
+  // Headings: a group row over the columns (this export has purchase-order lines), then the nine columns; every one
+  // has a tip, the four sources a coloured dot.
+  const heads = (tr) => [...tr.matchAll(/<th scope="(col|colgroup)"(?: colspan="(\d)")?(?: class="num")? data-tip="[^"]{20,}">(<i class="ohl-dot" style="background:[^"]+" aria-hidden="true"><\/i>)?([^<]+)<\/th>/g)];
+  const [grp, cols] = card.match(/<thead>([\s\S]*?)<\/thead>/)[1].split('</tr>');
+  assert.match(grp, /^<tr class="ohc3-grp"><td><\/td><th scope="colgroup"/);
+  assert.deepEqual(heads(grp).map((x) => [x[4], +x[2]]), [['Open orders', 3], ['At-risk orders by supply source', 5]]);
+  assert.deepEqual(heads(cols).map((x) => [x[4], !!x[3]]), [['Customer', false], ['Past due', false], ['At risk', false], ['Open', false],
+    ['Pull in', true], ['Late / no commit', true], ['Stock short', true], ['Not supply', true], ['Split', false]]);
+  assert.equal((card.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 11, 'every heading is one of the eleven tipped ones');
+  // Every heading cell of the table, the row headings too, has a tip of its own or holds a tipped button.
+  assert.deepEqual([...card.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)].filter((x) => !/\sdata-tip="[^"]{20,}"/.test(x[1]) && !/^<button [^>]*\sdata-tip="[^"]{20,}"/.test(x[2])).map((x) => x[0]), []);
+  const row = (code) => tbl().match(new RegExp(`<tr class="ohc2-tr[^"]*"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-${code}"[\\s\\S]*?</tr>`))[0];
+  const nums = (tr) => [...tr.matchAll(/<td class="num[^"]*">(\d+)<\/td>/g)].map((x) => +x[1]);
+  // The four source cells of a row: a dash where the customer has none, else a button with its orders.
+  const sources = (tr) => [...tr.matchAll(/<td class="num ohc3-zero" data-tip="[^"]+: none">—<\/td>|<td class="num"><button type="button" class="ohc3-n[^"]*" data-focus-key="ohl-sup-(?:\w+)-(\w+)"[^>]*>(\d+)<\/button><\/td>/g)].map((x) => (x[1] ? `${x[1]} ${x[2]}` : '—'));
+  // Most at-risk orders first, then value. Firefly: 8 open orders, 5 at risk (100, 106, 108 past due; 102, 109 rescheduled).
+  assert.deepEqual([...card.matchAll(/class="ohc2-name" data-focus-key="offrow-(\w+)" data-off="\1"/g)].map((x) => x[1]), ['FIREFLY', 'PATRICK', 'AQUHOT', 'BARLETTA']);
+  assert.deepEqual(nums(row('FIREFLY')), [3, 2, 8]);
+  assert.deepEqual(nums(row('PATRICK')), [1, 0, 1]);
+  assert.deepEqual(nums(row('AQUHOT')), [0, 1, 1]); // no commit date, not past due
+  assert.deepEqual(nums(row('BARLETTA')), [1, 0, 1]);
+  assert.match(row('FIREFLY'), /data-tip="FIREFLY - Firefly RV\n• 5 of 8 open orders at risk \(63%\)\n• 3 orders past due · 2 orders at risk otherwise\n• 5 at-risk lines\nClick to filter to it\."/);
+  assert.match(row('FIREFLY'), /<span class="ohc2-split" aria-hidden="true"><i class="pd" style="width:37\.5%"><\/i><i class="ar" style="width:25\.0%"><\/i><\/span><\/button><\/th><td class="num ohc2-pd">3<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td>/);
+  // By supply source: PO 700 (the one purchase-order line, due Aug 10, not received) covers this item's earliest order,
+  // Patrick's 110 (due Aug 2), and is late; every other at-risk order has no supply in trouble.
+  assert.deepEqual(['FIREFLY', 'PATRICK', 'AQUHOT', 'BARLETTA'].map((c) => sources(row(c))),
+    [['—', '—', '—', 'none 5'], ['—', 'po 1', '—', '—'], ['—', '—', '—', 'none 1'], ['—', '—', '—', 'none 1']]);
+  assert.ok(row('PATRICK').includes('<td class="num"><button type="button" class="ohc3-n" data-focus-key="ohl-sup-PATRICK-po" data-off="PATRICK" aria-pressed="false" aria-label="PATRICK - Patrick, Late / no commit: 1 order" onclick="ohlSupplyPick(this.dataset.off,\'po\')" data-tip="Late / no commit: 1 order, 1 line\n• SO 110 SPY-100: PO 700 ACME - Acme Parts: late since Aug 10\nClick to list them.">1</button></td>'));
+  assert.match(row('FIREFLY'), /<button type="button" class="ohc3-n quiet" data-focus-key="ohl-sup-FIREFLY-none" data-off="FIREFLY" aria-pressed="false" aria-label="FIREFLY - Firefly RV, Not supply: 5 orders" onclick="ohlSupplyPick\(this\.dataset\.off,'none'\)" data-tip="Not supply: 5 orders, 5 lines\nClick to list them\.">5<\/button>/);
+  assert.match(row('PATRICK'), /<td class="ohc3-split"><span class="ohl-sup-bar" aria-hidden="true"><i style="width:100\.0%;background:var\(--dz-amber\)"><\/i><\/span><\/td><\/tr>$/);
+  // The last row is every customer: distinct orders (5 past due, 3 at risk otherwise, 11 open), then the source totals
+  // as buttons (the old source pills) and their split: 1 of the 8 at-risk orders waits on a late PO.
+  const foot = () => tbl().match(/<tfoot>([\s\S]*?)<\/tfoot>/)[1];
+  assert.match(foot(), /^<tr class="ohc3-all"><th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">3<\/td><td class="num">11<\/td>/);
+  assert.deepEqual(sources(foot()), ['—', 'po 1', '—', 'none 7']);
+  assert.deepEqual([...foot().matchAll(/data-focus-key="(ohl-sup-src-\w+)"/g)].map((x) => x[1]), ['ohl-sup-src-po', 'ohl-sup-src-none']);
+  assert.ok(foot().includes('<button type="button" class="ohc3-n" data-focus-key="ohl-sup-src-po" aria-pressed="false" aria-label="All Customers, Late / no commit: 1 order" onclick="ohlSupplyPick(\'\',\'po\')" data-tip="Late / no commit: 1 order\n• The PO that covers it is late or has no commit date.\n• Click to list the lines.">1</button>'));
+  assert.match(foot(), /data-focus-key="ohl-sup-src-none"[^>]*aria-label="All Customers, Not supply: 7 orders"[^>]*data-tip="Not supply: 7 orders\n• Supply looks fine: at risk for their own dates or overrides\.\n• Click to list the lines\.">7<\/button>/);
+  assert.match(foot(), /<td class="ohc3-split"><span class="ohl-sup-bar" aria-hidden="true"><i style="width:12\.5%;background:var\(--dz-amber\)"><\/i><i style="width:87\.5%;background:var\(--dz-ink-6\)"><\/i><\/span><\/td><\/tr>$/);
+  assert.deepEqual(page.run('(()=>{const d=ohlSupplyData(currentMetrics());return [d.hasSources,Object.fromEntries(Object.entries(d.tot).map(([k,v])=>[k,v.size]))]})()'), [true, { pull: 0, po: 1, stock: 0, none: 7 }]);
+  // Five customers or fewer: no pager under the table, and no "load supply data" note.
+  assert.doesNotMatch(who(), /data-dzpager="ohl-customers"|Load purchase-order lines/);
+  // A number lists its lines in the Lines card and stays pressed; the same number again shows the at-risk lines again.
+  const listed = () => [...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((x) => x[1]).sort();
+  assert.deepEqual(listed(), ['100', '101', '102', '103', '106', '108', '109', '110']);
+  page.run("ohlSupplyPick('PATRICK','po')");
+  assert.deepEqual([page.run('weeklyTileFilter'), page.run('ohlSupPick'), listed()], ['ohlsup', { cust: 'PATRICK', src: 'po' }, ['110']]);
+  assert.match(row('PATRICK'), /class="ohc3-n sel" data-focus-key="ohl-sup-PATRICK-po" data-off="PATRICK" aria-pressed="true"[^>]*data-tip="Late \/ no commit: 1 order, 1 line\n[^"]*\nClick to show the at-risk lines again\."/);
+  assert.equal((tbl().match(/aria-pressed="true"/g) || []).length, 1, 'only the picked number is pressed');
+  page.run("ohlSupplyPick('PATRICK','po')");
+  assert.deepEqual([page.run('weeklyTileFilter'), page.run('ohlSupPick'), listed().length], ['late', null, 8]);
+  // A number of the All Customers row lists that source for every customer; the Lines card's Clear goes back.
+  page.run("ohlSupplyPick('','none')");
+  assert.deepEqual(listed(), ['100', '101', '102', '103', '106', '108', '109']);
+  assert.match(foot(), /class="ohc3-n quiet sel" data-focus-key="ohl-sup-src-none" aria-pressed="true"/);
+  page.run('ohlSupplyClear()');
+  assert.deepEqual([page.run('weeklyTileFilter'), page.run('ohlSupPick'), listed().length], ['late', null, 8]);
+  page.run("ohlSupplyPick('','')");
+  assert.equal(page.run('weeklyTileFilter'), 'late', 'no customer and no source: nothing to pick');
+  // A customer name filters the page to it; the same name again clears it.
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['PATRICK']);
   assert.match(html(page), /<tr class="ohc2-tr sel"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-PATRICK"[^>]*aria-pressed="true"/);
+  // The table follows the page's filters, the All Customers row with it.
+  assert.match(foot(), /^<tr class="ohc3-all"><th scope="row"[^>]*>All Customers<\/th><td class="num ohc2-pd">1<\/td><td class="num ohc2-ar">0<\/td><td class="num">1<\/td>/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['ALL']);
+  // Without purchase-order lines or a supply / demand snapshot: the first four columns only, and a note says what to load.
+  const plain = await loaded(rows.slice(0, -1));
+  const bare = html(plain).match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  assert.match(bare, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th scope="col" data-tip="[^"]{20,}">Customer<\/th>/);
+  assert.deepEqual([...bare.matchAll(/<th scope="col"[^>]*>([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
+  assert.doesNotMatch(bare, /ohc3-grp|ohc3-n|ohc3-zero|ohc3-split|ohl-sup-bar/);
+  assert.match(bare, /<tfoot><tr class="ohc3-all"><th scope="row"[^>]*>All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">3<\/td><td class="num">11<\/td><\/tr><\/tfoot>/);
+  assert.match(bare, /<p class="ohl-note ohl-foot-note">Load purchase-order lines or the supply \/ demand snapshot to see which supply source holds each customer's orders\.<\/p>/);
+  assert.equal(plain.run('ohlSupplyData(currentMetrics()).hasSources'), false);
+  assert.deepEqual(plain.errors, []);
   // The vendors branch of the same setter (no control on the page draws it now) still opens that vendor's late POs.
   page.run("setWeeklyOffenderFilter('vendors','ACME')");
   assert.deepEqual([page.run('activeTab'), page.run('poVendorFilter'), page.run('poTileFilter')], ['purchaseorders', ['ACME'], 'late']);
@@ -507,11 +583,23 @@ test('every new control and chart carries a plain-English tip with full numbers;
     page.run(`setWeeklyView('${view}')`);
     const m = html(page);
     // 2v6 controls: the tabs and chips; Leading: the At risk hero, its states, warehouse, override bars and tiles, the
-    // Status segments and rows, the Top reasons rows and Customers at risk; Lagging: the Monthly / Quarterly figures.
-    const controls = [...m.matchAll(/<button [^>]*(?:role="tab"|class="(?:chip active oh-chip|ohl-hero|dz-stat ohl-stat|ohl-wh|dz-barrow|ohl-tile|ohs2-seg|ohs2-row|ohu-name|ohu-col|ohc2-name))[^>]*>/g)].map((x) => x[0])
-      .concat([...m.matchAll(/<div class="dz-stat ohg-tile"[^>]*>/g)].map((x) => x[0]));
-    assert.ok(controls.length >= (view === 'leading' ? 30 : 13), `${view}: ${controls.length}`);
+    // Status segments and its row of cells, the Top reasons names and columns, the past-due chip of Open lines by due
+    // week, Customers at risk, the Date changes rows and the two month folds; Lagging: the Monthly / Quarterly figures.
+    const controls = [...m.matchAll(/<button [^>]*(?:role="tab"|class="(?:chip active oh-chip|ohl-hero|dz-stat ohl-stat|ohl-wh|dz-barrow|ohl-tile|ohs2-seg|ohs3-cell|ohu-name|ohu-col|dz-chip red ohl-chipbtn|ohc2-name|ohc3-n|ohl-pull-po|dz-tr ohl-dc-row))[^>]*>/g)].map((x) => x[0])
+      .concat([...m.matchAll(/<div class="dz-stat ohg-tile"[^>]*>|<summary data-focus-key="more-ohl-fold-[^>]*>/g)].map((x) => x[0]));
+    // Leading with the Us filter on: 3 tabs, the Cause chip, the hero, 3 states, the warehouse, 6 tiles, 2 Status parts
+    // and 5 cells, 5 reasons in 3 sets, the past-due chip, 3 customers, 1 date change and the 2 folds.
+    if (view === 'leading') assert.equal(controls.length, 37);
+    else assert.ok(controls.length >= 13, `${view}: ${controls.length}`);
     for (const c of controls) assert.match(c, /data-tip="[^"]{20,}"/, c.slice(0, 120));
+    if (view === 'leading') {
+      // Nothing left of the controls this layout replaced.
+      assert.doesNotMatch(m, /class="ohs2-row|class="ohl-sup-(pill|name|n)[ "]|class="(?:[^"]* )?ohl-notshipped[ "]/);
+      // Every heading of the customer table explains itself too (no supply data here: four columns).
+      const who = m.match(/<table class="ohc2-tbl ohc3-tbl">[\s\S]*?<\/table>/)[0];
+      assert.deepEqual([...who.matchAll(/<th scope="col"(?: class="num")? data-tip="[^"]{20,}">([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
+      assert.equal((who.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 4);
+    }
     // Full numbers in the tips: the At risk hero with the Us cause filter on (100, 101 and 103).
     if (view === 'leading') assert.match(m, /data-focus-key="tile-late"[^>]*data-tip="At risk, due by Oct 3\n• 3 orders, 3 lines\n• \$22,000 open\nClick to list them\."/);
     else assert.match(m, /data-tip="Avg days late, August 2026: 7\.3\n• 3 late delivery lines of 4 scored/);
@@ -522,6 +610,54 @@ test('every new control and chart carries a plain-English tip with full numbers;
     assert.doesNotMatch(m.replace(/<[^>]+>/g, ' '), /\bundefined\b|\bNaN\b|\[object Object\]/);
   }
   assert.deepEqual(page.errors, []);
+  // With a purchase-order line due after the order it covers (PO 700, due Sep 30; 106 needs it by Aug 10), Leading draws
+  // its other new controls: the customer table's supply source numbers, and "What can we do" as two lists behind a switch.
+  const sup = await loaded([...ROWS, sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...due('09/30/2026'), AmountLocal: '30,000.00' })]);
+  setStatus(sup, '106', 'Hold');
+  setStatus(sup, '107', 'Urgent');
+  setStatus(sup, '108', 'Not At Risk');
+  const balanced = (m, what) => {
+    const count = (needle) => m.split(needle).length - 1;
+    for (const tag of ['div', 'section', 'button', 'span', 'details', 'summary', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td']) assert.equal(count(`<${tag} `) + count(`<${tag}>`), count(`</${tag}>`), `${what}: unbalanced <${tag}>`);
+    assert.doesNotMatch(m.replace(/<[^>]+>/g, ' '), /\bundefined\b|\bNaN\b|\[object Object\]/);
+  };
+  const act = () => html(sup).match(/<section class="dz-card dz-span-6 ohl-card ohl-do[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  const m = html(sup);
+  balanced(m, 'supply to pull in');
+  // The supply source numbers: one for each customer and source with orders, and the same for All Customers. Each says
+  // what it counts in full and names itself for a screen reader (the number alone would not).
+  const srcButtons = [...m.matchAll(/<button type="button" class="ohc3-n[^"]*" data-focus-key="(ohl-sup-[^"]+)"(?: data-off="[^"]+")? aria-pressed="false" aria-label="([^"]+)" onclick="[^"]+" data-tip="([^"]{20,})">(\d+)<\/button>/g)].map((x) => x.slice(1));
+  assert.deepEqual(srcButtons.map((x) => [x[0], x[1], +x[3]]), [
+    ['ohl-sup-FIREFLY-pull', 'FIREFLY - Firefly RV, Pull in: 1 order', 1], ['ohl-sup-FIREFLY-none', 'FIREFLY - Firefly RV, Not supply: 3 orders', 3],
+    ['ohl-sup-AQUHOT-none', 'AQUHOT - Aqua Hot, Not supply: 1 order', 1], ['ohl-sup-BARLETTA-none', 'BARLETTA - Barletta, Not supply: 1 order', 1],
+    ['ohl-sup-src-pull', 'All Customers, Pull in: 1 order', 1], ['ohl-sup-src-none', 'All Customers, Not supply: 5 orders', 5]]);
+  assert.equal((m.match(/<button type="button" class="ohc3-n/g) || []).length, 6);
+  assert.equal(srcButtons[0][2], 'Pull in: 1 order, 1 line\n• SO 106 SPY-100: PO 700 ACME - Acme Parts: due Sep 30, needed by Aug 10 (51d)\nClick to list them.');
+  assert.equal(srcButtons[4][2], 'Pull in: 1 order\n• The PO that covers it is due after the order: ask for an earlier date.\n• Click to list the lines.');
+  // The eleven headings of the table with its supply columns, each with a tip; a dash cell says which source has none.
+  const who = m.match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
+  assert.deepEqual([...who.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th scope="col(?:group)?"(?: colspan="\d")?(?: class="num")? data-tip="[^"]{20,}">(?:<i[^>]*><\/i>)?([^<]+)<\/th>/g)].map((x) => x[1]),
+    ['Open orders', 'At-risk orders by supply source', 'Customer', 'Past due', 'At risk', 'Open', 'Pull in', 'Late / no commit', 'Stock short', 'Not supply', 'Split']);
+  assert.equal((who.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 11);
+  assert.deepEqual([...new Set([...who.matchAll(/<td class="num ohc3-zero" data-tip="([^"]+)">—<\/td>/g)].map((x) => x[1]))], ['Late / no commit: none', 'Stock short: none', 'Pull in: none']);
+  // The switch: two named choices with their counts; the card takes the shown list's title, tip and name.
+  assert.match(act(), /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-pull dz-fade" style="--i:5" aria-label="Supply to pull in"><div class="dz-card-head"><h2 class="dz-title" data-tip="PO lines due after the orders they cover\n• Matched to orders by date\n• Ask the vendor or CM for an earlier date\nClick a PO to list its lines\.">Supply to pull in<\/h2><span class="dz-meta"><div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">/);
+  const choices = () => [...act().matchAll(/<button type="button" data-focus-key="(ohl-do-\w+)"( class="on")? aria-pressed="(true|false)" onclick="ohlSetDoView\(&#39;(\w+)&#39;\)" data-tip="([^"]+)">([^<]+)<\/button>/g)].map((x) => [x[1], !!x[2], x[3], x[4], x[5], x[6]]);
+  assert.deepEqual(choices(), [['ohl-do-pull', true, 'true', 'pull', 'PO lines to ask for earlier.', 'Supply to pull in · 1'], ['ohl-do-dates', false, 'false', 'dates', 'Customers whose dates moved later.', 'Date changes · 3 lines']]);
+  assert.match(act(), /<button type="button" class="ohl-pull-po" data-focus-key="ohl-pull-[^"]+" data-off="[^"]+" aria-pressed="false" onclick="ohlPullPick\(this\.dataset\.off\)" data-tip="PO 700: pull in 51 days\n• 1 at-risk order · \$5,000\n• Due Sep 30, needed by Aug 10\nClick to list those lines\.">PO 700<\/button>/);
+  assert.doesNotMatch(act(), /ohl-dc-row/);
+  sup.run("ohlSetDoView('dates')");
+  balanced(html(sup), 'date changes');
+  assert.match(act(), /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-dcwrap dz-fade" style="--i:5" aria-label="Date changes"><div class="dz-card-head"><h2 class="dz-title" data-tip="Lines whose date moved over 2 days past due\n• Ready: clear to build\n• Blocked: short or on hold">Date changes<\/h2><span class="dz-meta"><div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">/);
+  assert.deepEqual(choices().map((x) => [x[0], x[1], x[2]]), [['ohl-do-pull', false, 'false'], ['ohl-do-dates', true, 'true']]);
+  assert.doesNotMatch(act(), /ohl-pull-tbl|ohl-pull-po/);
+  // Firefly's 102 and 109 moved a month later, Barletta's 103 from Aug 5 to Aug 28.
+  assert.deepEqual([...act().matchAll(/<button type="button" class="dz-tr ohl-dc-row" data-focus-key="dc-(\w+)" data-off="\1" onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)" aria-pressed="false" data-tip="([^"]{20,})">/g)].map((x) => [x[1], x[2].split('\n').slice(0, 2).join(' ')]),
+    [['FIREFLY', 'FIREFLY - Firefly RV • 2 lines, $8,500 moved later'], ['BARLETTA', 'BARLETTA - Barletta • 1 line, $4,000 moved later']]);
+  // A value that is not a list falls back to Supply to pull in.
+  sup.run("ohlSetDoView('sideways')");
+  assert.deepEqual([sup.run('ohlDoView'), choices().map((x) => x[1])], ['pull', [true, false]]);
+  assert.deepEqual(sup.errors, []);
 });
 
 test('About these numbers defines every new number in plain English', async () => {

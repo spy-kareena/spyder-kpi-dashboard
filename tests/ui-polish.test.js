@@ -60,6 +60,8 @@ const hasTip = (tag) => /\sdata-tip="[^"]+"/.test(tag) || /\stitle="[^"]+"/.test
 const VIEWS = [
   ['weekly', ''], ['weekly', "setWeeklyTileFilter('otd3mo')"], ['weekly', "setWeeklyTileFilter('reschedhit')"], ['weekly', "setWeeklyTileFilter('fillrate')"],
   ['weekly', "weeklyTileFilter='late';selectAllLinked(true)"],
+  // Leading's "What can we do" card shows one list at a time: Supply to pull in first, Date changes behind its switch.
+  ['weekly', "ohlSetDoView('dates')"],
   ['purchaseorders', ''], ['supplyweekly', ''], ['monthly', ''], ['warehouses', ''], ['metrics', ''], ['supplydemand', ''], ['buildrisk', ''], ['settings', ''],
   ['search', "searchQuery='SPY';applyGlobalSearch()"],
   // The note editor (override, cause, note), the Lagging tab and the Shipping page. (The Big picture chart is hidden on
@@ -70,7 +72,7 @@ const VIEWS = [
 function eachView(page, fn) {
   for (const [tab, setup] of VIEWS) {
     // Each view starts on Leading (Metrics opens Lagging, and the view is kept across pages).
-    page.run(`linkedSelection.clear();expandedNoteRows.clear();sankeyOpen.weekly=false;weeklyTileFilter='late';weeklyView='leading';setTab(${JSON.stringify(tab)});${setup}`);
+    page.run(`linkedSelection.clear();expandedNoteRows.clear();sankeyOpen.weekly=false;weeklyTileFilter='late';weeklyView='leading';ohlDoView='pull';setTab(${JSON.stringify(tab)});${setup}`);
     fn(results(page) + sidebar(page), `${tab} ${setup}`);
   }
 }
@@ -610,6 +612,39 @@ test('first-visit hints are gone: no hint card on the load screen or any page, n
   assert.equal(page.storage.spyderKpiHints, undefined);
 });
 
+// Leading, Version 1 (four questions): the controls that layout added, by name. (The general checks above would pass a
+// plain switch choice with no tip, and would not notice a control that is no longer drawn.)
+test('Leading\'s new controls each carry a tip: the Status cells, the customer table\'s headings and numbers, the What can we do switch and the two month folds', async () => {
+  const page = await loadedAll();
+  page.run("weeklyTileFilter='late';weeklyView='leading';ohlDoView='pull';setTab('weekly')");
+  const m = results(page);
+  const tips = (re) => [...m.matchAll(re)].map((x) => x.slice(1));
+  // Status: five cells (5 open orders: 1, 2 and 3 at risk, 4 due next week, 5 on track).
+  assert.deepEqual(tips(/<button type="button" class="ohs3-cell[^"]*" data-focus-key="status-st-(\w+)" aria-pressed="false" onclick="[^"]+" data-tip="([^"\n]+)\n• (\d+ orders?, \d+ lines?)\n[^"]{20,}">/g),
+    [['ontrack', 'On track', '2 orders, 2 lines'], ['duethisweek', 'Due this week', '0 orders, 0 lines'], ['rescheduled', 'Rescheduled', '1 order, 1 line'], ['pastdue', 'Past due', '1 order, 1 line'], ['nocommit', 'No commit', '1 order, 1 line']]);
+  // Customers at risk, with supply data loaded: every heading cell has a tip (the group row, the nine columns, the All
+  // Customers row) or holds the customer's tipped button.
+  const who = m.match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
+  const ths = [...who.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)].map((x) => [x[2].replace(/<[^>]*>/g, '').trim(), hasTip(x[1]) || /^<button [^>]*\sdata-tip="[^"]{20,}"/.test(x[2])]);
+  assert.deepEqual(ths.map((x) => x[0]), ['Open orders', 'At-risk orders by supply source', 'Customer', 'Past due', 'At risk', 'Open', 'Pull in', 'Late / no commit', 'Stock short', 'Not supply', 'Split', 'FIREFLY - Firefly RV', 'All Customers']);
+  assert.deepEqual(ths.filter((x) => !x[1]), []);
+  assert.match(who, /<th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th>/);
+  // Its numbers: a tip in full and a name for a screen reader (the digit alone says nothing).
+  assert.deepEqual(tips(/<button type="button" class="ohc3-n[^"]*" data-focus-key="(ohl-sup-[^"]+)"(?: data-off="[^"]+")? aria-pressed="false" aria-label="([^"]+)" onclick="[^"]+" data-tip="[^"]{20,}">\d+<\/button>/g), [
+    ['ohl-sup-FIREFLY-pull', 'FIREFLY - Firefly RV, Pull in: 1 order'], ['ohl-sup-FIREFLY-po', 'FIREFLY - Firefly RV, Late / no commit: 1 order'], ['ohl-sup-FIREFLY-none', 'FIREFLY - Firefly RV, Not supply: 1 order'],
+    ['ohl-sup-src-pull', 'All Customers, Pull in: 1 order'], ['ohl-sup-src-po', 'All Customers, Late / no commit: 1 order'], ['ohl-sup-src-none', 'All Customers, Not supply: 1 order']]);
+  assert.match(m, /data-focus-key="ohl-sup-FIREFLY-pull"[^>]*data-tip="Pull in: 1 order, 1 line\n• SO 1 SPY-100: PO 701 ACME - Acme Parts: due Sep 30, needed by Aug 10 \(51d\)\nClick to list them\."/);
+  // What can we do: a named switch of two choices, each with a tip; the PO button gives its value in full.
+  assert.match(m, /<div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do"><button type="button" data-focus-key="ohl-do-pull" class="on" aria-pressed="true" onclick="ohlSetDoView\(&#39;pull&#39;\)" data-tip="PO lines to ask for earlier\.">Supply to pull in · 1<\/button><button type="button" data-focus-key="ohl-do-dates" aria-pressed="false" onclick="ohlSetDoView\(&#39;dates&#39;\)" data-tip="Customers whose dates moved later\.">Date changes · 1 line<\/button><\/div>/);
+  assert.match(m, /<button type="button" class="ohl-pull-po"[^>]*data-tip="PO 701: pull in 51 days\n• 1 at-risk order · \$1,721,806\n• Due Sep 30, needed by Aug 10\nClick to list those lines\.">PO 701<\/button>/);
+  page.run("ohlSetDoView('dates')");
+  assert.match(results(page), /<button type="button" class="dz-tr ohl-dc-row" data-focus-key="dc-FIREFLY"[^>]*data-tip="FIREFLY - Firefly RV\n• 1 line, \$[\d,]+ moved later\n• Worst: SO 3 SPY-100 due Aug 25, now Sep 20 \(SAP\)\nClick to filter to it\.">/);
+  // The Lists card: each fold's summary is a native control with its own tip.
+  assert.deepEqual(tips(/<details class="ohl-fold" data-more="[^"]+" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="(more-ohl-fold-\w+)" data-tip="([^"]+)">/g),
+    [['more-ohl-fold-months', 'Shipped and open value per month, against last year.'], ['more-ohl-fold-items', 'Open lines by original delivery month, oldest first.']]);
+  assert.deepEqual(page.errors, []);
+});
+
 // 2v6 tables tip the headings that need it and leave a plain, self-explanatory name plain (Item, Customers, Lines, ...).
 // Build Risk's Clear To Build table is held to its old tips (COLUMN_TIPS has br-ctb texts for its Month, At risk, Late
 // and Notes): only CM is plain there.
@@ -803,8 +838,8 @@ test('wide tables and the ship calendar scroll from the keyboard: every scroll b
   });
   assert.ok(boxes >= 15, `${boxes} table scroll boxes`);
   assert.match(HTML, /class="sup-heat-c" style="background:\$\{bg\};color:\$\{fg\}" data-tip="\$\{esc\(tp\)\}"\$\{n\?' tabindex="0"':''\}/);
-  // The Monthly delivery summary sits in Open orders by delivery month on Sales Order Health > Leading now (2v9; Monthly
-  // is hidden by default).
+  // The Monthly delivery summary sits in the Open orders by delivery month fold of the Lists card on Sales Order Health >
+  // Leading now (2v9; Monthly is hidden by default).
   page.run("weeklyTileFilter='late';setTab('weekly');setWeeklyView('leading')");
   assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="Monthly delivery summary · \d{4}"><table class="data-table"/);
   page.run("setTab('monthly')");
