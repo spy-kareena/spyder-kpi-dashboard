@@ -133,7 +133,9 @@ test('the match count is announced from one persistent status node, only when it
 test('no data: the box is disabled, typing and shortcuts do nothing', async () => {
   const page = loadPage();
   page.run('renderSidebar()');
-  assert.match(page.els['app-sidebar'].innerHTML, /<input type="search" id="global-search"[^>]*placeholder="Search orders, items, customers…"[^>]*aria-label="[^"]+"[^>]* disabled>/);
+  // 2v6.9 (owner): no placeholder text in the open search box; its name stays for screen readers.
+  assert.match(page.els['app-sidebar'].innerHTML, /<input type="search" id="global-search" aria-label="[^"]+"[^>]* disabled>/);
+  assert.doesNotMatch(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*placeholder=/);
   page.run('onGlobalSearchInput("spy")');
   await wait();
   assert.equal(page.run('activeTab'), 'weekly');
