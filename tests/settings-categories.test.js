@@ -102,7 +102,15 @@ const header = (page) => page.els['app-header'].innerHTML;
 const card = (h) => (h.match(/<section class="dz-card stg-card[^"]*" id="stg-card-hiddenpages"[\s\S]*?<\/section>/) || [''])[0];
 test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden first), and a hidden page leaves the menus', async () => {
   const page = await loaded([sapRow()]);
-  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['warehouses']);
+  // 2v6.9 (owner): the Supply menu's pages start hidden too, so the Supply menu is gone; any can be shown again.
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['warehouses', 'supplyweekly', 'supplydemand', 'buildrisk', 'forecast']);
+  assert.doesNotMatch(header(page), /id="hdr-supply-btn"/);
+  // A browser that had chosen its hidden pages before gets them hidden once, too (the flag keeps a later choice).
+  const old = loadPage({ storage: { spyderKpiSettings: JSON.stringify({ dataSource: 'import', hiddenPages: ['monthly'] }) } });
+  assert.deepEqual(old.run("stgValue('hiddenPages')"), ['monthly', 'supplyweekly', 'supplydemand', 'buildrisk', 'forecast']);
+  // From here: only Warehouses hidden, as before.
+  page.run("stgSet('hiddenPages',['warehouses'])");
+  assert.match(header(page), /id="hdr-supply-btn"/);
   assert.equal(page.run("stgPageHidden('warehouses')"), true);
   assert.equal(page.run("stgPageHidden('weekly')"), false);
   // The menus: no Warehouses link; the other Sales links and the Supply menu stay.

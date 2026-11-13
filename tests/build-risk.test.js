@@ -69,7 +69,7 @@ async function loaded(sheets = [CROSS_TAB, SEP30, JUNK, SEP24], extra = []) {
   await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'Orders At Risk - Clear to Build.xlsx', bytes: wb }, ...extra.map((n) => ({ name: n, bytes: wb }))]);
   return page;
 }
-const html = (page, setup = '') => { page.run(`${setup};setTab("buildrisk")`); return page.els['results-screen'].innerHTML; };
+const html = (page, setup = '') => { page.run(`${setup};stgSet("hiddenPages",[]);setTab("buildrisk")`); return page.els['results-screen'].innerHTML; };
 // 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
 const stat = (h, label) => Number((h.match(label === 'CTB report lines' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report lines/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1]);
 

@@ -205,7 +205,7 @@ test('page header: title, then the as-of line and Data check; the actions on the
 
 test('sidebar: clear group labels, the current page marked, page descriptions in the tooltips', async () => {
   const page = await loadedAll();
-  page.run("setTab('supplyweekly')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
   const s = sidebar(page);
   assert.deepEqual([...s.matchAll(/<div class="nav-label">([^<]+)<\/div>/g)].map((m) => m[1]), ['Sales', 'Supply', 'Help']);
   assert.equal((s.match(/aria-current="page"/g) || []).length, 1);
@@ -222,7 +222,7 @@ test('load screen: one drop area until a report is loaded, then the loaded repor
   page.run('renderUploadState()');
   assert.equal(page.els['upload-side'].hidden, true);
   const pages = page.els['upload-pages'].innerHTML;
-  assert.deepEqual([...pages.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Supply', 'Help']);
+  assert.deepEqual([...pages.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Help']); // 2v6.9: the Supply group's pages start hidden
   for (const id of ['weekly', 'monthly', 'warehouses', 'metrics', 'shipping', 'purchaseorders', 'supplyweekly', 'supplydemand', 'buildrisk', 'connect']) {
     assert.ok(pages.includes(`<span class="page-desc">${page.run(`esc(PAGE_TIPS.${id})`)}</span>`), id);
   }
@@ -307,7 +307,7 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
   page.run('resetViewState()');
   assert.equal(page.run("!!tableMore['sd-risk-only']"), false);
   // A warehouse pick narrows the table and its sub-headings; more than 10 lines go 10 a page, the sub-heading repeating.
-  page.run("setTab('supplyweekly');setSupplyWarehouseFilter(['Spyder - Lacombe'])");
+  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly');setSupplyWarehouseFilter(['Spyder - Lacombe'])");
   assert.deepEqual(subHeads(group()).map((x) => x[0]), ['Spyder - Lacombe']);
   const manyRows = "Array.from({length:25},(_,i)=>({...supplyDemandRows[0],itemCode:'X'+i,warehouseName:i<15?'A':'B'}))";
   const many = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:${manyRows}})`);
@@ -325,8 +325,12 @@ test('Supply / Demand: the short or at-risk lines are one table with warehouse s
 test('load screen: What each page shows is filled on the first visit, before any report or showUpload()', () => {
   const page = loadPage();
   const pages = page.els['upload-pages'].innerHTML;
-  assert.deepEqual([...pages.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Supply', 'Help']);
-  assert.ok(pages.includes(`<span class="page-desc">${page.run('esc(PAGE_TIPS.supplyweekly)')}</span>`));
+  // 2v6.9: the Supply menu's pages start hidden, so the Supply group is left out until one is shown again.
+  assert.deepEqual([...pages.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Help']);
+  page.run("isSnapshotView=false;stgSet('hiddenPages',[]);renderUploadPages()");
+  const shown = page.els['upload-pages'].innerHTML;
+  assert.deepEqual([...shown.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Supply', 'Help']);
+  assert.ok(shown.includes(`<span class="page-desc">${page.run('esc(PAGE_TIPS.supplyweekly)')}</span>`));
   assert.deepEqual(page.errors, []);
 });
 

@@ -153,7 +153,7 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
 
 test('Supply / Demand page: coverage and the heat map only; Short opens Sales Order Health on Supply / Demand', async () => {
   const page = await loaded();
-  page.run("setTab('supplyweekly')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
   const h = html(page);
   assert.match(h, /sup-cover/);
   assert.match(h, /sup-heatcard/);
@@ -240,6 +240,40 @@ test('Customers at risk is a unit chart against each customer\'s own open orders
   assert.ok(heat.length > 100, 'the heatmap is drawn');
   assert.match(heat, /<th scope="row"><button type="button" class="ohs2-rname" data-focus-key="oh-reason-[^"]+" aria-pressed="false" onclick="setWeeklyReasonFilter\(/);
   assert.match(heat, /<td class="ohs2-hc[^"]*" style="--mix:\d+%"[^>]*>\d+<\/td>/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('Purchase Order Health: Build Risk counts CM kits not ticked clean (no money); Kits by CM and month; a tick updates both', async () => {
+  // Today is Sep 3: PO 700 (DSM) late, PO 701 (DSM) due in 30 days, PO 702 (DSM) later, PO 703 (Spyder - Lacombe, not a CM).
+  const rows = [
+    po('700', '08/20/2026', { Warehouse: 'CM - DSM' }),
+    po('701', '09/20/2026', { Warehouse: 'CM - DSM' }),
+    po('702', '12/15/2026', { Warehouse: 'CM - DSM' }),
+    po('703', '09/10/2026'),
+  ];
+  const page = loadPage({ storage: IMPORT });
+  await new Promise((r) => setTimeout(r, 0));
+  page.run('isSnapshotView=false');
+  await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
+  page.run("setTab('purchaseorders')");
+  let h = html(page);
+  const card = (x) => (x.match(/<div class="dz-stat br-stat br-card[\s\S]*?<\/div><\/div>/) || [''])[0];
+  assert.match(card(h), /Build Risk/);
+  assert.match(card(h), />3<\/span>|>3<span/);
+  assert.doesNotMatch(card(h).replace(/data-tip="[^"]*"/g, ''), /\$/, 'no money on the card');
+  assert.deepEqual(page.run("[poBuildRiskData(poData(currentMetrics()).filteredPoOpen,reportToday())].map(b=>[b.late,b.soon,b.later].map(x=>x.map(r=>r.documentNumber).join()))[0]"), ['700', '701', '702']);
+  // Kits by CM and month: one CM row (DSM), past due / this month / December cells, 0 of 3 clean.
+  assert.match(h, /<h2 class="dz-title sm"[^>]*>Kits by CM and month<\/h2>[\s\S]*?<b>0<\/b> of 3 kits clean/);
+  assert.match(h, /data-focus-key="kitcm-DSM"/);
+  // Tick PO 700's kit clean: Build Risk drops to 2 and the past-due cell turns clean.
+  page.run("(()=>{const r=allLoadedRows.find(x=>x.documentNumber==='700');writeRowOverride(rowKey(r),[r],'kitClean',true);renderResults();})()");
+  h = html(page);
+  assert.equal(page.run("poBuildRiskData(poData(currentMetrics()).filteredPoOpen,reportToday()).risk.length"), 2);
+  assert.match(h, /<b>1<\/b> of 3 kits clean/);
+  // A cell lists its lines in PO lines.
+  page.run("setPoKitPick('DSM','past')");
+  assert.equal(page.run('poTileFilter'), 'kitcm');
+  assert.deepEqual(page.run("poKitPickRows(poData(currentMetrics()).filteredPoOpen,reportToday()).map(r=>r.documentNumber)"), ['700']);
   assert.deepEqual(page.errors, []);
 });
 

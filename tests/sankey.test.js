@@ -439,7 +439,7 @@ test('Build Risk: the flow matches the cards; clicking a CM narrows the page to 
   page.run('isSnapshotView=false');
   const kpi = sapExport([sapRow({ DocumentNumber: '71001', Warehouse: 'CM - DSM', ...due('09/15/2026') }), sapRow({ DocumentNumber: '71002', Warehouse: 'CM - Price', ...due('10/10/2026') })]);
   await upload(page, [{ name: 'kpi.xls', bytes: kpi }, { name: 'ctb.xlsx', bytes: workbook(page, [SEP30, SEP24]) }]);
-  page.run("setTab('buildrisk')");
+  page.run("stgSet('hiddenPages',[]);setTab('buildrisk')");
   // Switch off: no card. On: the card sits at the top of the page, under the report-week picker it depends on and
   // above the KPI cards.
   assert.doesNotMatch(html(page), /sk-card|sk-filter/);
@@ -506,7 +506,7 @@ async function supplyPage(rows = SD) {
   await new Promise((r) => setTimeout(r, 0));
   page.run('isSnapshotView=false');
   await upload(page, [{ name: 'e.xls', bytes: sapExport([sapRow({})]) }, { name: 'sd.xls', bytes: utf16Tsv(SD_HEAD, rows) }]);
-  page.run("setTab('supplydemand');toggleSankey('supplydemand')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplydemand');toggleSankey('supplydemand')");
   return page;
 }
 
@@ -533,9 +533,9 @@ test('Supply Mix: open demand value adds up, bands are coloured by coverage, a w
   // The page's own cards are not narrowed (Supply Mix has no warehouse filter of its own).
   const gaps = h.slice(h.indexOf('aria-labelledby="pg-mix-gaps"'));
   for (const w of ['CM - DSM', 'Spyder - Lacombe']) assert.match(gaps, new RegExp(`<span class="rank-name">${w}<span class="rank-sub">`));
-  page.run("setTab('supplyweekly')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
   assert.match(html(page), /<option value="CM - DSM" selected>CM - DSM<\/option>/, 'Supply / Demand opens on the same warehouse');
-  page.run("setTab('supplydemand');sankeyNodeClick('supplydemand','demand','0:CM - DSM')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplydemand');sankeyNodeClick('supplydemand','demand','0:CM - DSM')");
   assert.deepEqual(page.run('supplyWarehouseFilter'), ['ALL']);
   // Switch off: no card and no note (the warehouse filter belongs to Supply / Demand).
   page.run("sankeyNodeClick('supplydemand','demand','0:CM - DSM');toggleSankey('supplydemand')");

@@ -285,7 +285,7 @@ test('Clear To Build matches come from one report week: the newest, or the one p
   assert.deepEqual(ctb(), [['2026-09-30', 8]]);
   assert.match(html(page), /<h2>Clear To Build<\/h2><span class="section-sub">1 matching line · Sep 30 report/);
   // The same query after picking another week on Build Risk is not served from the cache.
-  page.run('setTab("buildrisk");setBuildRiskSnapshot("2026-09-24")');
+  page.run('stgSet("hiddenPages",[]);setTab("buildrisk");setBuildRiskSnapshot("2026-09-24")');
   search(page, 'ims');
   assert.deepEqual(ctb(), [['2026-09-24', 5]]);
   assert.match(html(page), /1 matching line · Sep 24 report/);

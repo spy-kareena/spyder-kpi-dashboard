@@ -102,9 +102,9 @@ test('tooltips say what a card counts with the numbers written in full ($1,721,8
   // Sortable headings say what the column is and how sorting works.
   assert.match(html, /class="th-sort" data-focus-key="linked-sort-value" data-col="value" data-tip="Open value for open lines, line value for closed ones\. Click to sort, again to reverse\."/);
   // Column headings of data tables come from one list (COLUMN_TIPS); headings with no entry stay plain.
-  page.run("setTab('supplyweekly')");
+  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
   assert.match(results(page), /<th class="num" data-tip="Usable supply minus demand for that month; below zero is short\.">Monthly net<\/th>/);
-  page.run("setTab('buildrisk')");
+  page.run("stgSet('hiddenPages',[]);setTab('buildrisk')");
   assert.match(results(page), /<th class="num">Sep 24<\/th>/);
 });
 

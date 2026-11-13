@@ -170,7 +170,7 @@ test('supply/demand export: YearMonth stays a month and SAP "Item No." header is
   assert.equal(sd.shortageQty, 14);
   // RiskSupplyQty is used instead of adding the overlapping unconfirmed + late columns (5 + 5).
   assert.equal(sd.riskQty, 5);
-  page.run('setTab("supplydemand")');
+  page.run('stgSet("hiddenPages",[]);setTab("supplydemand")');
   assert.match(page.els['results-screen'].innerHTML, /Oct 2026/);
 });
 
@@ -318,7 +318,7 @@ test('supply warehouse names cannot break out of the pager or the markup', async
   const headers = ['#', 'ExportDate', 'Item No.', 'ItemDescription', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'DemandOpenValue', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'RiskSupplyQty', 'SupplyRiskFlag'];
   const rows = Array.from({ length: 12 }, (_, i) => ({ '#': String(i + 1), ExportDate: '09/03/2026', 'Item No.': `SPY-${i}`, WarehouseCode: '11', WarehouseName: evil, YearMonth: '2026-10', DemandOpenQty: '10', DemandOpenValue: '100', UsableSupplyQty: '0', MonthlyNetQty: '-10', CumulativeNetQty: '-10', RiskSupplyQty: '0', SupplyRiskFlag: 'OK' }));
   await upload(page, [{ name: 'supply.xls', bytes: utf16Tsv(headers, rows) }]);
-  page.run('setTab("supplyweekly")');
+  page.run('stgSet("hiddenPages",[]);setTab("supplyweekly")');
   const html = page.els['results-screen'].innerHTML + page.run('supSdItemsCard(currentMetrics())');
   // 12 lines (the Supply / Demand view): two pages; the pager's ids are fixed names, never the warehouse text.
   assert.match(html, /<nav class="shp-pager dz-pager print-hide" data-dzpager="sd-rows"[^>]*onkeydown="dzPagerKey\(event,&quot;sd-rows&quot;\)">/);

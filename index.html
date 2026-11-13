@@ -3958,6 +3958,8 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .po-pair .po-own+.po-own{margin-top:0}
 .po-pair-row .po-own-n{color:var(--dz-teal)}
 .po-pair-row.amber .po-own-n{color:var(--dz-amber-text)}
+.po-pair-row.red .po-own-n{color:var(--dz-risk-text)}
+.br-card .po-pair-row:not(.amber):not(.red) .po-own-n{color:var(--dz-ink-2)} /* Build Risk: a count with no tone is plain, not teal */
 .po-pair-row.on{background:var(--dz-indigo-bg)}
 .po-pair:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
 @media (max-width:980px){.sup-more-views.po-fill>.po-pair{flex-basis:calc((100% - 20px)/3*2 + 10px)}}
@@ -4111,6 +4113,29 @@ td.ohs2-hc.zero{background:var(--dz-fill-1);color:var(--dz-ink-6);font-weight:40
 .ohc-legend span{display:inline-flex;align-items:center;gap:6px}
 .ohc-unit{margin-left:auto;color:var(--dz-ink-5)}
 @media (forced-colors:active){.ohc-pips i,.ohc-legend i{forced-color-adjust:none;outline:1px solid CanvasText}}
+/* 2v6.9 Purchase Order Health: Build Risk (a pair card like Kits) and Kits by CM and month (a table: each cell the clean
+   ✓ and the not-clean count, green all clean, amber some not, red past due and not clean; a cell or CM lists its lines). */
+.kc-meta{font-size:12.5px;color:var(--dz-ink-4)}.kc-meta b{color:var(--dz-ink-1);font-weight:600}
+.kc-tbl th.kc-mo{text-align:center}
+.kc-tbl td.kc-cell{padding:3px;text-align:center}
+.kc-tbl td.kc-cell.none{color:var(--dz-ink-6)}
+button.kc-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:40px;padding:4px 6px;border:0;border-radius:8px;font:inherit;font-size:12.5px;font-variant-numeric:tabular-nums;cursor:pointer;transition:box-shadow .16s ease}
+.kc-cell.ok button.kc-btn{background:color-mix(in oklab,var(--dz-teal) 14%,var(--dz-surface));color:var(--dz-teal)}
+.kc-cell.warn button.kc-btn{background:var(--dz-amber-bg);color:var(--dz-amber-text)}
+.kc-cell.bad button.kc-btn{background:var(--dz-risk-bg);color:var(--dz-risk-text)}
+.kc-ok{font-weight:500}.kc-no{font-weight:600}
+button.kc-btn:hover{box-shadow:inset 0 0 0 1px currentColor}
+.kc-cell.sel button.kc-btn{box-shadow:inset 0 0 0 2px var(--dz-indigo)}
+button.kc-btn:focus-visible,button.kc-cm:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+button.kc-cm{margin:0 -6px;padding:4px 6px;border:0;border-radius:8px;background:transparent;font:inherit;font-weight:600;color:var(--dz-ink-1);text-align:left;cursor:pointer}
+button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.kc-tot{white-space:nowrap;font-variant-numeric:tabular-nums}.kc-tot span{color:var(--dz-ink-4)}.kc-tot b.kc-warn{color:var(--dz-amber-text)}
+.kc-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:11.5px;color:var(--dz-ink-4)}
+.kc-legend span{display:inline-flex;align-items:center;gap:6px}
+.kc-legend i{width:10px;height:10px;border-radius:3px}
+.kc-legend i.ok{background:color-mix(in oklab,var(--dz-teal) 30%,var(--dz-surface))}.kc-legend i.warn{background:var(--dz-amber)}.kc-legend i.bad{background:var(--dz-risk)}
+.po-kitcm-row{margin-top:16px}
+@media (prefers-reduced-motion:reduce){button.kc-btn{transition:none}}
 /* 2v9:end pages */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
@@ -9994,7 +10019,11 @@ function supPurchaseOrders(m){
   const poAtRisk=poAtRiskData(m);
   const atRiskBy=new Map(poAtRisk.lines.map(l=>[l.row,l]));
   const kitCleanRows=filteredPoOpen.filter(r=>r.kitClean),kitNotCleanRows=filteredPoOpen.filter(r=>!r.kitClean);
-  const tileRows={...poTileRows,poatrisk:poAtRisk.lines.map(l=>l.row),kitclean:kitCleanRows,kitnotclean:kitNotCleanRows};
+  // 2v6.9: Build Risk (CM builds whose kit is not ticked clean, late or due within 30 days) and Kits by CM and month,
+  // both read live from the Kit Clean ticks.
+  const br=poBuildRiskData(filteredPoOpen,today);
+  const kitPick=poKitPickRows(filteredPoOpen,today);
+  const tileRows={...poTileRows,poatrisk:poAtRisk.lines.map(l=>l.row),kitclean:kitCleanRows,kitnotclean:kitNotCleanRows,brrisk:br.risk,brlate:br.late,brsoon:br.soon,brlater:br.later,...(kitPick?{kitcm:kitPick}:{})};
   if(poTileFilter&&!tileRows[poTileFilter])poTileFilter='';
   // With no card picked the page shows the late lines, so the Late card is the selected one.
   const sel=poTileFilter||'late';
@@ -10079,8 +10108,8 @@ function supPurchaseOrders(m){
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','with a Logican commit after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','on its Open Orders tab']]:[])];
   const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('')
-    +followUpCardHtml(poUnconfirmedRows,poMissingPriceRows,tileRows.followup,sel)+kitCardHtml(kitCleanRows,kitNotCleanRows,sel);
-  const extraCount=extra.length+4; // the Unconfirmed · Missing price and Kits cards take two columns each
+    +followUpCardHtml(poUnconfirmedRows,poMissingPriceRows,tileRows.followup,sel)+kitCardHtml(kitCleanRows,kitNotCleanRows,sel)+poBuildRiskCardHtml(br,sel);
+  const extraCount=extra.length+6; // the Unconfirmed · Missing price, Kits and Build Risk cards take two columns each
 
   // Vendors with the most late POs, or open POs by warehouse (a click filters the page; again clears it).
   const by=supGet('po-by','vendor')==='wh'?'wh':'vendor';
@@ -10186,6 +10215,7 @@ function supPurchaseOrders(m){
     <div class="sup-tiles po-strip">${tiles.map(tileHtml).join('')}</div>
     <div class="dz-stats sup-more-views po-fill" style="--po-cols:${extraCount<=6?extraCount:Math.ceil(extraCount/2)}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
+    <div class="dz-grid po-kitcm-row">${poKitCmCardHtml(filteredPoOpen,today)}</div>
     ${linesWrap}
     ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
 }
@@ -10315,6 +10345,11 @@ function kitToggle(el){
 function kitUpdateTiles(){
   const d=poData(currentMetrics());
   if(!d||!document.querySelector)return;
+  // 2v6.9: Build Risk and Kits by CM follow the tick at once.
+  const open0=d.filteredPoOpen,today0=reportToday();
+  const swap=(sel,html)=>{const old=document.querySelector(sel);if(!old||!html)return;const b=document.createElement('div');b.innerHTML=html;const f=b.firstElementChild;if(f)old.innerHTML=f.innerHTML;};
+  swap('.br-card',poBuildRiskCardHtml(poBuildRiskData(open0,today0),poTileFilter||'late'));
+  swap('.po-kitcm',poKitCmCardHtml(open0,today0));
   const el=document.querySelector('.kit-card');
   if(!el)return;
   const open=d.filteredPoOpen;
@@ -10327,6 +10362,102 @@ function kitUpdateTiles(){
   if(had){const b=el.querySelector(`[data-focus-key="${had}"]`);if(b)b.focus({preventScroll:true});}
 }
 
+// --- 2v6.9: Build Risk and Kits by CM and month (Purchase Order Health) ---
+// A CM build is an open PO line received at a contract manufacturer's warehouse, or bought from one (cmKey names the
+// known CMs; a warehouse named "CM - …" counts too). Its kit is clean when the Kit Clean? box is ticked.
+function poKitCm(r){
+  const k=cmKey(`${r.warehouseName||''} ${r.warehouse||''}`);
+  if(k&&k!=='Lacombe')return k;
+  const m=/^cm\s*[-·:]\s*(.+)$/i.exec(rowWarehouse(r));
+  if(m)return m[1].trim();
+  const v=cmKey(poVendorLabel(r));
+  return v&&v!=='Lacombe'?v:'';
+}
+// Build Risk (owner, 2v6.9): every CM kit not ticked clean is a risk; the count only (no money), split by when it is
+// due: late (before today), within 30 days, or later. A tick takes it off at once.
+function poBuildRiskData(open,today){
+  const soonEnd=new Date(+today+30*864e5);
+  const cm=open.filter(poKitCm),late=[],soon=[],later=[],clean=[];
+  cm.forEach(r=>{
+    if(r.kitClean){clean.push(r);return;}
+    const due=parseDate(cmPoDue(r));
+    if(due&&due<today)late.push(r);else if(due&&due<=soonEnd)soon.push(r);else later.push(r);
+  });
+  return {cm,late,soon,later,clean,risk:[...late,...soon,...later]};
+}
+function poBuildRiskCardHtml(br,sel){
+  const n=br.risk.length;
+  const tipOf=(id,label,rows,what)=>`${label}: ${ohN(rows.length,'kit')} ${what}\n${sel===id?'Listed below.':'Click to list them.'}`;
+  return poPairCardHtml({cls:'br-stat br-card',label:'Build Risk',icon:'factory',ico:n?'var(--dz-risk)':'var(--dz-teal)',mainKey:'brrisk',mainId:'brrisk',
+    value:n,unit:n===1?'kit':'kits',color:br.late.length?'var(--dz-risk-text)':n?'var(--dz-amber-text)':'var(--dz-teal)',sub:`not clean · ${fmtNum(br.cm.length)} CM kits in all`,sel,
+    tip:`Build Risk: ${ohN(n,'CM kit')} not ticked clean\n• ${fmtNum(br.late.length)} late · ${fmtNum(br.soon.length)} due in 30 days · ${fmtNum(br.later.length)} later\nTick Kit Clean? on a line to take it off.`,
+    rows:[{id:'brlate',label:'Late',n:br.late.length,tone:br.late.length?'red':'',tip:tipOf('brlate','Late',br.late,'past due, not clean')},
+      {id:'brsoon',label:'Due in 30 days',n:br.soon.length,tone:br.soon.length?'amber':'',tip:tipOf('brsoon','Due in 30 days',br.soon,'due within 30 days, not clean')},
+      {id:'brlater',label:'Later',n:br.later.length,tone:'',tip:tipOf('brlater','Later',br.later,'due after 30 days or undated, not clean')}]});
+}
+// Kits by CM and month: a row per CM, a column per month (past due, this month and the next four, then later); each
+// cell the clean and not-clean kits (PO lines). A cell lists its lines in PO lines. 10 CMs a page.
+let poKitPick=null;
+function poKitMonth(r,today){
+  const d=parseDate(cmPoDue(r));
+  if(!d)return 'none';
+  if(d<new Date(today.getFullYear(),today.getMonth(),1))return 'past';
+  return monthKey(d);
+}
+function poKitCols(today){
+  const out=[['past','Past due']];
+  for(let i=0;i<5;i++){const d=new Date(today.getFullYear(),today.getMonth()+i,1);out.push([monthKey(d),d.toLocaleDateString('en-US',{month:'short'})+(d.getFullYear()!==today.getFullYear()?` '${String(d.getFullYear()).slice(2)}`:'')]);}
+  out.push(['later','Later']);
+  return out;
+}
+function poKitColOf(r,today,cols){
+  const k=poKitMonth(r,today);
+  if(k==='none')return 'later';
+  return cols.some(c=>c[0]===k)?k:'later';
+}
+function poKitPickRows(open,today){
+  if(!poKitPick)return null;
+  const cols=poKitCols(today);
+  const rows=open.filter(r=>poKitCm(r)===poKitPick.cm&&(!poKitPick.col||poKitColOf(r,today,cols)===poKitPick.col)&&(poKitPick.clean===undefined||!!r.kitClean===poKitPick.clean));
+  return rows;
+}
+function setPoKitPick(cm,col){
+  const same=poTileFilter==='kitcm'&&poKitPick&&poKitPick.cm===cm&&poKitPick.col===col;
+  poKitPick=same?null:{cm,col};
+  poTileFilter=same?'':'kitcm';
+  poRiskOwner='';
+  renderResults();
+  dzRevealList(!same&&'#po-linked-lines');
+}
+function poKitCmCardHtml(open,today){
+  const cols=poKitCols(today);
+  const by=new Map();
+  open.forEach(r=>{const cm=poKitCm(r);if(!cm)return;if(!by.has(cm))by.set(cm,{cm,rows:[]});by.get(cm).rows.push(r);});
+  if(!by.size)return '';
+  const list=[...by.values()].map(x=>({...x,not:x.rows.filter(r=>!r.kitClean).length,clean:x.rows.filter(r=>r.kitClean).length}))
+    .sort((a,b)=>b.not-a.not||b.rows.length-a.rows.length||a.cm.localeCompare(b.cm));
+  const shown=cols.filter(([k])=>list.some(x=>x.rows.some(r=>poKitColOf(r,today,cols)===k)));
+  const pg=dzPageOf('po-kitcm',list,JSON.stringify([poWarehouseFilter,poVendorFilter,monthKey(today)]));
+  const picked=(cm,col)=>poTileFilter==='kitcm'&&poKitPick&&poKitPick.cm===cm&&poKitPick.col===col;
+  const rows=pg.rows.map(x=>{
+    const cells=shown.map(([k,label])=>{
+      const rs=x.rows.filter(r=>poKitColOf(r,today,cols)===k);
+      if(!rs.length)return `<td class="kc-cell none">—</td>`;
+      const nc=rs.filter(r=>!r.kitClean).length,c=rs.length-nc;
+      const tone=!nc?'ok':k==='past'?'bad':'warn',on=picked(x.cm,k);
+      return `<td class="kc-cell ${tone}${on?' sel':''}"><button type="button" class="kc-btn" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(c)} clean · ${fmtNum(nc)} not clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}><span class="kc-ok"${c?'':' aria-hidden="true"'}>${c?`✓ ${fmtNum(c)} clean`:''}</span><span class="kc-no">${nc?`${fmtNum(nc)} not clean`:''}</span></button></td>`;
+    }).join('');
+    const on=picked(x.cm,'');
+    return `<tr><th scope="row"><button type="button" class="kc-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.clean)} of ${ohN(x.rows.length,'kit')} clean`,`${fmtNum(x.not)} not clean`],'Click to list its lines.'))}>${esc(x.cm)}</button></th>${cells}<td class="num kc-tot"><b class="${x.not?'kc-warn':''}">${fmtNum(x.not)}</b><span> / ${fmtNum(x.rows.length)}</span></td></tr>`;
+  }).join('');
+  function pos(rows){const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;}
+  const tNot=list.reduce((t,x)=>t+x.not,0),tAll=list.reduce((t,x)=>t+x.rows.length,0);
+  return dzCard({title:'Kits by CM and month',sm:true,cls:'po-kitcm dz-fade',span:6,
+    meta:`<span class="kc-meta"><b>${fmtNum(tAll-tNot)}</b> of ${fmtNum(tAll)} kits clean</span>`,
+    tip:'CM kits (open PO lines) by month\n• ✓ clean, or not clean yet\n• Green all clean, amber some not, red past due\nClick a cell or a CM to list its lines.',
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="sup-tbl kc-tbl"><thead><tr><th scope="col">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc-mo">${esc(l)}</th>`).join('')}<th scope="col" class="num"${tipAttr('Not clean of all kits.')}>Not clean</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="kc-legend" aria-hidden="true"><span><i class="ok"></i>All clean</span><span><i class="warn"></i>Some not clean</span><span><i class="bad"></i>Past due, not clean</span></div>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
+}
 // --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
 // A PO line counts when the date Spyder expects it (cmPoDue: its reschedule date, else its due date) is after the
 // earliest ship date of the open sales-order lines for the same item code (each sales line's reschedule date, else its
@@ -10784,10 +10915,14 @@ function stgSpec(){
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])},
     dataSource:{def:()=>'live',check:oneOf(['live','import'])},
     // 2v6.9: pages left out of the top menu (Settings > Hidden Pages); Warehouses is hidden by default.
-    hiddenPages:{def:()=>['warehouses'],check:v=>Array.isArray(v)?stgHideablePages().filter(id=>v.includes(id)):undefined}
+    // 2v6.9 (owner): the Supply menu's pages (Supply / Demand, Supply Mix, Build Risk, Forecast) start hidden, like
+    // Warehouses; Settings > Hidden Pages brings any of them back.
+    hiddenPages:{def:()=>['warehouses',...stgSupplyHidden()],check:v=>Array.isArray(v)?stgHideablePages().filter(id=>v.includes(id)):undefined}
   };
 }
 // The pages Hidden Pages can hide, in menu order: every page but Order Health and Settings.
+// A function (hoisted): settings are first read before this point of the script runs.
+function stgSupplyHidden(){return ['supplyweekly','supplydemand','buildrisk','forecast'];}
 function stgHideablePages(){return ['monthly','warehouses','shipping','purchaseorders','supplyweekly','supplydemand','buildrisk','forecast'];}
 // True when the page is hidden: it leaves the menus, and setTab / a stored page go to Order Health instead.
 function stgPageHidden(id){return stgHideablePages().includes(id)&&stgValue('hiddenPages').includes(id);}
@@ -10808,6 +10943,12 @@ function stgStore(){
       const v=JSON.parse(localStorage.getItem(stgKey())||'{}');
       if(v&&typeof v==='object'&&!Array.isArray(v))stgMemo=v;
     }catch(err){/* unreadable or blocked: the defaults */}
+    // 2v6.9: a browser that already chose its hidden pages gets the Supply menu's pages hidden too, once (the flag);
+    // they can be shown again in Settings.
+    if(Array.isArray(stgMemo.hiddenPages)&&!stgMemo.hiddenSupply2v69){
+      stgMemo={...stgMemo,hiddenPages:[...new Set([...stgMemo.hiddenPages,...stgSupplyHidden()])],hiddenSupply2v69:true};
+      try{localStorage.setItem(stgKey(),JSON.stringify(stgMemo));}catch(err){/* kept for this visit */}
+    }
   }
   return stgMemo;
 }
@@ -11530,7 +11671,8 @@ function liveLoadHtml(){
 function renderUploadPages(){
   const box=document.getElementById('upload-pages');
   if(!box)return;
-  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="misc-pg-col"><h3>${esc(group)}</h3><ul>${items.filter(([id])=>!stgPageHidden(id)).map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
+  // A group whose pages are all hidden (2v6.9: Supply) is left out.
+  box.innerHTML=NAV_GROUPS.map(([group,items])=>[group,items.filter(([id])=>!stgPageHidden(id))]).filter(([,items])=>items.length).map(([group,items])=>`<div class="misc-pg-col"><h3>${esc(group)}</h3><ul>${items.map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
 }
 function showUploadError(msg){
   const el=document.getElementById('upload-error');
@@ -12086,7 +12228,7 @@ function renderSidebar(){
   el.classList.toggle('searching',sOpen);
   hdrRendering=true;
   el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Sales Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
-    <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
+    <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supplyItems.length?supply:''}</div>
     <div class="hdr-right">${file}${search}${askAi}${hdrThemeButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
   hdrRendering=false;
   restoreFocus(el,focus);
