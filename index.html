@@ -2291,9 +2291,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:14px}
 .stg-foot{display:flex;justify-content:flex-end;margin-top:14px}
 .stg-foot .link-btn:disabled{opacity:.45;cursor:default}
-.ohl-hero-quiet{flex-basis:100%;margin-top:2px;font-size:12px;color:var(--dz-ink-5);font-variant-numeric:tabular-nums}
-.ohl-hero-quiet .ohl-hero-pct{flex-basis:auto;margin:0}
-.ohl-hero-target{color:var(--dz-ink-5)}
 @media (prefers-reduced-motion:reduce){.stg-switch,.stg-thumb{transition:none}}
 @media (forced-colors:active){.stg-switch{border:1px solid ButtonText;background:Canvas}.stg-thumb{background:ButtonText}.stg-switch[aria-checked="true"]{background:Highlight}}
 @media (max-width:640px){
@@ -2430,7 +2427,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .mwm-bar-l{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--dz-ink-4);margin-top:6px}
 .mwm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
 .mwm-stats .dz-stat-v{font-size:19px;letter-spacing:0}
-.mwm-note{margin:8px 0 0;font-size:13px;line-height:1.45;color:var(--dz-ink-3)}
 .mwm-closers{display:flex;flex-direction:column;margin-top:12px}
 .mwm-closer{display:grid;grid-template-columns:56px minmax(0,1fr) 76px 92px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--dz-line-6);font-size:13px}
 .mwm-closer-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-2)}
@@ -3979,6 +3975,35 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
   .ohg-tiles>.ohg-tile,.ohg-tiles>.ohg-tile:nth-child(n+4){grid-column:auto}
   .ohg-tiles>.ohg-tile:last-child{grid-column:1/-1}
 }
+/* Order Health (2v6.9 leading): Customers at risk by supply source has no CM sheet column (three sources); the source
+   pills, each customer's name and each number are buttons that list those lines in the Lines card (indigo when picked);
+   the Lines card head carries a Clear for the pick. Tips can hold short lines ("Line\n• fact"). */
+.tip-layer .tip-text{white-space:pre-line}
+.ohl-sup-row{grid-template-columns:minmax(0,2.2fr) repeat(3,minmax(64px,.6fr)) minmax(90px,1.1fr);cursor:default}
+button.ohl-sup-pill{border:0;font:inherit;font-size:12.5px;cursor:pointer;transition:background-color .16s ease}
+button.ohl-sup-pill:hover:not(:disabled){background:var(--dz-hover)}
+button.ohl-sup-pill.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+button.ohl-sup-pill:disabled{cursor:default;opacity:.7}
+button.ohl-sup-name,button.ohl-sup-n{min-width:0;margin:-4px -6px;padding:4px 6px;border:0;border-radius:8px;background:transparent;font:inherit;color:inherit;cursor:pointer;transition:background-color .16s ease}
+button.ohl-sup-name{text-align:left;color:var(--dz-ink-2)}
+button.ohl-sup-n{justify-self:end;margin:-4px -8px;padding:4px 8px;text-align:right;font-weight:600}
+button.ohl-sup-name:hover,button.ohl-sup-n:hover{background:var(--dz-hover)}
+button.ohl-sup-name.sel,button.ohl-sup-n.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-sup-n:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.ohl-lines-clear{margin-left:2px;font-size:13px}
+@media (max-width:760px){.ohl-sup-row{grid-template-columns:minmax(0,1fr) repeat(3,44px)}}
+@media (prefers-reduced-motion:reduce){button.ohl-sup-pill,button.ohl-sup-name,button.ohl-sup-n{transition:none}}
+/* Order Health, Supply / Demand view (2v6.9 leading): the Short or at-risk items card (from the Supply / Demand page)
+   full width, its Short or at risk | All demand switch in the head with the search; or a short note when no supply /
+   demand snapshot is loaded. Colours as on the Supply pages. */
+.ohl-sd .red{color:var(--dz-risk-text)}
+.ohl-sd .muted{color:var(--dz-ink-5)}
+.ohl-sd .dz-chip.red{color:var(--dz-risk-text)}
+.ohl-sd .dz-chip.amber{color:var(--dz-amber-text)}
+.ohl-sd .dz-chip.teal{color:var(--dz-teal)}
+.ohl-sd .sup-seg-sm{flex:none}
+.ohs-need-row{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-top:8px}
+.ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v9:end pages */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
@@ -4509,7 +4534,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .stg-x{font-size:18px}
 .stg-empty,.stg-link{font-size:13.5px}
 .stg-kv{font-size:14px}
-.ohl-hero-quiet{font-size:13px}
 @media (max-width:640px){
 .stg-kv dt{font-size:13px}
 }
@@ -4519,7 +4543,7 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .mwm-foot{font-size:13.5px}
 .mwm-bar-l{font-size:13px}
 .mwm-stats .dz-stat-v{font-size:21px}
-.mwm-note,.mwm-closer{font-size:14px}
+.mwm-closer{font-size:14px}
 .mwm-closer .dz-chip{font-size:12.5px}
 .mwm-by,.mwm-datebtn,.mwm-dates{font-size:13px}
 .mwm-dates .dz-pillinput{font-size:13.5px}
@@ -9193,7 +9217,7 @@ const KPI_TOOLS=[
         matched_open_value:aiR(br.matchedOpenValue),matched_open_qty:aiR(br.matchedOpenQty),buckets:buckets.slice(0,60)},'buckets');
     }},
   {name:'get_supply_demand',
-    description:'Supply / Demand page: open sales order demand vs open PO supply (stock on hand not included): shortage and supply-risk totals, by month, by warehouse, and the first shortage rows.',
+    description:'Supply / Demand: open sales order demand vs open PO supply (stock on hand not included): shortage and supply-risk totals, by month, by warehouse, and the first shortage rows (the Short or at-risk items list on Sales Order Health, Supply / Demand view).',
     parameters:{type:'object',properties:{},required:[]},
     run:()=>{
       if(!supplyDemandRows.length)return {loaded:false,hint:'No supply / demand snapshot is loaded. Run queries/sap_b1_hana_supply_demand_snapshot_v2.sql in SAP, export it, and use Add file.'};
@@ -9741,8 +9765,8 @@ function supLegend(items){
   return `<span class="sup-legend">${items.map(([c,l])=>`<span><i style="background:${c}"></i>${esc(l)}</span>`).join('')}</span>`;
 }
 // A card with a count chip, the search box and tools in its head, then the body.
-function supTableCard({title,chip='',tip='',tools='',body,sub=''}){
-  return `<section class="dz-card sup-tcard dz-span-6"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"${tipAttr(tip)}>${esc(title)}</h2>${chip}</div><div class="sup-tools">${tools}</div></div>${sub?`<div class="dz-meta sup-tsub">${sub}</div>`:''}${body}</section>`;
+function supTableCard({title,chip='',tip='',tools='',body,sub='',cls=''}){
+  return `<section class="dz-card sup-tcard dz-span-6${cls?` ${esc(cls)}`:''}"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"${tipAttr(tip)}>${esc(title)}</h2>${chip}</div><div class="sup-tools">${tools}</div></div>${sub?`<div class="dz-meta sup-tsub">${sub}</div>`:''}${body}</section>`;
 }
 // Column chart: items [{label,value,text,color,tip}]; bars scale to max (or the biggest value); target draws a dashed line.
 function supCols(items,{max=0,height=120,target=null}={}){
@@ -10228,23 +10252,24 @@ function supSdStatus(r){
   const [label,tone]=short?['Short','red']:r.lateSupplyQty>0?['Late PO','red']:r.noCommitSupplyQty>0?['No commit date','']:r.unconfirmedSupplyQty>0?['Unconfirmed','amber']:r.rescheduledSupplyQty>0?['Rescheduled','amber']:r.hasSupplyRisk?['Supply risk','amber']:r.hasDemandRisk?['SO no commit','']:['Covered','teal'];
   return {label,tone,detail:st.detail,flag:st.flag};
 }
+// The Short / Supply at risk numbers (Supply / Demand page) and the Supply at risk only toggle: the Short or at-risk
+// items card on Sales Order Health, Supply / Demand view (2v6.9 leading), revealed after the redraw.
 function supSdFocus(kind){
   tableMore={...tableMore,'sup-sd-view':'risk','sd-risk-only':kind==='risk'};
-  renderResults();
-  dzRevealList('#results-screen .sup-page .sup-tcard');
+  if(activeTab!=='weekly'||weeklyView!=='supply'){
+    setWeeklyView('supply',false);
+    setTab('weekly');
+  }else renderResults();
+  dzRevealList('#results-screen .ohl-sd');
 }
 function supSupplyDemand(m){
   const sd=m.supplyDemand;
   if(!supplyDemandRows.length)return supNeedsFile('supplyweekly');
   const options=supWarehouseOptions(sd);
-  const groups=[...new Set(sd.rows.map(supGroup))].sort((a,b)=>a.localeCompare(b));
-  let grp=String(supGet('sd-group',''));if(grp&&!groups.includes(grp))grp='';
-  const rowsW=filterSupplyRows(sd.rows);
-  const rows=grp?rowsW.filter(r=>supGroup(r)===grp):rowsW;
+  const {grp,groups,rows}=supSdRows(sd);
   const shortageRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage);
-  const riskRows=rows.filter(r=>r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||b.demandOpenValue-a.demandOpenValue);
-  const demandRows=rows.filter(r=>r.demandOpenQty>0).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||supplyWarehouse(a).localeCompare(supplyWarehouse(b))||a.itemCode.localeCompare(b.itemCode));
-  const actRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage||r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
+  const riskRows=rows.filter(r=>r.hasSupplyRisk);
+  const demandRows=rows.filter(r=>r.demandOpenQty>0);
   const demandQty=rows.reduce((s,r)=>s+r.demandOpenQty,0),demandValue=rows.reduce((s,r)=>s+r.demandOpenValue,0),usableQty=rows.reduce((s,r)=>s+r.usableSupplyQty,0);
   const shortQty=supplyShortageQty(rows);
   const hasOC=rows.some(r=>r.demandOrderCount>0);
@@ -10252,16 +10277,13 @@ function supSupplyDemand(m){
   const itemKey=r=>`${r.itemCode}|${supplyWarehouse(r)}`;
   const shortItems=new Set(shortageRows.map(itemKey)).size,riskItems=new Set(riskRows.map(itemKey)).size;
   const cover=demandQty>0?Math.max(0,Math.min(100,Math.round((demandQty-shortQty)/demandQty*100))):null;
-  const view=supGet('sd-view','risk')==='all'?'all':'risk';
-  const riskOnly=!!tableMore['sd-risk-only'];
 
-  const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of PO supply, or with supply at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view'});
-  const groupPill=dzFilterPill({id:'sup-sd-group',label:'Item group',value:grp||'All',set:!!grp,tip:'Filter by item group.',
-    options:[{label:'All item groups',selected:!grp,onclick:"supSet('sd-group','')"},...groups.map(g=>({label:g,selected:grp===g,onclick:`supSet('sd-group',${dzJs(g)})`}))]});
+  // 2v6.9 leading: the Short or at-risk items list moved to Sales Order Health (Supply / Demand view), with its
+  // Short or at risk | All demand switch; the page keeps the coverage card and the heat map side by side.
+  const groupPill=supSdGroupPill('sup-sd-group',grp,groups);
   const anyFilter=!supplyWarehouseFilter.includes('ALL')||!!grp;
-  const filterRow=dzFilterRow(seg,supWarehousePill(options)+groupPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('sd-group','')",'Show every warehouse and item group again.'):'');
+  const filterRow=dzFilterRow('',supWarehousePill(options)+groupPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('sd-group','')",'Show every warehouse and item group again.'):'');
   const warehouseNote=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.length===1?supplyWarehouseFilter[0]:`${fmtNum(supplyWarehouseFilter.length)} warehouses`;
-
   // Coverage card: share of demand with open PO supply, the two meters, the short and at-risk item counts.
   const coverCard=`<section class="dz-card dz-span-2 sup-cover dz-fade"><h2 class="dz-title sm"${tipAttr(sectionTipText('sd-coverage'))}>Coverage</h2>
     <div class="sup-bigrow"><span class="dz-big"${tipAttr(`Demand covered by usable PO supply\n• ${fmtNum(shortQty)} of ${fmtNum(demandQty)} qty short\n• Stock on hand not included`)}>${cover===null?'—':`${cover}%`}</span><span class="dz-sub">of demand has open PO supply</span></div>
@@ -10269,7 +10291,7 @@ function supSupplyDemand(m){
       <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty · ${money(demandValue)}${hasOC?` · ${fmtNum(demandOrders)} orders`:''}`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
       <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed POs.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">Usable supply · Stock on hand not included</div></div>
     </div>
-    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable PO supply (${fmtNum(shortQty)} qty). Click to list them.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items with PO supply at risk (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty). Click to list them.`})}</div></section>`;
+    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them on Sales Order Health.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list them on Sales Order Health.`})}</div></section>`;
 
   // Heat map: short items by warehouse and month.
   const months=supMonths(rows,6);
@@ -10285,7 +10307,37 @@ function supSupplyDemand(m){
       ${heat.map(h=>`<div class="sup-heat-row" style="${cols}"><span class="sup-heat-w" title="${esc(h.w)}">${esc(supWh(h.w))}</span>${h.cells.map((n,i)=>{const [bg,fg]=lc(n);const tp=`${h.w} · ${monthLabel(months[i])||months[i]}: ${n?`${fmtNum(n)} short ${n===1?'item':'items'}`:'no short items'}`;return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(tp)}"${n?' tabindex="0"':''}>${fmtNum(n)}</span>`;}).join('')}</div>`).join('')||'<p class="sup-empty">No warehouses in view.</p>'}
     </div></div></section>`;
 
-  // The table: warehouse sub-headings, the lines; Short or at-risk items (default) or all open demand.
+  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}</div>
+    <div class="dz-grid">${coverCard}${heatCard}</div>
+    ${renderAbout(['sd-coverage'])}</div>`;
+}
+// The supply / demand rows in view: the shared supply warehouse filter, then the item group (tableMore "sup-sd-group",
+// shared by the Supply / Demand page and the Sales Order Health Supply / Demand view).
+function supSdRows(sd){
+  const groups=[...new Set(sd.rows.map(supGroup))].sort((a,b)=>a.localeCompare(b));
+  let grp=String(supGet('sd-group',''));if(grp&&!groups.includes(grp))grp='';
+  const rowsW=filterSupplyRows(sd.rows);
+  return {grp,groups,rows:grp?rowsW.filter(r=>supGroup(r)===grp):rowsW};
+}
+function supSdGroupPill(id,grp,groups){
+  return dzFilterPill({id,label:'Item group',value:grp||'All',set:!!grp,tip:'Show one item group, or every item group.',
+    options:[{label:'All item groups',selected:!grp,onclick:"supSet('sd-group','')"},...groups.map(g=>({label:g,selected:grp===g,onclick:`supSet('sd-group',${dzJs(g)})`}))]});
+}
+// Short or at-risk items (2v6.9 leading: on Sales Order Health, Supply / Demand view; it was on the Supply / Demand page):
+// warehouse sub-headings, the lines; Short or at risk (default) or All demand; search, Supply at risk only, Show all.
+function supSdItemsCard(m){
+  const sd=m.supplyDemand;
+  if(!supplyDemandRows.length||!sd)return '';
+  const {rows}=supSdRows(sd);
+  const shortageRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage);
+  const riskRows=rows.filter(r=>r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||b.demandOpenValue-a.demandOpenValue);
+  const demandRows=rows.filter(r=>r.demandOpenQty>0).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||supplyWarehouse(a).localeCompare(supplyWarehouse(b))||a.itemCode.localeCompare(b.itemCode));
+  const actRows=rows.filter(r=>r.isMonthlyShortage||r.isCumulativeShortage||r.hasSupplyRisk).sort((a,b)=>String(a.yearMonth).localeCompare(String(b.yearMonth))||a.cumulativeNetQty-b.cumulativeNetQty);
+  const hasOC=rows.some(r=>r.demandOrderCount>0);
+  const itemKey=r=>`${r.itemCode}|${supplyWarehouse(r)}`;
+  const view=supGet('sd-view','risk')==='all'?'all':'risk';
+  const riskOnly=!!tableMore['sd-risk-only'];
+  const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of usable open PO supply, or whose PO supply is at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view',cls:'sup-seg-sm'});
   const terms=supTerms(supGet('sd-q',''));
   const listAll=view==='all'?demandRows:(riskOnly?riskRows:actRows);
   const list=terms.length?listAll.filter(r=>supHit(terms,[r.itemCode,r.itemDescription,r.itemGroup])):listAll;
@@ -10309,11 +10361,10 @@ function supSupplyDemand(m){
     <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month.':'Open demand quantity.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Qty on confirmed, committed POs.')}>Supply qty</th><th class="num"${tipAttr('Running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the risk on its PO supply.')}>Supply</th></tr></thead><tbody>${groupsHtml}</tbody></table></div>
     ${list.length>limit?`<div class="sup-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(list.length)} lines</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sd-rows" data-table-key="sd-rows"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(list.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
     :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
-  const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table});
-  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(warehouseNote)}${grp?` · ${esc(grp)}`:''}${riskOnly&&view==='risk'?' · Supply at risk only':''}</div>
-    <div class="dz-grid">${coverCard}${heatCard}${tableCard}</div>
-    ${renderAbout(['sd-coverage','sd-shortages'])}</div>`;
+  const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${seg}${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table,cls:'ohl-sd dz-fade'});
+  return tableCard;
 }
+
 
 // ---------- Supply Mix ----------
 function supSupplyMix(m){
@@ -10513,7 +10564,7 @@ function stgSpec(){
     toleranceDays:{def:()=>2,check:num(0,14)},
     horizon:{def:()=>'m1',check:oneOf(['w2','m1','w6','m2'])},
     linesShown:{def:()=>20,check:oneOf([10,20,50])},
-    openingView:{def:()=>'leading',check:oneOf(['leading','lagging'])},
+    openingView:{def:()=>'leading',check:oneOf(['leading','lagging','supply'])},
     noteCommentsSo:{def:()=>NOTE_COMMENTS_SO_DEFAULT.slice(),check:list},
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
@@ -10847,7 +10898,7 @@ function stgOrderHealthCard(dis,i){
     stgRow('On-track tolerance',`Days late that still count as on track. Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
     stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
     stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
-    stgRow('Opening view',`Where Sales Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
+    stgRow('Opening view',`Where Sales Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view'))
   ].join('');
   return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
@@ -12200,7 +12251,10 @@ function renderResults(){
         ...weeklyWarehouseOptions.map(w=>({label:whName(w),selected:!activePreset&&weeklyWarehouseFilter.length===1&&weeklyWarehouseFilter[0]===w,onclick:`setWeeklyWarehouseFilter([${dzJs(w)}])`}))
       ]});
     const anyFilter=[weeklyWarehouseFilter,weeklySegmentFilter,weeklyCustomerFilter,weeklyDepartmentFilter,weeklyProjectFilter,weeklyOrderTypeFilter].some(f=>!f.includes('ALL'));
-    html+=`
+    // 2v6.9 leading: the Supply / Demand view lists items, so only the filters that apply to them show: the supply
+    // warehouse (shared with the Supply pages) and the item group; the order filters stay set for the other views.
+    if(weeklyView==='supply'&&!printMode)html+=ohsFilterRow(m);
+    else html+=`
     ${dzFilterRow(ohRenderTabs(),
       warehousePill
       +filterPill('oh-segment','Segment','All segments',weeklySegmentFilter,weeklySegmentOptions,'setWeeklySegmentFilter')
@@ -12221,6 +12275,9 @@ function renderResults(){
     // ---------- Lagging view (2v6): Monthly and Quarterly cards ----------
     // The lagging maths runs only when the Lagging view is shown or printed (ohViewShown).
     if(ohViewShown('lagging'))html+=ohgRender(m);
+    html+=ohPanelClose()+ohPanelOpen('supply');
+    // ---------- Supply / Demand view (2v6.9 leading): the Short or at-risk items card ----------
+    if(ohViewShown('supply'))html+=ohsRender(m);
     html+=ohPanelClose();
 
     // ---------- Linked lines for the selected card ----------
@@ -12287,13 +12344,14 @@ function renderResults(){
       linkedSelection.forEach(k=>{if(!listKeys.has(k))linkedSelection.delete(k);});
       const ohlTone=ohlTileTone(weeklyTileFilter,tileRows.length);
       const ohlState=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);
-      const ohlTitle=ohlState?ohlState[2]:(weeklyTileTitles[weeklyTileFilter]||OH_TILE_TITLES[weeklyTileFilter]||'');
+      const ohlTitle=ohlState?ohlState[2]:weeklyTileFilter==='ohlsup'?ohlSupplyTitle(m,ohlSupPick):(weeklyTileTitles[weeklyTileFilter]||OH_TILE_TITLES[weeklyTileFilter]||'');
+      const ohlPickClear=weeklyTileFilter==='ohlsup'?`<button type="button" class="link-btn ohl-lines-clear print-hide" data-focus-key="ohl-sup-clear" onclick="ohlSupplyClear()"${tipAttr('Show the at-risk lines again.')}>Clear</button>`:'';
       const ohlHead=(sortHtml='')=>`<div class="dz-card-head ohl-lines-head">
-          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The lines behind your pick. Tick lines to set an override.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}</div>
-          <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Filter by order, customer, warehouse or item.')}>${sortHtml}</div>
+          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The lines behind your pick. Tick lines to set an override.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}${ohlPickClear}</div>
+          <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Narrow this list to lines whose order, customer, warehouse or item contains your words.')}>${sortHtml}</div>
         </div>`;
       if(!rows.length)return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">${ohlHead()}<p class="empty-note">${ohlQ?'No lines match your search.':'No lines for this card with the current filters.'}</p></section>`;
-      const showLateDetail=weeklyTileFilter==='late';
+      const showLateDetail=weeklyTileFilter==='late'||weeklyTileFilter==='ohlsup';
       const showScheduleChange=weeklyTileFilter==='active';
       const showOtd=weeklyTileFilter==='otd3mo'||OH_LAGGING_EXTRA_TILES.includes(weeklyTileFilter);
       const showShippedWeek=weeklyTileFilter==='shippedweek';
@@ -12345,7 +12403,7 @@ function renderResults(){
       const cellValue=r=>showOtd||showShippedWeek?shippedLineValue(r):(r.isOpen?openLineValue(r):r.amountLocal);
       const isNoCommitLine=r=>r.noCommitDate||r.isAtRisk||r.statusBucket==='No Commit';
       // Reschedule cell: 0 commit date, 1 No commit date, 2 No reschedule, 3 On schedule (also its sort order).
-      const rescheduleKind=r=>hasRealDate(rescheduleOf(r))?0:isNoCommitLine(r)?1:weeklyTileFilter==='late'||/late|past due|missed|still open past/i.test(linkedStatus(r))?2:3;
+      const rescheduleKind=r=>hasRealDate(rescheduleOf(r))?0:isNoCommitLine(r)?1:showLateDetail||/late|past due|missed|still open past/i.test(linkedStatus(r))?2:3;
       const timeOf=v=>{const d=parseDate(v);return d?d.getTime():null;};
       const dateHeader=showOtd||showShippedWeek?'Delivery date':showScheduleChange||showReschedulePerf||showLateDetail?'Original due':'Due date';
       const qtyHeader=showOtd||showShippedWeek?'Shipped':showReschedulePerf?'Qty':'Open';
@@ -12516,7 +12574,7 @@ function renderResults(){
     const rawLinkedTileRows=weeklyTileFilter?(weeklyTileRows[weeklyTileFilter]||[]):[];
     const laggingTileIds=OH_LAGGING_TILES;
     // 2v6: the Lagging view (Monthly / Quarterly cards) has no card to pick, so it lists no lines.
-    const hideLinkedTile=weeklyView==='lagging'||(weeklyLaggingCollapsed&&laggingTileIds.has(weeklyTileFilter))||(weeklyLeadingCollapsed&&weeklyTileFilter&&!laggingTileIds.has(weeklyTileFilter));
+    const hideLinkedTile=weeklyView==='lagging'||weeklyView==='supply'||(weeklyLaggingCollapsed&&laggingTileIds.has(weeklyTileFilter))||(weeklyLeadingCollapsed&&weeklyTileFilter&&!laggingTileIds.has(weeklyTileFilter));
     const otdLinkedStats=weeklyTileFilter==='otd3mo'?otdStats(rawLinkedTileRows):null;
     const rescheduleLinkedStats=weeklyTileFilter==='reschedhit'?rescheduleStats(rawLinkedTileRows):null;
     const linkedTileRows=weeklyTileFilter==='otd3mo'
@@ -15087,8 +15145,9 @@ function dzDecorateIcons(root){
 // page and table in this browser (spyderKpiOpenLines). Applied after each draw (renderResults), like the tile icons.
 const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head';
 const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
-// Lists (page:title, as in their collapse key) that start open on a first visit (owner, 2v7: Shipments is open).
-const DZ_OPEN_BY_DEFAULT=new Set(['shipping:shipments']);
+// Lists (page:title, as in their collapse key) that start open on a first visit (owner, 2v7: Shipments is open; 2v6.9
+// leading: the Short or at-risk items card, the whole Sales Order Health Supply / Demand view).
+const DZ_OPEN_BY_DEFAULT=new Set(['shipping:shipments','weekly:short or at-risk items','weekly:all open demand']);
 function dzCollapsedMap(){
   try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
 }
@@ -17459,7 +17518,7 @@ let weeklyCauseFilter='';
 let weeklyAgeFilter='';
 // "When flagged" dates carried inside a shared snapshot (a snapshot file cannot reach the server history).
 let ohSnapshotFlags=null;
-const OH_VIEWS=['leading','lagging'];
+const OH_VIEWS=['leading','lagging','supply'];
 const OH_LAGGING_EXTRA_TILES=['perfect','dayslate'];
 const OH_LAGGING_TILES=new Set(['otd3mo','shippedweek','fillrate','reschedhit',...OH_LAGGING_EXTRA_TILES]);
 // Top offenders waffle: one block is $20,000 of value; the longest row shows 50 blocks ($1,000,000).
@@ -18425,8 +18484,31 @@ function ohRenderTabs(){
   const tab=(id,label,tip)=>({id:`oh-tab-${id}`,label,on:weeklyView===id,onclick:`setWeeklyView('${id}')`,tip,attrs:` aria-controls="oh-panel-${id}" onkeydown="ohTabKey(event)"`});
   return dzSeg([
     tab('leading','Leading','What is at risk now, and why.'),
-    tab('lagging','Lagging','Last month and quarter, then metrics by month.')
+    tab('lagging','Lagging','Last month and quarter, then metrics by month.'),
+    tab('supply','Supply / Demand','Short or at-risk items from supply / demand.')
   ],{tabs:true,label:'Sales Order Health view'});
+}
+// The Supply / Demand view (2v6.9 leading): the Short or at-risk items card (supSdItemsCard, moved from the Supply /
+// Demand page), or a short note when no supply / demand snapshot is loaded (live: it comes with the SAP read).
+function ohsFilterRow(m){
+  const sd=supplyDemandRows.length&&m.supplyDemand;
+  if(!sd)return dzFilterRow(ohRenderTabs(),'');
+  const {grp,groups}=supSdRows(sd);
+  const any=!supplyWarehouseFilter.includes('ALL')||!!grp;
+  const wh=supplyWarehouseFilter.includes('ALL')?'All warehouses':supplyWarehouseFilter.join(', ');
+  return `${dzFilterRow(ohRenderTabs(),supWarehousePill(supWarehouseOptions(sd))+supSdGroupPill('oh-sd-group',grp,groups),any?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('sd-group','')",'Show every warehouse and item group again.'):'')}
+    <div class="print-only">Filters: ${esc(wh)}${grp?` · ${esc(grp)}`:''}</div>`;
+}
+function ohsRender(m){
+  const card=supSdItemsCard(m);
+  if(card)return `<div class="dz-grid ohs-grid">${card}</div>`;
+  if(printMode)return '';
+  const live=liveMode();
+  const act=live
+    ?`<button type="button" class="dz-btn" data-focus-key="ohs-refresh" onclick="loadFromSap()"${tipAttr('Read SAP again now.')}>Refresh now</button>`
+    :isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="ohs-add" onclick="document.getElementById('add-file-input').click()"${tipAttr('Choose the supply / demand snapshot to load next to this report.')}>Add file</button>`;
+  const text=isSnapshotView?'This shared snapshot has no supply / demand data.':live?'Needs the supply / demand snapshot. It comes with live SAP and shows after the next refresh.':'Needs the supply / demand snapshot. Add it with Add file.';
+  return `<div class="dz-grid ohs-grid">${dzCard({title:'Short or at-risk items',sm:true,cls:'ohs-need dz-fade',span:6,body:`<div class="ohs-need-row"><p class="ohs-need-t">${esc(text)}</p>${act}</div>`})}</div>`;
 }
 // The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
 function ohRenderDrillBar(){
@@ -19124,11 +19206,14 @@ function ohlLineMatches(r,q){
 // The Lines chip: red for the at-risk views, amber for rescheduled, indigo for due this week, teal for on track.
 function ohlTileTone(id,n){
   if(!n)return '';
-  return {late:'red',nocommit:'red','st-pastdue':'red','st-nocommit':'red',active:'amber','st-rescheduled':'amber','st-duethisweek':'indigo',ontrack:'teal','st-ontrack':'teal'}[id]||'';
+  return {late:'red',ohlsup:'red',nocommit:'red','st-pastdue':'red','st-nocommit':'red',active:'amber','st-rescheduled':'amber','st-duethisweek':'indigo',ontrack:'teal','st-ontrack':'teal'}[id]||'';
 }
 // Lines behind the state tiles (st-*) and All open, for the Lines card (merged into renderResults' weeklyTileRows).
 function ohlTileRows(m,allRows){
   const out={allopen:allRows};
+  // 2v6.9 leading: a pick in Customers at risk by supply source (ohlSupplyPick) lists its at-risk lines.
+  const sup=weeklyTileFilter==='ohlsup'?ohlSupplyRows(m,ohlSupPick):null;
+  if(sup)out.ohlsup=sup;else if(weeklyTileFilter==='ohlsup'){ohlSupPick=null;weeklyTileFilter='late';}
   ohLeadingData(m).states.forEach(s=>{out[`st-${s.id}`]=s.rows;});
   return out;
 }
@@ -19184,12 +19269,7 @@ function ohlAtRiskCard(c){
   const risk=d.risk,orders=rowDocCount(risk),lines=risk.length;
   const fresh=ohFlagAges(risk)[0];
   const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) newly at risk this week. Click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
-  // The share of orders due in the next month that are at risk: small and quiet, for the manager's review.
-  const dueOrders=rowDocCount(d.all),riskPct=dueOrders?Math.round(orders/dueOrders*100):null;
-  // The target (Settings, 5% by default) is on the at-risk share of the open value: green under it, amber up to twice it.
-  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the value due by ${shortDay(d.end)}.`:ohlTip(`At-risk value: ${d.riskPct}% of ${money(d.total)} due by ${shortDay(d.end)}`,[`Target under ${AT_RISK_TARGET}%`,`Amber up to ${AT_RISK_TARGET*2}%`]))}>${d.riskPct===null?'':`${d.riskPct}% of value · `}Target under ${AT_RISK_TARGET}%</span>`;
-  const riskPctHtml=`<span class="ohl-hero-quiet">${riskPct===null?'':`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span><span class="ohl-hero-dot" aria-hidden="true"> · </span>`}${targetHtml}</span>`;
-  const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(ohlTip(`At risk, due by ${shortDay(d.end)}`,[`${ohN(orders,'order')}, ${ohN(lines,'line')}`,`${money(rowOpenAmount(risk))} open`],'Click to list them.'))}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
+  const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(ohlTip(`At risk, due by ${shortDay(d.end)}`,[`${ohN(orders,'order')}, ${ohN(lines,'line')}`,`${money(rowOpenAmount(risk))} open`],'Click to list them.'))}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span></button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
   const stat=(id,label,color,rows)=>{
     const on=sel(id),n=rowDocCount(rows);
@@ -19337,7 +19417,6 @@ function ohlShipTargetCard(m){
   const sd=shipScenarioFor(m,today);
   const monthName=today.toLocaleDateString('en-US',{month:'long'});
   const pdOrders=rowDocCount(sd.pastOriginalDue),pdValue=rowOpenAmount(sd.pastOriginalDue);
-  const inOrders=rowDocCount(sd.onTrackWindow),inValue=rowOpenAmount(sd.onTrackWindow);
   const byDoc=new Map();
   sd.pastOriginalDue.forEach(r=>{
     const k=`${r.sourceType||''}-${r.documentNumber||''}`;
@@ -19359,24 +19438,25 @@ function ohlShipTargetCard(m){
     tip:'Open lines due by the end date, and the largest past-due orders.',
     meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
     body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
-      <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 }
 // Customers at risk by supply source: every at-risk sales line in the look-ahead window is traced to where its item's
-// supply comes from and counted under the first source in trouble: the CM sheet (Logican short, on hold, or committing
-// after the line is due), an open vendor PO for the item (late, no commit date, or expected after the line is due), or
-// stock (the supply / demand snapshot is short in or before the due month). Lines whose supply is fine are "Not supply"
-// (at risk for their own dates or overrides). One row per customer, orders first; a click filters to the customer.
-const OHL_SUPPLY_SOURCES=[['cm','CM sheet','var(--dz-indigo)'],['po','Vendor PO','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
+// supply comes from and counted under the first source in trouble: an open PO for the item (late, no commit date, or
+// expected after the line is due), or stock (the supply / demand snapshot is short in or before the due month). Lines
+// whose supply is fine are "Not supply" (at risk for their own dates or overrides). One row per customer, orders first.
+// 2v6.9 leading: no CM sheet source (its lines go to the open PO, stock or none like any other line); a click on a
+// customer, a number or a source pill lists exactly those at-risk lines in the Lines card (the "ohlsup" tile).
+const OHL_SUPPLY_SOURCES=[['po','Vendor PO','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
 const OHL_SUPPLY_SHOWN=8;
 let ohlSupplyAll=false;
+// The picked customer and / or source ({cust, src}; '' = all), listed by the Lines card while its tile is "ohlsup".
+let ohlSupPick=null;
 function ohlToggleSupplyAll(){ohlSupplyAll=!ohlSupplyAll;renderResults();}
-// Open purchase-order lines by item that are not on the Logican sheet (those are the CM's own build).
+// Open purchase-order lines by item.
 function ohlPoByItem(){
   const by=new Map();
   allLoadedRows.forEach(r=>{
     if(!/purchase order/i.test(String(r.sourceType||''))||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
-    if(typeof cmLineInfo==='function'&&cmLineInfo(r))return;
     const item=String(r.itemCode||'').trim().toUpperCase();
     if(!item)return;
     if(!by.has(item))by.set(item,[]);
@@ -19387,11 +19467,6 @@ function ohlPoByItem(){
 function ohlSupplySource(r,poBy,today){
   const item=String(r.itemCode||'').trim().toUpperCase();
   const due=parseDate(r.effectiveDueDate||ohOriginalDue(r));
-  const cm=item&&typeof dcItemSupply==='function'?dcItemSupply(item):null;
-  if(cm&&(cm.status==='Short'||cm.status==='Hold'||ohCmLate(r))){
-    const what=cm.status==='Short'||cm.status==='Hold'?`Logican ${cm.status.toLowerCase()}`:'Logican commit after due';
-    return {id:'cm',text:`${what}${cm.commit?`, commit ${cmShort(cm.commit)}`:''}${cm.comment?` (${cm.comment})`:''}`};
-  }
   const bad=(item?poBy.get(item)||[]:[]).map(p=>{
     const exp=parseDate(cmPoDue(p));
     const nc=isNoCommitDate(p.lineRescheduleDate)||isNoCommitDate(p.rescheduleDate)||!!p.noCommitDate;
@@ -19405,53 +19480,101 @@ function ohlSupplySource(r,poBy,today){
   return {id:'none',text:''};
 }
 function ohlSupplyData(m){
-  return cachedByFilter(m,`ohlsup|${weeklyFilterKey()}|${ohStamp()}|${cmState.version}`,()=>{
+  return cachedByFilter(m,`ohlsup|${weeklyFilterKey()}|${ohStamp()}`,()=>{
     const risk=ohAtRiskData(m).risk.filter(ohIsSalesRow);
     const poBy=ohlPoByItem(),today=reportToday();
     const ids=OHL_SUPPLY_SOURCES.map(x=>x[0]);
     const blank=()=>Object.fromEntries(ids.map(id=>[id,new Set()]));
-    const by=new Map(),tot=blank();
+    const lists=()=>Object.fromEntries(ids.map(id=>[id,[]]));
+    const by=new Map(),tot=blank(),totRows=lists();
     risk.forEach(r=>{
       const src=ohlSupplySource(r,poBy,today);
       const key=rowCustomer(r),doc=String(r.documentNumber||'');
-      if(!by.has(key))by.set(key,{key,label:rowCustomerLabel(r),orders:blank(),all:new Set(),value:0,notes:Object.fromEntries(ids.map(id=>[id,[]]))});
+      if(!by.has(key))by.set(key,{key,label:rowCustomerLabel(r),orders:blank(),rows:lists(),all:new Set(),allRows:[],value:0,notes:lists()});
       const c=by.get(key);
-      c.orders[src.id].add(doc);c.all.add(doc);c.value+=openLineValue(r);tot[src.id].add(doc);
+      c.orders[src.id].add(doc);c.rows[src.id].push(r);c.all.add(doc);c.allRows.push(r);c.value+=openLineValue(r);tot[src.id].add(doc);totRows[src.id].push(r);
       if(src.text&&c.notes[src.id].length<4)c.notes[src.id].push(`SO ${doc} ${r.itemCode||''}: ${src.text}`);
     });
-    const supplyOrders=c=>new Set([...c.orders.cm,...c.orders.po,...c.orders.stock]).size;
+    const supplyOrders=c=>new Set([...c.orders.po,...c.orders.stock]).size;
     const customers=[...by.values()].map(c=>({...c,supply:supplyOrders(c)}))
       .sort((a,b)=>b.supply-a.supply||b.all.size-a.all.size||b.value-a.value||a.label.localeCompare(b.label));
-    const hasSources=!!((typeof cmIndex==='function'&&cmIndex()&&cmIndex().supply.size)||poBy.size||supplyDemandRows.length);
-    return {customers,tot,hasSources,withSupply:customers.filter(c=>c.supply>0).length};
+    const hasSources=!!(poBy.size||supplyDemandRows.length);
+    return {customers,tot,totRows,hasSources,withSupply:customers.filter(c=>c.supply>0).length};
   });
+}
+// The lines behind a pick: one customer (every source, or one), or one source across every customer.
+function ohlSupplyRows(m,pick){
+  if(!pick)return null;
+  const d=ohlSupplyData(m);
+  if(!pick.cust)return pick.src&&d.totRows[pick.src]?d.totRows[pick.src]:null;
+  const c=d.customers.find(x=>x.key===pick.cust);
+  if(!c)return null;
+  return pick.src?c.rows[pick.src]||null:c.allRows;
+}
+// "Firefly RV · Vendor PO", "Firefly RV", "Vendor PO · All customers": the Lines card's title for the pick.
+function ohlSupplyTitle(m,pick){
+  if(!pick)return '';
+  const src=OHL_SUPPLY_SOURCES.find(x=>x[0]===pick.src);
+  const c=pick.cust&&ohlSupplyData(m).customers.find(x=>x.key===pick.cust);
+  return c?`${c.label}${src?` · ${src[1]}`:''}`:`${src?src[1]:''} · All customers`;
+}
+function ohlSupPicked(cust,src){return weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&ohlSupPick.cust===cust&&ohlSupPick.src===src;}
+// Click: list those lines (the Lines card shows the pick in its title and reveals); the same click again shows the
+// at-risk lines again.
+function ohlSupplyPick(cust,src){
+  const k=String(cust||''),s=OHL_SUPPLY_SOURCES.some(x=>x[0]===src)?src:'';
+  if(!k&&!s)return;
+  const same=ohlSupPicked(k,s);
+  ohlSupPick=same?null:{cust:k,src:s};
+  weeklyTileFilter=same?'late':'ohlsup';
+  weeklyLinkedShowAll=false;
+  linkedSelection.clear();
+  renderResults();
+  dzRevealList(!same&&'#results-screen .ohl-lines-card');
+}
+// The Lines card's Clear for a pick: back to the at-risk lines, focus on the supply card.
+function ohlSupplyClear(){
+  ohlSupPick=null;
+  if(weeklyTileFilter==='ohlsup')weeklyTileFilter='late';
+  weeklyLinkedShowAll=false;
+  linkedSelection.clear();
+  renderResults();
+  const back=typeof document!=='undefined'&&document.querySelector&&document.querySelector('.ohl-sup .ohl-sup-name');
+  if(back&&back.focus)back.focus({preventScroll:true});
 }
 function ohlSupplyCard(c){
   const {m}=c;
   const d=ohlSupplyData(m);
   if(!d.customers.length)return '';
-  const head=`<div class="ohl-sup-sum" role="list">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>`<span class="ohl-sup-pill" role="listitem"${tipAttr(id==='none'?'At-risk orders with no supply problem.':`At-risk orders held up by ${label==='CM sheet'?'the CM (Logican) build':label==='Vendor PO'?'a vendor PO':'short stock'}.`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(d.tot[id].size)}</b></span>`).join('')}</div>`;
+  const head=`<div class="ohl-sup-sum" role="group" aria-label="At-risk orders by supply source">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>{
+    const n=d.tot[id].size,on=ohlSupPicked('',id);
+    const what=id==='none'?'Supply looks fine: at risk for their own dates or overrides.':id==='po'?'An open PO for the item is late, has no commit date or comes after due.':'Short in the supply / demand snapshot.';
+    return `<button type="button" class="ohl-sup-pill${on?' sel':''}" data-focus-key="ohl-sup-src-${id}" aria-pressed="${on}"${n?` onclick="ohlSupplyPick('','${id}')"`:' disabled'}${tipAttr(`${label}: ${ohN(n,'order')}\n• ${what}${n?`\n• ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`:''}`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(n)}</b></button>`;
+  }).join('')}</div>`;
   if(!d.hasSources)return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
-    body:`${head}<div class="empty-note">Load the Logican sheet, purchase-order lines or the supply / demand snapshot to see which supply source puts each customer's orders at risk.</div>`});
+    body:`${head}<div class="empty-note">Load purchase-order lines or the supply / demand snapshot to see which supply source puts each customer's orders at risk.</div>`});
   const list=ohlSupplyAll?d.customers:d.customers.filter(x=>x.supply>0).slice(0,OHL_SUPPLY_SHOWN);
-  const cur=weeklyCustomerFilter;
   const rows=list.map((x,i)=>{
-    const on=cur.length===1&&cur[0]===x.key;
+    const sel=weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&ohlSupPick.cust===x.key;
     const total=Math.max(1,x.all.size);
     const cells=OHL_SUPPLY_SOURCES.map(([id,label])=>{
       const n=x.orders[id].size;
-      const tip=n?ohlTip(`${label}: ${ohN(n,'order')}`,x.notes[id]):`${label}: none`;
-      return `<span class="ohl-sup-n${n?'':' zero'}${id==='none'?' quiet':''}"${tipAttr(tip)}>${n?fmtNum(n):'—'}</span>`;
+      const cls=`ohl-sup-n${n?'':' zero'}${id==='none'?' quiet':''}`;
+      if(!n)return `<span class="${cls}"${tipAttr(`${label}: none`)}>—</span>`;
+      const on=ohlSupPicked(x.key,id);
+      const notes=x.notes[id].length?`\n• ${x.notes[id].join('\n• ')}`:'';
+      return `<button type="button" class="${cls}${on?' sel':''}" data-focus-key="ohl-sup-${esc(x.key)}-${id}" data-off="${esc(x.key)}" aria-pressed="${on}" aria-label="${esc(`${x.label}, ${label}: ${ohN(n,'order')}`)}" onclick="ohlSupplyPick(this.dataset.off,'${id}')"${tipAttr(`${label}: ${ohN(n,'order')}, ${ohN(x.rows[id].length,'line')}${notes}\n${on?'Click to show the at-risk lines again.':'Click to list them.'}`)}>${fmtNum(n)}</button>`;
     }).join('');
     const bar=OHL_SUPPLY_SOURCES.map(([id,,color])=>{const n=x.orders[id].size;return n?`<i style="width:${(n/total*100).toFixed(1)}%;background:${color}"></i>`:'';}).join('');
-    return `<button type="button" class="ohl-sup-row dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="ohl-sup-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.label,[`${ohN(x.all.size,'at-risk order')}, ${money(x.value)} open`,`${ohN(x.supply,'order')} held up by supply`],on?'':'Click to filter to it.'))}>
-      <span class="ohl-sup-name">${esc(x.label)}</span>${cells}<span class="ohl-sup-bar" aria-hidden="true">${bar}</span>
-    </button>`;
+    const on=ohlSupPicked(x.key,'');
+    return `<div class="ohl-sup-row dz-fade${sel?' sel':''}" style="--i:${i}" role="group" aria-label="${esc(x.label)}">
+      <button type="button" class="ohl-sup-name${on?' sel':''}" data-focus-key="ohl-sup-${esc(x.key)}" data-off="${esc(x.key)}" aria-pressed="${on}" onclick="ohlSupplyPick(this.dataset.off,'')"${tipAttr(`${x.label}: ${ohN(x.all.size,'at-risk order')}, ${ohN(x.allRows.length,'line')} (${money(x.value)} open)\n• ${ohN(x.supply,'order')} held up by supply\n• ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`)}>${esc(x.label)}</button>${cells}<span class="ohl-sup-bar" aria-hidden="true">${bar}</span>
+    </div>`;
   }).join('');
   const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
   return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
     meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonTitle())}`,
-    tip:ohlTip('At-risk orders by where the item’s supply is stuck',['CM sheet: Logican short, on hold or late','Vendor PO: late, no commit or after the due date','Stock short in supply / demand','Hover a number for its lines']),
+    tip:'At-risk orders by supply source\n• Vendor PO: late, no commit or after due\n• Stock short in supply / demand\nClick a customer or number to list its lines.',
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>
       ${rows||'<div class="empty-note">No customer has an at-risk order held up by supply.</div>'}
