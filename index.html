@@ -4110,6 +4110,11 @@ button.ohc3-n:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .ohl-fold-m{margin-left:auto;font-size:13px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
 .ohl-fold-body{padding-bottom:16px}
 .ohl-fold-tools{margin-bottom:10px}
+.ohl-months>.ohl-lines-card{margin:0;padding:14px 0 12px;border:0;border-radius:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;animation:none}
+.ohl-months>.ohl-fold+.ohl-lines-card{border-top:1px solid var(--dz-line-8)}
+.ohl-months>.ohl-lines-card.dz-collapsed{padding-bottom:6px}
+.ohl-months .ohl-lines-title .dz-title{font-size:17px}
+.ohl-months .ohl-lines-head .dz-collapse-btn{width:22px;height:22px;margin:0 -5px 0 -3px}
 @media (max-width:900px){.ohl-why-grid{grid-template-columns:minmax(0,1fr)}.ohl-why-half+.ohl-why-half{padding-left:0;border-left:0;padding-top:18px;border-top:1px solid var(--dz-line-8)}}
 @media (max-width:560px){.ohs3-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){.ohl-fold>summary .dz-chev{transition:none}}
@@ -20446,8 +20451,7 @@ function ohlRenderLeading(m){
     ${q('Who?')}
     ${ohlWhoCard(c)}
     ${act?q('What Can We Do?')+act:''}
-    ${p?ohlMonthsCard(p):''}
-    ${OHL_LINES_MARK}
+    ${ohlMonthsCard(p)}
   </div>`;
 }
 
@@ -20708,22 +20712,25 @@ function ohlShipTargetCard(m){
     body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>${dzPageFoot('ohl-ship',shipPg,'Past-due orders','orders')}${calOpen?ohlShipCalendar(sd):''}`});
 }
-// The two month lists (owner's pick, Version 1): one card, each list behind its own fold, both shut on every load (print
-// opens them). Open orders by delivery month is the monthly delivery summary (moMonthlyParts, the Monthly page's
+// The three long lists in one card (owner): Open orders by delivery month, Items not shipped yet and Lines, each behind
+// its own fold. The two month lists are shut on every load (print opens them); Lines keeps its own chevron (the shared
+// collapse, opened by a click on any number) and draws where OHL_LINES_MARK is. With no order lines only Lines is drawn. Open orders by delivery month is the monthly delivery summary (moMonthlyParts, the Monthly page's
 // numbers; its bar chart left Leading: the table shows the same shipped and open values). Items not shipped yet: open
 // lines by original delivery month, with its Month pick.
 function ohlFoldToggle(el){ohSetMoreOpen(el.dataset.more,el.open);if(el.open&&typeof dzFitTables==='function')dzFitTables(el);}
 function ohlMonthsCard(p){
+  if(!p)return `<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">${OHL_LINES_MARK}</section>`;
   const s=p.summarySpec(),ns=p.notShippedSpec();
   const undated=p.notes.find(t=>/are not in the monthly cards or chart/.test(t));
   const fold=(key,title,meta,tip,body)=>{
     const open=!!tableMore[`more-${key}`]||printMode;
     return `<details class="ohl-fold"${open?' open':''} data-more="${key}" ontoggle="ohlFoldToggle(this)"><summary data-focus-key="more-${key}"${tipAttr(tip)}>${DZ_CHEV}<span class="dz-title sm ohl-fold-t">${title}</span><span class="ohl-fold-m">${meta}</span></summary><div class="ohl-fold-body">${body}</div></details>`;
   };
-  return `<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Delivery months">
+  return `<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">
     ${fold('ohl-fold-months','Open orders by delivery month',esc(String(p.thisYear)),sectionTipText('mo-summary'),`<div class="ohl-sec-head"><div class="ohl-sec-title">${esc(momPlain(s.title))}</div>${s.note?`<span class="mom-note">${s.note}</span>`:''}</div>
       ${renderTableCard({...s,bare:true})}${undated?`<p class="ohl-note ohl-foot-note">${esc(undated.replace('are not in the monthly cards or chart.','are not in these months.'))}</p>`:''}`)}
     ${fold('ohl-fold-items','Items not shipped yet',esc(ohN((ns.items||[]).length,'line')),sectionTipText(ns.info),`<div class="ohl-fold-tools">${p.monthSelect('ohl-original-month','Show one original month.')}</div>${renderTableCard({...ns,bare:true})}`)}
+    ${OHL_LINES_MARK}
   </section>`;
 }
 // The ship target card's Calendar & lines disclosure (it was Monthly's Ship target scenario): the scenario's five numbers,
