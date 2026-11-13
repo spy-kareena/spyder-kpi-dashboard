@@ -4541,8 +4541,9 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .ohl-card table.ohl-lines .c-doc,.ohl-card table.ohl-lines .c-item strong{font-size:14px}
 .ohl-card table.ohl-lines .c-item .desc{font-size:13px}
 .ohl-card table.ohl-lines .c-date,.ohl-card table.ohl-lines .c-qty,.ohl-card table.ohl-lines .c-val{font-size:14px}
-.ohl-card table.ohl-lines .c-status .dz-cell-sub{font-size:13px}
-.ohl-card table.ohl-lines .c-status .oh-why{font-size:12.5px}
+/* 2v6.9 (owner): the lines under a status chip ("70d overdue", "Past due · No reschedule") smaller and quieter */
+.ohl-card table.ohl-lines .c-status .dz-cell-sub{margin-top:3px;font-size:11px;line-height:1.3}
+.ohl-card table.ohl-lines .c-status .oh-why{margin-top:1px;font-size:10.5px;font-weight:500;line-height:1.3}
 .ohl-note-by{font-size:12.5px}
 .ohl-sup-pill{font-size:13px}
 .ohl-sup-row{font-size:14px}
@@ -12495,8 +12496,9 @@ function renderResults(){
       const ohlState=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);
       const ohlTitle=ohlState?ohlState[2]:weeklyTileFilter==='ohlsup'?ohlSupplyTitle(m,ohlSupPick):(weeklyTileTitles[weeklyTileFilter]||OH_TILE_TITLES[weeklyTileFilter]||'');
       const ohlPickClear=weeklyTileFilter==='ohlsup'?`<button type="button" class="link-btn ohl-lines-clear print-hide" data-focus-key="ohl-sup-clear" onclick="ohlSupplyClear()"${tipAttr('Show the at-risk lines again.')}>Clear</button>`:'';
+      // 2v6.9 (owner): the default list (At risk) shows no "At risk · Next month" line; another pick still names itself.
       const ohlHead=(sortHtml='')=>`<div class="dz-card-head ohl-lines-head">
-          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The lines behind your pick. Tick lines to set an override.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}${ohlPickClear}</div>
+          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The lines behind your pick. Tick lines to set an override.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle&&weeklyTileFilter!=='late'?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}${ohlPickClear}</div>
           <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Narrow this list to lines whose order, customer, warehouse or item contains your words.')}>${sortHtml}</div>
         </div>`;
       if(!rows.length)return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">${ohlHead()}<p class="empty-note">${ohlQ?'No lines match your search.':'No lines for this card with the current filters.'}</p></section>`;
@@ -19819,8 +19821,8 @@ function ohlDateChangesCard(c){
   };
   // 10 customers a page; a new Order Health filter (a click on a customer is one) starts at page 1.
   const dcPg=dzPageOf('ohl-datechange',dc.customers,weeklyFilterKey());
-  const meta=`<span class="ohl-dc-meta">${esc(ohN(t.lines,'line'))} · ${esc(ohN(t.customers,'customer'))} · ${esc(money(t.value))}</span>${tags(t,true)}`;
-  return dzCard({title:'Date changes',sm:true,meta,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
+  // 2v6.9 (owner): no totals line (lines · customers · value, ready / blocked / unknown) in the head.
+  return dzCard({title:'Date changes',sm:true,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
     tip:ohlTip(`Lines whose date moved over ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due`,['Ready: clear to build','Blocked: short or on hold']),
     body:`<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
         <div class="dz-th ohl-dc-th"><span>Customer</span><span>Lines</span><span class="dz-num">Slip</span><span>Worst line</span><span>What we can deliver</span></div>
