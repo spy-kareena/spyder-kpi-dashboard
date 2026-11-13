@@ -75,6 +75,33 @@ test('Lagging: Monthly and Quarterly only (no Top offenders), five tiles each (n
   assert.deepEqual(page.errors, []);
 });
 
+test('Metrics is a section of Lagging under Monthly and Quarterly: setTab and a stored page open it; not in the menu', async () => {
+  const page = await loaded([...ROWS, delivery('801', '08/08/2026'), delivery('802', '08/15/2026')]);
+  assert.doesNotMatch(page.els['app-header'].innerHTML, /data-focus-key="nav-metrics"/);
+  assert.doesNotMatch(html(page), /id="ohg-metrics"/, 'Leading does not build it');
+  page.run("setTab('metrics')");
+  assert.equal(page.run('activeTab'), 'weekly');
+  assert.equal(page.run('weeklyView'), 'lagging');
+  let h = html(page);
+  const grid = h.indexOf('<div class="dz-grid ohg-grid">'), sec = h.indexOf('<section class="pg-group" id="ohg-metrics" aria-labelledby="pg-ohg-metrics" data-group="ohg-metrics">');
+  assert.ok(grid > 0 && sec > grid, 'the section follows the Monthly and Quarterly cards');
+  const metrics = h.slice(sec);
+  assert.match(metrics, /<h2 class="pg-group-title" id="pg-ohg-metrics">Metrics<\/h2><div class="pg-group-tools"><div class="dz-seg sup-seg-sm" role="group" aria-label="Months shown">/);
+  // The page's content: the five KPIs with sparklines, the on-time line, late orders by cause, the monthly table, Show more.
+  assert.equal((metrics.match(/<div class="mwm-kpi dz-fade"/g) || []).length, 5);
+  assert.match(metrics, />On-time delivery<\/h2>[\s\S]*>Late orders by cause<\/h2>[\s\S]*>Monthly metrics<\/h2>/);
+  assert.match(metrics, /<details class="mwm-more"[^>]*data-more="mwm-metrics"/);
+  assert.match(metrics, /aria-labelledby="pg-mt-quality"[\s\S]*aria-labelledby="pg-mt-month"/);
+  // Its own Months switch still works; the Order Health filters narrow it.
+  page.run('mwmSetRange(3)');
+  assert.match(html(page), /data-focus-key="mwm-range-3"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-focus-key="mwm-range-3"|class="on"[^>]*data-focus-key="mwm-range-3"/);
+  // A stored page of 'metrics' (an older snapshot, the page a search started from) opens Lagging.
+  page.run("setWeeklyView('leading');activeTab='metrics';renderResults()");
+  assert.equal(page.run('activeTab'), 'weekly');
+  assert.equal(page.run('weeklyView'), 'lagging');
+  assert.deepEqual(page.errors, []);
+});
+
 test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirmed · Missing price card, each two columns wide', async () => {
   // 500: unconfirmed; 501: missing price; 502: both (counts once on the card); 503: neither.
   const page = await loaded([...ROWS.slice(0, 3), po('500', '08/01/2026', { Confirmed: 'N' }), po('501', '10/30/2026', { PriceFlag: 'Missing Price' }),

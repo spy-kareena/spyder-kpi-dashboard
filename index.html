@@ -10453,7 +10453,7 @@ function stgSpec(){
   };
 }
 // The pages Hidden Pages can hide, in menu order: every page but Order Health and Settings.
-function stgHideablePages(){return ['monthly','warehouses','metrics','shipping','purchaseorders','supplyweekly','supplydemand','buildrisk','forecast'];}
+function stgHideablePages(){return ['monthly','warehouses','shipping','purchaseorders','supplyweekly','supplydemand','buildrisk','forecast'];}
 // True when the page is hidden: it leaves the menus, and setTab / a stored page go to Order Health instead.
 function stgPageHidden(id){return stgHideablePages().includes(id)&&stgValue('hiddenPages').includes(id);}
 function stgTogglePage(id){
@@ -11405,7 +11405,7 @@ function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
 }
 const NAV_GROUPS=[
-  ['Sales',[['weekly','Sales Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
+  ['Sales',[['weekly','Sales Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
   ['Help',[['settings','Settings','Data source, Data check, targets, display, comment lists and AI.']]]
 ];
@@ -11753,12 +11753,16 @@ function setTab(t){
   if(t==='connect'){stgShowCard('connect');return;}
   if(stgPageHidden(t))t='weekly'; // 2v6.9: a hidden page (Settings > Hidden Pages) opens Sales Order Health
   if(!hasLoadedData()&&t!=='settings')return;
+  // 2v6.9: Metrics is a section of Sales Order Health > Lagging now: open Lagging and scroll to it.
+  const toMetrics=t==='metrics';
+  if(toMetrics){t='weekly';setWeeklyView('lagging',false);}
   dzOpenMenu=''; // a page change closes the open menu
   const changed=activeTab!==t;
   // Going to any other page ends the search, so the box does not keep showing an old query.
   if(t!=='search'){searchQuery='';clearTimeout(searchTimer);}
   activeTab=t;
   moPage(changed,()=>{showResults();if(changed&&window.scrollY>0&&window.scrollTo)window.scrollTo(0,0);}); // 2v7: cross-fade, cancel a pending reveal
+  if(toMetrics)dzRevealList('#ohg-metrics');
 }
 // Data check: rows the export could not fully use (unreadable dates, skipped files), Logican lines that do not match,
 // lines you deleted, and what is left out by design (quarantine rows, non-inventory charges). One source for the
@@ -12018,6 +12022,7 @@ function ohSetMoreOpen(key,open){
 }
 function renderResults(){
   if(stgPageHidden(activeTab))activeTab='weekly'; // 2v6.9: a stored or remembered hidden page opens Sales Order Health
+  if(activeTab==='metrics'){activeTab='weekly';setWeeklyView('lagging',false);} // 2v6.9: Metrics is on Lagging now
   cmLoadIfStale();
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
@@ -12670,75 +12675,6 @@ function renderResults(){
     html+=mwmRenderMonthly(m,{today,legacy});
   }
   // Metrics Timeline: on-track, perfect-order, and month-by-month open value.
-  if(activeTab==='metrics'){
-    const mt=m.metricTimeline;
-    const thisMk=monthKey(reportToday());
-    const onTrackRate=pct(m.onTrackRows.length,m.rows.length);
-    // The same count as the timeline's Rescheduled column and the At-risk chart (a reschedule into next month is Open Next Month there).
-    const commitAhead=m.rescheduledRows.length;
-    const lateCount=m.pastDueRows.length+m.lateRows.length;
-    const rateCard=(label,valueText,rate,tone,target,targetLabel,sub,tipText)=>`<div class="card rate-card"${tipAttr(tipText)}>
-        <div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-tag">${targetLabel}</span></div>
-        <span class="kpi-value ${TONE_CLASS[tone]}" data-count="${rate}" data-fmt="pct">${valueText}</span>
-        ${renderBullet(rate,tone,target,true)}
-        <span class="kpi-sub">${sub}</span>
-      </div>`;
-    const countCell=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label"><span class="dot ${value?tone:'good'}"></span>${label}</span><span class="ms-sub">${sub}</span></div><div class="ms-num"><span class="ms-big xl ${value&&tone!=='good'?`${tone}-text`:''}">${fmtNum(value)}</span></div></div>`;
-    const openMax=Math.max(1,...mt.map(g=>g.openValue));
-    const riskMax=Math.max(1,...mt.map(g=>g.lateRows+g.noCommitRows+g.rescheduledRows));
-    const monthShort=g=>g.key==='No Date'?'No date':`${shortMonth(parseDate(`${g.key}-01`))} '${g.key.slice(2,4)}`;
-    const timelineRows=mt.map(g=>{
-      const onTrack=pct(g.onTrackRows,g.openRows);
-      return `<tr${g.key===thisMk?' class="current"':''}>
-        <td class="m">${esc(g.label)}</td>
-        <td class="num strong">${money(g.openValue)}</td>
-        <td class="num soft">${fmtNum(g.openQty)}</td>
-        <td class="num">${fmtNum(g.openRows)}</td>
-        <td>${renderBarCell(onTrack,`${onTrack}%`,rateColor(onTrack,90,75),'sm')}</td>
-        <td class="num ${g.lateRows?'crit-strong':'muted'}">${fmtNum(g.lateRows)}</td>
-        <td class="num ${g.noCommitRows?'crit-dark':'muted'}">${fmtNum(g.noCommitRows)}</td>
-        <td class="num ${g.rescheduledRows?'warn-soft':'muted'}">${fmtNum(g.rescheduledRows)}</td>
-        <td class="num soft">${fmtNum(g.partialRows)}</td>
-        <td class="num soft">${fmtNum(g.backorderQty)}</td>
-      </tr>`;
-    });
-    const attention=uniqueRows([...m.attentionRows,...m.missingPriceRows]).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
-    // 2v6: the design's KPI cards, on-time line and monthly table come first (mwmRenderMetrics); this is its Show more detail.
-    const legacy=`
-    ${pageGroupHtml('mt-quality','Order quality',`
-      <div class="grid-4">
-        ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open lines'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or without a commit date.`)}
-        ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and never rescheduled.`)}
-        ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`Backorder rate: ${m.backorderRate}%, ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in 12 months missed its original date; keep under 5%.`)}
-        ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`Partial ship rate: ${m.partialShipRate}%, ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines shipped in part; keep under 5%.`)}
-      </div>
-      <div class="mini-strip cols-4">
-        ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of lines`,'crit',`Past due / late: ${fmtNum(lateCount)} open lines past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
-        ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of lines`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open lines with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
-        ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of lines`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open lines with a reschedule date still ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
-        ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of lines`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order lines with no price in SAP.`)}
-      </div>`,{info:'mt-quality',rise:'rise-1'})}
-    ${pageGroupHtml('mt-month','By due month',`
-    <div class="grid-2">
-      <div class="card chart-card tight">
-        <div class="chart-head"><h2${sectionTip('mt-open-month')}>Open value by due month</h2></div>
-        <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
-        <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
-      </div>
-      <div class="card chart-card tight">
-        <div class="chart-head"><h2${sectionTip('mt-risk-month')}>At-risk lines by due month</h2><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--crit-dark)"></i>No commit</span><span><i class="sw" style="background:var(--warn-fill)"></i>Rescheduled</span></span></div>
-        <div class="col-chart tall">${mt.map((g,i)=>{const total=g.lateRows+g.noCommitRows+g.rescheduledRows;const part=n=>total?`${(n/total*100).toFixed(2)}%`:'0';return `<div class="col"><span class="col-val">${total?fmtNum(total):'—'}</span><div class="col-bar stack-bar grow-h" style="height:${(total/riskMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`)}><i style="height:${part(g.lateRows)};background:var(--crit)"></i><i style="height:${part(g.noCommitRows)};background:var(--crit-dark)"></i><i style="height:${part(g.rescheduledRows)};background:var(--warn-fill)"></i></div></div>`;}).join('')}</div>
-        <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
-      </div>
-    </div>
-    ${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
-      head:[['Month'],['Open value','num'],['Open qty','num'],['Open lines','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
-      rows:timelineRows,limit:10,minWidth:900})}`,{rise:'rise-2'})}
-    ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',title:'Lines needing attention',note:'most overdue first',limit:10}),{info:'mt-attention',rise:'rise-3',
-      badge:`<span class="count-badge${attention.length?' bad':''}">${ohN(attention.length,'line')}</span>`})}
-    ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
-    html+=mwmRenderMetrics(m,legacy);
-  }
   // Warehouse Timeline: open value, late, and no-commit by warehouse/month.
   if(activeTab==='warehouses'){
     // 2v4 wh: the scorecard and "Which warehouse is defaulting" lead the page and always list every warehouse; a
@@ -13773,11 +13709,84 @@ function mwmMetricsData(m){
     return {months:o,L,causes,lateOrders:perOrder.size};
   });
 }
+// The Metrics section's Show more detail (2v6.9: it was the Metrics Timeline page): order quality, open value and at-risk
+// lines by due month, the metrics timeline and the lines needing attention, with their About notes.
+function ohgMetricsLegacy(m){
+  const mt=m.metricTimeline;
+  const thisMk=monthKey(reportToday());
+  const onTrackRate=pct(m.onTrackRows.length,m.rows.length);
+  // The same count as the timeline's Rescheduled column and the At-risk chart (a reschedule into next month is Open Next Month there).
+  const commitAhead=m.rescheduledRows.length;
+  const lateCount=m.pastDueRows.length+m.lateRows.length;
+  const rateCard=(label,valueText,rate,tone,target,targetLabel,sub,tipText)=>`<div class="card rate-card"${tipAttr(tipText)}>
+      <div class="kpi-top"><span class="kpi-label">${label}</span><span class="kpi-tag">${targetLabel}</span></div>
+      <span class="kpi-value ${TONE_CLASS[tone]}" data-count="${rate}" data-fmt="pct">${valueText}</span>
+      ${renderBullet(rate,tone,target,true)}
+      <span class="kpi-sub">${sub}</span>
+    </div>`;
+  const countCell=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label"><span class="dot ${value?tone:'good'}"></span>${label}</span><span class="ms-sub">${sub}</span></div><div class="ms-num"><span class="ms-big xl ${value&&tone!=='good'?`${tone}-text`:''}">${fmtNum(value)}</span></div></div>`;
+  const openMax=Math.max(1,...mt.map(g=>g.openValue));
+  const riskMax=Math.max(1,...mt.map(g=>g.lateRows+g.noCommitRows+g.rescheduledRows));
+  const monthShort=g=>g.key==='No Date'?'No date':`${shortMonth(parseDate(`${g.key}-01`))} '${g.key.slice(2,4)}`;
+  const timelineRows=mt.map(g=>{
+    const onTrack=pct(g.onTrackRows,g.openRows);
+    return `<tr${g.key===thisMk?' class="current"':''}>
+      <td class="m">${esc(g.label)}</td>
+      <td class="num strong">${money(g.openValue)}</td>
+      <td class="num soft">${fmtNum(g.openQty)}</td>
+      <td class="num">${fmtNum(g.openRows)}</td>
+      <td>${renderBarCell(onTrack,`${onTrack}%`,rateColor(onTrack,90,75),'sm')}</td>
+      <td class="num ${g.lateRows?'crit-strong':'muted'}">${fmtNum(g.lateRows)}</td>
+      <td class="num ${g.noCommitRows?'crit-dark':'muted'}">${fmtNum(g.noCommitRows)}</td>
+      <td class="num ${g.rescheduledRows?'warn-soft':'muted'}">${fmtNum(g.rescheduledRows)}</td>
+      <td class="num soft">${fmtNum(g.partialRows)}</td>
+      <td class="num soft">${fmtNum(g.backorderQty)}</td>
+    </tr>`;
+  });
+  const attention=uniqueRows([...m.attentionRows,...m.missingPriceRows]).sort((a,b)=>(b.originalDaysPastDue||0)-(a.originalDaysPastDue||0));
+  // 2v6: the design's KPI cards, on-time line and monthly table come first (mwmRenderMetrics); this is its Show more detail.
+  return `
+  ${pageGroupHtml('mt-quality','Order quality',`
+    <div class="grid-4">
+      ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open lines'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or without a commit date.`)}
+      ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and never rescheduled.`)}
+      ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`Backorder rate: ${m.backorderRate}%, ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in 12 months missed its original date; keep under 5%.`)}
+      ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`Partial ship rate: ${m.partialShipRate}%, ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines shipped in part; keep under 5%.`)}
+    </div>
+    <div class="mini-strip cols-4">
+      ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of lines`,'crit',`Past due / late: ${fmtNum(lateCount)} open lines past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
+      ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of lines`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open lines with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
+      ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of lines`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open lines with a reschedule date still ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
+      ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of lines`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order lines with no price in SAP.`)}
+    </div>`,{info:'mt-quality',rise:'rise-1'})}
+  ${pageGroupHtml('mt-month','By due month',`
+  <div class="grid-2">
+    <div class="card chart-card tight">
+      <div class="chart-head"><h2${sectionTip('mt-open-month')}>Open value by due month</h2></div>
+      <div class="col-chart tall">${mt.map((g,i)=>`<div class="col"><span class="col-val">${moneyShort(g.openValue)}</span><div class="col-bar grow-h ${g.key===thisMk?'fill-accent':'fill-soft'}" style="height:${Math.max(g.openValue?3:0,g.openValue/openMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · ${fmtNum(g.openQty)} open qty`)}></div></div>`).join('')}</div>
+      <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
+    </div>
+    <div class="card chart-card tight">
+      <div class="chart-head"><h2${sectionTip('mt-risk-month')}>At-risk lines by due month</h2><span class="legend"><span><i class="sw" style="background:var(--crit)"></i>Late</span><span><i class="sw" style="background:var(--crit-dark)"></i>No commit</span><span><i class="sw" style="background:var(--warn-fill)"></i>Rescheduled</span></span></div>
+      <div class="col-chart tall">${mt.map((g,i)=>{const total=g.lateRows+g.noCommitRows+g.rescheduledRows;const part=n=>total?`${(n/total*100).toFixed(2)}%`:'0';return `<div class="col"><span class="col-val">${total?fmtNum(total):'—'}</span><div class="col-bar stack-bar grow-h" style="height:${(total/riskMax*110).toFixed(1)}px;animation-delay:${i*50}ms"${tipAttr(`${g.label}: ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`)}><i style="height:${part(g.lateRows)};background:var(--crit)"></i><i style="height:${part(g.noCommitRows)};background:var(--crit-dark)"></i><i style="height:${part(g.rescheduledRows)};background:var(--warn-fill)"></i></div></div>`;}).join('')}</div>
+      <div class="col-labels tall">${mt.map(g=>`<span>${esc(monthShort(g))}</span>`).join('')}</div>
+    </div>
+  </div>
+  ${renderTableCard({key:'metrics-timeline',info:'mt-timeline',title:'Metrics timeline',note:'by effective due month',
+    head:[['Month'],['Open value','num'],['Open qty','num'],['Open lines','num'],['On-track rate','','18%'],['Late','num'],['No commit','num'],['Rescheduled','num'],['Partial','num'],['Backorder qty','num']],
+    rows:timelineRows,limit:10,minWidth:900})}`,{rise:'rise-2'})}
+  ${pageGroupHtml('mt-lines','Lines to act on',renderRowsTable(attention,{key:'metrics-attention',title:'Lines needing attention',note:'most overdue first',limit:10}),{info:'mt-attention',rise:'rise-3',
+    badge:`<span class="count-badge${attention.length?' bad':''}">${ohN(attention.length,'line')}</span>`})}
+  ${renderAbout(['mt-quality','mt-open-month','mt-risk-month','mt-timeline','mt-attention'])}`;
+}
+// 2v6.9: the Metrics page moved to Sales Order Health > Lagging, under the Monthly and Quarterly cards (ohgMetricsSection):
+// a named section, its Months switch at the right of the title; the Order Health filter row above it holds the filters.
+function ohgMetricsSection(m){return mwmRenderMetrics(m,ohgMetricsLegacy(m));}
 function mwmRenderMetrics(m,legacy){
   const n=mwmRange;
-  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Show the last ${k} months.`})),{label:'Months shown'});
-  const filterRow=mwmFilterRow(m,seg);
-  if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
+  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Show the last ${k} months.`})),{label:'Months shown',cls:'sup-seg-sm'});
+  const wrap=body=>pageGroupHtml('ohg-metrics','Metrics',body,{tools:seg,anchor:'ohg-metrics'});
+  if(!m.allRows.length)return wrap('<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>');
   const x=mwmMetricsData(m);
   const mo=x.months,L=x.L;
   const slice=a=>a.slice(12-n);
@@ -13838,7 +13847,7 @@ function mwmRenderMetrics(m,legacy){
         return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
       }).join('')}
     </div></div>`});
-  return `${filterRow}<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Order quality rates, open value and at-risk lines by due month, the metrics timeline and the lines needing attention. These cover the whole report.')}`;
+  return wrap(`<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Order quality rates, open value and at-risk lines by due month, the metrics timeline and the lines needing attention. These cover the whole report.')}`);
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
 
@@ -18267,7 +18276,7 @@ function clearWeeklyDrill(kind){
 
 // --- Tabs ---
 // Switching tabs keeps the filters; a picked card from the other tab gives way to this tab's first card.
-function setWeeklyView(v){
+function setWeeklyView(v,render=true){
   const next=OH_VIEWS.includes(v)?v:'leading';
   if(next===weeklyView)return;
   weeklyView=next;
@@ -18277,7 +18286,7 @@ function setWeeklyView(v){
     weeklyLinkedShowAll=false;
     linkedSelection.clear();
   }
-  renderResults();
+  if(render)renderResults();
 }
 // Arrow keys move between the tabs (and show them), Home / End jump to the first / last (WAI-ARIA tabs pattern).
 function ohTabKey(e){
@@ -18300,7 +18309,7 @@ function ohRenderTabs(){
   const tab=(id,label,tip)=>({id:`oh-tab-${id}`,label,on:weeklyView===id,onclick:`setWeeklyView('${id}')`,tip,attrs:` aria-controls="oh-panel-${id}" onkeydown="ohTabKey(event)"`});
   return dzSeg([
     tab('leading','Leading','What is at risk now and why; arrow keys switch views.'),
-    tab('lagging','Lagging','How deliveries went last month and last quarter; arrow keys switch views.')
+    tab('lagging','Lagging','How deliveries went last month and last quarter, then the metrics by month; arrow keys switch views.')
   ],{tabs:true,label:'Sales Order Health view'});
 }
 // The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
@@ -18665,13 +18674,13 @@ function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>`;
+  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgMetricsSection(m)}`;
   const common='Counts are orders (an order that ships on several days counts once). On time, Perfect order, Avg days late, Reschedule hit and Late orders use the same rules as the rest of the dashboard, scored for deliveries in the period; the Sales Order Health filters apply.';
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:`Monthly: orders shipped in ${mo.label}, the last complete month at the report date, and the change against ${d.month.prev.label}. ${common}`});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:`Quarterly: orders shipped in ${q.label}, the last complete quarter at the report date, and the change against ${d.quarter.prev.label}. ${common}`});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>`;
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgMetricsSection(m)}`;
 }
 // --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.

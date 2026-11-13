@@ -26,10 +26,9 @@ To print a page or save it as a PDF, use the browser's Print. In import mode, **
 
 | Page | Menu | What it shows |
 |---|---|---|
-| Sales Order Health | Top | **Leading:** at-risk orders, this month's ship target, status and top reasons, open lines by due week, customers at risk (also by supply source), date changes and the Lines table. **Lagging:** monthly and quarterly on time, perfect order, days late, reschedule hit and late orders. |
+| Sales Order Health | Top | **Leading:** at-risk orders, this month's ship target, status and top reasons, open lines by due week, customers at risk (also by supply source), date changes and the Lines table. **Lagging:** monthly and quarterly on time, perfect order, days late, reschedule hit and late orders, then **Metrics** (it was its own page): the month's rates with 12-month trends, on-time delivery, late orders by cause, monthly metrics and, under Show more, order quality and open value by due month. |
 | Monthly | Top | Shipped and booked orders by month, month by month, and year over year |
 | Warehouses | Hidden | Open value, late lines and risk by warehouse and due month (turn it on in **Settings → Hidden Pages**) |
-| Metrics | Top | Order quality rates (on track, perfect order, backorder, partial ship) by due month |
 | Shipping | Top | Recent SAP deliveries for every carrier, with statuses from AfterShip every 2 hours (or set by hand) and an icon to open each tracking page |
 | Purchase Orders | Supply ▾ | Late and no-commit PO lines, PO At Risk with its owners, Unconfirmed · Missing price, Kits (clean and not clean), receiving and late POs by vendor |
 | Supply / Demand | Supply ▾ | Open demand against open PO supply by warehouse and month (needs the supply / demand snapshot, `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`) |

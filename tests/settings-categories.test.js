@@ -107,7 +107,9 @@ test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden
   assert.equal(page.run("stgPageHidden('weekly')"), false);
   // The menus: no Warehouses link; the other Sales links and the Supply menu stay.
   assert.doesNotMatch(header(page), /data-focus-key="nav-warehouses"/);
-  assert.match(header(page), /data-focus-key="nav-monthly"[\s\S]*data-focus-key="nav-metrics"/);
+  assert.match(header(page), /data-focus-key="nav-weekly"[\s\S]*data-focus-key="nav-monthly"[\s\S]*data-focus-key="nav-shipping"/);
+  // Metrics is a section of Lagging (2v6.9), so it is neither in the menu nor in Hidden Pages.
+  assert.doesNotMatch(header(page), /data-focus-key="nav-metrics"/);
   assert.match(header(page), /data-focus-key="nav-purchaseorders"/);
   // setTab to a hidden page opens Order Health.
   page.run("setTab('monthly');setTab('warehouses')");
@@ -120,7 +122,7 @@ test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden
   const rows = [...c.matchAll(/<button type="button" role="switch" class="stg-switch" id="stg-page-(\w+)" data-focus-key="stg-page-\1" aria-checked="(true|false)" aria-label="Show ([^"]+)" onclick="stgTogglePage\(&#39;\1&#39;\)"/g)].map((m) => [m[1], m[2], m[3]]);
   assert.deepEqual(rows[0], ['warehouses', 'false', 'Warehouses']);
   assert.ok(rows.length >= 7 && rows.slice(1).every((r) => r[1] === 'true'), JSON.stringify(rows));
-  assert.ok(!rows.some((r) => r[0] === 'weekly' || r[0] === 'settings'));
+  assert.ok(!rows.some((r) => r[0] === 'weekly' || r[0] === 'settings' || r[0] === 'metrics'));
   assert.match(c, /In the Supply menu/);
   assert.equal(page.run("stgCatOf('hiddenpages')"), 'dash');
   // Turn Warehouses on: it is back in the menu and opens; hide Monthly and Purchase Orders: both leave their menus.
