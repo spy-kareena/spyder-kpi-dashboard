@@ -85,15 +85,38 @@ test('the At risk card: orders, value and lines in the head and its tip; Resched
   assert.deepEqual(page.errors, []);
 });
 
-test('Leading is one bento grid: At risk first, the ship target beside it, even gaps; At risk lists Rescheduled, No commit, All open', async () => {
+test('Leading is one bento grid of four questions: At risk first, the ship target over Status beside it, even gaps; At risk lists Rescheduled, No commit, All open', async () => {
   assert.match(CSS, /\.dz-grid\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\);gap:16px\}/);
   const page = await loadedAll();
   const lead = panel(open(page, 'weekly', 'leading'), 'leading');
-  assert.match(lead, /^id="oh-panel-leading" aria-labelledby="oh-tab-leading"><div class="dz-grid ohl-grid">\s*<section class="dz-card dz-span-3 ohl-card dz-fade" style="--i:0"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>At risk<\/h2>/);
-  const at = (s) => lead.indexOf(s);
-  assert.ok(at('>At risk</h2>') < at('ship target</h2>') && at('ship target</h2>') < at('aria-label="Status and top reasons"'), 'At risk, then the ship target, then Status and top reasons');
+  // Version 1 (four questions): the grid opens with question 1, then the At risk card (half the row).
+  assert.match(lead, /^id="oh-panel-leading" aria-labelledby="oh-tab-leading"><div class="dz-grid ohl-grid">\s*<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">1<\/span><h2 class="ohl-q-t" data-tc-skip>What Is at Risk\?<\/h2><\/div>\s*<section class="dz-card dz-span-3 ohl-card dz-fade" style="--i:0"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>At risk<\/h2>/);
+  // Beside it, one column of the other half: the ship target over Status, with the grid's own gap between them.
+  assert.match(lead, /<\/section>\s*<div class="ohl-col dz-span-3"><section class="dz-card dz-fade ohl-ship" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>September ship target<\/h2>[\s\S]*?<\/section><section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status">/);
+  assert.match(CSS, /\n\.ohl-col\{display:flex;flex-direction:column;gap:16px;min-width:0\}/);
+  // The four questions, numbered, each a full row above its card; then the Delivery months card and Lines.
+  assert.deepEqual([...lead.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((m) => `${m[1]} ${m[2]}`),
+    ['1 What Is at Risk?', '2 Why, and When?', '3 Who?', '4 What Can We Do?']);
+  const marks = ['>What Is at Risk?</h2>', '>At risk</h2>', 'ship target</h2>', 'aria-label="Status"', '>Why, and When?</h2>', 'aria-label="Top reasons and open lines by due week"', '>Who?</h2>', '>Customers at risk</h2>',
+    '>What Can We Do?</h2>', 'aria-label="Supply to pull in"', 'aria-label="Delivery months"', 'aria-label="Lines"'];
+  const at = marks.map((s) => lead.indexOf(s));
+  at.forEach((pos, i) => assert.ok(pos > (i ? at[i - 1] : 0), `${marks[i]} comes after ${marks[i - 1] || 'the grid opens'}`));
+  // Every card under the first row takes the whole row.
+  assert.deepEqual([...lead.matchAll(/<section class="dz-card dz-span-(\d)/g)].map((m) => Number(m[1])), [3, 6, 6, 6, 6, 6]);
+  // Status is a card of its own now ("Status and top reasons" is gone): five open orders, one row of five numbers.
+  assert.doesNotMatch(lead, /Status and top reasons|Status &amp; top reasons|ohs2-cols|ohs2-list|ohs2-row/);
+  const status = lead.slice(lead.indexOf('aria-label="Status"'), lead.indexOf('>Why, and When?</h2>'));
+  assert.match(status, /^aria-label="Status"><div class="ohs2-head"><div class="ohl-sec-title" data-tip="[^"]+">Status<\/div><span class="ohs2-meta"><b>5<\/b> open orders<\/span><\/div>/);
+  assert.deepEqual([...status.matchAll(/<button type="button" class="ohs3-cell[^"]*" data-focus-key="status-(st-\w+)" aria-pressed="false" onclick="setWeeklyTileFilter\('\1'\)" data-tip="[^"]+"><span class="ohs3-l"><i class="ohl-dot"[^>]*><\/i>([^<]+)<\/span><span class="ohs3-n">(\d+)<\/span><span class="ohs3-s">([^<]+)<\/span><\/button>/g)].map((m) => [m[2], Number(m[3]), m[4]]),
+    [['On track', 2, 'orders · 2 lines'], ['Due this week', 0, 'orders · 0 lines'], ['Rescheduled', 1, 'order · 1 line'], ['Past due', 1, 'order · 1 line'], ['No commit', 1, 'order · 1 line']]);
+  // Top reasons left Status: it heads the left half of question 2's card, beside Open lines by due week.
+  assert.doesNotMatch(status, /Top reasons/);
+  const why = lead.slice(lead.indexOf('aria-label="Top reasons and open lines by due week"'), lead.indexOf('>Who?</h2>'));
+  assert.deepEqual([...why.matchAll(/<div class="ohl-sec-title"[^>]*>([^<]+)<\/div>/g)].map((m) => m[1]), ['Top reasons', 'Open lines by due week']);
+  assert.equal((why.match(/<div class="ohl-why-half/g) || []).length, 2);
   const keys = [...lead.matchAll(/class="dz-stat ohl-stat" data-focus-key="tile-([\w-]+)"/g)].map((m) => m[1]);
   assert.deepEqual(keys, ['st-rescheduled', 'st-nocommit', 'allopen']);
+  assert.deepEqual(page.errors, []);
 });
 
 test('the line lists say lines and carry a count pill; the 2v2 group names are gone from every page', async () => {
