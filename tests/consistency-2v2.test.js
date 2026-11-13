@@ -42,7 +42,7 @@ function ctbWorkbook(page) {
   return new Uint8Array(page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify(sheets)})XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.aoa),s.name);return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`));
 }
 // Every page is checked, so the pages hidden by default (Monthly, Warehouses, the Supply menu; 2v6.9) are shown again
-// first (Settings > Hidden Pages); Metrics is a section of Sales Order Health > Lagging (2v6.9).
+// first (Settings > Hidden Pages); setTab('metrics') opens Sales Order Health > Lagging at its Trend card (2v6.9).
 async function loadedAll() {
   const page = loadPage();
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }, { name: 'supply.xls', bytes: utf16Tsv(SD_HEADERS, SD_ROWS) }, { name: 'ctb.xlsx', bytes: ctbWorkbook(page) }]);
@@ -177,15 +177,36 @@ test('Lagging cards: the change line says "no change vs Jul" in grey when even, 
   assert.deepEqual(loaded.errors, []);
 });
 
-// KNOWN BUG (left failing on purpose, see the 2v6.9 test round report): the month cards under Lagging > Shipments ("Open
-// and shipped, month by month", moMonthlyParts) build their tip with fmtNum(totalRows) + ' lines', so a month with one
-// line reads "$0 shipped (0% of 1 lines)". ohN(totalRows,'line') gives "1 line".
+// The month cards ("Open and shipped, month by month", moMonthlyParts) once built their tip with fmtNum(totalRows) +
+// ' lines', so a month with one line read "$0 shipped (0% of 1 lines)"; ohN(totalRows,'line') gives "1 line". The cards
+// left Lagging with its Version 1 layout (one Trend card and three compact tables), so they are checked where they are
+// drawn now: the Monthly page (Settings > Hidden Pages shows it again; loadedAll does).
 test('BUG: the Open and shipped month cards say "1 line", not "1 lines", in their tips (moMonthlyParts)', async () => {
   const loaded = await loadedAll();
+  const cardTips = (h) => [...h.matchAll(/<div class="card month-card[^"]*" data-tip="([^"]+)"/g)].map((m) => m[1]);
+  // Lagging draws no month cards any more, and says "1 line" / "1 order" in its own tips and text.
   const lag = panel(open(loaded, 'weekly', 'lagging'), 'lagging');
-  const tips = [...lag.matchAll(/<div class="card month-card[^"]*" data-tip="([^"]+)"/g)].map((m) => m[1]);
-  assert.ok(tips.length >= 2, 'the month cards are drawn');
+  assert.match(lag, /<section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend">/);
+  assert.deepEqual(cardTips(lag), [], 'no month cards on Lagging');
+  assert.doesNotMatch(lag, /month-spot|month-card/);
+  const lagTips = [...lag.matchAll(/data-tip="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(lagTips.length > 30, `${lagTips.length} tips on Lagging`);
+  for (const t of [...lagTips, text(lag)]) assert.doesNotMatch(t, /\b1 (lines|orders|delivery lines|open lines|closed lines)\b/, t);
+  // One delivery this month (order 7, from CM - Alta), one line first due in October: singular in the new cards too.
+  assert.match(lag, /<p class="ohgt-sofar" data-tip="September so far\n• 1 order shipped, \$1,000 on 1 delivery line\n• Year to date: \$2,000 on 2 delivery lines"><b>September so far:<\/b> 1 order · \$1K shipped · year to date \$2K<\/p>/);
+  assert.match(lag, />By warehouse<\/h2><span class="dz-meta">September · 1 order<\/span>/);
+  assert.match(lag, /<tr data-tip="CM · Alta\n• 1 delivery line, 10 qty\n• 0 early · 0 on time · 1 late">/);
+  assert.match(lag, /<tr data-tip="Oct 2026\n• \$0 shipped of \$1,000 booked\n• 1 open line · 0 closed lines\n• 10 qty open">/);
+  // The Monthly page: last month, this month and October (November has nothing, so it is left out).
+  const mo = open(loaded, 'monthly');
+  assert.equal(loaded.run('activeTab'), 'monthly');
+  const tips = cardTips(mo);
+  assert.deepEqual(tips.map((t) => t.split('\n')[0]), ['Aug 2026', 'Sep 2026', 'Oct 2026'], 'the month cards are drawn');
   for (const t of tips) assert.doesNotMatch(t, /\b1 lines\b/, t);
+  // October holds one line (order 5, $1,000 open, nothing shipped): the count that used to read "1 lines".
+  assert.equal(tips[2], 'Oct 2026\n• $1,000 open\n• $0 shipped (0% of 1 line)\n• 0 at risk or late, 0 rescheduled');
+  for (const t of tips.slice(0, 2)) assert.match(t, /shipped \(\d+% of [2-9] lines\)/, t);
+  assert.deepEqual(loaded.errors, []);
 });
 
 test('lines, not rows: page text and pills say lines; the page head counts what the page is about (none on the two Health pages)', async () => {
