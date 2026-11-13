@@ -164,7 +164,8 @@ test('Print draws both views with their sections, the ship target calendar open'
 test('the new CSS sits in its own marker pair just before the pager block, on colour tokens', () => {
   const css = HTML.slice(HTML.indexOf('/* 2v9:monthly-move */'), HTML.indexOf('/* 2v9:end monthly-move */'));
   assert.ok(css.length > 100);
-  assert.ok(HTML.indexOf('/* 2v9:end monthly-move */\n/* 2v9:pager */') > 0);
+  // Later 2v9 blocks (each in its own marker pair) may sit between it and the pager block.
+  assert.match(HTML, /\/\* 2v9:end monthly-move \*\/\n(?:\/\* 2v9:([a-z0-9-]+) \*\/[\s\S]*?\/\* 2v9:end \1 \*\/\n)*\/\* 2v9:pager \*\//);
   assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,6}\b|rgba?\(/i);
 });
 

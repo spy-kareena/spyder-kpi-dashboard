@@ -3977,6 +3977,48 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 @media (max-width:640px){.mom-card>.dz-card-head .dz-meta{justify-content:flex-start}.mom-pair .pair-labels>span{font-size:10.5px}}
 @media print{.mom-cal .table-scroll,.mom-card .table-scroll{overflow:visible}.mom-card{break-inside:auto;page-break-inside:auto}}
 /* 2v9:end monthly-move */
+/* 2v9:revise2 */
+/* Board revision (2v9): Sales Order Health (Leading, Lagging, Supply / Demand), Settings and the pages that can be
+   hidden: spacing, mid-size and phone widths, touch targets and print. */
+/* At Risk: three tiles fit the half-width card from about 1080px; below that two a row, All open across. */
+@media (min-width:901px) and (max-width:1080px){div.ohl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}div.ohl-stats>:last-child{grid-column:1/-1}}
+/* Top reasons: where the card is narrow a reason wraps to two lines, so the warehouse and count columns stay in view. */
+@media (max-width:1180px){.ohs2-heat button.ohs2-rname{white-space:normal;line-height:1.25}.ohs2-heat tbody th{min-width:78px}table.ohs2-heat thead th{padding:0 1px 4px}}
+/* The current month's row in the flat tables: its accent bar no longer sits on the month (the table is inset). */
+.misc-flat .data-table:has(tbody tr.current) tr>:first-child{padding-left:12px}
+.misc-flat .data-table:has(tbody tr.current) tr>:last-child{padding-right:12px}
+/* Lagging's Show more bar: side padding, and room for two lines on phones. */
+.mwm-more>summary{height:auto;min-height:44px;padding:8px 20px;text-align:center;line-height:1.35}
+/* Shipments: the delivery-history note keeps clear of the card above it. */
+.mom-foot{margin-top:10px}
+/* Settings: the board's gaps (16px, 14px on phones) and card padding; holes in the bento are filled by stgBentoFit. */
+.stg-bento{--stg-gap:16px}
+.stg-bento.fit{grid-auto-rows:1px}
+@media (max-width:639px){.stg-bento{--stg-gap:14px}.stg-bento>.stg-card{padding:18px 18px 14px}}
+/* Keyboard: the pill inputs and the Dates / Calendar & lines pills show the board's focus ring (not only a tinted border). */
+#results-screen:has(#oh-tab-leading) .dz-pillinput:focus-visible,.stg-bento .dz-pillinput:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* Touch: controls at least 40px tall; small marks (switches, swatches, chips, row links) get a 40px hit area. */
+@media (pointer:coarse){
+  #results-screen:has(#oh-tab-leading) :is(.dz-seg>button,.dz-filter,select.select,.dz-pillinput,.mwm-datebtn,button.ohl-sup-pill,button.ohs2-row,button.ohs2-rname,button.ohl-sup-name,button.ohl-sup-n,button.ohl-pull-po),
+  .stg-bento :is(.dz-seg>button,.dz-btn,.dz-pillinput,.stg-select,summary.stg-setup-sum){min-height:40px}
+  #results-screen:has(#oh-tab-leading) .mwm-datebtn{height:auto}
+  .stg-bento .stg-item{min-height:40px}.stg-bento .stg-x{width:36px;height:36px}
+  #results-screen:has(#oh-tab-leading) :is(button.ohl-chipbtn,button.ohl-hero,.dz-collapse-btn),
+  .stg-bento :is(.stg-switch,.stg-bg,.link-btn){position:relative}
+  #results-screen:has(#oh-tab-leading) :is(button.ohl-chipbtn,button.ohl-hero,.dz-collapse-btn)::after,
+  .stg-bento :is(.stg-switch,.stg-bg,.link-btn)::after{content:"";position:absolute;top:min(0px,calc(50% - 20px));bottom:min(0px,calc(50% - 20px));left:min(0px,calc(50% - 20px));right:min(0px,calc(50% - 20px))}
+}
+@media print{
+  .stg-bento>.stg-card{min-height:0!important}
+  /* The ship target prints with its calendar and lines: that grid prints one card a row, and the calendar's days and
+     the lines fit the page's width. */
+  .ohl-grid:has(.mom-cal)>*{grid-column:1/-1}
+  .mom-cal .day-chart{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;min-width:0}
+  .mom-cal .day-col strong,.mom-cal .day-col span{font-size:9px}
+  .mom-cal .table-scroll>table{min-width:0!important}
+  .mom-cal .table-scroll>table :is(th,td){white-space:normal}
+}
+/* 2v9:end revise2 */
 /* 2v9:pager */
 /* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
    stacked and centred on phones. */
@@ -11483,8 +11525,32 @@ function stgBentoFit(){
     const grid=activeTab==='settings'&&typeof ResizeObserver==='function'&&document.querySelector('.stg-bento');
     if(!grid)return;
     const span=()=>{
-      const gap=parseFloat(getComputedStyle(grid).getPropertyValue('--stg-gap'))||14;
-      grid.querySelectorAll(':scope>.stg-card').forEach(c=>{c.style.gridRowEnd=`span ${Math.max(1,Math.ceil((c.offsetHeight+gap)/2))}`;});
+      // 2v9 revise: the row size is read from the CSS (1px now, so every gap is the same 16px, not 14 or 15).
+      const cs=getComputedStyle(grid),gap=parseFloat(cs.getPropertyValue('--stg-gap'))||14,row=parseFloat(cs.gridAutoRows)||2;
+      const cards=[...grid.querySelectorAll(':scope>.stg-card')];
+      const rows=()=>cards.forEach(c=>{c.style.gridRowEnd=`span ${Math.max(1,Math.ceil((c.offsetHeight+gap)/row))}`;});
+      cards.forEach(c=>{c.style.minHeight='';if(c.hasAttribute('data-stg-wide')){c.style.gridColumn='';c.removeAttribute('data-stg-wide');}});
+      rows();
+      // A one-column tile with an empty column beside it all along its height takes two columns, then the rows again.
+      const cols=cs.gridTemplateColumns.split(' ').length;
+      if(cols>1){
+        const g=grid.getBoundingClientRect(),cg=parseFloat(cs.columnGap)||gap,cw=(g.width-(cols-1)*cg)/cols;
+        let R=cards.map(c=>c.getBoundingClientRect()),wide=false;
+        const empty=(x0,x1,a)=>x0>=g.left-1&&x1<=g.right+1&&!R.some(b=>b.left<x1-2&&b.right>x0+2&&b.top<a.bottom-2&&b.bottom>a.top+2);
+        cards.forEach((c,i)=>{
+          const a=R[i];if(a.width>cw+2)return;
+          if(empty(a.right+cg,a.right+cg+cw,a)||empty(a.left-cg-cw,a.left-cg,a)){c.style.gridColumn='span 2';c.setAttribute('data-stg-wide','');wide=true;R=cards.map(x=>x.getBoundingClientRect());}
+        });
+        if(wide)rows();
+      }
+      // A tile with empty space under it (a taller neighbour sets the rows) grows down to the tile below it, or to the
+      // grid's end, so the bento has no holes and its columns end level.
+      const R=cards.map(c=>c.getBoundingClientRect()),end=Math.max(...R.map(r=>r.bottom));
+      cards.forEach((c,i)=>{
+        const a=R[i];let to=end;
+        R.forEach((b,j)=>{if(j!==i&&b.top>=a.bottom-1&&b.left<a.right-2&&b.right>a.left+2)to=Math.min(to,b.top-gap);});
+        if(to-a.bottom>2)c.style.minHeight=`${Math.floor(to-a.top)}px`;
+      });
     };
     grid.classList.add('fit');
     stgBentoRo=new ResizeObserver(span);
