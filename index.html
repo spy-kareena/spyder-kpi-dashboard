@@ -13009,6 +13009,9 @@ function showTip(el){
   const dialog=tipHost(el);
   if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}
   else tipGoHome(layer);
+  // Measured at the window's left edge: left where the last tip sat (near the right edge), the bubble would wrap
+  // into a narrow column.
+  if(layer.style){layer.style.left='0px';layer.style.top='0px';}
   layer.hidden=false;
   placeFloating(layer,el,tipGet(el,'data-tip-pos')||'top',8);
   // The class change after layout lets the bubble fade in (no motion when the viewer asked for less).
