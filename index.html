@@ -4176,6 +4176,80 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 @media print{.dz-spark{break-inside:avoid}}
 @media (forced-colors:active){.dz-spark svg path,.dz-spark svg circle{forced-color-adjust:none}}
 /* 2v9:end spark */
+/* 2v9:po-recv */
+/* Purchase Order Health > Received (owner's pick, Version 2 · Vendor Scorecard): the three numbers in one band, each
+   with a thin bar and a mark (the target or the 12-week average); the Vendor Scorecard table with the two trends under it. */
+.po-recv>.dz-card{margin:0}
+.por-band{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.por-num{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 14px;align-items:center;align-content:start;min-width:0;padding:2px 20px;border-left:1px solid var(--dz-line-8)}
+.por-num:first-child{padding-left:0;border-left:0}
+.por-num:last-child{padding-right:0}
+.por-num-l{grid-column:1/-1;display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--dz-ink-1)}
+.por-num-v{grid-column:1;grid-row:2/span 2;font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.1;color:var(--dz-ink-1);font-variant-numeric:tabular-nums;white-space:nowrap}
+.por-num-v small{margin-left:5px;font-size:13px;font-weight:500;letter-spacing:0;color:var(--dz-ink-3)}
+.por-num>.por-gauge{grid-column:2;grid-row:2;align-self:end;margin-bottom:3px}
+.por-num-of{grid-column:2;grid-row:3;align-self:start;font-size:12px;color:var(--dz-ink-4)}
+.por-num-of b{font-weight:600;color:var(--dz-ink-2)}
+.por-num-s{grid-column:1/-1;font-size:12px;color:var(--dz-ink-3)}
+.por-gauge{position:relative;display:block;min-width:48px}
+.por-gauge>span{display:block;height:5px;border-radius:3px;background:var(--dz-fill-1);overflow:hidden}
+.por-gauge>span>i{display:block;height:100%;border-radius:3px}
+.por-gauge>b{position:absolute;top:-3px;bottom:-3px;width:2px;margin-left:-1px;border-radius:1px;background:var(--dz-ink-2)}
+.por-teal{color:var(--dz-teal-text)}.por-amber{color:var(--dz-amber-text)}.por-red{color:var(--dz-risk-text)}
+.dz-big.por-teal{color:var(--dz-teal-text)}.dz-big.por-amber{color:var(--dz-amber-text)}.dz-big.por-red{color:var(--dz-risk-text)}
+.por-soft{color:var(--dz-ink-4)}
+.por-tbl{--min:780px}
+.por-tbl .c-ven{width:21%}.por-tbl .c-n{width:11%}.por-tbl .c-on{width:20%}.por-tbl .c-d{width:11%}.por-tbl .c-hit{width:15%}
+.por-tbl th .por-th{max-width:100%;padding:2px 0;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);border-radius:6px;white-space:nowrap}
+.por-tbl th .por-th:hover{color:var(--dz-ink-2)}
+.por-tbl th[aria-sort] .por-th{color:var(--dz-indigo-deep);font-weight:500}
+.por-tbl th .sort-arrow{display:inline-block;min-width:9px;margin-left:3px;font-size:11px;opacity:.45}
+.por-tbl th[aria-sort] .sort-arrow{opacity:1}
+.por-tbl th.num .por-th{margin-left:auto}
+.por-tbl th.num{text-align:right}
+.por-tbl td small{display:block;margin-top:1px;font-size:11.5px;font-weight:400;color:var(--dz-ink-4)}
+.por-tbl tbody tr.sel>td{background:var(--dz-indigo-bg)}
+.por-tbl tbody tr.sel>td:first-child{border-radius:10px 0 0 10px}
+.por-tbl tbody tr.sel>td:last-child{border-radius:0 10px 10px 0}
+.por-tbl tfoot th,.por-tbl tfoot td{padding:12px 12px 12px 0;border-top:1.5px solid var(--dz-line-8);font-weight:600;color:var(--dz-ink-1);text-align:left;font-size:13px}
+.por-tbl tfoot td.num{text-align:right}
+.por-tbl tfoot td:last-child{padding-right:0}
+.por-tbl tfoot small{font-weight:400}
+.por-oncell{display:grid;grid-template-columns:minmax(40px,72px) auto;justify-content:start;gap:10px;align-items:center}
+.por-ven{display:block;max-width:calc(100% + 16px);margin:-4px -8px;padding:4px 8px;border:0;border-radius:8px;background:none;font:inherit;font-weight:600;color:var(--dz-ink-1);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.por-ven:hover{background:var(--dz-fill-1)}
+.por-ven[aria-pressed="true"]{background:var(--dz-surface,transparent);color:var(--dz-indigo-deep);box-shadow:inset 0 0 0 1.5px var(--dz-indigo)}
+.por-tbl .por-th:focus-visible,.por-ven:focus-visible,.por-chip:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.por-sec{margin-top:18px;padding-top:14px;border-top:1px solid var(--dz-line-8)}
+.por-sec-head{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap}
+.por-h3{margin:0;font-size:15px;font-weight:600;color:var(--dz-ink-1)}
+.por-h4{margin:0;font-size:14px;font-weight:600;color:var(--dz-ink-1)}
+.por-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 36px;margin-top:10px}
+.por-trend{min-width:0}
+.por-trend .sup-bigrow{margin-top:6px}
+.por-trend .sup-cols{margin-top:12px}
+.sup-target.por-avg{border-top-color:var(--dz-ink-4)}
+.por-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;font-size:11.5px;color:var(--dz-ink-4)}
+.por-leg span{display:inline-flex;align-items:center;gap:6px}
+.por-leg i{display:block;width:16px;border-top:2px dashed var(--dz-ink-4)}
+.por-leg .por-leg-u{margin-left:auto}
+.por-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 12px;border:1px solid var(--dz-indigo);border-radius:999px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
+.por-chip span{font-size:15px;line-height:1}
+.po-recv .po-cap{margin-top:10px}
+@media (max-width:860px){
+  .por-band{grid-template-columns:minmax(0,1fr);gap:12px}
+  .por-num{padding:12px 0 0;border-left:0;border-top:1px solid var(--dz-line-8)}
+  .por-num:first-child{padding-top:0;border-top:0}
+  .por-side{grid-template-columns:minmax(0,1fr)}
+}
+@media (pointer:coarse){.por-ven,.por-tbl .por-th,.por-chip{min-height:40px}.por-ven{display:flex;align-items:center}.por-tbl .por-th{display:inline-flex;align-items:center}}
+@media print{
+  .por-tbl th .sort-arrow{display:none}
+  .por-bandcard,.por-trend{break-inside:avoid}
+  .por-scroll{overflow:visible}
+  .por-tbl{min-width:0}
+}
+/* 2v9:end po-recv */
 /* 2v9:ship-btns */
 /* Ship target's Dates and Calendar & lines (owner): the same soft pill edge as the What can we do switch (Supply to
    pull in), not the darker field border. */
@@ -10775,7 +10849,7 @@ function supPurchaseOrders(m){
     tip:'Filter by vendor.',
     options:[{label:'All vendors',selected:venAll,onclick:"setPoVendorFilter(['ALL'])"},...poVendorOptions.map(o=>({label:vendorLabel(o.value),selected:poVendorFilter.length===1&&poVendorFilter[0]===o.value,onclick:`setPoVendorFilter([${dzJs(o.value)}])`}))]});
   const seg=dzSeg([{label:'Open',on:view==='open',onclick:"supSet('po-view','open')",key:'po-view-open',tip:'Open POs, late vendors and PO lines.'},
-    {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving: on time, this week, fill rate, reschedule hit.'}],{label:'Purchase order view'});
+    {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving: on time, this week, reschedule hit and the vendor scorecard.'}],{label:'Purchase order view'});
   const filterRow=dzFilterRow(seg,vendorPill+warehousePill,(!whAll||!venAll)?dzClear('resetPoFilters()','Show all warehouses and vendors.'):'');
   const filterNote=`${whAll?'All warehouses':whHit?whHit.label:poWarehouseFilter.length===1?poWarehouseFilter[0]:`${fmtNum(poWarehouseFilter.length)} warehouses`} · ${venAll?'All vendors':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} vendors`}`;
 
@@ -10786,27 +10860,9 @@ function supPurchaseOrders(m){
   const six=series.slice(-6);
   const recvBody=()=>`<div class="sup-bigrow"><span class="dz-big sm">${scored?`${fmtNum(poOtd3Mo.rate)}%`:'—'}</span><span class="dz-sub">${scored?`of ${fmtNum(scored)} PO ${scored===1?'line':'lines'} received in the last 3 months`:(poReceiptRows.length?'No receipts in the last 3 months for this filter':'Needs receipt close-date data')}</span></div>
       ${supCols(six.map((s,i)=>({label:s.label,value:s.otd,text:s.otd===null?'—':`${s.otd}%`,color:i===six.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:s.otd===null?`${s.label}: no receipts scored`:`${s.label}: ${s.otd}% received on time`})),{max:100,height:120,target:90})}`;
-  const recvCard=span=>dzCard({title:'Received on time',sm:true,span,cls:'dz-fade',meta:'target 90%',tip:sectionTipText('po-receiving'),body:recvBody()});
-  const recvWeeks=weekWindows(thisWeekStart,12,-1).reverse();
-  poReceiptRows.forEach(r=>{const d=parseDate(r.closeDate);if(!d)return;const w=recvWeeks.find(w=>d>=w.s&&d<=w.e);if(w)w.rows.push(r);});
-  const weekCard=span=>dzCard({title:'Received by week',sm:true,span,cls:'dz-fade',meta:`${ordersN(supDocs(poReceivedThisWeekRows))} this week`,tip:sectionTipText('po-receiving'),
-    body:`<div class="sup-bigrow"><span class="dz-big sm">${fmtNum(supDocs(poReceivedThisWeekRows))}</span><span class="dz-sub">${poReceivedThisWeekRows.length?`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)} received this week`:'nothing received this week yet'}</span></div>
-      ${supCols(recvWeeks.map((w,i)=>({label:shortDay(w.s),value:supDocs(w.rows),text:fmtNum(supDocs(w.rows)),color:i===recvWeeks.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:`Week of ${shortDay(w.s)}: ${ordersN(supDocs(w.rows))}, ${supLines(w.rows.length)}, ${money(rowShippedAmount(w.rows))} received`})),{height:120})}`});
-
-  if(view==='received'){
-    const stat=(label,v,s,tone,tipText)=>`<div class="sup-tile static dz-fade"${tipAttr(tipText)}><span class="sup-tile-l">${esc(label)}</span><span class="sup-tile-v${tone?` ${tone}`:''}">${v}</span><span class="sup-tile-s">${esc(s)}</span></div>`;
-    const hitRate=poReschedulePerf.closed.length;
-    return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
-      ${dzQ(1,'How Is Receiving Going?','solo')}
-      <div class="sup-tiles">
-        ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',scored?`On time, last 3 months: ${fmtNum(poOtd3Mo.rate)}%\n• ${fmtNum(onTime)} of ${fmtNum(scored)} receipts by the original date\n• ${money(poOtdAmt)} received`:'On time, last 3 months: no receipts to score.')}
-        ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}\n• ${ordersN(supDocs(poReceivedThisWeekRows))} · ${supLines(poReceivedThisWeekRows.length)}\n• ${money(poReceivedWeekAmt)}`)}
-        ${stat('Reschedule hit · 12 mo',hitRate?`${fmtNum(poReschedulePerf.rate)}%`:'—',hitRate?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} met commit`:'no closed reschedules',hitRate?(poReschedulePerf.rate>=90?'teal':poReschedulePerf.rate>=75?'amber':'red'):'',hitRate?`Reschedule hit, 12 months: ${fmtNum(poReschedulePerf.rate)}%\n• ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} rescheduled receipts on time\n• ${money(poReschedulePerfAmt)} rescheduled`:'Reschedule hit: no rescheduled receipts in 12 months.')}
-      </div>
-      ${dzQ(2,'Is It Arriving on Time, and When?','solo')}
-      <div class="dz-grid">${recvCard(3)}${weekCard(3)}</div>
-      ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
-  }
+  // Received (owner's pick, Version 2 · Vendor Scorecard): its own function below (poReceivedView), with the page's
+  // filter row and filter note.
+  if(view==='received')return poReceivedView(poData(m),filterRow,filterNote,vendorName);
 
   // Open: the five order tiles (2v6.9: This week focus left the strip), the other views, the vendors / warehouses card, the PO lines.
   // PO At Risk counts lines (the owner's rule), the other order cards count POs.
@@ -10993,6 +11049,166 @@ function supPurchaseOrders(m){
   return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
     ${openTop}
     ${linesWrap}
+    ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
+}
+
+// ===== 2v9 po-recv: Purchase Order Health > Received (owner's pick, Version 2 · Vendor Scorecard) =====
+// Question 1: the three numbers in one band, each with a thin bar and a mark (the 90% target, or the 12-week average
+// for Received This Week); no $ in the band, the amounts are in the tips. Question 2: the Vendor Scorecard, one row per
+// vendor over the last 3 months of receipts (sortable, 10 a page), an All Vendors row equal to the band, and under it
+// the two trends (on time by month, receipts by week), which follow a vendor picked in the table. Scored exactly as the
+// board scores them: on time = early or on the original date (otdStats); late = received after the original date, so
+// a line 1 or 2 days late counts as late, as in the rate; days late from deliveryLateDays; Reschedule Hit from
+// rescheduleStats (poReschedulePerf). The page's Vendor and Warehouse filters apply to everything (poData).
+// The scorecard's columns: [id, title, th class, first click 'asc' | 'desc', what the column shows].
+const PO_RECV_COLS=[
+  ['name','Vendor','c-ven','asc','The vendor. Click a name to see its own trends under the table.'],
+  ['n','Received · 3 Mo','num','desc','PO lines received in the last 3 months, and their share of all lines received.'],
+  ['rate','On Time','c-on','asc','Lines received early or on the original date, against the 90% target.'],
+  ['late','Late Lines','num','desc','Lines received after the original date (1 to 2 days late included).'],
+  ['avg','Avg Days Late','num','desc','Average days after the original date, over the late lines.'],
+  ['worst','Worst','num','desc','The most days late of any line.'],
+  ['hit','Reschedule Hit · 12 Mo','num','asc','Rescheduled lines received in the last 12 months by their reschedule date; lines still open are listed under it.']
+];
+const PO_RECV_TARGET=90;
+// The scorecard sort, kept with the page's other view state (tableMore "sup-po-recv-sort"); Late Lines, most first, by default.
+function poRecvSortState(){
+  const [col,dir]=String(supGet('po-recv-sort','late:desc')).split(':');
+  return PO_RECV_COLS.some(c=>c[0]===col)&&(dir==='asc'||dir==='desc')?{col,dir}:{col:'late',dir:'desc'};
+}
+// A column title: the first click sorts it (names A to Z, rates lowest first, counts and days highest first), the next
+// click reverses it.
+function poRecvSort(col){
+  const c=PO_RECV_COLS.find(x=>x[0]===col);
+  if(!c)return;
+  const cur=poRecvSortState();
+  const dir=cur.col===col?(cur.dir==='asc'?'desc':'asc'):c[3];
+  supSet('po-recv-sort',`${col}:${dir}`);
+  announce(`Vendor scorecard sorted by ${c[1]}, ${dir==='asc'?'ascending':'descending'}.`);
+}
+// A vendor in the scorecard: the trends show only it; the same vendor again (or '') shows all vendors again.
+function poRecvVendor(code){
+  const cur=String(supGet('po-recv-ven','')),next=code&&code!==cur?String(code):'';
+  supSet('po-recv-ven',next);
+  announce(next?'Trends show one vendor.':'Trends show all vendors in view.');
+}
+const poRecvTone=rate=>rate>=PO_RECV_TARGET?'teal':rate>=75?'amber':'red';
+const poRecvFill=rate=>`var(--dz-${rate>=PO_RECV_TARGET?'teal':rate>=75?'amber':'risk'})`;
+const poRecvAvg=v=>Number.isInteger(v)?fmtNum(v):v.toFixed(1);
+// The numbers for the receipts in view, or for one vendor of them (code).
+function poRecvStats(po,code=''){
+  const of=r=>!code||poVendor(r)===code;
+  const otd=code?otdStats(po.poOtd3MonthRows.filter(of)):po.poOtd3Mo;
+  const scored=otd.scored,on=otd.early.length+otd.onTime.length;
+  const late=scored.filter(r=>otdTiming(r).days>0),lateDays=late.map(r=>deliveryLateDays(r)||0);
+  const perf=po.poReschedulePerf;
+  const closed=perf.closed.filter(of),met=perf.met.filter(of);
+  const resOpen=perf.rescheduled.filter(r=>of(r)&&!isShipmentRow(r));
+  const receipts=po.poReceiptRows.filter(of);
+  const weeks=weekWindows(po.thisWeekStart,12,-1).reverse();
+  receipts.forEach(r=>{const d=parseDate(r.closeDate);if(!d)return;const w=weeks.find(w=>d>=w.s&&d<=w.e);if(w)w.rows.push(r);});
+  const week=po.poReceivedThisWeekRows.filter(of);
+  const avg=Math.round(weeks.reduce((t,w)=>t+supDocs(w.rows),0)/weeks.length*10)/10;
+  const avgExact=lateDays.length?lateDays.reduce((a,b)=>a+b,0)/lateDays.length:0;
+  return {windowRows:code?po.poOtd3MonthRows.filter(of):po.poOtd3MonthRows,scored,on,rate:scored.length?otd.rate:null,late,lateDays,avgExact,
+    avgLate:lateDays.length?Math.round(lateDays.reduce((a,b)=>a+b,0)/lateDays.length):null,worst:lateDays.length?Math.max(...lateDays):null,
+    closed,met,hit:closed.length?Math.round(met.length/closed.length*100):null,resOpen,
+    week,weekDocs:supDocs(week),weeks,avg,six:monthlyRateSeries(receipts,closed,met).slice(-6)};
+}
+function poReceivedView(po,filterRow,filterNote,vendorName){
+  const ordersN=n=>`${fmtNum(n)} ${n===1?'PO':'POs'}`;
+  const s=poRecvStats(po);
+  const T=PO_RECV_TARGET;
+  const gauge=(fill,color,mark)=>`<span class="por-gauge" aria-hidden="true"><span><i style="width:${Math.max(0,Math.min(100,fill)).toFixed(1)}%;background:${color}"></i></span><b style="left:${Math.max(0,Math.min(100,mark)).toFixed(1)}%"></b></span>`;
+  // Question 1: the band. Each number: its label, the value, the bar with its mark, "N of M", and what it is measured against.
+  const scale=Math.max(s.weekDocs,s.avg*2,1);
+  const open=s.resOpen.length;
+  const nums=[
+    {id:'ontime',dot:'var(--dz-teal)',label:'On Time · 3 Mo',v:s.rate===null?'—':`${fmtNum(s.rate)}%`,tone:s.rate===null?'':poRecvTone(s.rate),
+      bar:gauge(s.rate||0,poRecvFill(s.rate||0),T),
+      of:s.scored.length?`<b>${fmtNum(s.on)}</b> of ${fmtNum(s.scored.length)} lines early or on time`:'no receipts to score',
+      sub:`target ${T}%`,
+      tip:s.scored.length?ohlTip(`On time, last 3 months: ${fmtNum(s.rate)}%`,[`${fmtNum(s.on)} of ${fmtNum(s.scored.length)} receipts by the original date`,`${money(po.poOtdAmt)} received`,`Target ${T}%; the mark on the bar`]):'On time, last 3 months: no receipts to score.'},
+    {id:'week',dot:'var(--dz-indigo)',label:'Received This Week',v:fmtNum(s.weekDocs),unit:s.weekDocs===1?'PO':'POs',tone:'',
+      bar:gauge(s.weekDocs/scale*100,'var(--dz-indigo)',s.avg/scale*100),
+      of:`${esc(supLines(s.week.length))} · 12-week average <b>${poRecvAvg(s.avg)}</b> ${s.avg===1?'PO':'POs'}`,
+      sub:s.weekDocs?`${s.weekDocs>=s.avg?'at or above':'below'} the 12-week average`:'nothing received this week yet',
+      tip:ohlTip(`Received Sunday to ${po.today.toLocaleDateString('en-CA',{weekday:'long'})}`,[`${ordersN(s.weekDocs)} · ${supLines(s.week.length)}`,money(po.poReceivedWeekAmt),`12-week average ${poRecvAvg(s.avg)} ${s.avg===1?'PO':'POs'} a week; the mark on the bar`])},
+    {id:'hit',dot:'var(--dz-amber)',label:'Reschedule Hit · 12 Mo',v:s.hit===null?'—':`${fmtNum(s.hit)}%`,tone:s.hit===null?'':poRecvTone(s.hit),
+      bar:gauge(s.hit||0,poRecvFill(s.hit||0),T),
+      of:s.closed.length?`<b>${fmtNum(s.met.length)}</b> of ${fmtNum(s.closed.length)} met commit`:'no closed reschedules',
+      sub:`target ${T}%${open?` · ${fmtNum(open)} rescheduled ${open===1?'line':'lines'} still open`:''}`,
+      tip:s.closed.length?ohlTip(`Reschedule hit, 12 months: ${fmtNum(s.hit)}%`,[`${fmtNum(s.met.length)} of ${fmtNum(s.closed.length)} rescheduled receipts on time`,`${money(po.poReschedulePerfAmt)} rescheduled`,open?`${fmtNum(open)} rescheduled ${open===1?'line':'lines'} still open`:''])
+        :ohlTip('Reschedule hit: no rescheduled receipts in 12 months.',[open?`${fmtNum(open)} rescheduled ${open===1?'line':'lines'} still open`:''])}];
+  const numHtml=x=>`<div class="por-num" role="group" aria-label="${esc(x.label)}" data-por="${x.id}"${tipAttr(x.tip)}><span class="por-num-l"><i class="sup-dot" style="background:${x.dot}" aria-hidden="true"></i>${esc(x.label)}</span><span class="por-num-v${x.tone?` por-${x.tone}`:''}">${x.v}${x.unit?`<small>${x.unit}</small>`:''}</span>${x.bar}<span class="por-num-of">${x.of}</span><span class="por-num-s">${esc(x.sub)}</span></div>`;
+  const band=`<section class="dz-card por-bandcard dz-fade" aria-label="How receiving went"><div class="por-band">${nums.map(numHtml).join('')}</div></section>`;
+
+  // Question 2: the scorecard, one row per vendor with receipts in the last 3 months.
+  const by=new Map();
+  // Every receipt in the window counts in Received and its share; only those with an original date are scored.
+  s.windowRows.forEach(r=>{const k=poVendor(r);if(!by.has(k))by.set(k,[]);by.get(k).push(r);});
+  const all=s.windowRows.length;
+  const list=[...by].map(([code,all3])=>{
+    const rows=all3.filter(otdTiming);
+    const on=rows.filter(r=>otdTiming(r).days<=0).length,late=rows.filter(r=>otdTiming(r).days>0),days=late.map(r=>deliveryLateDays(r)||0);
+    const avgExact=days.length?days.reduce((a,b)=>a+b,0)/days.length:0;
+    const hc=s.closed.filter(r=>poVendor(r)===code),hm=s.met.filter(r=>poVendor(r)===code);
+    return {code,name:vendorName(all3[0]),n:all3.length,scored:rows.length,on,rate:rows.length?Math.round(on/rows.length*100):-1,late:late.length,
+      avg:Math.round(avgExact),avgExact,worst:days.length?Math.max(...days):0,
+      amt:rowShippedAmount(all3),lateAmt:rowShippedAmount(late),hc:hc.length,hm:hm.length,hit:hc.length?Math.round(hm.length/hc.length*100):-1,
+      resOpen:s.resOpen.filter(r=>poVendor(r)===code).length};
+  });
+  const sort=poRecvSortState(),sign=sort.dir==='asc'?1:-1;
+  list.sort((a,b)=>(sort.col==='name'?a.name.localeCompare(b.name,undefined,{sensitivity:'base'}):a[sort.col]-b[sort.col])*sign||b.late-a.late||a.name.localeCompare(b.name));
+  let pick=String(supGet('po-recv-ven',''));
+  const picked=list.find(v=>v.code===pick);
+  if(!picked)pick='';
+  const pg=dzPageOf('po-recv-vendors',list,JSON.stringify([poWarehouseFilter,poVendorFilter,sort]),10);
+  const onCell=(rate,on,n)=>rate===null||rate<0?'<span class="por-soft">no original dates</span>':`<div class="por-oncell">${gauge(rate,poRecvFill(rate),T)}<span><b class="por-${poRecvTone(rate)}">${fmtNum(rate)}%</b> <span class="por-soft">${fmtNum(on)} of ${fmtNum(n)}</span></span></div>`;
+  const hitCell=(hc,hm,hit,openN)=>`${hc?`<b class="por-${poRecvTone(hit)}">${fmtNum(hit)}%</b><small>${fmtNum(hm)} of ${fmtNum(hc)} met</small>`:'—'}${openN?`<small>${fmtNum(openN)} ${openN===1?'line':'lines'} still open</small>`:hc?'':'<small>no reschedules</small>'}`;
+  const days=n=>`${fmtNum(n)} ${n===1?'day':'days'}`;
+  const row=v=>{
+    const on=v.code===pick;
+    const tip=ohlTip(v.name,[`${fmtNum(v.late)} of ${supLines(v.scored)} received late in 3 months`,v.late?`Average ${v.avgExact.toFixed(1)} days late, worst ${fmtNum(v.worst)}`:'',v.scored<v.n?`${supLines(v.n-v.scored)} with no original date (not scored)`:'',`${money(v.amt)} received, ${money(v.lateAmt)} of it late`,v.hc?`Reschedule hit ${fmtNum(v.hit)}%, ${fmtNum(v.hm)} of ${fmtNum(v.hc)} met`:''],on?'Click to show all vendors in the trends.':'Click to see its trends.');
+    return `<tr class="sup-row${on?' sel':''}"><td><button type="button" class="por-ven" data-focus-key="porecv-ven-${esc(v.code)}" aria-pressed="${on}" onclick="poRecvVendor(${esc(dzJs(v.code))})"${tipAttr(tip)}>${esc(v.name)}</button></td>
+      <td class="num sup-strong">${fmtNum(v.n)}<small>${fmtNum(Math.round(v.n/all*100))}% of all</small></td>
+      <td>${onCell(v.rate,v.on,v.scored)}</td>
+      <td class="num sup-strong${v.late?' por-red':''}">${fmtNum(v.late)}<small>of ${fmtNum(v.scored)}</small></td>
+      <td class="num">${v.late?days(v.avg):'—'}</td><td class="num">${v.late?days(v.worst):'—'}</td>
+      <td class="num">${hitCell(v.hc,v.hm,v.hit,v.resOpen)}</td></tr>`;
+  };
+  const foot=`<tr class="por-all"><th scope="row"${tipAttr('Every vendor in view: the same figures as the band.')}>All Vendors</th><td class="num">${fmtNum(all)}</td><td>${s.scored.length?onCell(s.rate,s.on,s.scored.length):'—'}</td>
+    <td class="num${s.late.length?' por-red':''}">${fmtNum(s.late.length)}</td><td class="num"${s.avgLate===null?'':tipAttr(`Average ${s.avgExact.toFixed(1)} days late over ${supLines(s.late.length)}.`)}>${s.avgLate===null?'—':days(s.avgLate)}</td><td class="num">${s.worst===null?'—':days(s.worst)}</td>
+    <td class="num"${tipAttr('The board\'s Reschedule Hit for the page filters, the same as the band. It counts every vendor with a rescheduled receipt in 12 months, so the vendor rows may not add up to it.')}>${hitCell(s.closed.length,s.met.length,s.hit,open)}</td></tr>`;
+  const heads=PO_RECV_COLS.map(([id,l,cls,,tp])=>{
+    const on=sort.col===id;
+    return `<th${cls?` class="${cls}"`:''} scope="col"${on?` aria-sort="${sort.dir==='asc'?'ascending':'descending'}"`:''}${tipAttr(`${tp} Click to sort.`)}><button type="button" class="th-sort por-th" data-focus-key="porecv-sort-${id}" onclick="poRecvSort('${id}')">${esc(l)}<span class="sort-arrow" aria-hidden="true">${on?(sort.dir==='asc'?'↑':'↓'):'↕'}</span></button></th>`;
+  }).join('');
+  const table=list.length?`<div class="sup-scroll por-scroll" tabindex="0" role="region" aria-label="Vendor scorecard"><table class="sup-tbl por-tbl"><colgroup><col class="c-ven"><col class="c-n"><col class="c-on"><col class="c-n"><col class="c-d"><col class="c-d"><col class="c-hit"></colgroup>
+    <thead><tr>${heads}</tr></thead><tbody>${pg.rows.map(row).join('')}</tbody><tfoot>${foot}</tfoot></table></div>${dzPageFoot('po-recv-vendors',pg,'Vendor scorecard','vendors')}`
+    :`<p class="sup-empty">${po.poReceiptRows.length?'No receipts in the last 3 months for this view.':'Needs receipt close-date data.'}</p>`;
+
+  // The trends: all vendors in view, or the vendor picked in the table.
+  const f=picked?poRecvStats(po,pick):s;
+  const who=picked?`<button type="button" class="por-chip" data-focus-key="porecv-clear" onclick="poRecvVendor('')" aria-label="${esc(`Showing ${picked.name}. Show all vendors`)}"${tipAttr('Show all vendors in the trends.')}>${esc(picked.name)}<span aria-hidden="true">×</span></button>`:'<span class="dz-meta">all vendors in view</span>';
+  const monthHero=`<div class="sup-bigrow"><span class="dz-big sm${f.rate===null?'':` por-${poRecvTone(f.rate)}`}">${f.rate===null?'—':`${fmtNum(f.rate)}%`}</span><span class="dz-sub">${f.scored.length?`of ${fmtNum(f.scored.length)} PO ${f.scored.length===1?'line':'lines'} received in the last 3 months`:'no receipts in the last 3 months'}</span></div>`;
+  const monthChart=supCols(f.six.map((m,i)=>({label:m.label,value:m.otd,text:m.otd===null?'—':`${m.otd}%`,color:i===f.six.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:m.otd===null?`${m.label}: no receipts scored`:`${m.label}: ${m.otd}% received on time`})),{max:100,height:96,target:T});
+  const weekHero=`<div class="sup-bigrow"><span class="dz-big sm">${fmtNum(f.weekDocs)}</span><span class="dz-sub">${f.week.length?`${supLines(f.week.length)} received this week`:'nothing received this week yet'} · 12-week average ${poRecvAvg(f.avg)} ${f.avg===1?'PO':'POs'}</span></div>`;
+  const wmax=Math.max(1,...f.weeks.map(w=>supDocs(w.rows)));
+  const weekChart=supCols(f.weeks.map((w,i)=>({label:shortDay(w.s),value:supDocs(w.rows),text:fmtNum(supDocs(w.rows)),color:i===f.weeks.length-1?'var(--dz-indigo)':'var(--dz-ink-6)',tip:`Week of ${shortDay(w.s)}: ${ordersN(supDocs(w.rows))}, ${supLines(w.rows.length)}, ${money(rowShippedAmount(w.rows))} received`})),{max:wmax,height:96,target:f.avg?f.avg:null})
+    .replace('class="sup-target"','class="sup-target por-avg"');
+  const leg=`<div class="por-leg" aria-hidden="true">${f.avg?`<span><i></i>12-week average, ${poRecvAvg(f.avg)} ${f.avg===1?'PO':'POs'} a week</span>`:''}<span class="por-leg-u">Each column: POs received that week</span></div>`;
+  const recvTip=sectionTipText('po-receiving');
+  const trends=`<div class="por-sec"><div class="por-sec-head"><h3 class="por-h3"${tipAttr('Six months of on time against the 90% target, and twelve weeks of receipts against their average, for all vendors in view or the vendor picked in the table.')}>Trends</h3>${who}</div>
+    <div class="por-side"><div class="por-trend"><div class="por-sec-head"><h4 class="por-h4"${tipAttr(recvTip)}>Received on time</h4><span class="dz-meta">target ${T}%</span></div>${monthHero}${monthChart}</div>
+    <div class="por-trend"><div class="por-sec-head"><h4 class="por-h4"${tipAttr(recvTip)}>Received by week</h4><span class="dz-meta">${ordersN(f.weekDocs)} this week</span></div>${weekHero}${weekChart}${leg}</div></div></div>`;
+  const card=dzCard({title:'Vendor Scorecard',cls:'por-card dz-fade',meta:`lines received in the last 3 months · target <b>${T}%</b>`,tip:'Every vendor with receipts in the last 3 months: lines received, on time against the 90% target, late lines, average and worst days late, and Reschedule Hit over 12 months.',
+    body:`${table}${list.length?'<p class="po-cap">Late means received after the original date. Reschedule Hit counts lines received in the last 12 months that had a reschedule date. Click a vendor to see its own trends below; click a column title to sort.</p>':''}${trends}`});
+  return `<div class="sup-page po-page po-recv">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+    ${dzQ(1,'How Is Receiving Going?','solo')}
+    ${band}
+    ${dzQ(2,'Which Vendors Deliver on Time?','solo')}
+    ${card}
     ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
 }
 
