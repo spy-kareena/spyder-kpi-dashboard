@@ -447,8 +447,8 @@ test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (
   page.run("setTab('settings')");
   let html = page.els['results-screen'].innerHTML;
   const card = () => { const h = page.els['results-screen'].innerHTML; const at = h.indexOf('id="stg-card-source"'); return h.slice(at, h.indexOf('id="stg-card-', at + 1)); };
-  // 2v8: the first card of the Data category (no Data Check card here), the first category.
-  assert.match(html, /<section class="pg-group stg-cat" id="stg-cat-data"[^>]*>[\s\S]*?<div class="stg-cgrid"><section class="dz-card stg-card dz-fade" id="stg-card-source"/);
+  // 2v9: the first tile of the bento grid (no Data Check card here).
+  assert.match(html, /<div class="stg-bento"><section class="dz-card stg-card dz-fade" id="stg-card-source"/);
   assert.match(card(), /aria-label="Data source"><button type="button" data-focus-key="stg-ds-live" class="on" aria-pressed="true"[^>]*>Live SAP<\/button><button type="button" data-focus-key="stg-ds-import" aria-pressed="false"[^>]*>Import files<\/button>/);
   assert.match(card(), /<svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span>Connected · Updated [^<]+<\/span>/);
   assert.match(card(), />Refresh now<\/button>/);

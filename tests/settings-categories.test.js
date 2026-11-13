@@ -1,5 +1,5 @@
-// 2v8 Settings: the page is five named categories under a category bar; stgShowCard marks the card's category.
-// Run with `node tests/settings-categories.test.js`. Fixtures are synthetic (no SAP data).
+// 2v9 Settings: one bento grid of compact tiles (no category bar or headings, no where-it-is-kept lines, short help);
+// stgShowCard opens Settings at a card. Run with `node tests/settings-categories.test.js`. Fixtures are synthetic.
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
@@ -7,13 +7,10 @@ const { test, run } = createSuite();
 
 const IMPORT = { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) };
 const html = (page) => page.els['results-screen'].innerHTML;
-// The categories in page order, each with the ids of the cards inside it.
-function categories(h) {
-  return [...h.matchAll(/<section class="pg-group stg-cat" id="stg-cat-(\w+)" aria-labelledby="pg-stg-\1" data-group="stg-\1" data-cat="\1"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-stg-\1" tabindex="-1">([^<]+)<\/h2><\/div><div class="stg-cgrid">([\s\S]*?)(?=<section class="pg-group stg-cat"|<\/div><div class="stg-end")/g)]
-    .map((m) => [m[1], m[2], [...m[3].matchAll(/<section class="dz-card stg-card[^"]*" id="stg-card-(\w+)"/g)].map((c) => c[1])]);
-}
-const bar = (h) => (h.match(/<nav class="stg-nav print-hide" aria-label="Settings categories">([\s\S]*?)<\/nav>/) || [])[1] || '';
-const marked = (h) => [...bar(h).matchAll(/data-cat="(\w+)"[^>]*aria-current="true"/g)].map((m) => m[1]);
+// The tiles in page order (the ids after stg-card-), all inside the one bento grid.
+const tiles = (h) => [...h.matchAll(/<section class="dz-card stg-card[^"]*" id="stg-card-(\w+)"/g)].map((c) => c[1]);
+const cards = (h) => h.split(/(?=<section class="dz-card stg-card)/).slice(1);
+const words = (x) => x.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 async function loaded(rows) {
   const page = loadPage({ storage: { ...IMPORT } });
@@ -23,74 +20,93 @@ async function loaded(rows) {
   return page;
 }
 
-test('Settings is five categories in order, every card in its own one; the bar links to each, Data marked first', async () => {
+test('Settings is one bento grid: every tile in reading order, no category bar or headings, Data Check first', async () => {
   const page = await loaded([sapRow({ DocumentNumber: '777', DueDate: '07/16/0202', LineDueDate: '07/16/0202', HeaderDueDate: '07/16/0202' })]);
   page.run("setTab('settings')");
   const h = html(page);
-  assert.deepEqual(categories(h), [
-    ['data', 'Data', ['dc', 'source', 'data']],
-    ['dash', 'Dashboard', ['oh', 'pages', 'hiddenpages']],
-    ['notes', 'Notes &amp; People', ['profile', 'notes']],
-    ['ai', 'AI', ['ai', 'connect']],
-    ['about', 'About', ['about']],
-  ]);
-  // The bar: one link per category, in the same order, keyboard reachable, with a focus key; Data is current.
-  const links = [...bar(h).matchAll(/<a class="stg-nav-a(?: on)?" href="#stg-cat-(\w+)" data-cat="\1" data-focus-key="stg-nav-\1"(?: aria-current="true")? onclick="return stgNavGo\('\1',event\)">([^<]+)/g)].map((m) => [m[1], m[2]]);
-  assert.deepEqual(links, [['data', 'Data'], ['dash', 'Dashboard'], ['notes', 'Notes &amp; People'], ['ai', 'AI'], ['about', 'About']]);
-  assert.deepEqual(marked(h), ['data']);
-  // The gear's red Data check dot is on the Data link too (with words for screen readers); Data Check opens Data.
+  assert.match(h, /<div class="stg-bento"><section class="dz-card stg-card dz-fade" id="stg-card-dc"/);
+  assert.deepEqual(tiles(h), ['dc', 'source', 'data', 'oh', 'pages', 'hiddenpages', 'profile', 'notes', 'ai', 'connect', 'about']);
+  assert.doesNotMatch(h, /stg-nav|stg-cat|stg-cgrid|pg-group|Settings categories|stg-end/);
+  // The gear's red Data check dot is on the Data Check tile's icon.
   assert.equal(page.run('stgDataCheckLevel()'), 'red');
-  assert.match(bar(h), /data-cat="data"[^>]*>Data<span class="hdr-dot red" aria-hidden="true"><\/span><span class="sr-only">, data check needs a look<\/span><\/a>/);
+  assert.match(cards(h)[0], /<span class="dz-ico stg-ico-dot"[^>]*>[\s\S]*?<span class="hdr-dot red"><\/span><\/span>Data Check<\/h2>/);
   // Reset to defaults sits in About, once; the old two columns and the foot link are gone.
   assert.equal(h.split('data-focus-key="stg-reset-all"').length - 1, 1);
   assert.match(h, /id="stg-card-about"[\s\S]*data-focus-key="stg-reset-all"/);
   assert.doesNotMatch(h, /stg-col|stg-grid|stg-top|stg-foot/);
+  // The bar's code is gone too (renderResults no longer calls it).
+  for (const fn of ['stgNavWatch', 'stgNavGo', 'stgNavSet', 'stgCatOf', 'stgNavHtml']) assert.equal(page.run(`typeof ${fn}`), 'undefined', fn);
   assert.deepEqual(page.errors, []);
 });
 
-test('stgShowCard opens Settings with the card\'s category marked: Connect in AI, your name in Notes & People, Data Check in Data', async () => {
+test('no where-it-is-kept lines, and help cut to one short line where a control needs it; the rest is in title tips', async () => {
   const page = await loaded([sapRow()]);
-  assert.deepEqual([...['source', 'dc', 'data', 'oh', 'pages', 'hiddenpages', 'profile', 'notes', 'ai', 'connect', 'about']].map((c) => page.run(`stgCatOf('${c}')`)),
-    ['data', 'data', 'data', 'dash', 'dash', 'dash', 'notes', 'notes', 'ai', 'ai', 'about']);
+  page.run("setTab('settings')");
+  const h = html(page);
+  assert.doesNotMatch(words(h), /Saved in this browser|this browser|everyone who signs in|Export and Import move them|Read only/);
+  assert.doesNotMatch(h, /class="page-meta"[^>]*>Saved/);
+  // At most one help line a tile, ten words or fewer; no "Default …" restating.
+  for (const c of cards(h)) {
+    const helps = [...c.matchAll(/<span class="stg-help">([^<]*)<\/span>/g)].map((m) => m[1]);
+    assert.ok(helps.length <= 1, `${c.slice(0, 80)}: ${helps}`);
+    for (const t of helps) assert.ok(t.split(' ').length <= 10 && !/Default/.test(t), t);
+  }
+  assert.match(h, /<label class="stg-label" for="stg-target">At-risk target<\/label><span class="stg-help">Amber up to twice it, red above\.<\/span>/);
+  // What left the tiles is in their title tips ("Line\n• fact").
+  assert.match(h, /id="stg-h-oh" tabindex="-1" data-tip="Sales Order Health\n• At-risk target: share of open value at risk\n• Tolerance: days late still on track\n• Look-ahead: lines due within it count\n• Defaults: 5%, 2 days, 1 month, 10, Leading">/);
+  assert.match(h, /id="stg-h-source" tabindex="-1" data-tip="Data Source\n• Live SAP: read every 5 minutes/);
+  // Data Source: the switch alone (the tile title names it), still named for screen readers.
+  assert.match(h, /<div class="stg-solo"><[^>]*aria-label="Data source"/);
+  // Import mode: the Data tile leaves Add / New to the Data Source tile (no duplicate buttons).
+  assert.doesNotMatch(h, /data-focus-key="stg-add-files"|data-focus-key="stg-new-export"/);
+  assert.match(h, /data-focus-key="stg-ds-upload"[\s\S]*data-focus-key="stg-ds-add"[\s\S]*data-focus-key="stg-ds-new"/);
+  // Every control is still there.
+  for (const k of ['stg-target', 'stg-tolerance', 'stg-horizon', 'stg-linesShown-10', 'stg-openingView-leading', 'stg-theme-dark', 'stg-linesStart-open', 'stg-importReport-always', 'stg-page-warehouses', 'stg-name', 'stg-notes-po', 'stg-export', 'stg-import', 'stg-reset-all', 'stg-connect-setup']) assert.match(h, new RegExp(`data-focus-key="${k}"`), k);
+  assert.match(h, /role="radiogroup" aria-label="Background"/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('stgShowCard opens Settings at the card: Connect with its setup open, your name, Data Check', async () => {
+  const page = await loaded([sapRow()]);
   page.run("setTab('weekly')");
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
-  assert.deepEqual(marked(html(page)), ['ai']);
-  assert.match(html(page), /id="stg-cat-ai"[\s\S]*?id="stg-card-connect"[\s\S]*?<details class="stg-setup" open/);
+  assert.match(html(page), /id="stg-card-connect"[\s\S]*?<details class="stg-setup" open/);
   page.run("setTab('weekly')");
   page.run("stgShowCard('profile','stg-name')");
-  assert.deepEqual(marked(html(page)), ['notes']);
-  assert.match(html(page), /id="stg-cat-notes"[\s\S]*?id="stg-card-profile"[\s\S]*?id="stg-name"/);
+  assert.equal(page.run('activeTab'), 'settings');
+  assert.match(html(page), /id="stg-card-profile"[\s\S]*?id="stg-name"/);
   page.run("stgShowCard('dc')");
-  assert.deepEqual(marked(html(page)), ['data']);
-  // A click in the bar marks that category at once (no redraw needed).
-  page.run("stgNavGo('about')");
-  assert.equal(page.run('stgNavCat'), 'about');
   page.run('renderResults()');
-  assert.deepEqual(marked(html(page)), ['about']);
   assert.deepEqual(page.errors, []);
 });
 
-test('the category bar keeps the design language: a sticky pill row on colour tokens, scrolls sideways on phones, off paper', () => {
-  const css = HTML.slice(HTML.indexOf('/* 2v8:settings */'), HTML.indexOf('/* 2v8:end settings */'));
-  assert.ok(css.length > 0 && HTML.indexOf('/* 2v8:end settings */') < HTML.indexOf('/* 2v7:motion */'));
-  assert.match(css, /\.stg-nav\{position:sticky;top:12px;/);
-  assert.match(css, /\.stg-nav-in\{[^}]*background:var\(--dz-surface\);[^}]*overflow-x:auto;scrollbar-width:none;/);
-  assert.match(css, /\.stg-nav-a\.on\{background:var\(--dz-seg-on-bg\);color:var\(--dz-seg-on-fg\)\}/);
-  assert.match(css, /\.stg-cgrid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css, /@media \(max-width:900px\)\{\.stg-cgrid,#stg-card-notes \.stg-list\{grid-template-columns:minmax\(0,1fr\)\}\}/);
-  assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{\.stg-nav-a\{transition:none\}\}/);
-  assert.match(css, /@media \(forced-colors:active\)\{\.stg-nav-a/);
-  // IntersectionObserver marks the category in view, with a scroll listener where there is none.
-  assert.match(HTML, /function stgNavWatch\(\)\{[\s\S]*?typeof IntersectionObserver==='function'[\s\S]*?addEventListener\('scroll',stgNavScroll,\{passive:true\}\)/);
+test('the bento keeps the design language: dense grid, 4 / 3 / 2 / 1 columns, spans, fit rows, off paper', () => {
+  const css = HTML.slice(HTML.indexOf('/* 2v9:settings-bento */'), HTML.indexOf('/* 2v9:end settings-bento */'));
+  assert.ok(css.length > 0 && HTML.indexOf('/* 2v9:end settings-bento */') < HTML.indexOf('/* 2v9:pager */'));
+  assert.match(css, /\.stg-bento\{[^}]*display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\);grid-auto-flow:row dense;/);
+  assert.match(css, /\.stg-bento>:is\(#stg-card-dc,#stg-card-data,#stg-card-oh,#stg-card-pages,#stg-card-hiddenpages,#stg-card-notes,#stg-card-about\)\{grid-column:span 2\}/);
+  assert.match(css, /@media \(max-width:1279px\)\{\s*\.stg-bento\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)\}/);
+  assert.match(css, /@media \(max-width:979px\)\{\.stg-bento\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/);
+  assert.match(css, /@media \(max-width:639px\)\{\s*\.stg-bento\{--stg-gap:12px;grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(css, /\.stg-bento\.fit\{grid-auto-rows:2px;row-gap:0;/);
+  assert.match(css, /container-type:inline-size/);
+  assert.match(css, /@media print\{[\s\S]*grid-row-end:auto!important/);
+  assert.doesNotMatch(css, /#[0-9a-f]{3,6}\b|rgba?\(/i, 'no colours of its own');
+  // The old bar and category grid are gone from the 2v8 block.
+  const old = HTML.slice(HTML.indexOf('/* 2v8:settings */'), HTML.indexOf('/* 2v8:end settings */'));
+  assert.doesNotMatch(old, /stg-nav|stg-cgrid|stg-cat/);
+  // stgBentoFit: each tile spans the 2px rows it needs, measured by a ResizeObserver; called after every redraw.
+  assert.match(HTML, /function stgBentoFit\(\)\{[\s\S]*?typeof ResizeObserver==='function'[\s\S]*?gridRowEnd=`span \$\{/);
+  assert.match(HTML, /dzFitTables\(el\);\n  stgBentoFit\(\);/);
 });
 
-test('a shared snapshot: settings read only, the category bar still there', async () => {
+test('a shared snapshot: settings read only, the bento still there', async () => {
   const page = await loaded([sapRow()]);
   page.run("isSnapshotView=true;setTab('settings')");
   const h = html(page);
   assert.match(h, /<p class="stg-ro rise">Shared snapshot: settings are read only\./);
-  assert.equal(categories(h).length, 5);
+  assert.equal(tiles(h).length, 10);
   assert.match(h, /data-focus-key="stg-reset-all" onclick="stgResetAll\(\)" disabled/);
   assert.doesNotMatch(h, /data-focus-key="stg-export"/);
   assert.match(h, /id="stg-target"[^>]*disabled/);
@@ -123,17 +139,15 @@ test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden
   // setTab to a hidden page opens Order Health.
   page.run("setTab('monthly');setTab('warehouses')");
   assert.equal(page.run('activeTab'), 'weekly');
-  // The card in Dashboard: the help line, Warehouses first and off, Order Health and Settings not offered.
+  // The card: the help in its title tip, Warehouses first and off, Order Health and Settings not offered.
   page.run("setTab('settings')");
   const c = card(html(page));
-  assert.match(c, /<h2 class="dz-title sm stg-title" id="stg-h-hiddenpages" tabindex="-1">[\s\S]*Hidden Pages<\/h2>/);
-  assert.match(c, /Hidden pages leave the top menu\. Turn one on to bring it back\./);
+  assert.match(c, /<h2 class="dz-title sm stg-title" id="stg-h-hiddenpages" tabindex="-1" data-tip="Hidden Pages\n• A hidden page leaves the top menu and the Supply menu\n• Turn one on to bring it back">[\s\S]*Hidden Pages<\/h2>/);
+  assert.doesNotMatch(c, /stg-help|stg-now/);
   const rows = [...c.matchAll(/<button type="button" role="switch" class="stg-switch" id="stg-page-(\w+)" data-focus-key="stg-page-\1" aria-checked="(true|false)" aria-label="Show ([^"]+)" onclick="stgTogglePage\(&#39;\1&#39;\)"/g)].map((m) => [m[1], m[2], m[3]]);
   assert.deepEqual(rows[0], ['warehouses', 'false', 'Warehouses']);
   assert.ok(rows.length >= 7 && rows.slice(1).every((r) => r[1] === 'true'), JSON.stringify(rows));
   assert.ok(!rows.some((r) => r[0] === 'weekly' || r[0] === 'settings' || r[0] === 'metrics'));
-  assert.match(c, /In the Supply menu/);
-  assert.equal(page.run("stgCatOf('hiddenpages')"), 'dash');
   // Turn Warehouses on: it is back in the menu and opens; hide Monthly and Purchase Orders: both leave their menus.
   page.run("stgTogglePage('warehouses')");
   assert.deepEqual(page.run("stgValue('hiddenPages')"), []);

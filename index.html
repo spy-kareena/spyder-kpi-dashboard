@@ -3882,6 +3882,82 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v9:settings-bento */
+/* Settings as a bento menu (owner, 2v9): every card is a compact tile in one dense grid, no category bar or headings.
+   Small settings take one column; lists and editors two (Data, Sales Order Health, Pages & Display, Hidden Pages,
+   Notes, About, Data Check). 4 columns from 1280px, 3 from 980px, 2 from 640px, 1 on phones. With .fit (stgBentoFit)
+   each tile spans the 2px rows its height needs, so tiles pack under each other with no gaps. Inside a tile a row's
+   control drops under its label when the tile is narrow (a container query on the card). */
+.stg-bento{--stg-gap:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row dense;gap:var(--stg-gap);align-items:start}
+.stg-bento.fit{grid-auto-rows:2px;row-gap:0;margin-bottom:calc(-1 * var(--stg-gap))}
+.stg-bento.fit>.stg-card{margin-bottom:var(--stg-gap)}
+.stg-bento>.stg-card{grid-column:span 1;padding:16px 18px 14px;border-radius:20px;container-type:inline-size}
+.stg-bento>:is(#stg-card-dc,#stg-card-data,#stg-card-oh,#stg-card-pages,#stg-card-hiddenpages,#stg-card-notes,#stg-card-about){grid-column:span 2}
+.stg-bento>#stg-card-connect:has(.stg-setup[open]){grid-column:span 2}
+.stg-bento .dz-card-head{align-items:center;min-height:24px}
+.stg-bento .dz-title.stg-title{gap:8px;font-size:15px}
+.stg-bento .stg-title .dz-ico{width:20px;height:20px;border-radius:6px}
+.stg-bento .dz-card-head .dz-meta{font-size:12px}
+.stg-bento .stg-rows{margin-top:6px}
+.stg-bento .stg-row{flex-wrap:wrap;gap:6px 14px;padding:7px 0;min-height:46px}
+.stg-bento .stg-row:first-child{padding-top:2px}
+.stg-bento .stg-row-top{align-items:center}
+.stg-bento .stg-l{flex:1 1 120px;gap:1px}
+.stg-bento .stg-ctl{flex:0 1 auto}
+.stg-bento .stg-label{font-size:13.5px}
+.stg-bento .stg-help{font-size:12px;line-height:1.35}
+.stg-bento .stg-now{margin-top:8px;font-size:12.5px;line-height:1.45}
+.stg-bento .stg-rows>.stg-now:first-child,.stg-bento .stg-solo+.stg-now{margin-top:6px}
+.stg-bento .stg-solo{display:flex}
+.stg-bento .stg-actions{gap:6px;padding-top:10px}
+.stg-bento .stg-select{min-width:0;max-width:220px}
+.stg-bento .stg-kv{grid-template-columns:84px minmax(0,1fr);gap:10px;padding:6px 0;font-size:13px}
+.stg-bento .stg-kv:first-child{padding-top:0}
+.stg-bento .stg-kv dt{font-size:12.5px}
+/* Lists: the comment list in two columns, Hidden Pages in two or three, both short */
+.stg-bento #stg-card-notes .stg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:232px;gap:5px}
+.stg-bento #stg-card-notes .stg-list>.stg-empty{grid-column:1/-1}
+.stg-bento .stg-item{min-height:32px;padding:2px 4px 2px 12px;border-radius:10px;font-size:13px}
+.stg-bento .stg-x{width:26px;height:26px}
+.stg-bento .stg-add{margin-top:10px}
+.stg-bento .stg-hp-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.stg-bento .stg-hp{min-height:0;padding:6px 0}
+.stg-bento .stg-hp-list>.stg-row:nth-child(2){border-top:0;padding-top:2px}
+.stg-bento .stg-dc{grid-template-columns:minmax(0,1fr);gap:12px}
+.stg-bento .stg-setup{margin-top:10px}
+.stg-bento .stg-setup-body{gap:12px;margin-top:12px}
+.stg-bento .stg-privacy{margin-top:0}
+@container (min-width:620px){
+  .stg-bento .stg-hp-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stg-bento .stg-hp-list>.stg-row:nth-child(3){border-top:0;padding-top:2px}
+  .stg-bento .stg-dc{grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:12px 28px}
+}
+@container (max-width:340px){
+  .stg-bento .stg-row:has(.dz-seg,.stg-bgs,.stg-select)>.stg-ctl{flex:1 1 100%;justify-content:flex-start}
+  .stg-bento .stg-select{max-width:none;flex:1}
+  .stg-bento .stg-bgs{justify-content:flex-start}
+}
+@container (max-width:460px){
+  .stg-bento #stg-card-notes .stg-list,.stg-bento .stg-hp-list{grid-template-columns:minmax(0,1fr)}
+  .stg-bento .stg-hp-list>.stg-row:nth-child(2){border-top:1px solid var(--dz-line-6);padding-top:6px}
+}
+/* 3 columns: Hidden Pages and About take one, so the third column fills */
+@media (max-width:1279px){
+  .stg-bento{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stg-bento>:is(#stg-card-hiddenpages,#stg-card-about){grid-column:span 1}
+}
+@media (max-width:979px){.stg-bento>:is(#stg-card-hiddenpages,#stg-card-about){grid-column:span 2}}
+@media (max-width:979px){.stg-bento{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:639px){
+  .stg-bento{--stg-gap:12px;grid-template-columns:minmax(0,1fr)}
+  .stg-bento>.stg-card,.stg-bento>:is(#stg-card-dc,#stg-card-data,#stg-card-oh,#stg-card-pages,#stg-card-hiddenpages,#stg-card-notes,#stg-card-about),.stg-bento>#stg-card-connect:has(.stg-setup[open]){grid-column:auto}
+  .stg-bento>.stg-card{padding:14px 16px 12px;border-radius:18px}
+}
+@media print{
+  .stg-bento,.stg-bento.fit{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto;row-gap:var(--stg-gap);margin-bottom:0}
+  .stg-bento>.stg-card{grid-row-end:auto!important;margin-bottom:0!important;container-type:normal}
+}
+/* 2v9:end settings-bento */
 /* 2v9:monthly-move */
 /* Monthly's sections on Sales Order Health (2v9): the older tables sit flat in glass cards (.misc-flat); the card's meta
    holds a short note and, where there is one, the Month pick. Lagging: the Shipments section; Leading: Open orders by
@@ -3983,13 +4059,9 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .po-pair:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
 @media (max-width:980px){.sup-more-views.po-fill>.po-pair{flex-basis:calc((100% - 20px)/3*2 + 10px)}}
 @media (max-width:640px){.sup-more-views.po-fill>.po-pair{flex-basis:100%}}
-/* Settings, Hidden Pages (2v6.9): across both columns of Dashboard, its rows in three columns (two, then one). */
-#stg-card-hiddenpages{grid-column:1/-1}
-.stg-hp-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:28px;margin-top:6px}
+/* Settings, Hidden Pages (2v6.9): its rows in columns (the count: 2v9:settings-bento). */
+.stg-hp-list{display:grid;grid-template-columns:minmax(0,1fr);column-gap:24px}
 .stg-hp.off .stg-label{color:var(--dz-ink-3)}
-.stg-hp-list>.stg-row:first-child{border-top:1px solid var(--dz-line-6);padding-top:12px}
-@media (max-width:1180px){.stg-hp-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:640px){.stg-hp-list{grid-template-columns:minmax(0,1fr)}}
 /* Order Health, Lagging (2v6.9): five tiles a card (Fill rate left): three across, then two across the width; phones two
    a row with the last across both. */
 .ohg-tiles{grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -4159,47 +4231,14 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
 @media (prefers-reduced-motion:reduce){button.kc-btn{transition:none}}
 /* 2v9:end pages */
 /* 2v8:settings */
-/* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
-   look, links instead of buttons; it sticks to the top while the page scrolls and scrolls sideways on phones. Cards
-   sit two to a row (one below 900px); Data Check, Profile, Notes and About take the whole row. */
-.stg-nav{position:sticky;top:12px;z-index:30;display:flex;margin:2px 0 26px;pointer-events:none}
-.stg-nav-in{display:flex;gap:2px;max-width:100%;padding:4px;border-radius:999px;background:var(--dz-surface);border:1px solid var(--dz-line-8);box-shadow:var(--dz-sh-card);overflow-x:auto;scrollbar-width:none;pointer-events:auto;font-size:13.5px;font-weight:500}
-.stg-nav-in::-webkit-scrollbar{display:none}
-.stg-nav-a{position:relative;flex:none;display:inline-flex;align-items:center;padding:7px 18px;border-radius:999px;color:var(--dz-seg-off-fg);text-decoration:none;white-space:nowrap;transition:background-color .15s ease,color .15s ease}
-.stg-nav-a:hover{color:var(--dz-ink-1)}
-.stg-nav-a.on{background:var(--dz-seg-on-bg);color:var(--dz-seg-on-fg)}
-.stg-nav-a:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:-2px}
-.stg-nav-a .hdr-dot{top:6px;right:9px;box-shadow:0 0 0 1.5px var(--dz-surface)}
-.stg-nav-a.on .hdr-dot{box-shadow:0 0 0 1.5px var(--dz-seg-on-bg)}
-.stg-cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
-.stg-cgrid>.stg-card{grid-column:auto}
-.stg-cgrid>#stg-card-dc,.stg-cgrid>#stg-card-about,.stg-cgrid>#stg-card-profile,.stg-cgrid>#stg-card-notes{grid-column:1/-1}
-/* Notes & People: Profile (one row) above Notes, both across the row; the comment list in two columns */
-#stg-card-notes .stg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-#stg-card-notes .stg-list>.stg-empty{grid-column:1/-1}
-.stg-cat,.stg-card{scroll-margin-top:80px}
-.stg-cat .pg-group-title:focus{outline:none}
-.stg-cat .pg-group-title:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-radius:4px}
-/* About across the row: Version and Changed side by side, Reset to defaults at the right of Export / Import */
-#stg-card-about .stg-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+/* Settings cards (2v9: one bento grid, see 2v9:settings-bento). About: Version and Changed side by side, Reset to
+   defaults at the right of Export / Import. */
+.stg-card{scroll-margin-top:80px}
+#stg-card-about .stg-dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
 #stg-card-about .stg-kv{border-top:0;padding-top:2px}
 .stg-reset{margin-left:auto;align-self:center}
 .stg-reset:disabled{opacity:.45;cursor:default}
-@media (prefers-reduced-motion:no-preference){
-  #results-screen.entering .stg-cgrid>:nth-child(2){--mo-i:1}
-  #results-screen.entering .stg-cgrid>:nth-child(3){--mo-i:2}
-}
-@media (prefers-reduced-motion:reduce){.stg-nav-a{transition:none}}
-@media (max-width:900px){.stg-cgrid,#stg-card-notes .stg-list{grid-template-columns:minmax(0,1fr)}}
-@media (max-width:640px){
-  .stg-nav{top:8px;margin:0 0 20px}
-  .stg-nav-a{padding:7px 14px}
-  .stg-cgrid{gap:14px}
-  .stg-cat,.stg-card{scroll-margin-top:68px}
-  #stg-card-about .stg-dl{grid-template-columns:minmax(0,1fr)}
-}
-@media (forced-colors:active){.stg-nav-a{border:2px solid Canvas}.stg-nav-a.on{border-color:Highlight}}
-@media print{.stg-cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.stg-card{scroll-margin-top:68px}}
 /* 2v8:end settings */
 /* 2v8:live */
 /* Live SAP (2v6.8): the live mark beside the export date (none in import mode), the short export-date popover, the
@@ -11129,8 +11168,6 @@ function stgVersion(){
 let stgConnectOpen=false;
 function stgShowCard(card,focusId){
   if(card==='connect')stgConnectOpen=true;
-  // The card's category is the one marked in the category bar (every category is on the page; this picks the pill).
-  stgNavSet(stgCatOf(card),1500);
   setTab('settings');
   stgRevealCard(card,focusId);
 }
@@ -11138,7 +11175,6 @@ function stgRevealCard(card,focusId,tries=0){
   const el=document.getElementById(`stg-card-${card}`);
   // A click in the header draws Settings a frame later, inside moPage's cross-fade: wait for the card (about 0.5 s).
   if(!el){if(tries<30&&activeTab==='settings'&&typeof requestAnimationFrame==='function')requestAnimationFrame(()=>stgRevealCard(card,focusId,tries+1));return;}
-  stgNavSet(stgCatOf(card),1200);
   const target=(focusId&&document.getElementById(focusId))||document.getElementById(`stg-h-${card}`);
   if(target&&target.focus)target.focus({preventScroll:true});
   if(el.scrollIntoView)el.scrollIntoView({block:card==='profile'?'nearest':'start',behavior:stgReduceMotion()?'auto':'smooth'});
@@ -11146,106 +11182,16 @@ function stgRevealCard(card,focusId,tries=0){
 function stgReduceMotion(){
   try{return matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(err){return true;/* no matchMedia: jump */}
 }
-// --- 2v8 settings: categories ---
-// The page is five named categories (the shared .pg-group markup), in this order, each with its cards in a two-column
-// grid (one on phones). The category bar under the page title scrolls to a category and marks the one in view.
-const STG_CATS=[['data','Data'],['dash','Dashboard'],['notes','Notes & People'],['ai','AI'],['about','About']];
-const STG_CARD_CAT={source:'data',dc:'data',data:'data',oh:'dash',pages:'dash',hiddenpages:'dash',profile:'notes',notes:'notes',ai:'ai',connect:'ai',about:'about'};
-let stgNavCat='data',stgNavHold=0,stgNavIo=null,stgNavScroll=null;
-function stgCatOf(card){return STG_CARD_CAT[card]||'data';}
-function stgNavHtml(dcLevel){
-  const dot=dcLevel==='red'||dcLevel==='yellow';
-  const links=STG_CATS.map(([id,title])=>{
-    const on=id===stgNavCat,mark=id==='data'&&dot;
-    return `<a class="stg-nav-a${on?' on':''}" href="#stg-cat-${id}" data-cat="${id}" data-focus-key="stg-nav-${id}"${on?' aria-current="true"':''} onclick="return stgNavGo('${id}',event)">${esc(title)}${mark?`<span class="hdr-dot ${dcLevel}" aria-hidden="true"></span><span class="sr-only">, data check needs a look</span>`:''}</a>`;
-  }).join('');
-  return `<nav class="stg-nav print-hide" aria-label="Settings categories"><div class="stg-nav-in">${links}</div></nav>`;
-}
-function stgCatHtml(id,title,cards){
-  return `<section class="pg-group stg-cat" id="stg-cat-${id}" aria-labelledby="pg-stg-${id}" data-group="stg-${id}" data-cat="${id}"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-stg-${id}" tabindex="-1">${esc(title)}</h2></div><div class="stg-cgrid">${cards}</div></section>`;
-}
-// Marks a category in the bar without a redraw. hold (ms): the scroll that follows does not move the mark.
-function stgNavSet(cat,hold=0){
-  if(!STG_CATS.some(c=>c[0]===cat))return;
-  stgNavCat=cat;
-  if(hold)stgNavHold=Date.now()+hold;
-  if(typeof document==='undefined'||!document.querySelectorAll)return;
-  document.querySelectorAll('.stg-nav-a').forEach(a=>{
-    const on=a.dataset.cat===cat;
-    a.classList.toggle('on',on);
-    if(on)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current');
-    // Phones: the bar scrolls sideways; keep the marked pill in it (never scrolls the page).
-    const bar=on&&a.parentElement;
-    if(bar&&bar.scrollWidth>bar.clientWidth){
-      const l=a.offsetLeft-bar.offsetLeft,r=l+a.offsetWidth;
-      if(l<bar.scrollLeft||r>bar.scrollLeft+bar.clientWidth)bar.scrollLeft=Math.max(0,l-16);
-    }
-  });
-}
-function stgNavGo(cat,e){
-  if(e&&e.preventDefault)e.preventDefault();
-  stgNavSet(cat,1200);
-  const sec=document.getElementById(`stg-cat-${cat}`),h=document.getElementById(`pg-stg-${cat}`);
-  if(h&&h.focus)h.focus({preventScroll:true});
-  if(sec&&sec.scrollIntoView)sec.scrollIntoView({block:'start',behavior:stgReduceMotion()?'auto':'smooth'});
-  return false;
-}
-// The line a category's top has to pass to be the one in view: just under the bar where it sticks.
-function stgNavLine(){
-  const nav=document.querySelector('.stg-nav');
-  if(!nav)return 80;
-  return (parseFloat(getComputedStyle(nav).top)||0)+nav.offsetHeight+32;
-}
-// The category in view: the last one whose top has passed the line; at the foot of the page, the last one.
-function stgNavSpy(){
-  if(activeTab!=='settings'||Date.now()<stgNavHold)return;
-  const secs=[...document.querySelectorAll('.stg-cat')];
-  if(!secs.length)return;
-  const line=stgNavLine();
-  let cur=secs[0].dataset.cat;
-  secs.forEach(s=>{if(s.getBoundingClientRect().top<=line)cur=s.dataset.cat;});
-  const doc=document.documentElement;
-  if(window.scrollY>0&&window.innerHeight+window.scrollY>=doc.scrollHeight-4)cur=secs[secs.length-1].dataset.cat;
-  if(cur!==stgNavCat)stgNavSet(cur);
-}
-// After each Settings redraw: IntersectionObservers call the spy when a category's top crosses the line (a band from
-// the top of the window down to the line) and when the page foot comes into view; without them, a passive scroll
-// listener does. Both stop when another page draws; a resize measures the line again.
-let stgNavResize=false;
-function stgNavWatch(){
-  try{
-    if(stgNavIo){stgNavIo.forEach(o=>o.disconnect());stgNavIo=null;}
-    if(stgNavScroll){window.removeEventListener('scroll',stgNavScroll);stgNavScroll=null;}
-    if(activeTab!=='settings'||typeof document==='undefined'||!document.querySelectorAll)return;
-    const secs=[...document.querySelectorAll('.stg-cat')],end=document.querySelector('.stg-end');
-    if(!secs.length)return;
-    let queued=false;
-    const tick=()=>{if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;stgNavSpy();});};
-    if(typeof IntersectionObserver==='function'){
-      const below=Math.max(0,Math.round(window.innerHeight-stgNavLine()));
-      const band=new IntersectionObserver(tick,{rootMargin:`0px 0px -${below}px 0px`,threshold:0});
-      secs.forEach(s=>band.observe(s));
-      const foot=new IntersectionObserver(tick,{threshold:0});
-      if(end)foot.observe(end);
-      stgNavIo=[band,foot];
-    }else{
-      stgNavScroll=tick;
-      window.addEventListener('scroll',stgNavScroll,{passive:true});
-    }
-    if(!stgNavResize){stgNavResize=true;window.addEventListener('resize',()=>{if(activeTab==='settings')stgNavWatch();},{passive:true});}
-    stgNavSpy();
-  }catch(err){/* no layout (tests, old browsers): the bar still scrolls on click */}
-}
-
 // --- The page ---
 const STG_AI_ICON='<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>';
-function stgCard({id,title,icon,color,body,changed=false,i=0,meta='',dot=''}){
+function stgCard({id,title,icon,color,body,changed=false,i=0,meta='',dot='',tip=''}){
   const svg=icon==='ai'?`<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${STG_AI_ICON}</svg>`:dzIconSvg(icon);
   return `<section class="dz-card stg-card dz-fade" id="stg-card-${id}" style="--i:${i}" aria-labelledby="stg-h-${id}">
-    <div class="dz-card-head"><h2 class="dz-title sm stg-title" id="stg-h-${id}" tabindex="-1"><span class="dz-ico${dot?' stg-ico-dot':''}" style="--ico:${color}" aria-hidden="true">${svg}${dot?`<span class="hdr-dot ${dot}"></span>`:''}</span>${esc(title)}</h2>${meta||(changed?`<span class="dz-meta">${dzChip('Changed','indigo')}</span>`:'')}</div>
+    <div class="dz-card-head"><h2 class="dz-title sm stg-title" id="stg-h-${id}" tabindex="-1"${tipAttr(tip)}><span class="dz-ico${dot?' stg-ico-dot':''}" style="--ico:${color}" aria-hidden="true">${svg}${dot?`<span class="hdr-dot ${dot}"></span>`:''}</span>${esc(title)}</h2>${meta||(changed?`<span class="dz-meta">${dzChip('Changed','indigo')}</span>`:'')}</div>
     <div class="stg-rows">${body}</div></section>`;
 }
-// One setting: label and a short help line at the left, the control at the right. labelFor ties the label to an input.
+// One setting: label (and, rarely, one short help line) at the left, the control at the right; on a narrow tile the
+// control drops under the label. labelFor ties the label to an input.
 function stgRow(label,help,control,{labelFor='',cls=''}={}){
   const l=labelFor?`<label class="stg-label" for="${labelFor}">${esc(label)}</label>`:`<span class="stg-label">${esc(label)}</span>`;
   return `<div class="stg-row${cls?` ${cls}`:''}"><div class="stg-l">${l}${help?`<span class="stg-help">${help}</span>`:''}</div><div class="stg-ctl">${control}</div></div>`;
@@ -11268,22 +11214,21 @@ function stgProfileCard(dis,i){
   const names=[...new Set([current,...sharedPeople.map(p=>p.name)].filter(Boolean))];
   const opts=`${current?'':'<option value="" selected disabled>Pick your name</option>'}${names.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('')}<option value="__new">Add a new name…</option>`;
   const select=`<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName(this)"${tipAttr(isSnapshotView?'Not saved from a shared snapshot.':'Stamped on the notes you save.')}${dis}>${opts}</select>`;
-  const where=canSharePeople()?'Pick yours or add one.':'Shown on your notes.';
-  return stgCard({id:'profile',title:'Profile',icon:'users',color:'#5468ff',i,
-    meta:`<span class="dz-meta">${esc(current||'No name set')}</span>`,
-    body:stgRow('Your name',esc(where),select,{labelFor:'stg-name'})});
+  return stgCard({id:'profile',title:'Profile',icon:'users',color:'#5468ff',i,tip:'Profile\n• Your name is stamped on the notes you save',
+    body:stgRow('Your name','',select,{labelFor:'stg-name'})});
 }
 function stgOrderHealthCard(dis,i){
   const keys=['atRiskTarget','toleranceDays','horizon','linesShown','openingView'];
   const seg=(key,items,label)=>dzSeg(items.map(([v,t])=>({label:t,on:stgValue(key)===v,key:`stg-${key}-${v}`,onclick:`stgSet('${key}',${JSON.stringify(v).replace(/"/g,"'")})`,attrs:dis})),{label,cls:'stg-seg'});
   const body=[
-    stgRow('At-risk target',`Share of open value at risk; amber up to twice it, red above. Default 5%.`,stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
-    stgRow('On-track tolerance',`Days late that still count as on track. Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
-    stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
-    stgRow('Lines a page',`Lines on each page of the Lines card. Default 10.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines a page')),
-    stgRow('Opening view',`Where Sales Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view'))
+    stgRow('At-risk target','Amber up to twice it, red above.',stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
+    stgRow('On-track tolerance','',stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
+    stgRow('Look-ahead window','',stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
+    stgRow('Lines a page','',seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines a page')),
+    stgRow('Opening view','',seg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view'))
   ].join('');
-  return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+  const tip='Sales Order Health\n• At-risk target: share of open value at risk\n• Tolerance: days late still on track\n• Look-ahead: lines due within it count\n• Defaults: 5%, 2 days, 1 month, 10, Leading';
+  return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 function stgNotesCard(dis,i){
   const kind=stgNotesKind,key=stgListKey(kind),list=stgValue(key),what=kind==='po'?'purchase-order':'sales-order';
@@ -11294,10 +11239,10 @@ function stgNotesCard(dis,i){
   const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr('Remove from the picker.')}${dis}>×</button></li>`).join('');
   const add=isSnapshotView?'':`<form class="stg-add print-hide" onsubmit="event.preventDefault();stgAddComment('${kind}',this)"><input type="text" class="dz-pillinput" maxlength="120" placeholder="Add a comment" aria-label="${esc(`New ${what} comment`)}" data-focus-key="stg-add-${kind}" autocomplete="off"><button type="submit" class="dz-btn" data-focus-key="stg-add-btn-${kind}">Add</button></form>`;
   const reset=!stgIsDefault(key)&&!isSnapshotView?`<button type="button" class="link-btn stg-link print-hide" data-focus-key="stg-reset-${kind}" onclick="stgResetList('${kind}')"${tipAttr(`Put back the ${fmtNum(stgSpec()[key].def().length)} ready-made ${what} comments.`)}>Reset list</button>`:'';
-  const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span><span class="stg-help">Comment picker choices for ${kind==='po'?'purchase-order':'sales-order'} lines.</span></div><div class="stg-ctl">${tabs}</div></div>
+  const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span></div><div class="stg-ctl">${tabs}</div></div>
     <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">None: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
-  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
+  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,tip:'Notes\n• The choices in the comment picker on order lines',changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
 }
 // Data Source: Live SAP (the default: read through the SAP bridge every 5 minutes) or Import files (uploads, as
 // before). The live state, Refresh now, or the import actions. Self-contained (liveStatusText, liveRead, impPick).
@@ -11320,8 +11265,8 @@ function stgDataSourceCard(dis,i){
     status=`<p class="stg-now">${loaded?`Loaded: ${esc(names.slice(0,2).join(', '))}${names.length>2?` + ${names.length-2} more`:''}`:'No files loaded.'}</p>`;
     actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="stg-ds-upload" onclick="impPick()"${tipAttr('Pick one or more exports to load.')}>Upload files</button><button type="button" class="dz-btn" data-focus-key="stg-ds-add" onclick="document.getElementById('add-file-input').click()"${loaded?'':' disabled'}${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add file</button><button type="button" class="dz-btn" data-focus-key="stg-ds-new" onclick="showUpload()"${tipAttr('Replace this report with a new export.')}>New file</button></div>`;
   }
-  const help=live?'Read from SAP every 5 minutes. The last data stays if the link drops.':'Upload Query Manager exports by hand.';
-  return stgCard({id:'source',title:'Data Source',icon:'trend',color:'#12b76a',i,changed:!live,body:stgRow('Data source',esc(help),seg)+status+actions});
+  const tip='Data Source\n• Live SAP: read every 5 minutes; the last data stays if the link drops\n• Import files: upload Query Manager exports';
+  return stgCard({id:'source',title:'Data Source',icon:'trend',color:'#12b76a',i,tip,changed:!live,body:`<div class="stg-solo">${seg}</div>${status}${actions}`});
 }
 function stgDataCard(i,dc){
   const loaded=hasLoadedData();
@@ -11333,23 +11278,24 @@ function stgDataCard(i,dc){
   }).join('');
   const so=allLoadedRows.filter(r=>!/purchase order/i.test(String(r.sourceType||''))).length,po=allLoadedRows.length-so;
   const lines=[so?ohN(so,'sales line'):'',po?ohN(po,'PO line'):'',supplyDemandRows.length?ohN(supplyDemandRows.length,'supply / demand line'):'',buildRiskRows.length?ohN(buildRiskRows.length,'CTB line'):''].filter(Boolean).join(' · ');
-  const savedAt=sharedReport.savedAt&&!isNaN(new Date(sharedReport.savedAt))?new Date(sharedReport.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+  // No where-it-is-kept lines (owner): a snapshot's date, and a save or notes problem, only.
   const kept=isSnapshotView?`Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}`
-    :liveMode()&&liveState.sig.kpi?'Live from SAP · The last read is kept in this browser'
-    :{saving:'Saving for everyone who signs in…',shared:`Saved for everyone who signs in${savedAt?` (${esc(savedAt)})`:''}`,local:'Saved in this browser only',failed:`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`}[sharedReport.state]||(loaded?'Saved in this browser only':'—');
-  const notes=loaded?sharedNotesSidebarLine():'';
+    :!(liveMode()&&liveState.sig.kpi)&&sharedReport.state==='failed'?`<span class="warn-text">Not saved for others: ${esc(sharedReport.message)}</span>`:'';
+  const ns=sharedNotes.state;
+  const notes=loaded&&(ns==='failed'||ns==='offline'||(ns==='shared'&&sharedNotes.message))?sharedNotesSidebarLine():'';
   const cm=loaded?cmSidebarLine():'';
   const body=loaded?`<dl class="stg-dl">
       ${kv('Files',files||esc(isSnapshotView?'Shared snapshot':'Loaded export'))}
       ${kv('Lines',esc(lines||'—'))}
       ${kv('Export date',esc(reportAsOfDate?displayDate(reportAsOfDate):'Not in the export (today is used)'))}
-      ${kv('Report',kept)}
+      ${kept?kv('Report',kept):''}
       ${notes?kv('Notes',notes):''}
       ${cm?kv('Logican',cm):''}
       ${dc&&!dc.parts.length?kv('Data check',`<span class="stg-dc-ok">${dzIconSvg('check')}No data issues</span>`):''}
     </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
-  const actions=`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
-  return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,meta:'<span class="dz-meta">Read only</span>',body:body+actions});
+  // In import mode the Data Source card carries the same buttons.
+  const actions=!liveMode()&&!isSnapshotView?'':`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
+  return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,body:body+actions});
 }
 function stgAiCard(dis,i){
   const st=aiState.status;
@@ -11364,12 +11310,12 @@ function stgAiCard(dis,i){
   else{
     const p=aiCurrent(),list=aiConfigured();
     const allowed=p&&aiConsented(p.id);
-    body=stgRow('Provider',allowed?'Allowed in this browser.':'Not allowed yet: tick its box in Ask AI settings.',stgSelect('stg-ai-provider','',list.map(x=>[x.id,x.name]),aiState.provider,'stgAiProvider(this.value)',{dis}),{labelFor:'stg-ai-provider'})
-      +(p?stgRow('Model','A new model starts a new chat.',stgSelect('stg-ai-model','',p.models.map(id=>[id,aiModelLabel(p,id)]),aiState.model,'stgAiModel(this.value)',{dis}),{labelFor:'stg-ai-model'}):'')
+    body=stgRow('Provider',allowed?'':'Tick its box in Ask AI settings.',stgSelect('stg-ai-provider','',list.map(x=>[x.id,x.name]),aiState.provider,'stgAiProvider(this.value)',{dis}),{labelFor:'stg-ai-provider'})
+      +(p?stgRow('Model','',stgSelect('stg-ai-model','',p.models.map(id=>[id,aiModelLabel(p,id)]),aiState.model,'stgAiModel(this.value)',{dis}),{labelFor:'stg-ai-model'}):'')
       +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
   }
   const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Provider, model and data terms.')}>Open Ask AI settings</button></div>`;
-  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,body:body+open});
+  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,tip:'Ask AI\n• A new model starts a new chat',body:body+open});
 }
 // Theme: saved like every setting; the page's colours follow it through applyTheme (the shell's theme code, which
 // also re-applies it from stgAfterChange). The typeof guard keeps this working where that code is absent.
@@ -11394,32 +11340,32 @@ function stgPagesCard(dis,i){
   const keys=['theme','background','linesStart','importReport'];
   // Background: one round swatch per choice (a radio group; arrow keys move, like the other choices on this page).
   const bgNow=stgValue('background'),bgs=stgBackgrounds();
-  const bgName=(bgs.find(b=>b[0]===bgNow)||bgs[0])[1];
   const swatches=`<div class="stg-bgs" role="radiogroup" aria-label="Background">${bgs.map(([v,name,lightSw,darkSw])=>{
     const on=v===bgNow;
     return `<button type="button" role="radio" class="stg-bg${on?' on':''}" aria-checked="${on}" aria-label="${esc(name)}" tabindex="${on?0:-1}" data-focus-key="stg-bg-${v}" style="--sw:${lightSw};--sw-dark:${darkSw}" onclick="stgSet('background','${v}')" onkeydown="stgBgKey(event)"${dis}${tipAttr(name)}></button>`;
   }).join('')}</div>`;
   const body=[
-    stgRow('Theme',`Match system follows this device. Default light.`,seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
-    stgRow('Background',`Behind the cards: ${esc(bgName)}. Default Blue.`,swatches),
-    stgRow('Line lists start',`How line lists open; each list then keeps your choice. Default folded.`,seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
-    stgRow('Import report',`Only when a file has problems, or after every load. Default with problems.`,seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
+    stgRow('Theme','',seg('theme',[['light','Light'],['dark','Dark'],['system','Match system']],'Theme','stgSetTheme(')),
+    stgRow('Background','',swatches),
+    stgRow('Line lists start','',seg('linesStart',[['folded','Folded'],['open','Open']],'Line lists start')),
+    stgRow('Import report','',seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
-  return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+  const tip='Pages & Display\n• Match system follows this device\n• Each line list then keeps your choice\n• Import report: after a load with file problems, or every load';
+  return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 // Hidden Pages (2v6.9): one row per page with a show / hide switch, hidden pages first (then menu order). Order Health
 // and Settings cannot be hidden. A hidden page leaves the top menu and the Supply menu; turning it on brings it back.
 function stgHiddenPagesCard(dis,i){
   const hidden=stgValue('hiddenPages');
-  const supply=new Set(((NAV_GROUPS.find(g=>g[0]==='Supply')||[])[1]||[]).map(x=>x[0]));
   const ids=stgHideablePages().filter(id=>PAGE_TITLES[id]);
   const rows=[...ids.filter(id=>hidden.includes(id)),...ids.filter(id=>!hidden.includes(id))].map(id=>{
     const off=hidden.includes(id),name=NAV_LABELS[id]||PAGE_TITLES[id];
-    return stgRow(name,off?'Hidden':supply.has(id)?'In the Supply menu':'In the top menu',stgSwitch(`stg-page-${id}`,`Show ${name}`,!off,`stgTogglePage('${id}')`,dis),{cls:`stg-hp${off?' off':''}`});
+    return stgRow(name,'',stgSwitch(`stg-page-${id}`,`Show ${name}`,!off,`stgTogglePage('${id}')`,dis),{cls:`stg-hp${off?' off':''}`});
   }).join('');
   return stgCard({id:'hiddenpages',title:'Hidden Pages',icon:'file',color:'#5468ff',i,changed:!stgIsDefault('hiddenPages'),
+    tip:'Hidden Pages\n• A hidden page leaves the top menu and the Supply menu\n• Turn one on to bring it back',
     meta:`<span class="dz-meta">${dzChip(hidden.length?`${fmtNum(hidden.length)} hidden`:'None hidden',hidden.length?'':'teal')}</span>`,
-    body:`<p class="stg-now stg-lead">Hidden pages leave the top menu. Turn one on to bring it back.</p><div class="stg-hp-list">${rows}</div>`});
+    body:`<div class="stg-hp-list">${rows}</div>`});
 }
 // Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
 function stgExport(){
@@ -11467,9 +11413,9 @@ function stgAboutCard(i){
   const reset=`<button type="button" class="link-btn stg-link stg-reset" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(changed?'Reset every setting; your name stays.':'Every setting is at its default.')}>Reset to defaults</button>`;
   const body=`<dl class="stg-dl">
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
-      <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'All settings are at their defaults'}</dd></div>
-    </dl><p class="stg-now">Saved in this browser only. Export and Import move them.</p><div class="stg-actions print-hide">${move}${reset}</div>`;
-  return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,body});
+      <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'None'}</dd></div>
+    </dl><div class="stg-actions print-hide">${move}${reset}</div>`;
+  return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,tip:'About\n• Export and Import move your settings to another browser',body});
 }
 // Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
 function stgDataCheckLevel(){return dcReport().level;}
@@ -11484,14 +11430,14 @@ function stgDataCheckCard(dc,i){
   const issuePg=dzPageOf('stg-dc-issues',dc.issues,String(dc.issues.length));
   const issues=dc.issues.length?`<ul class="stg-dc-list" tabindex="0" aria-label="Rows and files that need attention in SAP">${issuePg.rows.map(x=>`<li>${esc(x.message)}</li>`).join('')}</ul>${dzPageFoot('stg-dc-issues',issuePg,'Rows and files that need attention','rows and files')}`:'';
   const dateHelp=dc.issues.some(x=>x.kind==='date')?'<p class="stg-now">Dates outside 1990–2099 count as missing until fixed in SAP.</p>':'';
-  const scope=dc.nonInventory?stgRow('Non-inventory charges','PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave these charges out again (the default).':'Count these charges in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
+  const scope=dc.nonInventory?stgRow('Non-inventory charges','Left out of late, OTD and fill KPIs.',`<button type="button" class="dz-btn" data-focus-key="toggle-noninventory"${tipAttr(includeNonInventory?'Leave these charges out again (the default).':'Count these charges in the KPIs too.')} onclick="setIncludeNonInventory(${includeNonInventory?'false':'true'})">${includeNonInventory?'Leave them out':'Include them'}</button>`,{cls:'stg-dc-row'}):'';
   const d=dc.deleted;
   const delPg=dzPageOf('stg-dc-deleted',d,'');
-  const deleted=d.length?stgRow('Deleted lines',`Left out of every page and KPI ${sharedNotes.state==='shared'?'for everyone who signs in':'in this browser'}.`,`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back ${d.length===1?'the deleted line':`all ${fmtNum(d.length)} deleted lines`}.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
+  const deleted=d.length?stgRow('Deleted lines','Left out of every page and KPI.',`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back ${d.length===1?'the deleted line':`all ${fmtNum(d.length)} deleted lines`}.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
     +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${delPg.rows.map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}</ul>${dzPageFoot('stg-dc-deleted',delPg,'Deleted lines')}`:'';
   const meta=dc.level==='red'?dzChip(`${fmtNum(dc.red)} to fix in SAP`,'red'):dc.level==='yellow'?dzChip(`${fmtNum(dc.yellow)} to review`,'amber'):'<span class="dz-meta">By design</span>';
   const color=dc.level==='red'?'#ff3d68':dc.level==='yellow'?'#ffae1a':'#64748b';
-  return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,meta:`<span class="dz-meta">${meta}</span>`,
+  return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,tip:dc.nonInventory?'Data Check\n• PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs':'',meta:`<span class="dz-meta">${meta}</span>`,
     body:`<div class="stg-dc${issues||scope||deleted?'':' solo'}"><div class="stg-dc-lead">${sum}${dateHelp}</div>${issues||scope||deleted?`<div class="stg-dc-side">${issues}${scope}${deleted}</div>`:''}</div>`});
 }
 // Connect An AI App (it was the Connect an AI help page): the MCP connector in mcp/ for any AI app that supports MCP.
@@ -11509,27 +11455,42 @@ function stgConnectCard(i){
           ${step(3,"In your AI app's MCP settings, add this server, then restart the app.")}
         </ol>
         <div class="misc-code"><div class="misc-code-head"><span class="misc-code-file">MCP server config</span><div class="misc-code-copy print-hide"><span class="misc-code-status" id="connect-desktop-status" role="status"></span><button type="button" class="dz-btn" data-copy="connect-desktop" data-focus-key="copy-connect-desktop" aria-label="Copy the MCP server config"${tipAttr('Copy the config to the clipboard.')} onclick="copyConnectSnippet(this)">Copy</button></div></div><pre id="connect-desktop" tabindex="0" aria-label="MCP server config">${esc(CONNECT_SNIPPETS['connect-desktop'])}</pre></div>
+        <p class="misc-privacy stg-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI app receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>
         <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Paths, updates and fixes.')}>Setup guide</a></div>
       </div>
-    </details>
-    <p class="misc-privacy stg-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>The AI app receives the order data it looks up. Use only an AI app Spyder Controls approves.</span></p>`;
+    </details>`;
   return stgCard({id:'connect',title:'Connect An AI App',icon:'link',color:'#5468ff',i,body});
 }
 function stgRenderPage(){
   const ro=isSnapshotView,dis=ro?' disabled':'';
   const note=ro?`<p class="stg-ro rise">Shared snapshot: settings are read only. Open the dashboard to change them.</p>`:'';
-  // 2v8: five categories, in this order, under the category bar. The Data Check card (only while the Data check
-  // reports something) opens the Data category, full width, so the gear's dot leads straight to it.
+  // 2v9: one bento grid of compact tiles (no category bar or headings), in reading order: data, dashboard, notes,
+  // AI, about. The Data Check card (only while the Data check reports something) comes first, so the gear's dot
+  // leads straight to it. Spans: the 2v9:settings-bento CSS.
   const dc=dcReport(),check=stgDataCheckCard(dc,0);
   let i=check?1:0;
-  const cats={
-    data:[check,stgDataSourceCard(dis,i++),stgDataCard(i++,dc)],
-    dash:[stgOrderHealthCard(dis,i++),stgPagesCard(dis,i++),stgHiddenPagesCard(dis,i++)],
-    notes:[stgProfileCard(dis,i++),stgNotesCard(dis,i++)],
-    ai:[stgAiCard(dis,i++),stgConnectCard(i++)],
-    about:[stgAboutCard(i++)]
-  };
-  return `${note}${stgNavHtml(dc.level)}<div class="stg-cats">${STG_CATS.map(([id,title])=>stgCatHtml(id,title,cats[id].join(''))).join('')}</div><div class="stg-end" aria-hidden="true"></div>`;
+  const cards=[check,stgDataSourceCard(dis,i++),stgDataCard(i++,dc),stgOrderHealthCard(dis,i++),stgPagesCard(dis,i++),
+    stgHiddenPagesCard(dis,i++),stgProfileCard(dis,i++),stgNotesCard(dis,i++),stgAiCard(dis,i++),stgConnectCard(i++),stgAboutCard(i++)];
+  return `${note}<div class="stg-bento">${cards.join('')}</div>`;
+}
+// The bento packs tight: with ResizeObserver each tile spans as many 2px rows as its height needs (the grid gets the
+// class fit), so a short tile never stretches and the next one fills the space under it. Without it (tests, print,
+// old browsers) the grid is plain rows of tiles. Called after every redraw; a no-op on other pages.
+let stgBentoRo=null;
+function stgBentoFit(){
+  try{
+    if(stgBentoRo){stgBentoRo.disconnect();stgBentoRo=null;}
+    const grid=activeTab==='settings'&&typeof ResizeObserver==='function'&&document.querySelector('.stg-bento');
+    if(!grid)return;
+    const span=()=>{
+      const gap=parseFloat(getComputedStyle(grid).getPropertyValue('--stg-gap'))||14;
+      grid.querySelectorAll(':scope>.stg-card').forEach(c=>{c.style.gridRowEnd=`span ${Math.max(1,Math.ceil((c.offsetHeight+gap)/2))}`;});
+    };
+    grid.classList.add('fit');
+    stgBentoRo=new ResizeObserver(span);
+    grid.querySelectorAll(':scope>.stg-card').forEach(c=>stgBentoRo.observe(c));
+    span();
+  }catch(err){/* plain rows */}
 }
 // ===== end 2v6 settings =====
 // Connect An AI App (Settings): the MCP server config the card shows and copies. Details: docs/MCP.md.
@@ -12781,7 +12742,7 @@ function renderResults(){
   const openSoCount=m.rows.filter(r=>r.isOpen).length;
   const asOfShort=displayDate(reportAsOfDate||reportToday());
   const loaded=hasLoadedData();
-  const headMeta=activeTab==='settings'?'Saved in this browser'
+  const headMeta=activeTab==='settings'?''
     // No as-of line on the Metrics Timeline or Purchase Orders (the owner's ask); the export date is in the header.
     : activeTab==='metrics'||activeTab==='purchaseorders'?''
     : activeTab==='search'?globalSearchMeta(m)
@@ -13350,7 +13311,7 @@ function renderResults(){
   dzDecorateIcons(el);
   dzDecorateCollapse(el);
   dzFitTables(el);
-  stgNavWatch(); // 2v8: the Settings category bar follows the scroll (stops on other pages)
+  stgBentoFit(); // 2v9: Settings tiles pack as a bento (a no-op on other pages)
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
   restoreFocus(el,focus);
   runCountUps(el,entering);
