@@ -9931,7 +9931,6 @@ function supPurchaseOrders(m){
   // With no card picked the page shows the late lines, so the Late card is the selected one.
   const sel=poTileFilter||'late';
   if(poRiskOwner&&(sel!=='poatrisk'||!poAtRisk.byOwner.has(poRiskOwner)))poRiskOwner='';
-  const riskOwnerName=poRiskOwner?((poAtRiskOwners(poAtRisk).find(o=>o.key===poRiskOwner)||{}).name||''):'';
   const linked=poRiskOwner?(tileRows.poatrisk||[]).filter(r=>(atRiskBy.get(r)||{}).owner===poRiskOwner):(tileRows[sel]||[]);
   const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',followup:'Unconfirmed or missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · Expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
   const view=supGet('po-view','open')==='received'?'received':'open';
@@ -10112,8 +10111,7 @@ function supPurchaseOrders(m){
     ${dzPageFoot('po-lines',linesPg,'PO lines')}`
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
   const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
-  const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
-    sub:`${esc(titles[sel]||'Late / missed commit')}${riskOwnerName?` · ${esc(riskOwnerName)}`:''} · ${supLines(sorted.length)} · ${fmtNum(qty(sorted))} open qty · ${money(value(sorted))}`,body:tbl});
+  const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,body:tbl}); // 2v6.9 (owner): no summary line under the title
   const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
 
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
@@ -11681,11 +11679,12 @@ function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
 }
 const NAV_GROUPS=[
-  ['Sales',[['weekly','Sales Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline']]],
-  ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
+  // 2v6.9 (owner): Purchase Orders Health sits next to Sales Order Health in the top row (it was under Supply).
+  ['Sales',[['weekly','Sales Order Health'],['purchaseorders','Purchase Orders Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline']]],
+  ['Supply',[['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
   ['Help',[['settings','Settings','Data source, Data check, targets, display, comment lists and AI.']]]
 ];
-const PAGE_TITLES={weekly:'Sales Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
+const PAGE_TITLES={weekly:'Sales Order Health',purchaseorders:'Purchase Orders Health',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
 // Every page builds its cards, chips, bar rows, filter pills and segmented switches with the helpers below and styles
 // them with the .dz-* classes ("2v6 foundation" in the style block). All of them return HTML strings; text arguments
