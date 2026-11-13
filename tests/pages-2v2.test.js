@@ -57,7 +57,7 @@ const PAGE_LAYOUT = {
   supplydemand: { cards: ['Demand by item group and month', 'Least covered', 'Demand by warehouse', 'Item groups'], groups: [] },
   monthly: { cards: ['September to date', 'Orders shipped by month', 'Month by month'], groups: ['Open and shipped, month by month', 'By delivery month', 'By original delivery date', 'Ship target scenario'] },
   warehouses: { cards: ['Late orders by week', 'Getting worse', 'Getting better', 'Warehouses to watch'], groups: ['By late shipments', 'By due month', 'By warehouse'] },
-  metrics: { cards: ['Monthly', 'Quarterly', 'On-time delivery', 'Monthly metrics', 'Orders shipped by month', 'Month by month', 'Shipped by warehouse / CM · this month', 'Original line delivery summary'], groups: ['Metrics', 'Order quality', 'By due month', 'Lines to act on', 'Shipments'] }, // owner: Metrics above Shipments; Late orders by cause is a tile
+  metrics: { cards: ['Monthly', 'Quarterly', 'On-time delivery', 'Monthly metrics', 'Orders shipped by month', 'Month by month', 'Shipped by warehouse / CM · this month', 'Original line delivery summary'], groups: ['Metrics', 'Shipments'] }, // owner: Metrics above Shipments; Late orders by cause is a tile
   shipping: { cards: ['No shipments to show'], groups: [] },
   search: { cards: ['Order lines'], groups: [] },
 };
@@ -179,7 +179,7 @@ test('the numbers on the cards are the same numbers the pages computed before', 
   assert.equal(thisMonth, '$3,250');
   assert.match(h, new RegExp(`<div class="mwm-bar" role="img" aria-label="\\$1K shipped of \\$3K booked for September" data-tip="Target: \\${thisMonth} booked for September\\n• \\$1,000 shipped`));
   h = open(page, 'metrics');
-  assert.match(h, new RegExp(`On-track rate</span><span class="kpi-tag">target 90%</span></div>\\s*<span class="kpi-value [a-z]+" data-count="${page.run('pct(currentMetrics().onTrackRows.length,currentMetrics().rows.length)')}"`));
+  assert.doesNotMatch(h, /On-track rate/); // owner: Order quality left with Metrics' Show more
   assert.deepEqual(page.errors, []);
 });
 

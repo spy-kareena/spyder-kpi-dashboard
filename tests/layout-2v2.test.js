@@ -438,8 +438,7 @@ test('Sales Order Health reads as cards in a set order: Leading ends with its Li
   page.run("setWeeklyView('lagging')");
   const lag = panel(html(page), 'lagging');
   assert.deepEqual(cardNames(lag.slice(0, lag.indexOf('<section class="pg-group'))), ['Monthly', 'Quarterly']);
-  assert.deepEqual(groups(lag.slice(0, lag.indexOf('<details class="mwm-more"'))), ['Metrics']);
-  assert.ok(lag.indexOf('id="ohg-shipments"') > lag.indexOf('id="ohg-metrics"'), 'Shipments below Metrics (owner)');
+  assert.deepEqual(groups(lag), ['Metrics', 'Shipments']);
   assert.doesNotMatch(lag, /id="linked-lines"/);
   // The old Hide calls no longer hide anything.
   page.run("setWeeklyView('leading');toggleLeadingIndicators();toggleLaggingIndicators()");
@@ -457,15 +456,9 @@ test('open order states always show in the Status card (no Show more); the Metri
   page.run('printMode=true;renderResults()');
   assert.deepEqual(states(), ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
   page.run('printMode=false;renderResults()');
-  // Lagging's Metrics: the detail behind Show more, the same pattern as the old Open order states disclosure.
+  // Lagging's Metrics: no Show more (owner: order quality, open value by due month and lines to act on are gone).
   page.run("setWeeklyView('lagging')");
-  const more = () => html(page).match(/<details class="mwm-more"[^>]*>[\s\S]*?<\/summary>/)[0];
-  assert.match(more(), /^<details class="mwm-more" data-more="mwm-metrics" ontoggle="mwmSetMoreOpen\(this\.dataset\.more,this\.open\)"><summary data-focus-key="more-mwm-metrics" data-tip="[^"]{10,}"><span class="mwm-more-show">Show more · [^<]+<\/span><span class="mwm-more-less">Show less<\/span><\/summary>$/);
-  page.run("mwmSetMoreOpen('mwm-metrics',true);renderResults()");
-  assert.match(more(), /^<details class="mwm-more" open /);
-  assert.equal(page.run("tableMore['more-mwm-metrics']"), true);
-  page.run("mwmSetMoreOpen('mwm-metrics',false);printMode=true;renderResults()");
-  assert.match(more(), /^<details class="mwm-more" open /, 'print shows it');
+  assert.doesNotMatch(html(page), /data-more="mwm-metrics"|>Order quality<|>Lines to act on</);
   page.run('printMode=false');
   assert.match(HTML, /@media print\{\.mwm-more>summary\{display:none\}\}/);
   // The shared page-group CSS, byte for byte.

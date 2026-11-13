@@ -237,7 +237,7 @@ test('BUG: empty text fields have a 3:1 border (header search, Ask AI question, 
 });
 
 // 2v6.9: Metrics is a section of Sales Order Health > Lagging; Fill rate is one of its month figures (it left the
-// Monthly / Quarterly cards) and On-track rate is in Order quality, under Show more.
+// Monthly / Quarterly cards); On-track rate left with Order quality (owner removed Metrics' Show more).
 test('Fill rate and On-track rate show no made-up 0% when no sales-order lines are loaded', async () => {
   const page = await loaded([PO({ DocumentNumber: '700' })]);
   page.run('setTab("metrics")');
@@ -252,19 +252,15 @@ test('Fill rate and On-track rate show no made-up 0% when no sales-order lines a
   // (Fill rate left the Metrics tiles and the Monthly metrics table, owner.)
   assert.doesNotMatch(m, /<div class="mwm-kpi-l">Fill rate<\/div>/);
   assert.match(m, /<div class="mwm-kpi-l">On-time delivery<\/div>/);
-  assert.match(m, /<span class="kpi-label">On-track rate<\/span><span class="kpi-tag">target 90%<\/span><\/div>\s*<span class="kpi-value crit"[^>]*>0%<\/span>/);
+  assert.doesNotMatch(m, /On-track rate/); // Order quality left with Metrics' Show more (owner)
 });
 
-test('Metrics: "Rescheduled, commit ahead" counts the same lines as the timeline Rescheduled column', async () => {
-  const page = await loaded([
-    sapRow({ DocumentNumber: '1', RescheduleDate: '10/01/2026', LineRescheduleDate: '10/01/2026', RescheduleFlag: 'Rescheduled' }), // into next month: Open Next Month
-    sapRow({ DocumentNumber: '2', RescheduleDate: '11/15/2026', LineRescheduleDate: '11/15/2026', RescheduleFlag: 'Rescheduled' }),
-    sapRow({ DocumentNumber: '3' }),
-  ]);
+// The Metrics strip with "Rescheduled, commit ahead" left with Metrics' Show more (owner); nothing on Lagging draws it.
+test('Metrics: no "Rescheduled, commit ahead" strip (its Show more was removed)', async () => {
+  const page = await loaded([sapRow({ DocumentNumber: '1', RescheduleDate: '10/01/2026', LineRescheduleDate: '10/01/2026', RescheduleFlag: 'Rescheduled' }), sapRow({ DocumentNumber: '3' })]);
   page.run('setTab("metrics")');
-  const strip = Number(html(page).match(/Rescheduled, commit ahead[\s\S]*?class="ms-big[^>]*>(\d+)</)[1]);
-  assert.equal(strip, page.run('currentMetrics().metricTimeline.reduce((s,g)=>s+g.rescheduledRows,0)'));
-  assert.equal(strip, 1);
+  assert.doesNotMatch(html(page), /Rescheduled, commit ahead/);
+  assert.deepEqual(page.errors, []);
 });
 
 // 2v6: the ranked lists (renderRankRows) left the pages; Warehouses to watch on the Warehouse Timeline is the warehouse

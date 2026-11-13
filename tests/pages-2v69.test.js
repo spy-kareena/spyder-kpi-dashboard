@@ -101,10 +101,10 @@ test('Metrics is a section of Lagging under Monthly and Quarterly: setTab and a 
   // on-time line, the monthly table, Show more.
   assert.equal((metrics.match(/<div class="mwm-kpi dz-fade"/g) || []).length, 4);
   assert.doesNotMatch(metrics, /<div class="mwm-kpi-l">Fill rate<\/div>/);
-  assert.doesNotMatch(metrics.slice(metrics.indexOf('aria-label="Monthly metrics"'), metrics.indexOf('<details class="mwm-more"')), /role="columnheader"[^>]*>Fill rate</, 'no Fill rate column (owner)');
+  assert.doesNotMatch(metrics.slice(metrics.indexOf('aria-label="Monthly metrics"'), metrics.indexOf('</section>', metrics.indexOf('aria-label="Monthly metrics"'))), /role="columnheader"[^>]*>Fill rate</, 'no Fill rate column (owner)');
   assert.match(metrics, /<div class="mwm-kpi mwm-kpi-cause dz-fade"[\s\S]*?<div class="mwm-kpi-l">Late orders by cause<\/div>[\s\S]*>On-time delivery<\/h2>[\s\S]*>Monthly metrics<\/h2>/);
-  assert.match(metrics, /<details class="mwm-more"[^>]*data-more="mwm-metrics"/);
-  assert.match(metrics, /aria-labelledby="pg-mt-quality"[\s\S]*aria-labelledby="pg-mt-month"/);
+  assert.doesNotMatch(metrics, /data-more="mwm-metrics"/); // owner: no Show more under Metrics
+  assert.doesNotMatch(metrics, /aria-labelledby="pg-mt-(quality|month|attention)"/);
   // Its own Months switch still works; the Order Health filters narrow it.
   page.run('mwmSetRange(3)');
   assert.match(html(page), /data-focus-key="mwm-range-3"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-focus-key="mwm-range-3"|class="on"[^>]*data-focus-key="mwm-range-3"/);

@@ -109,11 +109,9 @@ test('the line lists say lines and carry a count pill; the 2v2 group names are g
   // Leading: the Lines card with its help as the title's tip and the picked card's lines and value in the pill.
   const lead = panel(open(page, 'weekly', 'leading'), 'leading');
   assert.match(lead, /<h2 class="dz-title" data-tip="[^"]+">Lines<\/h2><span class="dz-chip red">3 lines · \$23,500<\/span>/);
-  // Lagging: Lines to act on, with its help tip and a line count.
+  // Lagging: no Lines to act on (owner removed Metrics' Show more).
   const lag = panel(open(page, 'weekly', 'lagging'), 'lagging');
-  const head = lag.match(/<h2 class="pg-group-title" id="[^"]+" data-tip="([^"]+)">Lines to act on<\/h2><span class="count-badge[^"]*">([^<]+)<\/span>/);
-  assert.ok(head, 'Lines to act on with its help tip and a pill');
-  assert.match(head[2], /^\d+ lines?$/);
+  assert.doesNotMatch(lag, />Lines to act on<\/h2>/);
   // Purchase Order Health and Build Risk: the list card's pill counts what it lists.
   assert.match(open(page, 'purchaseorders'), /<h2 class="dz-title" data-tip="[^"]+">PO lines<\/h2><span class="dz-chip[^"]*">1 PO<\/span>/);
   assert.match(open(page, 'buildrisk'), /<h2 class="dz-title" data-tip="[^"]+">Orders at risk or late<\/h2><span class="dz-chip[^"]*">\d+ orders?<\/span>/);
@@ -205,7 +203,7 @@ test('lines, not rows: page text and pills say lines; the page head counts what 
     assert.doesNotMatch(t, /\b\d[\d,]* (?:[\w/-]+ ){0,2}rows?\b|% of rows|Sort rows|Open rows|Closed rows|rows shipped|Rows needing|SO rows|report rows/, `${tab}${view ? ` ${view}` : ''}: ${(t.match(/.{40}\brows?\b.{20}/) || [''])[0]}`);
   }
   // A few of the counts, by name.
-  assert.match(text(panel(open(page, 'metrics'), 'lagging')), /\d+% of lines/);
+  assert.match(text(panel(open(page, 'metrics'), 'lagging')), /\b\d+ lines?\b/);
   assert.match(text(open(page, 'monthly')), /\d+ delivery lines?/);
   assert.match(text(open(page, 'supplyweekly')), /Open demand 22 qty \$2K · 2 lines/);
   assert.match(open(page, 'weekly', 'leading'), /<select id="weekly-line-sort"[^>]*aria-label="Sort lines"/);
