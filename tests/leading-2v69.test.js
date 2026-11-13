@@ -118,11 +118,13 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   // numbers under the title; no fold chevron; each status a dot and a word with its detail small beside it.
   assert.doesNotMatch(h, /data-focus-key="sd-risk-only"|data-focus-key="sup-q-sd"|ohs-tools|class="dz-chip red">2 items/);
   assert.match(h, /<div class="dz-meta sup-tsub"><span class="ohs-sum"><span class="ohs-sum-i red"><b>\d+<\/b> short<\/span>/);
-  // Every column title sorts; Supply Qty and Short Qty with a capital Q; a warehouse heading has no item count.
+  // Every column title sorts; Supply Qty and Short Qty with a capital Q; the warehouse is a column (no heading rows);
+  // a status detail sits on its own small line under the word.
   const ths = [...h.matchAll(/data-focus-key="sd-sort-(\w+)" onclick="supSdSort\('\1'\)"[^>]*>([^<]+)</g)].map((m) => `${m[1]}:${m[2]}`);
-  assert.deepEqual(ths.slice(0, 7).map((t) => t.split(':')[0]), ['item', 'desc', 'month', 'dem', 'sup', 'short', 'status']);
+  assert.deepEqual(ths.slice(0, 8).map((t) => t.split(':')[0]), ['item', 'desc', 'wh', 'month', 'dem', 'sup', 'short', 'status']);
   assert.ok(ths.includes('sup:Supply Qty') && ths.includes('short:Short Qty'), ths.join(', '));
-  assert.match(h, /<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3"><svg[\s\S]*?<\/svg>[^<]+<\/b><\/td><\/tr>/);
+  assert.doesNotMatch(h.slice(h.indexOf('ohl-sd')), /class="sup-grp"/);
+  assert.match(h, /<td class="ohs-wh" data-label="Warehouse">[^<]+<\/td>/);
   page.run("supSdSort('short')");
   assert.match(html(page), /<th class="num" aria-sort="descending"><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-short"/);
   page.run("supSdSort('short')");
