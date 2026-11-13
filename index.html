@@ -3888,6 +3888,70 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v9:revise1 */
+/* Board revision (2v6.9): Purchase Order Health and Shipping space their cards like the rest of the board (16px, 14px
+   on phones, as .dz-grid); week labels under a narrow column chart show every other week instead of clipping; Kits by
+   CM keeps its first column while the months scroll; touch screens get 40px targets on the header, pills, pagers and
+   list rows; Update all is not printed. */
+:root{--rv-gap:16px}
+@media (max-width:640px){:root{--rv-gap:14px}}
+@media screen{
+  .sup-page.po-page{gap:var(--rv-gap)}
+  .sup-page.po-page>.dz-filterrow{margin-bottom:calc(22px - var(--rv-gap))}
+  .po-page .po-kitcm-row{margin-top:0}
+  .sup-more-views.po-fill{gap:var(--rv-gap)}
+  .sup-more-views.po-fill>*{flex-basis:calc((100% - (var(--po-cols,4) - 1)*var(--rv-gap))/var(--po-cols,4))}
+  .sup-more-views.po-fill>.po-pair{flex-basis:calc((100% - (var(--po-cols,4) - 1)*var(--rv-gap))/var(--po-cols,4)*2 + var(--rv-gap))}
+  #results-screen>.shp-top+.shp-grid{margin-top:var(--rv-gap)}
+  .shp-grid,.shp-side{gap:var(--rv-gap)}
+}
+@media screen and (max-width:980px){
+  .sup-more-views.po-fill>*{flex-basis:calc((100% - 2*var(--rv-gap))/3)}
+  .sup-more-views.po-fill>.po-pair{flex-basis:calc((100% - 2*var(--rv-gap))/3*2 + var(--rv-gap))}
+  .shp-top,.shp-top>.shp-tiles{gap:var(--rv-gap)}
+}
+@media screen and (max-width:640px){
+  .sup-more-views.po-fill>*{flex-basis:calc((100% - var(--rv-gap))/2)}
+  .sup-more-views.po-fill>.po-pair{flex-basis:100%}
+}
+.sup-page .sup-cols{container-type:inline-size}
+@container (max-width:560px){
+  :is(.sup-cols[style*="--n:10"],.sup-cols[style*="--n:11"],.sup-cols[style*="--n:12"]) .sup-col-labels span{overflow:visible}
+  :is(.sup-cols[style*="--n:10"],.sup-cols[style*="--n:11"],.sup-cols[style*="--n:12"]) .sup-col-labels span:nth-child(even){visibility:hidden}
+}
+@container (max-width:400px){
+  :is(.sup-cols[style*="--n:7"],.sup-cols[style*="--n:8"],.sup-cols[style*="--n:9"]) .sup-col-labels span{overflow:visible}
+  :is(.sup-cols[style*="--n:7"],.sup-cols[style*="--n:8"],.sup-cols[style*="--n:9"]) .sup-col-labels span:nth-child(even){visibility:hidden}
+}
+.kc-tbl th[scope="row"],.kc-tbl thead th:first-child{position:sticky;left:0;z-index:1;background:var(--dz-surface)}
+.shp-prog-t .shp-st{white-space:nowrap}
+.dz-asis{text-transform:none}
+.sup-page .sup-col-v{position:relative;z-index:1;padding:0 3px;border-radius:4px;background:var(--dz-surface)}
+@media print{.shp-updall{display:none}}
+@media (pointer:coarse){
+  .hdr-logo{padding:9px 0;margin:-9px 0}
+  .hdr-link::before{content:"";position:absolute;inset:-6px -8px}
+  .hdr-right .hdr-icon{width:40px;height:40px}
+  .hdr-right .hdr-date{min-width:40px;height:40px}
+  .hdr-search{height:40px}
+  .dz-filter{height:40px}
+  .dz-seg button{position:relative}
+  .dz-seg button::before{content:"";position:absolute;inset:-4px 0}
+  #results-screen .dz-btn,#results-screen .dz-pillinput{min-height:40px}
+  #results-screen .dz-btn.shp-open{min-width:40px}
+  .shp-pager .shp-pg{min-width:40px;height:40px;line-height:40px}
+  .dz-collapse-btn{width:40px;height:40px;margin:-6px -4px -6px -12px}
+  .po-own,.shp-pri-row,button.dz-barrow,button.kc-cm{min-height:40px;align-items:center}
+  button.kc-cm{min-width:40px}
+  .kit-check{width:40px;height:40px;margin:-10px -5px}
+  .shp-sort{position:relative}
+  .shp-sort::before{content:"";position:absolute;inset:-12px -4px}
+  .shp-dot::before{left:-11px;top:-11px;right:-11px;bottom:-11px}
+}
+@media (pointer:coarse) and (max-width:420px){
+  .app-header{column-gap:6px}
+}
+/* 2v9:end revise1 */
 /* 2v9:settings-bento */
 /* Settings as a bento menu (owner, 2v9): every card is a compact tile in one dense grid, no category bar or headings.
    Small settings take one column; lists and editors two (Data, Sales Order Health, Pages & Display, Hidden Pages,
@@ -9237,6 +9301,14 @@ function dzPageGroups(id,groups,sig,item,heading,after=()=>''){
   const html=pg.rows.map(({r,g,last},i)=>{const h=g===cur?'':heading(g);cur=g;return h+item(r,i)+(last?after(g):'');}).join('');
   return {html,pg};
 }
+// A longer page pushes the pager down: the pager button that has focus (the one just pressed) scrolls back into view,
+// so it is not left below the screen.
+function dzPagerInView(){
+  const a=typeof document!=='undefined'?document.activeElement:null;
+  if(!a||!a.closest||!a.closest('.shp-pager')||!a.getBoundingClientRect||!a.scrollIntoView)return;
+  const r=a.getBoundingClientRect(),h=window.innerHeight||document.documentElement.clientHeight;
+  if(r.bottom>h||r.top<0)a.scrollIntoView({block:'nearest',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
+}
 function dzGoPage(id,p,focus=false){
   const st=dzPg[id];
   if(!st)return;
@@ -9249,6 +9321,7 @@ function dzGoPage(id,p,focus=false){
   const nav=document.querySelector(`[data-dzpager="${typeof CSS!=='undefined'&&CSS.escape?CSS.escape(id):id}"]`);
   const card=nav&&nav.closest?nav.closest('.dz-card,section'):null;
   if(card&&card.getBoundingClientRect&&card.getBoundingClientRect().top<0&&card.scrollIntoView)card.scrollIntoView({block:'start',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
+  else dzPagerInView();
   if(focus){const b=document.querySelector(`[data-focus-key="pg-${id}-${n}"]`);if(b&&b.focus)b.focus();}
 }
 function dzPagerKey(ev,id){
@@ -10191,7 +10264,7 @@ function supPurchaseOrders(m){
   if(view==='received'){
     const stat=(label,v,s,tone,tipText)=>`<div class="sup-tile static dz-fade"${tipAttr(tipText)}><span class="sup-tile-l">${esc(label)}</span><span class="sup-tile-v${tone?` ${tone}`:''}">${v}</span><span class="sup-tile-s">${esc(s)}</span></div>`;
     const hitRate=poReschedulePerf.closed.length;
-    return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+    return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
       <div class="sup-tiles">
         ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',scored?`On time, last 3 months: ${fmtNum(poOtd3Mo.rate)}%\n• ${fmtNum(onTime)} of ${fmtNum(scored)} receipts by the original date\n• ${money(poOtdAmt)} received`:'On time, last 3 months: no receipts to score.')}
         ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}\n• ${ordersN(supDocs(poReceivedThisWeekRows))} · ${supLines(poReceivedThisWeekRows.length)}\n• ${money(poReceivedWeekAmt)}`)}
@@ -10329,7 +10402,7 @@ function supPurchaseOrders(m){
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,body:tbl}); // 2v6.9 (owner): no summary line under the title
   const linesWrap=`<div id="po-linked-lines" class="dz-grid sup-anchor">${linesCard}</div>`;
 
-  return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+  return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
     <div class="sup-tiles po-strip">${tiles.map(tileHtml).join('')}</div>
     <div class="dz-stats sup-more-views po-fill" style="--po-cols:${extraCount<=6?extraCount:Math.ceil(extraCount/2)}" role="group" aria-label="More purchase order views">${extraHtml}</div>
     <div class="dz-grid">${recvCard(3)}${byCard}</div>
@@ -10573,7 +10646,7 @@ function poKitCmCardHtml(open,today){
   return dzCard({title:'Kits by CM and month',sm:true,cls:'po-kitcm dz-fade',span:6,
     meta:`<span class="kc-meta"><b>${fmtNum(tAll-tNot)}</b> of ${fmtNum(tAll)} kits clean</span>`,
     tip:'CM kits (open PO lines) by month\n• ✓ clean, or not clean yet\n• Green all clean, amber some not, red past due\nClick a cell or a CM to list its lines.',
-    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="sup-tbl kc-tbl"><thead><tr><th scope="col">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc-mo">${esc(l)}</th>`).join('')}<th scope="col" class="num"${tipAttr('Not clean of all kits.')}>Not clean</th></tr></thead><tbody>${rows}</tbody></table></div>
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="sup-tbl kc-tbl" style="--min:${(shown.length+2)*110}px"><thead><tr><th scope="col">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc-mo">${esc(l)}</th>`).join('')}<th scope="col" class="num"${tipAttr('Not clean of all kits.')}>Not clean</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div class="kc-legend" aria-hidden="true"><span><i class="ok"></i>All clean</span><span><i class="warn"></i>Some not clean</span><span><i class="bad"></i>Past due, not clean</span></div>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
 }
 // --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
@@ -11852,7 +11925,7 @@ function renderGlobalSearchPage(m){
   const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Sales Order Health')}</button>`;
   const s=globalSearchResults(m);
   if(s.q.length<2)return miscEmpty('Type at least 2 characters','Search covers order lines, supply / demand and Clear To Build.',back);
-  if(!s.total)return miscEmpty(`No matches for “${s.q}”`,'Try fewer words, an item code, an SO or PO number, a customer or a tracking number.',back);
+  if(!s.total)return miscEmpty('No matches for','Try fewer words, an item code, an SO or PO number, a customer or a tracking number.',back,s.q);
   const hl=searchHighlighter(s.terms);
   const matched=v=>s.terms.some(t=>String(v||'').toLowerCase().includes(t));
   const has=v=>String(v??'').trim()!=='';
@@ -11911,8 +11984,9 @@ function renderGlobalSearchPage(m){
   return `<div class="misc-search search-results">${linesCard||(other?`<div class="misc-back print-hide">${back}</div>`:'')}${other}</div>`;
 }
 // A quiet empty state: a glass card with an icon, one line of what happened, one line of what to try, and the action.
-function miscEmpty(title,sub,actions=''){
-  return `<section class="dz-card misc-empty rise" role="status"><span class="misc-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><h2 class="dz-title sm">${esc(title)}</h2><p class="dz-sub">${esc(sub)}</p>${actions?`<div class="misc-empty-actions">${actions}</div>`:''}</section>`;
+// q: typed text quoted after the title, kept as typed (titles are capitalised).
+function miscEmpty(title,sub,actions='',q=''){
+  return `<section class="dz-card misc-empty rise" role="status"><span class="misc-empty-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span><h2 class="dz-title sm">${esc(title)}${q?` <span class="dz-asis">“${esc(q)}”</span>`:''}</h2><p class="dz-sub">${esc(sub)}</p>${actions?`<div class="misc-empty-actions">${actions}</div>`:''}</section>`;
 }
 // Redraws rebuild the sidebar and the page; put focus, typed text and the caret back on the same control.
 function captureFocus(root){
@@ -17587,6 +17661,7 @@ function shpGoPage(id,p,focus=false){
   if(typeof document==='undefined'||!document.querySelector)return;
   const card=document.querySelector(`#results-screen ${sel}`);
   if(card&&card.getBoundingClientRect&&card.getBoundingClientRect().top<0&&card.scrollIntoView)card.scrollIntoView({block:'start',behavior:typeof motionAllowed==='function'&&motionAllowed()?'smooth':'auto'});
+  else dzPagerInView();
   if(focus){const b=document.querySelector(`[data-focus-key="ship-pg-${id}-${shpPg[id]}"]`);if(b&&b.focus)b.focus();}
 }
 function shpPagerKey(ev,id){
@@ -17808,12 +17883,13 @@ function renderShipRow(s,idx=0){
   const i=Math.min(idx,14);
   const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
   const loc=shpLastLocation(s);
+  const stageText=SHIP_STAGES[s.status?s.pos:0][1]; // not repeated when the state says the same ("In transit")
   return `<div class="shp-row${open?' open':''} dz-fade" style="--i:${i}">
     <div class="shp-line">
       <button type="button" class="shp-head" data-focus-key="ship-${esc(n)}" aria-expanded="${open?'true':'false'}"${open?` aria-controls="ship-detail-${esc(n)}"`:''} onclick="toggleShipment('${esc(n)}')" data-tip="${esc(tipText)}">
         <span class="shp-trk">${shpCarrierBadge(s)}<span class="shp-trk-t"><b>${esc(shipFmtTrack(n))}</b></span></span>
         <span class="shp-ord"><b>${esc(orderTop)}</b><em>${esc(orderSub)}</em></span>
-        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span><span class="shp-stage">${esc(SHIP_STAGES[s.status?s.pos:0][1])}</span></span>${loc?`<span class="shp-loc">Last: ${esc(loc)}</span>`:''}</span>
+        <span class="shp-prog"${tipAttr(progTip)}>${dzProg({stage,tone,labels:SHIP_STAGES.map(x=>x[1]),i:2.5+i/3})}<span class="shp-prog-t"><span class="shp-st${stTone}">${esc(shipStateLabel(s))}</span>${stageText===shipStateLabel(s)?'':`<span class="shp-stage">${esc(stageText)}</span>`}</span>${loc?`<span class="shp-loc">Last: ${esc(loc)}</span>`:''}</span>
         <span class="shp-eta"><b${eta.topTone?` class="${eta.topTone}"`:''}>${esc(eta.top)}</b>${eta.sub?`<em${eta.subTone?` class="${eta.subTone}"`:''}>${esc(eta.sub)}</em>`:''}</span>
         <span class="sr-only">${esc(stepText)}</span>
       </button>
