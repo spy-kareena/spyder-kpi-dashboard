@@ -124,7 +124,7 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   assert.deepEqual(ths.slice(0, 8).map((t) => t.split(':')[0]), ['item', 'desc', 'wh', 'month', 'dem', 'sup', 'short', 'status']);
   assert.ok(ths.includes('sup:Supply Qty') && ths.includes('short:Short Qty'), ths.join(', '));
   assert.doesNotMatch(h.slice(h.indexOf('ohl-sd')), /class="sup-grp"/);
-  assert.match(h, /<td class="ohs-wh" data-label="Warehouse">[^<]+<\/td>/);
+  assert.match(h, /<td class="ohs-wh sup-soft" data-label="Warehouse">[^<]+<\/td>/);
   page.run("supSdSort('short')");
   assert.match(html(page), /<th class="num" aria-sort="descending"><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-short"/);
   page.run("supSdSort('short')");

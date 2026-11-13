@@ -4025,7 +4025,7 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 .ohl-sd th[aria-sort] .ohs-th{color:var(--dz-indigo-deep);font-weight:500}
 .ohl-sd th[aria-sort] .sort-arrow{opacity:1}
 .ohl-sd .sup-sd .c-wh{width:150px}
-.ohl-sd td.ohs-wh{font-size:13px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap}
+.ohl-sd td.ohs-wh{white-space:nowrap} /* the Description column's look (sup-soft) */
 .ohs-st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--dz-ink-2);vertical-align:middle}
 .ohs-st i{width:7px;height:7px;border-radius:50%;background:var(--dz-ink-5);flex:none}
 .ohs-st.red{color:var(--dz-risk-text)}.ohs-st.red i{background:var(--dz-risk)}
@@ -10441,7 +10441,7 @@ function supSdItemsCard(m){
   const rowsHtml=pg.rows.map(r=>{
     const st=supSdStatus(r),shortBy=shortOf(r);
     // The status is data, not a control: a coloured dot and its word, its detail small underneath, lined up with the word.
-    return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="ohs-wh" data-label="Warehouse">${esc(supWh(supplyWarehouse(r)))}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand Orders':'Demand Qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply Qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short Qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply"><span class="ohs-st${st.tone?` ${st.tone}`:''}"><i aria-hidden="true"></i>${esc(st.label)}</span>${st.detail?`<span class="ohs-st-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
+    return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="ohs-wh sup-soft" data-label="Warehouse">${esc(supWh(supplyWarehouse(r)))}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand Orders':'Demand Qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply Qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short Qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply"><span class="ohs-st${st.tone?` ${st.tone}`:''}"><i aria-hidden="true"></i>${esc(st.label)}</span>${st.detail?`<span class="ohs-st-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
   }).join('');
   const shortN=new Set(shortageRows.map(itemKey)).size,riskN=new Set(riskRows.map(itemKey)).size;
   // The numbers (data) under the title.
