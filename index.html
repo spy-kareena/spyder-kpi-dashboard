@@ -3568,7 +3568,9 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .ohl-tile-l.dz-ico-l{gap:6px}.ohl-tile-l .dz-ico{width:18px;height:18px;border-radius:6px}.ohl-tile-l .dz-ico svg{width:11px;height:11px}
 @media print{.dz-ico{background:none}}
 /* Card titles Capitalize Each Word (the words stay as written in the code, for screen readers and copy) */
-.dz-title,.dz-card-head h2,.ohl-sec-title,.ohl-sec-sub,.section-title,.need-title,.misc-need-title,.sup-need-title{text-transform:capitalize}
+/* 2v6.9: titles are Title Case in the text itself (dzTitleCase after each draw), not CSS capitalize, which raised
+   every word ("Short Or At-Risk Items") */
+.dz-title,.dz-card-head h2,.ohl-sec-title,.ohl-sec-sub,.section-title,.need-title,.misc-need-title,.sup-need-title{text-transform:none}
 /* Collapsible line tables: a chevron before the title folds the card to its header (screen only; print shows all) */
 .dz-collapse-btn{display:inline-grid;place-items:center;flex:none;width:28px;height:28px;margin:0 2px 0 -6px;border:0;border-radius:50%;background:transparent;color:var(--dz-ink-4);cursor:pointer;transition:transform .2s ease,background .15s}
 .dz-collapse-btn:hover{background:var(--dz-fill-1);color:var(--dz-ink-1)}
@@ -10651,6 +10653,7 @@ function kitUpdateTiles(){
   const swap=(sel,html)=>{const old=document.querySelector(sel);if(!old||!html)return;const b=document.createElement('div');b.innerHTML=html;const f=b.firstElementChild;if(f)old.innerHTML=f.innerHTML;};
   swap('.br-card',poBuildRiskCardHtml(poBuildRiskData(open0,today0),poTileFilter||'late'));
   swap('.po-kitcm',poKitCmCardHtml(open0,today0));
+  dzTitleCase(document.getElementById('results-screen')); // the swapped cards' titles
   const el=document.querySelector('.kit-card');
   if(!el)return;
   const open=d.filteredPoOpen;
@@ -13582,6 +13585,7 @@ function renderResults(){
   el.innerHTML=html;
   dzDecorateIcons(el);
   dzDecorateCollapse(el);
+  dzTitleCase(el);
   dzFitTables(el);
   stgBentoFit(); // 2v9: Settings tiles pack as a bento (a no-op on other pages)
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
@@ -15860,6 +15864,58 @@ const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
 const DZ_OPEN_BY_DEFAULT=new Set(['shipping:shipments','weekly:short or at-risk items','weekly:all open demand']);
 function dzCollapsedMap(){
   try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
+}
+// Title Case (2v6.9, owner): card, section and page titles, table column headings and metric names. Main words get a
+// capital; short joining words (a, of, by, or, in, to …) stay lower unless first or last in their part (parts split at
+// " · ", " / ", ":" and brackets). A word that already has a capital or starts with a digit (PO, CM, SAP, AquaHot,
+// 30d, '27) is left as it is, so names and codes never change. Runs on the text only; aria-labels and tips keep theirs.
+const DZ_TC_SEL=['.dz-title','.ohl-sec-title','.ohl-sec-sub','.section-title','.need-title','.misc-need-title','.sup-need-title','.stg-subt',
+  '#results-screen h1','#results-screen h2','#results-screen h3','#results-screen thead th','.dz-th>span','.ohl-sup-th>span','.ohs2-cols>span',
+  '.dz-stat-l','.sup-tile-l','.shp-tile-l','.ohl-tile-l','.ohl-stat-l','.misc-tile-l','.mwm-kpi-l','.kpi-label','.stat-label','.ohl-fig-l','.po-own-name'].join(',');
+const DZ_TC_MINOR=new Set(['a','an','the','and','but','or','nor','for','so','yet','as','at','by','in','of','off','on','per','to','up','via','vs','from','with','into']);
+function dzTitleCaseWords(words){
+  // words: [{t, seg}] in order; seg = the part it belongs to. First and last word of each part always get a capital.
+  const first=new Set(),last=new Map();
+  words.forEach((w,i)=>{if(!words.some((x,j)=>j<i&&x.seg===w.seg))first.add(i);last.set(w.seg,i);});
+  const lasts=new Set(last.values());
+  return words.map((w,i)=>w.t.split('-').map((p,k)=>{
+    if(!p||/[A-Z]/.test(p)||!/^[a-z]/.test(p))return p;
+    const edge=(first.has(i)&&k===0)||lasts.has(i);
+    // A hyphenated word keeps its first part capitalised ("At-Risk", "On-Time").
+    if(!edge&&k===0&&DZ_TC_MINOR.has(p)&&!w.t.includes('-'))return p;
+    return p[0].toUpperCase()+p.slice(1);
+  }).join('-'));
+}
+function dzTitleCaseEl(el){
+  if(!el||el.dataset&&el.dataset.tc==='done')return;
+  const doc=el.ownerDocument;
+  if(!doc||!doc.createTreeWalker)return;
+  const walker=doc.createTreeWalker(el,4);
+  // Hidden descriptions (screen-reader-only text, tip copies) keep their sentence case.
+  const hidden=n=>{const p=n.parentElement;return !!(p&&p.closest&&p.closest('.sr-only,[id^="tipd-"],[data-tip-copy],[hidden]'));};
+  const nodes=[];for(let n=walker.nextNode();n;n=walker.nextNode())if(!hidden(n))nodes.push(n);
+  const words=[],refs=[];let seg=0;
+  nodes.forEach((n,ni)=>{
+    // Text inside a button that sorts a column still counts; skip form fields' text.
+    n.nodeValue.split(/(\s+|·|\/|:|\(|\)|–|—|&)/).forEach((tok,ti)=>{
+      if(/^(·|\/|:|\(|\)|–|—)$/.test(tok)){seg++;return;}
+      if(/^[A-Za-z][A-Za-z'’.-]*$/.test(tok)){words.push({t:tok,seg});refs.push([ni,ti]);}
+    });
+  });
+  if(!words.length)return;
+  const out=dzTitleCaseWords(words);
+  const byNode=new Map();refs.forEach(([ni,ti],k)=>{if(!byNode.has(ni))byNode.set(ni,new Map());byNode.get(ni).set(ti,out[k]);});
+  byNode.forEach((m,ni)=>{
+    const parts=nodes[ni].nodeValue.split(/(\s+|·|\/|:|\(|\)|–|—|&)/);
+    m.forEach((v,ti)=>{parts[ti]=v;});
+    const next=parts.join('');
+    if(next!==nodes[ni].nodeValue)nodes[ni].nodeValue=next;
+  });
+  if(el.dataset)el.dataset.tc='done';
+}
+function dzTitleCase(root){
+  if(!root||!root.querySelectorAll)return;
+  try{root.querySelectorAll(DZ_TC_SEL).forEach(dzTitleCaseEl);}catch(err){/* titles keep their text */}
 }
 // Column titles never overlap (2v6.9, owner, every table on the board): after each draw, a column whose title is wider
 // than the column gets the room it needs (its <col> or title cell), plus a small gap; the table then grows past its
