@@ -578,7 +578,7 @@ test('open order states always show in the Status card (no Show more); the two m
   const [byMonth, items] = months.split('<details class="ohl-fold"').slice(1);
   assert.match(byMonth, /<div class="ohl-fold-body"><div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div>/);
   assert.match(byMonth, /<td class="m">Aug 2026<\/td>[\s\S]*?<span>\$3,000<\/span>[\s\S]*?<td class="num">\$21,700<\/td>/);
-  assert.match(byMonth, /<p class="ohl-note ohl-foot-note">1 open lines? \(\$8,000\) with no commit date are not in these months\.<\/p>/);
+  assert.match(byMonth, /<p class="ohl-note ohl-foot-note">1 open line \(\$8,000\) with no commit date is not in these months\.<\/p>/);
   assert.match(items, /<div class="ohl-fold-tools">[\s\S]*?<select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="Show one original month\."/);
   assert.equal(page.run('moMonthlyParts(currentMetrics(),momSource(currentMetrics()),reportToday()).notShippedSpec().items.length'), 8);
   // Opening one is remembered without a redraw, and kept by the next one; print opens both and leaves the choice alone.
