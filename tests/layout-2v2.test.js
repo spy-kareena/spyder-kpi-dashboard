@@ -413,14 +413,15 @@ test('override names show in the owner\'s words everywhere; stored values, saved
 
 // --- Page layout ---------------------------------------------------------------------------------------
 // 2v6: the views are bento grids of cards (dzCard): each card is named by its title, or by its aria-label when the
-// card has no title (Status and top reasons, 2v6.9). Lagging then has named groups (Shipments, Metrics).
+// card has no title (Status and top reasons, 2v6.9; Lagging's Trend). Lagging has no named groups any more: its
+// Metrics and Shipments groups became four cards (Version 1, the owner's pick).
 const cardNames = (m) => [...m.matchAll(/<section class="dz-card[^"]*"([^>]*)>(?:<div class="dz-card-head[^"]*">\s*(?:<div class="ohl-lines-title">)?<h2 class="dz-title[^"]*"[^>]*>([^<]+)<\/h2>)?/g)]
   .map((x) => x[2] || (/aria-label="([^"]+)"/.exec(x[1]) || [])[1] || '(no name)');
 const groups = (m) => [...m.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]*")? aria-labelledby="([^"]+)"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="([^"]+)"[^>]*>([^<]+)<\/h2>/g)]
   .map((x) => { assert.equal(x[1], x[2], 'each group is labelled by its own title'); return x[3]; });
 const panel = (m, view) => m.match(new RegExp(`<div class="oh-panel" role="tabpanel" id="oh-panel-${view}"[^>]*>[\\s\\S]*?(?=<div class="oh-panel" role="tabpanel"|$)`))[0];
 
-test('Sales Order Health reads as cards in a set order: Leading ends with its Lines card; Lagging is Monthly, Quarterly, then Metrics and Shipments', async () => {
+test('Sales Order Health reads as cards in a set order: Leading ends with its Lines card; Lagging is Monthly, Quarterly, then Trend, Month by month, By warehouse and Booked vs shipped', async () => {
   const page = await withStatuses();
   const lead = panel(html(page), 'leading');
   // 2v6.9: At risk beside the ship target over Status & top reasons; then due weeks and customers; Monthly's forward
@@ -437,8 +438,26 @@ test('Sales Order Health reads as cards in a set order: Leading ends with its Li
   // Lagging.
   page.run("setWeeklyView('lagging')");
   const lag = panel(html(page), 'lagging');
-  assert.deepEqual(cardNames(lag.slice(0, lag.indexOf('<section class="pg-group'))), ['Monthly', 'Quarterly']);
-  assert.deepEqual(groups(lag), ['Metrics', 'Shipments']);
+  // Version 1 (owner's pick): the period cards, then one grid of four cards; no page groups (Metrics and Shipments,
+  // with their tiles, charts, month cards and shipped-to-date strip, are gone).
+  assert.deepEqual(cardNames(lag), ['Monthly', 'Quarterly', 'Trend', 'Month by month', 'By warehouse', 'Booked vs shipped']);
+  assert.deepEqual(groups(lag), []);
+  assert.doesNotMatch(lag, /class="pg-group|id="ohg-shipments"|class="mwm-kpi[ "]|month-card|month-spot|mini-strip/);
+  // Trend (the card setTab('metrics') scrolls to) and Month by month run the full width; the last two share a row.
+  assert.deepEqual([...lag.matchAll(/<section class="dz-card (dz-span-\d)/g)].map((x) => x[1]), ['dz-span-3', 'dz-span-3', 'dz-span-6', 'dz-span-6', 'dz-span-3', 'dz-span-3']);
+  assert.match(lag, /<\/section><\/div><div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title"[^>]*>Trend<\/h2><div class="ohgt-chips" role="group" aria-label="Metric">/);
+  // The cards carry this export's numbers. Its four deliveries all shipped in August (one early, one on time, one 2
+  // and one 5 days late: 50% on time, 3.5 days late on average, 2 late orders, $3,000); nothing has shipped in
+  // September, so August is the newest month with orders and By warehouse (this month) is empty.
+  assert.deepEqual(page.run('mwmMetricsData(currentMetrics()).months.slice(10).map(r=>[r.orders,r.otd,r.perfect,r.days,r.lateOrders])'), [[4, 50, 0, 3.5, 2], [0, null, null, null, 0]]);
+  assert.match(lag, /<h3 data-tip="Shipped by the original date\.">On-time delivery · August<\/h3>\s*<div class="ohgt-now"><span>50%<\/span><\/div>/);
+  assert.match(lag, /Why orders were late · August<\/h3><ul class="mwm-causes"><li data-tip="Past due · No reschedule: 2 orders of 2 late in August\."><span class="mwm-cause-l">Past due · No reschedule<\/span><b class="mwm-cause-v">2<\/b><\/li><\/ul>/);
+  assert.match(lag, /<b>September so far:<\/b> 0 orders · \$0 shipped · year to date \$3K<\/p>/);
+  assert.match(lag, /<td class="k">Sep 2026 <span class="mwm-todate">to date<\/span><\/td><td class="num">0<\/td><td class="num">\$0<\/td><td class="num">—<\/td><td class="num">—<\/td><td class="num">—<\/td><td class="num">0<\/td><\/tr><tr><td class="k">Aug 2026<\/td><td class="num">4<\/td><td class="num">\$3K<\/td><td class="num"><span class="dz-chip red">50%<\/span><\/td><td class="num">0%<\/td><td class="num">3\.5<\/td><td class="num late">2<\/td><\/tr>/);
+  assert.match(lag, /By warehouse<\/h2><span class="dz-meta">September · 0 orders<\/span><\/div><p class="empty-note">No deliveries in this range\.<\/p>/);
+  // Booked vs shipped: August's seven open lines are the $35,700 of the Lines chip above; $3,000 of $38,700 shipped.
+  assert.deepEqual([...lag.slice(lag.indexOf('>Booked vs shipped</h2>')).matchAll(/<td class="k">([^<]+)<\/td><td class="num">([^<]+)<\/td><td class="num">([^<]+)<\/td><td class="num(?: late)?">([^<]+)<\/td>/g)].map((x) => x.slice(1)),
+    [['Aug 2026', '8%', '$35,700', '2'], ['Oct 2026', '0%', '$1,500', '0']]);
   assert.doesNotMatch(lag, /id="linked-lines"/);
   // The old Hide calls no longer hide anything.
   page.run("setWeeklyView('leading');toggleLeadingIndicators();toggleLaggingIndicators()");
