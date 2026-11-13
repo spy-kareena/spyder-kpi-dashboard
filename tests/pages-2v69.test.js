@@ -48,7 +48,7 @@ test('Leading: the ship target sits over Status & top reasons in one column; Sta
   assert.match(status, /<span class="ohs2-meta"><b>\d+<\/b> open orders<\/span>/);
   assert.doesNotMatch(status, /ohs2-pct|ohs2-val|% past due/);
   assert.match(status, /<div class="ohl-sec-title"[^>]*>Status<\/div>[\s\S]*<div class="ohl-sec-title"[^>]*>Top reasons<\/div>/);
-  assert.match(status, /<table class="ohs2-heat">[\s\S]*<th scope="col" class="num">At risk<\/th><th scope="col" class="num">Lines<\/th><th scope="col" class="num">Orders<\/th>/);
+  assert.match(status, /<div class="ohr-grid" role="group" aria-label="Top at-risk reasons">[\s\S]*?class="ohr-tile/); // 2v6.9: reason tiles
   assert.doesNotMatch(status, /ohs2-track|ohl-track|dz-barrow/);
   page.run("setWeeklyTileFilter('st-ontrack')");
   assert.match(html(page), /data-focus-key="status-st-ontrack" aria-pressed="true"/);

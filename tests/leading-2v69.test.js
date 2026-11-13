@@ -228,18 +228,21 @@ test('Pull in: POs are handed to orders by date; a covering PO due after the ord
   assert.deepEqual(page.errors, []);
 });
 
-test('Customers at risk is a unit chart against each customer\'s own open orders; Top reasons is a reason × warehouse heatmap', async () => {
+test('Customers at risk is a unit chart against each customer\'s own open orders; Top reasons are tiles with a share ring', async () => {
   const page = await loaded();
   const h = html(page);
   // Firefly: SO 100 and 101, both open and past due: "2 of 2 at risk", two red squares; a legend names the colours.
   assert.match(h, /data-focus-key="offrow-FIREFLY"[\s\S]*?<span class="ohc-fig"><b>2<\/b> of 2 at risk<\/span>[\s\S]*?<span class="ohc-pips" role="img" aria-label="FIREFLY - Firefly RV: 2 of 2 open orders at risk \(2 past due\)"><i class="pd"><\/i><i class="pd"><\/i><\/span>/);
   assert.match(h, /<div class="ohc-legend" aria-hidden="true"><span><i class="pd"><\/i>Past due<\/span><span><i class="ar"><\/i>At risk<\/span><span><i><\/i>Fine<\/span><span class="ohc-unit">Each square: 1 open order<\/span><\/div>/);
   assert.doesNotMatch(h.slice(h.indexOf('ohc-list'), h.indexOf('ohc-legend')), /ohl-track|dz-grow/);
-  // Top reasons: a table, reasons as row headers (buttons that filter), warehouses as columns, totals at the end.
-  const heat = h.slice(h.indexOf('<table class="ohs2-heat">'), h.indexOf('</table>', h.indexOf('<table class="ohs2-heat">')));
-  assert.ok(heat.length > 100, 'the heatmap is drawn');
-  assert.match(heat, /<th scope="row"><button type="button" class="ohs2-rname" data-focus-key="oh-reason-[^"]+" aria-pressed="false" onclick="setWeeklyReasonFilter\(/);
-  assert.match(heat, /<td class="ohs2-hc[^"]*" style="--mix:\d+%"[^>]*>\d+<\/td>/);
+  // Top reasons (2v6.9 redesign): a tile per reason with a ring for its share of the at-risk orders, its figures and
+  // where it is worst; the tile filters to the reason.
+  const tiles = h.slice(h.indexOf('<div class="ohr-grid"'), h.indexOf('ohl-foot-note', h.indexOf('<div class="ohr-grid"')));
+  assert.ok(tiles.length > 100, 'the reason tiles are drawn');
+  assert.match(tiles, /<button type="button" class="ohr-tile" data-focus-key="oh-reason-[^"]+" aria-pressed="false" onclick="setWeeklyReasonFilter\(/);
+  assert.match(tiles, /<circle class="ohr-arc" cx="22" cy="22" r="17" stroke-dasharray="[\d.]+ [\d.]+"/);
+  assert.match(tiles, /<span class="ohr-pct">\d+<small>%<\/small><\/span>/);
+  assert.match(tiles, /<span class="ohr-wh">Most at [^<]+ · \d+<\/span>/);
   assert.deepEqual(page.errors, []);
 });
 
