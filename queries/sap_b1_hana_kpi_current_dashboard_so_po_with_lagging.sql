@@ -9,10 +9,7 @@
 -- InventoryItem (OITM.InvntItem) is N for charge, service, and text lines; the dashboard keeps them out of shipping KPIs.
 -- TrackingNumber, ShipMethod, ShipToCountry and ShipDate (added in 2v1) are filled on delivery rows only: the delivery's
 -- ODLN.TrackNo, its shipping type (OSHP.TrnspName), the ship-to country (CRD1, AdresType S) and the delivery date.
--- ShipToCity and ShipToState (added in 2v6.9), also on delivery rows only, are that ship-to address's City and State
--- (CRD1), for the Order Map's cities.
--- They feed the Shipping page (AfterShip tracking and the Order Map, see docs/SHIPPING.md); older exports without them
--- still load.
+-- They feed the Shipping page (live FedEx tracking, see docs/SHIPPING.md); older exports without them still load.
 SELECT
     CURRENT_DATE AS "ExportDate",
     'Sales Order' AS "SourceType",
@@ -139,8 +136,6 @@ SELECT
     CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
     CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
     CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
-    CAST(NULL AS NVARCHAR(100)) AS "ShipToCity",
-    CAST(NULL AS NVARCHAR(3)) AS "ShipToState",
     CAST(NULL AS DATE) AS "ShipDate"
 FROM ORDR T0
 INNER JOIN RDR1 T1 ON T0."DocEntry" = T1."DocEntry"
@@ -269,12 +264,9 @@ SELECT
     'Covered' AS "CoverageType",
     COALESCE(I."InvntItem", 'N') AS "InventoryItem",
     -- Shipping page (2v1): the delivery's tracking number, shipping type, ship-to country and delivery date.
-    -- 2v6.9: the ship-to city and state / province code, for the Order Map's cities.
     CAST(D0."TrackNo" AS NVARCHAR(100)) AS "TrackingNumber",
     CAST(SHP."TrnspName" AS NVARCHAR(100)) AS "ShipMethod",
     CAST(A."Country" AS NVARCHAR(3)) AS "ShipToCountry",
-    CAST(A."City" AS NVARCHAR(100)) AS "ShipToCity",
-    CAST(A."State" AS NVARCHAR(3)) AS "ShipToState",
     D0."DocDate" AS "ShipDate"
 FROM ODLN D0
 INNER JOIN DLN1 D1 ON D0."DocEntry" = D1."DocEntry"
@@ -417,8 +409,6 @@ SELECT
     CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
     CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
     CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
-    CAST(NULL AS NVARCHAR(100)) AS "ShipToCity",
-    CAST(NULL AS NVARCHAR(3)) AS "ShipToState",
     CAST(NULL AS DATE) AS "ShipDate"
 FROM OPOR T0
 INNER JOIN POR1 T1 ON T0."DocEntry" = T1."DocEntry"
@@ -545,8 +535,6 @@ SELECT
     CAST(NULL AS NVARCHAR(100)) AS "TrackingNumber",
     CAST(NULL AS NVARCHAR(100)) AS "ShipMethod",
     CAST(NULL AS NVARCHAR(3)) AS "ShipToCountry",
-    CAST(NULL AS NVARCHAR(100)) AS "ShipToCity",
-    CAST(NULL AS NVARCHAR(3)) AS "ShipToState",
     CAST(NULL AS DATE) AS "ShipDate"
 FROM OPDN R0
 INNER JOIN PDN1 R1 ON R0."DocEntry" = R1."DocEntry"

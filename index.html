@@ -9089,9 +9089,6 @@ function normalizeRows(raw){
       trackingNumber:shipSplit(pick(mapped,['trackingnumber','trackno','tracknumber','trackingno'])).join(', '),
       shipMethod:String(pick(mapped,['shipmethod','shippingmethod','shippingtype','trnspname'])??'').trim(),
       shipToCountry:String(pick(mapped,['shiptocountry','shiptocountrycode','countrys'])??'').trim().toUpperCase(),
-      // 2v6.9 cities: the ship-to city and state / province code (CRD1 City, State), for the Order Map.
-      shipToCity:String(pick(mapped,['shiptocity','citys'])??'').trim(),
-      shipToState:String(pick(mapped,['shiptostate','shiptostatecode','states'])??'').trim().toUpperCase(),
       shipDate:pick(mapped,['shipdate','shippeddate']),
       dueDate:pick(mapped,['duedate','soduedate','polinedate']),
       headerDueDate:pick(mapped,['headerduedate','soduedate','duedate']),
@@ -18328,8 +18325,6 @@ function shippingExportData(){
       if(r.name)s.names.add(String(r.name));
       if(!s.shipMethod&&r.shipMethod)s.shipMethod=r.shipMethod;
       if(!s.country&&r.shipToCountry)s.country=r.shipToCountry;
-      // 2v6.9 cities: the ship-to city and state / province of the same delivery row.
-      if(!s.toCity&&r.shipToCity){s.toCity=r.shipToCity;s.toRegion=r.shipToState||'';}
       // The delivery's own date: ShipDate, else ClosedDate (DocumentDate on delivery rows is the order's date).
       if(d&&(!s.shipDate||d>s.shipDate))s.shipDate=d;
       s.value+=share;
@@ -18372,7 +18367,7 @@ function shippingDecorate(s,hand,now,as){
   const lateDays=promised&&deliveredDate?daysBetweenDates(promised,deliveredDate):null;
   const eta=as&&as.eta&&status!=='delivered'?parseDate(day(as.eta)):null;
   const to=shipToPlace(s,as);
-  return {...s,mark,hand:hand||null,as:as||null,status,pos,marker:status==='delayed',stale,checkedAt:updatedAt,crossBorder,dest,promised,deliveredDate,lateDays,eta,customer:s.customer||[...(s.names||[])][0]||'',toCity:to.city,toRegion:to.region,toFrom:to.from};
+  return {...s,mark,hand:hand||null,as:as||null,status,pos,marker:status==='delayed',stale,checkedAt:updatedAt,crossBorder,dest,promised,deliveredDate,lateDays,eta,customer:s.customer||[...(s.names||[])][0]||'',toCity:to.city,toRegion:to.region,toCountry:to.country,toFrom:to.from};
 }
 function shippingWeek(now){
   const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
@@ -18392,7 +18387,7 @@ function shippingRealList(now=Date.now()){
     const have=all.get(e.number);
     if(have){have.manual=e;continue;}
     const rows=byOrder.get(e.order)||[];
-    all.set(e.number,{number:e.number,source:'manual',manual:e,rows:rows.filter(isOrderLineRow),orders:new Set(e.order?[e.order]:[]),deliveries:new Set(),names:new Set(rows.map(r=>r.name).filter(Boolean)),shipMethod:'',country:String((rows.find(r=>r.shipToCountry)||{}).shipToCountry||''),toCity:String((rows.find(r=>r.shipToCity)||{}).shipToCity||''),toRegion:String((rows.find(r=>r.shipToCity)||{}).shipToState||''),shipDate:null,value:0});
+    all.set(e.number,{number:e.number,source:'manual',manual:e,rows:rows.filter(isOrderLineRow),orders:new Set(e.order?[e.order]:[]),deliveries:new Set(),names:new Set(rows.map(r=>r.name).filter(Boolean)),shipMethod:'',country:String((rows.find(r=>r.shipToCountry)||{}).shipToCountry||''),shipDate:null,value:0});
   }
   const marks=shippingStatusEntries();
   const prio=shippingPriorityEntries();
@@ -18631,22 +18626,30 @@ function shipNE(lon,lat){
 // SHIP_CITY_DATA (built by tools/build-ship-cities.mjs from GeoNames, https://www.geonames.org, CC BY 4.0): every place
 // of 1,000 people or more in Canada and the United States by province / state, Mexico's of 20,000 or more and other
 // countries' cities of 300,000 or more. A group is read the first time a shipment needs it.
-const SHIP_ISO3={USA:'US',CAN:'CA',MEX:'MX'};
+// AfterShip gives three-letter country codes (USA, CAN, GBR).
+const SHIP_ISO3={USA:'US',CAN:'CA',MEX:'MX',GBR:'GB',IRL:'IE',FRA:'FR',DEU:'DE',NLD:'NL',BEL:'BE',LUX:'LU',CHE:'CH',AUT:'AT',
+  ITA:'IT',ESP:'ES',PRT:'PT',SWE:'SE',NOR:'NO',DNK:'DK',FIN:'FI',ISL:'IS',POL:'PL',CZE:'CZ',AUS:'AU',NZL:'NZ',JPN:'JP',
+  CHN:'CN',KOR:'KR',TWN:'TW',HKG:'HK',SGP:'SG',IND:'IN',BRA:'BR',ARG:'AR',CHL:'CL',COL:'CO',PER:'PE',ZAF:'ZA',ARE:'AE',
+  ISR:'IL',TUR:'TR',PRI:'PR'};
 const SHIP_CITY_WORDS={saint:'st',sainte:'st',ste:'st',st:'st',mount:'mt',mt:'mt',fort:'ft',ft:'ft'};
+// Letters that do not split into a base letter and an accent.
+const SHIP_CITY_CHARS={'ł':'l','ø':'o','æ':'ae','œ':'oe','ß':'ss','ı':'i','đ':'d','ð':'d','þ':'th'};
 // A place name as the table compares it: no accents or case, Saint / Ste -> st, Mount -> mt, Fort -> ft, letters and
-// digits only ("ST. JOHN'S" and "Saint John's" -> stjohns). tools/build-ship-cities.mjs uses the same rule.
+// digits only ("ST. JOHN'S" and "Saint John's" -> stjohns; "Wrocław" -> wroclaw). tools/build-ship-cities.mjs uses the
+// same rule.
 function shipCityNorm(v){
-  return String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' and ')
-    .split(/[^a-z0-9]+/).filter(Boolean).map(w=>SHIP_CITY_WORDS[w]||w).join('');
+  return String(v||'').toLowerCase().replace(/[łøæœßıđðþ]/g,ch=>SHIP_CITY_CHARS[ch]).normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/&/g,' and ').split(/[^a-z0-9]+/).filter(Boolean).map(w=>SHIP_CITY_WORDS[w]||w).join('');
 }
-let shipCityGroups=null;
+let shipCityGroups=null,shipCityKeys=[];
 const shipCityHits=new Map();
 function shipCityGroupKeys(){
   if(!shipCityGroups){
     shipCityGroups=new Map();
     for(const part of SHIP_CITY_DATA.split('|')){const at=part.indexOf('@');shipCityGroups.set(part.slice(0,at),{src:part.slice(at+1),map:null});}
+    shipCityKeys=[...shipCityGroups.keys()];
   }
-  return [...shipCityGroups.keys()];
+  return shipCityKeys;
 }
 // One group's places: name (as compared) -> {name, lon, lat}; the first of two with the same name is the bigger.
 function shipCityGroup(g){
@@ -18682,17 +18685,19 @@ function shipRegionKey(code,v){
   return shipRegionNames[`${code}:${shipCityNorm(t)}`]||'';
 }
 // The key of a ship-to city ('US-IN:elkhart'); '' when the table does not have it. A US or Canadian city with no state or
-// province is found only when one place in the country has its name. A ZIP or postal code after the name is ignored.
-function shipCityKey(code,region,city){
+// province at all is found only when one place in the country has its name; one with a state the table does not know
+// is not looked for (it could land in the wrong state). A ZIP or postal code after the name is ignored.
+function shipCityKey(code,region,city,stateGiven=false){
   const n=shipCityNorm(String(city||'').split(',')[0].trim().replace(/\s+(\d{5}(-\d{4})?|[A-Z]\d[A-Z]\s?\d[A-Z]\d)$/i,''));
   if(!n||!code)return '';
-  const memo=`${code}|${region}|${n}`;
+  const memo=`${code}|${region}|${n}|${stateGiven?1:0}`;
   if(shipCityHits.has(memo))return shipCityHits.get(memo);
   // "New York" is "New York City" in the table.
   const tries=[n,`${n}city`,n.length>4&&n.endsWith('city')?n.slice(0,-4):''].filter(Boolean);
   const look=g=>{const m=shipCityGroup(g),t=m&&tries.find(x=>m.has(x));return t?`${g}:${t}`:'';};
   let key='';
   if(region)key=look(region);
+  else if(stateGiven&&(code==='US'||code==='CA'))key='';
   else if(code==='US'||code==='CA'){
     const found=shipCityGroupKeys().filter(g=>g.startsWith(`${code}-`)).map(look).filter(Boolean);
     key=found.length===1?found[0]:'';
@@ -18713,31 +18718,36 @@ function shipLocParts(v){
   const region=String(parts[1]||'').replace(/\s+(\d{5}(-\d{4})?|[A-Z]\d[A-Z]\s?\d[A-Z]\d)$/i,'').trim();
   return {city:parts[0]||'',region,country};
 }
-// Where a shipment goes: SAP's ship-to address (ShipToCity / ShipToState on its delivery rows) first, else AfterShip:
-// the carrier's destination city, or once delivered the place of the delivery scan. AfterShip's is used only when its
-// country is the SAP ship-to country. {city, region, from} ('' when nothing says).
+// Where a shipment goes on the map (owner, 2v6.9 cities): AfterShip's destination only, not SAP's address. The carrier's
+// destination city and state, else once delivered the place of the delivery scan, else AfterShip's destination state
+// or country. The country is AfterShip's; the SAP ship-to country only helps find a city AfterShip names without one.
+// {city, region, country (two letters), from: 'AfterShip' | ''}; nothing until AfterShip has checked the number.
 function shipToPlace(s,as){
-  if(s&&s.toCity)return {city:String(s.toCity),region:String(s.toRegion||''),from:'SAP'};
-  const none={city:'',region:'',from:''};
-  if(!as)return none;
-  const cc=shipCountryCode(s&&s.country);
-  const same=v=>{const c=shipCountryCode(v);return !c||!cc||c===cc;};
-  if(as.destCity&&same(as.destCountry))return {city:String(as.destCity),region:String(as.destState||''),from:'AfterShip'};
+  const none={city:'',region:'',country:'',from:''};
+  if(!as||as.notFound)return none;
+  const asCc=shipCountryCode(as.destCountry),cc=asCc||shipCountryCode(s&&s.country);
+  const from='AfterShip';
+  if(as.destCity)return {city:String(as.destCity),region:String(as.destState||''),country:cc,from};
   if(as.state==='delivered'&&as.lastEvent&&as.lastEvent.city){
-    const p=shipLocParts(as.lastEvent.city);
-    if(p.city&&same(p.country||as.destCountry))return {city:p.city,region:p.region,from:'AfterShip'};
+    const p=shipLocParts(as.lastEvent.city),pc=p.country?shipCountryCode(p.country):cc;
+    if(p.city&&pc)return {city:p.city,region:p.region,country:pc,from};
   }
+  if(asCc)return {city:'',region:String(as.destState||''),country:asCc,from};
   return none;
 }
-// The place key of a shipment: its city ('US-IN:elkhart') when the table has it, else its US state / Canadian
-// province, else the country ('' = no ship-to country, or one the table does not know).
+// The place key of a shipment: its AfterShip destination city ('US-IN:elkhart') when the table has it, else that
+// state / province, else the country ('' = AfterShip has no destination for it yet, or a country the table does not
+// know).
 function shipPlaceKey(s){
-  const code=shipCountryCode(s&&s.country);
+  let code=shipCountryCode(s&&s.toCountry);
   if(!code)return '';
   // A city written with its state ("Goshen, IN") and no state of its own.
   const loc=shipLocParts(s.toCity);
-  const region=shipRegionKey(code,s.toRegion)||shipRegionKey(code,loc.region);
-  return (loc.city&&shipCityKey(code,region,loc.city))||region||code;
+  const stateText=String(s.toRegion||'').trim()||loc.region;
+  // Puerto Rico is its own place on the map, even when SAP files it under the US.
+  if(code==='US'&&/^(PR|PUERTO RICO)$/i.test(stateText))code='PR';
+  const region=shipRegionKey(code,stateText);
+  return (loc.city&&shipCityKey(code,region,loc.city,!!stateText))||region||code;
 }
 // Several nearby places share one map dot: their keys joined by "+".
 function shipPlaceName(key){
@@ -18762,12 +18772,20 @@ function shipPlaceCoord(key){
 function shipDestMatch(s){
   return !shipDestSel||shipDestSel.split('+').includes(shipPlaceKey(s));
 }
-// Ship to, in a shipment's details: "Elkhart, IN · United States (US)"; a city the table does not have is shown as
-// written.
+// The ship-to city of a shipment: "Elkhart, IN", "Monterrey"; a city the table does not have as written (its state
+// added unless the text already has one); '' when none is known.
+function shipToCityText(s){
+  const key=shipPlaceKey(s),c=key.includes(':')?shipCityAt(key):null;
+  if(c)return c.group.length===5?`${c.name}, ${c.group.slice(3)}`:c.name;
+  const city=String(s.toCity||'').trim();
+  if(!city)return '';
+  const st=String(s.toRegion||'').trim();
+  return st&&!city.includes(',')?`${city}, ${st}`:city;
+}
+// Ship to, in a shipment's details: AfterShip's destination city and country ("Elkhart, IN · United States (US)"),
+// else the SAP ship-to country.
 function shipToText(s){
-  const key=shipPlaceKey(s),country=shipCountryName(s.dest);
-  const city=key.includes(':')?shipPlaceName(key):s.toCity?[String(s.toCity).trim(),String(s.toRegion||'').trim()].filter(Boolean).join(', '):'';
-  return [city,country].filter(Boolean).join(' · ');
+  return [shipToCityText(s),shipCountryName(s.toCountry||s.dest)].filter(Boolean).join(' · ');
 }
 // Shipments grouped by place; a place is delayed (red) if any of its shipments is, else on the way (indigo) while any
 // is not delivered, else delivered (teal).
@@ -18815,11 +18833,11 @@ function shipPlaceLabel(p){
   const ms=p&&p.members;
   return ms&&ms.length>1?`${shipPlaceShort(ms[0].key)} +${ms.length-1}`:shipPlaceShort(p&&p.key);
 }
-// The dot is picked: the Destination filter is its place, or every place picked is in it.
+// The dot is picked: it holds the (first) place the Destination filter names. Dots are shared by scale, so after a resize
+// the picked places may sit in two dots; the one with the first place shows the pick and clears it on a click.
 function shpDotSel(p){
   if(!shipDestSel)return false;
-  const mine=String(p.key).split('+');
-  return shipDestSel.split('+').every(k=>mine.includes(k));
+  return String(p.key).split('+').includes(shipDestSel.split('+')[0]);
 }
 // Places whose dots would overlap at the drawn size (Elkhart, Goshen and Middlebury, IN) share one dot where the
 // busiest is, sized by them all; its tip names each. u: map units per pixel. dots come busiest first.
@@ -18938,7 +18956,7 @@ function renderShipMap(list){
   };
   // 2v6.9b: the legend (and the no-ship-to-country note) sit small over the faded bottom-left of the map (owner): the
   // labels keep out of that corner, and a dot that would fall in it moves the view's bottom down.
-  const noPlaceText=unplaced?`${shipPlural(unplaced,'shipment','shipments')} with no ship-to country`:'';
+  const noPlaceText=unplaced?`${shipPlural(unplaced,'shipment','shipments')} waiting for AfterShip`:'';
   const footBox=v=>{
     const vx=phone?x0+(-v.shift/v.zoom)*v.vw:x0;
     const room=(phone?shpMapCol():lay?lay.w-lay.pw:shpMapCol())-60;
@@ -18961,26 +18979,30 @@ function renderShipMap(list){
   const taken=[[hub[0]-12*u,hub[1]-12*u,24*u,24*u],footBox({vw,vh,zoom,shift,u})];
   const inside=r=>r[0]>=vx0+2*u&&r[0]+r[2]<=vx1-2*u&&r[1]>=y0+2*u&&r[1]+r[3]<=y1-2*u;
   const free=r=>inside(r)&&!taken.some(t=>r[0]<t[0]+t[2]&&r[0]+r[2]>t[0]&&r[1]<t[1]+t[3]&&r[1]+r[3]>t[1]);
+  // Above, below, right, left, then the four corners.
   const place=(cx,cy,rad,px)=>{
-    const w=px*u,h=14*u,g=4*u;
-    const c=[[cx-w/2,cy-rad-g-h],[cx-w/2,cy+rad+g],[cx+rad+g,cy-h/2],[cx-rad-g-w,cy-h/2]].map(([x,y])=>[x,y,w,h]).find(free);
+    const w=px*u,h=14*u,g=4*u,r=rad*.72;
+    const c=[[cx-w/2,cy-rad-g-h],[cx-w/2,cy+rad+g],[cx+rad+g,cy-h/2],[cx-rad-g-w,cy-h/2],
+      [cx+r+g,cy-r-g-h],[cx+r+g,cy+r+g],[cx-r-g-w,cy-r-g-h],[cx-r-g-w,cy+r+g]].map(([x,y])=>[x,y,w,h]).find(free);
     if(c)taken.push(c);
     return c?[c[0]+w/2,c[1]+h/2]:null;
   };
   const hubText='Spyder · Lacombe';
-  const hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);
   const labels=[];
-  dots.forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
-  // 2v6.9 cities: only the busiest places are named (SHP_MAP_LABELS, 4 on a phone), and a picked one; the other dots
-  // name their places in their tips.
-  const maxLabels=phone?4:SHP_MAP_LABELS;
-  dots.forEach(({p,xy,d},i)=>{
-    const sel=shpDotSel(p);
-    if(i>=maxLabels&&!sel)return;
+  // 2v6.9 cities: only the busiest places are named: up to SHP_MAP_LABELS on a wide screen or in print, 5 below 981px,
+  // 3 on a phone, a picked one first; the other dots name their places in their tips. A dot whose label fits nowhere
+  // gives its turn to the next. Labels keep clear of the hub, the legend, each other and the dots likely to be named;
+  // they may cover a small unnamed dot. The hub's label comes after them, where there is room.
+  const maxLabels=phone?3:lay||printMode?SHP_MAP_LABELS:5;
+  const order=dots.map((dt,i)=>({...dt,i,sel:shpDotSel(dt.p)})).sort((a,b)=>(b.sel-a.sel)||(a.i-b.i));
+  order.slice(0,maxLabels+4).forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
+  for(const {p,xy,d} of order){
+    if(labels.length>=maxLabels)break;
     const text=shipPlaceLabel(p);
     const pos=place(xy[0],xy[1],d*u/2,text.length*6.4+8);
-    if(pos)labels.push(`<span class="shp-lbl${i>=3&&!sel?' minor':''}" style="${at(pos)}">${esc(text)}</span>`);
-  });
+    if(pos)labels.push(`<span class="shp-lbl" style="${at(pos)}">${esc(text)}</span>`);
+  }
+  const hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);
   const routes=dots.map(({p,c},i)=>{
     const d=shipArcPath([SHIP_HUB.lon,SHIP_HUB.lat],[c.lon,c.lat]);
     return d?`<path class="shp-route ${p.state}" style="--i:${i}" d="${d}"/>`:'';
@@ -18991,12 +19013,12 @@ function renderShipMap(list){
     return `<button type="button" class="shp-dot ${p.state}${sel?' sel':''}" style="${at(xy)};width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;margin:${(-d/2).toFixed(2)}px 0 0 ${(-d/2).toFixed(2)}px;--i:${i}" data-focus-key="ship-dot-${esc(p.key)}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(`${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}`)}" onclick="shipPickDest('${sel?'':esc(p.key)}')" data-tip="${esc(tip)}"></button>`;
   }).join('');
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
-  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('No known ship-to country: in the table, not on the map.')}>${esc(noPlaceText)}</span>`:'';
+  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('AfterShip has no destination for these yet (not checked yet, or the carrier gives none): in the table, not on the map.')}>${esc(noPlaceText)}</span>`:'';
   // 2v6.9b: the legend sits at the bottom left of the map (it was in the title row), with the no-ship-to-country note.
   const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
   const foot=`<div class="shp-map-foot">${legend}${noPlace}</div>`;
   return `<section class="dz-card shp-map" aria-label="Order map">
-    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Ship-to cities, sized by shipments; nearby ones share a dot and the busiest are named; arcs from Lacombe\n• Indigo: on the way\n• Red: a shipment delayed\n• Teal: all delivered`)}>Order Map</h2><div class="dz-meta">${esc(meta)}</div></div></div>
+    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Destination cities from AfterShip, sized by shipments; nearby ones share a dot and the busiest are named; arcs from Lacombe\n• Indigo: on the way\n• Red: a shipment delayed\n• Teal: all delivered`)}>Order Map</h2><div class="dz-meta">${esc(meta)}</div></div></div>
     <div class="shp-map-stage${lay?' wide':''}" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%${fade}">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
@@ -19494,7 +19516,7 @@ function renderShipDetail(s){
     fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','SAP delivery date.'),
     fact('Carrier',shipCarrier(s),'From the SAP ship method, else AfterShip.'),
     fact('Ship method (SAP)',s.shipMethod,'Shipping type on the SAP delivery.'),
-    fact('Ship to',shipToText(s),s.toFrom==='AfterShip'?'Ship-to city from AfterShip (not in the SAP delivery); country from SAP.':'Ship-to city and country in SAP.'),
+    fact('Ship to',shipToText(s),s.toFrom==='AfterShip'?'Destination from AfterShip (the carrier).':'Ship-to country in SAP; AfterShip has no destination yet.'),
     fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added it, and when.'),
   ].join('');
   const noteText=m&&m.source==='hand'&&m.note?`<p class="shp-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
@@ -19576,7 +19598,7 @@ function renderShippingPage(m){
   const g=shipGroups(fl,now);
   const anyFilter=!!(shipCarrierSel||shipCustomerSel||shipDestSel||shipQuery||shippingFilter||shipStatusSel||shipSortCol);
   // Status and Destination narrow the Shipments table only, like the tiles and the map dots (Destination is the same
-  // pick as a map dot). Destination lists the places on the map (shipments with no ship-to country have none).
+  // pick as a map dot). Destination lists the places on the map (shipments with no AfterShip destination have none).
   const statusLabel=(SHP_STATUS_FILTERS.find(([k])=>k===shipStatusSel)||[])[1]||'';
   const statusPill=fl.length?dzFilterPill({id:'ship-status',label:'Status',value:statusLabel||'All',set:!!shipStatusSel,tip:'Filter the Shipments table by status.',
     options:[{label:'All',selected:!shipStatusSel,onclick:"shpPickStatus('')"},{sep:true},...SHP_STATUS_FILTERS.map(([k,t])=>({label:t,selected:shipStatusSel===k,onclick:`shpPickStatus('${k}')`}))]}):'';
@@ -19605,7 +19627,7 @@ function renderShippingPage(m){
       '<strong>Status</strong>: from AfterShip every 2 hours; one set by hand counts until AfterShip has a newer one.',
       `<strong>Not delivered</strong>: no Delivered status yet; its card flags those with no update for ${SHIP_STALE_DAYS}+ days.`,
       `<strong>Priority</strong>: ticked in the Priority column (${shared?'shared with everyone':'this browser only'}).`,
-      '<strong>Map</strong>: by ship-to city (SAP’s ship-to address, else AfterShip), else state or country; nearby cities share a dot and the busiest are named. <strong>Cross-border</strong> means outside Canada.'
+      '<strong>Map</strong>: AfterShip’s destination city (else its state or country); shipments AfterShip has no destination for yet are not on it. Nearby cities share a dot and the busiest are named. City positions: GeoNames (CC BY 4.0). <strong>Cross-border</strong> means outside Canada (SAP ship-to country).'
     ])}</ul></div></details>`;
   const head=`${filterRow}${notesHtml}`;
 
@@ -19633,8 +19655,8 @@ function renderShippingPage(m){
   const byDest=shipDestSel?byStatus.filter(shipDestMatch):byStatus;
   const byPill=shipStatusSel?byDest.filter(s=>shpStatusMatch(s,shipStatusSel)):byDest;
   const q=shipQuery.trim().toLowerCase(),qn=q.replace(/[\s-]+/g,'');
-  // 2v6.9 cities: the search finds the ship-to city too.
-  const matched=q?byPill.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''} ${shipToText(s)}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byPill;
+  // 2v6.9 cities: the search finds the destination city too (not country names: "us" would match every US one).
+  const matched=q?byPill.filter(s=>`${s.number} ${[...s.orders].join(' ')} ${s.customer||''} ${shipCarrier(s)} ${s.shipMethod||''} ${shipToCityText(s)}`.toLowerCase().includes(q)||(qn&&s.number.toLowerCase().includes(qn))):byPill;
   const shown=shpSortList(matched);
   const {rows:visible,page,pages}=shpPageOf('list',shown);
   const filterName={transit:'in transit',delayed:'delayed',delivered:'delivered this week',open:'not delivered',stale:'with no update in 2+ days',priority:'priority','prio-done':'priority, delivered','prio-open':'priority, undelivered'}[shippingFilter];

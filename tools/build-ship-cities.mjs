@@ -19,11 +19,12 @@ if (!pbfPath || !htmlPath) {
   process.exit(2);
 }
 
-// The same rule as shipCityNorm in index.html: no accents or case, Saint/Ste -> st, Mount -> mt, Fort -> ft, letters and
-// digits only.
+// The same rule as shipCityNorm in index.html: no accents or case (letters such as ł and ø as their plain ones),
+// Saint/Ste -> st, Mount -> mt, Fort -> ft, letters and digits only.
 const WORDS = { saint: 'st', sainte: 'st', ste: 'st', st: 'st', mount: 'mt', mt: 'mt', fort: 'ft', ft: 'ft' };
-const cityNorm = (v) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' and ')
-  .split(/[^a-z0-9]+/).filter(Boolean).map((w) => WORDS[w] || w).join('');
+const CHARS = { 'ł': 'l', 'ø': 'o', 'æ': 'ae', 'œ': 'oe', 'ß': 'ss', 'ı': 'i', 'đ': 'd', 'ð': 'd', 'þ': 'th' };
+const cityNorm = (v) => String(v || '').toLowerCase().replace(/[łøæœßıđðþ]/g, (ch) => CHARS[ch]).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/&/g, ' and ').split(/[^a-z0-9]+/).filter(Boolean).map((w) => WORDS[w] || w).join('');
 
 // cities.pbf: length-prefixed City messages; longitude and latitude are deltas from the previous city, in 1e-5 degrees.
 function readCities(buf) {
