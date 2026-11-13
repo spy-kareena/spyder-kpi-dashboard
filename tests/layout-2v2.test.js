@@ -1,5 +1,6 @@
-// 2v2 layout (Order Health), as the page is today (2v6 / 2v6.9): the Leading / Lagging switch at the left of the filter
-// row, the cards in their order, the owner filter gone, and the six override tiles in the At risk card.
+// 2v2 layout (Order Health), as the page is today (2v6 / 2v6.9, Leading as four questions): the Leading / Lagging switch
+// at the left of the filter row, the cards in their order, the owner filter gone, and the six override tiles in the At
+// risk card.
 // Run with `node tests/layout-2v2.test.js`. Fixtures are synthetic (harness.js); no SAP data, no network.
 'use strict';
 const assert = require('node:assert/strict');
@@ -119,17 +120,51 @@ test('the Big picture switch is visible when off: its track is --gray-500 (3:1 o
   assert.ok(contrast(token('gray-500'), token('gray-100')) >= 3, 'also on a hovered button');
 });
 
-// 2v6.9 (owner): Status and Top reasons share one card (no card title, its two section titles lead); Top reasons is a
-// heatmap of the at-risk orders by reason and warehouse, each reason a button that filters the lines.
-test('Top reasons follow Status in one card: a reason by warehouse heatmap, the open order count only in the Status head', async () => {
+// Version 1 (owner's pick, "Four Questions"): Status is a card of its own under the ship target (question 1): its head,
+// the segmented bar and one row of five numbers. Top reasons left it for question 2, "Why, and When?": one card of two
+// halves, the reason-set chart beside Open lines by due week (no card of its own any more).
+test('Status is a card of its own: one row of five numbers. Top reasons sit beside Open lines by due week in the Why, and When? card', async () => {
   const page = await withStatuses();
   const m = html(page);
-  const card = m.match(/<section class="dz-card ohl-card ohl-status-card[^"]*"[^>]* aria-label="Status and top reasons">[\s\S]*?<\/section>/)[0];
-  assert.deepEqual([...card.matchAll(/<div class="ohl-sec-title" data-tip="[^"]{20,}">([^<]+)<\/div>/g)].map((x) => x[1]), ['Status', 'Top reasons']);
-  assert.match(card, /<div class="ohl-sec-title"[^>]*>Status<\/div><span class="ohs2-meta"><b>8<\/b> open orders<\/span>/);
-  const top = card.slice(card.indexOf('>Top reasons</div>'));
+  const titles = (card) => [...card.matchAll(/<div class="ohl-sec-title" data-tip="[^"]{20,}">([^<]+)<\/div>/g)].map((x) => x[1]);
+  const statusCard = () => html(page).match(/<section class="dz-card ohl-card ohl-status-card[^"]*"[^>]* aria-label="Status">[\s\S]*?<\/section>/)[0];
+  const status = statusCard();
+  assert.deepEqual(titles(status), ['Status']);
+  assert.match(status, /<div class="ohl-sec-title"[^>]*>Status<\/div><span class="ohs2-meta"><b>8<\/b> open orders<\/span>/);
+  assert.doesNotMatch(status, /Top reasons|class="ohu|at-risk lines/, 'Top reasons left the Status card');
+  // The bar: a part per state that has orders (Due this week has none), sized by its orders.
+  assert.deepEqual([...status.matchAll(/<button type="button" class="ohs2-seg" style="flex-grow:(\d+);[^"]*" data-focus-key="status-seg-st-(\w+)" aria-label="([^"]+)"/g)].map((x) => [x[2], +x[1], x[3]]),
+    [['ontrack', 1, 'On track: 1 order, 13%'], ['rescheduled', 1, 'Rescheduled: 1 order, 13%'], ['pastdue', 5, 'Past due: 5 orders, 63%'], ['nocommit', 1, 'No commit: 1 order, 13%']]);
+  // Under it, one row: a cell per state with its orders, then "orders · N lines". A state with nothing is greyed (zero),
+  // Past due with orders is red (crit). Each cell lists its lines, as the rows of the old list did.
+  const cells = (card) => [...card.match(/<div class="ohs3-row" role="group" aria-label="Open orders by state, with figures">([\s\S]*?)<\/div>/)[1]
+    .matchAll(/<button type="button" class="ohs3-cell([^"]*)" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\('st-\2'\)" data-tip="([^"]+)"><span class="ohs3-l"><i class="ohl-dot" style="background:[^"]+" aria-hidden="true"><\/i>([^<]+)<\/span><span class="ohs3-n">(\d+)<\/span><span class="ohs3-s">([^<]+)<\/span><\/button>/g)];
+  assert.deepEqual(cells(status).map((x) => [x[2], x[1].trim(), x[5], +x[6], x[7]]), [
+    ['ontrack', '', 'On track', 1, 'order · 1 line'], ['duethisweek', 'zero', 'Due this week', 0, 'orders · 0 lines'], ['rescheduled', '', 'Rescheduled', 1, 'order · 1 line'],
+    ['pastdue', 'crit', 'Past due', 5, 'orders · 5 lines'], ['nocommit', '', 'No commit', 1, 'order · 1 line']]);
+  assert.equal((status.match(/<button\b/g) || []).length, 9, 'four bar parts and five cells, nothing else to press');
+  assert.equal(cells(status)[3][4], 'Past due\n• 5 orders, 5 lines\n• $21,700 open\n• Past the original date with no reschedule, or past the commit date\nClick to list them.');
+  assert.equal(cells(status)[1][4], 'Due this week\n• 0 orders, 0 lines\n• $0 open\n• Due this week (Sun–Sat), no risk signal\nClick to list them.');
+  // The old two-column list is gone from the page.
+  assert.doesNotMatch(m, /class="ohs2-(cols|list|row|name|lines|n)[ "]|aria-label="Status and top reasons"/);
+  // A cell lists its lines and stays pressed (its tip drops the click line); the same cell again goes back to At risk.
+  page.run("setWeeklyTileFilter('st-pastdue')");
+  const picked = cells(statusCard())[3];
+  assert.deepEqual([picked[1].trim(), picked[3], picked[4]], ['crit sel', 'true', 'Past due\n• 5 orders, 5 lines\n• $21,700 open\n• Past the original date with no reschedule, or past the commit date']);
+  assert.deepEqual(linkedDocs(page), ['300', '301', '304', '305', '307']);
+  page.run("setWeeklyTileFilter('st-pastdue')");
+  assert.equal(page.run('weeklyTileFilter'), 'late');
+
+  // "Why, and When?": one card, two halves.
+  const why = m.match(/<section class="dz-card dz-span-6 ohl-card ohl-why[^"]*"[^>]* aria-label="Top reasons and open lines by due week">[\s\S]*?<\/section>/)[0];
+  assert.ok(m.indexOf('aria-label="Status"') < m.indexOf('>Why, and When?</h2>') && m.indexOf('>Why, and When?</h2>') < m.indexOf(why), 'after Status, under question 2');
+  assert.match(why, /^<section[^>]*><div class="ohl-why-grid"><div class="ohl-why-half">/);
+  const halves = why.split('<div class="ohl-why-half">').slice(1);
+  assert.equal(halves.length, 2);
+  assert.deepEqual(halves.map((h) => titles(h)), [['Top reasons'], ['Open lines by due week']]);
+  const [top, dueWeek] = halves;
   assert.doesNotMatch(top, /open orders/, 'the open order count is in the Status head only');
-  assert.match(top, /<span class="ohs2-meta"><b>7<\/b> at-risk lines<\/span>/);
+  assert.match(top, /^<div class="ohs2-head"><div class="ohl-sec-title"[^>]*>Top reasons<\/div><span class="ohs2-meta"><b>7<\/b> at-risk lines<\/span><\/div>/);
   assert.match(top, /<div class="ohu" style="--rows:8;--cols:6" role="group" aria-label="Which reasons come together">/);
   // Owner's pick (option S): the reasons in the sets shown, most lines first, each a filter button with its numbers in
   // the tip; a column per exact set of reasons, biggest first.
@@ -140,9 +175,23 @@ test('Top reasons follow Status in one card: a reason by warehouse heatmap, the 
   assert.equal(sets.length, 6);
   assert.equal(sets[0][2], 'Past due · No reschedule + Shipping Delay\n• 2 lines, 2 orders\n• $12,000 at risk\nClick to list them.');
   assert.equal(sets[0][3], '2');
+  assert.doesNotMatch(top, /smaller sets? not shown/, 'six sets: all shown (the note is for more than eight)');
+  // The other half: Open lines by due week. Its head carries the red past-due chip; the chart counts the open lines
+  // not yet past due in this week and the seven after it (303 moved to Sep 20, 306 is due Oct 20; 302 has no date).
+  assert.match(dueWeek, /^<div class="ohs2-head"><div class="ohl-sec-title" data-tip="Open lines due per week, next 8 weeks\. Past due is the red chip\.">Open lines by due week<\/div><button type="button" class="dz-chip red ohl-chipbtn" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter\('st-pastdue'\)" aria-pressed="false" data-tip="5 lines already past due\n• 5 orders\n• \$21,700 open\nClick to list them\.">5 lines already past due<\/button><\/div>/);
+  assert.match(dueWeek, /<div class="ohl-chart" role="img" aria-label="Open lines due by week, this week: 0, Sep 6: 0, Sep 13: 0, Sep 20: 1, Sep 27: 0, Oct 4: 0, Oct 11: 0, Oct 18: 1">/);
+  assert.deepEqual([...dueWeek.matchAll(/<span class="ohl-pt"[^>]*data-tip="([^"]+)"><\/span>/g)].map((x) => x[1]).filter((t) => !/: 0 open lines due, \$0\.$/.test(t)),
+    ['Week of Sep 20: 1 open line due, $6,000.', 'Week of Oct 18: 1 open line due, $1,500.']);
+  assert.equal((dueWeek.match(/<span class="ohl-pt"/g) || []).length, 8);
+  assert.match(dueWeek, /<span class="ohl-peak"[^>]*>1 line peak · Sep 20<\/span>/);
+  assert.match(dueWeek, /<div class="ohl-weeks" aria-hidden="true"><span>Now<\/span><span><\/span><span>9\/13<\/span>/);
+  // No card of its own any more.
+  assert.doesNotMatch(m, /<h2 class="dz-title[^"]*"[^>]*>Open lines by due week/);
+  assert.equal(m.split('>Open lines by due week<').length - 1, 1);
   page.run("setWeeklyReasonFilter('Shipping Delay')");
   assert.match(html(page), /class="ohu-name sel" data-focus-key="oh-reason-Shipping Delay" aria-pressed="true"/);
   assert.deepEqual(risk(page), ['300', '301']);
+  assert.equal(page.errors.length, 0, page.errors.join('\n'));
 });
 
 test('the switch keeps the tablist: arrow keys, Home / End, the view in snapshots and reset with a new report', async () => {
@@ -413,23 +462,59 @@ test('override names show in the owner\'s words everywhere; stored values, saved
 
 // --- Page layout ---------------------------------------------------------------------------------------
 // 2v6: the views are bento grids of cards (dzCard): each card is named by its title, or by its aria-label when the
-// card has no title (Status and top reasons, 2v6.9; Lagging's Trend). Lagging has no named groups any more: its
-// Metrics and Shipments groups became four cards (Version 1, the owner's pick).
+// card has no title (Leading's Status, its "Why, and When?" card and its Delivery months card; Lagging's Trend).
+// Lagging has no named groups any more: its Metrics and Shipments groups became four cards (Version 1, the owner's pick).
 const cardNames = (m) => [...m.matchAll(/<section class="dz-card[^"]*"([^>]*)>(?:<div class="dz-card-head[^"]*">\s*(?:<div class="ohl-lines-title">)?<h2 class="dz-title[^"]*"[^>]*>([^<]+)<\/h2>)?/g)]
   .map((x) => x[2] || (/aria-label="([^"]+)"/.exec(x[1]) || [])[1] || '(no name)');
 const groups = (m) => [...m.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]*")? aria-labelledby="([^"]+)"[^>]*><div class="pg-group-head"><h2 class="pg-group-title" id="([^"]+)"[^>]*>([^<]+)<\/h2>/g)]
   .map((x) => { assert.equal(x[1], x[2], 'each group is labelled by its own title'); return x[3]; });
 const panel = (m, view) => m.match(new RegExp(`<div class="oh-panel" role="tabpanel" id="oh-panel-${view}"[^>]*>[\\s\\S]*?(?=<div class="oh-panel" role="tabpanel"|$)`))[0];
 
-test('Sales Order Health reads as cards in a set order: Leading ends with its Lines card; Lagging is Monthly, Quarterly, then Trend, Month by month, By warehouse and Booked vs shipped', async () => {
+// Leading's numbered questions, in page order: [number, question].
+const questions = (m) => [...m.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d+)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((x) => [+x[1], x[2]]);
+
+test('Sales Order Health reads as cards in a set order: Leading is four questions, the delivery months and its Lines card; Lagging is Monthly, Quarterly, then Trend, Month by month, By warehouse and Booked vs shipped', async () => {
   const page = await withStatuses();
   const lead = panel(html(page), 'leading');
-  // 2v6.9: At risk beside the ship target over Status & top reasons; then due weeks and customers; Monthly's forward
-  // sections; the Lines card last (the supply source card shows with a supply / demand snapshot, none here).
-  assert.deepEqual(cardNames(lead), ['At risk', 'September ship target', 'Status and top reasons', 'Open lines by due week', 'Customers at risk',
-    'Customers at risk by supply source', 'Date changes', 'Open orders by delivery month', 'Items not shipped yet', 'Lines']);
+  // Version 1 (owner's pick, "Four Questions"): 1 At risk beside the ship target over Status; 2 Top reasons beside Open
+  // lines by due week, one card; 3 Customers at risk (their supply sources are columns of the same table); 4 Supply to
+  // pull in and Date changes, one card; then the two month lists in one card, and the Lines card last.
+  assert.deepEqual(cardNames(lead), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk',
+    'Date changes', 'Delivery months', 'Lines']);
+  assert.deepEqual(questions(lead), [[1, 'What Is at Risk?'], [2, 'Why, and When?'], [3, 'Who?'], [4, 'What Can We Do?']]);
+  // Each question sits right above its cards, inside the one grid.
+  assert.match(lead, /^<div[^>]*>\s*<div class="dz-grid ohl-grid">\s*<div class="ohl-q dz-span-6">/);
+  const at = ['>What Is at Risk?</h2>', '>At risk</h2>', 'class="dz-card dz-fade ohl-ship"', 'aria-label="Status"', '>Why, and When?</h2>', 'aria-label="Top reasons and open lines by due week"',
+    '>Who?</h2>', '>Customers at risk</h2>', '>What Can We Do?</h2>', 'aria-label="Date changes"', 'aria-label="Delivery months"', 'id="linked-lines"'].map((s) => lead.indexOf(s));
+  assert.deepEqual(at, [...at].sort((a, b) => a - b), 'questions and cards in page order');
+  assert.ok(at.every((i) => i > 0));
   assert.match(lead, /<div class="ohl-col dz-span-3">\s*<section class="dz-card dz-fade ohl-ship"[\s\S]*?<\/section>\s*<section class="dz-card ohl-card ohl-status-card/);
   assert.deepEqual(groups(lead), []);
+  // The cards that left Leading: Status and top reasons, Open lines by due week and the supply source card (merged into
+  // their neighbours), the two month cards (now folds of one card) and the shipped / open bar chart (Monthly keeps it).
+  assert.doesNotMatch(lead, /aria-label="Status and top reasons"|Customers at risk by supply source|class="(?:[^"]* )?(?:ohl-sup|ohl-sup-sum|ohl-sup-pill|ohl-sup-row|ohl-sup-name|ohl-sup-n|ohl-notshipped|mom-pair|pair-chart)[ "]|ohlToggleSupplyAll/);
+  // 3 Who: one table. This export has no purchase-order lines and no supply / demand snapshot, so it has its first four
+  // columns only and a note says what to load. Firefly has all 8 open orders: 5 past due, 2 at risk otherwise.
+  const who = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  assert.match(who, /<h2 class="dz-title"[^>]*>Customers at risk<\/h2><span class="dz-meta">Most at-risk orders first<\/span>/);
+  assert.match(who, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th/, 'no src class, no group row');
+  assert.deepEqual([...who.matchAll(/<th scope="col"[^>]*>(?:<i[^>]*><\/i>)?([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
+  assert.match(who, /data-focus-key="offrow-FIREFLY"[\s\S]*?<\/button><\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td><\/tr>/);
+  assert.match(who, /<tfoot><tr class="ohc3-all"><th scope="row"[^>]*>All Customers<\/th><td class="num ohc2-pd">5<\/td><td class="num ohc2-ar">2<\/td><td class="num">8<\/td><\/tr><\/tfoot>/);
+  assert.doesNotMatch(who, /ohc3-n|ohc3-grp|ohl-sup-bar/);
+  assert.match(who, /<p class="ohl-note ohl-foot-note">Load purchase-order lines or the supply \/ demand snapshot to see which supply source holds each customer's orders\.<\/p><\/section>$/);
+  // 4 What can we do: with no purchase orders there is nothing to pull in, so Date changes shows alone, with no switch
+  // (303 moved from Aug 20 to Sep 20).
+  const act = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-do[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  assert.match(act, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-dcwrap dz-fade" style="--i:5" aria-label="Date changes"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]{20,}">Date changes<\/h2><\/div><div class="ohl-dc" data-card="date-change">/);
+  assert.doesNotMatch(act, /ohl-do-pull|ohl-do-dates|class="dz-seg|ohl-pull-tbl/);
+  assert.deepEqual([...act.matchAll(/<button type="button" class="dz-tr ohl-dc-row" data-focus-key="dc-(\w+)"[^>]*data-tip="([^"]+)">/g)].map((x) => [x[1], x[2]]),
+    [['FIREFLY', 'FIREFLY - Firefly RV\n• 1 line, $6,000 moved later\n• Worst: SO 303 SPY-100 due Aug 20, now Sep 20 (SAP)\nClick to filter to it.']]);
+  assert.match(act, /<span class="dz-num ohl-dc-slip">\+31d<\/span>/);
+  // The delivery months card: two folds, shut on load (the third test below opens them).
+  const months = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Delivery months">[\s\S]*?<\/section>/)[0];
+  assert.deepEqual([...months.matchAll(/<details class="ohl-fold"( open)? data-more="(ohl-fold-\w+)" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="more-\2" data-tip="[^"]{20,}">[\s\S]*?<span class="dz-title sm ohl-fold-t">([^<]+)<\/span><span class="ohl-fold-m">([^<]+)<\/span><\/summary>/g)].map((x) => [x[2], !!x[1], x[3], x[4]]),
+    [['ohl-fold-months', false, 'Open orders by delivery month', '2026'], ['ohl-fold-items', false, 'Items not shipped yet', '8 lines']]);
   // No Hide link: the tabs do that job.
   assert.doesNotMatch(html(page), /toggle-leading|toggle-lagging|toggleLaggingIndicators|>Hide</);
   // Lines: its title, a chip with the picked card's lines and value, the search box and the sort.
@@ -462,19 +547,49 @@ test('Sales Order Health reads as cards in a set order: Leading ends with its Li
   // The old Hide calls no longer hide anything.
   page.run("setWeeklyView('leading');toggleLeadingIndicators();toggleLaggingIndicators()");
   assert.deepEqual(page.run('[weeklyLeadingCollapsed,weeklyLaggingCollapsed]'), [false, false]);
-  assert.equal(cardNames(panel(html(page), 'leading')).length, 10);
+  assert.equal(cardNames(panel(html(page), 'leading')).length, 8);
   assert.equal(page.errors.length, 0, page.errors.join('\n'));
+  // Nothing to act on (no date moved, no purchase orders): no fourth card and no fourth question.
+  const calm = await loaded([ROWS[6], ...ROWS.slice(8)]);
+  const calmLead = panel(html(calm), 'leading');
+  assert.deepEqual(questions(calmLead), [[1, 'What Is at Risk?'], [2, 'Why, and When?'], [3, 'Who?']]);
+  assert.deepEqual(cardNames(calmLead), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Delivery months', 'Lines']);
+  assert.doesNotMatch(calmLead, /class="(?:[^"]* )?ohl-do[ "]|What Can We Do\?/);
+  assert.equal(calm.errors.length, 0, calm.errors.join('\n'));
 });
 
-test('open order states always show in the Status card (no Show more); the Metrics detail sits behind Show more (kept across redraws, open in print); the group CSS is the contract', async () => {
+test('open order states always show in the Status card (no Show more); the two month lists are folds, shut on load (kept across redraws, open in print); the group CSS is the contract', async () => {
   const page = await withStatuses();
-  // Status: every open order in one of the five states, as rows that list their lines; on screen and on paper.
-  const states = () => [...html(page).matchAll(/<button type="button" class="ohs2-row[^"]*" data-focus-key="status-st-([a-z]+)"/g)].map((x) => x[1]);
+  // Status: every open order in one of the five states, as a row of cells that list their lines; on screen and on paper.
+  const states = () => [...html(page).matchAll(/<button type="button" class="ohs3-cell[^"]*" data-focus-key="status-st-([a-z]+)"/g)].map((x) => x[1]);
+  // The delivery months card's two folds: [key, open].
+  const folds = () => [...html(page).matchAll(/<details class="ohl-fold"( open)? data-more="ohl-fold-(\w+)" ontoggle="ohlFoldToggle\(this\)">/g)].map((x) => [x[2], !!x[1]]);
   assert.deepEqual(states(), ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
-  assert.doesNotMatch(html(page), /<details class="oh-more"/);
+  assert.doesNotMatch(html(page), /<details class="oh-more"|class="ohs2-row/);
+  assert.deepEqual(folds(), [['months', false], ['items', false]]);
+  // A fold's lists are in the page while it is shut (the browser hides them): the monthly table with the note on the
+  // undated line (302, $8,000, no commit date), and the Month pick over the eight open lines.
+  const months = html(page).match(/<section class="dz-card dz-span-6 ohl-card ohl-months[^"]*" aria-label="Delivery months">[\s\S]*?<\/section>/)[0];
+  const [byMonth, items] = months.split('<details class="ohl-fold"').slice(1);
+  assert.match(byMonth, /<div class="ohl-fold-body"><div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div>/);
+  assert.match(byMonth, /<td class="m">Aug 2026<\/td>[\s\S]*?<span>\$3,000<\/span>[\s\S]*?<td class="num">\$21,700<\/td>/);
+  assert.match(byMonth, /<p class="ohl-note ohl-foot-note">1 open lines? \(\$8,000\) with no commit date are not in these months\.<\/p>/);
+  assert.match(items, /<div class="ohl-fold-tools">[\s\S]*?<select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="Show one original month\."/);
+  assert.equal(page.run('moMonthlyParts(currentMetrics(),momSource(currentMetrics()),reportToday()).notShippedSpec().items.length'), 8);
+  // Opening one is remembered without a redraw, and kept by the next one; print opens both and leaves the choice alone.
+  page.run("ohlFoldToggle({dataset:{more:'ohl-fold-items'},open:true})");
+  assert.deepEqual(page.run('tableMore'), { 'more-ohl-fold-items': true });
+  page.run('renderResults()');
+  assert.deepEqual(folds(), [['months', false], ['items', true]]);
   page.run('printMode=true;renderResults()');
   assert.deepEqual(states(), ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
+  assert.deepEqual(folds(), [['months', true], ['items', true]]);
   page.run('printMode=false;renderResults()');
+  assert.deepEqual(folds(), [['months', false], ['items', true]]);
+  page.run("ohlFoldToggle({dataset:{more:'ohl-fold-items'},open:false})");
+  assert.deepEqual(page.run('tableMore'), {});
+  page.run('renderResults()');
+  assert.deepEqual(folds(), [['months', false], ['items', false]]);
   // Lagging's Metrics: no Show more (owner: order quality, open value by due month and lines to act on are gone).
   page.run("setWeeklyView('lagging')");
   assert.doesNotMatch(html(page), /data-more="mwm-metrics"|>Order quality<|>Lines to act on</);
