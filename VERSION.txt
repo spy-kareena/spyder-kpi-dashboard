@@ -280,3 +280,14 @@ search, Supply at risk only, Show all); without a snapshot it says how to load o
 target line, the ship target its note. Customers at risk by supply source has no CM sheet source (those lines fall to
 open PO, stock or none); a click on a customer, number or source lists exactly those lines in the Lines card. Tests:
 leading-2v69.
+2v6.9 (live mark): the Live SAP mark is an activity line beside the export date at every width (tablets keep the date
+beside it; phones show the mark alone): green and drawing itself while live, red and still when the link drops, grey
+while connecting, still with reduced motion. The popover is one small row: the mark, "Live SAP · Updated 7:23 PM",
+then the icon buttons; when disconnected the longer story is the line's tooltip. Menus now place themselves from
+their own width (the opening scale no longer pushes a right-anchored menu off a phone's edge). Tests: sap-live.
+2v6.9 (pages of 10): every card list with more than 10 items shows 10 a page (dzPageOf + dzPageFoot: "11-20 of 24
+lines" and a pager like Shipping's); a change of filters, view, search or sort starts at page 1; print shows every row.
+Month-by-month tables keep a year (12) on a page. Show all / Show fewer buttons are gone; Settings "Lines shown" is
+"Lines a page" (default 10) for the Lines card. Sales Order Health > Supply / Demand: the numbers under the title, the
+options (View, Filter, search) in a labelled bar, each status a dot and a word, no fold chevron. Tests: pager-2v69,
+leading-2v69, search, ui-polish, pages-2v2, dashboard, linked-lines, review-* updated.

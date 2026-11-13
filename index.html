@@ -4022,6 +4022,19 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 }
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v9:end pages */
+/* 2v9:pager */
+/* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
+   stacked and centred on phones. */
+.dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
+.dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.dz-pagefoot .shp-pager{margin-top:0}
+/* The older framed table cards (renderTableCard, the scorecard, the heat grid, the Lagging warehouse summaries): the foot sits inside the frame's
+   padding, flat in the glass cards (.misc-flat), and inside the phone cards' gutters. */
+.table>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+.misc-flat .table>.dz-pagefoot{padding:12px 0 0}
+.card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
+/* 2v9:end pager */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
    look, links instead of buttons; it sticks to the top while the page scrolls and scrolls sideways on phones. Cards
@@ -4284,19 +4297,6 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 }
 @media (forced-colors:active){.shp-pg.on{border:1px solid Highlight}}
 /* 2v9:end ship */
-/* 2v9:pager */
-/* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
-   stacked and centred on phones. */
-.dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
-.dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
-.dz-pagefoot .shp-pager{margin-top:0}
-/* The older framed table cards (renderTableCard, the scorecard, the heat grid, the Lagging warehouse summaries): the foot sits inside the frame's
-   padding, flat in the glass cards (.misc-flat), and inside the phone cards' gutters. */
-.table>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
-.misc-flat .table>.dz-pagefoot{padding:12px 0 0}
-.card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
-@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
-/* 2v9:end pager */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -8984,6 +8984,8 @@ let tableMore={};
 // starts it at page 1 again. dzPageFoot draws "1–10 of 24 lines" and the ‹ 1 2 3 › pager under the list (the Shipping
 // pager's look); arrow keys, Home and End step through the pages. Printing shows every row and no pager.
 const DZ_PAGE_SIZE=10;
+// Month-by-month tables keep a whole year on one page (12 months), then page by year.
+const DZ_MONTH_PAGE=12;
 let dzPg={};
 function dzPageOf(id,list,sig='',size=DZ_PAGE_SIZE){
   const st=dzPg[id]&&dzPg[id].sig===String(sig)?dzPg[id]:{page:1,sig:String(sig)};
@@ -9070,9 +9072,9 @@ function labelTableCells(rowHtml,head){
 }
 // sig: the filters / view / sort that built the list (a change starts it at page 1); without one the list's own
 // fingerprint stands in. limit is kept for older callers and no longer used (10 a page). noun names the rows.
-function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false,sig,noun='rows'}){
+function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false,sig,noun='rows',pageSize=DZ_PAGE_SIZE}){
   const all=items||rows;
-  const pg=dzPageOf(key,all,sig===undefined?dzListSig(all):sig);
+  const pg=dzPageOf(key,all,sig===undefined?dzListSig(all):sig,pageSize);
   const plain=String(title).replace(/<[^>]*>/g,'');
   let shown=renderRow?pg.rows.map(renderRow):pg.rows;
   if(cards)shown=shown.map(row=>labelTableCells(row,head));
@@ -12930,7 +12932,7 @@ function renderResults(){
     ${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
       note:anyLastYear?'':`No ${lastYear} months in the export for year over year`,
       head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% lines shipped','','14%'],['Open lines','num'],['Closed lines','num'],['At risk / late','num']],
-      rows:summaryRows,limit:12,minWidth:anyLastYear?980:820,noun:'months'})}
+      rows:summaryRows,pageSize:DZ_MONTH_PAGE,minWidth:anyLastYear?980:820,noun:'months'})}
     ${renderShippedByWarehouseCard(scenario,today)}`,{rise:'rise-2'})}
     ${pageGroupHtml('mo-open','By original delivery date',`
     ${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect}</div>`,
@@ -13825,7 +13827,7 @@ function mwmRenderMonthly(m,ctx){
 
   // Month by month, newest first, 10 a page (a new view or filter starts at page 1).
   const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
-  const moPg=dzPageOf('mwm-months',[...d.entries].reverse().map((x,ri)=>({x,ri})),JSON.stringify([key,weeklyFilterKey()]));
+  const moPg=dzPageOf('mwm-months',[...d.entries].reverse().map((x,ri)=>({x,ri})),JSON.stringify([key,weeklyFilterKey()]),DZ_MONTH_PAGE);
   const table=dzCard({title:'Month by month',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
       <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Shipped by the original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Ordered qty delivered, lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
@@ -14146,7 +14148,7 @@ function mwmRenderMetrics(m,legacy){
       <div class="dz-bars mwm-cause-bars">${shownCauses.map(([label,c],i)=>dzBarRow({label,value:c,max:causeMax,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',i,tip:`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late.`})).join('')||'<p class="empty-note">No late orders.</p>'}</div>`});
   const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
   // Newest first, 10 months a page; a new range or filter starts at page 1.
-  const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]));
+  const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]),DZ_MONTH_PAGE);
   const table=dzCard({title:'Monthly metrics',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
       <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
