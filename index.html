@@ -4853,6 +4853,126 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
   .live-act.busy svg{animation:none}
 }
 @media (forced-colors:active){.live-pulse{forced-color-adjust:none}}
+/* 2v9:santa */
+/* The Christmas live mark (2v9, santaMark): with <html data-xmas="on">, on screen and without forced colours, the
+   header's date button and the live popover line show Santa in place of the live mark, with no green dot (the date
+   and the button's label carry the status). The standard mark shows when the theme is off, in print, with forced
+   colours and everywhere else (Settings > Data Source, the load screen, Ask AI). ok: the team flies (the legs gallop
+   in 0.7 s, the team bobs and glides in 3.6 s, the hat tip and the sack sway, three sparkles twinkle, the lead's nose
+   glows). down: the team lands, the reindeer stand and Santa steps out, faces us and smiles (once, when the tone goes
+   from ok to down: .landing), then all is still; a red crossed circle follows him. '': parked, still. Each loop runs
+   on the page clock (--sm-t, a negative delay), so a redraw of the header carries on without a jump. The sleigh,
+   reindeer, sack and ground come from the ink and page colours, so they follow the theme and the background. */
+.santa-mark,.santa-x{display:none}
+:root{--sm-red:#c2414b;--sm-red-d:#8e2a35;--sm-skin:#f3cfae;--sm-skin-d:#dba584;--sm-white:#fff;--sm-eye:#22364d;--sm-boot:#22364d;
+  --sm-gold:#d9a93c;--sm-spark:#e3a62b;--sm-nose:#e0393f;--sm-edge:color-mix(in oklab,var(--dz-ink-1) 38%,transparent);
+  --sm-sleigh:color-mix(in oklab,var(--dz-ink-2) 92%,var(--dz-page));--sm-deer:color-mix(in oklab,var(--dz-ink-5) 92%,var(--dz-page));
+  --sm-deer-far:color-mix(in oklab,var(--dz-ink-5) 64%,var(--dz-page));--sm-sack:color-mix(in oklab,var(--dz-ink-5) 52%,var(--dz-page));
+  --sm-ground:color-mix(in oklab,var(--dz-ink-1) 28%,transparent)}
+.santa-mark{flex:none;width:48px;height:17px;overflow:visible}
+.santa-x{flex:none;width:11px;height:11px;color:var(--dz-risk)}
+.live-pop-line .santa-mark{width:45px;height:16px}
+.live-pop-line .santa-x{width:10px;height:10px}
+.santa-mark *{transform-box:fill-box}
+.santa-mark .sm-red{fill:var(--sm-red)}
+.santa-mark .sm-skin{fill:var(--sm-skin)}
+.santa-mark .sm-skin-d{fill:var(--sm-skin-d)}
+.santa-mark .sm-white{fill:var(--sm-white);stroke:var(--sm-edge);stroke-width:.3}
+.santa-mark .sm-brim,.santa-mark .sm-hem{fill:none;stroke:var(--sm-white);stroke-width:1.3;stroke-linecap:round}
+.santa-mark .sm-hem{stroke-width:1.1}
+.santa-mark .sm-arm{fill:none;stroke:var(--sm-red);stroke-width:1.7;stroke-linecap:round}
+.santa-mark .sm-eye{fill:var(--sm-eye)}
+.santa-mark .sm-boot{fill:var(--sm-boot)}
+.santa-mark .sm-belt{fill:none;stroke:var(--sm-eye);stroke-width:1.1}
+.santa-mark .sm-gold{fill:var(--sm-gold)}
+.santa-mark .sm-smile{fill:none;stroke:var(--sm-red-d);stroke-width:.8;stroke-linecap:round}
+.santa-mark .sm-sleigh{fill:var(--sm-sleigh)}
+.santa-mark .sm-trim{fill:none;stroke:var(--sm-gold);stroke-width:1;stroke-linecap:round}
+.santa-mark .sm-runner{fill:none;stroke:var(--sm-sleigh);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.santa-mark .sm-sack circle{fill:var(--sm-sack)}
+.santa-mark .sm-sack path{fill:none;stroke:var(--sm-sleigh);stroke-width:.7;stroke-linecap:round;stroke-linejoin:round}
+.santa-mark .sm-fur{fill:var(--sm-deer)}
+.santa-mark .sm-leg,.santa-mark .sm-neck,.santa-mark .sm-ant{fill:none;stroke:var(--sm-deer);stroke-linecap:round;stroke-linejoin:round}
+.santa-mark .sm-leg{stroke-width:1.5}
+.santa-mark .sm-f2,.santa-mark .sm-h2{stroke:var(--sm-deer-far)}
+.santa-mark .sm-neck{stroke-width:2.4}
+.santa-mark .sm-ant{stroke-width:1.05}
+.santa-mark .sm-tail{fill:var(--sm-white)}
+.santa-mark .sm-nose{fill:var(--sm-nose)}
+.santa-mark .sm-glow{fill:var(--sm-nose);opacity:0}
+.santa-mark .sm-rein{fill:none;stroke:var(--sm-deer);stroke-width:.8}
+.santa-mark .sm-spark{fill:var(--sm-spark)}
+.santa-mark .sm-ground{fill:none;stroke:var(--sm-ground);stroke-width:.9;stroke-linecap:round}
+/* The poses. Base: parked on the ground (''), and down: Santa out in front. ok: the team up and tilted, legs stretched. */
+.santa-mark .sm-team,.santa-mark .sm-bob{transform-box:view-box;transform-origin:45px 22px}
+.santa-mark .sm-leg{transform-origin:50% 0}
+.santa-mark .sm-f1{--sm-a:-50deg}.santa-mark .sm-f2{--sm-a:-26deg}.santa-mark .sm-h1{--sm-a:48deg}.santa-mark .sm-h2{--sm-a:26deg}
+.santa-mark .sm-tip{transform-origin:94% 40%}
+.santa-mark .sm-sack{transform-origin:55% 100%}
+.santa-mark .sm-spark,.santa-mark .sm-glow{transform-origin:50% 50%}
+.santa-mark .sm-out{opacity:0;transform-origin:50% 100%}
+.santa-mark .sm-trail{opacity:0}
+.santa-mark.ok .sm-ground{opacity:0}
+.santa-mark.ok .sm-team{transform:translate(0,-4.5px) rotate(-6deg)}
+.santa-mark.ok .sm-leg{transform:rotate(var(--sm-a))}
+.santa-mark.ok .sm-trail{opacity:1}
+.santa-mark.ok .sm-spark{opacity:.8}
+.santa-mark.ok .sm-glow{opacity:.3}
+.santa-mark.down .sm-seat{opacity:0}
+.santa-mark.down .sm-out{opacity:1}
+/* ok: the loops, all on the page clock. The far legs trail the near ones a little, the second reindeer the lead. */
+.santa-mark.ok .sm-bob{animation:sm-bob 3.6s var(--sm-t,0s) ease-in-out infinite}
+.santa-mark.ok .sm-leg{animation:sm-fore .7s calc(var(--sm-t,0s) - var(--sm-d,0s) - var(--sm-l,0s)) ease-in-out infinite}
+.santa-mark.ok .sm-h1,.santa-mark.ok .sm-h2{animation-name:sm-hind}
+.santa-mark .sm-f2,.santa-mark .sm-h2{--sm-l:.08s}
+.santa-mark .sm-deer:not(.sm-lead){--sm-d:.2s}
+.santa-mark.ok .sm-tip{animation:sm-tip 1.8s var(--sm-t,0s) ease-in-out infinite}
+.santa-mark.ok .sm-sack{animation:sm-sack 3.6s calc(var(--sm-t,0s) - .9s) ease-in-out infinite}
+.santa-mark.ok .sm-spark{animation:sm-tw 1.8s var(--sm-t,0s) ease-in-out infinite}
+.santa-mark.ok .sm-spark:nth-child(2){animation-delay:calc(var(--sm-t,0s) + .6s)}
+.santa-mark.ok .sm-spark:nth-child(3){animation-delay:calc(var(--sm-t,0s) + 1.2s)}
+.santa-mark.ok .sm-glow{animation:sm-glow 2.4s var(--sm-t,0s) ease-in-out infinite}
+@keyframes sm-bob{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(1.4px,-1.5px) rotate(-1.2deg)}50%{transform:translate(0,-.3px) rotate(0)}75%{transform:translate(-1.4px,1.2px) rotate(1deg)}}
+@keyframes sm-fore{0%,100%{transform:rotate(-50deg)}50%{transform:rotate(16deg)}}
+@keyframes sm-hind{0%,100%{transform:rotate(48deg)}50%{transform:rotate(-16deg)}}
+@keyframes sm-tip{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(12deg)}}
+@keyframes sm-sack{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(6deg)}}
+@keyframes sm-tw{0%,100%{opacity:.2;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}
+@keyframes sm-glow{0%,100%{opacity:.12;transform:scale(.7)}50%{opacity:.5;transform:scale(1.15)}}
+/* down, once after ok (.landing, --sm-land: how far in a redraw is): the team lands and the legs straighten (0.5 s),
+   then Santa climbs out and hops down in front (0.34 to 0.8 s). */
+.santa-mark.landing .sm-team{animation:sm-land .5s var(--sm-land,0s) cubic-bezier(.3,.1,.3,1) both}
+.santa-mark.landing .sm-leg{animation:sm-stand .45s var(--sm-land,0s) ease-out both}
+.santa-mark.landing .sm-trail{animation:sm-hide .25s var(--sm-land,0s) both}
+.santa-mark.landing .sm-ground{animation:sm-show .25s calc(var(--sm-land,0s) + .25s) both}
+.santa-mark.landing .sm-seat{animation:sm-hide .08s calc(var(--sm-land,0s) + .33s) both}
+.santa-mark.landing .sm-out{animation:sm-step .46s calc(var(--sm-land,0s) + .34s) cubic-bezier(.4,0,.4,1) both}
+@keyframes sm-land{0%{transform:translate(0,-4.5px) rotate(-6deg)}80%{transform:translate(0,.35px) rotate(.3deg)}100%{transform:none}}
+@keyframes sm-stand{0%{transform:rotate(var(--sm-a))}100%{transform:none}}
+@keyframes sm-hide{0%{opacity:1}100%{opacity:0}}
+@keyframes sm-show{0%{opacity:0}100%{opacity:1}}
+@keyframes sm-step{0%{opacity:0;transform:translate(-16px,-7px) scale(.55)}20%{opacity:1;transform:translate(-13px,-11px) scale(.66)}55%{transform:translate(-5px,-6px) scale(.88)}82%{transform:translate(0,0) scale(1.05,.93)}100%{opacity:1;transform:none}}
+/* Where Santa shows. Phones (360 to 420 px): the date button, the mark alone there, widens to hold a 15 px Santa
+   (the logo and the icons keep their room); narrower than 360 px it keeps the standard mark. */
+@media screen and (forced-colors:none){
+  :root[data-xmas=on] .live-pop-line .live-pulse{display:none}
+  :root[data-xmas=on] .live-pop-line .santa-mark,:root[data-xmas=on] .live-pop-line .santa-x{display:block}
+  [data-theme=dark]{--sm-red:#e0656d;--sm-white:#f4f8fc;--sm-boot:#6d8298;--sm-gold:#e3b54c;--sm-spark:#f2cd6a;--sm-nose:#ff5a62;--sm-edge:rgba(0,0,0,.35);
+    --sm-sack:color-mix(in oklab,var(--dz-ink-5) 72%,var(--dz-page))}
+}
+@media screen and (forced-colors:none) and (min-width:360px){
+  :root[data-xmas=on] #hdr-date-btn .live-pulse{display:none}
+  :root[data-xmas=on] #hdr-date-btn .santa-mark,:root[data-xmas=on] #hdr-date-btn .santa-x{display:block}
+}
+@media screen and (forced-colors:none) and (min-width:360px) and (max-width:420px){
+  :root[data-xmas=on] .hdr-right .hdr-date.has-live{width:auto;padding:0 5px;gap:4px}
+  :root[data-xmas=on] #hdr-date-btn .santa-mark{width:42px;height:15px}
+  :root[data-xmas=on] #hdr-date-btn .santa-x{width:10px;height:10px}
+}
+/* Reduced motion: still pictures (flying for ok, standing and smiling for down). Print: the standard mark. */
+@media (prefers-reduced-motion:reduce){.santa-mark,.santa-mark *{animation:none!important}}
+@media print{.santa-mark,.santa-x{display:none!important}}
+/* end 2v9:santa */
 @media screen{
   [data-theme=dark]{--live-ok:#2cc8b2}
   [data-theme=dark] .hdr-pop .live-act{background:var(--dz-line-8)}
@@ -7695,6 +7815,64 @@ function liveIcon(name){
 const LIVE_MARK_PATH='M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2';
 function liveMark(tone){
   return `<svg class="live-pulse${tone?` ${tone}`:''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path class="live-track" d="${LIVE_MARK_PATH}"/><path class="live-trace" pathLength="1" d="${LIVE_MARK_PATH}"/></svg>`;
+}
+// The Christmas live mark (2v9): Santa in his sleigh with two reindeer. The header's date button and the live popover
+// line draw it after the standard mark; the 2v9:santa CSS shows it in place of that mark only with <html
+// data-xmas="on"> on screen (the standard mark stays for the standard theme, print and forced colours). ok: flying, the
+// legs gallop, the team bobs, the hat tip sways, three sparkles twinkle and the lead's nose glows (no green dot: the
+// date and the button's label carry the status). down: landed, the reindeer stand and Santa stands in front of them,
+// smiling, with a red crossed circle after him. '' (connecting): parked, still. The header redraws its innerHTML
+// often, so the loops share one page clock (a negative animation-delay from performance.now()) and the landing plays
+// only when the tone goes from ok to down: a redraw within SANTA_LAND_MS carries on where it was, later ones show the
+// landed pose with no replay. A hidden mark (the closed popover; the date button while a phone searches) would start
+// its landing only when shown, so the popover line lands only if open (land), and once the landing is over the class
+// comes off every mark that still has it.
+const SANTA_LAND_MS=900;
+let santaTone=null,santaLandAt=-1,santaLandTimer=null;
+const santaNow=()=>typeof performance!=='undefined'&&performance&&typeof performance.now==='function'?performance.now():Date.now();
+// The drawing (original artwork, user units of a 84 x 30 box), built once: a four-point sparkle, a reindeer (the legs
+// one line each from the hip, turned by CSS), then the whole mark.
+function santaSpark(x,y,r){
+  const k=r*.2,f=v=>+v.toFixed(2);
+  return `<path class="sm-spark" d="M${f(x)} ${f(y-r)}Q${f(x+k)} ${f(y-k)} ${f(x+r)} ${f(y)}Q${f(x+k)} ${f(y+k)} ${f(x)} ${f(y+r)}Q${f(x-k)} ${f(y+k)} ${f(x-r)} ${f(y)}Q${f(x-k)} ${f(y-k)} ${f(x)} ${f(y-r)}Z"/>`;
+}
+function santaDeer(x,lead){
+  const leg=(c,lx,ly)=>`<path class="sm-leg ${c}" d="M${lx} ${ly}v5.8"/>`;
+  return `<g class="sm-deer${lead?' sm-lead':''}" transform="translate(${x} 20)">${leg('sm-h2',-1.6,1.4)}${leg('sm-f2',1.8,1.4)}<ellipse class="sm-fur" rx="4.7" ry="2.6"/>${leg('sm-h1',-3,.9)}${leg('sm-f1',3.1,.9)}<path class="sm-neck" d="M3.2 -.8L6 -4.8"/><ellipse class="sm-fur" cx="6.9" cy="-5.3" rx="2.1" ry="1.45" transform="rotate(12 6.9 -5.3)"/><path class="sm-ant" d="M5.8 -6.4L5.1 -10M5.3 -8.6L3.5 -9.8M5.5 -8.4L7.3 -10"/><circle class="sm-tail" cx="-4.7" cy="-1.3" r="1"/>${lead?'<circle class="sm-glow" cx="9" cy="-5" r="2.1"/><circle class="sm-nose" cx="9" cy="-5" r="1"/>':''}</g>`;
+}
+const SANTA_ART=`<path class="sm-ground" d="M3 28.4H81"/>`
+    +`<g class="sm-team"><g class="sm-bob">`
+    +`<g class="sm-trail">${santaSpark(4.6,14.6,2.5)}${santaSpark(2.1,19,1.9)}${santaSpark(3.8,23.2,1.5)}</g>`
+    +`<path class="sm-rein" d="M26.5 15.6Q40 20.5 52 19.2L69 19.2"/>${santaDeer(54,false)}${santaDeer(71,true)}`
+    +`<g transform="translate(6 1.4)"><g class="sm-sack"><circle cx="6.6" cy="9.6" r="3.2"/><path d="M5.4 6.7L6.6 7.7L7.8 6.7"/></g>`
+    +`<g class="sm-seat"><path class="sm-red" d="M10 17V12.5Q10 10.4 13.5 10.4Q17 10.4 17 12.5V17Z"/><path class="sm-arm" d="M15.4 12.8L20.4 14.2"/>`
+    +`<circle class="sm-skin" cx="14" cy="8.3" r="2.5"/><path class="sm-white" d="M11.7 8.8Q12 12.7 14.6 12.7Q17 12.4 16.6 9.2Q14.5 10.4 11.7 8.8Z"/>`
+    +`<path class="sm-red" d="M11.3 7.4Q12.2 3.2 15.2 4.6Q16.6 5.4 16.8 7.2Z"/><g class="sm-tip"><path class="sm-red" d="M12.6 5Q9.4 3.3 7.6 5.8L8.9 6.7Q10.4 5.3 12.3 6.6Z"/><circle class="sm-white" cx="8" cy="6.5" r="1.2"/></g>`
+    +`<path class="sm-brim" d="M11.3 7.6L16.9 7.2"/><circle class="sm-eye" cx="15.2" cy="8.3" r=".45"/></g>`
+    +`<path class="sm-sleigh" d="M3 11L7 11L8 16.5L20 16.5C22.5 16.5 23.5 15 23.8 12.5L26.8 12.5C26.6 19 24.5 22 20 22L10 22C5.5 22 3.3 18.5 3 11Z"/>`
+    +`<path class="sm-trim" d="M8.4 18.6H21"/><path class="sm-runner" d="M2.5 25.6H23.5Q28 25.6 28.6 22.4M9 22V25.6M19 22V25.6"/></g>`
+    +`</g></g>`
+    +`<g transform="translate(40.5 28) scale(1.3)"><g class="sm-out">`
+    +`<rect class="sm-boot" x="-2.9" y="-1.5" width="2.5" height="1.5" rx=".6"/><rect class="sm-boot" x=".4" y="-1.5" width="2.5" height="1.5" rx=".6"/>`
+    +`<path class="sm-arm" d="M-3.2 -8.6L-5.3 -5.2M3.2 -8.6L5.6 -11.6"/><circle class="sm-boot" cx="-5.5" cy="-4.8" r=".95"/><circle class="sm-boot" cx="5.9" cy="-12" r=".95"/>`
+    +`<path class="sm-red" d="M-3.3 -9.6Q-4.6 -4.5 -4 -1.3H4Q4.6 -4.5 3.3 -9.6Z"/><path class="sm-hem" d="M-3.6 -1.9H3.6"/><path class="sm-belt" d="M-4.15 -4.7H4.15"/><rect class="sm-gold" x="-.8" y="-5.4" width="1.6" height="1.4" rx=".2"/>`
+    +`<circle class="sm-skin" cx="0" cy="-12.4" r="3"/><path class="sm-white" d="M-3.1 -12.7Q-3.7 -7 0 -6.5Q3.7 -7 3.1 -12.7Q1.6 -10.9 0 -11.5Q-1.6 -10.9 -3.1 -12.7Z"/>`
+    +`<path class="sm-smile" d="M-1.3 -10.25Q0 -8.75 1.3 -10.25"/><circle class="sm-skin-d" cx="0" cy="-12" r=".7"/><circle class="sm-eye" cx="-1.2" cy="-13.2" r=".45"/><circle class="sm-eye" cx="1.2" cy="-13.2" r=".45"/>`
+    +`<path class="sm-red" d="M-3.1 -14.6Q-2.6 -19.6 1.2 -19Q4.4 -18.4 5 -15L3.6 -14.8Q3 -16.6 1.6 -16.9L3.1 -14.6Z"/><circle class="sm-white" cx="4.5" cy="-14.3" r="1.2"/><rect class="sm-white" x="-3.5" y="-15.7" width="7" height="1.7" rx=".85"/>`
+    +`</g></g>`;
+const SANTA_X='<svg class="santa-x" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="4.6"/><path d="M3.9 3.9l4.2 4.2M8.1 3.9L3.9 8.1"/></svg>';
+function santaMark(tone,land=true){
+  const t=tone==='ok'||tone==='down'?tone:'',now=santaNow();
+  if(t!==santaTone){santaLandAt=t==='down'&&santaTone==='ok'?now:-1;santaTone=t;}
+  const into=now-santaLandAt,landing=land&&t==='down'&&santaLandAt>=0&&into<SANTA_LAND_MS;
+  if(landing&&!santaLandTimer&&typeof document!=='undefined'&&document.querySelectorAll){
+    santaLandTimer=setTimeout(()=>{
+      santaLandTimer=null;
+      document.querySelectorAll('.santa-mark.landing').forEach(el=>{el.classList.remove('landing');el.style.removeProperty('--sm-land');});
+    },SANTA_LAND_MS-into+60);
+  }
+  const sec=v=>`-${(Math.max(0,v)/1000).toFixed(3)}s`;
+  return `<svg class="santa-mark${t?` ${t}`:''}${landing?' landing':''}" viewBox="0 0 84 30" style="--sm-t:${sec(now)}${landing?`;--sm-land:${sec(into)}`:''}" aria-hidden="true" focusable="false">${SANTA_ART}</svg>${t==='down'?SANTA_X:''}`;
 }
 // One line for the export-date popover: "Live SAP · Updated 7:23 PM" (the green mark says it is connected).
 function livePopLine(){
@@ -13210,7 +13388,7 @@ function renderSidebar(){
     const why=liveState.status==='down'&&liveState.message&&!liveState.stale?liveState.message:'';
     const detail=[st.line,why].filter(Boolean).join('\n• ');
     popLabel='';
-    popBody=`<div class="live-pop-line"${liveState.status!=='ok'&&detail?tipAttr(detail):''}>${liveMark(st.tone)}<span>${esc(livePopLine())}</span></div>`;
+    popBody=`<div class="live-pop-line"${liveState.status!=='ok'&&detail?tipAttr(detail):''}>${liveMark(st.tone)}${santaMark(st.tone,fileOpen)}<span>${esc(livePopLine())}</span></div>`;
     const canRefresh=liveState.on&&liveState.status!=='off';
     popActions=`${canRefresh?liveActBtn({key:'hdr-sap',label:'Refresh now',icon:'refresh',onclick:"if(this.getAttribute('aria-disabled')!=='true')loadFromSap()",busy:liveState.busy,tip:liveState.busy?'Reading SAP…':'Refresh now: read SAP, skipping the 5-minute cache.'}):''}${addFile}${share}`;
   }else{
@@ -13220,7 +13398,7 @@ function renderSidebar(){
     popBody=`<div class="hdr-pop-name">${fileNames}</div>`;
     popActions=`${addFile}${liveActBtn({key:'sidebar-new',label:'New file',icon:'swap',onclick:'dzMenuClose(true);showUpload()',tip:'New file: replace this report with a new export; it stays until the new file is read.'})}${share}`;
   }
-  const dot=st.tone?liveMark(st.tone):'';
+  const dot=st.tone?liveMark(st.tone)+santaMark(st.tone):'';
   const dateLabel=live&&st.tone?liveDateLabel(st):`Export date ${dateText}: loaded files, Add file, New file and Share snapshot`;
   const dateTip=live&&st.tone?`${st.short}. Click for Refresh now, Add file and Share snapshot.`:'Export date. Click for the loaded files, Add file and New file.';
   const file=loaded
