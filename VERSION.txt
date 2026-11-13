@@ -259,3 +259,6 @@ pr:<number>, read-only in snapshots, sortable). Rows get a state icon and a quie
 10-minute limit message). Shipments 10 a page, Cross-border and Delayed 5 a page, with page numbers. Tests:
 shipping-page, notes-store.
 Follow-up: carrier logos (Simple Icons, CC0), legend at the map's bottom, "Last:", "Due", no next time, calm pager.
+2v6.9 (header): the Live SAP mark is a short pipe with a green pulse running along it (red and still when
+disconnected, still with reduced motion); the export-date popover has round icon buttons (Refresh now, Add file,
+Share snapshot; import: Add file, New file, Share snapshot) and no line count / export date line. Tests: sap-live, mcp.

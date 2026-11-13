@@ -195,7 +195,7 @@ test('a second click while SAP is being read does nothing', async () => {
 test('markup: the buttons carry tips; the version is the same in the page and VERSION.txt', () => {
   const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
   assert.match(html, /id="sap-live-btn"[^>]*data-tip="[^"]+"/);
-  assert.match(html, /data-focus-key="hdr-sap"[^`]*tipAttr\('Read SAP now, skipping the 5-minute cache\.'\)\}>Refresh now<\/button>/);
+  assert.match(html, /liveActBtn\(\{key:'hdr-sap',label:'Refresh now',icon:'refresh',[^}]*tip:liveState\.busy\?'Reading SAP…':'Refresh now: read SAP, skipping the 5-minute cache\.'\}\)/);
   assert.match(html, /data-focus-key="stg-ds-refresh"[^`]*tipAttr\('[^']+'\)/);
   const version = html.match(/<meta name="app-version" content="([^"]+)">/)[1];
   assert.match(fs.readFileSync(path.join(__dirname, '..', 'VERSION.txt'), 'utf8'), new RegExp(`^Version: ${version.replace(/\./g, '\\.')}$`, 'm'));
@@ -255,7 +255,7 @@ test('live is the default: start-up reads SAP (status, then both reports through
   assert.deepEqual(page.alerts, []);
 });
 
-test('the header has no Upload or Export PDF icon; the live popover is short: status, one quiet line, three actions', async () => {
+test('the header has no Upload or Export PDF icon; the live popover is short: status and three round icon buttons', async () => {
   const site = liveSite();
   const page = await openLive(site);
   page.run("dzOpenMenu='hdr-file';renderSidebar()");
@@ -264,18 +264,31 @@ test('the header has no Upload or Export PDF icon; the live popover is short: st
   assert.equal(typeof page.ctx.exportPdf, 'undefined');
   const pop = h.slice(h.indexOf('id="hdr-file-pop"'));
   assert.match(pop, /aria-label="Live SAP"/);
-  assert.match(pop, /<div class="hdr-pop-label"><span class="live-pulse ok" aria-hidden="true"><\/span>Live SAP<\/div><div class="hdr-pop-name">Connected · Updated [^<]+<\/div><div class="hdr-pop-meta">\d+ lines · Export date 2026-09-10<\/div>/);
-  assert.deepEqual([...pop.matchAll(/class="dz-btn"[^>]*>([^<]+)<\/button>/g)].map((m) => m[1]), ['Refresh now', 'Add file', 'Share snapshot']);
+  // 2v6.9: no line count / export date line; the actions are round icon buttons named by aria-label and tooltip.
+  assert.match(pop, /<div class="hdr-pop-label"><span class="live-pulse ok" aria-hidden="true"><\/span>Live SAP<\/div><div class="hdr-pop-name">Connected · Updated [^<]+<\/div><div class="hdr-pop-actions live-acts">/);
+  assert.ok(!/hdr-pop-meta|Export date|\d+ lines?\b/.test(pop), 'no quiet meta line');
+  const acts = (x) => [...x.matchAll(/<button type="button" class="hdr-icon live-act[^"]*" data-focus-key="([^"]+)" aria-label="([^"]+)"[^>]*data-tip="([^"]+)"><svg[^>]*aria-hidden="true">/g)].map((m) => [m[1], m[2], m[3].split(':')[0]]);
+  assert.deepEqual(acts(pop), [['hdr-sap', 'Refresh now', 'Refresh now'], ['sidebar-add', 'Add file', 'Add file'], ['hdr-share', 'Share snapshot', 'Share snapshot']]);
+  assert.ok(!/class="dz-btn"/.test(pop), 'no text buttons left');
+  assert.match(pop, /data-focus-key="hdr-sap"[^>]*onclick="if\(this\.getAttribute\('aria-disabled'\)!=='true'\)loadFromSap\(\)"/, 'Refresh keeps the popover open');
+  assert.match(pop, /data-focus-key="hdr-share"[^>]*onclick="dzMenuClose\(true\);exportShareSnapshot\(\)"/);
+  assert.match(pop, /data-focus-key="sidebar-add"[^>]*onclick="dzMenuClose\(true\);document\.getElementById\('add-file-input'\)\.click\(\)"/);
+  // While SAP is read the refresh button says so (busy, its arrows turn) and does nothing when pressed again.
+  page.run("liveState.busy=true;renderSidebar()");
+  const busy = header(page);
+  assert.match(busy, /class="hdr-icon live-act busy" data-focus-key="hdr-sap" aria-label="Refresh now"[^>]* aria-disabled="true" aria-busy="true" data-tip="Reading SAP…"/);
+  page.run("liveState.busy=false;renderSidebar()");
   const words = pop.replace(/<[^>]+>/g, ' ');
   assert.ok(!/Saved for everyone|Saved in this browser|View import report|Logican|notes/i.test(words), `no where-it-is-kept, notes, Logican or import report lines: ${words}`);
-  // Import mode: the file name, the quiet line, Add file / New file / Share snapshot, no dot.
+  // Import mode: the file name, then Add file / New file / Share snapshot as icon buttons, no mark, no quiet line.
   const imp = await openPage(liveSite());
   await imp.ctx.handleFiles([{ name: 'export.xls', bytes: sapExport([sapRow()]) }]);
   imp.run("dzOpenMenu='hdr-file';renderSidebar()");
   const ih = header(imp);
   assert.ok(!ih.includes('live-pulse'));
-  assert.match(ih, /<div class="hdr-pop-label">Loaded export<\/div><div class="hdr-pop-name">export\.xls<\/div><div class="hdr-pop-meta">1 line · Export date 2026-09-03<\/div>/);
-  assert.deepEqual([...ih.matchAll(/class="dz-btn"[^>]*>([^<]+)<\/button>/g)].map((m) => m[1]), ['Add file', 'New file', 'Share snapshot']);
+  assert.match(ih, /<div class="hdr-pop-label">Loaded export<\/div><div class="hdr-pop-name">export\.xls<\/div><div class="hdr-pop-actions live-acts">/);
+  assert.ok(!/hdr-pop-meta|1 line · Export date/.test(ih), 'no quiet meta line in import mode');
+  assert.deepEqual(acts(ih.slice(ih.indexOf('id="hdr-file-pop"'))), [['sidebar-add', 'Add file', 'Add file'], ['sidebar-new', 'New file', 'New file'], ['hdr-share', 'Share snapshot', 'Share snapshot']]);
 });
 
 test('every 5 minutes: read again without refresh=1; the same text changes nothing, new text reloads in place', async () => {
