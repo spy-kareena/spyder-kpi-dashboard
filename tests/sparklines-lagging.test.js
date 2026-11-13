@@ -9,6 +9,8 @@ const { test, run } = createSuite();
 
 const IMPORT = { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) };
 const html = (page) => page.els['results-screen'].innerHTML;
+// The Lagging panel alone (Leading has lines of its own, and print draws both views).
+const lag = (page) => { const h = html(page), i = h.indexOf('id="oh-panel-lagging"'), j = h.indexOf('<div class="oh-panel"', i); return i < 0 ? '' : h.slice(i, j < 0 ? undefined : j); };
 async function loaded(rows) {
   const page = loadPage({ storage: { ...IMPORT } });
   await new Promise((r) => setTimeout(r, 0));
@@ -165,16 +167,16 @@ test('No errors and no lines with an empty export, a PO-only export or no delive
   for (const rows of [[], [po], [so('1', '08/01/2026'), so('2', '09/20/2026')]]) {
     const page = await loaded(rows);
     page.run('renderResults()');
-    assert.doesNotMatch(html(page), /class="dz-spark"|class="ohgt-spk"/);
+    assert.doesNotMatch(lag(page), /class="dz-spark"|class="ohgt-spk"/);
     assert.deepEqual(page.errors, [], JSON.stringify(rows.map((r) => r.DocumentNumber)));
   }
   const page = await loaded(ROWS);
-  const n = (html(page).match(/class="dz-spark"/g) || []).length;
+  const n = (lag(page).match(/class="dz-spark"/g) || []).length;
   assert.equal(n, 7, 'five tiles and two warehouses');
   page.run('isSnapshotView=true;renderResults()');
-  assert.equal((html(page).match(/class="dz-spark"/g) || []).length, n);
+  assert.equal((lag(page).match(/class="dz-spark"/g) || []).length, n);
   page.run('isSnapshotView=false;printMode=true;renderResults()');
-  assert.equal((html(page).match(/class="dz-spark"/g) || []).length, n);
+  assert.equal((lag(page).match(/class="dz-spark"/g) || []).length, n);
   page.run('printMode=false;renderResults()');
   assert.deepEqual(page.errors, []);
 });
