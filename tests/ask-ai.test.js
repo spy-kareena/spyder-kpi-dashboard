@@ -590,7 +590,7 @@ test('Connect an AI opens Settings at the Connect An AI App card, which names no
   const page = loadPage();
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
-  const card = page.els['results-screen'].innerHTML.match(/<section class="dz-card stg-card[^"]*" id="stg-card-connect"[\s\S]*?<\/section>/);
+  const card = page.els['results-screen'].innerHTML.match(/<section class="dz-card stg-card[^"]*" id="stg-card-ai"[\s\S]*?<\/section>/);
   assert.ok(card, 'the Connect An AI App card is on the Settings page');
   assert.doesNotMatch(card[0], /cl[a]ude|cur[s]or/i);
   assert.doesNotMatch(card[0], /Gemini|Google AI Studio/);

@@ -25,7 +25,7 @@ test('Settings is one bento grid: every tile in reading order, no category bar o
   page.run("setTab('settings')");
   const h = html(page);
   assert.match(h, /<div class="stg-bento"><section class="dz-card stg-card dz-fade" id="stg-card-dc"/);
-  assert.deepEqual(tiles(h), ['dc', 'source', 'data', 'oh', 'pages', 'hiddenpages', 'profile', 'notes', 'ai', 'connect', 'about']);
+  assert.deepEqual(tiles(h), ['dc', 'source', 'data', 'oh', 'pages', 'hiddenpages', 'profile', 'notes', 'ai', 'about']); // 2v6.9 (owner): one AI card (Ask AI and Connect)
   assert.doesNotMatch(h, /stg-nav|stg-cat|stg-cgrid|pg-group|Settings categories|stg-end/);
   // The gear's red Data check dot is on the Data Check tile's icon.
   assert.equal(page.run('stgDataCheckLevel()'), 'red');
@@ -71,7 +71,7 @@ test('stgShowCard opens Settings at the card: Connect with its setup open, your 
   page.run("setTab('weekly')");
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
-  assert.match(html(page), /id="stg-card-connect"[\s\S]*?<details class="stg-setup" open/);
+  assert.match(html(page), /id="stg-card-ai"[\s\S]*?<details class="stg-setup" open/);
   page.run("setTab('weekly')");
   page.run("stgShowCard('profile','stg-name')");
   assert.equal(page.run('activeTab'), 'settings');
@@ -122,7 +122,7 @@ test('a shared snapshot: settings read only, the bento still there', async () =>
   page.run("isSnapshotView=true;setTab('settings')");
   const h = html(page);
   assert.match(h, /<p class="stg-ro rise">Shared snapshot: settings are read only\./);
-  assert.equal(tiles(h).length, 10);
+  assert.equal(tiles(h).length, 9); // one AI card
   assert.match(h, /data-focus-key="stg-reset-all" onclick="stgResetAll\(\)" disabled/);
   assert.doesNotMatch(h, /data-focus-key="stg-export"/);
   assert.match(h, /id="stg-target"[^>]*disabled/);
