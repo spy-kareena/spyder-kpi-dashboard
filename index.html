@@ -4350,6 +4350,7 @@ button.ohl-pull-po.sel{background:var(--dz-indigo-bg)}
 button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
 .ohl-pull-gap{font-weight:600;color:var(--dz-indigo-deep)}
 .ohl-pull-cust{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ohl-pull-xfer{color:var(--dz-amber-text)}
 .ohl-pull-note{display:block;margin-top:2px;font-size:10.5px;font-weight:600;line-height:1.3;color:var(--dz-indigo-deep)}
 @media (prefers-reduced-motion:reduce){button.ohl-pull-po{transition:none}}
 @media (prefers-reduced-motion:reduce){button.ohl-sup-pill,button.ohl-sup-name,button.ohl-sup-n{transition:none}}
@@ -20504,6 +20505,9 @@ function ohlPoExpected(p){return parseDate(cmExpectedDate(p)||cmPoDue(p));}
 function ohlPoNoCommit(p){return isNoCommitDate(p.lineRescheduleDate)||isNoCommitDate(p.rescheduleDate)||!!p.noCommitDate;}
 function ohlSalesDue(r){return parseDate(r.effectiveDueDate||ohOriginalDue(r));}
 function ohlAllocate(poBy){
+  // 2v6.9 (owner's call: same warehouse first, transfers flagged): for each item, open PO lines are handed to the open
+  // sales lines in date order WITHIN each warehouse first (a PO received at a warehouse fills that warehouse's orders);
+  // supply still left after that can cover what is still short elsewhere, as a transfer from the PO's warehouse.
   const sales=new Map();
   allLoadedRows.forEach(r=>{
     if(r.isDeleted||!ohIsSalesRow(r)||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
@@ -20514,22 +20518,34 @@ function ohlAllocate(poBy){
   });
   const cover=new Map();
   const t=d=>d?+d:Infinity;
-  sales.forEach((rows,item)=>{
-    const sup=poBy.get(item).map(p=>({p,exp:ohlPoExpected(p),nc:ohlPoNoCommit(p),left:Math.max(0,num(p.openQuantity)||0)}))
-      .filter(x=>x.left>0)
-      .sort((a,b)=>(a.nc-b.nc)||t(a.exp)-t(b.exp)||String(a.p.documentNumber||'').localeCompare(String(b.p.documentNumber||''),undefined,{numeric:true}));
-    rows.sort((a,b)=>t(ohlSalesDue(a))-t(ohlSalesDue(b))||String(a.documentNumber||'').localeCompare(String(b.documentNumber||''),undefined,{numeric:true}));
+  const num0=v=>Math.max(0,num(v)||0);
+  const supOrder=(a,b)=>(a.nc-b.nc)||t(a.exp)-t(b.exp)||String(a.p.documentNumber||'').localeCompare(String(b.p.documentNumber||''),undefined,{numeric:true});
+  const fill=(rows,sup,need,transfer)=>{
     let i=0;
     rows.forEach(r=>{
-      let need=Math.max(0,num(r.openQuantity)||0),last=null;
-      if(!need&&i<sup.length)last=sup[i];
-      while(need>0&&i<sup.length){
-        const x=sup[i],take=Math.min(need,x.left);
-        x.left-=take;need-=take;last=x;
+      let left=need.get(r),last=null;
+      if(left<=0&&!cover.has(r)){if(i<sup.length)last=sup[i];}
+      while(left>0&&i<sup.length){
+        const x=sup[i];
+        if(x.left<=0){i++;continue;}
+        const take=Math.min(left,x.left);
+        x.left-=take;left-=take;last=x;
         if(x.left<=0)i++;
       }
-      if(!need&&last)cover.set(r,last);
+      need.set(r,left);
+      if(left<=0&&last&&!cover.has(r))cover.set(r,{p:last.p,exp:last.exp,nc:last.nc,wh:last.wh,transfer:transfer&&last.wh!==rowWarehouse(r)?last.wh:''});
     });
+  };
+  sales.forEach((rows,item)=>{
+    const sup=poBy.get(item).map(p=>({p,exp:ohlPoExpected(p),nc:ohlPoNoCommit(p),wh:rowWarehouse(p),left:num0(p.openQuantity)})).filter(x=>x.left>0).sort(supOrder);
+    rows.sort((a,b)=>t(ohlSalesDue(a))-t(ohlSalesDue(b))||String(a.documentNumber||'').localeCompare(String(b.documentNumber||''),undefined,{numeric:true}));
+    const need=new Map(rows.map(r=>[r,num0(r.openQuantity)]));
+    // Pass 1: each warehouse's orders take that warehouse's POs.
+    const whs=[...new Set(rows.map(rowWarehouse))];
+    whs.forEach(w=>fill(rows.filter(r=>rowWarehouse(r)===w),sup.filter(x=>x.wh===w),need,false));
+    // Pass 2: what is still short takes leftover supply from any warehouse (a transfer when it comes from another).
+    const short=rows.filter(r=>!cover.has(r)&&need.get(r)>0);
+    if(short.length)fill(short,sup.filter(x=>x.left>0),need,true);
   });
   return cover;
 }
@@ -20541,7 +20557,7 @@ function ohlSupplySource(r,cover,today){
     if(c.exp&&c.exp<today)return {id:'po',text:`${who}: late since ${cmShort(c.exp)}`};
     if(c.exp&&due&&c.exp>due){
       const gap=Math.max(1,Math.round((c.exp-due)/864e5));
-      return {id:'pull',c,due,gap,text:`${who}: due ${cmShort(c.exp)}, needed by ${cmShort(due)} (${gap}d)`};
+      return {id:'pull',c,due,gap,text:`${who}: due ${cmShort(c.exp)}, needed by ${cmShort(due)} (${gap}d)${c.transfer?` · transfer from ${ohlWhName(c.transfer)}`:''}`};
     }
   }
   if(ohHasShortage(r))return {id:'stock',text:`short at ${rowWarehouse(r)} (supply / demand snapshot)`};
@@ -20572,11 +20588,11 @@ function ohlSupplyData(m){
       if(src.id==='pull'){
         // One "Supply to pull in" row per PO line: the earliest date its at-risk orders need it by.
         const pk=rowKey(src.c.p);
-        pullBy.set(r,{p:src.c.p,exp:src.c.exp,due:src.due,gap:src.gap});
-        if(!pulls.has(pk))pulls.set(pk,{key:pk,p:src.c.p,exp:src.c.exp,need:src.due,rows:[],customers:new Set(),orders:new Set(),value:0});
+        pullBy.set(r,{p:src.c.p,exp:src.c.exp,due:src.due,gap:src.gap,transfer:src.c.transfer?rowWarehouse(r):''});
+        if(!pulls.has(pk))pulls.set(pk,{key:pk,p:src.c.p,exp:src.c.exp,need:src.due,rows:[],customers:new Set(),orders:new Set(),value:0,transferTo:new Set()});
         const x=pulls.get(pk);
         if(src.due<x.need)x.need=src.due;
-        x.rows.push(r);x.customers.add(rowCustomerLabel(r));x.orders.add(doc);x.value+=openLineValue(r);
+        x.rows.push(r);x.customers.add(rowCustomerLabel(r));x.orders.add(doc);x.value+=openLineValue(r);if(src.c.transfer)x.transferTo.add(rowWarehouse(r));
       }
     });
     const supplyOrders=c=>new Set([...c.orders.pull,...c.orders.po,...c.orders.stock]).size;
@@ -20624,7 +20640,7 @@ function ohlPullNote(m,r){
   const x=ohlSupplyData(m).pullBy.get(r);
   if(!x)return '';
   const wo=ohlPoWorkOrders(x.p);
-  return `<span class="ohl-pull-note">Pull in PO ${esc(x.p.documentNumber||'—')}${wo.length?` (WO ${esc(wo[0])})`:''} · ${esc(poVendorLabel(x.p))} · due ${esc(cmShort(x.exp))} → needed by ${esc(cmShort(x.due))} (${fmtNum(x.gap)}d)</span>`;
+  return `<span class="ohl-pull-note">Pull in PO ${esc(x.p.documentNumber||'—')}${wo.length?` (WO ${esc(wo[0])})`:''} · ${esc(poVendorLabel(x.p))} · due ${esc(cmShort(x.exp))} → needed by ${esc(cmShort(x.due))} (${fmtNum(x.gap)}d)${x.transfer?` · then transfer from ${esc(ohlWhName(rowWarehouse(x.p)))} to ${esc(ohlWhName(x.transfer))}`:''}</span>`;
 }
 // Click: list those lines (the Lines card shows the pick in its title and reveals); the same click again shows the
 // at-risk lines again.
@@ -20657,7 +20673,7 @@ function ohlPullCard(c){
   const rows=pg.rows.map(x=>{
     const on=ohlPullPicked(x.key),cust=[...x.customers];
     const tip=ohlTip(`PO ${x.p.documentNumber||'—'}: pull in ${ohN(x.gap,'day')}`,[`${ohN(x.orders.size,'at-risk order')} · ${money(x.value)}`,`Due ${cmShort(x.exp)}, needed by ${cmShort(x.need)}`,x.wo.length?`WO ${x.wo.slice(0,3).join(', ')}`:''],on?'Click to show the at-risk lines again.':'Click to list those lines.');
-    return `<tr class="${on?'sel':''}"><td><button type="button" class="ohl-pull-po${on?' sel':''}" data-focus-key="ohl-pull-${esc(x.key)}" data-off="${esc(x.key)}" aria-pressed="${on}" onclick="ohlPullPick(this.dataset.off)"${tipAttr(tip)}>PO ${esc(x.p.documentNumber||'—')}</button>${x.wo.length?`<span class="dz-cell-sub">WO ${esc(x.wo[0])}${x.wo.length>1?` +${x.wo.length-1}`:''}</span>`:''}</td>
+    return `<tr class="${on?'sel':''}"><td><button type="button" class="ohl-pull-po${on?' sel':''}" data-focus-key="ohl-pull-${esc(x.key)}" data-off="${esc(x.key)}" aria-pressed="${on}" onclick="ohlPullPick(this.dataset.off)"${tipAttr(tip)}>PO ${esc(x.p.documentNumber||'—')}</button>${x.wo.length?`<span class="dz-cell-sub">WO ${esc(x.wo[0])}${x.wo.length>1?` +${x.wo.length-1}`:''}</span>`:''}${x.transferTo.size?`<span class="dz-cell-sub ohl-pull-xfer"${tipAttr(`Received at ${ohlWhName(rowWarehouse(x.p))}; the orders it covers ship from ${[...x.transferTo].map(ohlWhName).join(', ')}.`)}>Transfer to ${esc([...x.transferTo].map(ohlWhName).join(', '))}</span>`:''}</td>
       <td class="sup-soft">${esc(poVendorLabel(x.p))}</td>
       <td><span class="sup-strong">${esc(x.p.itemCode||'—')}</span></td>
       <td class="sup-soft">${esc(cmShort(x.exp))}</td>

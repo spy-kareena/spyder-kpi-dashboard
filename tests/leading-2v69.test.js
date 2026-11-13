@@ -280,4 +280,28 @@ test('Purchase Order Health: Build Risk counts CM kits not ticked clean (no mone
   assert.deepEqual(page.errors, []);
 });
 
+test('Pull in matches POs to orders in the same warehouse first; leftover supply elsewhere covers the rest as a transfer', async () => {
+  // Item Q. Lacombe: SO 300 (Aug 10, 10) and SO 302 (Aug 15, 5); McBride: SO 301 (Aug 12, 10).
+  // POs: 700 at McBride (Sep 1, 10), 701 at Lacombe (Sep 20, 10), 702 at McBride (Sep 25, 5).
+  const L = { 'Item No.': 'Q', Warehouse: 'Spyder - Lacombe' }, M = { 'Item No.': 'Q', Warehouse: 'Spyder - McBride' };
+  const rows = [
+    so('300', '08/10/2026', { ...L }), so('301', '08/12/2026', { ...M }), so('302', '08/15/2026', { ...L, Quantity: '5.000', OpenQuantity: '5.000' }),
+    po('700', '09/01/2026', { ...M }), po('701', '09/20/2026', { ...L }), po('702', '09/25/2026', { ...M, Quantity: '5.000', OpenQuantity: '5.000' }),
+  ];
+  const page = loadPage({ storage: IMPORT });
+  await new Promise((r) => setTimeout(r, 0));
+  page.run('isSnapshotView=false');
+  await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
+  const cover = page.run(`(()=>{const c=ohlAllocate(ohlPoByItem());const o={};c.forEach((v,r)=>{o[r.documentNumber]=[v.p.documentNumber,v.transfer||''];});return o;})()`);
+  // Same warehouse first: SO 300 (Lacombe) takes PO 701 (Lacombe), not the earlier McBride PO 700; SO 301 takes PO 700.
+  assert.deepEqual(cover['300'], ['701', '']);
+  assert.deepEqual(cover['301'], ['700', '']);
+  // SO 302 (Lacombe) has no Lacombe supply left: McBride's leftover PO 702 covers it, flagged as a transfer.
+  assert.deepEqual(cover['302'], ['702', 'Spyder - McBride']);
+  const pulls = page.run(`ohlSupplyData(currentMetrics()).pulls.map(x=>[x.p.documentNumber,[...x.transferTo].join()])`);
+  assert.deepEqual(pulls.find((x) => x[0] === '702'), ['702', 'Spyder - Lacombe']);
+  assert.match(html(page), /<span class="dz-cell-sub ohl-pull-xfer"[^>]*>Transfer to Spyder · Lacombe<\/span>/);
+  assert.deepEqual(page.errors, []);
+});
+
 run();
