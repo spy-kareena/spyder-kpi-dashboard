@@ -1,5 +1,6 @@
-// 2v6.9 page changes: the ship target moves from Monthly to Order Health Leading (above Status & top reasons, now a list
-// without bars); When flagged, the Due this week tile and the Lagging Top offenders cards are gone; Purchase Orders loses
+// 2v6.9 page changes: the ship target moves from Monthly to Order Health Leading (above Status, which since Leading's
+// Version 1 is a bar over one row of five numbers; Top reasons sits beside Open lines by due week under "Why, and
+// When?"); When flagged, the Due this week tile and the Lagging Top offenders cards are gone; Purchase Orders loses
 // This week focus and has one Kits card. Run with `node tests/pages-2v69.test.js`. Fixtures are synthetic.
 'use strict';
 const assert = require('node:assert/strict');
@@ -19,46 +20,57 @@ async function loaded(rows) {
 }
 const ROWS = [so('100', '08/01/2026'), so('101', '09/20/2026'), so('102', '10/20/2026'), po('500', '08/01/2026'), po('501', '10/30/2026')];
 
-test('Leading: the ship target sits over Status & top reasons in one column; Status is a list (no bars); no When flagged, no Due this week tile', async () => {
+test('Leading: the ship target sits over Status in one column beside At risk; Status is a bar over one row of five cells (no list, no Top reasons); no When flagged, no Due this week tile', async () => {
   const page = await loaded(ROWS);
   const h = html(page);
-  const col = (h.match(/<div class="ohl-col dz-span-3">([\s\S]*?)<\/div>\s*<section class="dz-card dz-span-3 ohl-card dz-fade" style="--i:2">/) || [])[1] || '';
-  assert.ok(col, 'the column follows At risk');
+  // Version 1: the column closes question 1; question 2's heading follows it.
+  const col = (h.match(/<div class="ohl-col dz-span-3">([\s\S]*?)<\/div>\s*<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2<\/span><h2 class="ohl-q-t" data-tc-skip>Why, and When\?<\/h2><\/div>/) || [])[1] || '';
+  assert.ok(col, 'the column follows At risk and closes question 1');
+  assert.match(h, /<h2 class="dz-title sm"[^>]*>At risk<\/h2>[\s\S]*?<\/section>\s*<div class="ohl-col dz-span-3"><section class="dz-card dz-fade ohl-ship"/);
   const titles = [...col.matchAll(/<h2 class="dz-title sm"[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]);
-  // 2v6.9 (owner): the Status & top reasons card has no title (its Status and Top reasons headings lead).
+  // 2v6.9 (owner): the Status card has no title (its Status heading leads).
   assert.equal(titles.length, 1);
   assert.match(titles[0], /^(\w+ ship target|Ship target)$/);
-  assert.match(col, /<section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status and top reasons"><div class="ohl-sec ohl-sec-first">/);
+  assert.equal((col.match(/<section\b/g) || []).length, 2, 'the ship target and Status');
+  assert.match(col, /<\/section><section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status"><div class="ohs2-head"><div class="ohl-sec-title"[^>]*>Status<\/div><span class="ohs2-meta"><b>3<\/b> open orders<\/span><\/div>/);
   // The ship target is the Monthly card: its month, its Dates control, the same scenario numbers.
   const month = page.run("reportToday().toLocaleDateString('en-US',{month:'long'})");
   assert.equal(titles[0], `${month} ship target`);
   assert.match(col, /data-focus-key="mwm-dates" aria-expanded="false" onclick="toggleTableMore\('mwm-dates'\)"/);
   const sd = page.run('(()=>{const s=shipScenarioFor(currentMetrics());return [rowDocCount(s.pastOriginalDue),rowDocCount(s.onTrackWindow)]})()');
   assert.match(col, new RegExp(`<span class="dz-big sm[^"]*">${sd[0]} orders?</span><span class="dz-sub">past due`));
-  // Status & top reasons (2v6.9 redesign): Status is a thin segmented bar (one part per state with orders) over button
-  // rows with the share, open value, lines and orders; Top reasons is a heatmap of reasons by warehouse with the at
-  // risk value, lines and orders closing each row. Rows, parts and reason names filter as before.
+  // Status (Version 1, owner's pick): a thin segmented bar (one part per state with orders) over one row of five
+  // cells, a button per state with its open orders and lines. Cells and parts filter the Lines card as before.
+  // This export: order 100 is past due; 101 (Sep 20) and 102 (Oct 20) are on track.
   const status = col.slice(col.indexOf('ohl-status-card'));
   assert.match(status, /<div class="ohs2-bar" role="group" aria-label="Open orders by state">/);
-  const rows = [...status.matchAll(/<button type="button" class="ohs2-row[^"]*" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\((?:&#39;|')st-\1(?:&#39;|')\)"/g)].map((m) => m[1]);
-  assert.deepEqual(rows, ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
-  // 2v6.9 (owner): Lines and Orders only (no Share or Open columns); the head says only the open order count.
-  assert.match(status, /<div class="ohs2-cols" aria-hidden="true"><span><\/span><span>Lines<\/span><span>Orders<\/span><\/div>/);
-  assert.match(status, /<span class="ohs2-name">On track<\/span>\s*<span class="ohs2-lines">\d+<\/span><span class="ohs2-n">\d+<\/span>/);
-  assert.match(status, /<span class="ohs2-meta"><b>\d+<\/b> open orders<\/span>/);
-  assert.doesNotMatch(status, /ohs2-pct|ohs2-val|% past due/);
-  assert.match(status, /<div class="ohl-sec-title"[^>]*>Status<\/div>[\s\S]*<div class="ohl-sec-title"[^>]*>Top reasons<\/div>/);
-  assert.match(status, /<div class="ohu" style="--rows:\d+;--cols:\d+" role="group" aria-label="Which reasons come together">[\s\S]*?class="ohu-col/); // option S: reason sets
-  assert.doesNotMatch(status, /ohs2-track|ohl-track|dz-barrow/);
+  assert.deepEqual([...status.matchAll(/class="ohs2-seg" style="flex-grow:(\d+);[^"]*" data-focus-key="status-seg-st-(\w+)"/g)].map((m) => [m[2], +m[1]]), [['ontrack', 2], ['pastdue', 1]]);
+  assert.match(status, /<div class="ohs3-row" role="group" aria-label="Open orders by state, with figures">/);
+  const cells = [...status.matchAll(/<button type="button" class="ohs3-cell([^"]*)" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\((?:&#39;|')st-\2(?:&#39;|')\)" data-tip="[^"]+"><span class="ohs3-l"><i class="ohl-dot" style="background:[^"]+" aria-hidden="true"><\/i>([^<]+)<\/span><span class="ohs3-n">(\d+)<\/span><span class="ohs3-s">([^<]+)<\/span><\/button>/g)]
+    .map((m) => [m[2], m[4], +m[5], m[6], m[1].trim(), m[3]]);
+  assert.deepEqual(cells, [['ontrack', 'On track', 2, 'orders · 2 lines', '', 'false'], ['duethisweek', 'Due this week', 0, 'orders · 0 lines', 'zero', 'false'], ['rescheduled', 'Rescheduled', 0, 'orders · 0 lines', 'zero', 'false'],
+    ['pastdue', 'Past due', 1, 'order · 1 line', 'crit', 'false'], ['nocommit', 'No commit', 0, 'orders · 0 lines', 'zero', 'false']]);
+  // Gone on purpose: the list (its Lines / Orders column heads and button rows), any share or value column, any bar
+  // track; and Top reasons, which moved to the "Why, and When?" card beside Open lines by due week.
+  assert.doesNotMatch(h, /class="ohs2-(cols|list|row[ "]|name|lines|n")/);
+  assert.doesNotMatch(status, /ohs2-pct|ohs2-val|% past due|ohs2-track|ohl-track|dz-barrow|Top reasons|class="ohu"/);
+  assert.equal((status.match(/class="ohl-sec-title"/g) || []).length, 1, 'Status only');
+  const why = (h.match(/<section class="dz-card dz-span-6 ohl-card ohl-why dz-fade" style="--i:2" aria-label="Top reasons and open lines by due week">[\s\S]*?<\/section>/) || [''])[0];
+  assert.match(why, /<div class="ohl-sec-title"[^>]*>Top reasons<\/div><span class="ohs2-meta"><b>1<\/b> at-risk lines<\/span>/);
+  assert.match(why, /<div class="ohu" style="--rows:\d+;--cols:\d+" role="group" aria-label="Which reasons come together">[\s\S]*?class="ohu-col/); // option S: reason sets
+  assert.match(why, /<div class="ohl-why-half"><div class="ohs2-head"><div class="ohl-sec-title"[^>]*>Open lines by due week<\/div><button type="button" class="dz-chip red ohl-chipbtn" data-focus-key="tile-st-pastdue-chip"[^>]*>1 line already past due<\/button>/);
   page.run("setWeeklyTileFilter('st-ontrack')");
-  assert.match(html(page), /data-focus-key="status-st-ontrack" aria-pressed="true"/);
+  assert.match(html(page), /class="ohs3-cell sel" data-focus-key="status-st-ontrack" aria-pressed="true"/);
+  assert.match(html(page), /class="ohs2-seg sel"[^>]*data-focus-key="status-seg-st-ontrack"[^>]*aria-pressed="true"/);
+  assert.deepEqual([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((m) => m[1]).sort(), ['101', '102']);
   // Gone: the When flagged card and the Due this week tile under At risk (three tiles left).
   assert.doesNotMatch(h, />When flagged<\/h2>|data-focus-key="oh-age-/);
   const stats = [...h.matchAll(/class="dz-stat ohl-stat[^"]*" data-focus-key="tile-([\w-]+)"/g)].map((m) => m[1]);
   assert.deepEqual(stats, ['st-rescheduled', 'st-nocommit', 'allopen']);
-  // Open lines by due week and Customers at risk share the next row (3 + 3).
-  assert.match(h, /class="dz-card dz-span-3 ohl-card dz-fade" style="--i:2"><div class="dz-card-head"><h2 class="dz-title"[^>]*>Open lines by due week/);
-  assert.match(h, /class="dz-card dz-span-3 ohl-card dz-fade" style="--i:3"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>Customers at risk/);
+  // Open lines by due week has no card of its own any more (it is the second half of "Why, and When?"); Customers
+  // at risk takes the full row under question 3.
+  assert.doesNotMatch(h, /<h2[^>]*>Open lines by due week<\/h2>/);
+  assert.match(h, /<h2 class="ohl-q-t" data-tc-skip>Who\?<\/h2><\/div>\s*<section class="dz-card dz-span-6 ohl-card ohl-who dz-fade" style="--i:3"><div class="dz-card-head"><h2 class="dz-title"[^>]*>Customers at risk<\/h2>/);
   assert.deepEqual(page.errors, []);
 });
 
