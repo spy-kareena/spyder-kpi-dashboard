@@ -39,7 +39,9 @@ const linesMeta = (h) => ((h.match(/<div class="ohl-lines-title">[\s\S]*?<\/h2><
 test('Leading: no quiet share / target line under At risk, no note in the ship target (its list stays)', async () => {
   const page = await loaded();
   const h = html(page);
-  assert.doesNotMatch(h, /ohl-hero-quiet|ohl-hero-target|of orders due in the|Target under/);
+  // Visible text only: the section's tooltip may still name the at-risk target.
+  const visible = h.replace(/data-tip="[^"]*"/g, '');
+  assert.doesNotMatch(visible, /ohl-hero-quiet|ohl-hero-target|of orders due in the|Target under/);
   assert.doesNotMatch(h, /mwm-note|booked to ship by|These past-due orders are the largest still open/);
   const ship = h.slice(h.indexOf('ohl-ship'), h.indexOf('ohl-status-card'));
   assert.match(ship, /<span class="dz-sub">past due/);
