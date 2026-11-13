@@ -4024,6 +4024,38 @@ button.ohu-col:focus-visible,button.ohu-name:focus-visible{outline:2px solid var
 @media print{.ohu{break-inside:avoid}}
 @media (forced-colors:active){.ohu-bar,.ohu-dot.on,.ohu-link{forced-color-adjust:none;background:Highlight}.ohu-dot{forced-color-adjust:none;outline:1px solid CanvasText}}
 /* 2v9:end reasons-tiles */
+/* 2v9:lagging-v1 */
+/* Lagging detail (owner's pick, Version 1): the Trend card (title, metric chips, months switch; chart beside the newest
+   month and why its orders were late) and the compact tables under it. */
+.ohg-detail{margin-top:16px}
+.ohgt-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.ohgt-head .dz-title{margin:0}
+.ohgt-chips{display:flex;flex-wrap:wrap;gap:6px}
+button.ohgt-chip{margin:0;padding:6px 12px;border:1px solid var(--dz-line-8);border-radius:999px;background:none;font:inherit;font-size:13px;color:var(--dz-ink-3);cursor:pointer}
+button.ohgt-chip:hover{border-color:var(--dz-indigo)}
+button.ohgt-chip.on{background:var(--dz-indigo-bg);border-color:var(--dz-indigo);color:var(--dz-indigo);font-weight:600}
+button.ohgt-chip:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.ohgt-tools{margin-left:auto}
+.ohgt-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px 28px}
+.ohgt-chart{min-width:0}
+.ohgt-side{min-width:0;padding-top:24px}
+.ohgt-side h3{margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dz-ink-3)}
+.ohgt-now{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.ohgt-now>span:first-child{font-size:30px;font-weight:600;letter-spacing:-.03em;line-height:1;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.ohgt-why{margin-top:18px}
+.ohgt-none{margin:0;font-size:13px;color:var(--dz-ink-4)}
+.ohgt-sofar{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--dz-line-8);font-size:13px;line-height:1.5;color:var(--dz-ink-3)}
+.ohgt-sofar b{font-weight:600;color:var(--dz-ink-1)}
+table.ohgt-tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.ohgt-tbl th{padding:8px 10px;text-align:left;font-size:12.5px;font-weight:500;color:var(--dz-ink-4);white-space:nowrap;border-bottom:1px solid var(--dz-line-8)}
+.ohgt-tbl td{padding:10px;border-bottom:1px solid var(--dz-line-6);white-space:nowrap;color:var(--dz-ink-2)}
+.ohgt-tbl tbody tr:last-child td{border-bottom:0}
+.ohgt-tbl .num{text-align:right}
+.ohgt-tbl td.k{font-weight:600;color:var(--dz-ink-1)}
+.ohgt-tbl td.late{font-weight:600;color:var(--dz-risk-text)}
+@media (max-width:900px){.ohgt-split{grid-template-columns:minmax(0,1fr)}.ohgt-side{padding-top:0}.ohgt-tools{margin-left:0}}
+@media print{.ohgt-chips,.ohgt-tools{display:none}.ohgt-trend{break-inside:avoid}}
+/* 2v9:end lagging-v1 */
 /* 2v9:kit-status */
 /* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
 .dz-stat.kit2{display:flex;flex-direction:column;gap:8px}
@@ -13238,7 +13270,7 @@ function moMonthlyParts(m,src,today){
       note:notShippedNote,
       head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
       items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(openOriginalRows.map(r=>rowKey(r))),empty:'Every line in these months has shipped.'});
-  return {scenario,notes,undated,spotMonths,yearGroups,thisYear,spot,strip,chart,chartLegend,pairBars,summarySpec,originalSpec,notShippedSpec,notShippedNote,monthSelect,
+  return {mtd,ytd,originalGroups:originalHeaderBase,scenario,notes,undated,spotMonths,yearGroups,thisYear,spot,strip,chart,chartLegend,pairBars,summarySpec,originalSpec,notShippedSpec,notShippedNote,monthSelect,
     warehouseSpec:()=>shippedByWarehouseSpec(scenario,today)};
 }
 // 2v9 monthly-move: what moMonthlyParts reads on Sales Order Health: the whole report, or (while a page filter is set)
@@ -14866,83 +14898,100 @@ function mwmMetricsData(m){
     return {months:o,L,causes,lateOrders:perOrder.size};
   });
 }
-// 2v6.9: the Metrics page moved to Sales Order Health > Lagging, under the Monthly and Quarterly cards (ohgMetricsSection):
-// a named section, its Months switch at the right of the title; the Order Health filter row above it holds the filters.
-// Owner: no Show more (order quality, open value by due month, lines to act on) under Metrics.
-function ohgMetricsSection(m){return mwmRenderMetrics(m);}
-function mwmRenderMetrics(m){
-  const n=mwmRange;
-  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Last ${k} months.`})),{label:'Months shown',cls:'sup-seg-sm'});
-  const wrap=body=>pageGroupHtml('ohg-metrics','Metrics',body,{tools:seg,anchor:'ohg-metrics'});
-  if(!m.allRows.length)return wrap('<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>');
-  const x=mwmMetricsData(m);
-  const mo=x.months,L=x.L;
-  const slice=a=>a.slice(12-n);
-  const monthName=d=>d.toLocaleDateString('en-US',{month:'long'});
-  const prevShort=mo[L-1].date.toLocaleDateString('en-US',{month:'short'});
-  const defs=[
-    {k:'otd',label:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'Target 90%',tip:'Shipped by the original date.'},
-    {k:'fill',label:'Fill rate',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-teal)',sub:'Of ordered quantity',tip:'Ordered qty delivered, lines due that month.'},
-    {k:'perfect',label:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'On time, complete, never rescheduled',tip:'Shipped complete, on time, never rescheduled.'},
-    {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days late, late deliveries only.'},
-    {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Shipped by the reschedule date.'}
-  ];
-  // 2v6.9 (owner): no Fill rate tile, and no Fill rate column in the Monthly metrics table.
-  const kpis=defs.filter(c=>c.k!=='fill').map((c,i)=>{
-    const series=mo.map(r=>r[c.k]);
-    const cur=series[L],prev=series[L-1];
-    const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
-    const goodMove=diff===null||diff===0?null:c.inv?diff<0:diff>0;
-    const dText=diff===null?'':`${mwmSigned(diff,c.unit)} vs ${prevShort}`;
-    const tip=ohlTip(`${c.label}, ${mo[L].date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${cur===null?'nothing to score':c.fmt(cur)}`,[dText,c.tip]);
-    return `<div class="mwm-kpi dz-fade" style="--i:${i}"${tipAttr(tip)}>
-      <div class="mwm-kpi-l">${c.label}</div>
-      <div class="mwm-kpi-v"><span>${cur===null?'—':c.fmt(cur)}</span>${dText?`<span class="mwm-kpi-d ${goodMove===null?'':goodMove?'teal':'red'}">${esc(dText)}</span>`:''}</div>
-      ${mwmSpark(slice(series),c.color,`${c.label}, last ${n} months`)}
-      <div class="mwm-kpi-s">${c.sub}</div>
-    </div>`;
-  }).join('');
-  // On-time line: 12 (or 6, 3) points on a 50 to 100 % scale (lower when a month needs it), with the 90 % target dashed.
-  const pts=slice(mo);
-  const real=pts.map(r=>r.otd).filter(v=>v!==null);
-  const lo=Math.min(50,Math.floor((real.length?Math.min(...real):50)/10)*10);
-  const yOf=v=>(100-v)/(100-lo)*100;
+// Sales Order Health > Lagging, under the Monthly and Quarterly cards (owner's pick, Version 1): one Trend card with a
+// metric switch (the chart, the newest month's figure and why its orders were late), one Month by month table, then By
+// warehouse and Booked vs shipped. It replaces the Metrics tiles, the two charts, the two month tables, the month cards
+// and the shipped-to-date strip. The Order Health filter row applies; the Months switch is mwmRange.
+let ohgTrendMetric='otd';
+const OHG_TREND={
+  otd:{label:'On Time',long:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,pct:true,target:90,color:'var(--dz-indigo)',tip:'Shipped by the original date.'},
+  perfect:{label:'Perfect Order',long:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,pct:true,color:'var(--dz-indigo)',tip:'Shipped complete, on time, never rescheduled.'},
+  days:{label:'Avg Days Late',long:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',tip:'Average days late, late deliveries only.'},
+  lateOrders:{label:'Late Orders',long:'Late orders',fmt:v=>fmtNum(v),unit:'',inv:true,color:'var(--dz-risk)',tip:'Orders shipped 1+ days late.'},
+  orders:{label:'Orders Shipped',long:'Orders shipped',fmt:v=>fmtNum(v),unit:'',inv:false,color:'var(--dz-teal)',tip:'Orders shipped in the month.'}
+};
+function ohgSetTrendMetric(k){ohgTrendMetric=OHG_TREND[k]?k:'otd';renderResults();}
+// The chart: the months shown on one scale (percent metrics from 50 %, or lower when a month needs it, to 100 %; counts
+// and days from 0 to a round top), a dot per scored month with its value, the 90 % target for on-time delivery.
+function ohgTrendChart(pts,k){
+  const c=OHG_TREND[k];
+  const real=pts.map(r=>r[k]).filter(v=>v!==null&&v!==undefined);
+  let lo=0,hi=100;
+  if(c.pct)lo=Math.min(50,Math.floor((real.length?Math.min(...real):50)/10)*10);
+  else{const mx=real.length?Math.max(...real):0,pw=Math.pow(10,Math.floor(Math.log10(mx||1))),n=mx/pw;hi=Math.max(1,(n<=1?1:n<=2?2:n<=5?5:10)*pw);if(hi>2&&hi%2)hi+=1;}
+  const yOf=v=>(hi-v)/(hi-lo)*100;
+  const axis=v=>c.pct?`${fmtNum(v)}%`:Number.isInteger(v)?fmtNum(v):v.toFixed(1);
   let path='',pen=false;
-  pts.forEach((r,i)=>{if(r.otd===null){pen=false;return;}path+=`${pen?'L':'M'}${Math.round((i+.5)/pts.length*1200)} ${Math.round(yOf(r.otd)*2)} `;pen=true;});
+  pts.forEach((r,i)=>{const v=r[k];if(v===null||v===undefined){pen=false;return;}path+=`${pen?'L':'M'}${Math.round((i+.5)/pts.length*1200)} ${Math.round(yOf(v)*2)} `;pen=true;});
   const dots=pts.map((r,i)=>{
-    if(r.otd===null)return '';
-    const px=((i+.5)/pts.length*100).toFixed(2),py=yOf(r.otd).toFixed(2);
-    const tip=ohlTip(`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${r.otd}% on time`,[`${ohN(r.otdScored,'delivery line')} scored`,`${mwmOrders(r.lateOrders)} late`]);
-    return `<span class="mwm-pt" style="left:${px}%;top:${py}%"${tipAttr(tip)}></span><span class="mwm-pt-l" style="left:${px}%;top:${py}%">${r.otd}%</span>`;
+    const v=r[k];if(v===null||v===undefined)return '';
+    const px=((i+.5)/pts.length*100).toFixed(2),py=yOf(v).toFixed(2);
+    const tip=ohlTip(`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${c.long} ${c.fmt(v)}`,[`${mwmOrders(r.orders)} shipped`,`${mwmOrders(r.lateOrders)} late`]);
+    return `<span class="mwm-pt" style="left:${px}%;top:${py}%;border-color:${c.color}"${tipAttr(tip)}></span><span class="mwm-pt-l" style="left:${px}%;top:${py}%">${esc(c.fmt(v))}</span>`;
   }).join('');
-  const mid=Math.round((100+lo)/2);
-  const line=dzCard({title:'On-time delivery',span:6,
-    meta:`<span class="mwm-legend"><span><i class="mwm-line"></i>On time</span><span><i class="mwm-line dash"></i>Target 90%</span></span>`,
-    body:`<div class="mwm-plot-wrap"><div class="mwm-yax"><span style="top:0">100%</span><span style="top:50%">${mid}%</span><span style="top:100%">${lo}%</span></div>
-      <div class="mwm-plot" data-tip-notab><i class="mwm-grid" style="top:0"></i><i class="mwm-grid" style="top:50%"></i><i class="mwm-grid base" style="bottom:0"></i><i class="mwm-target" style="top:${yOf(90).toFixed(2)}%"></i>
-        <svg viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="${path.trim()}" fill="none" stroke="var(--dz-indigo)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>${dots}</div></div>
-      <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`});
-  // Late orders by cause (owner): a tile beside the others, no chart: each first reason and its late orders, most
-  // first; past four rows the rest are one "Other" row (its tip names them).
-  const rest=x.causes.slice(3);
-  const shownCauses=x.causes.length>4?[...x.causes.slice(0,3),['Other',rest.reduce((s,c)=>s+c[1],0),rest]]:x.causes;
-  const lateMonth=monthName(mo[x.L].date);
-  const causes=`<div class="mwm-kpi mwm-kpi-cause dz-fade" style="--i:${defs.length-1}"${tipAttr(ohlTip(`Late orders by cause, ${lateMonth}: ${fmtNum(x.lateOrders)}`,['By the first reason on the late delivery']))}>
-      <div class="mwm-kpi-l">Late orders by cause</div>
-      ${shownCauses.length?`<ul class="mwm-causes">${shownCauses.map(([label,c,more])=>`<li${tipAttr(more?ohlTip(`Other: ${mwmOrders(c)}`,more.map(([l,n])=>`${l}: ${fmtNum(n)}`)):`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late in ${lateMonth}.`)}><span class="mwm-cause-l">${esc(label)}</span><b class="mwm-cause-v">${fmtNum(c)}</b></li>`).join('')}</ul>`:'<p class="mwm-kpi-s">No late orders.</p>'}
+  const mid=(hi+lo)/2;
+  return `<div class="mwm-plot-wrap"><div class="mwm-yax"><span style="top:0">${axis(hi)}</span><span style="top:50%">${axis(mid)}</span><span style="top:100%">${axis(lo)}</span></div>
+      <div class="mwm-plot" data-tip-notab role="img" aria-label="${esc(`${c.long}, last ${pts.length} months`)}"><i class="mwm-grid" style="top:0"></i><i class="mwm-grid" style="top:50%"></i><i class="mwm-grid base" style="bottom:0"></i>${c.target?`<i class="mwm-target" style="top:${yOf(c.target).toFixed(2)}%"></i>`:''}
+        <svg viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="${path.trim()}" fill="none" stroke="${c.color}" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>${dots}</div></div>
+      <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`;
+}
+const OHG_PAGE=6;
+function ohgDetailSection(m){
+  if(!m.allRows.length)return `<div class="dz-grid ohg-detail">${dzCard({title:'Trend',span:6,attrs:' id="ohg-metrics"',body:'<p class="empty-note">No order lines are loaded yet.</p>'})}</div>`;
+  const today=reportToday();
+  const x=mwmMetricsData(m),mo=x.months,L=x.L;
+  const d=mwmMonthlyData(m);
+  const p=moMonthlyParts(m,momSource(m),today);
+  const n=mwmRange,k=OHG_TREND[ohgTrendMetric]?ohgTrendMetric:'otd',c=OHG_TREND[k];
+  const partial=today.getDate()<new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  const monthName=dt=>dt.toLocaleDateString('en-US',{month:'long'});
+  const toDate=L===11&&partial;
+  // Trend: the metric switch, the months switch, the chart; beside it the newest month and why its orders were late.
+  const chips=`<div class="ohgt-chips" role="group" aria-label="Metric">${Object.entries(OHG_TREND).map(([id,t])=>`<button type="button" class="ohgt-chip${id===k?' on':''}" data-focus-key="ohg-trend-${id}" aria-pressed="${id===k}" onclick="ohgSetTrendMetric('${id}')"${tipAttr(t.tip)}>${esc(t.label)}</button>`).join('')}</div>`;
+  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([r,label])=>({label,on:n===r,onclick:`mwmSetRange(${r})`,key:`mwm-range-${r}`,tip:`Last ${r} months.`})),{label:'Months shown',cls:'sup-seg-sm'});
+  const cur=mo[L][k],prev=mo[L-1][k];
+  const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
+  const goodMove=diff===null||diff===0?null:c.inv?diff<0:diff>0;
+  const dText=diff===null?'':`${mwmSigned(diff,c.unit)} vs ${shortMonth(mo[L-1].date)}`;
+  const rest=x.causes.slice(5);
+  const shownCauses=x.causes.length>6?[...x.causes.slice(0,5),['Other',rest.reduce((t,q)=>t+q[1],0),rest]]:x.causes;
+  const lateMonth=monthName(mo[L].date);
+  const causes=shownCauses.length?`<ul class="mwm-causes">${shownCauses.map(([label,q,more])=>`<li${tipAttr(more?ohlTip(`Other: ${mwmOrders(q)}`,more.map(([l,v])=>`${l}: ${fmtNum(v)}`)):`${label}: ${mwmOrders(q)} of ${fmtNum(x.lateOrders)} late in ${lateMonth}.`)}><span class="mwm-cause-l">${esc(label)}</span><b class="mwm-cause-v">${fmtNum(q)}</b></li>`).join('')}</ul>`:'<p class="ohgt-none">No late orders.</p>';
+  const nowE=d.entries[11].shipped;
+  const side=`<div class="ohgt-side">
+      <h3${tipAttr(c.tip)}>${esc(c.long)} · ${esc(lateMonth)}${toDate?' to date':''}</h3>
+      <div class="ohgt-now"><span>${cur===null?'—':esc(c.fmt(cur))}</span>${dText?`<span class="mwm-kpi-d ${goodMove===null?'':goodMove?'teal':'red'}">${esc(dText)}</span>`:''}</div>
+      <div class="ohgt-why"><h3${tipAttr('Each late order under the first reason on its late delivery.')}>Why orders were late · ${esc(lateMonth)}</h3>${causes}</div>
+      <p class="ohgt-sofar"${tipAttr(ohlTip(`${monthName(today)}${partial?' so far':''}`,[`${mwmOrders(nowE.orders)} shipped, ${money(nowE.value)} on ${ohN(nowE.lines,'delivery line')}`,`Year to date: ${money(p.ytd.amount)} on ${ohN(p.ytd.rows,'delivery line')}`]))}><b>${esc(monthName(today))}${partial?' so far':''}:</b> ${esc(mwmOrders(nowE.orders))} · ${esc(moneyShort(nowE.value))} shipped · year to date ${esc(moneyShort(p.ytd.amount))}</p>
     </div>`;
-  const cols='minmax(0,1.1fr) repeat(6,minmax(0,1fr))'; // owner: no Fill rate column
-  // Newest first, 10 months a page; a new range or filter starts at page 1.
-  const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]),DZ_MONTH_PAGE);
-  const table=dzCard({title:'Monthly metrics',span:6,
-    body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
-      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
-      ${metPg.rows.map(({r,ri})=>{
-        const cur=ri===0&&slice(mo).length&&r===mo[11];
-        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
-      }).join('')}
-    </div></div>${dzPageFoot('mwm-metric-months',metPg,'Monthly metrics','months')}`});
-  return wrap(`<div class="mwm-kpis">${kpis}${causes}</div><div class="dz-grid">${line}${table}</div>`);
+  const trend=`<section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title"${tipAttr('One metric over the months shown. Pick a metric to redraw the chart.')}>Trend</h2>${chips}<div class="ohgt-tools">${seg}</div></div>
+      <div class="ohgt-split"><div class="ohgt-chart">${ohgTrendChart(mo.slice(12-n),k)}</div>${side}</div></section>`;
+  // Month by month: the twelve months, newest first, six a page; the value is the shipped value of the month.
+  const th=(label,tip,num=true)=>`<th scope="col"${num?' class="num"':''}${tipAttr(tip)}>${label}</th>`;
+  const rateTone=v=>v>=90?'teal':v>=70?'amber':'red';
+  const sig=JSON.stringify([weeklyFilterKey()]);
+  const moPg=dzPageOf('ohg-months',mo.map((r,i)=>({r,i})).reverse(),sig,OHG_PAGE);
+  const months=dzCard({title:'Month by month',span:6,tip:'Orders shipped each month, by delivery date.',
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Month by month"><table class="ohgt-tbl"><thead><tr>${th('Month','The month the orders shipped.',false)}${th('Orders','Orders shipped in the month.')}${th('Value','Shipped value of the month.')}${th('On time',OHG_TREND.otd.tip)}${th('Perfect order',OHG_TREND.perfect.tip)}${th('Avg days late',OHG_TREND.days.tip)}${th('Late orders',OHG_TREND.lateOrders.tip)}</tr></thead><tbody>${moPg.rows.map(({r,i})=>{
+      const label=r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'});
+      return `<tr><td class="k">${esc(label)}${i===11&&partial?' <span class="mwm-todate">to date</span>':''}</td><td class="num">${fmtNum(r.orders)}</td><td class="num">${esc(moneyShort(d.entries[i].shipped.value))}</td><td class="num">${r.otd===null?'—':dzChip(`${fmtNum(r.otd)}%`,rateTone(r.otd))}</td><td class="num">${mwmPct(r.perfect)}</td><td class="num">${r.days===null?'—':r.days.toFixed(1)}</td><td class="num${r.lateOrders?' late':''}">${fmtNum(r.lateOrders)}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-months',moPg,'Month by month','months')}`});
+  // By warehouse: the ship target range's deliveries (this month unless a scenario range is set).
+  const sd=p.scenario;
+  const whPg=dzPageOf('ohg-wh',sd.shippedWeekGroups,sig,OHG_PAGE);
+  const whRange=sd.isDefaultRange?monthName(today):`${displayDate(sd.scenarioRangeStart)} to ${displayDate(sd.scenarioRangeEnd)}`;
+  const wh=dzCard({title:'By warehouse',span:3,tip:'Deliveries by the warehouse or CM that shipped them.',meta:`${esc(whRange)} · ${esc(mwmOrders(sd.shippedWeekOrders))}`,
+    body:whPg.total?`<div class="sup-scroll" tabindex="0" role="region" aria-label="By warehouse"><table class="ohgt-tbl"><thead><tr>${th('Warehouse / CM','The warehouse or CM that shipped.',false)}${th('Orders','Sales orders with a delivery in the range.')}${th('Shipped','Shipped value.')}${th('On time','Deliveries early or on time.')}</tr></thead><tbody>${whPg.rows.map(g=>{
+      const otd=g.rows.length?Math.round((g.early+g.onTime)/g.rows.length*100):0;
+      return `<tr${tipAttr(ohlTip(ohlWhName(g.warehouse),[`${ohN(g.rows.length,'delivery line')}, ${fmtNum(g.qty)} qty`,`${fmtNum(g.early)} early · ${fmtNum(g.onTime)} on time · ${fmtNum(g.late)} late`]))}><td class="k">${esc(ohlWhName(g.warehouse))}</td><td class="num">${fmtNum(g.orders.size)}</td><td class="num">${money(g.value)}</td><td class="num">${dzChip(`${fmtNum(otd)}%`,rateTone(otd))}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-wh',whPg,'By warehouse','warehouses')}`:'<p class="empty-note">No deliveries in this range.</p>'});
+  // Booked vs shipped: lines by the month they were first due.
+  const og=p.originalGroups.filter(g=>g.key&&g.key!=='No Original Delivery Date');
+  const ogPg=dzPageOf('ohg-orig',og,sig,OHG_PAGE);
+  const orig=dzCard({title:'Booked vs shipped',span:3,tip:'Lines by the month they were first due: how much of the booked value has shipped.',meta:'By original delivery month',
+    body:ogPg.total?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Booked vs shipped"><table class="ohgt-tbl"><thead><tr>${th('Original month','The month the lines were first due.',false)}${th('Booked $ shipped','Shipped value as a share of the value booked for the month.')}${th('Open','Open value still to ship.')}${th('Late lines','Lines shipped after their original date.')}</tr></thead><tbody>${ogPg.rows.map(g=>{
+      const booked=g.openAmount+g.closedAmount,pctV=booked>0?Math.round(g.closedAmount/booked*100):0;
+      return `<tr${tipAttr(ohlTip(g.label,[`${money(g.closedAmount)} shipped of ${money(booked)} booked`,`${ohN(g.openRows,'open line')} · ${ohN(g.closedRows,'closed line')}`,`${fmtNum(g.openQty)} qty open`]))}><td class="k">${esc(g.label)}</td><td class="num">${fmtNum(pctV)}%</td><td class="num">${money(g.openAmount)}</td><td class="num${g.shippedLateRows?' late':''}">${fmtNum(g.shippedLateRows)}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-orig',ogPg,'Booked vs shipped','months')}`:'<p class="empty-note">No original delivery dates in this export.</p>'});
+  const notes=[p.notes.find(t=>/closed lines have no delivery/.test(t)),p.notes.find(t=>/^Delivery history starts/.test(t))].filter(Boolean);
+  return `<div class="dz-grid ohg-detail">${trend}${months}${wh}${orig}</div>${notes.length?`<p class="mom-foot">${notes.map(esc).join(' ')}</p>`:''}`;
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
 
@@ -19924,34 +19973,13 @@ function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgMetricsSection(m)}${ohgShipmentsSection(m)}`; // owner: Metrics, then Shipments
+  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgDetailSection(m)}`;
   const common=['An order counts once, however many shipments','Page filters apply'];
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgMetricsSection(m)}${ohgShipmentsSection(m)}`; // owner: Metrics, then Shipments
-}
-// 2v9 monthly-move (owner): Monthly's backward-looking sections on Lagging, under the Monthly and Quarterly cards: orders
-// shipped (or booked) by month and month by month (its Shipped | Booked switch at the right of the title), open and
-// shipped month by month, shipped to date, shipped by warehouse / CM and the original line delivery summary. The same
-// helpers as the Monthly page (mwmMonthlyData, moMonthlyParts); the page filters apply.
-function ohgShipmentsSection(m){
-  if(!m.allRows.length)return '';
-  const today=reportToday();
-  const p=moMonthlyParts(m,momSource(m),today);
-  const d=mwmMonthlyData(m);
-  const booked=mwmMode==='booked';
-  const partial=today.getDate()<new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
-  const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders due each month by original date, shipped or not.']]
-    .map(([id,label,tip])=>({label,on:mwmMode===id,onclick:`mwmSetMode('${id}')`,key:`ohg-ship-mode-${id}`,tip})),{label:'Shipments view',cls:'sup-seg-sm'});
-  const original=p.originalSpec('ohg-original-month','One original month, here and in Items not shipped yet on Leading.');
-  const notes=[p.notes.find(t=>/closed lines have no delivery/.test(t)),p.notes.find(t=>/^Delivery history starts/.test(t))].filter(Boolean);
-  return pageGroupHtml('ohg-shipments','Shipments',`<div class="dz-grid">${mwmMonthlyChartCard(d,booked,partial)}${mwmMonthlyTableCard(d,booked,partial,'ohg-ship-months')}</div>
-    ${p.spot()}
-    ${p.strip()}
-    <div class="dz-grid">${momTableCard(p.warehouseSpec())}${momTableCard(original,{meta:p.monthSelect('ohg-original-month','One original month, here and in Items not shipped yet on Leading.')})}</div>
-    ${notes.length?`<p class="mom-foot">${notes.map(esc).join(' ')}</p>`:''}`,{tools:seg,anchor:'ohg-shipments'});
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgDetailSection(m)}`;
 }
 // --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.
