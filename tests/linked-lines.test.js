@@ -226,14 +226,16 @@ test('override select: stepping the closed select waits for Enter or blur, a pic
   assert.equal(focused[focused.length - 1], 'tile-late');
 });
 
-test('emptying the list focuses its KPI card; Restore focuses the next Restore button, else Data check or the page nav', async () => {
+test('emptying the list focuses its KPI card; Restore focuses the next Restore button, else Restore all, the Settings card titles or the gear', async () => {
   const page = await atRiskPage(pastDue(3));
   const focused = [];
   const doc = page.ctx.document;
-  const pageHtml = () => html(page) + page.els['app-sidebar'].innerHTML;
+  // 2v6: the page nav and the Settings gear are in the top header; deleted lines are restored in Settings > Data Check.
+  const pageHtml = () => html(page) + page.els['app-header'].innerHTML;
   // Controls exist only while the last render drew them; focus() records which one got focus.
   const getById = doc.getElementById;
-  doc.getElementById = (id) => (id === 'linked-select-all' ? (pageHtml().includes('id="linked-select-all"') ? { focus() { focused.push(id); } } : null) : getById(id));
+  const live = ['linked-select-all', 'stg-h-dc', 'stg-h-data'];
+  doc.getElementById = (id) => (live.includes(id) ? (pageHtml().includes(`id="${id}"`) ? { focus() { focused.push(id); } } : null) : getById(id));
   doc.querySelector = (s) => {
     const fk = /data-focus-key="([^"]+)"/.exec(s);
     return fk && pageHtml().includes(`data-focus-key="${fk[1]}"`) ? { focus() { focused.push(fk[1]); } } : null;
@@ -246,18 +248,22 @@ test('emptying the list focuses its KPI card; Restore focuses the next Restore b
   page.run('deleteLinkedSelection()');
   assert.match(html(page), /No lines for this card/);
   assert.deepEqual(focused.splice(0), ['tile-late']);
-  // Restore one line: focus the Restore button that took its place.
+  // The deleted lines are listed in Settings > Data Check, each with its Restore button, then Restore all.
+  page.run("setTab('settings')");
   const keys = fakeControls(page, /class="dc-restore link-btn" data-key="([^"]*)"/g, []).map((b) => b.dataset.key);
   assert.equal(keys.length, 3);
+  assert.match(html(page), /data-focus-key="restore-deleted"[^>]*onclick="restoreDeletedLines\(\)">Restore all</);
+  // Restore one line: focus the Restore button that took its place, else the last one.
   page.run(`restoreDeletedLines(${JSON.stringify(keys[1])})`);
   assert.deepEqual(focused.splice(0), [keys[2]]);
   page.run(`restoreDeletedLines(${JSON.stringify(keys[2])})`);
   assert.deepEqual(focused.splice(0), [keys[0]]);
-  // Restore all removes every Restore button; with nothing else to report Data check goes too, so the page's nav item.
+  // Restore all removes every Restore button and Restore all; focus the Data Check card's title, else the Data card's.
   page.run('restoreDeletedLines()');
   assert.equal(atRiskCount(page), 3);
-  assert.doesNotMatch(html(page), /data-focus-key="data-check"/);
-  assert.deepEqual(focused.splice(0), ['nav-weekly']);
+  assert.doesNotMatch(html(page), /dc-restore|data-focus-key="restore-deleted"/);
+  assert.deepEqual(focused.splice(0), [html(page).includes('id="stg-h-dc"') ? 'stg-h-dc' : 'stg-h-data']);
+  page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   // Apply Not At Risk to every line also empties the list.
   page.run('selectAllLinked(true)');
   focused.splice(0);
@@ -291,7 +297,7 @@ test('every column header sorts the list ascending and descending on the values 
   // Lead time has no column (the table fits a 1366px screen); it is in the delivery date's tip instead.
   page.run("weeklyLineSort='default';renderResults()");
   assert.doesNotMatch(html(page), /data-col="lead"|>Lead<|c-lead/);
-  assert.match(html(page), /<td class="c-date" data-label="Original delivery"><span data-tip="Lead time 7\.1 wks \(order date to original delivery\)\.">2026-08-20<\/span><\/td>/);
+  assert.match(html(page), /<td class="c-date" data-label="Original due"><span data-tip="Lead time 7\.1 wks \(order to original delivery\)\.">2026-08-20<\/span><\/td>/);
   // Header clicks: text columns start A to Z, amounts start high to low, a second click flips.
   page.run("weeklyLineSort='default';sortLinkedColumn('customer')");
   assert.equal(page.run('weeklyLineSort'), 'col:customer:asc');
@@ -305,24 +311,49 @@ test('every column header sorts the list ascending and descending on the values 
   assert.doesNotMatch(html(page), /Column: |aria-sort/);
 });
 
-test('Order Health, PO and Search lines fit the 1055px card of a 1366px screen and keep room for Item / Description', async () => {
-  // Screen min-width of the table: the last plain (not print !important) rule that names it.
-  const css = HTML.replace(/\/\*[\s\S]*?\*\//g, '');
-  const cssMin = (cls) => Number([...css.matchAll(/([^{}]+)\{min-width:(\d+)px\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(`.lines-table.${cls}`)).pop()[2]);
-  const fixedCols = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">\\s*<colgroup>([\\s\\S]*?)</colgroup>`))[1].matchAll(/width:(\d+)px/g)].reduce((t, m) => t + Number(m[1]), 0);
-  const heads = (h, cls) => [...h.match(new RegExp(`<table class="lines-table ${cls}">[\\s\\S]*?</thead>`))[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
+test('Order Health, PO and Search lines fit the card of a 1366px screen and keep room for Item / Description', async () => {
+  // 2v6: the page nav is a top header (no sidebar), so at 1366px a full-width card leaves 1248px for its table
+  // (measured in Chromium: 1366 less the page gutters and the card padding).
+  const CARD = 1248;
+  const css = HTML.slice(HTML.indexOf('\n<style>'), HTML.indexOf('\n</style>')).replace(/\/\*[\s\S]*?\*\//g, ''); // the one stylesheet
+  // Top-level rules only (not inside @media: print, phone and narrow-screen rules), as [selector, body].
+  const topRules = [];
+  for (let i = 0, depth = 0, start = 0, sel = ''; i < css.length; i++) {
+    if (css[i] === '{') { if (depth === 0) { sel = css.slice(start, i); start = i + 1; } depth++; }
+    else if (css[i] === '}') { depth--; if (depth === 0) { if (!sel.trim().startsWith('@')) topRules.push([sel, css.slice(start, i)]); start = i + 1; } }
+  }
+  // The last top-level rule that names exactly that selector sets the property.
+  const lastRule = (sel, prop) => {
+    const hits = topRules.filter((m) => m[0].split(',').map((x) => x.trim()).includes(sel))
+      .map((m) => new RegExp(`(?:^|;)${prop}:([^;!]+)(?:;|$)`).exec(m[1])).filter(Boolean);
+    return hits.length ? hits.pop()[1] : null;
+  };
+  const cssMin = (sel) => Number(String(lastRule(sel, '--min') || lastRule(sel, 'min-width')).replace(/px/, ''));
+  // Each column's width (px or %) from its <col> style, or from the .sup-po .c-* rule its class names.
+  const colWidths = (h, cls) => [...h.match(new RegExp(`<table class="${cls}">\\s*<colgroup>([\\s\\S]*?)</colgroup>`))[1].matchAll(/<col\b[^>]*>/g)]
+    .map((m) => (/width:([\d.]+(?:px|%))/.exec(m[0]) || [])[1] || (/class="(c-[a-z]+)"/.test(m[0]) ? lastRule(`.sup-po .${/class="(c-[a-z]+)"/.exec(m[0])[1]}`, 'width') : null))
+    .filter(Boolean);
+  // Width left for the one free column (Item / Description) at a table width.
+  const free = (widths, at) => at - widths.reduce((t, w) => t + (w.endsWith('%') ? at * parseFloat(w) / 100 : parseFloat(w)), 0);
+  const heads = (h, cls) => [...h.match(new RegExp(`<table class="${cls}">[\\s\\S]*?</thead>`))[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, '').replace(/↕/g, '').trim());
   const page = await atRiskPage([...pastDue(2), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorName: 'Acme Parts' })]);
-  // Order Health: no Lead column; every other column (with Notes) is in the 1055px card at 1366.
-  assert.deepEqual(heads(html(page), 'so'), ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original delivery', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
-  const so = cssMin('so') - fixedCols(html(page), 'so');
+  // Order Health (the Lines card): no Lead column; Item / Description is the free column.
+  assert.deepEqual(heads(html(page), 'lines-table so ohl-lines'), ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original due', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
+  const so = { min: cssMin('.ohl-card table.lines-table.so.ohl-lines'), cols: colWidths(html(page), 'lines-table so ohl-lines') };
   page.run("setTab('purchaseorders')");
-  const po = cssMin('po') - fixedCols(html(page), 'po');
+  assert.deepEqual(heads(html(page), 'sup-tbl sup-po').slice(0, 3), ['PO #', 'Vendor', 'Item']);
+  const po = { min: cssMin('.sup-po'), cols: colWidths(html(page), 'sup-tbl sup-po') };
   page.run("onGlobalSearchInput('Acme');applyGlobalSearch()");
-  const search = cssMin('search') - fixedCols(html(page), 'search');
-  for (const cls of ['so', 'po', 'search']) assert.ok(cssMin(cls) <= 1055, `${cls} table minimum ${cssMin(cls)}px`);
-  assert.ok(so >= 130 && po >= 190 && search >= 140, `Item / Description gets ${so}px (SO), ${po}px (PO), ${search}px (Search) at the minimum width`);
+  const search = { min: cssMin('.lines-table.search'), cols: colWidths(html(page), 'lines-table search') };
+  for (const [name, t] of Object.entries({ so, po, search })) {
+    assert.ok(t.min > 0 && t.min <= CARD, `${name} table minimum ${t.min}px fits the ${CARD}px card`);
+    assert.equal(t.cols.length, { so: 10, po: 10, search: 9 }[name], `${name}: every column but the free one has a width`);
+  }
+  const room = { so: free(so.cols, CARD), po: free(po.cols, CARD), search: free(search.cols, CARD) };
+  assert.ok(room.so >= 200 && room.po >= 100 && room.search >= 300, `Item / Description gets ${JSON.stringify(room)} px at 1366`);
   // Fixed layout: long customer and warehouse names stop at two lines (title has the full name) instead of widening rows.
   assert.match(HTML, /\.lines-table\{width:100%;border-collapse:collapse;table-layout:fixed;/);
+  assert.match(HTML, /\.sup-tbl\{width:100%;min-width:var\(--min,1000px\);border-collapse:collapse;table-layout:fixed;/);
   assert.match(HTML, /\.lines-table \.clip\{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;/);
   assert.match(html(page), /<td class="c-name" title="Acme Parts"><span class="clip"><mark>Acme<\/mark> Parts<\/span><\/td>/);
 });
@@ -355,13 +386,15 @@ test('an override redraws Order Health without building other pages\' aggregates
   assert.equal(page.run('currentMetrics().backorderQty'), page.run('backorderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).backorderQty'));
 });
 
-test('the guides promise row selection and header sort only on Order Health linked lines, where they exist', async () => {
+test('the guides promise row selection only on Order Health linked lines, where it exists (both tables sort by header)', async () => {
   const page = await atRiskPage([...pastDue(1), sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700' })]);
   assert.match(html(page), /class="row-check"[\s\S]*class="th-sort"/);
   page.run("setTab('purchaseorders')");
-  const po = html(page).match(/<section[^>]*id="po-linked-lines"[\s\S]*?<\/section>/)[0];
-  assert.match(po, /<td class="c-doc">700<\/td>/);
-  assert.doesNotMatch(po, /row-check|th-sort/);
+  const po = html(page).match(/<div id="po-linked-lines"[^>]*>[\s\S]*?<\/section><\/div>/)[0];
+  assert.match(po, /<td class="sup-strong" data-label="PO #">700<\/td>/);
+  // PO lines: no row ticks (one Add note per line); since 2v6.5 their column titles sort too (poSortColumn).
+  assert.doesNotMatch(po, /row-check|linkedSelection|selectAllLinked/);
+  assert.match(po, /<button type="button" class="th-sort po-th" data-focus-key="po-sort-po" onclick="poSortColumn\('po'\)"/);
   for (const file of ['README.md', 'docs/USER_QUICK_START.md']) {
     const claim = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', file), 'utf8').split('\n').find((l) => /tick rows/.test(l));
     assert.match(claim, /Order Health/, file);
