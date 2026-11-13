@@ -198,7 +198,7 @@ test('--check prints the overview and exits; exits 1 without files', () => {
 // --- The "Connect an AI" help page in index.html --------------------------------------------------------
 const unescape = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 
-// 2v7: the Connect an AI page moved into Settings ("Connect An AI App" card); setTab('connect') opens Settings there.
+// 2v7: the Connect an AI page moved into Settings; 2v6.9 (owner): it is the "Connect an AI app" part of the one AI card.
 test('Connect an AI opens in Settings before any export is loaded: a short card and a working config snippet', () => {
   const page = loadPage();
   const header = () => page.els['app-header'].innerHTML;
@@ -209,10 +209,12 @@ test('Connect an AI opens in Settings before any export is loaded: a short card 
   assert.equal(page.run('activeTab'), 'settings');
   assert.equal(page.run('stgConnectOpen'), true, 'asked for, its setup steps are open');
   const html = page.els['results-screen'].innerHTML;
-  const at = html.indexOf('id="stg-card-connect"');
-  assert.ok(at > 0, 'the Connect An AI App card is drawn');
-  const card = html.slice(at, html.indexOf('</section>', at));
-  assert.match(card, /<h2 class="dz-title sm stg-title" id="stg-h-connect" tabindex="-1">[\s\S]*Connect An AI App<\/h2>/);
+  const at = html.indexOf('id="stg-card-ai"');
+  assert.ok(at > 0, 'the AI card is drawn');
+  const whole = html.slice(at, html.indexOf('</section>', at));
+  assert.match(whole, /<h2 class="dz-title sm stg-title" id="stg-h-ai" tabindex="-1"[^>]*>[\s\S]*AI<\/h2>/);
+  const card = whole.slice(whole.indexOf('<h3 class="stg-subt">Connect an AI app</h3>'));
+  assert.ok(card.length > 100, 'the Connect an AI app part is in the AI card');
   assert.match(card, /<details class="stg-setup" open/);
   assert.doesNotMatch(html, /Share snapshot|Export PDF/);
   // Concise: one intro line, the three steps, one privacy line; the details live in the guide.
@@ -245,7 +247,7 @@ test('Connect an AI with an export loaded opens the Settings card; no Data check
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /id="stg-card-connect"/);
+  assert.match(html, /id="stg-card-ai"[\s\S]*?<h3 class="stg-subt">Connect an AI app<\/h3>/);
   assert.match(html, /<pre id="connect-desktop" tabindex="0"/);
   // Share snapshot stays in the export-date popover; the Export PDF icon is gone (2v6.8: print from the browser); the
   // Data check is a Settings card.
