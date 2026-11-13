@@ -3941,6 +3941,26 @@ button.kc2-cell:focus-visible,button.kc2-cm:focus-visible{outline:2px solid var(
 .stg-subt{margin:0 0 6px;font-size:12.5px;font-weight:600;color:var(--dz-ink-3)}
 .stg-sub .stg-actions{margin-top:8px}
 /* 2v9:end stg-ai */
+/* 2v9:kits-simple */
+/* Kits by CM and month, simple (owner): a plain table, one number per cell in its tone, the CM's total at the end */
+table.kc3-tbl{min-width:var(--min,0)}
+.kc3-tbl th.num,.kc3-tbl td{text-align:right}
+.kc3-tbl th.kc3-past{color:var(--dz-risk-text)}
+.kc3-td{font-variant-numeric:tabular-nums}
+button.kc3-n,button.kc3-cm{margin:-4px -8px;padding:4px 8px;border:0;border-radius:8px;background:transparent;font:inherit;cursor:pointer;transition:background-color .16s ease}
+button.kc3-n{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}
+button.kc3-n.bad,.kc3-note b.bad{color:var(--dz-risk-text)}
+button.kc3-n.warn,.kc3-tot b.warn{color:var(--dz-amber-text)}
+button.kc3-n.ok,.kc3-tot b.ok,.kc3-note b.ok{color:var(--dz-teal-text,var(--dz-teal))}
+button.kc3-cm{font-weight:600;color:var(--dz-ink-1);text-align:left}
+button.kc3-n:hover,button.kc3-cm:hover{background:var(--dz-hover)}
+button.kc3-n.sel,button.kc3-cm.sel{background:var(--dz-indigo-bg)}
+button.kc3-n:focus-visible,button.kc3-cm:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.kc3-none{color:var(--dz-ink-6)}
+.kc3-tot{white-space:nowrap;font-variant-numeric:tabular-nums}.kc3-tot b{font-weight:600}.kc3-tot span{color:var(--dz-ink-4)}
+.kc3-note{margin:10px 0 0;font-size:12px;color:var(--dz-ink-4)}
+@media (prefers-reduced-motion:reduce){button.kc3-n,button.kc3-cm{transition:none}}
+/* 2v9:end kits-simple */
 /* 2v9:revise1 */
 /* Board revision (2v6.9): Purchase Order Health and Shipping space their cards like the rest of the board (16px, 14px
    on phones, as .dz-grid); week labels under a narrow column chart show every other week instead of clipping; Kits by
@@ -10743,28 +10763,27 @@ function poKitCmCardHtml(open,today){
   const shown=cols.filter(([k])=>list.some(x=>x.rows.some(r=>poKitColOf(r,today,cols)===k)));
   const pg=dzPageOf('po-kitcm',list,JSON.stringify([poWarehouseFilter,poVendorFilter,monthKey(today)]));
   const picked=(cm,col)=>poTileFilter==='kitcm'&&poKitPick&&poKitPick.cm===cm&&poKitPick.col===col;
-  // 2v6.9 redesign (owner): each CM is a row: its name with a clean-share meter, then one quiet cell per month: the
-  // kits NOT clean as the number (red when past due, amber otherwise, a teal ✓ when every kit is clean), "/N" beside it
-  // and a thin bar for the share already clean. No heavy colour blocks: the number is what needs work.
+  // 2v6.9 (owner: "make this simple"): a plain table. Each cell is the kits NOT clean that month (red when past due,
+  // amber otherwise), a green ✓ when every kit is clean, – when there are none; the last column the CM's total. Click a
+  // number to list those lines.
   const rows=pg.rows.map(x=>{
-    const cleanPct=x.rows.length?Math.round(x.clean/x.rows.length*100):0;
     const cells=shown.map(([k,label])=>{
       const rs=x.rows.filter(r=>poKitColOf(r,today,cols)===k);
-      if(!rs.length)return `<td class="kc2-td"><span class="kc2-none" aria-label="No kits">–</span></td>`;
-      const nc=rs.filter(r=>!r.kitClean).length,c=rs.length-nc,on=picked(x.cm,k);
+      if(!rs.length)return `<td class="kc3-td"><span class="kc3-none" aria-label="No kits">–</span></td>`;
+      const nc=rs.filter(r=>!r.kitClean).length,on=picked(x.cm,k);
       const tone=!nc?'ok':k==='past'?'bad':'warn';
-      return `<td class="kc2-td"><button type="button" class="kc2-cell ${tone}${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" aria-label="${esc(`${x.cm}, ${label}: ${nc} not clean of ${rs.length}`)}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(nc)} not clean · ${fmtNum(c)} clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}><span class="kc2-v">${nc?`<b>${fmtNum(nc)}</b><span class="kc2-of">/${fmtNum(rs.length)}</span>`:'<b>✓</b>'}</span><span class="kc2-bar" aria-hidden="true"><i style="width:${Math.round(c/rs.length*100)}%"></i></span></button></td>`;
+      return `<td class="kc3-td"><button type="button" class="kc3-n ${tone}${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" aria-label="${esc(`${x.cm}, ${label}: ${nc} of ${rs.length} not clean`)}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(nc)} of ${fmtNum(rs.length)} not clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}>${nc?fmtNum(nc):'✓'}</button></td>`;
     }).join('');
     const on=picked(x.cm,'');
-    return `<tr><th scope="row" class="kc2-th"><button type="button" class="kc2-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.clean)} of ${ohN(x.rows.length,'kit')} clean (${cleanPct}%)`,`${fmtNum(x.not)} not clean`],'Click to list its lines.'))}><span class="kc2-name">${esc(x.cm)}</span><span class="kc2-meter" aria-hidden="true"><i style="width:${cleanPct}%"></i></span><span class="kc2-sub">${fmtNum(x.clean)} of ${fmtNum(x.rows.length)} clean</span></button></th>${cells}</tr>`;
+    return `<tr><th scope="row"><button type="button" class="kc3-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.not)} of ${ohN(x.rows.length,'kit')} not clean`],'Click to list its lines.'))}>${esc(x.cm)}</button></th>${cells}<td class="kc3-tot"><b class="${x.not?'warn':'ok'}">${fmtNum(x.not)}</b><span> of ${fmtNum(x.rows.length)}</span></td></tr>`;
   }).join('');
   function pos(rows){const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;}
   const tNot=list.reduce((t,x)=>t+x.not,0),tAll=list.reduce((t,x)=>t+x.rows.length,0);
   return dzCard({title:'Kits by CM and month',sm:true,cls:'po-kitcm dz-fade',span:6,
     meta:`<span class="kc-meta"><b>${fmtNum(tAll-tNot)}</b> of ${fmtNum(tAll)} kits clean</span>`,
     tip:'CM kits (open PO lines) by month\n• ✓ clean, or not clean yet\n• Green all clean, amber some not, red past due\nClick a cell or a CM to list its lines.',
-    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="kc2-tbl" style="--min:${180+shown.length*92}px"><thead><tr><th scope="col" class="kc2-th">CM</th>${shown.map(([k,l])=>`<th scope="col" class="kc2-mo${k==='past'?' past':''}">${esc(l)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="kc-legend" aria-hidden="true"><span><b class="kc2-key bad">3</b>Not clean, past due</span><span><b class="kc2-key warn">3</b>Not clean</span><span><b class="kc2-key ok">✓</b>All clean</span><span><i class="kc2-keybar"></i>Share clean</span></div>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Kits by CM and month"><table class="sup-tbl kc3-tbl" style="--min:${140+shown.length*76+110}px"><thead><tr><th scope="col">CM</th>${shown.map(([k,l])=>`<th scope="col" class="num${k==='past'?' kc3-past':''}">${esc(l)}</th>`).join('')}<th scope="col" class="num"${tipAttr('Kits not clean, of all kits.')}>Not clean</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="kc3-note" aria-hidden="true">Kits not clean · <b class="bad">red</b> past due · <b class="ok">✓</b> all clean</p>${dzPageFoot('po-kitcm',pg,'Kits by CM and month','CMs')}`});
 }
 // --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
 // A PO line counts when the date Spyder expects it (cmPoDue: its reschedule date, else its due date) is after the
