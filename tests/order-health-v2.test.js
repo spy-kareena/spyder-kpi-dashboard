@@ -121,10 +121,10 @@ test('reasons: every signal on an at-risk line counts, ranked by open value; top
     ['Unconfirmed', 1, 4000, 'us'],
   ]);
   assert.equal(d.top, 6);
-  // The Top reasons heatmap (2v6.9): the at-risk lines due by the At Risk end date, top 5 by orders, then value.
-  const bars = [...html(page).matchAll(/class="ohs2-rname[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(bars, page.run('ohlReasons(currentMetrics()).slice(0,5).map(r=>r.label)'));
-  assert.deepEqual(bars, ['Past due · No reschedule', 'Rescheduled later', 'Supply shortage', 'No Commit (override)', 'No commit date']);
+  // Top reasons (owner, option S): the reasons in the sets drawn (up to 8 sets), most lines first.
+  const bars = [...html(page).matchAll(/class="ohu-name[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(bars, page.run('(()=>{const m=currentMetrics(),r=ohlReasons(m),by=new Map(r.map(x=>[x.label,x.lines])),sh=ohlReasonSets(m).slice(0,8);return r.map(x=>x.label).filter(l=>sh.some(s=>s.labels.includes(l))).sort((a,b)=>by.get(b)-by.get(a));})()'));
+  assert.equal(bars[0], 'Past due · No reschedule');
   // Lines not at risk have no reasons, even when unconfirmed.
   setStatus(page, '103', 'Not At Risk');
   assert.deepEqual(page.run(`lineReasons(${row('103')})`), []);
@@ -417,7 +417,7 @@ test('waffle blocks: one per $20,000, a half block under $10,000, capped at 50, 
 
 // 2v6.9 (owner, 96c6ae9 / 6401b31): Top offenders and its $20k waffle left the page; Customers at risk is a unit
 // chart, one square per open order of the customer (red past due, amber at risk otherwise, grey fine).
-test('Customers at risk draws each customer\'s open orders as squares; clicking a row filters the page to it; a vendor pick opens Purchase Orders', async () => {
+test('Customers at risk is a ranked table of each customer\'s open orders; clicking a row filters the page to it; a vendor pick opens Purchase Orders', async () => {
   const rows = [...ROWS,
     open('110', { ...due('08/02/2026'), AmountLocal: '45,000.00', CustomerVendorCode: 'PATRICK', CustomerVendorName: 'Patrick' }),
     sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...due('08/10/2026'), AmountLocal: '30,000.00' })];
@@ -425,21 +425,20 @@ test('Customers at risk draws each customer\'s open orders as squares; clicking 
   setStatus(page, '106', 'Hold');
   const m = html(page);
   assert.doesNotMatch(m, /aria-label="Top offenders"|class="waffle-row/);
-  const card = m.match(/<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">[\s\S]*?<\/section>/)[0];
-  const row = (code) => card.match(new RegExp(`<button type="button" class="ohl-cust ohc-row[^"]*" data-focus-key="offrow-${code}"[\\s\\S]*?</button>`))[0];
-  const pips = (code) => [...row(code).match(/<span class="ohc-pips"[^>]*>([\s\S]*?)<\/span>/)[1].matchAll(/<i( class="(\w+)")?><\/i>/g)].map((x) => x[2] || 'fine');
+  // Owner's pick (option F): a ranked table of past due, at risk otherwise and open orders; a thin split under each name.
+  const card = m.match(/<table class="ohc2-tbl">[\s\S]*?<\/table>/)[0];
+  const row = (code) => card.match(new RegExp(`<tr class="ohc2-tr[^"]*"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-${code}"[\\s\\S]*?</tr>`))[0];
+  const nums = (code) => [...row(code).matchAll(/<td class="num[^"]*">(\d+)<\/td>/g)].map((x) => +x[1]);
   // Most at-risk orders first, then value. Firefly: 8 open orders, 5 at risk (100, 106, 108 past due; 102, 109 rescheduled).
   assert.deepEqual([...card.matchAll(/data-off="(\w+)"/g)].map((x) => x[1]), ['FIREFLY', 'PATRICK', 'AQUHOT', 'BARLETTA']);
-  assert.deepEqual(pips('FIREFLY'), ['pd', 'pd', 'pd', 'ar', 'ar', 'fine', 'fine', 'fine']);
-  assert.deepEqual(pips('PATRICK'), ['pd']);
-  assert.deepEqual(pips('AQUHOT'), ['ar']); // no commit date, not past due
-  assert.match(row('FIREFLY'), /<span class="ohc-fig"><b>5<\/b> of 8 at risk<\/span>/);
-  assert.match(row('FIREFLY'), /data-tip="FIREFLY - Firefly RV\n• 5 of 8 open orders at risk \(63%\)\n• 3 orders past due\n• 5 lines · \$24,200 at risk\nClick to filter to it\."/);
-  assert.match(row('PATRICK'), /<span class="ohl-cust-amt">\$45K · 1 line<\/span>/);
-  assert.match(card, /<span class="ohc-unit">Each square: 1 open order<\/span>/);
+  assert.deepEqual(nums('FIREFLY'), [3, 2, 8]);
+  assert.deepEqual(nums('PATRICK'), [1, 0, 1]);
+  assert.deepEqual(nums('AQUHOT').slice(0, 2), [0, 1]); // no commit date, not past due
+  assert.match(row('FIREFLY'), /data-tip="FIREFLY - Firefly RV\n• 5 of 8 open orders at risk \(63%\)\n• 3 orders past due · 2 orders at risk otherwise\n• 5 at-risk lines\nClick to filter to it\."/);
+  assert.doesNotMatch(card, /\$/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['PATRICK']);
-  assert.match(html(page), /class="ohl-cust ohc-row sel" data-focus-key="offrow-PATRICK"[^>]*aria-pressed="true"/);
+  assert.match(html(page), /<tr class="ohc2-tr sel"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-PATRICK"[^>]*aria-pressed="true"/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['ALL']);
   // The vendors branch of the same setter (no control on the page draws it now) still opens that vendor's late POs.
@@ -480,7 +479,7 @@ test('every new control and chart carries a plain-English tip with full numbers;
     const m = html(page);
     // 2v6 controls: the tabs and chips; Leading: the At risk hero, its states, warehouse, override bars and tiles, the
     // Status segments and rows, the Top reasons rows and Customers at risk; Lagging: the Monthly / Quarterly figures.
-    const controls = [...m.matchAll(/<button [^>]*(?:role="tab"|class="(?:chip active oh-chip|ohl-hero|dz-stat ohl-stat|ohl-wh|dz-barrow|ohl-tile|ohs2-seg|ohs2-row|ohs2-rname|ohl-cust))[^>]*>/g)].map((x) => x[0])
+    const controls = [...m.matchAll(/<button [^>]*(?:role="tab"|class="(?:chip active oh-chip|ohl-hero|dz-stat ohl-stat|ohl-wh|dz-barrow|ohl-tile|ohs2-seg|ohs2-row|ohu-name|ohu-col|ohc2-name))[^>]*>/g)].map((x) => x[0])
       .concat([...m.matchAll(/<div class="dz-stat ohg-tile"[^>]*>/g)].map((x) => x[0]));
     assert.ok(controls.length >= (view === 'leading' ? 30 : 13), `${view}: ${controls.length}`);
     for (const c of controls) assert.match(c, /data-tip="[^"]{20,}"/, c.slice(0, 120));

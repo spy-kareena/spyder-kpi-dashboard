@@ -129,14 +129,19 @@ test('Top reasons follow Status in one card: a reason by warehouse heatmap, the 
   assert.match(card, /<div class="ohl-sec-title"[^>]*>Status<\/div><span class="ohs2-meta"><b>8<\/b> open orders<\/span>/);
   const top = card.slice(card.indexOf('>Top reasons</div>'));
   assert.doesNotMatch(top, /open orders/, 'the open order count is in the Status head only');
-  assert.match(top, /<span class="ohs2-meta">At-risk orders by warehouse · <b>7<\/b> in all<\/span>/);
-  assert.match(top, /<table class="ohs2-heat"><caption class="sr-only">At-risk orders by reason and warehouse<\/caption>/);
-  // The five reasons with the most at-risk orders (then value), each a filter button with its numbers in the tip.
-  const rows = [...top.matchAll(/<button type="button" class="ohs2-rname[^"]*" data-focus-key="oh-reason-([^"]+)" aria-pressed="false" onclick="[^"]+" data-tip="([^"]+)">/g)];
-  assert.deepEqual(rows.map((x) => x[1]), ['Past due · No reschedule', 'Shipping Delay', 'No commit date', 'QC Delay', 'Rescheduled later']);
-  assert.equal(rows[1][2], 'Shipping Delay\n• 2 orders of 7 at risk (29%)\n• 2 lines · $12,000 at risk\nClick to list them.');
+  assert.match(top, /<span class="ohs2-meta"><b>7<\/b> at-risk lines<\/span>/);
+  assert.match(top, /<div class="ohu" style="--rows:8;--cols:6" role="group" aria-label="Which reasons come together">/);
+  // Owner's pick (option S): the reasons in the sets shown, most lines first, each a filter button with its numbers in
+  // the tip; a column per exact set of reasons, biggest first.
+  const rows = [...top.matchAll(/<button type="button" class="ohu-name[^"]*" data-focus-key="oh-reason-([^"]+)" aria-pressed="false" onclick="[^"]+" data-tip="([^"]+)">/g)];
+  assert.deepEqual(rows.map((x) => x[1]).slice(0, 2), ['Past due · No reschedule', 'Shipping Delay']);
+  assert.equal(rows[1][2], 'Shipping Delay\n• 2 lines, 2 orders with this reason\n• $12,000 at risk\nClick to list every line with this reason.');
+  const sets = [...top.matchAll(/data-focus-key="oh-rset-([^"]+)"[^>]*data-tip="([^"]+)"[\s\S]*?ohu-n">(\d+)</g)];
+  assert.equal(sets.length, 6);
+  assert.equal(sets[0][2], 'Past due · No reschedule + Shipping Delay\n• 2 lines, 2 orders\n• $12,000 at risk\nClick to list them.');
+  assert.equal(sets[0][3], '2');
   page.run("setWeeklyReasonFilter('Shipping Delay')");
-  assert.match(html(page), /class="ohs2-rname sel" data-focus-key="oh-reason-Shipping Delay" aria-pressed="true"/);
+  assert.match(html(page), /class="ohu-name sel" data-focus-key="oh-reason-Shipping Delay" aria-pressed="true"/);
   assert.deepEqual(risk(page), ['300', '301']);
 });
 
@@ -369,12 +374,11 @@ test('override names show in the owner\'s words everywhere; stored values, saved
   assert.match(bulk, /<option value="Waiting on Production">Wait on Prod<\/option>/);
   assert.match(bulk, /<option value="Supply Chain">Supply Chain Delay<\/option>/);
   page.run('selectAllLinked(false)');
-  // Top reasons rows (2v6.9 heatmap; on CM - DSM, where Supply Chain is in the top five): the name shown is the
-  // owner's, in the row and its cells; the filter value is the stored one.
+  // Top reasons rows (option S; on CM - DSM, where Supply Chain is in a set shown): the name shown is the owner's, in
+  // the row and its tip; the filter value is the stored one.
   page.run("setWeeklyWarehouseFilter(['CM - DSM'])");
-  const bar = html(page).match(/<tr[^>]*><th scope="row"><button type="button" class="ohs2-rname[^"]*" data-focus-key="oh-reason-Supply Chain"[\s\S]*?<\/tr>/)[0];
-  assert.match(bar, /onclick="setWeeklyReasonFilter\(&quot;Supply Chain&quot;\)" data-tip="Supply Chain Delay\n• 1 order of 2 at risk \(50%\)\n• 1 line · \$4,000 at risk\nClick to list them\.">Supply Chain Delay<\/button>/);
-  assert.match(bar, /data-tip="Supply Chain Delay · CM · DSM\n• 1 order, 1 line\n• \$4,000 at risk">1<\/td>/);
+  const bar = html(page).match(/<button type="button" class="ohu-name[^"]*" data-focus-key="oh-reason-Supply Chain"[\s\S]*?<\/button>/)[0];
+  assert.match(bar, /onclick="setWeeklyReasonFilter\(&quot;Supply Chain&quot;\)" data-tip="Supply Chain Delay\n• 1 line, 1 order with this reason\n• \$4,000 at risk\nClick to list every line with this reason\.\"><span class="ohu-nm">Supply Chain Delay<\/span>/);
   assert.doesNotMatch(bar, />Supply Chain</);
   page.run("setWeeklyWarehouseFilter(['ALL'])");
   // The chip, the line's status cell (first reason, other reasons) and the note button tip.
