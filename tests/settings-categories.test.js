@@ -101,6 +101,22 @@ test('the bento keeps the design language: dense grid, 4 / 3 / 2 / 1 columns, sp
   assert.match(HTML, /dzFitTables\(el\);\n  stgBentoFit\(\);/);
 });
 
+test('revision (2v9): the bento uses the board gaps, 1px fit rows and fills its holes; touch and print rules', () => {
+  const css = HTML.slice(HTML.indexOf('/* 2v9:revise2 */'), HTML.indexOf('/* 2v9:end revise2 */'));
+  assert.ok(css.length > 0 && HTML.indexOf('/* 2v9:end revise2 */\n/* 2v9:pager */') > 0);
+  assert.match(css, /\.stg-bento\{--stg-gap:16px\}/);
+  assert.match(css, /\.stg-bento\.fit\{grid-auto-rows:1px\}/);
+  assert.match(css, /@media \(max-width:639px\)\{\.stg-bento\{--stg-gap:14px\}/);
+  assert.match(css, /@media \(pointer:coarse\)\{[\s\S]*min-height:40px/);
+  assert.match(css, /@media print\{[\s\S]*\.stg-bento>\.stg-card\{min-height:0!important\}/);
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /#[0-9a-f]{3,6}\b|rgba?\(/i, 'no colours of its own');
+  // The row size comes from the CSS; a one-column tile beside an empty column takes two; a tile over a hole grows.
+  const fit = HTML.slice(HTML.indexOf('function stgBentoFit(){'), HTML.indexOf('// ===== end 2v6 settings ====='));
+  assert.match(fit, /row=parseFloat\(cs\.gridAutoRows\)\|\|2/);
+  assert.match(fit, /c\.style\.gridColumn='span 2';c\.setAttribute\('data-stg-wide',''\)/);
+  assert.match(fit, /c\.style\.minHeight=`\$\{Math\.floor\(to-a\.top\)\}px`/);
+});
+
 test('a shared snapshot: settings read only, the bento still there', async () => {
   const page = await loaded([sapRow()]);
   page.run("isSnapshotView=true;setTab('settings')");
