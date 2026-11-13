@@ -11682,12 +11682,12 @@ function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
 }
 const NAV_GROUPS=[
-  // 2v6.9 (owner): Purchase Orders Health sits next to Sales Order Health in the top row (it was under Supply).
-  ['Sales',[['weekly','Sales Order Health'],['purchaseorders','Purchase Orders Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline']]],
+  // 2v6.9 (owner): Purchase Order Health sits next to Sales Order Health in the top row (it was under Supply).
+  ['Sales',[['weekly','Sales Order Health'],['purchaseorders','Purchase Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline']]],
   ['Supply',[['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
   ['Help',[['settings','Settings','Data source, Data check, targets, display, comment lists and AI.']]]
 ];
-const PAGE_TITLES={weekly:'Sales Order Health',purchaseorders:'Purchase Orders Health',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
+const PAGE_TITLES={weekly:'Sales Order Health',purchaseorders:'Purchase Order Health',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
 // Every page builds its cards, chips, bar rows, filter pills and segmented switches with the helpers below and styles
 // them with the .dz-* classes ("2v6 foundation" in the style block). All of them return HTML strings; text arguments
