@@ -97,9 +97,11 @@ test('Metrics is a section of Lagging under Monthly and Quarterly: setTab and a 
   assert.ok(grid > 0 && sec > grid, 'the section follows the Monthly and Quarterly cards');
   const metrics = h.slice(sec);
   assert.match(metrics, /<h2 class="pg-group-title" id="pg-ohg-metrics">Metrics<\/h2><div class="pg-group-tools"><div class="dz-seg sup-seg-sm" role="group" aria-label="Months shown">/);
-  // The page's content: the five KPIs with sparklines, the on-time line, late orders by cause, the monthly table, Show more.
-  assert.equal((metrics.match(/<div class="mwm-kpi dz-fade"/g) || []).length, 5);
-  assert.match(metrics, />On-time delivery<\/h2>[\s\S]*>Late orders by cause<\/h2>[\s\S]*>Monthly metrics<\/h2>/);
+  // The page's content (owner): four KPIs with sparklines (no Fill rate) and the Late orders by cause tile, then the
+  // on-time line, the monthly table, Show more.
+  assert.equal((metrics.match(/<div class="mwm-kpi dz-fade"/g) || []).length, 4);
+  assert.doesNotMatch(metrics, /<div class="mwm-kpi-l">Fill rate<\/div>/);
+  assert.match(metrics, /<div class="mwm-kpi mwm-kpi-cause dz-fade"[\s\S]*?<div class="mwm-kpi-l">Late orders by cause<\/div>[\s\S]*>On-time delivery<\/h2>[\s\S]*>Monthly metrics<\/h2>/);
   assert.match(metrics, /<details class="mwm-more"[^>]*data-more="mwm-metrics"/);
   assert.match(metrics, /aria-labelledby="pg-mt-quality"[\s\S]*aria-labelledby="pg-mt-month"/);
   // Its own Months switch still works; the Order Health filters narrow it.

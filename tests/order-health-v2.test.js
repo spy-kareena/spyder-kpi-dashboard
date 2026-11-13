@@ -397,9 +397,13 @@ test('Lagging: perfect order and average days late on the Monthly card, late ord
   // 2v6.9 (owner): the Lagging tiles are figures, not buttons, so there is no Lines card and no Us / Them line on them;
   // why orders were late is the Metrics section's Late orders by cause (each late order under its first reason).
   assert.doesNotMatch(lag, /id="linked-lines"|cause-text-|<button[^>]*data-focus-key="tile-(perfect|dayslate|otd3mo|fillrate)"/);
-  const causes = lag.match(/>Late orders by cause<\/h2>[\s\S]*?<\/section>/)[0];
-  assert.match(causes, /<span class="mwm-cause-n">3<\/span><span class="dz-meta">late orders in August<\/span>/);
-  assert.deepEqual([...causes.matchAll(/data-tip="([^"]+)"><span class="dz-barrow-l">/g)].map((x) => x[1]), ['Past due · No reschedule: 2 orders of 3 late.', 'Missed commit: 1 order of 3 late.']);
+  // A tile beside the other Metrics tiles (owner): each reason and its number, no chart.
+  const causes = lag.match(/<div class="mwm-kpi mwm-kpi-cause[\s\S]*?<div class="mwm-kpi-s">[^<]*<\/div>/)[0];
+  assert.match(causes, /<div class="mwm-kpi-l">Late orders by cause<\/div>/);
+  assert.match(causes, /<div class="mwm-kpi-s">3 late orders in August<\/div>/);
+  assert.deepEqual([...causes.matchAll(/<li data-tip="([^"]+)"><span class="mwm-cause-l">([^<]+)<\/span><b class="mwm-cause-v">(\d+)<\/b><\/li>/g)].map((x) => [x[1], x[2], x[3]]),
+    [['Past due · No reschedule: 2 orders of 3 late in August.', 'Past due · No reschedule', '2'], ['Missed commit: 1 order of 3 late in August.', 'Missed commit', '1']]);
+  assert.doesNotMatch(causes, /dz-barrow|<svg/);
   assert.deepEqual(page.errors, []);
 });
 

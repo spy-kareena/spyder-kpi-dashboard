@@ -81,7 +81,7 @@ test('Lagging: a Shipments section between the Monthly / Quarterly cards and Met
   page.run("setWeeklyView('lagging')");
   let h = html(page);
   const grid = h.indexOf('<div class="dz-grid ohg-grid">'), ship = h.indexOf('<section class="pg-group" id="ohg-shipments"'), met = h.indexOf('<section class="pg-group" id="ohg-metrics"');
-  assert.ok(grid > 0 && ship > grid && met > ship, 'cards, then Shipments, then Metrics');
+  assert.ok(grid > 0 && met > grid && ship > met, 'cards, then Metrics, then Shipments (owner)');
   const s = section(h, 'ohg-shipments');
   assert.match(s, /<h2 class="pg-group-title" id="pg-ohg-shipments">Shipments<\/h2><div class="pg-group-tools"><div class="dz-seg sup-seg-sm" role="group" aria-label="Shipments view">/);
   assert.match(s, />Orders shipped by month<\/h2>[\s\S]*>Month by month<\/h2>[\s\S]*<div class="month-spot n\d">[\s\S]*<section class="mini-strip cols-3" aria-label="Shipped to date">[\s\S]*>Shipped by warehouse \/ CM · this month<\/h2>[\s\S]*>Original line delivery summary<\/h2>/);

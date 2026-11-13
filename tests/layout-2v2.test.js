@@ -420,7 +420,7 @@ const groups = (m) => [...m.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]
   .map((x) => { assert.equal(x[1], x[2], 'each group is labelled by its own title'); return x[3]; });
 const panel = (m, view) => m.match(new RegExp(`<div class="oh-panel" role="tabpanel" id="oh-panel-${view}"[^>]*>[\\s\\S]*?(?=<div class="oh-panel" role="tabpanel"|$)`))[0];
 
-test('Sales Order Health reads as cards in a set order: Leading ends with its Lines card; Lagging is Monthly, Quarterly, then Shipments and Metrics', async () => {
+test('Sales Order Health reads as cards in a set order: Leading ends with its Lines card; Lagging is Monthly, Quarterly, then Metrics and Shipments', async () => {
   const page = await withStatuses();
   const lead = panel(html(page), 'leading');
   // 2v6.9: At risk beside the ship target over Status & top reasons; then due weeks and customers; Monthly's forward
@@ -438,7 +438,8 @@ test('Sales Order Health reads as cards in a set order: Leading ends with its Li
   page.run("setWeeklyView('lagging')");
   const lag = panel(html(page), 'lagging');
   assert.deepEqual(cardNames(lag.slice(0, lag.indexOf('<section class="pg-group'))), ['Monthly', 'Quarterly']);
-  assert.deepEqual(groups(lag.slice(0, lag.indexOf('<details class="mwm-more"'))), ['Shipments', 'Metrics']);
+  assert.deepEqual(groups(lag.slice(0, lag.indexOf('<details class="mwm-more"'))), ['Metrics']);
+  assert.ok(lag.indexOf('id="ohg-shipments"') > lag.indexOf('id="ohg-metrics"'), 'Shipments below Metrics (owner)');
   assert.doesNotMatch(lag, /id="linked-lines"/);
   // The old Hide calls no longer hide anything.
   page.run("setWeeklyView('leading');toggleLeadingIndicators();toggleLaggingIndicators()");

@@ -2506,6 +2506,11 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .mwm-cause-head{display:flex;align-items:baseline;gap:8px;margin-top:10px}
 .mwm-cause-n{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
 .mwm-cause-bars{margin-top:16px;gap:9px}
+.mwm-causes{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.mwm-causes li{display:flex;align-items:baseline;gap:10px;min-width:0;font-size:13px}
+.mwm-cause-l{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dz-ink-2)}
+.mwm-cause-v{flex:none;font-weight:650;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
+.mwm-causes li:first-child .mwm-cause-v{color:var(--dz-risk-text)}
 @media (max-width:900px){
   .mwm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mwm-kpi:last-child:nth-child(odd){grid-column:1 / -1}
@@ -11163,7 +11168,7 @@ function supSupplyDemand(m){
       <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty · ${money(demandValue)}${hasOC?` · ${fmtNum(demandOrders)} orders`:''}`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
       <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed POs.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">Usable supply · Stock on hand not included</div></div>
     </div>
-    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them on Sales Order Health.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list them on Sales Order Health.`})}</div></section>`;
+    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${ohN(shortItems,'item')} short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them on Sales Order Health.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${ohN(riskItems,'item')} whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list them on Sales Order Health.`})}</div></section>`;
 
   // Heat map: short items by warehouse and month.
   const months=supMonths(rows,6);
@@ -14943,7 +14948,8 @@ function mwmRenderMetrics(m,legacy){
     {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days late, late deliveries only.'},
     {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Shipped by the reschedule date.'}
   ];
-  const kpis=defs.map((c,i)=>{
+  // 2v6.9 (owner): no Fill rate tile (the Monthly metrics table keeps its column).
+  const kpis=defs.filter(c=>c.k!=='fill').map((c,i)=>{
     const series=mo.map(r=>r[c.k]);
     const cur=series[L],prev=series[L-1];
     const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
@@ -14971,17 +14977,22 @@ function mwmRenderMetrics(m,legacy){
     return `<span class="mwm-pt" style="left:${px}%;top:${py}%"${tipAttr(tip)}></span><span class="mwm-pt-l" style="left:${px}%;top:${py}%">${r.otd}%</span>`;
   }).join('');
   const mid=Math.round((100+lo)/2);
-  const line=dzCard({title:'On-time delivery',span:4,
+  const line=dzCard({title:'On-time delivery',span:6,
     meta:`<span class="mwm-legend"><span><i class="mwm-line"></i>On time</span><span><i class="mwm-line dash"></i>Target 90%</span></span>`,
     body:`<div class="mwm-plot-wrap"><div class="mwm-yax"><span style="top:0">100%</span><span style="top:50%">${mid}%</span><span style="top:100%">${lo}%</span></div>
       <div class="mwm-plot" data-tip-notab><i class="mwm-grid" style="top:0"></i><i class="mwm-grid" style="top:50%"></i><i class="mwm-grid base" style="bottom:0"></i><i class="mwm-target" style="top:${yOf(90).toFixed(2)}%"></i>
         <svg viewBox="0 0 1200 200" preserveAspectRatio="none" aria-hidden="true"><path d="${path.trim()}" fill="none" stroke="var(--dz-indigo)" stroke-width="3" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path></svg>${dots}</div></div>
       <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`});
-  const causeMax=Math.max(1,...x.causes.map(c=>c[1]));
-  const shownCauses=x.causes.length>6?[...x.causes.slice(0,5),['Other',x.causes.slice(5).reduce((s,c)=>s+c[1],0)]]:x.causes;
-  const causes=dzCard({title:'Late orders by cause',sm:true,span:2,tip:'Late orders by the first reason on the late delivery.',
-    body:`<div class="mwm-cause-head"><span class="mwm-cause-n">${fmtNum(x.lateOrders)}</span><span class="dz-meta">late ${x.lateOrders===1?'order':'orders'} in ${esc(monthName(mo[x.L].date))}</span></div>
-      <div class="dz-bars mwm-cause-bars">${shownCauses.map(([label,c],i)=>dzBarRow({label,value:c,max:causeMax,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',i,tip:`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late.`})).join('')||'<p class="empty-note">No late orders.</p>'}</div>`});
+  // Late orders by cause (owner): a tile beside the others, no chart: each first reason and its late orders, most
+  // first; past four rows the rest are one "Other" row (its tip names them).
+  const rest=x.causes.slice(3);
+  const shownCauses=x.causes.length>4?[...x.causes.slice(0,3),['Other',rest.reduce((s,c)=>s+c[1],0),rest]]:x.causes;
+  const lateMonth=monthName(mo[x.L].date);
+  const causes=`<div class="mwm-kpi mwm-kpi-cause dz-fade" style="--i:${defs.length-1}"${tipAttr(ohlTip(`Late orders by cause, ${lateMonth}: ${fmtNum(x.lateOrders)}`,['By the first reason on the late delivery']))}>
+      <div class="mwm-kpi-l">Late orders by cause</div>
+      ${shownCauses.length?`<ul class="mwm-causes">${shownCauses.map(([label,c,more])=>`<li${tipAttr(more?ohlTip(`Other: ${mwmOrders(c)}`,more.map(([l,n])=>`${l}: ${fmtNum(n)}`)):`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late in ${lateMonth}.`)}><span class="mwm-cause-l">${esc(label)}</span><b class="mwm-cause-v">${fmtNum(c)}</b></li>`).join('')}</ul>`:'<p class="mwm-kpi-s">No late orders.</p>'}
+      <div class="mwm-kpi-s">${fmtNum(x.lateOrders)} late ${x.lateOrders===1?'order':'orders'} in ${esc(lateMonth)}</div>
+    </div>`;
   const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
   // Newest first, 10 months a page; a new range or filter starts at page 1.
   const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]),DZ_MONTH_PAGE);
@@ -14993,7 +15004,7 @@ function mwmRenderMetrics(m,legacy){
         return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
       }).join('')}
     </div></div>${dzPageFoot('mwm-metric-months',metPg,'Monthly metrics','months')}`});
-  return wrap(`<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Covers the whole report.')}`);
+  return wrap(`<div class="mwm-kpis">${kpis}${causes}</div><div class="dz-grid">${line}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Covers the whole report.')}`);
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
 
@@ -19975,13 +19986,13 @@ function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgShipmentsSection(m)}${ohgMetricsSection(m)}`;
+  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgMetricsSection(m)}${ohgShipmentsSection(m)}`; // owner: Metrics, then Shipments
   const common=['An order counts once, however many shipments','Page filters apply'];
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgShipmentsSection(m)}${ohgMetricsSection(m)}`;
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgMetricsSection(m)}${ohgShipmentsSection(m)}`; // owner: Metrics, then Shipments
 }
 // 2v9 monthly-move (owner): Monthly's backward-looking sections on Lagging, under the Monthly and Quarterly cards: orders
 // shipped (or booked) by month and month by month (its Shipped | Booked switch at the right of the title), open and
