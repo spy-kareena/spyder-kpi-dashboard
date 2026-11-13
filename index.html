@@ -11349,7 +11349,7 @@ function searchTimingRepeats(timing,texts){
   return !!t&&texts.some(x=>{const n=norm(x);return !!n&&(n.includes(t)||t.includes(n));});
 }
 function renderGlobalSearchPage(m){
-  const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Sales Order Health')}</button>`;
+  const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Sales Order Health')}</button>`;
   const s=globalSearchResults(m);
   if(s.q.length<2)return miscEmpty('Type at least 2 characters','Search covers order lines, supply / demand and Clear To Build.',back);
   if(!s.total)return miscEmpty(`No matches for “${s.q}”`,'Try fewer words, an item code, an SO or PO number, a customer or a tracking number.',back);
@@ -11396,12 +11396,12 @@ function renderGlobalSearchPage(m){
         <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls])=>`<th${cls?` class="${cls}"`:''}${tipAttr(columnTip('search',label))}>${label}</th>`).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
-      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · Add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matching lines only.':'Show up to 500 matching lines.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
+      ${s.rows.length>100?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(s.rows.length)}${s.rows.length>shown.length?' · Add another word to narrow the results':''}</span><button type="button" class="link-btn" data-focus-key="more-search" data-table-key="search"${tipAttr(more?'Show the first 100 matches.':'Show up to 500 matches.')} onclick="toggleTableMore(this.dataset.tableKey)">${more?'Show fewer':'Show up to 500'}</button></div>`:''}
     </div>`;
   // 2v6: one glass card per kind of match (Order lines, Supply / demand, Clear To Build); a kind with no match is left out.
   // The legacy table cards inside are flattened by .misc-flat so they sit in the glass card without a second frame.
   const linesCard=s.rows.length?`<section class="dz-card misc-flat misc-search-lines rise rise-1" aria-labelledby="pg-search-lines" data-group="search-lines">
-      <div class="dz-card-head"><div class="misc-head-l"><h2 class="dz-title" id="pg-search-lines">Order lines</h2><span class="dz-chip"${tipAttr('Open lines first, then closed lines, newest first; Esc in the search box goes back.')}>${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span></div>${back}</div>
+      <div class="dz-card-head"><div class="misc-head-l"><h2 class="dz-title" id="pg-search-lines">Order lines</h2><span class="dz-chip"${tipAttr('Open lines first, then closed, newest first.')}>${fmtNum(s.rows.length)} ${s.rows.length===1?'line':'lines'}</span></div>${back}</div>
       ${lines}
     </section>`:'';
   const otherCard=(html,i)=>html?`<div class="dz-card misc-flat rise rise-${i}">${html}</div>`:'';
@@ -11999,19 +11999,19 @@ function renderShipTargetScenario(sd,today,{controls=true}={}){
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return pageGroupHtml('mo-scenario','Ship target scenario',`
     ${controls?`<div class="filter-bar inline-controls">
-      <label>Start date <input type="date" id="ship-scenario-start"${tipAttr('First day of the scenario range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>End date <input type="date" id="ship-scenario-end"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>Calendar basis <select id="ship-scenario-basis" class="select"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)">
+      <label>Start date <input type="date" id="ship-scenario-start"${tipAttr('First day of the range.')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End date <input type="date" id="ship-scenario-end"${tipAttr('Last day; lines booked by then count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>Calendar basis <select id="ship-scenario-basis" class="select"${tipAttr('Reschedule dates, or original dates only.')} onchange="setShipScenarioDateBasis(this.value)">
         <option value="effective"${sd.useEffective?' selected':''}>Include reschedule dates</option>
         <option value="original"${!sd.useEffective?' selected':''}>Original line delivery only</option>
       </select></label>
     </div>`:''}
     <div class="mini-strip cols-5">
-      ${stat('Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`Booked by target: ${fmtNum(sd.bookedByTarget.length)} lines due by ${displayDate(sd.target)}, worth ${money(sd.bookedValue)} (open plus shipped).`)}
-      ${stat('% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${fmtNum(sd.shippedPct)}% of the booked value has shipped or closed: ${money(sd.shippedValue)} of ${money(sd.bookedValue)}.`)}
-      ${stat('On track window',ohN(sd.onTrackWindow.length,'line'),`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`On track window: ${fmtNum(sd.onTrackWindow.length)} open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}, ${money(rowOpenAmount(sd.onTrackWindow))}.`)}
-      ${stat('Past original due',ohN(sd.pastOriginalDue.length,'line'),`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Past original due: ${fmtNum(sd.pastOriginalDue.length)} open lines dated before ${displayDate(sd.start)}, ${money(rowOpenAmount(sd.pastOriginalDue))}.`)}
-      ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Still open by target: ${fmtNum(sd.stillOpenByTarget.length)} booked lines not yet shipped, ${money(rowOpenAmount(sd.stillOpenByTarget))}.`)}
+      ${stat('Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`${ohN(sd.bookedByTarget.length,'line')} due by ${displayDate(sd.target)}, ${money(sd.bookedValue)} (open plus shipped).`)}
+      ${stat('% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${money(sd.shippedValue)} of ${money(sd.bookedValue)} booked has shipped or closed.`)}
+      ${stat('On track window',ohN(sd.onTrackWindow.length,'line'),`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`Open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}.`)}
+      ${stat('Past original due',ohN(sd.pastOriginalDue.length,'line'),`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Open lines dated before ${displayDate(sd.start)}.`)}
+      ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Booked lines not shipped yet.`)}
     </div>
     ${sd.forward?`<div class="card chart-card tight">
       <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · First ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
@@ -12134,7 +12134,7 @@ function renderResults(){
     const filterPill=(id,label,allText,current,options,setter,labelOf=v=>v)=>dzFilterPill({id,label,
       value:current.includes('ALL')?'All':current.length===1?labelOf(current[0]):`${fmtNum(current.length)} selected`,
       set:!current.includes('ALL'),
-      tip:`Show only the lines of one ${label.toLowerCase()}, or ${allText.toLowerCase()}.`,
+      tip:`Pick one ${label.toLowerCase()}, or all.`,
       options:[{label:allText,selected:current.includes('ALL'),onclick:`${setter}(['ALL'])`},...options.map(o=>{
         const v=typeof o==='string'?o:o.value,t=typeof o==='string'?o:o.label;
         return {label:t,selected:current.length===1&&current[0]===v,onclick:`${setter}([${dzJs(v)}])`};
@@ -12143,7 +12143,7 @@ function renderResults(){
     const whName=w=>String(w).replace(/ - /g,' \u00b7 ');
     const warehousePill=dzFilterPill({id:'oh-warehouse',label:'Warehouse',
       value:isWhAll?'All':activePreset?activePreset[1]:whName(customWarehouseLabel),
-      set:!isWhAll,tip:'Show one warehouse group or one warehouse, or every warehouse.',
+      set:!isWhAll,tip:'Pick a warehouse group, one warehouse, or all.',
       options:[
         {label:'All warehouses',selected:isWhAll,onclick:"setWeeklyWarehouseFilter(['ALL'])"},
         ...whPresets.filter(([id])=>id!=='ALL').map(([id,label,on])=>({label,selected:on,onclick:`setWeeklyWarehousePreset('${id}')`})),
@@ -12175,7 +12175,7 @@ function renderResults(){
     html+=ohPanelClose();
 
     // ---------- Linked lines for the selected card ----------
-    const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(`${label}: ${valueText} · ${sub}; click to list ${key==='total'?'every line':'them'}.`)}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
+    const drillCard=(handler,prefix,current,key,label,tone,valueText,sub)=>`<button type="button" class="drill${current===key?' selected':''}" data-focus-key="${prefix}-${key}" onclick="${handler}('${key}')" aria-pressed="${current===key?'true':'false'}"${tipAttr(ohlTip(`${label}: ${valueText}`,String(sub).split(' · '),'Click to list them.'))}><span class="drill-label">${esc(label)}</span><span class="drill-value${tone?` ${tone}-text`:''}">${esc(valueText)}</span><span class="drill-sub">${esc(sub)}</span></button>`;
     const pctPill=(rate,good,warn)=>`<span class="pill ${rate>=good?'good':rate>=warn?'warn':'bad'}">${fmtNum(rate)}%</span>`;
     const summaryTable=(head,rows)=>`<div class="card flush"><div class="table-scroll" tabindex="0" role="region" aria-label="${esc(`${head[1]} by ${String(head[0]).toLowerCase()}`)}"><table class="data-table compact"><thead><tr>${head.map((h,i)=>`<th${i?' class="num"':''}${tipAttr(columnTip('summary',h))}>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div></div>`;
     const renderOtdDrillCards=(rows)=>{
@@ -12240,8 +12240,8 @@ function renderResults(){
       const ohlState=OH_STATES.find(x=>`st-${x[0]}`===weeklyTileFilter);
       const ohlTitle=ohlState?ohlState[2]:(weeklyTileTitles[weeklyTileFilter]||OH_TILE_TITLES[weeklyTileFilter]||'');
       const ohlHead=(sortHtml='')=>`<div class="dz-card-head ohl-lines-head">
-          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The order lines behind the card or number you picked; click a column heading to sort, tick lines to set an override on several at once.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}</div>
-          <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Narrow this list to lines whose order, customer, warehouse or item contains your words.')}>${sortHtml}</div>
+          <div class="ohl-lines-title"><h2 class="dz-title"${tipAttr('The lines behind your pick. Tick lines to set an override.')}>Lines</h2>${dzChip(linkedTileSummary,ohlTone)}${ohlTitle?`<span class="dz-meta">${esc(ohlTitle)}</span>`:''}</div>
+          <div class="ohl-lines-tools"><input type="search" id="ohl-line-search" class="dz-pillinput ohl-search" data-focus-key="ohl-search" placeholder="Search lines" aria-label="Search these lines" value="${esc(ohlLineQuery)}" autocomplete="off" oninput="ohlSetQuery(this.value)"${tipAttr('Filter by order, customer, warehouse or item.')}>${sortHtml}</div>
         </div>`;
       if(!rows.length)return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">${ohlHead()}<p class="empty-note">${ohlQ?'No lines match your search.':'No lines for this card with the current filters.'}</p></section>`;
       const showLateDetail=weeklyTileFilter==='late';
@@ -12358,21 +12358,21 @@ function renderResults(){
       if(selectedCount&&!allSelected)Promise.resolve().then(()=>{const box=document.getElementById('linked-select-all');if(box)box.indeterminate=true;});
       const bulkBar=selectedCount?`<div class="bulk-actions ohl-bulk" role="group" aria-label="Selected lines">
           <span class="bulk-count">${fmtNum(selectedCount)} selected</span>
-          <label>Override <select id="linked-bulk-status" class="select"${tipAttr('The override to set on the selected lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}</select></label>
-          <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply"${tipAttr(`Set the chosen override on the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'}.`)} onclick="applyLinkedOverride()">Apply</button>
-          <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete"${tipAttr(`Hide the ${fmtNum(selectedCount)} selected ${selectedCount===1?'line':'lines'} from every page; Settings → Data check brings them back.`)} onclick="deleteLinkedSelection()">Delete</button>
-          <button type="button" class="link-btn" id="linked-bulk-clear"${tipAttr('Untick every selected line.')} onclick="selectAllLinked(false)">Clear selection</button>
+          <label>Override <select id="linked-bulk-status" class="select"${tipAttr('Override for the ticked lines; “No override” clears it.')} onchange="linkedBulkStatus=this.value">${OVERRIDE_OPTIONS.map(opt=>`<option value="${esc(opt)}"${opt===linkedBulkStatus?' selected':''}>${esc(opt?overrideLabel(opt):'No override')}</option>`).join('')}</select></label>
+          <button type="button" class="btn btn-sm btn-primary" id="linked-bulk-apply"${tipAttr(`Set it on ${fmtNum(selectedCount)} ${selectedCount===1?'line':'lines'}.`)} onclick="applyLinkedOverride()">Apply</button>
+          <button type="button" class="btn btn-sm btn-danger" id="linked-bulk-delete"${tipAttr(`Hide ${fmtNum(selectedCount)} ${selectedCount===1?'line':'lines'} everywhere. Undo in Settings → Data check.`)} onclick="deleteLinkedSelection()">Delete</button>
+          <button type="button" class="link-btn" id="linked-bulk-clear"${tipAttr('Untick every line.')} onclick="selectAllLinked(false)">Clear selection</button>
         </div>`:'';
       // What each column shows, for its heading's tooltip.
       const sortTips={doc:'Sales order number.',customer:'Customer name.',warehouse:'Warehouse the line ships from.',item:'Item code and description.',
-        date:`${dateHeader==='Delivery date'?'Date the line was delivered.':dateHeader==='Original due'?'The line’s original delivery date, before any reschedule.':'The date the line is due now (its reschedule date when it has one).'} Point at a date for its lead time.`,
-        qty:qtyHeader==='Shipped'?'Quantity delivered.':qtyHeader==='Qty'?'Quantity on the line (open quantity for open lines).':'Quantity still to ship.',
-        value:showOtd||showShippedWeek?'Value shipped.':'Open value for open lines, line value for closed ones.',
-        status:'Why the line is listed, with its timing.',
-        reschedule:'The reschedule (commit) date, or why there is none.'};
+        date:`${dateHeader==='Delivery date'?'Date delivered.':dateHeader==='Original due'?'Original delivery date, before reschedules.':'Date due now (reschedule date if any).'} Hover a date for lead time.`,
+        qty:qtyHeader==='Shipped'?'Quantity delivered.':qtyHeader==='Qty'?'Quantity on the line (open qty if open).':'Quantity still to ship.',
+        value:showOtd||showShippedWeek?'Value shipped.':'Open value; line value if closed.',
+        status:'Why the line is listed, and its timing.',
+        reschedule:'Reschedule (commit) date, or why there is none.'};
       const sortHeader=([id,label,,num])=>{
         const on=sortCol&&sortCol[0]===id;
-        return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort, again to reverse.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
+        return `<th${num?' class="num"':''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
       };
       const sortHtml=`<select id="weekly-line-sort" class="dz-pillinput ohl-sort" aria-label="Sort lines"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${sortCol&&v===weeklyLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
       return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">
@@ -12380,7 +12380,7 @@ function renderResults(){
         ${bulkBar}
         <div class="table-scroll ohl-scroll" tabindex="0" role="region" aria-label="Linked sales-order lines"><table class="lines-table so ohl-lines">
           <colgroup><col class="col-check" style="width:34px"><col style="width:66px"><col style="width:13%"><col style="width:11%"><col><col style="width:94px"><col style="width:54px"><col style="width:84px"><col style="width:176px"><col style="width:118px"><col class="col-notes" style="width:92px"></colgroup>
-          <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines in this list, not only those shown.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
+          <thead><tr><th class="c-check print-hide"><input type="checkbox" id="linked-select-all" class="row-check"${allSelected?' checked':''} aria-label="Select all ${fmtNum(listKeys.size)} lines in this list"${tipAttr(`Select all ${fmtNum(listKeys.size)} lines, shown or not.`)} onchange="selectAllLinked(this.checked)"></th>${sortCols.map(sortHeader).join('')}<th class="print-hide"${tipAttr(columnTip('linked','Notes'))}>Notes</th></tr></thead>
           <tbody>${shown.map((r,i)=>{
             const rowValue=cellValue(r);
             const rowQty=cellQty(r);
@@ -12427,7 +12427,7 @@ function renderResults(){
               <td class="c-name" title="${esc(r.name||'')}"><span class="clip">${esc(r.name||'—')}</span></td>
               <td class="c-wh" title="${esc(rowWarehouse(r)||'')}"><span class="clip">${esc(rowWarehouse(r)||'—')}</span></td>
               <td class="c-item"><strong>${esc(r.itemCode||'—')}</strong><span class="desc"${String(r.itemDescription||'').length>70?tipAttr(String(r.itemDescription).substring(0,200)):''}>${esc((r.itemDescription||'').substring(0,160))}</span></td>
-              <td class="c-date" data-label="${esc(dateHeader)}">${orderLeadTime==='—'?esc(displayDate(cellDate(r))||'—'):`<span${tipAttr(`Lead time ${orderLeadTime} (order date to original delivery).`)}>${esc(displayDate(cellDate(r))||'—')}</span>`}</td>
+              <td class="c-date" data-label="${esc(dateHeader)}">${orderLeadTime==='—'?esc(displayDate(cellDate(r))||'—'):`<span${tipAttr(`Lead time ${orderLeadTime} (order to original delivery).`)}>${esc(displayDate(cellDate(r))||'—')}</span>`}</td>
               <td class="num c-qty" data-label="${esc(qtyHeader)}">${fmtNum(rowQty)}</td>
               <td class="num c-val">${money(rowValue)}</td>
               <td class="c-st"><div class="c-status">${dzChip(status,ohlStatusTone)}<span class="dz-cell-sub timing">${esc(timing)}</span>${ohLineWhy(r)}${renderPrintOverride(r)}</div></td>
@@ -12436,7 +12436,7 @@ function renderResults(){
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
           }).join('')}</tbody>
         </table></div>
-        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · Narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines only.`:`Show up to ${linesAll} lines; Export PDF prints every line.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
+        <div class="ohl-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(sorted.length)} lines${weeklyLinkedShowAll&&sorted.length>linesAll?' · Narrow the filters to see the rest':''}</span>${sorted.length>linesFirst?`<button type="button" class="link-btn ohl-more print-hide" data-focus-key="linked-all"${tipAttr(weeklyLinkedShowAll?`Show the first ${linesFirst} lines.`:`Show up to ${linesAll} lines. Export PDF prints all.`)} onclick="toggleWeeklyLinkedAll()">${weeklyLinkedShowAll?'Show fewer':'Show more →'}</button>`:''}</div>
       </section>`;
     };
     // 2v4 oh: the cards on the page are At risk and On track (next month), OTD and Fill rate.
@@ -12576,7 +12576,7 @@ function renderResults(){
       const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
       const atRisk=g.lateRows+g.atRiskRows;
       const lateOpen=isPast&&g.openAmount>0;
-      return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(`${g.label}: ${money(g.openAmount)} open${lateOpen?' and now late':''}, ${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines closed); ${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled.`)}>
+      return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(ohlTip(g.label,[`${money(g.openAmount)} open${lateOpen?', now late':''}`,`${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines)`,`${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled`]))}>
         <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
         <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · Now late':'open'}</span></div>
         <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
@@ -12641,7 +12641,7 @@ function renderResults(){
         <td class="num soft">${fmtNum(g.openQty)}</td>
       </tr>`;
     });
-    const monthSelect=`<label class="inline-controls">Month <select id="original-month-select" class="select"${tipAttr('Show one original delivery month here and in Items not shipped yet.')} onchange="setOriginalDeliveryMonthFilter(this.value)">
+    const monthSelect=`<label class="inline-controls">Month <select id="original-month-select" class="select"${tipAttr('One original month, here and in Items not shipped yet.')} onchange="setOriginalDeliveryMonthFilter(this.value)">
         <option value="ALL"${originalDeliveryMonthFilter==='ALL'?' selected':''}>All months</option>
         ${originalMonthOptions.map(g=>`<option value="${esc(g.key)}"${originalDeliveryMonthFilter===g.key?' selected':''}>${esc(g.label)}</option>`).join('')}
       </select></label>`;
@@ -12667,8 +12667,8 @@ function renderResults(){
     const notes=[];
     const undated=m.byMonth.filter(g=>g.key==='No Commit'||g.key==='No Date').filter(g=>g.openRows);
     if(undated.length)notes.push(`${undated.map(g=>`${fmtNum(g.openRows)} open lines (${money(g.openAmount)}) with ${g.key==='No Commit'?'no commit date':'no due date'}`).join(' and ')} are not in the monthly cards or chart.`);
-    if(closedUnknown.closedUnknownRows)notes.push(`${fmtNum(closedUnknown.closedUnknownRows)} closed lines have no delivery in this export, so they are not in shipped totals.`);
-    notes.push(`The ship target scenario uses ${scenario.scenarioDateLabel}.`);
+    if(closedUnknown.closedUnknownRows)notes.push(`${fmtNum(closedUnknown.closedUnknownRows)} closed lines have no delivery here, so are not in shipped totals.`);
+    notes.push(`Ship target uses ${scenario.scenarioDateLabel}.`);
     if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
 
     // 2v6: the design's cards come first (mwmRenderMonthly); what the page showed before is its Show more detail.
@@ -12676,9 +12676,9 @@ function renderResults(){
     ${pageGroupHtml('mo-months','Open and shipped, month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
     ${pageGroupHtml('mo-shipped','By delivery month',`
     <section class="mini-strip cols-3" aria-label="Shipped to date">
-      <div${tipAttr(`Month to date: ${money(mtd.amount)} shipped on ${ohN(mtd.rows,'delivery line')} (${dayRange(monthStart,today)})${momOk?`, against ${money(prevMtd.amount)} on the same days last month`:`; no earlier month, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'No earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
-      <div${tipAttr(`Year to date: ${money(ytd.amount)} shipped on ${ohN(ytd.rows,'delivery line')}${ytdOk?`, against ${money(lastYtd.amount)} in the same period of ${lastYear}`:`; no ${lastYear} data, ${notCovered}`}.`)}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
-      <div${tipAttr(yoyOk?`Year over year for ${dayRange(monthStart,today)}: ${money(mtd.amount)} this year against ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data, ${notCovered}.`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
+      <div${tipAttr(ohlTip(`Month to date: ${money(mtd.amount)} shipped`,[`${ohN(mtd.rows,'delivery line')}, ${dayRange(monthStart,today)}`,momOk?`Same days last month: ${money(prevMtd.amount)}`:`No earlier month (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'No earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(ohlTip(`Year to date: ${money(ytd.amount)} shipped`,[ohN(ytd.rows,'delivery line'),ytdOk?`Same period ${lastYear}: ${money(lastYtd.amount)}`:`No ${lastYear} data (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(yoyOk?`${dayRange(monthStart,today)}: ${money(mtd.amount)} vs ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data (${notCovered}).`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
     </section>
     <section class="card chart-card">
       <div class="chart-head"><div class="card-head-text"><h2${sectionTip('mo-chart')}>Shipped and open value by month · ${thisYear}</h2></div>
@@ -12730,7 +12730,7 @@ function renderResults(){
         <td>${renderBarCell(g.otdRate,`${fmtNum(g.otdRate)}%`,rateColor(g.otdRate,90,75),'sm')}</td>
         <td>${perfect===null?'<span class="muted">—</span>':renderBarCell(perfect,`${fmtNum(perfect)}%`,rateColor(perfect,90,75),'sm')}</td>
         <td class="num tone-${toneForLow(g.backorderRate,5,15)}">${fmtNum(g.backorderRate)}%</td>
-        <td class="num soft"${tipAttr(`${g.key}: ${fmtNum(g.partialRows.length)} open ${g.partialRows.length===1?'line has':'lines have'} shipped part of their quantity.`)}>${fmtNum(g.partialShipRate)}%</td>
+        <td class="num soft"${tipAttr(`${g.key}: ${fmtNum(g.partialRows.length)} open ${g.partialRows.length===1?'line':'lines'} shipped in part.`)}>${fmtNum(g.partialShipRate)}%</td>
         <td class="num soft">${fmtNum(g.activeOpenQty)}</td>
         <td class="num strong">${money(g.activeOpenValue)}</td>
         <td class="num ${g.pastDue?'crit-strong':'muted'}">${fmtNum(g.pastDue)}</td>
@@ -12751,13 +12751,13 @@ function renderResults(){
         ${heatShown.map((x,ri)=>`<div class="heat-grid row" role="row" style="${heatCols}"><div class="heat-name" role="rowheader" title="${esc(x.w)}">${esc(x.w)}</div>${months.map((mo,ci)=>{
           const g=byWarehouseMonth.get(`${x.w}|||${mo}`);
           const v=g?g.openValue:0;
-          const tip=g?`${x.w} · ${g.label}: ${money(g.openValue)} open · ${ohN(g.openRows,'line')} · on track ${pct(g.onTrackRows,g.openRows)}% · ${fmtNum(g.lateRows)} late · ${fmtNum(g.noCommitRows)} no commit · ${fmtNum(g.rescheduledRows)} rescheduled`:`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
+          const tip=g?ohlTip(`${x.w} · ${g.label}: ${money(g.openValue)} open`,[`${ohN(g.openRows,'line')}, ${pct(g.onTrackRows,g.openRows)}% on track`,`${fmtNum(g.lateRows)} late, ${fmtNum(g.noCommitRows)} no commit, ${fmtNum(g.rescheduledRows)} rescheduled`]):`${x.w} · ${mo==='No Date'?'No date':monthLabel(mo)}: nothing open`;
           // Each cell carries its breakdown as text (its tooltip on hover or focus, read by screen readers); cells with
           // lines are Tab stops, empty ones are not.
-          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(tip)}</span></div></div>`;
+          return `<div class="heat-slot" role="cell"${g?' tabindex="0"':''} data-tip="${esc(tip)}"><div class="heat-cell heat-${heatLevel(v)} pop" style="animation-delay:${Math.min(ri+ci,30)*18}ms">${v?moneyShort(v):'—'}${g&&g.lateRows?`<span class="late-badge" aria-hidden="true">${fmtNum(g.lateRows)}</span>`:''}<span class="sr-only">, ${esc(ohlPlain(tip))}</span></div></div>`;
         }).join('')}</div>`).join('')||'<div class="empty-note" style="padding:14px 22px">No open lines.</div>'}
       </div>
-      ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show only the 10 warehouses with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
+      ${gridWarehouses.length>10?`<div class="tfoot"><span>Showing ${fmtNum(heatShown.length)} of ${fmtNum(gridWarehouses.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-wh-heat"${tipAttr(heatOpen?'Show the 10 with the most open value.':`Show all ${fmtNum(gridWarehouses.length)} warehouses.`)} onclick="toggleTableMore('wh-heat')">${heatOpen?'Show fewer':'Show all'}</button></div>`:''}
     </section>`,{rise:'rise-3'})}
     ${pageGroupHtml('wh-kpis','By warehouse',renderTableCard({key:'wh-summary',info:'wh-summary',title:'Warehouse KPI summary',
       head:[['Warehouse'],['Open lines','num'],['On-track (open)','','14%'],['Perfect order','','14%'],['Backorder','num'],['Partial ship','num'],['Open qty','num'],['Open value','num'],['Late','num'],['No commit','num'],['Rescheduled','num']],
@@ -13264,7 +13264,7 @@ function renderWarehouseScorecard(m){
       ${scGroups.map(grp=>`<div class="sc-group-head" role="heading" aria-level="3" data-group="${grp.id}">${esc(grp.label)}<span class="muted">${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>
       ${grp.shown.map(scRow).join('')}
       ${scSubtotal(grp)}`).join('')||'<div class="empty-note" style="padding:14px 24px">No open lines or recent deliveries in this report.</div>'}
-      ${scGroups.some(g=>g.rows.length>9)?`<div class="tfoot"><span>Showing ${fmtNum(scShown)} of ${fmtNum(scorecard.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show only the top 9 warehouses of each group.':'Show every warehouse in each group.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}
+      ${scGroups.some(g=>g.rows.length>9)?`<div class="tfoot"><span>Showing ${fmtNum(scShown)} of ${fmtNum(scorecard.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show the top 9 of each group.':'Show every warehouse.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}
     </section>`;
 }
 // Late shipments by warehouse: delivery lines shipped more than 2 days after their original date (the OTD tolerance,
@@ -13339,23 +13339,23 @@ function renderWarehouseDefaulting(m,opts={}){
   // Late lines and Late $ sit next to the name, so a phone (the row scrolls sideways) sees the ranking first.
   const cols=`grid-template-columns:minmax(0,1.8fr) minmax(0,.9fr) minmax(0,.9fr) repeat(${data.columns.length},minmax(0,.8fr)) minmax(0,.8fr)`;
   const span=period==='quarter'?'last 4 quarters':'last 3 months';
-  const cellTip=(name,c,cell)=>`${name} · ${c.label}${c.partial?' (to date)':''}: ${ohN(cell.lines,'late line')} worth ${money(cell.amount)} of ${ohN(cell.scored,'delivery line')}`;
-  const rowTip=g=>`${g.name}: ${ohN(g.lines,'late shipment line')} worth ${money(g.amount)}, ${fmtNum(g.rate)}% of ${ohN(g.scored,'delivery line')} in the ${span}; ${focused===g.name?'click to show all.':'click to filter.'}`;
-  const row=g=>`<button type="button" class="trow wl-cols${focused===g.name?' selected':''}" style="${cols}" data-focus-key="${ctx}-late-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===g.name?'true':'false'}" aria-label="${esc(rowTip(g))}"${tipAttr(rowTip(g))}>
+  const cellTip=(name,c,cell)=>`${name} · ${c.label}${c.partial?' (to date)':''}: ${ohN(cell.lines,'late line')} of ${fmtNum(cell.scored)}, ${money(cell.amount)}`;
+  const rowTip=g=>ohlTip(g.name,[`${ohN(g.lines,'late line')}, ${money(g.amount)}`,`${fmtNum(g.rate)}% of ${ohN(g.scored,'delivery line')}, ${span}`],focused===g.name?'':'Click to filter to it.');
+  const row=g=>`<button type="button" class="trow wl-cols${focused===g.name?' selected':''}" style="${cols}" data-focus-key="${ctx}-late-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===g.name?'true':'false'}" aria-label="${esc(ohlPlain(rowTip(g)))}"${tipAttr(rowTip(g))}>
         <div class="name">${esc(g.name)}</div>
         <div class="num risk-cell">${fmtNum(g.lines)}</div>
         <div class="num soft-cell">${moneyShort(g.amount)}</div>
         ${g.cells.map((cell,i)=>`<div class="num ${cell.lines?'':'muted'}"${tipAttr(cellTip(g.name,data.columns[i],cell))}>${cell.lines?fmtNum(cell.lines):'—'}</div>`).join('')}
         <div class="num">${fmtNum(g.rate)}%</div>
       </button>`;
-  const totalText=`All warehouses: ${ohN(data.total.lines,'late shipment line')} worth ${money(data.total.amount)}, ${data.total.rate===null?'no deliveries scored':`${fmtNum(data.total.rate)}% of ${ohN(data.total.scored,'delivery line')}`} in the ${span}`;
+  const totalText=ohlTip(`All warehouses, ${span}`,[`${ohN(data.total.lines,'late line')}, ${money(data.total.amount)}`,data.total.rate===null?'No deliveries scored':`${fmtNum(data.total.rate)}% of ${ohN(data.total.scored,'delivery line')}`]);
   const toggle=`<div class="segmented wl-period" role="group" aria-label="Late shipments by">${[['month','Monthly','Late shipments in each of the last 3 months.'],['quarter','Quarterly','Late shipments in each of the last 4 quarters.']].map(([id,label,t])=>`<button type="button" class="${period===id?'active':''}" data-focus-key="${ctx}-late-${id}" onclick="setWhDefaultPeriod('${id}')" aria-pressed="${period===id?'true':'false'}"${tipAttr(t)}>${label}</button>`).join('')}</div>`;
   return `<section class="table wl-card" aria-label="Which warehouse is defaulting" data-period="${period}">
       <div class="card-head"><div class="card-head-text">${opts.title===false?`<span class="section-sub">Late shipments by warehouse, ${span}</span>`:`<h2${sectionTip('wh-late')}>Which warehouse is defaulting</h2><span class="section-sub">late shipments, ${span}</span>`}</div>${toggle}</div>
-      ${data.warehouses.length?`<div class="thead wl-cols" style="${cols}" aria-hidden="true"><div${tipAttr('Warehouse, most late shipment lines first.')}>Warehouse</div><div class="num"${tipAttr('Delivery lines shipped more than 2 days after their original date.')}>Late lines</div><div class="num"${tipAttr('Shipped value of the late lines.')}>Late $</div>${data.columns.map(c=>`<div class="num"${tipAttr(`${c.label}${c.partial?' to date':''}: late shipment lines.`)}>${esc(colLabel(c))}</div>`).join('')}<div class="num"${tipAttr('Late lines as a share of the warehouse’s delivery lines in the period.')}>Late %</div></div>
+      ${data.warehouses.length?`<div class="thead wl-cols" style="${cols}" aria-hidden="true"><div${tipAttr('Most late lines first.')}>Warehouse</div><div class="num"${tipAttr('Lines shipped more than 2 days late.')}>Late lines</div><div class="num"${tipAttr('Shipped value of the late lines.')}>Late $</div>${data.columns.map(c=>`<div class="num"${tipAttr(`${c.label}${c.partial?' to date':''}: late lines.`)}>${esc(colLabel(c))}</div>`).join('')}<div class="num"${tipAttr('Late lines as a share of deliveries.')}>Late %</div></div>
       ${shown.map(row).join('')}
-      <div class="trow wl-cols sc-subtotal" style="${cols}"${tipAttr(totalText)}><div class="name" aria-hidden="true">All warehouses</div><div class="num strong" aria-hidden="true">${fmtNum(data.total.lines)}</div><div class="num soft-cell" aria-hidden="true">${moneyShort(data.total.amount)}</div>${data.total.cells.map(cell=>`<div class="num" aria-hidden="true">${cell.lines?fmtNum(cell.lines):'—'}</div>`).join('')}<div class="num" aria-hidden="true">${data.total.rate===null?'—':`${fmtNum(data.total.rate)}%`}</div><span class="sr-only">${esc(totalText)}</span></div>
-      ${data.warehouses.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(data.warehouses.length)} warehouses with late shipments</span><button type="button" class="link-btn" data-focus-key="more-${moreKey}" data-table-key="${moreKey}" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(showAll?`Show only the top ${fmtNum(limit)}.`:'Show every warehouse with a late shipment.')}>${showAll?`Show top ${fmtNum(limit)}`:'Show all'}</button></div>`:''}`
+      <div class="trow wl-cols sc-subtotal" style="${cols}"${tipAttr(totalText)}><div class="name" aria-hidden="true">All warehouses</div><div class="num strong" aria-hidden="true">${fmtNum(data.total.lines)}</div><div class="num soft-cell" aria-hidden="true">${moneyShort(data.total.amount)}</div>${data.total.cells.map(cell=>`<div class="num" aria-hidden="true">${cell.lines?fmtNum(cell.lines):'—'}</div>`).join('')}<div class="num" aria-hidden="true">${data.total.rate===null?'—':`${fmtNum(data.total.rate)}%`}</div><span class="sr-only">${esc(ohlPlain(totalText))}</span></div>
+      ${data.warehouses.length>limit?`<div class="tfoot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(data.warehouses.length)} warehouses with late shipments</span><button type="button" class="link-btn" data-focus-key="more-${moreKey}" data-table-key="${moreKey}" onclick="toggleTableMore(this.dataset.tableKey)"${tipAttr(showAll?`Show the top ${fmtNum(limit)}.`:'Show every warehouse with a late line.')}>${showAll?`Show top ${fmtNum(limit)}`:'Show all'}</button></div>`:''}`
       :`<div class="empty-note" style="padding:14px 24px">${data.total.scored?`No late shipments in the ${span}: all ${ohN(data.total.scored,'delivery line')} shipped within 2 days of their original date.`:`No delivery lines in the ${span}.`}</div>`}
     </section>`;
 }
@@ -13416,7 +13416,7 @@ function mwmFilterRow(m,seg,{customer=false,groupPill=false,extra=''}={}){
   const custom=weeklyWarehouseFilter.length===1?mwmWhName(weeklyWarehouseFilter[0]):`${fmtNum(weeklyWarehouseFilter.length)} warehouses`;
   const pill=(id,label,allText,current,options,setter,labelOf=v=>v)=>dzFilterPill({id:`mwm-${id}`,label,
     value:isAll(current)?'All':current.length===1?labelOf(current[0]):`${fmtNum(current.length)} selected`,
-    set:!isAll(current),tip:`Show only the lines of one ${label.toLowerCase()}, or ${allText.toLowerCase()}.`,
+    set:!isAll(current),tip:`Pick one ${label.toLowerCase()}, or all.`,
     options:[{label:allText,selected:isAll(current),onclick:`${setter}(['ALL'])`},...options.map(o=>{
       const v=typeof o==='string'?o:o.value,t=typeof o==='string'?o:o.label;
       return {label:t,selected:current.length===1&&current[0]===v,onclick:`${setter}([${dzJs(v)}])`};
@@ -13426,7 +13426,7 @@ function mwmFilterRow(m,seg,{customer=false,groupPill=false,extra=''}={}){
     const groups=[['Spyder',names.filter(w=>!/^CM( SFG)? - /i.test(w))],['CM',names.filter(w=>/^CM - /i.test(w))],['CM SFG',names.filter(w=>/^CM SFG - /i.test(w))]].filter(([,list])=>list.length);
     const hit=groups.find(([,list])=>sameSet(list));
     whPill=dzFilterPill({id:'mwm-group',label:'Group',value:whAll?'All':hit?hit[0]:custom,set:!whAll,
-      tip:'Show Spyder, CM or CM SFG warehouses, one warehouse, or all of them.',
+      tip:'Pick Spyder, CM or CM SFG, one warehouse, or all.',
       options:[{label:'All',selected:whAll,onclick:"setWeeklyWarehouseFilter(['ALL'])"},
         ...groups.map(([label,list])=>({label,selected:!!hit&&hit[0]===label,onclick:`setWeeklyWarehouseFilter(${JSON.stringify(list)})`})),
         {sep:true},
@@ -13435,7 +13435,7 @@ function mwmFilterRow(m,seg,{customer=false,groupPill=false,extra=''}={}){
     const presets=MWM_WH_PRESETS.map(([id,label,re])=>[id,label,sameSet(names.filter(w=>re.test(w)))]);
     const active=presets.find(p=>p[2]);
     whPill=dzFilterPill({id:'mwm-warehouse',label:'Warehouse',value:whAll?'All':active?active[1]:custom,set:!whAll,
-      tip:'Show one warehouse group or one warehouse, or every warehouse.',
+      tip:'Pick a warehouse group, one warehouse, or all.',
       options:[{label:'All warehouses',selected:whAll,onclick:"setWeeklyWarehouseFilter(['ALL'])"},
         ...presets.map(([id,label,on])=>({label,selected:on,onclick:`setWeeklyWarehousePreset('${id}')`})),
         {sep:true},
@@ -13510,7 +13510,7 @@ function mwmRenderMonthly(m,ctx){
   const {today,legacy}=ctx;
   const d=mwmMonthlyData(m);
   const booked=mwmMode==='booked';
-  const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders booked to ship in each month by their original delivery date, shipped or not.']]
+  const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders due each month by original date, shipped or not.']]
     .map(([id,label,tip])=>({label,on:mwmMode===id,onclick:`mwmSetMode('${id}')`,key:`mwm-mode-${id}`,tip})),{label:'Monthly view'});
   const filterRow=mwmFilterRow(m,seg,{customer:true});
   if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
@@ -13529,18 +13529,18 @@ function mwmRenderMonthly(m,ctx){
   const delta=base===null?null:s.orders-base;
   const barW=target>0?Math.min(100,done/target*100):0;
   const tick=target>0&&done>target?target/done*100:100;
-  const heroTip=`${monthName}${partial?' so far':''}: ${mwmOrders(s.orders)} ${verb}, ${money(s.value)} on ${ohN(s.lines,'line')}.${booked?' Booked means due to ship this month by the original delivery date.':''}`;
+  const heroTip=ohlTip(`${monthName}${partial?' so far':''}: ${mwmOrders(s.orders)} ${verb}`,[`${money(s.value)} on ${ohN(s.lines,'line')}`,booked?'Booked: due this month by original date':'']);
   const heroCard=dzCard({title:partial?`${monthName} to date`:monthName,sm:true,span:6,cls:'dz-fade mwm-herocard',
     tip:`${monthName}${partial?' so far':''}, ${verb}.`,
     meta:pct===null?'':dzChip(booked?`${pct}% shipped`:`${pct}% of target`,chipTone),
     body:`<div class="mwm-hero"${tipAttr(heroTip)}><span class="dz-big sm">${mwmOrders(s.orders)}</span><span class="dz-sub">${moneyShort(s.value)} · ${ohN(s.lines,'line')} ${verb}</span></div>
-      <div class="mwm-bar" role="img" aria-label="${esc(target>0?`${moneyShort(done)} shipped of ${moneyShort(target)} booked for ${monthName}`:'Nothing booked this month')}"${tipAttr(target>0?`Target is the value booked to ship in ${monthName} by original delivery date, open plus shipped: ${money(target)}. ${money(done)} ${booked?'of it has shipped':'has shipped this month'}.`:'')}><span class="mwm-bar-fill dz-grow" style="width:${barW.toFixed(1)}%"></span>${target>0?`<span class="mwm-bar-tick" style="left:${tick.toFixed(1)}%"></span>`:''}</div>
+      <div class="mwm-bar" role="img" aria-label="${esc(target>0?`${moneyShort(done)} shipped of ${moneyShort(target)} booked for ${monthName}`:'Nothing booked this month')}"${tipAttr(target>0?ohlTip(`Target: ${money(target)} booked for ${monthName}`,[`${money(done)} shipped`,'Booked: open plus shipped, by original date']):'')}><span class="mwm-bar-fill dz-grow" style="width:${barW.toFixed(1)}%"></span>${target>0?`<span class="mwm-bar-tick" style="left:${tick.toFixed(1)}%"></span>`:''}</div>
       <div class="mwm-bar-l"><span>${moneyShort(done)} shipped</span><span>${booked?'Booked':'Target'} ${moneyShort(target)}</span></div>
       <div class="mwm-stats">
         ${dzStat({label:`vs ${prevName}${!booked&&partial&&delta!==null?', same days':''}`,value:delta===null?'—':`${mwmSigned(delta)} ${Math.abs(delta)===1?'order':'orders'}`,tone:delta===null?'muted':'',
-          tip:delta===null?'The delivery history does not reach back to last month.':`${mwmOrders(s.orders)} ${verb} against ${mwmOrders(base)} ${booked?`booked for ${prevName}`:`shipped on the same days of ${prevName}`}.`})}
-        ${dzStat({label:'On time',value:mwmPct(s.otd),tip:'Deliveries shipped on or before their original delivery date.'})}
-        ${dzStat({label:'Shipped late',value:mwmOrders(s.late),tone:s.late?'red':'muted',tip:`Orders with a delivery shipped 1 or more days after its original date, ${verb==='booked'?'among the lines booked for this month':'among this month’s deliveries'}.`})}
+          tip:delta===null?'No delivery history for last month.':`${mwmOrders(s.orders)} ${verb} vs ${mwmOrders(base)} ${booked?`booked for ${prevName}`:`on the same days of ${prevName}`}.`})}
+        ${dzStat({label:'On time',value:mwmPct(s.otd),tip:'Shipped by the original date.'})}
+        ${dzStat({label:'Shipped late',value:mwmOrders(s.late),tone:s.late?'red':'muted',tip:'Orders shipped 1+ days after the original date.'})}
       </div>`});
 
   // Orders by month, twelve columns; the report month is the indigo one.
@@ -13556,7 +13556,7 @@ function mwmRenderMonthly(m,ctx){
   const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
   const table=dzCard({title:'Month by month',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
-      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Deliveries on or before their original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Share of the ordered quantity delivered, for the lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders with a delivery 1 or more days after its original date.')}>Late orders</span></div>
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Shipped by the original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Ordered qty delivered, lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
       ${[...d.entries].reverse().map((x,ri)=>{
         const i=11-ri,v=x[key],cur=i===11;
         const label=x.date.toLocaleDateString('en-US',{month:'short'})+(x.date.getMonth()===0||i===0?` ${x.date.getFullYear()}`:'');
@@ -13565,7 +13565,7 @@ function mwmRenderMonthly(m,ctx){
     </div></div>`});
 
   const more=mwmMore('mwm-monthly','year over year, original dates, items not shipped yet and the ship calendar',legacy,
-    'Year over year, the original delivery date summary, items not shipped yet, the ship target calendar and notes on the numbers. The ship target parts follow the filters; the rest covers the whole report.');
+    'Ship target parts follow the filters; the rest is the whole report.');
   return `${filterRow}<div class="dz-grid">${heroCard}${chart}${table}</div>${more}`;
 }
 
@@ -13604,9 +13604,9 @@ function mwmWatchCard(m){
   const groups=scorecardGroups(sc,weeklyScorecardAll).sort((a,b)=>(a.id==='sfg')-(b.id==='sfg'));
   const shown=groups.reduce((s,g)=>s+g.shown.length,0);
   const focused=whFocusedWarehouse();
-  const rowTip=g=>`${g.name}: open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}, ${fmtNum(g.pastDue)} past due, OTD ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}; ${focused===g.name?'click to show all.':'click to filter.'}`;
+  const rowTip=g=>ohlTip(g.name,[`Open ${money(g.openAmt)}, at risk ${money(g.riskAmt)}`,`${fmtNum(g.pastDue)} past due`,`OTD ${rateLabel(g.otdRate)}, fill ${rateLabel(g.fillRate)}, reschedule hit ${rateLabel(g.hitRate)}`],focused===g.name?'':'Click to filter to it.');
   const badgeOf=g=>/^CM SFG - /i.test(g.name)?'':/^CM - /i.test(g.name)?'CM':'Spyder';
-  const row=(g,i)=>`<button type="button" class="dz-tr mwm-wrow${focused===g.name?' sel':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===g.name?'true':'false'}" aria-label="${esc(rowTip(g))}"${tipAttr(rowTip(g))}>
+  const row=(g,i)=>`<button type="button" class="dz-tr mwm-wrow${focused===g.name?' sel':''}" data-focus-key="sc-${esc(g.name)}" data-wh="${esc(g.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===g.name?'true':'false'}" aria-label="${esc(ohlPlain(rowTip(g)))}"${tipAttr(rowTip(g))}>
       <span class="mwm-wname"><span class="mwm-wtxt">${esc(mwmWhName(g.name))}</span>${badgeOf(g)?`<span class="mwm-badge">${badgeOf(g)}</span>`:''}</span>
       <span class="dz-num mwm-soft">${moneyShort(g.openAmt)}</span>
       <b class="dz-num${g.riskAmt?'':' mwm-mute'}">${g.riskAmt?moneyShort(g.riskAmt):'—'}</b>
@@ -13617,24 +13617,24 @@ function mwmWatchCard(m){
     </button>`;
   const subtotal=grp=>{
     const t=grp.subtotal;
-    const text=`${grp.label} subtotal (${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}): open ${money(t.openAmt)}, at risk ${money(t.riskAmt)}, ${fmtNum(t.pastDue)} ${t.pastDue===1?'line':'lines'} past due, OTD 3 mo ${rateLabel(t.otdRate)}`;
-    return `<div class="dz-tr mwm-sub" role="group" aria-label="${esc(text)}"${tipAttr(text)}><span class="mwm-wname" aria-hidden="true"><span class="mwm-wtxt">Subtotal</span></span><span class="dz-num" aria-hidden="true">${moneyShort(t.openAmt)}</span><b class="dz-num" aria-hidden="true">${t.riskAmt?moneyShort(t.riskAmt):'—'}</b><span class="dz-num" aria-hidden="true">${t.pastDue?fmtNum(t.pastDue):'—'}</span><b class="dz-num" style="color:${mwmRateColor(t.otdRate,60)}" aria-hidden="true">${mwmPct(t.otdRate)}</b><span class="mwm-hs" aria-hidden="true"></span><span class="mwm-hs" aria-hidden="true"></span></div>`;
+    const text=ohlTip(`${grp.label} subtotal (${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'})`,[`Open ${money(t.openAmt)}, at risk ${money(t.riskAmt)}`,`${fmtNum(t.pastDue)} ${t.pastDue===1?'line':'lines'} past due`,`OTD 3 mo ${rateLabel(t.otdRate)}`]);
+    return `<div class="dz-tr mwm-sub" role="group" aria-label="${esc(ohlPlain(text))}"${tipAttr(text)}><span class="mwm-wname" aria-hidden="true"><span class="mwm-wtxt">Subtotal</span></span><span class="dz-num" aria-hidden="true">${moneyShort(t.openAmt)}</span><b class="dz-num" aria-hidden="true">${t.riskAmt?moneyShort(t.riskAmt):'—'}</b><span class="dz-num" aria-hidden="true">${t.pastDue?fmtNum(t.pastDue):'—'}</span><b class="dz-num" style="color:${mwmRateColor(t.otdRate,60)}" aria-hidden="true">${mwmPct(t.otdRate)}</b><span class="mwm-hs" aria-hidden="true"></span><span class="mwm-hs" aria-hidden="true"></span></div>`;
   };
   const cols='minmax(0,2fr) repeat(6,minmax(0,.7fr))';
   const body=groups.length?`<div class="dz-table mwm-tablewrap"><div class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,2.1fr) repeat(4,minmax(0,.8fr));--gap:10px">
-      <div class="dz-th"><span>Warehouse</span><span class="dz-num"${tipAttr('Open value: what is still to ship on open lines.')}>Open</span><span class="dz-num"${tipAttr('Open value of at-risk lines.')}>At risk</span><span class="dz-num"${tipAttr('Lines past their original date with no reschedule or no commit date.')}>Past due</span><span class="dz-num"${tipAttr('Deliveries (3 months) shipped by the original date; teal 85%+, red under 60%.')}>OTD 3 mo</span><span class="dz-num mwm-hs"${tipAttr('Delivered or closed share of ordered quantity.')}>Fill</span><span class="dz-num mwm-hs"${tipAttr('Rescheduled deliveries (12 months) shipped by their reschedule date.')}>Resched</span></div>
+      <div class="dz-th"><span>Warehouse</span><span class="dz-num"${tipAttr('Value still to ship.')}>Open</span><span class="dz-num"${tipAttr('Open value of at-risk lines.')}>At risk</span><span class="dz-num"${tipAttr('Past the original date, no reschedule or commit.')}>Past due</span><span class="dz-num"${tipAttr('Shipped by the original date, 3 months. Teal 85%+, red under 60%.')}>OTD 3 mo</span><span class="dz-num mwm-hs"${tipAttr('Ordered qty delivered or closed.')}>Fill</span><span class="dz-num mwm-hs"${tipAttr('Rescheduled deliveries shipped by the new date, 12 months.')}>Resched</span></div>
       ${groups.map(grp=>`<div class="mwm-ghead" role="heading" aria-level="3">${esc(grp.label==='CM SFG'?'CM SFG':'Spyder and CM warehouses')}<span>${fmtNum(grp.rows.length)} ${grp.rows.length===1?'warehouse':'warehouses'}</span></div>${grp.shown.map(row).join('')}${subtotal(grp)}`).join('')}
     </div></div>
-    ${groups.some(g=>g.rows.length>9)?`<div class="mwm-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(sc.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show only the top 9 warehouses of each group.':'Show every warehouse in each group.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}`
+    ${groups.some(g=>g.rows.length>9)?`<div class="mwm-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(sc.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="scorecard-all" onclick="toggleWeeklyScorecardAll()"${tipAttr(weeklyScorecardAll?'Show the top 9 of each group.':'Show every warehouse.')}>${weeklyScorecardAll?'Show top 9':'Show all'}</button></div>`:''}`
     :'<p class="empty-note">No open lines or recent deliveries in this report.</p>';
-  return dzCard({title:'Warehouses to watch',sm:true,span:6,meta:'sorted by at-risk value',tip:'Open value, at-risk value, past-due lines and the delivery rates of each warehouse; click a row to show only that warehouse.',body});
+  return dzCard({title:'Warehouses to watch',sm:true,span:6,meta:'sorted by at-risk value',tip:'Open, at-risk and past-due value plus delivery rates. Click a row to filter.',body});
 }
 function mwmRenderWarehouses(m,legacy){
   const late=mwmWhMetric==='late';
   const n=mwmWeeks;
-  const seg=dzSeg([['late','Late orders','Orders shipped 1 or more days after their original delivery date, by week.'],['otd','On-time %','Deliveries shipped on or before their original delivery date, by week.']]
+  const seg=dzSeg([['late','Late orders','Orders shipped 1+ days late, by week.'],['otd','On-time %','Shipped by the original date, by week.']]
     .map(([id,label,tip])=>({label,on:mwmWhMetric===id,onclick:`mwmSetWhMetric('${id}')`,key:`mwm-wh-${id}`,tip})),{label:'Heat map shows'});
-  const weeksPill=dzFilterPill({id:'mwm-weeks',label:'Weeks',value:`Last ${n}`,set:false,tip:'How many weeks the heat map covers.',
+  const weeksPill=dzFilterPill({id:'mwm-weeks',label:'Weeks',value:`Last ${n}`,set:false,tip:'Weeks the heat map covers.',
     options:[8,12,26].map(k=>({label:`Last ${k}`,selected:n===k,onclick:`mwmSetWeeks(${k})`}))});
   const filterRow=mwmFilterRow(m,seg,{groupPill:true,extra:weeksPill});
   if(!m.allRows.length)return `${filterRow}<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>`;
@@ -13648,17 +13648,18 @@ function mwmRenderWarehouses(m,legacy){
     .map(([l,c])=>`<span><i class="mwm-sw" style="background:${c}"></i>${l}</span>`).join('');
   const step=n>16?2:1;
   const focused=whFocusedWarehouse();
-  const heatRows=shown.map((r,ri)=>`<div class="mwm-heat-row dz-fade" role="row" style="--i:${ri}"><span role="rowheader" class="mwm-heat-rh"><button type="button" class="mwm-heat-name${focused===r.name?' sel':''}" data-focus-key="heat-${esc(r.name)}" data-wh="${esc(r.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===r.name?'true':'false'}"${tipAttr(`${r.name}: ${ohN(r.lateTotal,'late order')} in the last ${n} weeks; ${focused===r.name?'click to show all.':'click to filter.'}`)}>${esc(mwmWhName(r.name))}</button></span>${r.cells.map((c,i)=>{
+  const heatRows=shown.map((r,ri)=>`<div class="mwm-heat-row dz-fade" role="row" style="--i:${ri}"><span role="rowheader" class="mwm-heat-rh"><button type="button" class="mwm-heat-name${focused===r.name?' sel':''}" data-focus-key="heat-${esc(r.name)}" data-wh="${esc(r.name)}" onclick="setWeeklyScorecardWarehouse(this.dataset.wh)" aria-pressed="${focused===r.name?'true':'false'}"${tipAttr(`${r.name}: ${ohN(r.lateTotal,'late order')} in ${n} weeks.${focused===r.name?'':' Click to filter to it.'}`)}>${esc(mwmWhName(r.name))}</button></span>${r.cells.map((c,i)=>{
       const [bg,fg]=late?lateC(c.late):otdC(c.otd);
       const wk=w.wins[i];
-      const tip=`${r.name}, week of ${shortDay(wk.s)}${i===n-1&&w.partial?' (to date)':''}: ${c.orders?`${ohN(c.late,'late order')} of ${mwmOrders(c.orders)} shipped, ${mwmPct(c.otd)} on time`:'nothing shipped'}`;
+      const head=`${r.name} · Week of ${shortDay(wk.s)}${i===n-1&&w.partial?' (to date)':''}`;
+      const tip=c.orders?ohlTip(head,[`${ohN(c.late,'late order')} of ${fmtNum(c.orders)} shipped`,`${mwmPct(c.otd)} on time`]):`${head}: nothing shipped`;
       return `<span class="mwm-heat-cell" role="cell" style="background:${bg};color:${fg}"${tipAttr(tip)}>${late?fmtNum(c.late):c.otd===null?'—':`${c.otd}%`}</span>`;
     }).join('')}</div>`).join('');
   const heat=dzCard({title:late?'Late orders by week':'On-time delivery by week',span:6,meta:`<span class="mwm-legend">${legend}</span>`,
     body:rows.length?`<div class="mwm-scroll"><div class="mwm-heat${n>12?' dense':''}" role="table" aria-label="${late?'Late orders':'On-time delivery'} by warehouse and week" data-tip-notab style="--n:${n};min-width:calc(var(--mwm-name) + ${n}*var(--mwm-col))">
         <div class="mwm-heat-row mwm-heat-head" role="row"><span role="columnheader">Warehouse</span>${w.wins.map((x,i)=>`<span role="columnheader" aria-label="Week of ${esc(shortDay(x.s))}">${i%step===0||i===n-1&&step===1?esc(shortDay(x.s)):''}</span>`).join('')}</div>${heatRows}
       </div></div>
-      ${rows.length>10?`<div class="mwm-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(rows.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-mwm-heat" onclick="toggleTableMore('mwm-heat')"${tipAttr(heatOpen?'Show only the 10 warehouses with the most late orders.':`Show all ${fmtNum(rows.length)} warehouses.`)}>${heatOpen?'Show fewer':'Show all'}</button></div>`:''}`
+      ${rows.length>10?`<div class="mwm-foot"><span>Showing ${fmtNum(shown.length)} of ${fmtNum(rows.length)} warehouses</span><button type="button" class="link-btn" data-focus-key="more-mwm-heat" onclick="toggleTableMore('mwm-heat')"${tipAttr(heatOpen?'Show the 10 with the most late orders.':`Show all ${fmtNum(rows.length)} warehouses.`)}>${heatOpen?'Show fewer':'Show all'}</button></div>`:''}`
       :`<p class="empty-note">${late?`No late orders in the last ${n} weeks.`:`No deliveries in the last ${n} weeks.`}</p>`});
   // Getting worse / better: the first week against the newest week of the window (the newest may still be filling).
   const trend=w.rows.map(r=>{
@@ -13674,8 +13675,8 @@ function mwmRenderWarehouses(m,legacy){
   const worse=trend.filter(bad).sort((a,b)=>weigh(b)-weigh(a)||a.name.localeCompare(b.name)).slice(0,3);
   const better=trend.filter(good).sort((a,b)=>weigh(b)-weigh(a)||a.name.localeCompare(b.name)).slice(0,3);
   const trendRow=(x,tone)=>`<div class="mwm-trow dz-fade"><div><div class="mwm-trow-n">${esc(mwmWhName(x.name))}</div><div class="mwm-trow-s">${late?`${fmtNum(x.first)} → ${fmtNum(x.last)} late ${x.last===1?'order':'orders'} in ${n} weeks`:`${fmtNum(x.first)}% → ${fmtNum(x.last)}% on time in ${n} weeks`}</div></div><span class="mwm-trow-d ${tone}">${mwmSigned(x.delta,late?'':' pts')}</span></div>`;
-  const trendCard=(title,list,tone,none)=>dzCard({title,sm:true,span:3,tip:`The first week of the heat map against the newest week${w.partial?' (still in progress)':''}.`,body:`<div class="mwm-tlist">${list.map(x=>trendRow(x,tone)).join('')||`<p class="empty-note">${none}</p>`}</div>`});
-  return `${filterRow}<div class="dz-grid">${heat}${trendCard('Getting worse',worse,'red','No warehouse is getting worse.')}${trendCard('Getting better',better,'teal','No warehouse is getting better.')}${mwmWatchCard(m)}</div>${mwmMore('mwm-warehouses','open value by due month, late shipments and the KPI summary',legacy,'Open value by warehouse and due month, which warehouse is defaulting, and the warehouse KPI summary. A warehouse picked above narrows the heat map and the detail table.')}`;
+  const trendCard=(title,list,tone,none)=>dzCard({title,sm:true,span:3,tip:`First week of the heat map vs the newest${w.partial?' (in progress)':''}.`,body:`<div class="mwm-tlist">${list.map(x=>trendRow(x,tone)).join('')||`<p class="empty-note">${none}</p>`}</div>`});
+  return `${filterRow}<div class="dz-grid">${heat}${trendCard('Getting worse',worse,'red','No warehouse is getting worse.')}${trendCard('Getting better',better,'teal','No warehouse is getting better.')}${mwmWatchCard(m)}</div>${mwmMore('mwm-warehouses','open value by due month, late shipments and the KPI summary',legacy,'A warehouse picked above narrows the detail table.')}`;
 }
 
 // ---------- Metrics Timeline ----------
@@ -13778,15 +13779,15 @@ function ohgMetricsLegacy(m){
   return `
   ${pageGroupHtml('mt-quality','Order quality',`
     <div class="grid-4">
-      ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,`On-track rate: ${m.rows.length?`${onTrackRate}%`:'no open lines'}, ${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or without a commit date.`)}
-      ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`Perfect order rate: ${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines shipped complete, on time to commit and never rescheduled.`)}
-      ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`Backorder rate: ${m.backorderRate}%, ${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in 12 months missed its original date; keep under 5%.`)}
-      ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`Partial ship rate: ${m.partialShipRate}%, ${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines shipped in part; keep under 5%.`)}
+      ${rateCard('On-track rate',m.rows.length?`${onTrackRate}%`:'—',onTrackRate,m.rows.length?toneFor(onTrackRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines`,m.rows.length?`${fmtNum(m.onTrackRows.length)} of ${fmtNum(m.rows.length)} open lines not late, past due or uncommitted.`:'No open lines.')}
+      ${rateCard('Perfect order rate',m.perfectEligibleRows.length?`${m.perfectOrderRate}%`:'—',m.perfectOrderRate,m.perfectEligibleRows.length?toneFor(m.perfectOrderRate,90,75):'neutral',90,'target 90%',`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines`,`${fmtNum(m.perfectRows.length)} of ${fmtNum(m.perfectEligibleRows.length)} closed lines complete, on time, never rescheduled.`)}
+      ${rateCard('Backorder rate',`${m.backorderRate}%`,m.backorderRate,toneForLow(m.backorderRate,5,15),5,'limit 5%',`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due · 12 mo`,`${fmtNum(m.backorderQty)} of ${fmtNum(m.backorderDueQty)} qty due in 12 months missed its date. Limit 5%.`)}
+      ${rateCard('Partial ship rate',`${m.partialShipRate}%`,m.partialShipRate,toneForLow(m.partialShipRate,5,10),5,'limit 5%',`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines`,`${fmtNum(m.partialShipRows.length)} of ${fmtNum(m.rows.length)} open lines shipped in part. Limit 5%.`)}
     </div>
     <div class="mini-strip cols-4">
       ${countCell('Past due / late',lateCount,`${pct(lateCount,m.rows.length)}% of lines`,'crit',`Past due / late: ${fmtNum(lateCount)} open lines past their date (${money(rowOpenAmount([...m.pastDueRows,...m.lateRows]))}).`)}
       ${countCell('No commit',m.atRiskRows.length,`${pct(m.atRiskRows.length,m.rows.length)}% of lines`,'crit',`No commit: ${fmtNum(m.atRiskRows.length)} open lines with no valid commit date (${money(rowOpenAmount(m.atRiskRows))}).`)}
-      ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of lines`,'warn',`Rescheduled, commit ahead: ${fmtNum(commitAhead)} open lines with a reschedule date still ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
+      ${countCell('Rescheduled, commit ahead',commitAhead,`${pct(commitAhead,m.rows.length)}% of lines`,'warn',`${fmtNum(commitAhead)} open lines with a commit date ahead (${money(rowOpenAmount(m.rescheduledRows))}).`)}
       ${countCell('SO lines missing price',m.missingPriceRows.length,`${pct(m.missingPriceRows.length,m.rows.length)}% of lines`,'warn',`Missing price: ${fmtNum(m.missingPriceRows.length)} open sales-order lines with no price in SAP.`)}
     </div>`,{info:'mt-quality',rise:'rise-1'})}
   ${pageGroupHtml('mt-month','By due month',`
@@ -13814,7 +13815,7 @@ function ohgMetricsLegacy(m){
 function ohgMetricsSection(m){return mwmRenderMetrics(m,ohgMetricsLegacy(m));}
 function mwmRenderMetrics(m,legacy){
   const n=mwmRange;
-  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Show the last ${k} months.`})),{label:'Months shown',cls:'sup-seg-sm'});
+  const seg=dzSeg([[12,'12 months'],[6,'6 months'],[3,'3 months']].map(([k,label])=>({label,on:n===k,onclick:`mwmSetRange(${k})`,key:`mwm-range-${k}`,tip:`Last ${k} months.`})),{label:'Months shown',cls:'sup-seg-sm'});
   const wrap=body=>pageGroupHtml('ohg-metrics','Metrics',body,{tools:seg,anchor:'ohg-metrics'});
   if(!m.allRows.length)return wrap('<section class="dz-card"><p class="empty-note">No order lines are loaded yet.</p></section>');
   const x=mwmMetricsData(m);
@@ -13823,11 +13824,11 @@ function mwmRenderMetrics(m,legacy){
   const monthName=d=>d.toLocaleDateString('en-US',{month:'long'});
   const prevShort=mo[L-1].date.toLocaleDateString('en-US',{month:'short'});
   const defs=[
-    {k:'otd',label:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'Target 90%',tip:'Deliveries shipped on or before their original delivery date.'},
-    {k:'fill',label:'Fill rate',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-teal)',sub:'Of ordered quantity',tip:'Share of the ordered quantity delivered, for the lines due that month.'},
-    {k:'perfect',label:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'On time, complete, never rescheduled',tip:'Completed lines shipped complete, on time to their commit date and never rescheduled.'},
-    {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days after the original date, over the deliveries that shipped late.'},
-    {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Rescheduled deliveries shipped by their reschedule date.'}
+    {k:'otd',label:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'Target 90%',tip:'Shipped by the original date.'},
+    {k:'fill',label:'Fill rate',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-teal)',sub:'Of ordered quantity',tip:'Ordered qty delivered, lines due that month.'},
+    {k:'perfect',label:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-indigo)',sub:'On time, complete, never rescheduled',tip:'Shipped complete, on time, never rescheduled.'},
+    {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days late, late deliveries only.'},
+    {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Shipped by the reschedule date.'}
   ];
   const kpis=defs.map((c,i)=>{
     const series=mo.map(r=>r[c.k]);
@@ -13835,7 +13836,7 @@ function mwmRenderMetrics(m,legacy){
     const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
     const goodMove=diff===null||diff===0?null:c.inv?diff<0:diff>0;
     const dText=diff===null?'':`${mwmSigned(diff,c.unit)} vs ${prevShort}`;
-    const tip=`${c.label}, ${mo[L].date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}${cur===null?': nothing to score.':`: ${c.fmt(cur)}${diff===null?'':` (${dText})`}.`} ${c.tip}`;
+    const tip=ohlTip(`${c.label}, ${mo[L].date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${cur===null?'nothing to score':c.fmt(cur)}`,[dText,c.tip]);
     return `<div class="mwm-kpi dz-fade" style="--i:${i}"${tipAttr(tip)}>
       <div class="mwm-kpi-l">${c.label}</div>
       <div class="mwm-kpi-v"><span>${cur===null?'—':c.fmt(cur)}</span>${dText?`<span class="mwm-kpi-d ${goodMove===null?'':goodMove?'teal':'red'}">${esc(dText)}</span>`:''}</div>
@@ -13853,7 +13854,7 @@ function mwmRenderMetrics(m,legacy){
   const dots=pts.map((r,i)=>{
     if(r.otd===null)return '';
     const px=((i+.5)/pts.length*100).toFixed(2),py=yOf(r.otd).toFixed(2);
-    const tip=`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${r.otd}% on time, ${ohN(r.otdScored,'delivery line')} scored, ${mwmOrders(r.lateOrders)} late.`;
+    const tip=ohlTip(`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}: ${r.otd}% on time`,[`${ohN(r.otdScored,'delivery line')} scored`,`${mwmOrders(r.lateOrders)} late`]);
     return `<span class="mwm-pt" style="left:${px}%;top:${py}%"${tipAttr(tip)}></span><span class="mwm-pt-l" style="left:${px}%;top:${py}%">${r.otd}%</span>`;
   }).join('');
   const mid=Math.round((100+lo)/2);
@@ -13865,19 +13866,19 @@ function mwmRenderMetrics(m,legacy){
       <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`});
   const causeMax=Math.max(1,...x.causes.map(c=>c[1]));
   const shownCauses=x.causes.length>6?[...x.causes.slice(0,5),['Other',x.causes.slice(5).reduce((s,c)=>s+c[1],0)]]:x.causes;
-  const causes=dzCard({title:'Late orders by cause',sm:true,span:2,tip:'Each late order under the first reason noted on its late delivery: a reason from SAP or the override status picked on the line.',
+  const causes=dzCard({title:'Late orders by cause',sm:true,span:2,tip:'Late orders by the first reason on the late delivery.',
     body:`<div class="mwm-cause-head"><span class="mwm-cause-n">${fmtNum(x.lateOrders)}</span><span class="dz-meta">late ${x.lateOrders===1?'order':'orders'} in ${esc(monthName(mo[x.L].date))}</span></div>
       <div class="dz-bars mwm-cause-bars">${shownCauses.map(([label,c],i)=>dzBarRow({label,value:c,max:causeMax,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',i,tip:`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late.`})).join('')||'<p class="empty-note">No late orders.</p>'}</div>`});
   const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
   const table=dzCard({title:'Monthly metrics',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
-      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders with a delivery 1 or more days after its original date.')}>Late orders</span></div>
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
       ${[...slice(mo)].reverse().map((r,ri)=>{
         const cur=ri===0&&slice(mo).length&&r===mo[11];
         return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
       }).join('')}
     </div></div>`});
-  return wrap(`<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Order quality rates, open value and at-risk lines by due month, the metrics timeline and the lines needing attention. These cover the whole report.')}`);
+  return wrap(`<div class="mwm-kpis">${kpis}</div><div class="dz-grid">${line}${causes}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Covers the whole report.')}`);
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
 
@@ -13909,20 +13910,16 @@ const WAREHOUSE_PRESET_TIPS={
 // sentence each; sectionTip).
 const SECTION_INFO={
   'oh-attention':{title:'At risk',
-    what:'Next-month lines expected over 2 days late, with no commit date or marked Urgent; target under 5%.',
-    click:'Click the card, a reason or the warehouse to filter.'},
+    what:'Next-month lines expected over 2 days late, with no commit date or Urgent. Target under 5%.'},
   'oh-ontrack':{title:'On track',
-    what:'Open lines due in the next month expected to ship by the due date plus 2 days.',
-    click:'Click the card to list its lines below.'},
+    what:'Next-month lines expected to ship by the due date plus 2 days.'},
   'oh-defaulting':{title:'Warehouse defaulting',
-    what:'Warehouses ranked by late shipments: shipped more than 2 days after the due date.',
-    click:'Switch Monthly or Quarterly to change the periods.'},
+    what:'Warehouses ranked by lines shipped more than 2 days late.'},
   'oh-performed':{title:'Delivery performance',
-    what:'On-time delivery and fill rate; the target for each is 90%.',
-    click:'Click a card to list its lines with a breakdown.'},
+    what:'On-time delivery and fill rate. Target 90% each.'},
   'oh-linked':{title:'Lines to act on',
     what:'The lines behind the card you picked.',
-    click:'Click a heading to sort; tick lines to set an override or delete them.'},
+    click:'Tick lines to set an override.'},
   'po-commitments':{title:'Leading · Supply commitments',
     what:'Open purchase-order lines that may arrive late.',
     click:'Click a card to list its lines below.'},
@@ -13954,53 +13951,39 @@ const SECTION_INFO={
     what:'Lines short of usable open PO supply, or whose PO supply is at risk, by warehouse.',
     click:'Supply at risk only lists the risky-supply lines; All open lines lists every line.'},
   'mo-chart':{title:'Shipped and open value by month',
-    what:'Shipped value by delivery month, open value by the month it is due now.',
-    click:'Rest the pointer on a bar for its value.'},
+    what:'Shipped value by delivery month; open value by due month.'},
   'mo-summary':{title:'Monthly delivery summary',
-    what:'Shipped and open value per month, against the same month last year.',
-    click:'Show all lists every month.'},
+    what:'Shipped and open value per month, against last year.'},
   'mo-warehouse':{title:'Shipped by warehouse / CM',
-    what:'Deliveries in the scenario date range, by warehouse.',
-    click:'Change the range in Ship target scenario.'},
+    what:'Deliveries in the ship target range, by warehouse.'},
   'mo-original':{title:'Original line delivery summary',
-    what:'How much of each original delivery month has shipped.',
-    click:'Pick a month to narrow this table and the next.'},
+    what:'How much of each original delivery month has shipped.'},
   'mo-notshipped':{title:'Items not shipped yet',
-    what:'Open lines by original delivery month, oldest first.',
-    click:'Show all lists every line.'},
+    what:'Open lines by original delivery month, oldest first.'},
   'mo-scenario':{title:'Ship target scenario',
-    what:'How much of the value booked by the end date has shipped, is open or is past its date.',
-    click:'Change the dates or Calendar basis to test a target.'},
+    what:'Value booked by the end date: shipped, open or past due.'},
   'mo-calendar':{title:'Open ship calendar',
-    what:'Open lines per day in the scenario range (first 62 days).',
-    click:'Rest the pointer on a day for its numbers.'},
+    what:'Open lines per day in the range (first 62 days).'},
   'mt-quality':{title:'Order quality',
-    what:'On-track, perfect order, backorder and partial ship rates.',
-    click:'Sales Order Health lists the lines behind them.'},
+    what:'On-track, perfect order, backorder and partial ship rates.'},
   'mt-open-month':{title:'Open value by due month',
-    what:'Open sales-order value by the month each line is due now.',
-    click:'Rest the pointer on a bar for its numbers.'},
+    what:'Open sales-order value by current due month.'},
   'mt-risk-month':{title:'At-risk lines by due month',
-    what:'Late, no-commit and rescheduled open lines by due month.',
-    click:'Rest the pointer on a bar for its breakdown.'},
+    what:'Late, no-commit and rescheduled open lines by due month.'},
   'mt-timeline':{title:'Metrics timeline',
-    what:'Open value, lines, on-track rate and risk counts per due month.',
-    click:'Show all lists every month.'},
+    what:'Open value, lines, on-track rate and risk counts per due month.'},
   'mt-attention':{title:'Lines to act on',
-    what:'Late, no-commit, rescheduled and missing-price open lines, most overdue first.',
-    click:'Add notes and overrides on Sales Order Health.'},
+    what:'Late, no-commit, rescheduled and unpriced open lines, most overdue first.'},
   'wh-scorecard':{title:'Warehouse scorecard',
     what:'Open, at-risk and past-due value and delivery rates per warehouse.',
-    click:'Click a row to focus this page and Sales Order Health on it.'},
+    click:'Click a row to filter.'},
   'wh-late':{title:'Which warehouse is defaulting',
-    what:'Delivery lines shipped more than 2 days late, per warehouse, most late lines first.',
-    click:'Switch Monthly or Quarterly; click a row to focus on that warehouse.'},
+    what:'Lines shipped more than 2 days late, per warehouse.',
+    click:'Click a row to filter.'},
   'wh-heat':{title:'Open value by warehouse and due month',
-    what:'Darker blue is more open value; the red badge counts late lines.',
-    click:'Rest the pointer on a cell for its numbers.'},
+    what:'Darker is more open value; the red badge counts late lines.'},
   'wh-summary':{title:'Warehouse KPI summary',
-    what:'Every rate and risk count per warehouse.',
-    click:'Show all lists every warehouse.'},
+    what:'Every rate and risk count per warehouse.'},
   'mix-net':{title:'Net qty by month',
     what:'Usable supply minus demand per month; red months are short.',
     click:'Rest the pointer on a row for its numbers.'},
@@ -14028,11 +14011,11 @@ const SECTION_INFO={
 // Trusted constant HTML (only <strong>).
 const ABOUT_NOTES={
   oh:[
-    '<strong>At risk</strong>: next-month lines expected over 2 days late, with no commit date, or marked Urgent; target under 5% of the value.',
-    '<strong>On track</strong>: the rest of next month’s lines; expected date is the reschedule, else the Logican commit, else the due date.',
-    '<strong>OTD</strong>: deliveries shipped on or before the original date. <strong>Fill rate</strong>: delivered or closed quantity out of ordered quantity. Each target is 90%.',
-    '<strong>Warehouse defaulting</strong>: late shipments (more than 2 days after the due date) per warehouse.',
-    '<strong>When flagged</strong>: whole weeks since the line was first at risk in an uploaded report.'
+    '<strong>At risk</strong>: next-month lines over 2 days late, with no commit date or Urgent. Target under 5% of value.',
+    '<strong>On track</strong>: the rest of next month’s lines.',
+    '<strong>Expected date</strong>: reschedule, else Logican commit, else due date.',
+    '<strong>OTD</strong>: shipped by the original date. <strong>Fill rate</strong>: ordered qty delivered. Target 90% each.',
+    '<strong>When flagged</strong>: weeks since the line was first at risk.'
   ],
   po:[
     '<strong>Late / missed commit</strong>: past the original date with no reschedule, or past the reschedule date.',
@@ -14058,14 +14041,14 @@ const ABOUT_NOTES={
     'The original-date tables use each line’s original delivery date.'
   ],
   mt:[
-    '<strong>On-track rate</strong>: open lines not late, past due or without a commit date.',
-    '<strong>Perfect order</strong>: closed lines shipped complete, on time to commit and never rescheduled.',
-    '<strong>Backorder rate</strong>: quantity due in the last 12 months that missed its original date.',
-    '<strong>Partial ship rate</strong>: open lines that shipped part of their quantity.'
+    '<strong>On-track rate</strong>: open lines not late, past due or missing a commit date.',
+    '<strong>Perfect order</strong>: closed lines shipped complete, on time, never rescheduled.',
+    '<strong>Backorder rate</strong>: qty due in the last 12 months that missed its original date.',
+    '<strong>Partial ship rate</strong>: open lines that shipped part of their qty.'
   ],
   wh:[
-    '<strong>Open value</strong>: value still to ship, by the month each line is due now.',
-    '<strong>On-track rate</strong>: open lines not late, past due or without a commit date. Target 90%.',
+    '<strong>Open value</strong>: value still to ship, by current due month.',
+    '<strong>On-track rate</strong>: open lines not late, past due or missing a commit date. Target 90%.',
     'The red badge on a cell counts late or past-due lines.'
   ],
   mix:[
@@ -18090,11 +18073,11 @@ const OH_AGE_BUCKETS=[['new','New this week',0,0],['1-2','1–2 wk',1,2],['3-4',
 const OH_AGE_IDS=OH_AGE_BUCKETS.map(a=>a[0]);
 // Open order states: every open sales order line is in exactly one.
 const OH_STATES=[
-  ['ontrack','on_track','On track','var(--good)','Open lines with no risk signal that are not due this week.'],
-  ['duethisweek','due_this_week','Due this week','var(--accent)','Open lines due this week (Sunday to Saturday) with no risk signal.'],
-  ['rescheduled','rescheduled','Rescheduled','var(--warn-fill)','Open lines with a reschedule (commit) date that is today or later.'],
-  ['pastdue','past_due','Past due','#ff4f73','Open lines past their original date with no reschedule, or past their commit date.'],
-  ['nocommit','no_commit','No commit','var(--crit-text)','Open lines with no commit date (SAP 1111-11-11).']
+  ['ontrack','on_track','On track','var(--good)','No risk signal, not due this week.'],
+  ['duethisweek','due_this_week','Due this week','var(--accent)','Due this week (Sun–Sat), no risk signal.'],
+  ['rescheduled','rescheduled','Rescheduled','var(--warn-fill)','Commit date is today or later.'],
+  ['pastdue','past_due','Past due','#ff4f73','Past the original date with no reschedule, or past the commit date.'],
+  ['nocommit','no_commit','No commit','var(--crit-text)','No commit date in SAP.']
 ];
 const OH_TILE_TITLES={'st-ontrack':'On track','st-duethisweek':'Due this week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past due','st-nocommit':'No commit','allopen':'All open orders','perfect':'Not perfect · 12 mo','dayslate':'Late deliveries · 3 mo'};
 
@@ -18378,8 +18361,8 @@ function ohPanelClose(){return '</div>';}
 function ohRenderTabs(){
   const tab=(id,label,tip)=>({id:`oh-tab-${id}`,label,on:weeklyView===id,onclick:`setWeeklyView('${id}')`,tip,attrs:` aria-controls="oh-panel-${id}" onkeydown="ohTabKey(event)"`});
   return dzSeg([
-    tab('leading','Leading','What is at risk now and why; arrow keys switch views.'),
-    tab('lagging','Lagging','How deliveries went last month and last quarter, then the metrics by month; arrow keys switch views.')
+    tab('leading','Leading','What is at risk now, and why.'),
+    tab('lagging','Lagging','Last month and quarter, then metrics by month.')
   ],{tabs:true,label:'Sales Order Health view'});
 }
 // The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
@@ -18389,7 +18372,7 @@ function ohRenderDrillBar(){
 }
 function ohRenderDrillChips(){
   if(!ohDrillActive())return '';
-  const chip=(kind,label,value)=>`<button type="button" class="chip active oh-chip" data-kind="${kind}" onclick="clearWeeklyDrill(this.dataset.kind)" aria-label="${esc(`Remove filter ${label}: ${value}`)}" data-tip="${esc(`Showing only lines where ${label.toLowerCase()} is ${value}; click to remove.`)}">${esc(label)}: ${esc(value)} <span class="oh-x" aria-hidden="true">×</span></button>`;
+  const chip=(kind,label,value)=>`<button type="button" class="chip active oh-chip" data-kind="${kind}" onclick="clearWeeklyDrill(this.dataset.kind)" aria-label="${esc(`Remove filter ${label}: ${value}`)}" data-tip="${esc(`Only lines with ${label.toLowerCase()} ${value}. Click to remove.`)}">${esc(label)}: ${esc(value)} <span class="oh-x" aria-hidden="true">×</span></button>`;
   const age=OH_AGE_BUCKETS.find(a=>a[0]===weeklyAgeFilter);
   // A reason that is one of the reason tiles shows with the tile's name (2v4).
   const tile=!weeklyReasonMain&&OH_REASON_TILES.find(t=>t.reason===weeklyReasonFilter);
@@ -18398,7 +18381,7 @@ function ohRenderDrillChips(){
     ${weeklyReasonFilter?(tile?chip('reason','Reason',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',overrideLabel(weeklyReasonFilter))):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
     ${age?chip('age','When flagged',age[1]):''}
-    <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove the chart filters; other filters stay.">Clear all</button>
+    <button type="button" class="link-btn" data-focus-key="oh-drill-clear" onclick="clearWeeklyDrill('')" data-tip="Remove these filters; others stay.">Clear all</button>
   </div>`;
 }
 
@@ -18726,15 +18709,15 @@ function ohgPeriodCard(cur,prev,{title,span,tip,i}){
   const w=cur.label,pw=prev.label;
   const tiles=[
     tile('On time',cur.otd===null?null:pct(cur.otd),ohgDelta(cur.otd,prev.otd,{vs,suffix:' pts'}),
-      cur.otd===null?`On time: no scored deliveries in ${w}.`:`On time: ${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries shipped on or before the original date in ${w} (1 to 2 days late is not on time); ${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}.`,{tone:cur.otd!==null&&cur.otd>=90?'teal':''}),
+      cur.otd===null?`On time: no scored deliveries in ${w}.`:ohlTip(`On time, ${w}: ${pct(cur.otd)}`,[`${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries by the original date`,`${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}`]),{tone:cur.otd!==null&&cur.otd>=90?'teal':''}),
     tile('Perfect order',cur.perfect===null?null:pct(cur.perfect),ohgDelta(cur.perfect,prev.perfect,{vs,suffix:' pts'}),
-      cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:`Perfect order: ${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines were never rescheduled and shipped on time (counted in the month of the last delivery) in ${w}; ${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}.`),
+      cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:ohlTip(`Perfect order, ${w}: ${pct(cur.perfect)}`,[`${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines on time, never rescheduled`,`${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}`])),
     tile('Avg days late',cur.avgDays===null?null:cur.avgDays.toFixed(1),ohgDelta(cur.avgDays,prev.avgDays,{vs,dp:1,suffix:' days',lowerBetter:true}),
-      cur.avgDays===null?`Avg days late: no scored deliveries in ${w}.`:`Avg days late: ${cur.avgDays.toFixed(1)} days after the original date, across the ${ohN(cur.lateDeliveries,'late delivery line')} of ${fmtNum(cur.scored)} scored in ${w}; ${pw}: ${prev.avgDays===null?'none scored':prev.avgDays.toFixed(1)}.`),
+      cur.avgDays===null?`Avg days late: no scored deliveries in ${w}.`:ohlTip(`Avg days late, ${w}: ${cur.avgDays.toFixed(1)}`,[`${ohN(cur.lateDeliveries,'late delivery line')} of ${fmtNum(cur.scored)} scored`,`${pw}: ${prev.avgDays===null?'none scored':prev.avgDays.toFixed(1)}`])),
     tile('Reschedule hit',cur.hit===null?null:pct(cur.hit),ohgDelta(cur.hit,prev.hit,{vs,suffix:' pts'}),
-      cur.hit===null?`Reschedule hit: no rescheduled deliveries in ${w}.`:`Reschedule hit: ${fmtNum(cur.hitMet)} of ${fmtNum(cur.hitN)} rescheduled deliveries shipped by their reschedule date in ${w}; ${pw}: ${prev.hit===null?'none':pct(prev.hit)}.`),
+      cur.hit===null?`Reschedule hit: no rescheduled deliveries in ${w}.`:ohlTip(`Reschedule hit, ${w}: ${pct(cur.hit)}`,[`${fmtNum(cur.hitMet)} of ${fmtNum(cur.hitN)} shipped by the reschedule date`,`${pw}: ${prev.hit===null?'none':pct(prev.hit)}`])),
     tile('Late orders',cur.scored?fmtNum(cur.late):null,cur.scored?ohgDelta(cur.late,prev.scored?prev.late:null,{vs,lowerBetter:true}):ohgDelta(null,null,{vs}),
-      cur.scored?`Late orders: ${ohN(cur.late,'order')} with a delivery more than 2 days after the original date (${ohN(cur.lateRows.length,'delivery line')}) in ${w}; ${pw}: ${prev.scored?fmtNum(prev.late):'none scored'}.`:`Late orders: no scored deliveries in ${w}.`,{tone:cur.late?'red':''})
+      cur.scored?ohlTip(`Late orders, ${w}: ${fmtNum(cur.late)}`,[`${ohN(cur.lateRows.length,'delivery line')} more than 2 days late`,`${pw}: ${prev.scored?fmtNum(prev.late):'none scored'}`]):`Late orders: no scored deliveries in ${w}.`,{tone:cur.late?'red':''})
   ].join('');
   const sub=cur.orders?`${moneyShort(cur.value)} · ${ohN(cur.lines,'line')}`:'';
   const body=`<div class="ohg-head"><span class="dz-big sm ohg-orders">${fmtNum(cur.orders)} ${cur.orders===1?'order':'orders'} shipped</span>${sub?`<span class="dz-sub">${esc(sub)}</span>`:''}${cur.orders?`<span class="ohg-delta ohg-${od.c}">${esc(od.t)}</span>`:''}</div><div class="dz-stats ohg-tiles">${tiles}</div>`;
@@ -18745,11 +18728,11 @@ function ohgRender(m){
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
   if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgMetricsSection(m)}`;
-  const common='Counts are orders (an order that ships on several days counts once). On time, Perfect order, Avg days late, Reschedule hit and Late orders use the same rules as the rest of the dashboard, scored for deliveries in the period; the Sales Order Health filters apply.';
+  const common=['An order counts once, however many shipments','Page filters apply'];
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
-    tip:`Monthly: orders shipped in ${mo.label}, the last complete month at the report date, and the change against ${d.month.prev.label}. ${common}`});
+    tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
-    tip:`Quarterly: orders shipped in ${q.label}, the last complete quarter at the report date, and the change against ${d.quarter.prev.label}. ${common}`});
+    tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});
   return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgMetricsSection(m)}`;
 }
 // --- end 2v6 oh-lagging ---
@@ -18827,7 +18810,7 @@ function ohLineWhy(r){
   const {cause,rule}=ohCauseRule(r);
   const since=ohFlaggedSince(r),sinceText=since?`first at risk in the ${displayDate(since)||since} upload`:'';
   // 2v4: Us vs Them is no longer shown; the line shows its reasons only (the cause stays in the data for Search / AI).
-  const tip=`${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${since?` First at risk in the week of the ${displayDate(since)||since} upload.`:''}`.trim()||'No at-risk reason.';
+  const tip=`${reasons.length?`Reasons: ${reasons.join(', ')}.`:''}${since?` First at risk: week of ${displayDate(since)||since}.`:''}`.trim()||'No at-risk reason.';
   const extra=[reasons.slice(1).join(', '),sinceText].filter(Boolean).join(' · ');
   return `<span class="oh-why cause-text-${cause}" data-tip="${esc(tip)}">${reasons.length?esc(reasons[0]):''}</span>${extra?`<span class="timing oh-why-more">${esc(extra)}</span>`:''}`;
 }
@@ -19108,6 +19091,12 @@ function ohlReasons(m){
 }
 const ohlMoney=rows=>`${money(rowOpenAmount(rows))} · ${ohN(rows.length,'line')}`;
 const ohlWhName=n=>String(n||'').replace(/ - /g,' · ');
+// A short tooltip: a heading line, then one bullet per fact ("• "), then an optional click hint (the tip bubble shows
+// the line breaks). ohlPlain is the same text on one line, for an aria-label.
+function ohlTip(head,facts=[],click=''){
+  return [head,...facts.filter(Boolean).map(f=>`• ${String(f).replace(/\.$/,'')}`),click].filter(Boolean).join('\n');
+}
+function ohlPlain(t){return String(t||'').replace(/\n• /g,'; ').replace(/\n/g,'. ');}
 
 function ohlRenderLeading(m){
   const oh=orderHealthData(m);
@@ -19131,17 +19120,17 @@ function ohlAtRiskCard(c){
   const sel=id=>weeklyTileFilter===id;
   const risk=d.risk,orders=rowDocCount(risk),lines=risk.length;
   const fresh=ohFlagAges(risk)[0];
-  const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) at risk for the first time in this week's upload; click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
+  const newChip=fresh.orders?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyAgeFilter==='new'?' sel':''}" data-focus-key="ohl-new" onclick="setWeeklyAgeFilter('new')" aria-pressed="${weeklyAgeFilter==='new'}"${tipAttr(`${ohN(fresh.orders,'order')} (${ohN(fresh.lines,'line')}) newly at risk this week. Click to list them.`)}>+${fmtNum(fresh.orders)} new this week</button>`:'';
   // The share of orders due in the next month that are at risk: small and quiet, for the manager's review.
   const dueOrders=rowDocCount(d.all),riskPct=dueOrders?Math.round(orders/dueOrders*100):null;
   // The target (Settings, 5% by default) is on the at-risk share of the open value: green under it, amber up to twice it.
-  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the open value due by ${shortDay(d.end)}.`:`At-risk value is ${d.riskPct}% of the ${money(d.total)} open due by ${shortDay(d.end)}; the target is under ${AT_RISK_TARGET}% (amber up to ${AT_RISK_TARGET*2}%).`)}>${d.riskPct===null?'':`${d.riskPct}% of value · `}Target under ${AT_RISK_TARGET}%</span>`;
+  const targetHtml=`<span class="ohl-hero-target"${tipAttr(d.riskPct===null?`Target: at-risk value under ${AT_RISK_TARGET}% of the value due by ${shortDay(d.end)}.`:ohlTip(`At-risk value: ${d.riskPct}% of ${money(d.total)} due by ${shortDay(d.end)}`,[`Target under ${AT_RISK_TARGET}%`,`Amber up to ${AT_RISK_TARGET*2}%`]))}>${d.riskPct===null?'':`${d.riskPct}% of value · `}Target under ${AT_RISK_TARGET}%</span>`;
   const riskPctHtml=`<span class="ohl-hero-quiet">${riskPct===null?'':`<span class="ohl-hero-pct"${tipAttr(`${fmtNum(orders)} of ${ohN(dueOrders,'order')} due by ${shortDay(d.end)} are at risk.`)}>${riskPct}% of orders due in the ${esc(stgHorizonLabel())}</span><span class="ohl-hero-dot" aria-hidden="true"> · </span>`}${targetHtml}</span>`;
-  const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(`At risk, due by ${shortDay(d.end)}: ${ohN(orders,'order')}, ${ohN(lines,'line')}, ${money(rowOpenAmount(risk))} open; click to list the lines.`)}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
+  const hero=`<button type="button" class="ohl-hero" data-focus-key="tile-late" onclick="setWeeklyTileFilter('late')" aria-pressed="${sel('late')}"${tipAttr(ohlTip(`At risk, due by ${shortDay(d.end)}`,[`${ohN(orders,'order')}, ${ohN(lines,'line')}`,`${money(rowOpenAmount(risk))} open`],'Click to list them.'))}><span class="dz-big sm ${lines?'ohl-crit':'ohl-good'}">${esc(ohN(orders,'order'))}</span><span class="dz-sub">${esc(ohlMoney(risk))}</span>${riskPctHtml}</button>`;
   const stateRows=id=>lead.states.find(s=>s.id===id).rows;
   const stat=(id,label,color,rows)=>{
     const on=sel(id),n=rowDocCount(rows);
-    return `<button type="button" class="dz-stat ohl-stat${on?' sel':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}"${tipAttr(`${label}: ${ohN(n,'order')}, ${ohN(rows.length,'line')}, ${money(rowOpenAmount(rows))} open; ${on?'click to show the at-risk lines again.':'click to list the lines.'}`)}><span class="ohl-stat-l"><i class="ohl-dot" style="background:${color}"></i>${esc(label)}</span><span class="ohl-stat-v${n?'':' zero'}">${esc(ohN(n,'order'))}</span><span class="ohl-stat-s">${esc(ohlMoney(rows))}</span></button>`;
+    return `<button type="button" class="dz-stat ohl-stat${on?' sel':''}" data-focus-key="tile-${id}" onclick="setWeeklyTileFilter('${id}')" aria-pressed="${on}"${tipAttr(ohlTip(label,[`${ohN(n,'order')}, ${ohN(rows.length,'line')}`,`${money(rowOpenAmount(rows))} open`],on?'':'Click to list them.'))}><span class="ohl-stat-l"><i class="ohl-dot" style="background:${color}"></i>${esc(label)}</span><span class="ohl-stat-v${n?'':' zero'}">${esc(ohN(n,'order'))}</span><span class="ohl-stat-s">${esc(ohlMoney(rows))}</span></button>`;
   };
   const stats=`<div class="ohl-stats" role="group" aria-label="Open orders">
       ${stat('st-rescheduled','Rescheduled',OHL_COLOR.rescheduled,stateRows('rescheduled'))}
@@ -19158,7 +19147,7 @@ function ohlAtRiskCard(c){
     const otd=otdStats(oh.otdLast3MonthRows.filter(r=>rowWarehouse(r)===top.name));
     const focused=weeklyWarehouseFilter.length===1&&weeklyWarehouseFilter[0]===top.name;
     const fig=(label,value,small,tone)=>`<div><div class="ohl-fig-l">${label}</div><div class="ohl-fig-v${small?' sm':''}${tone?` ${tone}`:''}">${esc(value)}</div></div>`;
-    const panel=`<button type="button" class="ohl-wh${focused?' sel':''}" data-focus-key="oh-top-wh" data-wh="${esc(top.name)}" onclick="setWeeklyOffenderFilter('warehouses',this.dataset.wh)" aria-pressed="${focused}"${tipAttr(`${top.name}: ${ohN(top.lines,'at-risk line')} of ${fmtNum(lines)}, ${money(top.value)} open, ${fmtNum(top.share)}% of the at-risk value; ${focused?'click to show every warehouse.':'click to show only this warehouse.'}`)}>
+    const panel=`<button type="button" class="ohl-wh${focused?' sel':''}" data-focus-key="oh-top-wh" data-wh="${esc(top.name)}" onclick="setWeeklyOffenderFilter('warehouses',this.dataset.wh)" aria-pressed="${focused}"${tipAttr(ohlTip(top.name,[`${ohN(top.lines,'at-risk line')} of ${fmtNum(lines)}`,`${money(top.value)} open, ${fmtNum(top.share)}% of at-risk value`],focused?'':'Click to filter to it.'))}>
         <span class="ohl-wh-main"><span class="ohl-wh-name">${esc(ohlWhName(top.name))}</span><span class="ohl-wh-sub">${fmtNum(top.lines)} of ${fmtNum(lines)} at-risk lines</span></span>
         <span class="ohl-figs">${fig('At-risk lines',fmtNum(top.lines),false,'ohl-crit')}${fig('Past due',fmtNum(pastDue),false)}${fig('Value',moneyShort(top.value),true)}${fig('OTD 3 mo',otd.scored.length?`${fmtNum(otd.rate)}%`:'—',true)}</span>
       </button>`;
@@ -19168,7 +19157,7 @@ function ohlAtRiskCard(c){
     const maxIssue=Math.max(1,...issues.map(x=>x.orders));
     const issueRows=issues.map((x,i)=>dzBarRow({label:x.t.label,value:x.orders,max:maxIssue,color:i===0?OHL_RED:OHL_SLATE,num:fmtNum(x.orders),cls:'ohl-bar130',i,
       onclick:`setWeeklyOverrideTile(${dzJs(x.t.reason)})`,selected:x.t.on,attrs:` data-focus-key="ovr-${esc(x.t.reason.replace(/\W+/g,'-').toLowerCase())}"`,
-      tip:`${x.t.label} at ${top.name}: ${ohN(x.orders,'order')}, ${ohlMoney(x.rows)}; ${x.t.on?'click to show all.':'click to list the at-risk lines with this override.'}`})).join('');
+      tip:ohlTip(`${x.t.label} at ${top.name}`,[`${ohN(x.orders,'order')}, ${ohN(x.rows.length,'line')}`,`${money(rowOpenAmount(x.rows))} open`],x.t.on?'':'Click to list them.')})).join('');
     whHtml=`<div class="ohl-sec">
         <div class="ohl-sec-title">Most affected warehouse</div>
         ${panel}
@@ -19179,7 +19168,7 @@ function ohlAtRiskCard(c){
   // By override, all warehouses: one small tile per override status (orders; zero tiles are greyed).
   const ovrCells=ovr.map(t=>{
     const n=rowDocCount(t.rows);
-    return `<button type="button" class="ohl-tile${n?'':' zero'}${t.on?' sel':''}" data-focus-key="ovr-tile-${esc(t.reason.replace(/\W+/g,'-').toLowerCase())}" onclick="setWeeklyOverrideTile(${esc(dzJs(t.reason))})" aria-pressed="${t.on}"${tipAttr(`${t.label}: ${ohN(n,'order')}, ${ohlMoney(t.rows)} at risk; ${t.on?'click to show all.':'click to list them.'}`)}><span class="ohl-tile-l">${esc(t.label)}</span><span class="ohl-tile-n">${fmtNum(n)}</span></button>`;
+    return `<button type="button" class="ohl-tile${n?'':' zero'}${t.on?' sel':''}" data-focus-key="ovr-tile-${esc(t.reason.replace(/\W+/g,'-').toLowerCase())}" onclick="setWeeklyOverrideTile(${esc(dzJs(t.reason))})" aria-pressed="${t.on}"${tipAttr(ohlTip(t.label,[`${ohN(n,'order')}, ${ohN(t.rows.length,'line')}`,`${money(rowOpenAmount(t.rows))} at risk`],t.on?'':'Click to list them.'))}><span class="ohl-tile-l">${esc(t.label)}</span><span class="ohl-tile-n">${fmtNum(n)}</span></button>`;
   }).join('');
   const none=!ovr.some(t=>t.lines);
   const ovrHtml=`<div class="ohl-sec">
@@ -19187,7 +19176,7 @@ function ohlAtRiskCard(c){
       <div class="ohl-tiles" role="group" aria-label="At-risk orders by override">${ovrCells}</div>
     </div>`;
   return dzCard({title:'At risk',sm:true,meta:newChip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
-    tip:`Open sales-order lines due by ${shortDay(d.end)} that need action: past due, no commit date, rescheduled, urgent. Click a number to list its lines.`,
+    tip:`Lines due by ${shortDay(d.end)} that are past due, uncommitted, rescheduled or urgent.`,
     body:`<div class="ohl-hero-row">${hero}</div>${stats}${whHtml}${ovrHtml}`});
 }
 
@@ -19203,14 +19192,14 @@ function ohlStatusCard(c){
     const id=`st-${s.id}`,on=weeklyTileFilter===id;
     return ohlKvRow({label:s.label,sub:ohlMoney(s.rows),num:ohN(s.orders,'order'),dot:OHL_COLOR[s.id],zero:!s.orders,tone:s.id==='pastdue'&&s.orders?'crit':'',
       on,onclick:`setWeeklyTileFilter('${id}')`,key:`status-${id}`,
-      tip:`${s.label}: ${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open. ${s.help} ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`});
+      tip:ohlTip(s.label,[`${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}`,`${money(s.value)} open`,s.help],on?'':'Click to list them.')});
   }).join('');
   const reasons=ohlReasons(m).slice(0,5);
   const reasonRows=reasons.map(r=>ohlKvRow({label:overrideLabel(r.label),sub:ohlMoney(r.rows),num:ohN(r.orders,'order'),
     on:r.on,onclick:`setWeeklyReasonFilter(${dzJs(r.label)})`,key:`oh-reason-${esc(r.label)}`,
-    tip:`${overrideLabel(r.label)}: ${ohN(r.orders,'order')}, ${ohlMoney(r.rows)} at risk; ${r.on?'click to show all.':'click to list them.'}`})).join('');
+    tip:ohlTip(overrideLabel(r.label),[`${ohN(r.orders,'order')}, ${ohN(r.lines,'line')}`,`${money(r.value)} at risk`],r.on?'':'Click to list them.')})).join('');
   return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1"',
-    tip:'Every open order in exactly one state, then the top reasons behind the at-risk lines. Click a row to list its lines.',
+    tip:'Each open order in one state, then the top at-risk reasons.',
     body:`<div class="ohl-sec ohl-sec-first"><div class="ohl-sec-title">Status</div>
         <div class="ohl-kvs" role="group" aria-label="Open orders by state">${statusRows}</div>
       </div>
@@ -19245,10 +19234,10 @@ function ohlDueCard(c){
   const dots=pts.map((p,i)=>`<span class="ohl-pt" style="left:${(p[0]/W*100).toFixed(2)}%;top:${(p[1]/H*100).toFixed(2)}%"${tipAttr(`${i?`Week of ${wkText(weeks[i],i)}`:'This week'}: ${ohN(counts[i],'open line')} due, ${money(rowOpenAmount(weeks[i].rows))}.`)}></span>`).join('');
   const pill=total?`<span class="ohl-peak" style="--x:${(pts[peak][0]/W*100).toFixed(2)}%;top:${(pts[peak][1]/H*100).toFixed(2)}%">${fmtNum(counts[peak])} ${counts[peak]===1?'line':'lines'} peak · ${esc(peak?shortDay(weeks[peak].s):'This week')}</span>`:'';
   const labels=weeks.map((w,i)=>`<span>${i%2?'':i?`${w.s.getMonth()+1}/${w.s.getDate()}`:'Now'}</span>`).join('');
-  const chip=past.length?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyTileFilter==='st-pastdue'?' sel':''}" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter('st-pastdue')" aria-pressed="${weeklyTileFilter==='st-pastdue'}"${tipAttr(`${ohN(past.length,'open line')} (${ohN(rowDocCount(past),'order')}, ${money(rowOpenAmount(past))}) already past due; click to list them.`)}>${fmtNum(past.length)} ${past.length===1?'line':'lines'} already past due</button>`:'';
+  const chip=past.length?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyTileFilter==='st-pastdue'?' sel':''}" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter('st-pastdue')" aria-pressed="${weeklyTileFilter==='st-pastdue'}"${tipAttr(ohlTip(`${ohN(past.length,'line')} already past due`,[ohN(rowDocCount(past),'order'),`${money(rowOpenAmount(past))} open`],'Click to list them.'))}>${fmtNum(past.length)} ${past.length===1?'line':'lines'} already past due</button>`:'';
   const summary=weeks.map((w,i)=>`${wkText(w,i)}: ${counts[i]}`).join(', ');
   return dzCard({title:'Open lines by due week',meta:chip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:2"',
-    tip:'Open lines by the week they are due (this week and the next seven); lines already past due are the red chip.',
+    tip:'Open lines due per week, next 8 weeks. Past due is the red chip.',
     body:total?`<div class="ohl-chart" role="img" aria-label="${esc(`Open lines due by week, ${summary}`)}">
         <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ohlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5468ff" stop-opacity=".35"/><stop offset="1" stop-color="#5468ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#ohlG)"/><path d="${line}" fill="none" stroke="#5468ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
         ${dots}${pill}
@@ -19267,13 +19256,13 @@ function ohlCustomersCard(c){
   const cur=weeklyCustomerFilter;
   const rows=list.map((x,i)=>{
     const on=cur.length===1&&cur[0]===x.key;
-    return `<button type="button" class="ohl-cust${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(`${x.name}: ${ohN(x.orders,'order')}, ${ohlMoney(x.rows)} at risk; ${on?'click to show every customer.':'click to filter to this customer.'}`)}>
+    return `<button type="button" class="ohl-cust${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.name,[`${ohN(x.orders,'order')}, ${ohN(x.rows.length,'line')}`,`${money(rowOpenAmount(x.rows))} at risk`],on?'':'Click to filter to it.'))}>
       <span class="ohl-cust-top"><span class="ohl-cust-name"><span class="ohl-rank">${String(i+1).padStart(2,'0')}</span>${esc(x.name)}</span><span class="ohl-cust-n">${esc(ohN(x.orders,'order'))}</span></span>
       <span class="ohl-cust-bar"><span class="ohl-track"><i class="dz-grow" style="width:${Math.max(x.orders/max*100,2).toFixed(1)}%;--i:${i}"></i></span><span class="ohl-cust-amt">${esc(ohlMoney(x.rows))}</span></span>
     </button>`;
   }).join('');
   return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
-    tip:'The customers with the most at-risk orders; click one to filter Sales Order Health to it.',
+    tip:'Customers with the most at-risk orders. Click to filter.',
     body:rows?`<div class="ohl-list" role="group" aria-label="Customers at risk">${rows}</div>`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
@@ -19299,14 +19288,14 @@ function ohlShipTargetCard(m){
   const datesOpen=!!tableMore['mwm-dates'];
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   const dates=datesOpen?`<div class="mwm-dates">
-      <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>End <input type="date" id="ship-scenario-end" class="dz-pillinput"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>Basis <select id="ship-scenario-basis" class="dz-pillinput"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)"><option value="effective"${sd.useEffective?' selected':''}>With reschedules</option><option value="original"${!sd.useEffective?' selected':''}>Original only</option></select></label>
+      <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range.')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End <input type="date" id="ship-scenario-end" class="dz-pillinput"${tipAttr('Last day; lines booked by then count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>Basis <select id="ship-scenario-basis" class="dz-pillinput"${tipAttr('Reschedule dates, or original dates only.')} onchange="setShipScenarioDateBasis(this.value)"><option value="effective"${sd.useEffective?' selected':''}>With reschedules</option><option value="original"${!sd.useEffective?' selected':''}>Original only</option></select></label>
     </div>`:'';
   return dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,cls:'dz-fade ohl-ship',attrs:' style="--i:1"',
-    tip:'The ship target range: lines due by the end date that are still open, and the past-due ones that would close the gap.',
-    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the start date, the end date or the date basis of this ship target.')}>Dates</button>`,
-    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
+    tip:'Open lines due by the end date, and the largest past-due orders.',
+    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
+    body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
       <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 }
@@ -19378,7 +19367,7 @@ function ohlSupplyCard(c){
   const {m}=c;
   const d=ohlSupplyData(m);
   if(!d.customers.length)return '';
-  const head=`<div class="ohl-sup-sum" role="list">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>`<span class="ohl-sup-pill" role="listitem"${tipAttr(id==='none'?'At-risk orders whose supply looks fine: they are at risk for their own dates or overrides.':`At-risk orders whose ${label==='CM sheet'?'CM (Logican sheet) build':label==='Vendor PO'?'vendor purchase order':'stock'} is in trouble.`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(d.tot[id].size)}</b></span>`).join('')}</div>`;
+  const head=`<div class="ohl-sup-sum" role="list">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>`<span class="ohl-sup-pill" role="listitem"${tipAttr(id==='none'?'At-risk orders with no supply problem.':`At-risk orders held up by ${label==='CM sheet'?'the CM (Logican) build':label==='Vendor PO'?'a vendor PO':'short stock'}.`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(d.tot[id].size)}</b></span>`).join('')}</div>`;
   if(!d.hasSources)return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
     body:`${head}<div class="empty-note">Load the Logican sheet, purchase-order lines or the supply / demand snapshot to see which supply source puts each customer's orders at risk.</div>`});
   const list=ohlSupplyAll?d.customers:d.customers.filter(x=>x.supply>0).slice(0,OHL_SUPPLY_SHOWN);
@@ -19388,18 +19377,18 @@ function ohlSupplyCard(c){
     const total=Math.max(1,x.all.size);
     const cells=OHL_SUPPLY_SOURCES.map(([id,label])=>{
       const n=x.orders[id].size;
-      const tip=n?`${label}: ${ohN(n,'order')}${x.notes[id].length?`; ${x.notes[id].join('; ')}`:''}`:`${label}: none`;
+      const tip=n?ohlTip(`${label}: ${ohN(n,'order')}`,x.notes[id]):`${label}: none`;
       return `<span class="ohl-sup-n${n?'':' zero'}${id==='none'?' quiet':''}"${tipAttr(tip)}>${n?fmtNum(n):'—'}</span>`;
     }).join('');
     const bar=OHL_SUPPLY_SOURCES.map(([id,,color])=>{const n=x.orders[id].size;return n?`<i style="width:${(n/total*100).toFixed(1)}%;background:${color}"></i>`:'';}).join('');
-    return `<button type="button" class="ohl-sup-row dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="ohl-sup-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(`${x.label}: ${ohN(x.all.size,'at-risk order')} (${money(x.value)} open), ${ohN(x.supply,'order')} held up by supply; click to ${on?'show all':'filter to this customer'}.`)}>
+    return `<button type="button" class="ohl-sup-row dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="ohl-sup-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.label,[`${ohN(x.all.size,'at-risk order')}, ${money(x.value)} open`,`${ohN(x.supply,'order')} held up by supply`],on?'':'Click to filter to it.'))}>
       <span class="ohl-sup-name">${esc(x.label)}</span>${cells}<span class="ohl-sup-bar" aria-hidden="true">${bar}</span>
     </button>`;
   }).join('');
   const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
   return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
     meta:`${ohN(d.withSupply,'customer')} held up by supply · ${esc(stgHorizonTitle())}`,
-    tip:'Each at-risk sales order is traced to the supply of its item: the CM sheet (Logican short, on hold or committing after the due date), an open vendor PO (late, no commit date or expected after the due date), or stock short in the supply / demand snapshot. Numbers are orders; hover a number for the lines behind it; click a customer to filter.',
+    tip:ohlTip('At-risk orders by where the item’s supply is stuck',['CM sheet: Logican short, on hold or late','Vendor PO: late, no commit or after the due date','Stock short in supply / demand','Hover a number for its lines']),
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>
       ${rows||'<div class="empty-note">No customer has an at-risk order held up by supply.</div>'}
@@ -19418,7 +19407,7 @@ function ohlDateChangesCard(c){
   const row=(cu,i)=>{
     const on=cur.length===1&&cur[0]===cu.key;
     const w=cu.lines[0],blocked=cu.lines.find(l=>l.deliverable==='blocked');
-    const tip=words(`${cu.customer}: ${ohN(cu.lines.length,'line')}, ${money(cu.value)}, moved later; worst ${lineText(w)}${blocked&&blocked!==w?`; blocked ${lineText(blocked)}`:''}; click to ${on?'show all':'filter'}.`);
+    const tip=ohlTip(cu.customer,[`${ohN(cu.lines.length,'line')}, ${money(cu.value)} moved later`,`Worst: ${words(lineText(w),16)}`,blocked&&blocked!==w?`Blocked: ${words(lineText(blocked),16)}`:''],on?'':'Click to filter to it.');
     return `<button type="button" class="dz-tr ohl-dc-row${on?' sel':''}" data-focus-key="dc-${esc(cu.key)}" data-off="${esc(cu.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(tip)}>
       <span class="ohl-dc-cust">${esc(cu.customer)}</span>
       <span class="ohl-dc-lines">${esc(ohN(cu.lines.length,'line'))}<span class="dz-cell-sub">${esc(moneyShort(cu.value))}</span></span>
@@ -19432,7 +19421,7 @@ function ohlDateChangesCard(c){
   const more=rest.length?`<div class="ohl-foot"><span>${open?`Showing all ${fmtNum(dc.customers.length)} customers`:`Showing ${fmtNum(shown.length)} of ${fmtNum(dc.customers.length)} customers`}</span><button type="button" class="link-btn ohl-more print-hide" data-focus-key="more-ohl-datechange" data-table-key="ohl-datechange" aria-expanded="${open}"${tipAttr(open?'Show the first customers only.':`Show the other ${ohN(rest.length,'customer')} with later dates.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show more →'}</button></div>`:'';
   const meta=`<span class="ohl-dc-meta">${esc(ohN(t.lines,'line'))} · ${esc(ohN(t.customers,'customer'))} · ${esc(money(t.value))}</span>${tags(t,true)}`;
   return dzCard({title:'Date changes',sm:true,meta,cls:'ohl-card ohl-dc dz-fade',span:6,attrs:' style="--i:5" data-card="date-change"',
-    tip:`Open sales-order lines whose expected date moved more than ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due (SAP reschedule or Logican commit), and whether Logican can build them: ready (clear to build) or blocked (short or on hold).`,
+    tip:ohlTip(`Lines whose date moved over ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due`,['Ready: clear to build','Blocked: short or on hold']),
     body:`<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
         <div class="dz-th ohl-dc-th"><span>Customer</span><span>Lines</span><span class="dz-num">Slip</span><span>Worst line</span><span>What we can deliver</span></div>
         ${(open?dc.customers:shown).map(row).join('')}
