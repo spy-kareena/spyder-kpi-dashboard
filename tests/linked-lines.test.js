@@ -371,8 +371,9 @@ test('an override redraws Order Health without building other pages\' aggregates
 
   page.run("stgSet('hiddenPages',[])"); // 2v6.9: Warehouses is hidden by default; Settings > Hidden Pages brings it back
   // 2v9: Order Health Leading shows Monthly's sections, so it builds the month groups (once per metrics object).
-  const pages = { buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
-  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'groupByMonth', 'groupByOriginalHeaderMonth', 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
+  // (Metrics no longer builds the metric timeline: only its removed Show more drew it.)
+  const pages = { buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses' };
+  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'buildMetricTimeline', 'groupByMonth', 'groupByOriginalHeaderMonth', 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
   page.run(`updateRowOverride(${JSON.stringify(keyOf(page, '1000'))},'status','Urgent')`);
   page.run('selectAllLinked(true);linkedBulkStatus="Hold";applyLinkedOverride()');
   assert.deepEqual(page.run('built'), { groupByMonth: 2, groupByOriginalHeaderMonth: 2 }, 'two redraws, two metrics objects');
@@ -382,6 +383,8 @@ test('an override redraws Order Health without building other pages\' aggregates
     page.run(`setTab('${tab}');renderResults()`);
     assert.equal(page.run(`built.${fn}`), 1, fn);
   }
+  page.run("built={};setTab('metrics');renderResults()");
+  assert.equal(page.run('built.buildMetricTimeline'), undefined, 'Metrics draws no timeline');
   assert.equal(page.run('currentMetrics().perfectOrderRate'), page.run('perfectOrderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).rate'));
   assert.equal(page.run('currentMetrics().backorderQty'), page.run('backorderStats(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).backorderQty'));
 });
