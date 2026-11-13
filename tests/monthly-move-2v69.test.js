@@ -1,5 +1,6 @@
 // 2v9 monthly-move: Monthly is dissolved into Sales Order Health. Its forward-looking sections are on Leading (Open
-// orders by delivery month, Items not shipped yet, the ship target's Calendar & lines). Lagging (Version 1, the owner's
+// orders by delivery month and Items not shipped yet, two folds of one Lists card (with Lines after them, in the same card), shut on load, without the
+// shipped / open bar chart; the ship target's Calendar & lines). Lagging (Version 1, the owner's
 // pick) is the Monthly and Quarterly cards over one grid of four cards: Trend (a metric switch, one chart, the newest
 // month and why its orders were late), Month by month, By warehouse and Booked vs shipped. The Shipments section that
 // stood there before (two charts, two month tables, the month cards, the shipped-to-date strip, the Shipped | Booked
@@ -461,13 +462,53 @@ test('Why orders were late: each first reason and its late orders, most first; p
   assert.deepEqual(page.errors, []);
 });
 
-test('Leading: Open orders by delivery month and Items not shipped yet before the Lines card; the ship target opens Calendar & lines', async () => {
+// --- Leading (Version 1, four questions): how these tests read it ----------------------------------------------------
+// The Leading panel, its question heads ("1 What Is at Risk?"), and the Lists card with its two folds (each:
+// its key, whether it is open, the summary's tip, title and meta, and what is inside).
+const leading = (h) => { const i = h.indexOf('id="oh-panel-leading"'); const j = h.indexOf('<div class="oh-panel"', i); return i < 0 ? '' : h.slice(i, j < 0 ? undefined : j); };
+const questions = (h) => [...h.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((x) => `${x[1]} ${x[2]}`);
+const monthsCard = (h) => { const i = h.indexOf('<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">'); return i < 0 ? '' : h.slice(i, h.indexOf('</section>', i)); };
+const folds = (h) => [...monthsCard(h).matchAll(/<details class="ohl-fold"( open)? data-more="([\w-]+)" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="more-\2" data-tip="([^"]+)"><svg class="dz-chev"[^>]*>[\s\S]*?<\/svg><span class="dz-title sm ohl-fold-t">([^<]+)<\/span><span class="ohl-fold-m">([^<]*)<\/span><\/summary><div class="ohl-fold-body">([\s\S]*?)<\/div><\/details>/g)]
+  .map((x) => ({ open: !!x[1], key: x[2], tip: x[3], title: x[4], meta: x[5], body: x[6] }));
+
+test('Leading: Open orders by delivery month and Items not shipped yet are two folds of one card before the Lines card, shut on load, with no bar chart; the ship target opens Calendar & lines', async () => {
   const page = await loaded();
   let h = html(page);
-  const open = h.indexOf('>Open orders by delivery month</h2>'), items = h.indexOf('>Items not shipped yet</h2>');
-  assert.ok(open > h.indexOf('>Date changes</h2>') && items > open, 'after Date changes, Open orders then Items not shipped yet');
-  assert.match(h, /<section class="dz-card dz-span-6 ohl-card mom-card misc-flat dz-fade"><div class="dz-card-head"><h2 class="dz-title"[^>]*>Open orders by delivery month<\/h2>[\s\S]*?<div class="mom-pair" role="img"[^>]*><div class="pair-chart">/);
-  assert.match(h, /<select id="ohl-original-month" class="select" data-focus-key="ohl-original-month"/);
+  // Nothing to pull in and no date changes in this export: three questions, then the Lists card, then Lines.
+  assert.deepEqual(questions(h), ['1 What Is at Risk?', '2 Why, and When?', '3 Who?']);
+  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Lists', 'Lines']);
+  // One card, two folds, both shut on load; each summary has its tip, its title and a short meta (the year, the lines).
+  let f = folds(h);
+  assert.equal((monthsCard(h).match(/<details\b/g) || []).length, 2);
+  assert.deepEqual(f.map((x) => [x.key, x.open, x.title, x.meta, x.tip]), [
+    ['ohl-fold-months', false, 'Open orders by delivery month', '2026', 'Shipped and open value per month, against last year.'],
+    ['ohl-fold-items', false, 'Items not shipped yet', '17 lines', 'Open lines by original delivery month, oldest first.']]);
+  assert.deepEqual(page.run('tableMore'), {});
+  // The two separate cards are gone (no card title of either name, no collapse chevron on a card head), and the
+  // shipped / open bar chart left Leading with its legend.
+  assert.doesNotMatch(h, /<h2 class="dz-title[^"]*"[^>]*>(Open orders by delivery month|Items not shipped yet)<\/h2>|ohl-notshipped/);
+  assert.doesNotMatch(leading(h), /mom-pair|pair-chart|pair-col|pair-labels/);
+  // Open orders by delivery month: the Monthly delivery summary. Aug: 300 and 301 shipped ($2,000), 100 and 104 still
+  // open and past due. Sep: 302 shipped, 13 open lines. Oct and Nov: one open line each.
+  assert.match(f[0].body, /^<div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div><span class="mom-note">No 2025 months in the export for year over year<\/span><\/div>/);
+  assert.deepEqual(tbody(f[0].body, 'Monthly delivery summary · 2026'), ['Aug 2026 $2,000 $2,000 50% 2 2 2', 'Sep 2026 to date $1,000 $13,000 7% 13 1 0', 'Oct 2026 $0 $1,000 — 1 0 0', 'Nov 2026 $0 $1,000 — 1 0 0']);
+  assert.doesNotMatch(f[0].body, /ohl-foot-note/, 'every open line has a month here');
+  // Items not shipped yet: the Month pick (its tip speaks of this list alone), then the table.
+  assert.match(f[1].body, /^<div class="ohl-fold-tools"><label class="inline-controls">Month <select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="Show one original month\." onchange="setOriginalDeliveryMonthFilter\(this\.value\)">/);
+  assert.deepEqual([...f[1].body.matchAll(/<option value="([^"]+)"( selected)?>([^<]+)<\/option>/g)].map((x) => [x[1], x[3], !!x[2]]),
+    [['ALL', 'All months', true], ['2026-08', 'Aug 2026', false], ['2026-09', 'Sep 2026', false], ['2026-10', 'Oct 2026', false], ['2026-11', 'Nov 2026', false]]);
+  assert.equal(tbody(f[1].body, 'Items not shipped yet')[0], 'Aug 2026 100 Firefly RV Spyder - Lacombe SPY-100 Controller board 2026-08-01 10 $1,000 Past Due');
+  // Opening a fold is kept over a redraw, one fold at a time; shutting it forgets it.
+  page.run("ohlFoldToggle({dataset:{more:'ohl-fold-items'},open:true})");
+  assert.deepEqual(page.run('tableMore'), { 'more-ohl-fold-items': true });
+  page.run("setWeeklyTileFilter('allopen')");
+  assert.deepEqual(folds(html(page)).map((x) => [x.key, x.open]), [['ohl-fold-months', false], ['ohl-fold-items', true]]);
+  page.run("ohlFoldToggle({dataset:{more:'ohl-fold-months'},open:true});renderResults()");
+  assert.deepEqual(folds(html(page)).map((x) => x.open), [true, true]);
+  page.run("ohlFoldToggle({dataset:{more:'ohl-fold-items'},open:false});ohlFoldToggle({dataset:{more:'ohl-fold-months'},open:false});setWeeklyTileFilter('late')");
+  assert.deepEqual(page.run('tableMore'), {});
+  h = html(page);
+  assert.deepEqual(folds(h).map((x) => x.open), [false, false]);
   // The ship target card: compact by default, a Calendar & lines button beside Dates.
   const ship = (x) => x.slice(x.indexOf('ohl-ship'), x.indexOf('ohl-status-card'));
   assert.match(ship(h), /data-focus-key="mwm-dates"[^>]*>Dates<\/button><button type="button" class="dz-pillinput mwm-datebtn mom-calbtn print-hide" data-focus-key="ohl-ship-cal" aria-expanded="false" onclick="toggleTableMore\('ohl-ship-cal'\)"[^>]*>Calendar &amp; lines<\/button>/);
@@ -486,7 +527,38 @@ test('Leading: Open orders by delivery month and Items not shipped yet before th
   assert.deepEqual(lead.sum, tbody(mo, 'Monthly delivery summary · 2026'));
   assert.deepEqual(lead.items, tbody(mo, 'Items not shipped yet'));
   assert.deepEqual(lead.lines, tbody(mo, 'Scenario lines'));
+  // The bar chart that left Leading is still on the Monthly page: twelve months, the same shipped and open values as
+  // the summary's rows.
+  assert.match(mo, />Shipped and open value by month · 2026<\/h2>[\s\S]*?<div class="pair-chart"><div class="pair-col">/);
+  assert.equal((mo.match(/<div class="pair-col[ "]/g) || []).length, 12);
+  for (const tip of ['Aug 2026: $2,000 shipped', 'Aug 2026: $2,000 open (late: this month has passed)', 'Sep 2026: $1,000 shipped', 'Sep 2026: $13,000 open', 'Oct 2026: $0 shipped', 'Oct 2026: $1,000 open']) assert.ok(mo.includes(`data-tip="${tip}"`), tip);
   assert.deepEqual(page.errors, []);
+
+  // With a date change (900, moved from Sep 10 to Sep 25) there is a fourth question: the Lists card comes
+  // after its card. Two lines with no commit date (901, 902) are in no month: the first fold says so under its table,
+  // and they are still items not shipped yet (17 + 3 lines).
+  const noCommit = { LineRescheduleDate: '11/11/1111', RescheduleDate: '11/11/1111', RescheduleFlag: 'No Commit Date' };
+  const more = await loaded([...ROWS, so('900', '09/10/2026', { LineRescheduleDate: '09/25/2026', RescheduleDate: '09/25/2026', RescheduleFlag: 'Rescheduled Later Than Original Delivery' }),
+    so('901', '08/25/2026', noCommit), so('902', '08/26/2026', noCommit)]);
+  h = html(more);
+  assert.deepEqual(questions(h), ['1 What Is at Risk?', '2 Why, and When?', '3 Who?', '4 What Can We Do?']);
+  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Date changes', 'Lists', 'Lines']);
+  f = folds(h);
+  assert.deepEqual(f.map((x) => [x.title, x.open, x.meta]), [['Open orders by delivery month', false, '2026'], ['Items not shipped yet', false, '20 lines']]);
+  assert.match(f[0].body, /<\/table><\/div>\s*<p class="ohl-note ohl-foot-note">2 open lines \(\$2,000\) with no commit date are not in these months\.<\/p>$/);
+  assert.doesNotMatch(leading(h), /monthly cards or chart/);
+  assert.deepEqual(more.errors, []);
+});
+
+// KNOWN BUG (left failing on purpose): index.html, moMonthlyParts, the undated note
+// (`${fmtNum(g.openRows)} open lines (...) with no commit date ... are not in the monthly cards or chart.`), which
+// ohlMonthsCard shows under Leading's Open orders by delivery month table (ending "are not in these months."). With one
+// such line it reads "1 open lines ($1,000) with no commit date are not in these months." It should say "1 open line".
+test('BUG: the note under Open orders by delivery month says "1 open line", not "1 open lines", when one line has no commit date', async () => {
+  const page = await loaded([...ROWS, so('901', '08/25/2026', { LineRescheduleDate: '11/11/1111', RescheduleDate: '11/11/1111', RescheduleFlag: 'No Commit Date' })]);
+  const note = (folds(html(page))[0].body.match(/<p class="ohl-note ohl-foot-note">([^<]*)<\/p>$/) || [])[1];
+  assert.match(note, /\(\$1,000\) with no commit date/);
+  assert.doesNotMatch(note, /\b1 open lines\b/);
 });
 
 test('The page filters apply to Leading\'s moved sections and to all four Lagging cards; the Month pick is Leading\'s alone (no select on Lagging)', async () => {
@@ -498,10 +570,17 @@ test('The page filters apply to Leading\'s moved sections and to all four Laggin
   assert.ok(want > 0 && want < all);
   // 2v6.9 (owner): the card shows no note; the filtered count is still what its spec carries.
   assert.match(page.run("(()=>{const m=currentMetrics();return moMonthlyParts(m,momSource(m),reportToday()).notShippedSpec().note})()"), new RegExp(`By original line delivery month · ${want} open lines`));
-  assert.doesNotMatch(html(page).slice(html(page).indexOf('ohl-notshipped')), /By original line delivery month ·/);
+  assert.ok(monthsCard(html(page)).length > 1000, 'the Lists card is drawn');
+  assert.doesNotMatch(monthsCard(html(page)), /By original line delivery month ·/);
+  // The Items not shipped yet fold counts the filtered lines in its summary: nine DSM lines, six of them in September.
+  assert.equal(want, 9);
+  assert.deepEqual(folds(html(page)).map((x) => x.meta), ['2026', '9 lines']);
   page.run("setOriginalDeliveryMonthFilter('2026-09')");
   assert.match(html(page), /<select id="ohl-original-month"[\s\S]*?<option value="2026-09" selected>Sep 2026<\/option>/);
   assert.equal(tbody(html(page), 'Items not shipped yet').length, 6, 'the six DSM lines first due in September');
+  assert.deepEqual(folds(html(page)).map((x) => x.meta), ['2026', '6 lines']);
+  // The Month pick is the Items list's alone: the summary above it keeps every DSM month.
+  assert.deepEqual(tbody(folds(html(page))[0].body, 'Monthly delivery summary · 2026').map((r) => r.split(' ').slice(0, 2).join(' ')), ['Aug 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026']);
   // Lagging under the DSM filter: its one delivery is 301 (August, five days late), so August is the newest month
   // with orders (no "to date"), with no July to compare with.
   const l = lag(page);
@@ -531,11 +610,11 @@ test('The page filters apply to Leading\'s moved sections and to all four Laggin
   assert.deepEqual(page.errors, []);
 });
 
-// KNOWN BUG (left failing on purpose): index.html, ohlNotShippedCard (the momTableCard call with
-// p.monthSelect('ohl-original-month', ...)): the Month pick on Leading's Items not shipped yet still says "One original
+// Was a bug, fixed since (the test stays as a guard): the Month pick on Leading's Items not shipped yet (now a fold of
+// the Lists card, index.html ohlMonthsCard, p.monthSelect('ohl-original-month', ...)) said "One original
 // month, here and in Original line delivery summary on Lagging." Lagging has no Original line delivery summary since
-// Version 1, and the pick changes nothing there (Booked vs shipped lists every month), so the tip names a table that is
-// gone. It should only speak of Items not shipped yet.
+// Version 1, and the pick changes nothing there (Booked vs shipped lists every month), so the tip named a table that is
+// gone. It only speaks of Items not shipped yet.
 test('BUG: the Month pick on Leading does not say it also narrows a Lagging table that is gone (Original line delivery summary)', async () => {
   const page = await loaded();
   const tip = html(page).match(/<select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="([^"]+)"/)[1];
@@ -552,7 +631,17 @@ test('Print draws both views with their sections, the ship target calendar open;
   const page = await loaded();
   page.run("ohgSetTrendMetric('days');printMode=true;renderResults()");
   const h = html(page);
-  assert.match(h, /id="oh-panel-leading"[\s\S]*>Open orders by delivery month<\/h2>[\s\S]*>Items not shipped yet<\/h2>[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
+  assert.match(h, /id="oh-panel-leading"[\s\S]*<section class="dz-card dz-span-6 ohl-card ohl-months [^>]*aria-label="Lists">[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
+  // Paper opens both folds of Leading's Delivery months card (nothing is stored for it), with every row and no pager;
+  // the fold chevrons are hidden. The bar chart is not on Leading's paper either.
+  const f = folds(leading(h));
+  assert.deepEqual(f.map((x) => [x.key, x.title, x.open]), [['ohl-fold-months', 'Open orders by delivery month', true], ['ohl-fold-items', 'Items not shipped yet', true]]);
+  assert.equal(tbody(f[0].body, 'Monthly delivery summary · 2026').length, 4);
+  assert.equal(tbody(f[1].body, 'Items not shipped yet').length, 17, 'all 17 open lines, not 10 a page');
+  assert.doesNotMatch(monthsCard(h), /dz-pagefoot|shp-pager/);
+  assert.doesNotMatch(leading(h), /mom-pair|pair-chart/);
+  assert.deepEqual(page.run("[!!tableMore['more-ohl-fold-months'],!!tableMore['more-ohl-fold-items']]"), [false, false]);
+  assert.match(HTML, /@media print\{\.ohl-fold>summary \.dz-chev\{display:none\}\.ohl-q\{break-after:avoid\}\}/);
   assert.match(h, /<div class="mom-cal misc-flat" id="ohl-ship-cal">/);
   const l = lagging(h);
   assert.deepEqual(cardNames(l.slice(l.indexOf('ohg-detail'))), ['Trend', 'Month by month', 'By warehouse', 'Booked vs shipped']);
@@ -563,6 +652,10 @@ test('Print draws both views with their sections, the ship target calendar open;
   assert.match(HTML, /@media print\{\.ohgt-chips,\.ohgt-tools\{display:none\}\.ohgt-trend\{break-inside:avoid\}\}/);
   page.run("printMode=false;setWeeklyView('lagging')");
   assert.equal(ohgTable(lagging(html(page)), 'Month by month').rows.length, 6);
+  // Back on screen the folds are shut again, ten lines a page.
+  page.run("setWeeklyView('leading')");
+  assert.deepEqual(folds(html(page)).map((x) => x.open), [false, false]);
+  assert.equal(tbody(html(page), 'Items not shipped yet').length, 10);
   assert.deepEqual(page.errors, []);
 });
 
