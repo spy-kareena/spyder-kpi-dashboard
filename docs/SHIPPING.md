@@ -9,15 +9,16 @@ a number AfterShip cannot track. There is no demo data.
 ## What the page shows
 
 - **Header:** how many shipments are listed.
-- **Bar:** the **Carrier**, **Customer**, **Status** and **Destination** filters (Destination is left out on a phone)
-  and **Add tracking #**. Without AfterShip (a file copy, a static web server, or no key yet) one short line says
-  "Automatic tracking isn't set up, so statuses are set by hand." If the last check stopped (a refused key, too many
-  requests), one line says why.
+- **Bar:** the **Carrier**, **Customer**, **Status** and **Destination** filters (Destination lists the ship-to cities
+  on the map, and is left out on a phone) and **Add tracking #**. Without AfterShip (a file copy, a static web server,
+  or no key yet) one short line says "Automatic tracking isn't set up, so statuses are set by hand." If the last check
+  stopped (a refused key, too many requests), one line says why.
 - **Map and status cards:** the delivery map across the page; on its right the map fades out (like at its top and
   bottom) and the five cards sit small over that part, two a row, Priority across both. The map's view keeps every
-  dot and arc left of the cards. Below 981px the cards sit above the map, two a row. Each card shows its count and
-  one or two short facts; its tooltip adds the orders and value. Click a card to list only those shipments, click
-  again for all:
+  dot and arc left of the cards. Below 981px the cards sit above the map, two a row. Each dot is a ship-to city (else
+  its state / province or country, see [Map cities](#map-cities)); nearby cities share one dot ("Elkhart, IN +2").
+  Click a dot to list only its shipments, click again for all. Each card shows its count and one or two short facts;
+  its tooltip adds the orders and value. Click a card to list only those shipments, click again for all:
   - **In transit**: Shipped (label created, AfterShip "Pending" or "Info received") or In transit (in transit, out for
     delivery, ready for pickup).
   - **Delayed**: an exception, a failed delivery attempt, tracking expired, or marked Delayed by hand.
@@ -46,8 +47,8 @@ a number AfterShip cannot track. There is no demo data.
     number>` in a new tab. AfterShip works out the carrier from the number.
   - Click a row (or press Enter) for its details: **Status** (AfterShip's own status, e.g. "In transit · Arrived at
     FedEx location", else the status set by hand and its date), the last scan (message, place, time), the expected,
-    due and SAP ship dates, carrier and ship method, ship-to country, the delivery's order lines, **Open tracking page** and
-    **Update status**.
+    due and SAP ship dates, carrier and ship method, **Ship to** (city and country, "Elkhart, IN · United States
+    (US)"), the delivery's order lines, **Open tracking page** and **Update status**.
 - **Update status:** pick **Shipped**, **In transit**, **Delayed** or **Delivered**, a date and an optional note up to
   200 characters, then **Save**. It counts until AfterShip reports something newer (a later scan); then AfterShip's
   status shows again. Use it for numbers AfterShip cannot track.
@@ -60,14 +61,44 @@ a number AfterShip cannot track. There is no demo data.
 
 1. **The KPI export.** The KPI query (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`) adds
    `TrackingNumber` (`ODLN.TrackNo`; one field can hold several numbers separated by commas), `ShipMethod`,
-   `ShipToCountry` and `ShipDate` to every delivery row. Sales deliveries shipped in the **30 days before the export
-   date** are listed.
+   `ShipToCountry`, `ShipToCity`, `ShipToState` and `ShipDate` to every delivery row (the ship-to columns are the
+   business partner's ship-to address the delivery names, `CRD1` Country, City and State). Sales deliveries shipped in
+   the **30 days before the export date** are listed. `ShipToCity` and `ShipToState` are new in 2v6.9: re-save the
+   query in SAP Query Manager and copy it to the Live SAP bridge's own SQL copy
+   ([LIVE_SAP.md](LIVE_SAP.md#keeping-the-queries-in-step)). An export without them still loads; the map then uses
+   AfterShip's city (below).
 2. **Add tracking #** on the page (45 days).
 
 When the page opens on the hosted site it sends this list to `/api/shipping` (only when it changed), with the carrier
 the SAP ship method names. The Worker adds each new number to AfterShip once (passing the carrier only for FedEx, FedEx
 Freight, UPS, Purolator, Canpar, Canada Post and Loomis; otherwise AfterShip works it out), then reads the latest
 status of the ones still moving in batches of 50. Delivered numbers are final and are not asked again.
+
+## Map cities
+
+Each shipment sits on the map at its ship-to city (2v6.9), from the first of these that has one:
+
+1. **SAP:** `ShipToCity` and `ShipToState` on its delivery rows. A city typed with its state ("Goshen, IN") works too.
+2. **AfterShip:** the carrier's destination city and state.
+3. **AfterShip, once delivered:** the place of the delivery scan.
+
+AfterShip's city is used only when its country is the SAP ship-to country.
+
+- **City table:** the positions are built into `index.html` (`SHIP_CITY_DATA`) from GeoNames
+  (https://www.geonames.org, CC BY 4.0), through the npm package all-the-cities 3.1.0: every place of 1,000 people or
+  more in Canada and the United States (by province / state), Mexico's places of 20,000 or more and other countries'
+  cities of 300,000 or more. To rebuild it, follow the steps at the top of `tools/build-ship-cities.mjs`.
+- **A city the table does not know** goes to its state / province, else its country, as before. A US or Canadian city
+  with no state or province is found only when one place in the country has that name. A shipment with no ship-to
+  country has no dot.
+- **Shared dots:** nearby cities whose dots would overlap share one dot at the busiest, labelled "Elkhart, IN +2"; its
+  tooltip lists each city with its count. Only the 8 busiest dots are named (4 on a phone); a picked one always is.
+  Labels read "Elkhart, IN" or "Red Deer, AB".
+- The **Destination** filter, a shipment's **Ship to**, the Shipments search and the **Cross-border** list show the
+  same city. Clicking a shared dot lists the shipments of all its cities.
+- **AfterShip Worker:** it saves the destination city (`destCity` / `destState`, from AfterShip's `destination_city` /
+  `destination_state`, in `shared/aftership.mjs`) only once it is redeployed (`npx wrangler deploy` in
+  `workers/shipping-poller`). Until then the map uses SAP's city, or the delivery scan place once delivered.
 
 ## Set up AfterShip (once)
 
@@ -140,4 +171,5 @@ carries the hand-set and AfterShip statuses on screen and the Priority ticks (re
 | "AfterShip says too many requests" | Nothing: the rest is read at the next check. |
 | A row has no status | AfterShip has not been asked yet (long list: it takes a few checks), or does not recognise the number (see its details). Set a status by hand. |
 | "This export has no TrackingNumber column" | Re-run the updated SAP query and load the new export. |
+| Map dots sit at a state or country, not a city | The export has no `ShipToCity` (re-run the updated SAP query; on Live SAP, update the bridge's SQL copy), the ship-to address has no city, or the city table does not know it ([Map cities](#map-cities)). |
 | A hand-set status saved on one computer is missing on another | Wait a minute and reload: the store re-reads changes about a minute after each save. |

@@ -291,3 +291,14 @@ Month-by-month tables keep a year (12) on a page. Show all / Show fewer buttons 
 "Lines a page" (default 10) for the Lines card. Sales Order Health > Supply / Demand: the numbers under the title, the
 options (View, Filter, search) in a labelled bar, each status a dot and a word, no fold chevron. Tests: pager-2v69,
 leading-2v69, search, ui-polish, pages-2v2, dashboard, linked-lines, review-* updated.
+2v6.9 (ship cities): the Shipping page's Order Map puts its dots at the ship-to cities, not one per country. The KPI
+query adds ShipToCity and ShipToState (CRD1 City and State) to delivery rows (empty on the other rows; update the saved
+query and the Live SAP bridge's copy); exports without them load as before. A shipment's city is SAP's ship-to city,
+else the destination city AfterShip reports (destCity / destState, now saved by shared/aftership.mjs once
+workers/shipping-poller is redeployed), else, once delivered, the place of the delivery scan; AfterShip's only when its
+country is the SAP one. City positions come from GeoNames (CC BY 4.0), built into index.html by
+tools/build-ship-cities.mjs: places of 1,000+ in Canada and the US, Mexico's of 20,000+, other countries' cities of
+300,000+; a city it does not know falls back to its state / province, else the country. Nearby cities share one dot
+("Elkhart, IN +2", its tip lists each city); only the 8 busiest dots are named (4 on a phone), a picked one always.
+The Destination filter lists cities (a shared dot filters to all of them), the details say "Ship to: Elkhart, IN ·
+United States (US)", the search finds the city and the Cross-border list shows it. Tests: shipping-page, aftership.
