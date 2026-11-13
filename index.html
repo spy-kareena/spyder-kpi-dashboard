@@ -3885,6 +3885,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 /* 2v9:pager */
 /* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
    stacked and centred on phones. */
+.dz-tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
 .dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
 .dz-pagefoot .shp-pager{margin-top:0}
@@ -13039,6 +13040,7 @@ function renderResults(){
   el.innerHTML=html;
   dzDecorateIcons(el);
   dzDecorateCollapse(el);
+  dzFitTables(el);
   stgNavWatch(); // 2v8: the Settings category bar follows the scroll (stops on other pages)
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
   restoreFocus(el,focus);
@@ -15307,6 +15309,66 @@ const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
 const DZ_OPEN_BY_DEFAULT=new Set(['shipping:shipments','weekly:short or at-risk items','weekly:all open demand']);
 function dzCollapsedMap(){
   try{const v=JSON.parse(localStorage.getItem(DZ_COLLAPSE_KEY)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{};}catch(err){return {};}
+}
+// Column titles never overlap (2v6.9, owner, every table on the board): after each draw, a column whose title is wider
+// than the column gets the room it needs (its <col> or title cell), plus a small gap; the table then grows past its
+// card and its scroll box (added when there is none) scrolls sideways. Phone card layouts (no visible titles) and
+// print are left alone. Again on resize and once the web font has loaded.
+const DZ_TH_GAP=14,DZ_FREE_COL=170;
+function dzFitTables(root){
+  if(!root||!root.querySelectorAll||printMode||typeof getComputedStyle!=='function'||typeof document==='undefined'||!document.createRange)return;
+  root.querySelectorAll('table').forEach(t=>{
+    try{
+      const head=t.tHead;
+      if(!head||!head.rows.length||!t.getClientRects().length||getComputedStyle(head).display==='none')return;
+      // Start from the table's own widths (a redraw or a wider screen may need less).
+      t.querySelectorAll('[data-dzfit]').forEach(x=>{x.style.width='';x.style.minWidth='';x.removeAttribute('data-dzfit');});
+      t.style.minWidth='';
+      const ths=[...head.rows[head.rows.length-1].cells];
+      if(ths.some(th=>th.getBoundingClientRect().width<2)||ths.some(th=>th.colSpan>1))return;
+      const cols=[...t.querySelectorAll(':scope>colgroup>col')];
+      const fixed=getComputedStyle(t).tableLayout==='fixed';
+      let total=0,grew=false;
+      ths.forEach((th,i)=>{
+        const cs=getComputedStyle(th),pad=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight);
+        const rg=document.createRange();rg.selectNodeContents(th);
+        const textW=rg.getBoundingClientRect().width,w=th.getBoundingClientRect().width;
+        let need=w;
+        // A column with no set width (the item / description one) keeps room to read once the table scrolls.
+        const free=fixed&&cols.length===ths.length&&!cols[i].className&&!cols[i].getAttribute('width')&&!cols[i].getAttribute('data-dzfit')&&!cols[i].style.width;
+        if(free)need=Math.max(need,DZ_FREE_COL);
+        if(textW>w-pad+.5){
+          need=Math.max(free?DZ_FREE_COL:0,Math.ceil(textW+pad+DZ_TH_GAP));
+          const target=fixed&&cols.length===ths.length?cols[i]:th;
+          target.style.width=`${need}px`;
+          if(target===th)th.style.minWidth=`${need}px`;
+          target.setAttribute('data-dzfit','');
+          grew=true;
+        }
+        total+=need;
+      });
+      if(!grew)return;
+      t.style.minWidth=`${Math.ceil(Math.max(total,t.offsetWidth))}px`;
+      // A scroll box between the table and its card, so the extra width scrolls instead of spilling out.
+      let a=t.parentElement,scroll=false;
+      while(a&&!(a.classList&&(a.classList.contains('dz-card')||a.classList.contains('card')||a.tagName==='SECTION'))){
+        const o=getComputedStyle(a).overflowX;
+        if(o==='auto'||o==='scroll'){scroll=true;break;}
+        a=a.parentElement;
+      }
+      if(!scroll&&!(t.parentElement&&t.parentElement.classList.contains('dz-tscroll'))){
+        const box=document.createElement('div');
+        box.className='dz-tscroll';
+        t.parentElement.insertBefore(box,t);
+        box.appendChild(t);
+      }
+    }catch(err){/* a table that cannot be measured keeps its own layout */}
+  });
+}
+let dzFitTimer=0;
+if(typeof addEventListener==='function'){
+  addEventListener('resize',()=>{clearTimeout(dzFitTimer);dzFitTimer=setTimeout(()=>dzFitTables(document.getElementById('results-screen')),120);},{passive:true});
+  if(typeof document!=='undefined'&&document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>dzFitTables(document.getElementById('results-screen'))).catch(()=>{});
 }
 function dzDecorateCollapse(root){
   if(!root||!root.querySelectorAll)return;
