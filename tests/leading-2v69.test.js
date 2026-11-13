@@ -53,8 +53,9 @@ const loadRows = async (rows) => {
 const grid = (page) => {
   const h = html(page), from = h.indexOf('<div class="dz-grid ohl-grid">');
   if (from < 0) return '';
-  const to = h.indexOf('<details class="about', from);
-  return h.slice(from, to < 0 ? undefined : to);
+  // Print draws Lagging after Leading; its questions open with the solo "How Did We Do?", so the grid ends there too.
+  const ends = ['<details class="about', '<div class="ohl-q solo">'].map((s) => h.indexOf(s, from)).filter((i) => i >= 0);
+  return h.slice(from, ends.length ? Math.min(...ends) : undefined);
 };
 const card = (h, cls) => {
   const m = new RegExp(`<section class="dz-card(?: [^"]*)? ${cls}(?: [^"]*)?"[^>]*>`).exec(h);
@@ -469,10 +470,18 @@ test('Leading reads as four questions, in order; question 4 and its card are lef
   const three = await loaded();
   assert.deepEqual(questions(grid(three)), FOUR.slice(0, 3));
   assert.doesNotMatch(grid(three), /ohl-do[ "]/);
-  // The questions are Leading's: Lagging and Supply / Demand have none.
-  for (const view of ['lagging', 'supply']) {
-    page.run(`setWeeklyView('${view}')`);
-    assert.doesNotMatch(html(page), /class="ohl-q[ "]|ohl-q-t/, view);
+  // Every page reads as questions now, but these four are Leading's: Lagging and Supply / Demand ask their own.
+  const asked = (h) => [...h.matchAll(/<div class="ohl-q([^"]*)"><span class="ohl-q-n" aria-hidden="true">(\d+)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((m) => [+m[2], m[3], m[1].trim()]);
+  page.run("setWeeklyView('lagging')");
+  assert.deepEqual(asked(html(page)), [[1, 'How Did We Do?', 'solo'], [2, 'Which Way Is It Heading, and Why?', 'dz-span-6'], [3, 'How Did Each Month Go?', 'dz-span-6'], [4, 'Who Shipped It, and What Is Still Open?', 'dz-span-6']], 'lagging');
+  // Supply / Demand asks its one question only over the shortage card: none without a Supply / Demand sheet.
+  page.run("setWeeklyView('supply')");
+  assert.deepEqual(asked(html(page)), [], 'supply, no sheet');
+  three.run("setWeeklyView('supply')");
+  assert.deepEqual(asked(html(three)), [[1, 'What Are We Short Of?', 'dz-span-6']], 'supply, with the sheet');
+  for (const [p, view] of [[page, 'lagging'], [page, 'supply'], [three, 'supply']]) {
+    p.run(`setWeeklyView('${view}')`);
+    for (const [, words] of FOUR) assert.ok(!html(p).includes(`>${words}</h2>`), `${view}: ${words}`);
   }
   assert.deepEqual(page.errors, []);
   assert.deepEqual(three.errors, []);
@@ -828,17 +837,27 @@ test('Purchase Order Health: Build Risk counts CM kits not ticked clean (no mone
   let h = html(page);
   const card = (x) => (x.match(/<div class="dz-stat br-stat br-card[\s\S]*?<\/div><\/div>/) || [''])[0];
   assert.match(card(h), /Build Risk/);
-  assert.match(card(h), />3<\/span>|>3<span/);
+  // "3 kits not clean", a split bar (late / due in 30 days / later, one kit each) under it, and no sub line.
+  assert.match(card(h), /<span class="dz-stat-v"[^>]*>3<span class="po-unit">kits not clean<\/span><\/span><span class="po-split" aria-hidden="true"><i style="flex:1;[^"]*"><\/i><i style="flex:1;[^"]*"><\/i><i style="flex:1;[^"]*"><\/i><\/span><\/button>/);
+  assert.doesNotMatch(card(h), /CM kits in all|dz-stat-s/);
+  assert.deepEqual([...card(h).matchAll(/data-focus-key="potile-(br\w+)"[\s\S]*?(?:<span class="po-own-n">(\d+)<\/span>|<\/button>)/g)].map((m) => [m[1], m[2] ? +m[2] : null]), [['brrisk', null], ['brlate', 1], ['brsoon', 1], ['brlater', 1]]);
   assert.doesNotMatch(card(h).replace(/data-tip="[^"]*"/g, ''), /\$/, 'no money on the card');
+  // The card sits in question 3's Kits card, beside Kit Status (0 clean, 4 not clean).
+  assert.match(h, /<h2 class="ohl-q-t" data-tc-skip>Are the Kits Ready\?<\/h2><\/div><section class="dz-card po-kitscard[^"]*" aria-label="Kits"><div class="po-kgrid"><div class="dz-stat kit-stat[^"]*" role="group" aria-label="Kit Status">[\s\S]*?<span class="kit2-n">0<\/span><span class="kit2-l">Clean<\/span>[\s\S]*?<span class="kit2-n">4<\/span><span class="kit2-l">Not clean<\/span>[\s\S]*?<\/div><\/div><div class="dz-stat br-stat br-card/);
   assert.deepEqual(page.run("[poBuildRiskData(poData(currentMetrics()).filteredPoOpen,reportToday())].map(b=>[b.late,b.soon,b.later].map(x=>x.map(r=>r.documentNumber).join()))[0]"), ['700', '701', '702']);
   // Kits by CM and month: one CM row (DSM), past due / this month / December cells, 0 of 3 clean.
-  assert.match(h, /<h2 class="dz-title sm"[^>]*>Kits by CM and month<\/h2>[\s\S]*?<b>0<\/b> of 3 kits clean/);
+  // It is a block inside the Kits card now, not a card of its own.
+  assert.match(h, /<div class="po-sec po-kitcm" role="group" aria-label="Kits by CM and month"><div class="ohs2-head"><div class="ohl-sec-title"[^>]*>Kits by CM and month<\/div><span class="kc-meta"><b>0<\/b> of 3 kits clean<\/span><\/div>/);
+  assert.doesNotMatch(h, /<h2 class="dz-title sm"[^>]*>Kits by CM and month<\/h2>/);
   assert.match(h, /data-focus-key="kitcm-DSM"/);
+  assert.deepEqual([...h.matchAll(/data-focus-key="kitcm-DSM-([\w-]+)"[^>]*aria-label="([^"]+)"/g)].map((m) => [m[1], m[2]]),
+    [['past', 'DSM, Past due: 1 not clean, 0 clean'], ['2026-09', 'DSM, Sep: 1 not clean, 0 clean'], ['2026-12', 'DSM, Dec: 1 not clean, 0 clean']]);
   // Tick PO 700's kit clean: Build Risk drops to 2 and the past-due cell turns clean.
   page.run("(()=>{const r=allLoadedRows.find(x=>x.documentNumber==='700');writeRowOverride(rowKey(r),[r],'kitClean',true);renderResults();})()");
   h = html(page);
   assert.equal(page.run("poBuildRiskData(poData(currentMetrics()).filteredPoOpen,reportToday()).risk.length"), 2);
   assert.match(h, /<b>1<\/b> of 3 kits clean/);
+  assert.match(card(h), />2<span class="po-unit">kits not clean<\/span><\/span><span class="po-split" aria-hidden="true"><i style="flex:1;[^"]*"><\/i><i style="flex:1;[^"]*"><\/i><\/span>/);
   // A cell lists its lines in PO lines.
   page.run("setPoKitPick('DSM','past')");
   assert.equal(page.run('poTileFilter'), 'kitcm');
