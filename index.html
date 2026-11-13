@@ -2578,7 +2578,8 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-map-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;display:block}
 .shp-land-p{fill:#dfe6f2;stroke:#fff;stroke-width:.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .shp-borders{fill:none;stroke:#fff;stroke-width:.6;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.shp-route{fill:none;stroke:var(--dz-indigo);stroke-width:1.2;stroke-linecap:round;opacity:.5;vector-effect:non-scaling-stroke}
+/* 2v9 map draw: a route is 1.2px wide on screen (--sw: its width in map units, from the drawn scale) so it can draw itself (pathLength 1) */
+.shp-route{fill:none;stroke:var(--dz-indigo);stroke-width:var(--sw,1.2px);stroke-linecap:round;opacity:.5}
 .shp-route.late{stroke:var(--dz-risk);opacity:.55}
 .shp-route.done{stroke:var(--dz-teal);opacity:.3}
 .shp-lbl{position:absolute;z-index:2;transform:translate(-50%,-50%);font-size:11px;line-height:14px;font-weight:500;color:var(--dz-ink-2);white-space:nowrap;pointer-events:none;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 2px #fff}
@@ -2602,12 +2603,18 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 /* Fade in on load (land, routes one after another, dots, labels); only when the page opens, never on a redraw */
 @media (prefers-reduced-motion:no-preference){
   .shp-land{animation:shpMapIn .6s ease both}
-  .shp-route{animation:shpMapIn .9s ease both;animation-delay:calc(200ms + var(--i,0)*90ms)}
-  .shp-dot{animation:shpDotIn .45s ease backwards;animation-delay:calc(300ms + var(--i,0)*70ms)}
-  .shp-lbl,.shp-hub{animation:shpMapIn .5s ease backwards;animation-delay:.45s}
+  /* 2v9 map draw: each route draws itself out of Lacombe, one after another; its dot pops in as the line arrives,
+     the names fade in after (the first 12 stagger, the rest go with the 12th) */
+  .shp-hub{animation:shpDotIn .5s cubic-bezier(.34,1.56,.64,1) backwards;animation-delay:.15s}
+  .shp-route{stroke-dasharray:1;animation:shpRouteDraw 1.15s cubic-bezier(.45,.05,.2,1) both;animation-delay:calc(300ms + min(var(--i,0),12)*85ms)}
+  .shp-dot{animation:shpDotIn .5s cubic-bezier(.34,1.56,.64,1) backwards;animation-delay:calc(1.05s + min(var(--i,0),12)*85ms)}
+  .shp-lbl{animation:shpLblIn .6s ease backwards;animation-delay:calc(1.4s + min(var(--i,0),12)*60ms)}
+  .shp-lbl.hub{animation-delay:.35s}
 }
 @keyframes shpMapIn{from{opacity:0}}
-@keyframes shpDotIn{from{opacity:0;transform:scale(.6)}}
+@keyframes shpDotIn{from{opacity:0;transform:scale(.3)}}
+@keyframes shpRouteDraw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes shpLblIn{from{opacity:0;translate:0 3px}}
 #results-screen:not(.entering) .shp-land,#results-screen:not(.entering) .shp-route,#results-screen:not(.entering) .shp-dot,#results-screen:not(.entering) .shp-lbl,#results-screen:not(.entering) .shp-hub{animation:none}
 
 /* Shipments table + side lists */
@@ -19137,12 +19144,12 @@ function renderShipMap(list){
     if(labels.length===3&&!hubTried)tryHub();
     const text=shipPlaceLabel(p);
     const pos=place(xy[0],xy[1],d*u/2,text.length*6.4+8);
-    if(pos)labels.push(`<span class="shp-lbl" style="${at(pos)}">${esc(text)}</span>`);
+    if(pos)labels.push(`<span class="shp-lbl" style="${at(pos)};--i:${labels.length}">${esc(text)}</span>`);
   }
   if(!hubTried)tryHub();
   const routes=dots.map(({p,c},i)=>{
     const d=shipArcPath([SHIP_HUB.lon,SHIP_HUB.lat],[c.lon,c.lat]);
-    return d?`<path class="shp-route ${p.state}" style="--i:${i}" d="${d}"/>`:'';
+    return d?`<path class="shp-route ${p.state}" pathLength="1" style="--i:${i}" d="${d}"/>`:'';
   }).join('');
   const dotHtml=dots.map(({p,d},i)=>{
     const sel=shpDotSel(p),tip=shipDotTip(p,sel);
@@ -19159,7 +19166,7 @@ function renderShipMap(list){
     <div class="shp-map-stage${lay?' wide':''}" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%${fade}">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
-        <g class="shp-routes">${routes}</g>
+        <g class="shp-routes" style="--sw:${(1.2*u).toFixed(3)}">${routes}</g>
       </svg>
       <span class="shp-hub" style="${at(hub)}" aria-hidden="true"></span>
       ${dotHtml}
