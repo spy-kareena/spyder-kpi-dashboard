@@ -26,6 +26,8 @@ The search box under the logo (or Ctrl+K, Cmd+K on a Mac) finds any order line b
 
 **Settings** (the gear, top right) is grouped into Data, Dashboard, Notes & People, AI and About; the bar at the top jumps to each. **Hidden Pages** (under Dashboard) takes a page out of the top menu; Warehouses is hidden at first, turn it on to bring it back. **Connect An AI App** (under AI) shows how to use the same data from an AI app on your computer (any app that supports MCP); Settings opens before an export is loaded.
 
+**Christmas Theme** (Settings → Pages & Display) is Off at first. Turn it On for a soft line of snowy hills with a few small pines under the header and Santa with his reindeer on the Live SAP mark. The cards, numbers and status colours stay as they are, and printed pages keep the standard look. Your browser remembers the choice.
+
 The page header shows the date the KPIs are calculated for (the export date). If the Settings gear shows a red or yellow dot, open Settings: the **Data Check** card lists the SAP rows with unreadable dates (for example a year typed as 0202 or 2626) and other problems; fix those in SAP and re-export.
 
 The dashboard remembers the last files loaded: anyone who opens the hosted site sees that report, on any computer, until someone loads a new export with **New file** (which replaces it for everyone). The sidebar says "Saved for everyone who signs in" once it is stored; "Saved in this browser only" means the site has no shared storage.
