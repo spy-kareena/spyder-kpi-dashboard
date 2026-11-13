@@ -9748,7 +9748,7 @@ function supNeedsFile(kind){
   const k=NEEDS_FILE[kind];
   const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
   const steps=isSnapshotView?'':`<ol class="sup-steps">${k.steps.map(([text,code],i)=>`<li><span class="sup-step-n">${i+1}</span><span class="sup-step-t">${esc(text)}${code?`<code class="sup-code">${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
-  const actions=`<div class="sup-need-actions">${isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button></div>`;
+  const actions=`<div class="sup-need-actions">${isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Load the KPI export with purchase orders.':'Add a file to this report.')}>${esc(k.cta)}</button>`}<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button></div>`;
   return `<div class="sup-page"><section class="dz-card sup-need dz-fade" aria-labelledby="sup-need-title">
     <div class="sup-need-main">${dzChip(k.tag,'amber')}<h2 class="dz-title sup-need-title" id="sup-need-title">${esc(k.title)}</h2><p class="sup-need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>${steps}${actions}</div>
     <div class="sup-need-preview" aria-hidden="true"><span class="sup-need-cap">What this screen will show</span>${k.preview.map(([title,desc,h])=>`<div class="sup-need-item"><strong>${esc(title)}</strong><span>${esc(desc)}</span><div class="sup-skel" style="height:${Math.round(h*.6)}px"></div></div>`).join('')}</div>
@@ -9763,7 +9763,7 @@ function supWarehousePill(options){
   const hit=presets.find(p=>same(p.list));
   return dzFilterPill({id:'sup-warehouse',label:'Warehouse',
     value:all?'All':hit?hit.label:f.length===1?supWh(f[0]):`${fmtNum(f.length)} selected`,set:!all,
-    tip:'Show one warehouse group or one warehouse, or every warehouse; shared by Supply / Demand and Supply Mix.',
+    tip:'Filter by warehouse (Supply / Demand and Supply Mix).',
     options:[{label:'All warehouses',selected:all,onclick:"setSupplyWarehouseFilter(['ALL'])"},
       ...presets.map(p=>({label:p.label,selected:same(p.list),onclick:`setSupplyWarehouseFilter(${JSON.stringify(p.list)})`})),
       {sep:true},
@@ -9811,7 +9811,7 @@ function supPurchaseOrders(m){
   const vendorName=r=>String(r.name||'').trim()||poVendor(r);
   const ordersN=n=>`${fmtNum(n)} ${n===1?'PO':'POs'}`;
   const subOf=rows=>`${moneyShort(value(rows))} · ${supLines(rows.length)}`;
-  const tipOf=(label,rows,what)=>`${label}: ${ordersN(supDocs(rows))} on ${supLines(rows.length)}, ${money(value(rows))} open (${fmtNum(qty(rows))} qty) ${what}; click to list the lines.`;
+  const tipOf=(label,rows,what)=>`${label}: ${ordersN(supDocs(rows))} ${what}\n• ${supLines(rows.length)} · ${fmtNum(qty(rows))} qty\n• ${money(value(rows))} open\nClick to list them.`;
 
   // Filter row: Open | Received, then the Vendor and Warehouse pills (the same state and setters as before).
   const whAll=poWarehouseFilter.includes('ALL'),venAll=poVendorFilter.includes('ALL');
@@ -9820,15 +9820,15 @@ function supPurchaseOrders(m){
   const whSame=list=>!whAll&&list.length===poWarehouseFilter.length&&list.every(w=>poWarehouseFilter.includes(w));
   const whHit=whPresets.find(p=>whSame(p.list));
   const warehousePill=dzFilterPill({id:'po-warehouse',label:'Warehouse',value:whAll?'All':whHit?whHit.label:poWarehouseFilter.length===1?supWh(poWarehouseFilter[0]):`${fmtNum(poWarehouseFilter.length)} selected`,set:!whAll,
-    tip:'Show one warehouse group or one warehouse, or every warehouse.',
+    tip:'Filter by warehouse or group.',
     options:[{label:'All warehouses',selected:whAll,onclick:"setPoWarehouseFilter(['ALL'])"},...whPresets.map(p=>({label:p.label,selected:whSame(p.list),onclick:`setPoWarehouseFilter(${JSON.stringify(p.list)})`})),{sep:true},
       ...poWarehouseOptions.map(w=>({label:supWh(w),selected:!whHit&&poWarehouseFilter.length===1&&poWarehouseFilter[0]===w,onclick:`setPoWarehouseFilter([${dzJs(w)}])`}))]});
   const vendorPill=dzFilterPill({id:'po-vendor',label:'Vendor',value:venAll?'All':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} selected`,set:!venAll,
-    tip:'Show only the lines of one vendor, or every vendor.',
+    tip:'Filter by vendor.',
     options:[{label:'All vendors',selected:venAll,onclick:"setPoVendorFilter(['ALL'])"},...poVendorOptions.map(o=>({label:vendorLabel(o.value),selected:poVendorFilter.length===1&&poVendorFilter[0]===o.value,onclick:`setPoVendorFilter([${dzJs(o.value)}])`}))]});
-  const seg=dzSeg([{label:'Open',on:view==='open',onclick:"supSet('po-view','open')",key:'po-view-open',tip:'Open purchase orders: commitments, the vendors that are late and the PO lines.'},
-    {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving performance: on time, received this week, fill rate and reschedule hit.'}],{label:'Purchase order view'});
-  const filterRow=dzFilterRow(seg,vendorPill+warehousePill,(!whAll||!venAll)?dzClear('resetPoFilters()','Show every warehouse and vendor again.'):'');
+  const seg=dzSeg([{label:'Open',on:view==='open',onclick:"supSet('po-view','open')",key:'po-view-open',tip:'Open POs, late vendors and PO lines.'},
+    {label:'Received',on:view==='received',onclick:"supSet('po-view','received')",key:'po-view-received',tip:'Receiving: on time, this week, fill rate, reschedule hit.'}],{label:'Purchase order view'});
+  const filterRow=dzFilterRow(seg,vendorPill+warehousePill,(!whAll||!venAll)?dzClear('resetPoFilters()','Show all warehouses and vendors.'):'');
   const filterNote=`${whAll?'All warehouses':whHit?whHit.label:poWarehouseFilter.length===1?poWarehouseFilter[0]:`${fmtNum(poWarehouseFilter.length)} warehouses`} · ${venAll?'All vendors':poVendorFilter.length===1?vendorLabel(poVendorFilter[0]):`${fmtNum(poVendorFilter.length)} vendors`}`;
 
   // Receiving: the 3-month on-time rate, six months of it as columns, the 12 receipt weeks.
@@ -9850,10 +9850,10 @@ function supPurchaseOrders(m){
     const hitRate=poReschedulePerf.closed.length;
     return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
       <div class="sup-tiles">
-        ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',`On-time receiving, 3 months: ${scored?`${fmtNum(poOtd3Mo.rate)}%, ${fmtNum(onTime)} of ${fmtNum(scored)} receipts (${money(poOtdAmt)}) by the original date`:'no receipts to score'}.`)}
-        ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received this week (Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}): ${ordersN(supDocs(poReceivedThisWeekRows))}, ${supLines(poReceivedThisWeekRows.length)}, ${money(poReceivedWeekAmt)}.`)}
-        ${stat('Fill rate',`${fmtNum(poFillRate)}%`,`${supLines(filteredPoOpen.length)} still open`,poFillRate>=90?'teal':poFillRate>=70?'amber':'red',`PO fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed, ${fmtNum(filteredPoOpen.length)} still open.`)}
-        ${stat('Reschedule hit · 12 mo',hitRate?`${fmtNum(poReschedulePerf.rate)}%`:'—',hitRate?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} met commit`:'no closed reschedules',hitRate?(poReschedulePerf.rate>=90?'teal':poReschedulePerf.rate>=75?'amber':'red'):'',hitRate?`PO reschedule hit rate, 12 months: ${fmtNum(poReschedulePerf.rate)}%, ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} rescheduled receipts on time (${money(poReschedulePerfAmt)} rescheduled).`:'PO reschedule hit rate: no rescheduled receipts in the last 12 months.')}
+        ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',scored?`On time, last 3 months: ${fmtNum(poOtd3Mo.rate)}%\n• ${fmtNum(onTime)} of ${fmtNum(scored)} receipts by the original date\n• ${money(poOtdAmt)} received`:'On time, last 3 months: no receipts to score.')}
+        ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}\n• ${ordersN(supDocs(poReceivedThisWeekRows))} · ${supLines(poReceivedThisWeekRows.length)}\n• ${money(poReceivedWeekAmt)}`)}
+        ${stat('Fill rate',`${fmtNum(poFillRate)}%`,`${supLines(filteredPoOpen.length)} still open`,poFillRate>=90?'teal':poFillRate>=70?'amber':'red',`Fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed · ${fmtNum(filteredPoOpen.length)} still open.`)}
+        ${stat('Reschedule hit · 12 mo',hitRate?`${fmtNum(poReschedulePerf.rate)}%`:'—',hitRate?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} met commit`:'no closed reschedules',hitRate?(poReschedulePerf.rate>=90?'teal':poReschedulePerf.rate>=75?'amber':'red'):'',hitRate?`Reschedule hit, 12 months: ${fmtNum(poReschedulePerf.rate)}%\n• ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} rescheduled receipts on time\n• ${money(poReschedulePerfAmt)} rescheduled`:'Reschedule hit: no rescheduled receipts in 12 months.')}
       </div>
       <div class="dz-grid">${recvCard(3)}${weekCard(3)}</div>
       ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
@@ -9862,17 +9862,17 @@ function supPurchaseOrders(m){
   // Open: the five order tiles (2v6.9: This week focus left the strip), the other views, the vendors / warehouses card, the PO lines.
   // PO At Risk counts lines (the owner's rule), the other order cards count POs.
   const tiles=[
-    ['allopen','var(--dz-teal)','Open POs',poAllOpenRows,'','open on purchase orders in view'],
+    ['allopen','var(--dz-teal)','Open POs',poAllOpenRows,'','open in view'],
     ['late','var(--dz-risk)','Late / missed commit',poLateRows,'red','past their date'],
     ['poatrisk','var(--dz-risk)','PO At Risk',tileRows.poatrisk,'red','',true],
     ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
-    ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
+    ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date ahead']];
   // PO At Risk: the wide tile (two of the strip's seven columns, CSS 2v7:e): label, line count and value at the left,
   // its top four PO owners (first names, most lines first) listed at the right; the tip lists them all.
   const atRiskOwners=poAtRiskOwners(poAtRisk);
   const tileHtml=([id,dot,label,rows,tone,what,byLine],i)=>{
     const n=byLine?rows.length:supDocs(rows);
-    const tipText=byLine?`PO At Risk: ${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after the sales order that needs the item ships (${ordersN(supDocs(rows))}, ${money(value(rows))} open): the PO's reschedule date (else its due date) is later than the earliest open sales-order ship date for the same item.${atRiskOwners.length?` By PO owner: ${atRiskOwners.map(o=>`${o.name} ${fmtNum(o.n)}`).join(', ')}.`:''} Click to list the lines.`:tipOf(label,rows,what);
+    const tipText=byLine?`PO At Risk: ${ohN(n,'PO line')} ${n===1?'arrives':'arrive'} after the sales order ships\n• ${ordersN(supDocs(rows))} · ${money(value(rows))} open\n• Due after the item’s first open SO ships${atRiskOwners.length?`\n• By owner: ${atRiskOwners.map(o=>`${o.name} ${fmtNum(o.n)}`).join(', ')}`:''}\nClick to list them.`:tipOf(label,rows,what);
     const main=`<span class="sup-tile-l"><i class="sup-dot" style="background:${dot}"></i>${esc(label)}</span><span class="sup-tile-v${tone&&n?` ${tone}`:''}">${fmtNum(n)}${byLine?`<span class="po-unit">${n===1?'line':'lines'}</span>`:''}</span><span class="sup-tile-s">${esc(byLine?`${moneyShort(value(rows))} · ${ordersN(supDocs(rows))}`:subOf(rows))}</span>`;
     // PO At Risk holds its owners' names as their own buttons, so the card is a group: its main button covers the card
     // (CSS 2v7:po-own) and each name sits above it.
@@ -9881,7 +9881,7 @@ function supPurchaseOrders(m){
   };
   // 2v6.9: Unconfirmed and Missing price are one card (followUpCardHtml), next to Kits; both take two columns of the row.
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],
-    ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
+    ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','with a Logican commit after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','on its Open Orders tab']]:[])];
   const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('')
     +followUpCardHtml(poUnconfirmedRows,poMissingPriceRows,tileRows.followup,sel)+kitCardHtml(kitCleanRows,kitNotCleanRows,sel);
   const extraCount=extra.length+4; // the Unconfirmed · Missing price and Kits cards take two columns each
@@ -9899,15 +9899,15 @@ function supPurchaseOrders(m){
     const mx=Math.max(1,...top.map(v=>v.n));
     byTitle='Vendors with the most late POs';
     byBody=top.length?`<div class="dz-bars sup-bars">${top.map((v,i)=>dzBarRow({label:v.name,value:v.n,max:mx,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(v.n),onclick:`setPoVendorRow(${dzJs(v.code)})`,selected:focusedVendor===v.code,attrs:` data-focus-key="povendor-${esc(v.code)}"`,i,
-      tip:`${v.name}: ${ordersN(v.n)} late on ${supLines(v.rows.length)}, ${money(v.value)}; ${focusedVendor===v.code?'click to show all.':'click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
+      tip:`${v.name}: ${ordersN(v.n)} late · ${supLines(v.rows.length)} · ${money(v.value)}. ${focusedVendor===v.code?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No late purchase-order lines in this view.</p>';
   }else{
     const wg=groupBy(filteredPoOpen,rowWarehouse).map(g=>({key:g.key,rows:g.rows,n:supDocs(g.rows),late:supDocs(g.rows.filter(r=>poLateRows.includes(r))),nc:supDocs(g.rows.filter(r=>poNoCommitRows.includes(r))),value:rowOpenAmount(g.rows)})).sort((a,b)=>b.n-a.n||b.value-a.value);
     const shown=poWarehouseAll?wg:wg.slice(0,8);
     const mx=Math.max(1,...wg.map(g=>g.n));
     byTitle='Open POs by warehouse';
     byBody=shown.length?`<div class="dz-bars sup-bars">${shown.map((g,i)=>dzBarRow({label:supWh(g.key),sub:`${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit`,value:g.n,max:mx,color:'var(--dz-indigo)',num:fmtNum(g.n),onclick:`setPoWarehouseRow(${dzJs(g.key)})`,selected:focusedWh===g.key,attrs:` data-focus-key="powh-${esc(g.key)}"`,i,
-      tip:`${g.key}: ${money(g.value)} open on ${ordersN(g.n)} (${supLines(g.rows.length)}), ${fmtNum(g.late)} late, ${fmtNum(g.nc)} no commit; ${focusedWh===g.key?'click to show all.':'click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
-    if(wg.length>8)byFoot=`<div class="sup-foot"><span>${fmtNum(shown.length)} of ${fmtNum(wg.length)} warehouses</span><button type="button" class="dz-clear sup-more" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show only the 8 warehouses with the most open POs.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`;
+      tip:`${g.key}: ${money(g.value)} open\n• ${ordersN(g.n)} · ${supLines(g.rows.length)}\n• ${fmtNum(g.late)} late · ${fmtNum(g.nc)} no commit\n${focusedWh===g.key?'Click to show all.':'Click to filter.'}`})).join('')}</div>`:'<p class="sup-empty">No open PO lines in this view.</p>';
+    if(wg.length>8)byFoot=`<div class="sup-foot"><span>${fmtNum(shown.length)} of ${fmtNum(wg.length)} warehouses</span><button type="button" class="dz-clear sup-more" data-focus-key="po-wh-all"${tipAttr(poWarehouseAll?'Show the top 8 only.':'Show every warehouse.')} onclick="togglePoWarehouseAll()">${poWarehouseAll?'Show top 8':'Show all'}</button></div>`;
   }
   const byCard=dzCard({title:byTitle,sm:true,span:3,cls:'dz-fade',meta:bySeg,tip:sectionTipText(by==='vendor'?'po-vendors':'po-warehouse'),body:`<div class="sup-cardbody">${byBody}</div>${byFoot}`});
 
@@ -9939,7 +9939,7 @@ function supPurchaseOrders(m){
   const sortCol=sortState&&!sortOptions.some(([v])=>v===poLineSort)?PO_LINE_COLS.find(c=>c[0]===sortState.col):null;
   // A title sort with no matching choice shows as an extra choice, so the other choices still switch back.
   if(sortCol)sortOptions.push([poLineSort,`Column: ${sortCol[1]} ${sortState.dir==='asc'?'↑':'↓'}`]);
-  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort or group the PO lines; a column title sorts too.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${poLineSort===v?' selected':''}>${sortCol&&v===poLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
+  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${poLineSort===v?' selected':''}>${sortCol&&v===poLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
   const lineRow=(r,i)=>{
     const reschedule=realPoReschedule(r);
     const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
@@ -9961,7 +9961,7 @@ function supPurchaseOrders(m){
       <td class="sup-item" data-label="Item"><strong>${esc(r.itemCode||'—')}</strong><span class="sup-desc">${esc((r.itemDescription||'').substring(0,160))}</span></td>
       <td class="sup-clip" data-label="Owner" title="${esc(rowOwner(r))}">${esc(rowOwner(r))}</td>
       <td class="sup-clip" data-label="Warehouse" title="${esc(rowWarehouse(r)||'')}">${esc(supWh(rowWarehouse(r)||'—'))}</td>
-      <td data-label="Promised">${esc(supDay(dueDate)||'—')}${cmDate?`<span class="sup-sub sup-cm-from"${tipAttr(`Logican commit date; the PO is due ${displayDate(originalDue)||'with no date'} in SAP.`)}>Logican</span>`:''}</td>
+      <td data-label="Promised">${esc(supDay(dueDate)||'—')}${cmDate?`<span class="sup-sub sup-cm-from"${tipAttr(`Logican commit date. SAP due: ${displayDate(originalDue)||'no date'}.`)}>Logican</span>`:''}</td>
       <td class="num sup-strong" data-label="Open qty">${fmtNum(r.openQuantity)}</td>
       <td class="num sup-strong" data-label="Value">${money(openLineValue(r))}</td>
       <td class="sup-status" data-label="Status">${dzChip(label,tone)}<span class="sup-sub">${esc(timing)}</span>${reschedule?`<span class="sup-sub">↻ ${esc(supDay(reschedule))}</span>`:''}${risk?`<span class="sup-sub red"${tipAttr(poAtRiskText(risk))}>${esc(`${ohN(risk.days,'day')} after SO ${risk.so} ships`)}</span>`:''}${cmStatusHtml(r)}${renderPrintOverride(r)}</td>
@@ -9972,11 +9972,11 @@ function supPurchaseOrders(m){
   // Every column title with data is a sort button (aria-sort on the sorted one); the note column has no title.
   const colHead=PO_LINE_COLS.map(([id,l,cls,,tp])=>{
     const on=sortState&&sortState.col===id;
-    return `<th${cls?` class="${cls}"`:''}${on?` aria-sort="${sortState.dir==='asc'?'ascending':'descending'}"`:''}><button type="button" class="th-sort po-th" data-focus-key="po-sort-${id}" onclick="poSortColumn('${id}')"${tipAttr(`${tp||columnTip('po',l)||l} Click to sort, again to reverse.`)}>${esc(l)}<span class="sort-arrow" aria-hidden="true">${on?(sortState.dir==='asc'?'↑':'↓'):'↕'}</span></button></th>`;
-  }).join('')+`<th class="print-hide"${tipAttr('Add note sets an override or a note on the line.')}><span class="sr-only">Note</span></th>`;
+    return `<th${cls?` class="${cls}"`:''}${on?` aria-sort="${sortState.dir==='asc'?'ascending':'descending'}"`:''}><button type="button" class="th-sort po-th" data-focus-key="po-sort-${id}" onclick="poSortColumn('${id}')"${tipAttr(`${tp||columnTip('po',l)||l} Click to sort.`)}>${esc(l)}<span class="sort-arrow" aria-hidden="true">${on?(sortState.dir==='asc'?'↑':'↓'):'↕'}</span></button></th>`;
+  }).join('')+`<th class="print-hide"${tipAttr('Set an override or a note.')}><span class="sr-only">Note</span></th>`;
   const tbl=sorted.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po"><colgroup><col class="c-po"><col class="c-ven"><col><col class="c-own"><col class="c-wh"><col class="c-date"><col class="c-qty"><col class="c-val"><col class="c-st"><col class="c-kit"><col class="c-act"></colgroup>
     <thead><tr>${colHead}</tr></thead><tbody>${shownLines.map(lineRow).join('')}</tbody></table></div>
-    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · Narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines; Export PDF prints every line.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
+    <div class="sup-foot"><span>Showing ${fmtNum(shownLines.length)} of ${fmtNum(sorted.length)} lines${poLinkedShowAll&&sorted.length>100?' · Narrow the filters to see the rest':''}</span>${sorted.length>20?`<button type="button" class="dz-clear sup-more" data-focus-key="po-linked-all"${tipAttr(poLinkedShowAll?'Show the first 20 lines only.':'Show up to 100 lines.')} onclick="togglePoLinkedAll()">${poLinkedShowAll?'Show fewer':'Show up to 100'}</button>`:''}</div>`
     :`<p class="sup-empty">No PO lines found for this selection.</p>`;
   const bad=(sel==='late'||sel==='nocommit'||sel==='cmlate'||sel==='poatrisk')&&sorted.length;
   const linesCard=supTableCard({title:'PO lines',tip:sectionTipText('po-linked'),chip:dzChip(ordersN(supDocs(sorted)),bad?'red':''),tools:`${supSearchBox('po','Search PO, vendor, item')}${sortSel}`,
@@ -9998,13 +9998,13 @@ const PO_LINE_COLS=[
   ['po','PO #','','asc','Purchase order number.'],
   ['vendor','Vendor','','asc','Vendor name.'],
   ['item','Item','','asc','Item code and description.'],
-  ['owner','Owner','','asc','The PO’s document owner in SAP.'],
+  ['owner','Owner','','asc','PO owner in SAP.'],
   ['wh','Warehouse','','asc','Warehouse the line is received into.'],
-  ['date','Promised','','asc','The reschedule date, else the Logican commit date, else the original due date.'],
+  ['date','Promised','','asc','Reschedule date, else Logican commit, else due date.'],
   ['qty','Open qty','num','desc','Quantity still to receive.'],
   ['value','Value','num','desc','Value still to receive.'],
-  ['status','Status','','asc','Late, Missed commit, No commit, Rescheduled, Unconfirmed or Open, with the reschedule date (↻) when there is one.'],
-  ['kit','Kit Clean?','po-kit','desc','Ticked when the line’s kit is clean; saved for everyone like notes. The first click lists ticked lines first.']
+  ['status','Status','','asc','Line status; ↻ is the reschedule date.'],
+  ['kit','Kit Clean?','po-kit','desc','Ticked when the kit is clean; shared like notes.']
 ];
 // The Sort select's choices are column sorts too (Due date is the page's own order and marks no column).
 const PO_SORT_ALIASES={warehouse:['wh','asc'],vendor:['vendor','asc'],owner:['owner','asc'],status:['status','asc'],value:['value','desc']};
@@ -10061,10 +10061,10 @@ const KIT_TILES={kitclean:['Clean','ticked Kit Clean'],kitnotclean:['Not clean',
 function kitCardHtml(cleanRows,notRows,sel){
   const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
   const n=notRows.length,amt=rowOpenAmount(notRows);
-  const tipOf=(id,rows)=>{const [label,what]=KIT_TILES[id];return `Kits ${label.toLowerCase()}: ${supLines(rows.length)} on ${pos(rows)} (${money(rowOpenAmount(rows))} open) ${what} in PO lines; ${sel===id?'listed below.':'click to list them.'}`;};
+  const tipOf=(id,rows)=>{const [label]=KIT_TILES[id];return `Kits ${label.toLowerCase()}: ${supLines(rows.length)} · ${pos(rows)} · ${money(rowOpenAmount(rows))} open. ${sel===id?'Listed below.':'Click to list them.'}`;};
   return poPairCardHtml({cls:'kit-stat kit-card',label:'Kits',icon:'box',ico:'var(--dz-amber)',mainKey:'kits',mainId:'kitnotclean',
     value:n,unit:n===1?'line':'lines',color:n?'var(--dz-amber-text)':'',sub:`${moneyShort(amt)} · ${pos(notRows)}`,sel,
-    tip:`Kits: ${supLines(n)} not ticked Kit Clean yet (${pos(notRows)}, ${money(amt)} open), ${fmtNum(cleanRows.length)} clean. Click to list the Not clean lines.`,
+    tip:`Kits: ${supLines(n)} not clean yet\n• ${pos(notRows)} · ${money(amt)} open\n• ${fmtNum(cleanRows.length)} clean\nClick to list them.`,
     rows:[{id:'kitclean',label:'Clean',n:cleanRows.length,tip:tipOf('kitclean',cleanRows)},{id:'kitnotclean',label:'Not clean',n,tone:n?'amber':'',tip:tipOf('kitnotclean',notRows)}]});
 }
 // Unconfirmed · Missing price (it was two cards): the POs with an unconfirmed or unpriced open line, each PO once
@@ -10073,19 +10073,19 @@ function kitCardHtml(cleanRows,notRows,sel){
 function followUpCardHtml(unconfRows,priceRows,bothRows,sel){
   const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
   const n=supDocs(bothRows);
-  const tipOf=(label,rows,what)=>`${label}: ${pos(rows)} on ${supLines(rows.length)}, ${money(rowOpenAmount(rows))} open (${fmtNum(rowOpenQty(rows))} qty) ${what}; click to list the lines.`;
+  const tipOf=(label,rows,what)=>`${label}: ${pos(rows)} ${what}\n• ${supLines(rows.length)} · ${fmtNum(rowOpenQty(rows))} qty\n• ${money(rowOpenAmount(rows))} open\nClick to list them.`;
   return poPairCardHtml({cls:'po-follow',label:'Unconfirmed · Missing price',icon:'help',ico:'var(--dz-amber)',mainKey:'followup',mainId:'followup',
     value:n,color:n?'var(--dz-amber-text)':'var(--dz-teal)',sub:`${moneyShort(rowOpenAmount(bothRows))} · ${supLines(bothRows.length)}`,sel,
-    tip:tipOf('Unconfirmed or missing price',bothRows,'the vendor has not confirmed or that have no price in SAP (a PO with both counts once)'),
-    rows:[{id:'unconfirmed',label:'Unconfirmed',n:supDocs(unconfRows),tone:unconfRows.length?'amber':'',tip:tipOf('Unconfirmed',unconfRows,'the vendor has not confirmed')},
+    tip:tipOf('Unconfirmed or missing price',bothRows,'not confirmed or with no price (each PO once)'),
+    rows:[{id:'unconfirmed',label:'Unconfirmed',n:supDocs(unconfRows),tone:unconfRows.length?'amber':'',tip:tipOf('Unconfirmed',unconfRows,'not confirmed by the vendor')},
       {id:'missingprice',label:'Missing price',n:supDocs(priceRows),tone:priceRows.length?'amber':'',tip:tipOf('Missing price',priceRows,'with no price in SAP')}]});
 }
 function kitTipText(r){
   if(isSnapshotView)return `Kit ${r.kitClean?'clean':'not ticked clean'}. A shared snapshot cannot change the tick.`;
-  if(!r.kitClean)return 'Tick when the kit for this line is clean; everyone who signs in sees it.';
+  if(!r.kitClean)return 'Tick when the kit is clean (shared with everyone).';
   const e=rowKeyCandidates(r).map(k=>rowOverrides[k]).find(Boolean);
   const when=e&&noteTime(e)?new Date(noteTime(e)).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
-  return `Kit clean.${e&&e.by?` Last change on this line by ${e.by}${when?`, ${when}`:''}.`:''} Click to clear.`;
+  return `Kit clean${e&&e.by?` (${e.by}${when?`, ${when}`:''})`:''}. Click to clear.`;
 }
 function kitCellHtml(r){
   const key=rowKey(r),on=!!r.kitClean;
@@ -10246,8 +10246,8 @@ function supSupplyDemand(m){
   const view=supGet('sd-view','risk')==='all'?'all':'risk';
   const riskOnly=!!tableMore['sd-risk-only'];
 
-  const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of usable open PO supply, or whose PO supply is at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view'});
-  const groupPill=dzFilterPill({id:'sup-sd-group',label:'Item group',value:grp||'All',set:!!grp,tip:'Show one item group, or every item group.',
+  const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of PO supply, or with supply at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view'});
+  const groupPill=dzFilterPill({id:'sup-sd-group',label:'Item group',value:grp||'All',set:!!grp,tip:'Filter by item group.',
     options:[{label:'All item groups',selected:!grp,onclick:"supSet('sd-group','')"},...groups.map(g=>({label:g,selected:grp===g,onclick:`supSet('sd-group',${dzJs(g)})`}))]});
   const anyFilter=!supplyWarehouseFilter.includes('ALL')||!!grp;
   const filterRow=dzFilterRow(seg,supWarehousePill(options)+groupPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('sd-group','')",'Show every warehouse and item group again.'):'');
@@ -10255,12 +10255,12 @@ function supSupplyDemand(m){
 
   // Coverage card: share of demand with open PO supply, the two meters, the short and at-risk item counts.
   const coverCard=`<section class="dz-card dz-span-2 sup-cover dz-fade"><h2 class="dz-title sm"${tipAttr(sectionTipText('sd-coverage'))}>Coverage</h2>
-    <div class="sup-bigrow"><span class="dz-big"${tipAttr(`Share of open demand covered by usable open PO supply, after each item and warehouse's worst running shortfall (${fmtNum(shortQty)} qty short of ${fmtNum(demandQty)}); stock on hand is not included.`)}>${cover===null?'—':`${cover}%`}</span><span class="dz-sub">of demand has open PO supply</span></div>
+    <div class="sup-bigrow"><span class="dz-big"${tipAttr(`Demand covered by usable PO supply\n• ${fmtNum(shortQty)} of ${fmtNum(demandQty)} qty short\n• Stock on hand not included`)}>${cover===null?'—':`${cover}%`}</span><span class="dz-sub">of demand has open PO supply</span></div>
     <div class="sup-meters">
-      <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty on open sales orders, worth ${money(demandValue)}${hasOC?`, ${fmtNum(demandOrders)} orders counted once per item, warehouse and month`:''}.`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
-      <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed open POs (${usableQty>=demandQty?'at least':'less than'} the demand of ${fmtNum(demandQty)}); stock on hand is not included.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">Usable supply · Stock on hand not included</div></div>
+      <div${tipAttr(`Open demand: ${fmtNum(demandQty)} qty · ${money(demandValue)}${hasOC?` · ${fmtNum(demandOrders)} orders`:''}`)}><div class="sup-meter-h"><span>Open demand</span><b>${hasOC?`${fmtNum(demandOrders)} ${demandOrders===1?'order':'orders'}`:`${fmtNum(demandQty)} qty`}</b></div><div class="sup-meter"><i class="dz-grow" style="width:100%;background:var(--dz-indigo)"></i></div><div class="sup-meter-s">${moneyShort(demandValue)} · ${supLines(demandRows.length)}</div></div>
+      <div${tipAttr(`Usable supply: ${fmtNum(usableQty)} qty on confirmed, committed POs.`)}><div class="sup-meter-h"><span>Open PO supply</span><b>${fmtNum(usableQty)} qty</b></div><div class="sup-meter"><i class="dz-grow" style="width:${cover||0}%;background:var(--dz-teal);--i:1"></i></div><div class="sup-meter-s">Usable supply · Stock on hand not included</div></div>
     </div>
-    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable open PO supply (${fmtNum(shortQty)} qty); click to list them.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items whose PO supply is unconfirmed, has no commit, is rescheduled or late (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty); click to list only those.`})}</div></section>`;
+    <div class="sup-pair">${dzStat({label:'Short',value:`${fmtNum(shortItems)} ${shortItems===1?'item':'items'}`,tone:shortItems?'red':'teal',onclick:"supSdFocus('short')",attrs:' data-focus-key="sd-stat-short"',tip:`${fmtNum(shortItems)} items short of usable PO supply (${fmtNum(shortQty)} qty). Click to list them.`})}${dzStat({label:'Supply at risk',value:`${fmtNum(riskItems)} ${riskItems===1?'item':'items'}`,tone:riskItems?'amber':'teal',onclick:"supSdFocus('risk')",attrs:' data-focus-key="sd-stat-risk"',tip:`${fmtNum(riskItems)} items with PO supply at risk (${fmtNum(rows.reduce((s,r)=>s+r.riskSupplyQty,0))} qty). Click to list them.`})}</div></section>`;
 
   // Heat map: short items by warehouse and month.
   const months=supMonths(rows,6);
@@ -10293,11 +10293,11 @@ function supSupplyDemand(m){
       return `<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply">${dzChip(st.label,st.tone)}${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
     }).join('')}`;
   }).join('');
-  const riskChip=`<button type="button" class="dz-pillinput sup-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show every short or at-risk line again.':'List only lines whose PO supply is unconfirmed, has no commit, is rescheduled or late.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
+  const riskChip=`<button type="button" class="dz-pillinput sup-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show all short or at-risk lines.':'List only lines with supply at risk.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">Supply at risk only · ${fmtNum(riskRows.length)}</button>`;
   const nItems=new Set(list.map(itemKey)).size;
   const chip=view==='all'?dzChip(supLines(list.length),''):dzChip(`${fmtNum(nItems)} ${nItems===1?'item':'items'}`,shortageRows.length?'red':'amber');
   const table=list.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
-    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month; counted once per item, warehouse and month.':'Open demand quantity (the snapshot has no order counts).')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Usable supply: quantity on confirmed, committed open POs.')}>Supply qty</th><th class="num"${tipAttr('Quantity short: the running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the kind of risk on the PO supply behind it.')}>Supply</th></tr></thead><tbody>${groupsHtml}</tbody></table></div>
+    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month.':'Open demand quantity.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Qty on confirmed, committed POs.')}>Supply qty</th><th class="num"${tipAttr('Running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the risk on its PO supply.')}>Supply</th></tr></thead><tbody>${groupsHtml}</tbody></table></div>
     ${list.length>limit?`<div class="sup-foot"><span>Showing ${fmtNum(shown)} of ${fmtNum(list.length)} lines</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sd-rows" data-table-key="sd-rows"${tipAttr(open?`Show only the first ${fmtNum(limit)} lines.`:`Show all ${fmtNum(list.length)} lines of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
     :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
   const tableCard=supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:`${supSearchBox('sd','Search item')}${view==='risk'?riskChip:''}`,body:table});
@@ -10330,10 +10330,10 @@ function supSupplyMix(m){
   const label=k=>by==='wh'?supWh(k):k;
 
   const seg=dzSeg([{label:'By item group',on:by==='group',onclick:"supSet('mix-by','group')",key:'mix-by-group'},{label:'By warehouse',on:by==='wh',onclick:"supSet('mix-by','wh')",key:'mix-by-wh'}],{label:'Group demand'});
-  const monthsPill=dzFilterPill({id:'sup-months',label:'Months',value:`Next ${n}`,set:n!==6,tip:'How many months of the snapshot to show.',
+  const monthsPill=dzFilterPill({id:'sup-months',label:'Months',value:`Next ${n}`,set:n!==6,tip:'Months to show.',
     options:[6,3,12].map(v=>({label:`Next ${v}`,selected:n===v,onclick:`supSet('mix-months',${v})`}))});
   const anyFilter=!supplyWarehouseFilter.includes('ALL')||n!==6;
-  const filterRow=dzFilterRow(seg,supWarehousePill(options)+monthsPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('mix-months',6)",'Show every warehouse and the next 6 months again.'):'');
+  const filterRow=dzFilterRow(seg,supWarehousePill(options)+monthsPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('mix-months',6)",'Show all warehouses, next 6 months.'):'');
   const cols=`grid-template-columns:minmax(120px,190px) repeat(${Math.max(1,months.length)},minmax(0,1fr)) 80px`;
   const first=monthLabel(months[0]);
   const matrixCard=`<section class="dz-card dz-span-6 dz-fade"><div class="dz-card-head"><h2 class="dz-title"${tipAttr(sectionTipText('mix-net'))}>${by==='wh'?'Demand by warehouse and month':'Demand by item group and month'}</h2>${supLegend([['#d6f2ec','Covered'],['#f5e2a6','Partly covered'],['#ff7a93','Short']])}</div>
@@ -10347,12 +10347,12 @@ function supSupplyMix(m){
   // Least covered (short orders) and demand by warehouse, covered against short.
   const least=dims.map(d=>({k:d.k,s:Math.round(d.a.short)})).filter(d=>d.s>0).sort((a,b)=>b.s-a.s).slice(0,5);
   const leastCard=dzCard({title:'Least covered',sm:true,span:3,cls:'dz-fade',tip:sectionTipText('mix-demand'),
-    body:`<div class="sup-cardbody">${least.length?`<div class="dz-bars sup-bars">${least.map((d,i)=>supBar(dzBarRow({label:label(d.k),value:d.s,max:least[0].s,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(d.s),i,tip:`${d.k}: about ${fmtNum(d.s)} ${unit} short of usable open PO supply.`}),'short')).join('')}</div>`:'<p class="sup-empty">Everything in view is covered.</p>'}</div>`});
+    body:`<div class="sup-cardbody">${least.length?`<div class="dz-bars sup-bars">${least.map((d,i)=>supBar(dzBarRow({label:label(d.k),value:d.s,max:least[0].s,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(d.s),i,tip:`${d.k}: about ${fmtNum(d.s)} ${unit} short.`}),'short')).join('')}</div>`:'<p class="sup-empty">Everything in view is covered.</p>'}</div>`});
   const whDims=[...groupMap(inM,supplyWarehouse)].map(([k,list])=>({k,a:agg(list)})).sort((a,b)=>b.a.orders-a.a.orders).slice(0,8);
   const whMax=Math.max(1,...whDims.map(d=>d.a.orders));
   const whCard=dzCard({title:'Demand by warehouse',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Covered'],['#ff7a93','Short']]),tip:sectionTipText('mix-demand'),
     body:`<div class="sup-cardbody">${whDims.length?`<div class="sup-stack-list">${whDims.map((d,i)=>{const sh=Math.min(d.a.orders,Math.round(d.a.short)),cv=Math.max(0,d.a.orders-sh),w=d.a.orders/whMax*100;const on=supplyWarehouseFilter.length===1&&supplyWarehouseFilter[0]===d.k;
-      return `<button type="button" class="sup-whrow${on?' sel':''}" data-focus-key="mixwh-${esc(d.k)}" aria-pressed="${on?'true':'false'}" onclick="setSupplyWarehouseFilter(${esc(on?"['ALL']":`[${dzJs(d.k)}]`)})"${tipAttr(`${d.k}: ${fmtNum(d.a.orders)} ${unit}, about ${fmtNum(sh)} short; ${on?'click to show every warehouse.':'click to show only this warehouse.'}`)}><span class="sup-whrow-l">${esc(supWh(d.k))}</span><span class="sup-whrow-track"><span class="sup-whrow-bar" style="width:${w.toFixed(1)}%"><i class="dz-grow" style="flex:${cv};--i:${i}"></i><i class="dz-grow short" style="flex:${sh};--i:${i}"></i></span></span><span class="sup-whrow-n">${fmtNum(d.a.orders)}</span></button>`;}).join('')}</div>`:'<p class="sup-empty">No warehouse demand in these months.</p>'}</div>`});
+      return `<button type="button" class="sup-whrow${on?' sel':''}" data-focus-key="mixwh-${esc(d.k)}" aria-pressed="${on?'true':'false'}" onclick="setSupplyWarehouseFilter(${esc(on?"['ALL']":`[${dzJs(d.k)}]`)})"${tipAttr(`${d.k}: ${fmtNum(d.a.orders)} ${unit}, about ${fmtNum(sh)} short. ${on?'Click to show all.':'Click to filter.'}`)}><span class="sup-whrow-l">${esc(supWh(d.k))}</span><span class="sup-whrow-track"><span class="sup-whrow-bar" style="width:${w.toFixed(1)}%"><i class="dz-grow" style="flex:${cv};--i:${i}"></i><i class="dz-grow short" style="flex:${sh};--i:${i}"></i></span></span><span class="sup-whrow-n">${fmtNum(d.a.orders)}</span></button>`;}).join('')}</div>`:'<p class="sup-empty">No warehouse demand in these months.</p>'}</div>`});
 
   // Item groups table: demand, value, coverage, short orders and the biggest shortage.
   const worst=list=>{const mp=new Map();list.forEach(r=>{const k=`${r.itemCode}|${supplyWarehouse(r)}`;const v=mp.get(k)||{item:r.itemCode,short:0};v.short=Math.max(v.short,-Math.min(0,r.cumulativeNetQty));mp.set(k,v);});return [...mp.values()].sort((a,b)=>b.short-a.short)[0];};
@@ -10361,7 +10361,7 @@ function supSupplyMix(m){
   const gShown=gAll||printMode?gdims:gdims.slice(0,12);
   const covColor=p=>p>=90?'var(--dz-teal)':p>=75?'var(--dz-amber)':'var(--dz-risk)';
   const gTable=gdims.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Item groups"><table class="sup-tbl sup-groups"><colgroup><col><col class="c-n"><col class="c-n"><col class="c-cov"><col class="c-n"><col class="c-big"></colgroup>
-    <thead><tr><th>Item group</th><th class="num"${tipAttr(hasOC?'Open sales orders in the months shown; counted once per item, warehouse and month.':'Open demand quantity in the months shown.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Open demand value in the months shown.')}>Value</th><th${tipAttr('Share of demand met by usable open PO supply in the same month.')}>Coverage</th><th class="num"${tipAttr('Orders left uncovered: each line’s orders weighed by the share of its demand with no usable supply.')}>${hasOC?'Short orders':'Short qty'}</th><th${tipAttr('The item with the biggest running shortfall in the group.')}>Biggest shortage</th></tr></thead>
+    <thead><tr><th>Item group</th><th class="num"${tipAttr(hasOC?'Open sales orders in the months shown.':'Open demand quantity in the months shown.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Open demand value in the months shown.')}>Value</th><th${tipAttr('Demand met by usable PO supply in the same month.')}>Coverage</th><th class="num"${tipAttr('Orders with no usable supply.')}>${hasOC?'Short orders':'Short qty'}</th><th${tipAttr('Item with the biggest running shortfall.')}>Biggest shortage</th></tr></thead>
     <tbody>${gShown.map(d=>{const p=Math.round(d.a.pct),s=Math.round(d.a.short);return `<tr class="sup-row"><td class="sup-strong" data-label="Item group">${esc(d.k)}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${fmtNum(Math.round(d.a.orders))}</td><td class="num sup-soft" data-label="Value">${moneyShort(d.a.value)}</td><td data-label="Coverage"><span class="sup-covcell"><span class="sup-meter thin"><i style="width:${p}%;background:${covColor(p)}"></i></span><span>${p}%</span></span></td><td class="num sup-strong${s?' red':' muted'}" data-label="Short">${fmtNum(s)}</td><td class="sup-clip sup-soft" data-label="Biggest shortage">${d.w&&d.w.short>0?`${esc(d.w.item)} · ${fmtNum(d.w.short)} short`:'—'}</td></tr>`;}).join('')}</tbody></table></div>
     ${gdims.length>12&&!printMode?`<div class="sup-foot"><span>Showing ${fmtNum(gShown.length)} of ${fmtNum(gdims.length)}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-sup-mix-groups" data-table-key="sup-mix-groups" onclick="toggleTableMore(this.dataset.tableKey)">${gAll?'Show fewer':'Show all'}</button></div>`:''}`
     :'<p class="sup-empty">No item groups in these months.</p>';
@@ -10392,11 +10392,11 @@ function supBuildRisk(m){
 
   // Filter row: Report week at the left; CM and Customer at the right.
   const dated=snapshots.some(s=>s.dated);
-  const weekPill=dated?dzFilterPill({id:'sup-week',label:'Report week',value:brAll.label,align:'left',tip:'Pick which weekly Clear To Build sheet to show; weeks are never added together.',
+  const weekPill=dated?dzFilterPill({id:'sup-week',label:'Report week',value:brAll.label,align:'left',tip:'Pick a Clear To Build report week.',
     options:snapshots.map(s=>({label:s.label,selected:s===brAll,onclick:`setBuildRiskSnapshot(${dzJs(s.key)})`}))}):`<span class="dz-filter sup-static">Clear To Build report</span>`;
-  const cmPill=dzFilterPill({id:'sup-cm',label:'CM',value:cmIn?(cmMap.get(buildRiskCmFilter).cm):'All',set:cmIn,tip:'Show one CM, or every CM.',
+  const cmPill=dzFilterPill({id:'sup-cm',label:'CM',value:cmIn?(cmMap.get(buildRiskCmFilter).cm):'All',set:cmIn,tip:'Filter by CM.',
     options:[{label:'All CMs',selected:!cmIn,onclick:"setBuildRiskCm('')"},...cms.map(c=>({label:c.cm,selected:cmIn&&buildRiskCmFilter===c.id,onclick:cmIn&&buildRiskCmFilter===c.id?'':`setBuildRiskCm(${dzJs(c.id)})`}))]});
-  const custPill=dzFilterPill({id:'sup-customer',label:'Customer',value:cust||'All',set:!!cust,tip:'Show only the orders of one customer in the list below; the counts above come from the Clear To Build report.',
+  const custPill=dzFilterPill({id:'sup-customer',label:'Customer',value:cust||'All',set:!!cust,tip:'Filter the order list by customer.',
     options:[{label:'All customers',selected:!cust,onclick:"supSet('br-cust','')"},...customers.map(c=>({label:c,selected:cust===c,onclick:`supSet('br-cust',${dzJs(c)})`}))]});
   const anyFilter=cmSet||!!cust;
   const ctbNote=`<span class="dz-meta sup-weeknote"${tipAttr(`${ohN(br.rows.length,'CM / month line')} in the ${br.dated?`${br.label} `:''}Clear To Build report${br.sheet?` (sheet ${br.sheet})`:''}.`)}><strong class="ctb-rows">${fmtNum(br.rows.length)}</strong> CTB report ${br.rows.length===1?'line':'lines'}${snapshots.length>1?` · ${fmtNum(snapshots.length)} weeks loaded`:''}${cmSet&&!cmIn?` · CM ${esc(buildRiskCmFilter)} is not in this week; showing every CM`:''}</span>`;
@@ -10406,7 +10406,7 @@ function supBuildRisk(m){
   const cmCards=cms.map((c,i)=>{
     const t=Math.max(1,c.clear+c.risk+c.late),on=cmIn&&buildRiskCmFilter===c.id;
     const seg=(v,col,k)=>v>0?`<span class="dz-grow" style="flex:${v};background:${col};--i:${k}"></span>`:'';
-    return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.clear)} clear to build, ${fmtNum(c.risk)} at risk, ${fmtNum(c.late)} late of ${fmtNum(c.total)} orders in the ${brAll.label} report; ${on?'click to show every CM.':'click to show only this CM.'}`)}>
+    return `<button type="button" class="sup-cmcard dz-fade${on?' sel':''}" style="--i:${i}" data-focus-key="brcm-${esc(c.id)}" aria-pressed="${on?'true':'false'}" onclick="setBuildRiskCm(${esc(dzJs(c.id))})"${tipAttr(`${c.cm}: ${fmtNum(c.total)} orders (${brAll.label} report)\n• ${fmtNum(c.clear)} clear to build\n• ${fmtNum(c.risk)} at risk\n• ${fmtNum(c.late)} late\n${on?'Click to show all.':'Click to filter.'}`)}>
       <span class="sup-cmhead"><b>${esc(cmName(c.cm))}</b><span>${fmtNum(c.total)} ${c.total===1?'order':'orders'}</span></span>
       <span class="sup-cmbar">${seg(c.clear,'var(--dz-teal)',0)}${seg(c.risk,'var(--dz-amber)',1)}${seg(c.late,'var(--dz-risk)',2)}</span>
       <span class="sup-cmnums"><span><b class="teal">${fmtNum(c.clear)}</b><i>clear</i></span><span><b class="amber">${fmtNum(c.risk)}</b><i>at risk</i></span><span><b class="red">${fmtNum(c.late)}</b><i>late</i></span></span></button>`;
@@ -10420,11 +10420,11 @@ function supBuildRisk(m){
   const firstM=monthLabel(monthList[0]&&monthList[0].key);
   const stack=(v,col,r)=>v>0?`<div style="height:${Math.max(3,v/mMax*160).toFixed(1)}px;background:${col}${r?`;border-radius:6px 6px 0 0`:''}"></div>`:'';
   const monthsCard=dzCard({title:'Builds by month',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Clear'],['var(--dz-amber)','At risk'],['var(--dz-risk)','Late']]),tip:sectionTipText('br-demand'),
-    body:monthList.length?`<div class="sup-cols sup-stackcols" style="--n:${monthList.length};--h:160px"><div class="sup-plot">${monthList.map((g,i)=>{const lateOnTop=g.late>0;return `<div class="sup-col dz-fade" style="--i:${i}"${tipAttr(`${monthLabel(g.key)}: ${fmtNum(g.total)} orders, ${fmtNum(g.clear)} clear to build, ${fmtNum(g.risk)} at risk, ${fmtNum(g.late)} late`)}><span class="sup-col-v">${fmtNum(g.total)}</span><span class="sup-stack">${stack(g.late,'var(--dz-risk)',true)}${stack(g.risk,'var(--dz-amber)',!lateOnTop)}${stack(g.clear,'var(--dz-teal)',!lateOnTop&&!g.risk)}</span></div>`;}).join('')}</div><div class="sup-col-labels">${monthList.map(g=>`<span>${esc(supMonthShort(g.key,firstM))}</span>`).join('')}</div></div>`:'<p class="sup-empty">No months in this report week.</p>'});
+    body:monthList.length?`<div class="sup-cols sup-stackcols" style="--n:${monthList.length};--h:160px"><div class="sup-plot">${monthList.map((g,i)=>{const lateOnTop=g.late>0;return `<div class="sup-col dz-fade" style="--i:${i}"${tipAttr(`${monthLabel(g.key)}: ${fmtNum(g.total)} orders\n• ${fmtNum(g.clear)} clear to build\n• ${fmtNum(g.risk)} at risk\n• ${fmtNum(g.late)} late`)}><span class="sup-col-v">${fmtNum(g.total)}</span><span class="sup-stack">${stack(g.late,'var(--dz-risk)',true)}${stack(g.risk,'var(--dz-amber)',!lateOnTop)}${stack(g.clear,'var(--dz-teal)',!lateOnTop&&!g.risk)}</span></div>`;}).join('')}</div><div class="sup-col-labels">${monthList.map(g=>`<span>${esc(supMonthShort(g.key,firstM))}</span>`).join('')}</div></div>`:'<p class="sup-empty">No months in this report week.</p>'});
 
   // What blocks builds: the report's own notes for each CM / month bucket that is at risk or late (the workbook has no part numbers).
   const blocking=br.matched.filter(r=>r.atRisk+r.late>0).map(r=>({r,n:r.atRisk+r.late,note:String(r.notes||'').replace(/\s*\r?\n\s*/g,' · ').trim()})).sort((a,b)=>(b.note?1:0)-(a.note?1:0)||b.r.late-a.r.late||b.n-a.n).slice(0,5);
-  const blockCard=dzCard({title:'Blocking builds',sm:true,span:3,cls:'dz-fade',tip:'The CM and month buckets the report marks at risk or late, with the note the report carries for each; the workbook has no part numbers.',
+  const blockCard=dzCard({title:'Blocking builds',sm:true,span:3,cls:'dz-fade',tip:'CM / month buckets the report marks at risk or late, with its note.',
     body:blocking.length?`<div class="sup-blocklist">${blocking.map(({r,n,note},i)=>`<div class="sup-block"><div class="sup-block-t"><b>${esc(cmName(r.cm))} · ${esc(monthLabel(r.monthKey)||r.month)}</b><span class="${note?'':'none'}" title="${esc(note)}">${esc(note||'No note in the report')}</span></div><span class="sup-block-n"><b${i===0?' class="red"':''}>${fmtNum(n)}</b> ${n===1?'order':'orders'}</span></div>`).join('')}</div>`:'<p class="sup-empty">No CM / month bucket is at risk or late in this report week.</p>'});
 
   // Orders at risk or late: the sales orders in the buckets the report marks at risk or late; Edit opens the override / note editor.
@@ -10449,7 +10449,7 @@ function supBuildRisk(m){
     </tr>${renderNoteEditorRow(r,8)}`;
   };
   const orders=all.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
-    <thead><tr><th>SO #</th><th>Customer</th><th>CM</th><th>Item</th><th${tipAttr('The effective due date: the reschedule date, else the original due date.')}>Build date</th><th>Status</th><th${tipAttr('Your override, its cause and note; Edit sets them.')}>Override</th><th class="num">Amount</th></tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
+    <thead><tr><th>SO #</th><th>Customer</th><th>CM</th><th>Item</th><th${tipAttr('Reschedule date, else the due date.')}>Build date</th><th>Status</th><th${tipAttr('Your override, cause and note.')}>Override</th><th class="num">Amount</th></tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
     ${cap.length>8?`<div class="sup-foot"><span>Showing ${fmtNum(vis.length)} of ${fmtNum(cap.length)}${all.length>60?` · First 60 of ${fmtNum(all.length)} lines`:''}</span><button type="button" class="dz-clear sup-more" data-focus-key="more-br-risk" data-table-key="br-risk"${tipAttr(open?'Show only the first 8 rows.':`Show all ${fmtNum(cap.length)} rows of this table.`)} onclick="toggleTableMore(this.dataset.tableKey)">${open?'Show fewer':'Show all'}</button></div>`:''}`
     :`<p class="sup-empty">${riskRows.length?'No orders match the search or the customer.':'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}</p>`;
   const nOrders=supDocs(all);
@@ -10460,7 +10460,7 @@ function supBuildRisk(m){
   const detailOpen=!!tableMore['more-br-ctb']||printMode;
   const ctbTable=`<h3 class="sup-h3"${tipAttr(sectionTipText('br-ctb'))}>Clear To Build by CM / month</h3><div class="sup-scroll" tabindex="0" role="region" aria-label="Clear To Build by CM / month"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th><th>Month</th><th class="num">Total</th><th class="num">Clear to build</th><th class="num">At risk</th><th class="num">Late</th><th class="num">Matched SO lines</th><th class="num">Matched open qty</th><th class="num">Matched open value</th><th>Notes</th></tr></thead><tbody>${br.matched.map(r=>`<tr class="sup-row"><td class="sup-strong">${esc(r.cm)}</td><td class="sup-soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${r.total?dzChip(`${fmtNum(r.clearToBuild)} (${pct(r.clearToBuild,r.total)}%)`,tone(r.clearToBuild,r.total)):'—'}</td><td class="num${r.atRisk?' amber':' muted'}">${fmtNum(r.atRisk)}</td><td class="num${r.late?' red':' muted'}">${fmtNum(r.late)}</td><td class="num">${fmtNum(r.matchedRows.length)}</td><td class="num sup-soft">${fmtNum(r.matchedOpenQty)}</td><td class="num sup-strong">${money(r.matchedOpenValue)}</td><td class="sup-soft">${esc(r.notes||'').replace(/\r\n?|\n/g,'<br>')}</td></tr>`).join('')||'<tr><td colspan="10" class="sup-soft">No CM / month lines.</td></tr>'}</tbody></table></div>`;
   const trendTable=weeks.length>1?`<h3 class="sup-h3"${tipAttr(sectionTipText('br-trend'))}>CTB % by CM <span class="dz-meta">last ${fmtNum(weeks.length)} report weeks, oldest first</span></h3><div class="sup-scroll" tabindex="0" role="region" aria-label="CTB % by CM"><table class="sup-tbl sup-ctb"><thead><tr><th>CM</th>${weeks.map(s=>`<th class="num">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>${trend.map(t=>`<tr class="sup-row"><td class="sup-strong">${esc(t.cm)}</td>${t.cells.map(c=>!c||!c.total?'<td class="num muted">—</td>':`<td class="num">${dzChip(`${pct(c.clearToBuild,c.total)}%`,tone(c.clearToBuild,c.total))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'';
-  const detail=`<details class="sup-detail"${detailOpen?' open':''} data-more="br-ctb" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-br-ctb"${tipAttr('The report’s CM / month lines with the matched sales orders, and the CTB % trend by CM.')}><span class="sup-detail-show">Show more · Clear To Build by CM and month</span><span class="sup-detail-less">Show less</span></summary><div class="sup-detail-body">${ctbTable}${trendTable}</div></details>`;
+  const detail=`<details class="sup-detail"${detailOpen?' open':''} data-more="br-ctb" ontoggle="ohSetMoreOpen(this.dataset.more,this.open)"><summary data-focus-key="more-br-ctb"${tipAttr('Report lines with matched sales orders, and CTB % by CM.')}><span class="sup-detail-show">Show more · Clear To Build by CM and month</span><span class="sup-detail-less">Show less</span></summary><div class="sup-detail-body">${ctbTable}${trendTable}</div></details>`;
   return `<div class="sup-page">${filterRow}<div class="print-only">Filters: ${esc(brAll.label)} report${cmIn?` · CM ${esc(cmMap.get(buildRiskCmFilter).cm)}`:''}${cust?` · ${esc(cust)}`:''}</div>
     <div class="sup-cmcards">${cmCards}</div>
     <div class="dz-grid">${monthsCard}${blockCard}${ordersCard}</div>
@@ -13955,35 +13955,28 @@ const SECTION_INFO={
     what:'The lines behind the card you picked.',
     click:'Tick lines to set an override.'},
   'po-commitments':{title:'Leading · Supply commitments',
-    what:'Open purchase-order lines that may arrive late.',
-    click:'Click a card to list its lines below.'},
+    what:'Open PO lines that may arrive late.',
+    click:'Click a card to list them.'},
   'po-receiving':{title:'Lagging · Receiving performance',
-    what:'How goods receipts did against their PO dates; target 90%.',
-    click:'Click Fill rate to list every open PO line.'},
+    what:'PO receipts against their dates. Target 90%.'},
   'po-warehouse':{title:'Open PO value by warehouse',
-    what:'Open PO value and risky line counts by receiving warehouse.',
-    click:'Click a row to show only that warehouse; click it again for all.'},
+    what:'Open POs by receiving warehouse.',
+    click:'Click a row to filter.'},
   'po-vendors':{title:'Late value by vendor',
-    what:'The eight vendors with the most late open PO value.',
-    click:'Click a vendor to show only that vendor; click it again for all.'},
+    what:'The 8 vendors with the most late POs.',
+    click:'Click a row to filter.'},
   'po-linked':{title:'Lines to act on',
-    what:'The PO lines behind the card you picked.',
-    click:'Sort with Sort lines; Add note sets an override or a note.'},
+    what:'The PO lines behind the card you picked.'},
   'fc-summary':{title:'Next 12 months',
-    what:'The Logican forecast for SAP items against open sales and purchase orders for the same items.',
-    click:'Point at a card for its numbers.'},
+    what:'Logican forecast vs open sales and purchase orders.'},
   'fc-month':{title:'Forecast against open orders',
-    what:'Forecast quantity by month (bars) with open sales-order and open PO / CM quantity (lines).',
-    click:'Point at a month for its numbers.'},
+    what:'Forecast by month (bars) vs open orders (lines).'},
   'fc-items':{title:'Forecast by item',
-    what:'Each matched SAP item over 12 months; Gap is open orders less forecast.',
-    click:'Items with a month over forecast come first.'},
+    what:'Each matched item over 12 months; over forecast first.'},
   'sd-coverage':{title:'Coverage',
-    what:'Open sales-order demand against open PO supply; stock on hand is not included.',
-    click:'Filter with the warehouse buttons or list above.'},
+    what:'Open demand vs open PO supply; no stock on hand.'},
   'sd-shortages':{title:'Lines to act on',
-    what:'Lines short of usable open PO supply, or whose PO supply is at risk, by warehouse.',
-    click:'Supply at risk only lists the risky-supply lines; All open lines lists every line.'},
+    what:'Lines short of usable PO supply, or with supply at risk.'},
   'mo-chart':{title:'Shipped and open value by month',
     what:'Shipped value by delivery month; open value by due month.'},
   'mo-summary':{title:'Monthly delivery summary',
@@ -14019,26 +14012,19 @@ const SECTION_INFO={
   'wh-summary':{title:'Warehouse KPI summary',
     what:'Every rate and risk count per warehouse.'},
   'mix-net':{title:'Net qty by month',
-    what:'Usable supply minus demand per month; red months are short.',
-    click:'Rest the pointer on a row for its numbers.'},
+    what:'Open demand by month, coloured by coverage; red is short.'},
   'mix-demand':{title:'Demand by warehouse',
-    what:'The twelve warehouses with the most open demand; red is short, amber is at risk.',
-    click:'Rest the pointer on a row for its quantities.'},
+    what:'Open demand and how much of it is short.'},
   'mix-groups':{title:'Supply risk by item group',
-    what:'Demand, usable supply and risky supply by item group.',
-    click:'Show all lists every item group.'},
+    what:'Demand, coverage and shortage by item group.'},
   'br-demand':{title:'Sales order demand in CTB buckets',
-    what:'Open sales-order value in each CM and month of the Clear To Build report.',
-    click:'Rest the pointer on a row for its counts.'},
+    what:'Report orders by month: clear, at risk or late.'},
   'br-ctb':{title:'Clear To Build by CM / month',
-    what:'Each report line with its counts and the matching open sales orders.',
-    click:'Show all lists every line.'},
+    what:'Each report line with its matching open sales orders.'},
   'br-trend':{title:'CTB % by CM',
-    what:'Each CM’s clear-to-build share over recent report weeks.',
-    click:'Rest the pointer on a cell for its counts.'},
+    what:'Each CM’s clear-to-build share by report week.'},
   'br-risk':{title:'Lines to act on',
-    what:'Open sales-order lines in buckets the report marks at risk or late.',
-    click:'Set an override or a note on a line here.'}
+    what:'Open sales-order lines in at-risk or late buckets.'}
 };
 
 // "About these numbers": 3 to 5 short definitions per page, picked by the page's section keys (their prefix).
@@ -14052,23 +14038,23 @@ const ABOUT_NOTES={
     '<strong>When flagged</strong>: weeks since the line was first at risk.'
   ],
   po:[
-    '<strong>Late / missed commit</strong>: past the original date with no reschedule, or past the reschedule date.',
-    '<strong>No commit date</strong>: the vendor has given no valid date (SAP shows 11/11/1111).',
-    '<strong>Logican</strong>: lines on the Logican sheet show its status and commit date; with no SAP reschedule date the commit date is the expected date.',
-    '<strong>On-time receiving</strong>: receipts on or before the original date. Target 90%.',
-    'A <strong>Not At Risk</strong> override takes a line off every card.'
+    '<strong>Late / missed commit</strong>: past the due date, or past the reschedule date.',
+    '<strong>No commit date</strong>: no valid vendor date (SAP shows 11/11/1111).',
+    '<strong>Logican</strong>: with no SAP reschedule, its commit date is the expected date.',
+    '<strong>On-time receiving</strong>: received by the original date. Target 90%.',
+    '<strong>Not At Risk</strong> override: takes a line off every card.'
   ],
   fc:[
-    '<strong>Forecast</strong>: the monthly quantities on the Logican sheet’s Forecast tab (lines marked In-Active are left out).',
-    '<strong>Open sales orders</strong> count in the month they are due now; past due counts in the first month.',
-    '<strong>Open PO / CM</strong> counts in the month expected: reschedule date, else Logican commit date, else due date.',
-    'Forecast labels match a SAP item by its exact code, the code before a space or bracket, or the Logican part id.'
+    '<strong>Forecast</strong>: monthly quantities on the Logican Forecast tab (In-Active lines left out).',
+    '<strong>Open sales orders</strong>: in the month due now; past due counts in the first month.',
+    '<strong>Open PO / CM</strong>: in the month expected (reschedule, else Logican commit, else due date).',
+    'Forecast lines match a SAP item by item code or Logican part id.'
   ],
   sd:[
-    '<strong>Demand</strong> is open sales orders; <strong>supply</strong> is open purchase orders. Stock on hand is not included.',
+    '<strong>Demand</strong>: open sales orders. <strong>Supply</strong>: open POs. Stock on hand not included.',
     '<strong>Usable supply</strong>: PO quantity with a confirmed, committed date.',
-    '<strong>Shortage</strong>: demand is more than usable supply for the month or the running total.',
-    '<strong>Supply risk</strong>: supply that is unconfirmed, has no commit date, is rescheduled or is late.'
+    '<strong>Short</strong>: demand above usable supply for the month or running total.',
+    '<strong>Supply risk</strong>: unconfirmed, no commit date, rescheduled or late.'
   ],
   mo:[
     '<strong>Shipped</strong> counts in its delivery month; <strong>open</strong> in the month it is due now.',
@@ -14086,26 +14072,26 @@ const ABOUT_NOTES={
     'The red badge on a cell counts late or past-due lines.'
   ],
   mix:[
-    '<strong>Demand</strong> is open sales orders; <strong>supply</strong> is open purchase orders. Stock on hand is not included.',
-    '<strong>Net qty</strong>: usable supply minus demand; below zero is short.',
+    '<strong>Demand</strong>: open sales orders. <strong>Supply</strong>: open POs. Stock on hand not included.',
+    '<strong>Covered</strong>: demand met by usable supply in the same month.',
     'Unconfirmed and no-commit POs count as risk, not usable supply.'
   ],
   br:[
-    'Sales orders are matched to the Clear To Build report by CM warehouse and due month, not by PO.',
-    'Numbers come from the report week picked at the top; weeks are never added together.',
-    'The Lacombe firm orders block is for reference and is not matched.'
+    'Sales orders match the Clear To Build report by CM and due month, not by PO.',
+    'Numbers come from the report week picked; weeks are never added up.',
+    'Lacombe firm orders are for reference only (not matched).'
   ]
 };
 
 // Column heading tips for the data tables (renderTableCard and the summary tables). A "<table key>|<heading>"
 // entry wins over the plain heading, for headings that mean something different in one table.
 const COLUMN_TIPS={
-  'fc-items|Item':'SAP item code the forecast line matched.',
-  'fc-items|Months':'Forecast by month for 12 months; red bars are months with more on order than forecast.',
-  'fc-items|Forecast':'Forecast quantity for the next 12 months.',
-  'fc-items|Open SO':'Open sales-order quantity due in those months, past due included.',
-  'fc-items|Open PO / CM':'Open PO quantity expected in those months.',
-  'fc-items|Gap':'Open sales orders less forecast; below zero is forecast not yet ordered.',
+  'fc-items|Item':'Matched SAP item code.',
+  'fc-items|Months':'Forecast by month; red bars: more on order than forecast.',
+  'fc-items|Forecast':'Forecast qty, next 12 months.',
+  'fc-items|Open SO':'Open sales-order qty due by then, past due included.',
+  'fc-items|Open PO / CM':'Open PO qty expected by then.',
+  'fc-items|Gap':'Open sales orders less forecast.',
   'Due timing':'How far the line is from its due date, for example “3d overdue”.',
   'Effective due':'The date the line is due now: its reschedule date, else its due date.',
   'Reschedule':'The reschedule (commit) date, or why there is none.',
@@ -16586,7 +16572,7 @@ function shipDotTip(p,selected){
   const parts=[p.late?`${p.late} delayed`:'',p.moving?`${p.moving} on the way`:'',p.done?`${p.done} delivered`:''].filter(Boolean).join(', ');
   const names=[...new Set(p.list.map(s=>s.customer).filter(Boolean))];
   const who=names.length?` · ${names.slice(0,3).join(', ')}${names.length>3?` +${names.length-3}`:''}`:'';
-  return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')} (${parts})${who}; ${selected?'click to show all destinations.':'click to list only these.'}`;
+  return `${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}\n• ${parts}${who?`\n• ${who.slice(3)}`:''}\n${selected?'Click to show all.':'Click to list them.'}`;
 }
 // How wide the map is drawn, for its label placer (the CSS in 2v7:pages, 2v7:e and 2v9:ship). 2v6.9: the map card
 // spans the page; from 981px its stage is the card's full width (shpMapLayout) with the small status cards over its
@@ -16725,12 +16711,12 @@ function renderShipMap(list){
     return `<button type="button" class="shp-dot ${p.state}${sel?' sel':''}" style="${at(xy)};width:${d.toFixed(1)}px;height:${d.toFixed(1)}px;margin:${(-d/2).toFixed(2)}px 0 0 ${(-d/2).toFixed(2)}px;--i:${i}" data-focus-key="ship-dot-${esc(p.key)}" aria-pressed="${sel?'true':'false'}" aria-label="${esc(`${shipPlaceName(p.key)}: ${shipPlural(p.n,'shipment','shipments')}`)}" onclick="shipPickDest('${esc(p.key)}')" data-tip="${esc(tip)}"></button>`;
   }).join('');
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
-  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('The SAP delivery has no ship-to country (or one this map does not know), so these shipments are in the table but not on the map.')}>${esc(noPlaceText)}</span>`:'';
+  const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('No known ship-to country: in the table, not on the map.')}>${esc(noPlaceText)}</span>`:'';
   // 2v6.9b: the legend sits at the bottom left of the map (it was in the title row), with the no-ship-to-country note.
   const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
   const foot=`<div class="shp-map-foot">${legend}${noPlace}</div>`;
   return `<section class="dz-card shp-map" aria-label="Order map">
-    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Each dot is a ship-to place (the country; a US state or Canadian province when the shipment has one), sized by its shipments: indigo on the way, red with a delayed shipment, teal all delivered. Arcs run from Lacombe. Click a dot to list only its shipments.`)}>Order Map</h2><div class="dz-meta">${esc(meta)}</div></div></div>
+    <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Ship-to places, sized by shipments; arcs from Lacombe\n• Indigo: on the way\n• Red: a shipment delayed\n• Teal: all delivered`)}>Order Map</h2><div class="dz-meta">${esc(meta)}</div></div></div>
     <div class="shp-map-stage${lay?' wide':''}" role="group" aria-label="Destinations" style="--ar:${(vw/vh).toFixed(4)};--zoom:${zoom.toFixed(3)};--ml:${(shift*100).toFixed(2)}%${fade}">
       <svg class="shp-map-svg" viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
         <g class="shp-land"><path class="shp-land-p" transform="scale(.1)" d="${SHIP_MAP.land}"/><path class="shp-borders" transform="scale(.1)" d="${SHIP_MAP.borders}"/></g>
@@ -16764,7 +16750,7 @@ function shpAsCanRefresh(){return !isSnapshotView&&shippingApiPossible()&&!!(shp
 function renderShipUpdateAll(){
   if(!shpAsCanRefresh())return '';
   const busy=!!shpAs.refreshing;
-  return `<button type="button" class="dz-btn shp-updall${busy?' busy':''}" data-focus-key="ship-update-all" onclick="shpAsRefreshAll()"${busy?' aria-busy="true" aria-disabled="true"':''}${tipAttr(busy?'Asking AfterShip about every shipment now.':'Ask AfterShip about every shipment now (once every 10 minutes for the whole site).')}>${dzIconSvg('refresh')}<span>${busy?'Updating…':'Update all'}</span></button>`;
+  return `<button type="button" class="dz-btn shp-updall${busy?' busy':''}" data-focus-key="ship-update-all" onclick="shpAsRefreshAll()"${busy?' aria-busy="true" aria-disabled="true"':''}${tipAttr(busy?'Checking every shipment now.':'Check every shipment now (once per 10 minutes).')}>${dzIconSvg('refresh')}<span>${busy?'Updating…':'Update all'}</span></button>`;
 }
 function shpAsRefreshAll(){
   if(shpAs.refreshing||!shpAsCanRefresh())return;
@@ -16966,7 +16952,7 @@ const shipFmtTrack=n=>/^\d{12}$/.test(n)?n.replace(/(\d{4})(?=\d)/g,'$1 '):n;
 const SHP_EXT_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></svg>';
 function renderShipOpen(s,withText=false){
   const href=esc(shipTrackUrl(s.number));
-  if(withText)return `<a class="dz-btn shp-open-t" href="${href}" target="_blank" rel="noopener" data-focus-key="ship-open-d-${esc(s.number)}"${tipAttr('Open AfterShip’s tracking page in a new tab.')}>${SHP_EXT_SVG}Open tracking page</a>`;
+  if(withText)return `<a class="dz-btn shp-open-t" href="${href}" target="_blank" rel="noopener" data-focus-key="ship-open-d-${esc(s.number)}"${tipAttr('Opens in a new tab.')}>${SHP_EXT_SVG}Open tracking page</a>`;
   return `<a class="dz-btn shp-open" href="${href}" target="_blank" rel="noopener" data-focus-key="ship-open-${esc(s.number)}" aria-label="Open tracking page"${tipAttr('Open tracking page')}>${SHP_EXT_SVG}</a>`;
 }
 // 2v7 e: one or two short facts under a tile's count, new information only (its orders and value stay in the tip).
@@ -17027,8 +17013,8 @@ function renderShipCard(id,label,group,color,tipLead,tone='',ico=''){
   const orders=new Set();
   group.forEach(s=>s.orders.forEach(o=>orders.add(o)));
   const selected=shippingFilter===id;
-  const detail=[orders.size?shipPlural(orders.size,'order','orders'):count?'no sales order':'',value?`worth ${money(value)}`:''].filter(Boolean).join(', ');
-  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')}${detail?` (${detail})`:''} ${tipLead}; ${selected?'click to show all.':'click to list only these.'}`;
+  const detail=[orders.size?shipPlural(orders.size,'order','orders'):count?'no sales order':'',value?money(value):''].filter(Boolean).join(' · ');
+  const tipText=`${label}: ${shipPlural(count,'shipment','shipments')}\n• ${tipLead}${detail?`\n• ${detail.charAt(0).toUpperCase()}${detail.slice(1)}`:''}\n${selected?'Click to show all.':'Click to list them.'}`;
   const vcol=count&&tone==='red'?'var(--dz-risk-text)':count&&tone==='amber'?'var(--dz-amber-text)':'';
   return `<button type="button" class="shp-tile${selected?' sel':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${selected?'true':'false'}" onclick="setShippingFilter('${id}')" data-tip="${esc(tipText)}">
     ${shpTileLabel(label,color,ico)}
@@ -17048,7 +17034,7 @@ function shpTileLabel(label,color,ico=''){
 function renderShipPriorityCard(g){
   const all=g.priority||[],done=g['prio-done']||[],open=g['prio-open']||[];
   const sel=shippingFilter==='priority';
-  const tipText=`Priority: ${shipPlural(all.length,'shipment','shipments')} ticked in the Priority column (${fmtNum(done.length)} delivered, ${fmtNum(open.length)} not yet); ${sel?'click to show all.':'click to list only these.'}`;
+  const tipText=`Priority: ${shipPlural(all.length,'shipment','shipments')} ticked\n• ${fmtNum(done.length)} delivered\n• ${fmtNum(open.length)} not yet\n${sel?'Click to show all.':'Click to list them.'}`;
   const row=(id,label,list,tone)=>{
     const on=shippingFilter===id;
     return `<button type="button" class="shp-pri-row${on?' on':''}" data-focus-key="ship-kpi-${id}" aria-pressed="${on?'true':'false'}" onclick="setShippingFilter('${id}')"${tipAttr(`Priority, ${label.toLowerCase()}: ${shipPlural(list.length,'shipment','shipments')}. ${on?'Click to show all.':'Click to list them.'}`)}><span class="shp-pri-name">${esc(label)}</span><span class="shp-pri-lead" aria-hidden="true"></span><span class="shp-pri-n${list.length&&tone?` ${tone}`:''}">${fmtNum(list.length)}</span></button>`;
@@ -17074,7 +17060,7 @@ function shpPriUpdateCard(){
 }
 function shpPriTip(s){
   if(isSnapshotView)return `${s.priority?'Priority':'Not priority'}. A shared snapshot cannot change the tick.`;
-  if(!s.priority)return `Tick to mark ${s.number} as priority (${shippingSharedStore()?'everyone who signs in sees it':'kept in this browser'}).`;
+  if(!s.priority)return `Tick to mark as priority (${shippingSharedStore()?'shared with everyone':'this browser only'}).`;
   const when=s.priorityAt?shipTimeLabel(s.priorityAt):'';
   return `Priority${s.priorityBy||when?` (ticked${s.priorityBy?` by ${s.priorityBy}`:''}${when?`, ${when}`:''})`:''}. Click to clear.`;
 }
@@ -17161,7 +17147,7 @@ function renderShipRow(s,idx=0){
   const tone=s.status==='delayed'?'red':s.status==='delivered'?'teal':'';
   const stTone=s.status==='delayed'?' late':s.status==='delivered'?' done':!s.status?' warn':'';
   const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:'No status yet.';
-  const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}; click to ${open?'hide':'show'} the details.`;
+  const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}. Click to ${open?'hide':'show'} details.`;
   const i=Math.min(idx,14);
   const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
   const loc=shpLastLocation(s);
@@ -17193,10 +17179,10 @@ function renderShipUpdateForm(s){
   const opts=SHIP_STATUS_OPTIONS.map(k=>`<option value="${k}"${(m.status||'')===k?' selected':''}>${esc(SHIP_STATUS_TEXT[k])}</option>`).join('');
   const where=shippingSharedStore()?'shared with everyone':'kept in this browser';
   return `<form class="shp-update print-hide" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
-      <span class="shp-update-t"${tipAttr(`Set a status by hand, for example when AfterShip cannot track it (${where}). A newer AfterShip update replaces it.`)}>Update status</span>
-      <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${tipAttr('Shipped (left Spyder Controls), In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
-      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('When it happened: the delivery date for Delivered, else today.')}></label>
-      <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${tipAttr('A short note anyone can read (up to 200 characters).')}></label>
+      <span class="shp-update-t"${tipAttr(`Set a status by hand (${where}); a newer AfterShip update replaces it.`)}>Update status</span>
+      <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${tipAttr('Shipped, In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
+      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('Delivery date for Delivered, else today.')}></label>
+      <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${tipAttr('Short note anyone can read (200 characters max).')}></label>
       <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${tipAttr(`Save this status (${where}).`)}>Save</button>
       <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status"></span>
     </form>`;
@@ -17219,15 +17205,15 @@ function renderShipDetail(s){
   const late=s.status==='delivered'?shipLateText(s.lateDays):'';
   const handStatus=m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${late?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:'';
   const facts=[
-    fact('Status',asStatus?`${asStatus}${late&&a.tag==='Delivered'?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:handStatus||(a&&a.error)||'No status yet',asStatus?'AfterShip’s status for this shipment, read every 2 hours.':'The status set by hand, and its date.'),
-    fact('Last scan',scan,'The carrier’s latest scan, from AfterShip.'),
-    fact('Expected',s.eta?shipDateLabel(s.eta):'','The expected delivery date, from AfterShip.'),
-    fact('Due',s.promised?shipDateLabel(s.promised):'','The earliest reschedule or delivery date of its order lines.'),
-    fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','The delivery date in SAP.'),
-    fact('Carrier',shipCarrier(s),'From the ship method on the SAP delivery, else from AfterShip.'),
-    fact('Ship method (SAP)',s.shipMethod,'The shipping type on the SAP delivery.'),
+    fact('Status',asStatus?`${asStatus}${late&&a.tag==='Delivered'?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:handStatus||(a&&a.error)||'No status yet',asStatus?'From AfterShip, every 2 hours.':'Set by hand, with its date.'),
+    fact('Last scan',scan,'Carrier’s latest scan (AfterShip).'),
+    fact('Expected',s.eta?shipDateLabel(s.eta):'','Expected delivery (AfterShip).'),
+    fact('Due',s.promised?shipDateLabel(s.promised):'','Earliest due date of its order lines.'),
+    fact('Shipped',s.shipDate?shipDateLabel(s.shipDate):'','SAP delivery date.'),
+    fact('Carrier',shipCarrier(s),'From the SAP ship method, else AfterShip.'),
+    fact('Ship method (SAP)',s.shipMethod,'Shipping type on the SAP delivery.'),
     fact('Ship to',shipCountryName(s.dest),'Ship-to country in SAP.'),
-    fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added this tracking number and when.'),
+    fact('Added by hand',s.manual?[s.manual.by,shipTimeLabel(s.manual.at)].filter(Boolean).join(' · ')||'yes':'','Who added it, and when.'),
   ].join('');
   const noteText=m&&m.source==='hand'&&m.note?`<p class="shp-alert${s.status==='delayed'?'':' calm'}">${esc(m.note)}</p>`:'';
   const rows=shippingLinkedRows(s).slice(0,60);
@@ -17241,11 +17227,11 @@ function renderShipDetail(s){
       <th scope="col"${tipAttr('Item number and description.')}>Item / description</th>
       <th scope="col" class="num"${tipAttr(s.deliveries.size?'Quantity shipped on this delivery.':'Quantity ordered on the line.')}>Qty</th>
       <th scope="col" class="num"${tipAttr(s.deliveries.size?'Shipped value of the line.':'Open value of the line.')}>Value</th>
-      <th scope="col"${tipAttr('The line’s reschedule date, else its delivery date.')}>Due</th>
-      <th scope="col"${tipAttr('The delivery date in SAP; blank until shipped.')}>Shipped</th>
+      <th scope="col"${tipAttr('Reschedule date, else delivery date.')}>Due</th>
+      <th scope="col"${tipAttr('SAP delivery date; blank until shipped.')}>Shipped</th>
     </tr></thead><tbody>${rows.map(lineRow).join('')}</tbody></table></div>`
     :`<p class="shp-note-p">${s.manual&&s.manual.order?`No lines of sales order ${esc(s.manual.order)} are in this export.`:'No order lines are linked; add the sales order number with the tracking number.'}</p>`;
-  const actions=`<div class="shp-actions print-hide">${renderShipOpen(s,true)}${s.manual&&!isSnapshotView?`<button type="button" class="dz-btn shp-remove" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')"${tipAttr('Remove this number (only numbers added by hand can be removed).')}>Remove tracking #</button>`:''}</div>`;
+  const actions=`<div class="shp-actions print-hide">${renderShipOpen(s,true)}${s.manual&&!isSnapshotView?`<button type="button" class="dz-btn shp-remove" data-focus-key="ship-remove-${esc(n)}" onclick="shippingRemoveManual('${esc(n)}')"${tipAttr('Remove this hand-added number.')}>Remove tracking #</button>`:''}</div>`;
   return `<div class="shp-detail" id="ship-detail-${esc(n)}">
     ${facts?`<div class="shp-facts">${facts}</div>`:''}
     ${noteText}
@@ -17256,7 +17242,7 @@ function renderShipDetail(s){
 }
 // Side list rows are buttons that open the shipment in the table.
 function shipSideRow(s,top,sub,right,tone,keyPrefix){
-  return `<button type="button" class="shp-li" data-focus-key="${keyPrefix}-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} with its status form in the Shipments table.`)}>
+  return `<button type="button" class="shp-li" data-focus-key="${keyPrefix}-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} in the Shipments table.`)}>
     <span class="shp-li-l"><b>${esc(top)}</b><em>${esc(sub)}</em></span>${right}</button>`;
 }
 function renderShipCross(list,today){
@@ -17270,7 +17256,7 @@ function renderShipCross(list,today){
       return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'Unknown'}`,right,'','ship-x');
     }).join('')}</div>${shpPager('cross',page,pages,'Cross-border')}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Shipments to an address outside Canada that are not delivered yet: customer, order, destination, and the days since the delivery shipped. Delayed ones first.'});
+  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Undelivered shipments outside Canada, delayed first.'});
 }
 function renderShipDelayed(list){
   const sorted=list.filter(s=>s.status==='delayed').sort((a,b)=>((b.mark&&b.mark.statusDate)||'').localeCompare((a.mark&&a.mark.statusDate)||'')||(b.checkedAt||0)-(a.checkedAt||0));
@@ -17280,12 +17266,12 @@ function renderShipDelayed(list){
       const note=s.mark&&s.mark.note;
       const so=s.orders.size?`SO ${[...s.orders][0]}`:s.number;
       const when=s.mark&&s.mark.statusDate?shipDateLabel(s.mark.statusDate):s.checkedAt?shipDateLabel(new Date(s.checkedAt)):'';
-      return `<button type="button" class="shp-li exc" data-focus-key="ship-d-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} with its status form in the Shipments table.`)}>
+      return `<button type="button" class="shp-li exc" data-focus-key="ship-d-${esc(s.number)}" onclick="openShipment('${esc(s.number)}')"${tipAttr(`Show ${s.number} in the Shipments table.`)}>
         <span class="shp-li-top"><b>${esc(so)}${s.customer?` · ${esc(s.customer)}`:''}</b><em>${esc(when)}</em></span>
         <span class="shp-li-why${note?'':' none'}">${esc(note||'No note yet')}</span></button>`;
     }).join('')}</div>${shpPager('delayed',page,pages,'Delayed')}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card shp-delayed',body,tip:'Delayed shipments, newest first, with AfterShip’s latest scan or the note set by hand (for example a customs hold).'});
+  return dzCard({title:'Delayed',sm:true,meta:all?esc(String(all)):'',cls:'shp-side-card shp-delayed',body,tip:'Delayed shipments, newest first, with the latest scan or note.'});
 }
 const SHIP_TRUCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6.5h12v9.5H2z"/><path d="M14 10h4.2l3.3 3.4V16H14z"/><circle cx="6.2" cy="17.6" r="1.9"/><circle cx="17.4" cy="17.6" r="1.9"/></svg>';
 function renderShippingPage(m){
@@ -17310,20 +17296,20 @@ function renderShippingPage(m){
   // Status and Destination narrow the Shipments table only, like the tiles and the map dots (Destination is the same
   // pick as a map dot). Destination lists the places on the map (shipments with no ship-to country have none).
   const statusLabel=(SHP_STATUS_FILTERS.find(([k])=>k===shipStatusSel)||[])[1]||'';
-  const statusPill=fl.length?dzFilterPill({id:'ship-status',label:'Status',value:statusLabel||'All',set:!!shipStatusSel,tip:'List only the shipments with this status in the Shipments table.',
+  const statusPill=fl.length?dzFilterPill({id:'ship-status',label:'Status',value:statusLabel||'All',set:!!shipStatusSel,tip:'Filter the Shipments table by status.',
     options:[{label:'All',selected:!shipStatusSel,onclick:"shpPickStatus('')"},{sep:true},...SHP_STATUS_FILTERS.map(([k,t])=>({label:t,selected:shipStatusSel===k,onclick:`shpPickStatus('${k}')`}))]}):'';
   const destKeys=[...new Set(fl.map(shipPlaceKey).filter(Boolean))].map(k=>[k,shipPlaceName(k)]).sort((a,b)=>a[1].localeCompare(b[1]));
-  const destPill=destKeys.length>1?dzFilterPill({id:'ship-dest',label:'Destination',value:shipPlaceName(shipDestSel)||'All',set:!!shipDestSel,tip:'List only the shipments to this place in the Shipments table (the same as clicking its dot on the map).',
+  const destPill=destKeys.length>1?dzFilterPill({id:'ship-dest',label:'Destination',value:shipPlaceName(shipDestSel)||'All',set:!!shipDestSel,tip:'Filter the Shipments table by destination.',
     options:[{label:'All',selected:!shipDestSel,onclick:"shpPickDest('')"},{sep:true},...destKeys.map(([k,name])=>({label:name,selected:shipDestSel===k,onclick:`shpPickDest(${dzJs(k)})`}))]}):'';
 
   // Filter row: Carrier, Customer, Status and Destination pills, Add tracking # and Clear.
   // Carrier is a menu like Customer (most shipments first), shown when there are two carriers or more.
-  const carrierCtl=carriers.length<2?'':dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,tip:'Show only one carrier’s shipments: the tiles, the map and the lists.',
+  const carrierCtl=carriers.length<2?'':dzFilterPill({id:'ship-carrier',label:'Carrier',value:shipCarrierSel||'All',set:!!shipCarrierSel,tip:'Filter the page by carrier.',
     options:[{label:'All',selected:!shipCarrierSel,onclick:"shipPickCarrier('')"},{sep:true},...carriers.map(c=>({label:c,selected:shipCarrierSel===c,onclick:`shipPickCarrier(${dzJs(c)})`}))]});
-  const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,tip:'Show only one customer’s shipments: the tiles, the map and the lists.',options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
+  const custPill=customerList.length>1?dzFilterPill({id:'ship-customer',label:'Customer',value:shipCustomerSel||'All',set:!!shipCustomerSel,tip:'Filter the page by customer.',options:[{label:'All',selected:!shipCustomerSel,onclick:"shipPickCustomer('')"},{sep:true},...customerList.map(c=>({label:c,selected:shipCustomerSel===c,onclick:`shipPickCustomer(${dzJs(c)})`}))]}):'';
   const canAdd=!isSnapshotView;
-  const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`List a shipment with no tracking number in SAP for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add tracking #</button>`:'';
-  const filterRow=`<div class="shp-frow">${dzFilterRow('',`${carrierCtl}${custPill}${statusPill}${destPill}${addBtn}${anyFilter?dzClear('shipClearFilters()','Show every shipment again, in the usual order.'):''}`)}</div>`;
+  const addBtn=canAdd?`<button type="button" class="dz-btn primary shp-addbtn" data-focus-key="ship-add-toggle" aria-expanded="${shipAddOpen?'true':'false'}" onclick="shipToggleAdd()"${tipAttr(`Add a number SAP does not have; kept ${SHIP_MANUAL_DAYS} days${shared?', shared':', this browser only'}.`)}>Add tracking #</button>`:'';
+  const filterRow=`<div class="shp-frow">${dzFilterRow('',`${carrierCtl}${custPill}${statusPill}${destPill}${addBtn}${anyFilter?dzClear('shipClearFilters()','Clear filters and sorting.'):''}`)}</div>`;
 
   // Notes: what this export can and cannot give, and whether AfterShip statuses come in (one short line).
   const notes=[];
@@ -17333,12 +17319,11 @@ function renderShippingPage(m){
   const notesHtml=notes.map(([tone,text])=>`<p class="shp-note${tone?` ${tone}`:''}">${esc(text)}</p>`).join('');
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
-      `Tracking numbers come from SAP deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)} (any carrier), or from <strong>Add tracking #</strong>.`,
-      'Statuses come from AfterShip every 2 hours. A status set by hand counts until AfterShip has a newer one.',
-      `<strong>Not delivered</strong>: every shipment without a Delivered status; its card also counts those with no AfterShip or hand update for ${SHIP_STALE_DAYS} days or more.`,
-      `<strong>Priority</strong>: tick a shipment in the Priority column (${shared?'shared with everyone':'kept in this browser'}); the card splits them into delivered and undelivered.`,
-      'The arrow icon opens AfterShip’s tracking page in a new tab.',
-      'The map places each shipment by its ship-to country (SAP carries no city); <strong>Cross-border</strong> means outside Canada.'
+      `<strong>Tracking numbers</strong>: SAP deliveries in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)}, or <strong>Add tracking #</strong>.`,
+      '<strong>Status</strong>: from AfterShip every 2 hours; one set by hand counts until AfterShip has a newer one.',
+      `<strong>Not delivered</strong>: no Delivered status yet; its card flags those with no update for ${SHIP_STALE_DAYS}+ days.`,
+      `<strong>Priority</strong>: ticked in the Priority column (${shared?'shared with everyone':'this browser only'}).`,
+      '<strong>Map</strong>: by ship-to country; <strong>Cross-border</strong> means outside Canada.'
     ])}</ul></div></details>`;
   const head=`${filterRow}${notesHtml}`;
 
@@ -17352,10 +17337,10 @@ function renderShippingPage(m){
   // Tiles (a click lists just these in the table); first in the page order. 2v6.9: on a wide screen they are small
   // cards laid over the right of the map card, where the map fades out (shpMapLayout); below 981px they sit above it.
   const tiles=`<div class="shp-tiles" role="group" aria-label="Shipment status">
-      ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','on the way: Shipped or In transit')}
-      ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','held up: an exception, a failed delivery or marked Delayed','red')}
-      ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`delivered since Monday ${shipDateLabel(model.weekStart)}`)}
-      ${renderShipCard('open','Not delivered',g.open,'var(--dz-amber)','not delivered yet: shipped, in transit, delayed or no status','','box')}
+      ${renderShipCard('transit','In transit',g.transit,'var(--dz-indigo)','Shipped or in transit')}
+      ${renderShipCard('delayed','Delayed',g.delayed,'var(--dz-risk)','Exception, failed delivery or marked Delayed','red')}
+      ${renderShipCard('delivered','Delivered this week',g.delivered,'var(--dz-teal)',`Since Monday ${shipDateLabel(model.weekStart)}`)}
+      ${renderShipCard('open','Not delivered',g.open,'var(--dz-amber)','Shipped, in transit, delayed or no status','','box')}
       ${renderShipPriorityCard(g)}
     </div>`;
 
@@ -17374,13 +17359,13 @@ function renderShippingPage(m){
   const emptyMsg=tablePicks>1?'No shipments match these filters.':filterName?`No shipments ${filterName} right now.`:q?'No shipment matches that search.':shipDestSel?`No shipments to ${shipPlaceName(shipDestSel)} right now.`:shipStatusSel?`No shipments with the status ${statusLabel} right now.`:'No shipments match these filters.';
   const chip=(text,onclick,tip)=>`<button type="button" class="shp-chipbtn" data-focus-key="ship-chip-${esc(text)}" onclick="${esc(onclick)}"${tipAttr(tip)}>${esc(text)}<span aria-hidden="true">×</span></button>`;
   // The destination chip shows a map-dot pick where there is no Destination pill (the pill is left out on phones).
-  const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show every destination again.'):'';
-  const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show every shipment again.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
+  const destChip=shipDestSel?chip(shipPlaceName(shipDestSel),"shipPickDest('')",'Show all destinations.'):'';
+  const chips=`${filterName?chip(filterName,"setShippingFilter('')",'Show all shipments.'):''}${destChip&&destPill?`<span class="shp-destchip">${destChip}</span>`:destChip}`;
   // Column titles sort the table (again to reverse); aria-sort is on each column header.
-  const etaTip='Delivered: the delivery date and the due date. Others: AfterShip’s expected date (else the due date) and the due date.';
-  const sortHead=[['track','Tracking','The tracking number, with its carrier.'],['order','Order','The sales order number, then the customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, then Delivered.'],['eta','ETA',etaTip],['priority','Priority','Ticked as priority (first click lists them first).']].map(([id,label,tip])=>{
+  const etaTip='Expected or delivered date, with the due date.';
+  const sortHead=[['track','Tracking','Tracking number and carrier.'],['order','Order','Sales order and customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, Delivered.'],['eta','ETA',etaTip],['priority','Priority','Ticked as priority.']].map(([id,label,tip])=>{
     const on=shipSortCol===id;
-    return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort, again to reverse.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
+    return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''} aria-sort="${on?(shipSortDir>0?'ascending':'descending'):'none'}"><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
   }).join('');
   const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
   const listSub=`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
@@ -17393,8 +17378,8 @@ function renderShippingPage(m){
     ${shpPager('list',page,pages,'Shipments')}`;
   // The title row: the count, when AfterShip was read, and Update all.
   const upd=shpAsUpdatedText();
-  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('When AfterShip was last read (it checks every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
-  const list=dzCard({title:'Shipments',meta:listMeta,cls:'shp-main shp-ships',tip:`${listSub}. Delayed first, then those with no update for ${SHIP_STALE_DAYS}+ days, delivered last.`,body:tableBody});
+  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('Last AfterShip check (every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
+  const list=dzCard({title:'Shipments',meta:listMeta,cls:'shp-main shp-ships',tip:`${listSub.charAt(0).toUpperCase()}${listSub.slice(1)}. Delayed first, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
   // 2v6.9: the map card across the page with the small cards over its faded right part (stacked, cards first, below
   // 981px); --pw is the cards' width the map was laid out for.
@@ -17404,9 +17389,9 @@ function renderShippingPage(m){
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
   return `<form class="shp-add print-hide" onsubmit="return shippingAddManual(event)">
-      <label>Sales order # <input class="dz-pillinput" id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345"${tipAttr('The sales order it belongs to, so its lines show (optional).')}></label>
-      <label>Tracking # <input class="dz-pillinput" id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678"${tipAttr('Any carrier’s tracking or PRO number; spaces and dashes are fine.')}></label>
-      <button type="submit" class="dz-btn primary" data-focus-key="ship-add"${tipAttr(`Save this number for ${SHIP_MANUAL_DAYS} days${shared?', shared with everyone':', in this browser'}.`)}>Add</button>
+      <label>Sales order # <input class="dz-pillinput" id="ship-add-order" type="text" inputmode="numeric" autocomplete="off" maxlength="20" placeholder="e.g. 12345"${tipAttr('Optional; shows its order lines.')}></label>
+      <label>Tracking # <input class="dz-pillinput" id="ship-add-number" type="text" autocomplete="off" spellcheck="false" maxlength="60" required placeholder="e.g. 7700 1234 5678"${tipAttr('Any carrier’s tracking or PRO number.')}></label>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-add"${tipAttr(`Keep it ${SHIP_MANUAL_DAYS} days${shared?', shared':', this browser only'}.`)}>Add</button>
       <span id="ship-add-status" class="shp-msg" role="status"></span>
     </form>`;
 }
@@ -17795,11 +17780,12 @@ function cmStatusHtml(r){
   const wo=[...new Set(o.flatMap(x=>[x.wo,...x.subs.map(s=>s.wo)]).map(s=>s.split('\n')[0]).filter(s=>s&&!/^stock$/i.test(s)))];
   const notes=[...new Set(o.flatMap(x=>[x.priority,x.comments,x.spyComments,...x.subs.map(s=>s.comments)]).map(s=>s.replace(/\s*\n\s*/g,' ')).filter(Boolean))];
   const commit=i.commit?`${i.commitKind==='tba'?'tentative ':''}commit ${cmShort(i.commit)}`:o[0].commitText?`commit “${o[0].commitText.replace(/\s*\n\s*/g,' ')}”`:'no commit date';
-  let tip=`Logican: ${commit}${i.req?`, Spyder req ${cmShort(i.req)}`:''}${i.kit?`, kit ${cmShort(i.kit)}`:''}${wo.length?`, WO ${wo.slice(0,4).join(', ')}`:''}${o[0].woStatus?`, status ${o[0].woStatus.replace(/\s*\n\s*/g,' ')}`:''}${notes.length?`; ${notes.slice(0,3).join('; ').slice(0,180)}`:''}${i.by==='po'?' (matched by PO number only)':''}.`;
+  // Tips stay short: the commit first, then one bullet per fact; the notes are cut at 100 characters.
+  const note=notes.slice(0,2).join('; ');
+  const facts=[i.req?`Spyder req ${cmShort(i.req)}`:'',i.kit?`Kit ${cmShort(i.kit)}`:'',wo.length?`WO ${wo.slice(0,4).join(', ')}`:'',
+    o[0].woStatus?`Status ${o[0].woStatus.replace(/\s*\n\s*/g,' ')}`:'',note?(note.length>100?`${note.slice(0,99)}…`:note):'',i.by==='po'?'Matched by PO number only':''].filter(Boolean);
+  const tip=`Logican: ${commit}${facts.map(f=>`\n• ${f}`).join('')}`;
   const late=cmCommitLate(r);
-  // Tips stay short: at most 30 words.
-  const words=tip.split(/\s+/);
-  if(words.length>30)tip=`${words.slice(0,29).join(' ')}…`;
   return `<span class="cm-line" data-tip="${esc(tip)}"><span class="status-chip cm ${cmStatusTone(i)}">${esc(cmStatusLabel(i))}</span><span class="timing${late?' crit-text':''}">${i.commit?`${i.commitKind==='tba'?'TBA':'CM'} ${esc(cmShort(i.commit))}`:'CM no date'}</span></span>`;
 }
 // Words Search finds a PO line by: Logican WO #, sub WO #, part ids, Logican's SO and the status.
@@ -18031,7 +18017,7 @@ function renderForecastChart(f){
   const max=Math.max(1,...f.totals.fc,...f.totals.so,...f.totals.po);
   const W=1200,H=100,pt=(arr)=>arr.map((v,i)=>`${((i+.5)/arr.length*W).toFixed(1)},${(H-v/max*H).toFixed(1)}`).join(' ');
   const cols=f.months.map((k,i)=>{
-    const t=`${monthLabel(k)}: forecast ${fmtNum(f.totals.fc[i])}, open sales orders ${fmtNum(f.totals.so[i])}, open PO / CM ${fmtNum(f.totals.po[i])}${i===0?' (past due counts here)':''}.`;
+    const t=`${monthLabel(k)}${i===0?' (past due counts here)':''}\n• Forecast ${fmtNum(f.totals.fc[i])}\n• Open sales orders ${fmtNum(f.totals.so[i])}\n• Open PO / CM ${fmtNum(f.totals.po[i])}`;
     return `<div class="misc-fc-col"${tipAttr(t)}><i class="dz-fade${i===0?' now':''}" style="height:${(f.totals.fc[i]/max*100).toFixed(1)}%;--i:${i}"></i></div>`;
   }).join('');
   const legend=`<span class="misc-fc-legend"><span><i class="sw bar"></i>Forecast</span><span><i class="sw line"></i>Open sales orders</span><span><i class="sw line dash"></i>Open PO / CM</span></span>`;
@@ -18049,13 +18035,13 @@ function renderForecastPage(m){
   const above=f.items.filter(g=>g.over>0);
   const range=`${monthLabel(f.months[0])} – ${monthLabel(f.months[11])}`;
   const src=cmTab('forecast');
-  const unmatchedTip=f.unmatched.length?`Not matched to a SAP item: ${f.unmatched.slice(0,8).map(u=>u.label).join(', ')}${f.unmatched.length>8?', …':''}.`:'Every forecast line with quantity matched a SAP item.';
+  const unmatchedTip=f.unmatched.length?`Not matched to a SAP item: ${f.unmatched.slice(0,8).map(u=>u.label).join(', ')}${f.unmatched.length>8?', …':''}.`:'Every forecast line matched a SAP item.';
   const tile=(label,value,sub,dot,tone,tipText)=>`<div class="misc-tile"${tipAttr(tipText)}><div class="misc-tile-l"><span class="misc-dot" style="background:${dot}"></span>${esc(label)}</div><div class="misc-tile-v"${tone?` style="color:${tone}"`:''}>${esc(value)}</div><div class="misc-tile-s">${esc(sub)}</div></div>`;
   const tiles=`<div class="misc-tiles dz-fade" aria-label="Forecast totals, next 12 months">
     ${tile('Forecast',fmtNum(fcT),range,'#5468ff','',`Forecast: ${fmtNum(fcT)} qty for ${fmtNum(f.items.length)} SAP items, ${range}.`)}
-    ${tile('Open sales orders',fmtNum(soT),'same items, due by then','#0f172a','',`Open sales orders: ${fmtNum(soT)} qty of the same items due by ${monthLabel(f.months[11])}, past due included.`)}
-    ${tile('Open PO / CM',fmtNum(poT),'expected by then','#ffae1a','',`Open PO / CM: ${fmtNum(poT)} qty on open purchase orders for these items expected by ${monthLabel(f.months[11])}.`)}
-    ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'#ff3d68':'#0fa08e',above.length?'#e0244f':'',`Items over forecast: ${fmtNum(above.length)} items with more on open sales orders than forecast in at least one month.`)}
+    ${tile('Open sales orders',fmtNum(soT),'same items, due by then','#0f172a','',`Open sales orders: ${fmtNum(soT)} qty due by ${monthLabel(f.months[11])}, past due included.`)}
+    ${tile('Open PO / CM',fmtNum(poT),'expected by then','#ffae1a','',`Open PO / CM: ${fmtNum(poT)} qty expected by ${monthLabel(f.months[11])}.`)}
+    ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'#ff3d68':'#0fa08e',above.length?'#e0244f':'',`Items over forecast: ${fmtNum(above.length)} items with more on order than forecast in a month.`)}
   </div>`;
   const spark=g=>{const mx=Math.max(1,...g.fc,...g.so);return `<span class="misc-fc-spark" aria-hidden="true">${g.fc.map((v,i)=>`<i style="height:${Math.max(v||g.so[i]>v?3:0,v/mx*22).toFixed(1)}px"${g.so[i]>v?' class="over"':''}></i>`).join('')}</span>`;};
   const open=!!tableMore['fc-items']||printMode;
