@@ -51,7 +51,10 @@ async function openBrowser(site) {
   return page;
 }
 const summary = (page) => page.run('({rows:allLoadedRows.length,value:allLoadedRows.reduce((s,r)=>s+r.amount,0),files:loadedFiles.map(f=>f.name),state:sharedReport.state})');
-const sidebar = (page) => page.els['app-sidebar'].innerHTML;
+// The sidebar is gone: the report state shows on the Data card in Settings (2v9). That card has no where-it-is-kept
+// line any more (owner: "Saved for everyone who signs in" / "Saved in this browser only" were dropped); only a save
+// that failed still says so.
+const dataCard = (page) => page.run('stgDataCard(0,null)');
 
 test('an upload is saved on the server and opens in another browser with the same numbers', async () => {
   const site = fakeSite();
@@ -61,13 +64,13 @@ test('an upload is saved on the server and opens in another browser with the sam
   await tick();
   assert.ok(site.calls.includes('PUT /api/report'));
   assert.equal(summary(mine).state, 'shared');
-  assert.match(sidebar(mine), /Saved for everyone who signs in/);
+  assert.doesNotMatch(dataCard(mine), /Saved for everyone|Not saved for others/);
 
   const theirs = await openBrowser(site);
   await theirs.ctx.restoreSavedReport();
   await tick();
   assert.deepEqual(summary(theirs), summary(mine));
-  assert.match(sidebar(theirs), /Saved for everyone who signs in/);
+  assert.doesNotMatch(dataCard(theirs), /Saved for everyone|Not saved for others/);
   // The copy from the server is also kept in that browser, for when the server cannot be reached.
   assert.deepEqual(Array.from(theirs.db.last, (f) => f.name), ['kpi_3.xls']);
 });
@@ -106,7 +109,7 @@ test('a host without server storage keeps the report in this browser only', asyn
   await page.run("shareQueue");
   await tick();
   assert.equal(summary(page).state, 'local');
-  assert.match(sidebar(page), /Saved in this browser only/);
+  assert.doesNotMatch(dataCard(page), /Saved in this browser|Not saved for others/);
 
   const next = await openBrowser(site);
   next.db.last = page.db.last;
@@ -115,14 +118,14 @@ test('a host without server storage keeps the report in this browser only', asyn
   assert.equal(summary(next).rows, 2);
 });
 
-test('a refused save says so in the sidebar', async () => {
+test('a refused save says so on the Settings Data card', async () => {
   const site = fakeSite({ status: 413 });
   const page = await openBrowser(site);
   await page.ctx.handleFiles([kpi(2)]);
   await page.run("shareQueue");
   await tick();
   assert.equal(summary(page).state, 'failed');
-  assert.match(sidebar(page), /Not saved for others/);
+  assert.match(dataCard(page), /<span class="warn-text">Not saved for others: [^<]+<\/span>/);
 });
 
 run();

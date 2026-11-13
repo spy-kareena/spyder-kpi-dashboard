@@ -457,15 +457,15 @@ test('one TrackNo field with several numbers: commas, &, + or "and", or two whol
   assert.equal(page.run("shipClean('Will Call')"), '');
 });
 
-test('Shipping has a first-visit hint (Stream A hints): dismissed once per browser, back with Show hints again, never in a snapshot', async () => {
+// The first-visit hint banners (Order Health, Shipping, load screen) and Show hints again were removed on purpose
+// (9ce2078): Shipping draws no hint card, live or in a snapshot, and the hint helpers are gone.
+test('Shipping has no first-visit hint banner (the hints were removed), live or in a snapshot', async () => {
   const page = await shipPage();
-  assert.match(html(page), /<div class="hint-card print-hide" role="note" aria-label="Hint" data-hint="shipping">[\s\S]*?click <strong>Check<\/strong>/);
-  page.run("dismissHint('shipping');renderResults()");
-  assert.doesNotMatch(html(page), /data-hint="shipping"/);
-  page.run('resetHints()');
-  assert.match(html(page), /data-hint="shipping"/);
+  assert.doesNotMatch(html(page), /hint-card|data-hint=/);
+  assert.equal(page.run('typeof dismissHint'), 'undefined');
+  assert.equal(page.run('typeof resetHints'), 'undefined');
   page.run('isSnapshotView=true;renderResults()');
-  assert.doesNotMatch(html(page), /data-hint="shipping"/);
+  assert.doesNotMatch(html(page), /hint-card|data-hint=/);
 });
 
 test('search covers export tracking numbers of every carrier, typed with or without spaces', async () => {
