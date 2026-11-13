@@ -34,15 +34,20 @@ test('Leading: the ship target sits over Status & top reasons in one column; Sta
   assert.match(col, /data-focus-key="mwm-dates" aria-expanded="false" onclick="toggleTableMore\('mwm-dates'\)"/);
   const sd = page.run('(()=>{const s=shipScenarioFor(currentMetrics());return [rowDocCount(s.pastOriginalDue),rowDocCount(s.onTrackWindow)]})()');
   assert.match(col, new RegExp(`<span class="dz-big sm[^"]*">${sd[0]} orders?</span><span class="dz-sub">past due`));
-  // Status & top reasons: no bar rows or tracks; each state is a button row, label left, orders right, filtering as before.
+  // Status & top reasons (2v6.9 redesign): Status is a thin segmented bar (one part per state with orders) over button
+  // rows with the share, open value, lines and orders; Top reasons is a heatmap of reasons by warehouse with the at
+  // risk value, lines and orders closing each row. Rows, parts and reason names filter as before.
   const status = col.slice(col.indexOf('Status &amp; top reasons'));
-  assert.doesNotMatch(status, /dz-barrow|ohl-track|<svg/);
-  const rows = [...status.matchAll(/<button type="button" class="ohl-kv[^"]*" data-focus-key="status-st-(\w+)" onclick="setWeeklyTileFilter\(&#39;st-\1&#39;\)" aria-pressed="(true|false)"/g)].map((m) => m[1]);
+  assert.match(status, /<div class="ohs2-bar" role="group" aria-label="Open orders by state">/);
+  const rows = [...status.matchAll(/<button type="button" class="ohs2-row[^"]*" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\((?:&#39;|')st-\1(?:&#39;|')\)"/g)].map((m) => m[1]);
   assert.deepEqual(rows, ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
-  assert.match(status, /<span class="ohl-kv-name">On track<\/span><span class="ohl-kv-sub"><span class="ohl-kv-sep"> · <\/span>\$[\d,]+ · \d+ lines?<\/span><\/span><span class="ohl-kv-lead" aria-hidden="true"><\/span><span class="ohl-kv-n">\d+ orders?<\/span>/);
+  assert.match(status, /<div class="ohs2-cols" aria-hidden="true"><span><\/span><span>Share<\/span><span>Open<\/span><span>Lines<\/span><span>Orders<\/span><\/div>/);
+  assert.match(status, /<span class="ohs2-name">On track<\/span>\s*<span class="ohs2-pct">\d+%<\/span><span class="ohs2-val">\$[\d.]+[KM]?<\/span><span class="ohs2-lines">\d+<\/span><span class="ohs2-n">\d+<\/span>/);
   assert.match(status, /<div class="ohl-sec-title">Status<\/div>[\s\S]*<div class="ohl-sec-title">Top reasons<\/div>/);
+  assert.match(status, /<table class="ohs2-heat">[\s\S]*<th scope="col" class="num">At risk<\/th><th scope="col" class="num">Lines<\/th><th scope="col" class="num">Orders<\/th>/);
+  assert.doesNotMatch(status, /ohs2-track|ohl-track|dz-barrow/);
   page.run("setWeeklyTileFilter('st-ontrack')");
-  assert.match(html(page), /data-focus-key="status-st-ontrack" onclick="[^"]*" aria-pressed="true"/);
+  assert.match(html(page), /data-focus-key="status-st-ontrack" aria-pressed="true"/);
   // Gone: the When flagged card and the Due this week tile under At risk (three tiles left).
   assert.doesNotMatch(h, />When flagged<\/h2>|data-focus-key="oh-age-/);
   const stats = [...h.matchAll(/class="dz-stat ohl-stat[^"]*" data-focus-key="tile-([\w-]+)"/g)].map((m) => m[1]);

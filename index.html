@@ -4046,6 +4046,71 @@ button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offs
 .ohs-st-sub{display:block;margin:2px 0 0 13px;font-size:11px;line-height:1.3;color:var(--dz-ink-5)} /* 13px = the dot (7px) + its gap (6px): under the word's first letter */
 @media (prefers-reduced-motion:reduce){.ohl-sd th .sort-arrow{transition:none}}
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
+/* 2v6.9 Status & top reasons redesign: a thin segmented bar (2px gaps, 4px ends) over rows with a swatch, the name, the
+   share, the open value and the orders; the reasons as ranked bars in one hue on a soft track. Rows filter the Lines card. */
+.ohs2-head{display:flex;align-items:baseline;justify-content:space-between;gap:4px 12px;flex-wrap:wrap}
+.ohs2-meta{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.ohs2-meta b{font-weight:600;color:var(--dz-ink-1)}
+.ohs2-crit{color:var(--dz-risk-text);font-weight:500}
+.ohs2-bar{display:flex;gap:2px;height:12px;margin:12px 0 6px}
+button.ohs2-seg{min-width:4px;padding:0;border:0;border-radius:2px;cursor:pointer;transition:opacity .16s ease,transform .16s ease}
+button.ohs2-seg:first-child{border-radius:4px 2px 2px 4px}button.ohs2-seg:last-child{border-radius:2px 4px 4px 2px}button.ohs2-seg:only-child{border-radius:4px}
+.ohs2-bar:has(.ohs2-seg.sel) .ohs2-seg:not(.sel){opacity:.35}
+button.ohs2-seg:hover{transform:scaleY(1.25)}
+button.ohs2-seg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.ohs2-cols,button.ohs2-row{display:grid;grid-template-columns:minmax(0,1fr) 46px 60px 44px 48px;align-items:center;gap:10px}
+.ohs2-cols{margin:6px -8px 0;padding:0 8px;font-size:11px;color:var(--dz-ink-5)} /* the rows' own -8px / 8px box, so headings sit over their numbers */
+.ohs2-cols span:not(:first-child){text-align:right}
+.ohs2-list{display:flex;flex-direction:column}
+button.ohs2-row{width:calc(100% + 16px);margin:0 -8px;padding:7px 8px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:14px;text-align:left;color:inherit;cursor:pointer;transition:background-color .16s ease}
+button.ohs2-row{grid-template-columns:auto minmax(0,1fr) 46px 60px 44px 48px}
+.ohs2-cols:not(.ohs2-rcols){grid-template-columns:minmax(0,1fr) 46px 60px 44px 48px}
+button.ohs2-row:hover{background:var(--dz-hover)}
+button.ohs2-row.sel{background:var(--dz-indigo-bg)}
+button.ohs2-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.ohs2-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;color:var(--dz-ink-1)}
+.ohs2-pct,.ohs2-val,.ohs2-rval,.ohs2-lines{text-align:right;font-size:13px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.ohs2-n{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+button.ohs2-row.crit .ohs2-n{color:var(--dz-risk-text)}
+button.ohs2-row.zero .ohs2-name,button.ohs2-row.zero .ohs2-n{color:var(--dz-ink-5)}
+/* Top reasons heatmap: one hue (indigo) mixed into the card colour by count, 2px card-colour gaps between cells, the
+   count printed in each (white on the darker half); totals on the right in the text inks. */
+.ohs2-heatwrap{margin:10px -2px 0;overflow-x:auto}
+table.ohs2-heat{width:100%;border-collapse:separate;border-spacing:2px;font-size:13px;font-variant-numeric:tabular-nums}
+.ohs2-heat thead th{padding:0 4px 4px;font-size:11px;font-weight:400;color:var(--dz-ink-5);text-align:center;white-space:nowrap}
+.ohs2-heat thead th.num{text-align:right}
+.ohs2-heat tbody th{padding:0;text-align:left;font-weight:500;width:auto}
+button.ohs2-rname{display:block;max-width:100%;margin:0;padding:6px 8px 6px 2px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--dz-ink-1);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:background-color .16s ease}
+button.ohs2-rname:hover{background:var(--dz-hover)}
+button.ohs2-rname.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+button.ohs2-rname:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+td.ohs2-hc{width:44px;min-width:36px;height:30px;padding:0 2px;border-radius:4px;background:color-mix(in oklab,var(--dz-indigo) var(--mix,0%),var(--dz-surface));color:var(--dz-ink-1);font-weight:600;text-align:center}
+td.ohs2-hc.dk{color:#fff}
+td.ohs2-hc.zero{background:var(--dz-fill-1);color:var(--dz-ink-6);font-weight:400}
+.ohs2-heat td.ohs2-rval,.ohs2-heat td.ohs2-lines,.ohs2-heat td.ohs2-n{width:52px;padding:0 0 0 6px;text-align:right}
+.ohs2-heat tr.sel td.ohs2-hc:not(.zero){box-shadow:inset 0 0 0 2px var(--dz-indigo-deep)}
+@media (forced-colors:active){td.ohs2-hc{forced-color-adjust:none;outline:1px solid CanvasText}}
+@media (max-width:420px){
+  .ohs2-cols{gap:6px}
+  button.ohs2-row{grid-template-columns:auto minmax(0,1fr) 34px 48px 34px 34px;gap:6px}
+  .ohs2-cols:not(.ohs2-rcols){grid-template-columns:minmax(0,1fr) 34px 48px 34px 34px}
+}
+@media (prefers-reduced-motion:reduce){button.ohs2-seg,button.ohs2-row,button.ohs2-rname{transition:none}button.ohs2-seg:hover{transform:none}}
+@media (forced-colors:active){button.ohs2-seg{forced-color-adjust:none;outline:1px solid CanvasText}}
+/* Customers at risk unit chart: one 8px square per open order (2px gaps, 2px corners), past due in the risk red, other
+   at-risk in amber, fine in a soft grey; the figures in text inks beside it; a legend under the list. */
+.ohc-list{gap:14px}
+.ohc-fig{flex:none;font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ohc-fig b{font-size:14px;font-weight:600;color:var(--dz-ink-1)}
+.ohc-strip{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px}
+.ohc-pips{display:flex;flex-wrap:wrap;gap:2px;min-width:0;max-width:calc(48 * 10px)}
+.ohc-pips i,.ohc-legend i{display:block;width:8px;height:8px;border-radius:2px;background:var(--dz-line-8)}
+.ohc-pips i.pd,.ohc-legend i.pd{background:var(--dz-risk)}
+.ohc-pips i.ar,.ohc-legend i.ar{background:var(--dz-amber)}
+.ohc-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:14px;font-size:11.5px;color:var(--dz-ink-4)}
+.ohc-legend span{display:inline-flex;align-items:center;gap:6px}
+.ohc-unit{margin-left:auto;color:var(--dz-ink-5)}
+@media (forced-colors:active){.ohc-pips i,.ohc-legend i{forced-color-adjust:none;outline:1px solid CanvasText}}
 /* 2v9:end pages */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
@@ -19562,26 +19627,59 @@ function ohlAtRiskCard(c){
 function ohlKvRow({label,sub,num,dot,tone,on,onclick,key,tip,zero}){
   return `<button type="button" class="ohl-kv${zero?' zero':''}${tone?` ${tone}`:''}${on?' sel':''}" data-focus-key="${key}" onclick="${esc(onclick)}" aria-pressed="${on}"${tipAttr(tip)}><span class="ohl-kv-l">${dot?`<i class="ohl-dot" style="background:${dot}" aria-hidden="true"></i>`:''}<span class="ohl-kv-name">${esc(label)}</span>${sub?`<span class="ohl-kv-sub"><span class="ohl-kv-sep"> · </span>${esc(sub)}</span>`:''}</span><span class="ohl-kv-lead" aria-hidden="true"></span><span class="ohl-kv-n">${esc(num)}</span></button>`;
 }
+// Status & top reasons (2v6.9 redesign, owner): Status is one whole (every open order in exactly one state), so a thin
+// segmented bar shows the split and the rows under it carry the figures (orders, share, open value); Top reasons are
+// ranked bars in one hue, largest first, each with its orders and value at risk. Every row and segment filters the
+// Lines card, as before.
 function ohlStatusCard(c){
   const {m,lead}=c;
+  const totO=lead.states.reduce((t,s)=>t+s.orders,0),totV=lead.states.reduce((t,s)=>t+s.value,0);
+  const pct=n=>totO?Math.round(n/totO*100):0;
+  const live=lead.states.filter(s=>s.orders);
+  const seg=live.map(s=>{
+    const id=`st-${s.id}`,on=weeklyTileFilter===id;
+    return `<button type="button" class="ohs2-seg${on?' sel':''}" style="flex-grow:${s.orders};background:${OHL_COLOR[s.id]}" data-focus-key="status-seg-${id}" aria-label="${esc(`${s.label}: ${ohN(s.orders,'order')}, ${pct(s.orders)}%`)}" aria-pressed="${on}" onclick="setWeeklyTileFilter('${id}')"${tipAttr(ohlTip(s.label,[`${ohN(s.orders,'order')} · ${pct(s.orders)}% of open`,`${money(s.value)} open`],on?'':'Click to list them.'))}></button>`;
+  }).join('');
   const statusRows=lead.states.map(s=>{
     const id=`st-${s.id}`,on=weeklyTileFilter===id;
-    return ohlKvRow({label:s.label,sub:ohlMoney(s.rows),num:ohN(s.orders,'order'),dot:OHL_COLOR[s.id],zero:!s.orders,tone:s.id==='pastdue'&&s.orders?'crit':'',
-      on,onclick:`setWeeklyTileFilter('${id}')`,key:`status-${id}`,
-      tip:ohlTip(s.label,[`${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}`,`${money(s.value)} open`,s.help],on?'':'Click to list them.')});
+    return `<button type="button" class="ohs2-row${s.orders?'':' zero'}${s.id==='pastdue'&&s.orders?' crit':''}${on?' sel':''}" data-focus-key="status-${id}" aria-pressed="${on}" onclick="setWeeklyTileFilter('${id}')"${tipAttr(ohlTip(s.label,[`${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}`,`${money(s.value)} open`,s.help],on?'':'Click to list them.'))}>
+      <i class="ohl-dot" style="background:${OHL_COLOR[s.id]}" aria-hidden="true"></i><span class="ohs2-name">${esc(s.label)}</span>
+      <span class="ohs2-pct">${pct(s.orders)}%</span><span class="ohs2-val">${esc(moneyShort(s.value))}</span><span class="ohs2-lines">${fmtNum(s.rows.length)}</span><span class="ohs2-n">${fmtNum(s.orders)}</span></button>`;
   }).join('');
+  // Top reasons (2v6.9, owner: no bars): a heatmap, the reasons down the side and the warehouses across (the four with
+  // the most of these orders, the rest as Other). Each cell is the at-risk orders for that reason there, one hue light to
+  // dark by count, its number printed; the totals (at risk, lines, orders) close each row. A line can carry several
+  // reasons, so a warehouse can count in more than one row.
   const reasons=ohlReasons(m).slice(0,5);
-  const reasonRows=reasons.map(r=>ohlKvRow({label:overrideLabel(r.label),sub:ohlMoney(r.rows),num:ohN(r.orders,'order'),
-    on:r.on,onclick:`setWeeklyReasonFilter(${dzJs(r.label)})`,key:`oh-reason-${esc(r.label)}`,
-    tip:ohlTip(overrideLabel(r.label),[`${ohN(r.orders,'order')}, ${ohN(r.lines,'line')}`,`${money(r.value)} at risk`],r.on?'':'Click to list them.')})).join('');
+  const riskO=Math.max(1,rowDocCount(c.d.risk.filter(ohIsSalesRow)));
+  const whOrders=new Map();
+  reasons.forEach(r=>r.rows.forEach(x=>{const w=rowWarehouse(x);if(!whOrders.has(w))whOrders.set(w,new Set());whOrders.get(w).add(`${x.sourceType||''}-${x.documentNumber||''}`);}));
+  const whRank=[...whOrders].sort((a,b)=>b[1].size-a[1].size||a[0].localeCompare(b[0])).map(x=>x[0]);
+  const cols=whRank.length>5?[...whRank.slice(0,4),'']:whRank; // '' = Other
+  const inCol=(w,col)=>col===''?!cols.slice(0,-1).includes(w):w===col;
+  const grid=reasons.map(r=>cols.map(col=>{const rows=r.rows.filter(x=>inCol(rowWarehouse(x),col));return {rows,orders:rowDocCount(rows)};}));
+  const maxC=Math.max(1,...grid.flat().map(x=>x.orders));
+  const shortWh=w=>w===''?'Other':(String(w).split(' - ').pop()||w);
+  const cellHtml=(r,col,x)=>{
+    if(!x.orders)return `<td class="ohs2-hc zero"${tipAttr(`${overrideLabel(r.label)} · ${col===''?'Other warehouses':ohlWhName(col)}: none`)}>·</td>`;
+    const k=x.orders/maxC,mix=Math.round(14+k*76),dark=mix>=78;
+    return `<td class="ohs2-hc${dark?' dk':''}" style="--mix:${mix}%"${tipAttr(ohlTip(`${overrideLabel(r.label)} · ${col===''?'Other warehouses':ohlWhName(col)}`,[`${ohN(x.orders,'order')}, ${ohN(x.rows.length,'line')}`,`${money(rowOpenAmount(x.rows))} at risk`]))}>${fmtNum(x.orders)}</td>`;
+  };
+  const reasonRows=reasons.map((r,i)=>`<tr${r.on?' class="sel"':''}><th scope="row"><button type="button" class="ohs2-rname${r.on?' sel':''}" data-focus-key="oh-reason-${esc(r.label)}" aria-pressed="${!!r.on}" onclick="${esc(`setWeeklyReasonFilter(${dzJs(r.label)})`)}"${tipAttr(ohlTip(overrideLabel(r.label),[`${ohN(r.orders,'order')} of ${fmtNum(riskO)} at risk (${Math.round(r.orders/riskO*100)}%)`,`${ohN(r.lines,'line')} · ${money(r.value)} at risk`],r.on?'':'Click to list them.'))}>${esc(overrideLabel(r.label))}</button></th>${cols.map((col,j)=>cellHtml(r,col,grid[i][j])).join('')}<td class="ohs2-rval">${esc(moneyShort(r.value))}</td><td class="ohs2-lines">${fmtNum(r.lines)}</td><td class="ohs2-n">${fmtNum(r.orders)}</td></tr>`).join('');
+  const heat=reasons.length?`<div class="ohs2-heatwrap"><table class="ohs2-heat"><caption class="sr-only">At-risk orders by reason and warehouse</caption>
+      <thead><tr><th scope="col"><span class="sr-only">Reason</span></th>${cols.map(col=>`<th scope="col" class="ohs2-wh"${tipAttr(col===''?'Every other warehouse':ohlWhName(col))}>${esc(shortWh(col))}</th>`).join('')}<th scope="col" class="num">At risk</th><th scope="col" class="num">Lines</th><th scope="col" class="num">Orders</th></tr></thead>
+      <tbody>${reasonRows}</tbody></table></div>`:'';
+  const pd=lead.states.find(s=>s.id==='pastdue');
   return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1"',
-    tip:'Each open order in one state, then the top at-risk reasons.',
-    body:`<div class="ohl-sec ohl-sec-first"><div class="ohl-sec-title">Status</div>
-        <div class="ohl-kvs" role="group" aria-label="Open orders by state">${statusRows}</div>
+    tip:'Status: every open order in one state\nTop reasons: the at-risk reasons, by orders\nClick a part or a row to list its lines.',
+    body:`<div class="ohl-sec ohl-sec-first"><div class="ohs2-head"><div class="ohl-sec-title">Status</div><span class="ohs2-meta"><b>${fmtNum(totO)}</b> open orders · ${esc(moneyShort(totV))}${pd&&pd.orders?` · <span class="ohs2-crit">${pct(pd.orders)}% past due</span>`:''}</span></div>
+        ${totO?`<div class="ohs2-bar" role="group" aria-label="Open orders by state">${seg}</div>`:''}
+        <div class="ohs2-cols" aria-hidden="true"><span></span><span>Share</span><span>Open</span><span>Lines</span><span>Orders</span></div>
+        <div class="ohs2-list" role="group" aria-label="Open orders by state, with figures">${statusRows}</div>
       </div>
-      <div class="ohl-sec"><div class="ohl-sec-title">Top reasons</div>
-        ${reasonRows?`<div class="ohl-kvs" role="group" aria-label="Top at-risk reasons by orders">${reasonRows}</div>`:'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
-        <div class="ohl-note ohl-foot-note">A line can have several reasons.</div>
+      <div class="ohl-sec"><div class="ohs2-head"><div class="ohl-sec-title">Top reasons</div><span class="ohs2-meta">At-risk orders by warehouse · <b>${fmtNum(riskO)}</b> in all</span></div>
+        ${heat||'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
+        <div class="ohl-note ohl-foot-note">A line can have several reasons, so an order can count in more than one row.</div>
       </div>`});
 }
 
@@ -19621,25 +19719,41 @@ function ohlDueCard(c){
       <div class="ohl-weeks" aria-hidden="true">${labels}</div>`:'<div class="empty-note ohl-empty">No open lines are due in the next eight weeks.</div>'});
 }
 
-// Customers at risk: orders first, with the value and lines under a thin bar. Click filters Order Health to the customer.
+// Customers at risk (2v6.9 redesign, owner: no bars): a unit chart per customer, one square per open order, measured
+// against that customer's own book: red past due, amber at risk otherwise, grey fine. The figures say "12 of 26 at
+// risk" and the open value at risk. One square stands for several orders only when a customer has more than 48 (the
+// legend then says so). Click filters Order Health to the customer, as before.
 function ohlCustomersCard(c){
-  const {d}=c;
+  const {d,oh,lead}=c;
+  const docKey=r=>`${r.sourceType||''}-${r.documentNumber||''}`;
+  const pastDocs=new Set(lead.states.find(s=>s.id==='pastdue').rows.map(docKey));
   const by=new Map();
-  d.risk.forEach(r=>{const k=rowCustomer(r);if(!by.has(k))by.set(k,{key:k,name:rowCustomerLabel(r),rows:[]});by.get(k).rows.push(r);});
-  const list=[...by.values()].map(x=>({...x,orders:rowDocCount(x.rows),value:rowOpenAmount(x.rows)}))
-    .sort((a,b)=>b.orders-a.orders||b.value-a.value||a.name.localeCompare(b.name)).slice(0,6);
-  const max=Math.max(1,...list.map(x=>x.orders));
+  d.risk.forEach(r=>{const k=rowCustomer(r);if(!by.has(k))by.set(k,{key:k,name:rowCustomerLabel(r),rows:[],risk:new Set()});const x=by.get(k);x.rows.push(r);x.risk.add(docKey(r));});
+  const openBy=new Map();
+  oh.allOrderRows.forEach(r=>{if(!r.isOpen||!ohIsSalesRow(r))return;const k=rowCustomer(r);if(!by.has(k))return;if(!openBy.has(k))openBy.set(k,new Set());openBy.get(k).add(docKey(r));});
+  const list=[...by.values()].map(x=>{
+    const open=new Set([...(openBy.get(x.key)||[]),...x.risk]);
+    const pd=[...x.risk].filter(k=>pastDocs.has(k)).length;
+    return {...x,orders:x.risk.size,pd,other:x.risk.size-pd,open:open.size,value:rowOpenAmount(x.rows)};
+  }).sort((a,b)=>b.orders-a.orders||b.value-a.value||a.name.localeCompare(b.name)).slice(0,6);
+  const unit=Math.max(1,Math.ceil(Math.max(1,...list.map(x=>x.open))/48));
+  const pips=x=>{
+    const n=Math.max(1,Math.round(x.open/unit)),pd=Math.round(x.pd/unit),ot=Math.min(n-pd,Math.round((x.pd+x.other)/unit)-pd);
+    return `${'<i class="pd"></i>'.repeat(pd)}${'<i class="ar"></i>'.repeat(Math.max(0,ot))}${'<i></i>'.repeat(Math.max(0,n-pd-Math.max(0,ot)))}`;
+  };
   const cur=weeklyCustomerFilter;
   const rows=list.map((x,i)=>{
-    const on=cur.length===1&&cur[0]===x.key;
-    return `<button type="button" class="ohl-cust${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.name,[`${ohN(x.orders,'order')}, ${ohN(x.rows.length,'line')}`,`${money(rowOpenAmount(x.rows))} at risk`],on?'':'Click to filter to it.'))}>
-      <span class="ohl-cust-top"><span class="ohl-cust-name"><span class="ohl-rank">${String(i+1).padStart(2,'0')}</span>${esc(x.name)}</span><span class="ohl-cust-n">${esc(ohN(x.orders,'order'))}</span></span>
-      <span class="ohl-cust-bar"><span class="ohl-track"><i class="dz-grow" style="width:${Math.max(x.orders/max*100,2).toFixed(1)}%;--i:${i}"></i></span><span class="ohl-cust-amt">${esc(ohlMoney(x.rows))}</span></span>
+    const on=cur.length===1&&cur[0]===x.key,share=x.open?Math.round(x.orders/x.open*100):0;
+    const said=`${x.name}: ${x.orders} of ${x.open} open orders at risk (${x.pd} past due)`;
+    return `<button type="button" class="ohl-cust ohc-row${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.name,[`${x.orders} of ${ohN(x.open,'open order')} at risk (${share}%)`,`${ohN(x.pd,'order')} past due`,`${ohN(x.rows.length,'line')} · ${money(x.value)} at risk`],on?'':'Click to filter to it.'))}>
+      <span class="ohl-cust-top"><span class="ohl-cust-name">${esc(x.name)}</span><span class="ohc-fig"><b>${fmtNum(x.orders)}</b> of ${fmtNum(x.open)} at risk</span></span>
+      <span class="ohc-strip"><span class="ohc-pips" role="img" aria-label="${esc(said)}">${pips(x)}</span><span class="ohl-cust-amt">${esc(moneyShort(x.value))} · ${esc(ohN(x.rows.length,'line'))}</span></span>
     </button>`;
   }).join('');
+  const legend=`<div class="ohc-legend" aria-hidden="true"><span><i class="pd"></i>Past due</span><span><i class="ar"></i>At risk</span><span><i></i>Fine</span><span class="ohc-unit">${unit>1?`Each square: ${unit} orders`:'Each square: 1 open order'}</span></div>`;
   return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
-    tip:'Customers with the most at-risk orders. Click to filter.',
-    body:rows?`<div class="ohl-list" role="group" aria-label="Customers at risk">${rows}</div>`:'<div class="empty-note">Nothing at risk in this view.</div>'});
+    tip:'Each customer\'s open orders, one square each\n• Red: past due\n• Amber: at risk otherwise\n• Grey: fine\nClick to filter to the customer.',
+    body:rows?`<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">${rows}</div>${legend}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
 // Ship target (2v6.9: on Order Health, Leading, above Status & top reasons; it was on Monthly): the scenario's range (this
