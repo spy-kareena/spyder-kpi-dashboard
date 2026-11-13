@@ -4013,6 +4013,20 @@ button.ohr-tile:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:
 @media (prefers-reduced-motion:reduce){button.ohr-tile{transition:none}}
 @media (forced-colors:active){.ohr-arc{forced-color-adjust:none;stroke:Highlight}}
 /* 2v9:end reasons-tiles */
+/* 2v9:kit-status */
+/* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
+.dz-stat.kit2{display:flex;flex-direction:column;gap:8px}
+.kit2-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1}
+button.kit2-half{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;margin:0;padding:6px 10px;border:0;border-radius:12px;background:transparent;font:inherit;text-align:left;color:inherit;cursor:pointer;transition:background-color .16s ease}
+button.kit2-half:hover{background:var(--dz-hover)}
+button.kit2-half.on{background:var(--dz-indigo-bg)}
+button.kit2-half:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.kit2-n{font-size:28px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.kit2-half.ok .kit2-n{color:var(--dz-teal-text,var(--dz-teal))}
+.kit2-half.warn .kit2-n{color:var(--dz-amber-text)}
+.kit2-l{font-size:12.5px;color:var(--dz-ink-4)}
+@media (prefers-reduced-motion:reduce){button.kit2-half{transition:none}}
+/* 2v9:end kit-status */
 /* 2v9:revise1 */
 /* Board revision (2v6.9): Purchase Order Health and Shipping space their cards like the rest of the board (16px, 14px
    on phones, as .dz-grid); week labels under a narrow column chart show every other week instead of clipping; Kits by
@@ -10663,13 +10677,12 @@ function poPairCardHtml({cls,label,icon,ico,mainKey,mainId,value,unit='',color='
 // rows. The card itself lists the Not clean lines.
 const KIT_TILES={kitclean:['Clean','ticked Kit Clean'],kitnotclean:['Not clean','not ticked Kit Clean yet']};
 function kitCardHtml(cleanRows,notRows,sel){
+  // 2v6.9 (owner): "Kit Status", only the two numbers: Clean and Not clean (each lists its lines). Same two-column slot.
   const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
-  const n=notRows.length,amt=rowOpenAmount(notRows);
-  const tipOf=(id,rows)=>{const [label]=KIT_TILES[id];return `Kits ${label.toLowerCase()}: ${supLines(rows.length)} · ${pos(rows)} · ${money(rowOpenAmount(rows))} open. ${sel===id?'Listed below.':'Click to list them.'}`;};
-  return poPairCardHtml({cls:'kit-stat kit-card',label:'Kits',icon:'box',ico:'var(--dz-amber)',mainKey:'kits',mainId:'kitnotclean',
-    value:n,unit:n===1?'line':'lines',color:n?'var(--dz-amber-text)':'',sub:`${moneyShort(amt)} · ${pos(notRows)}`,sel,
-    tip:`Kits: ${supLines(n)} not clean yet\n• ${pos(notRows)} · ${money(amt)} open\n• ${fmtNum(cleanRows.length)} clean\nClick to list them.`,
-    rows:[{id:'kitclean',label:'Clean',n:cleanRows.length,tip:tipOf('kitclean',cleanRows)},{id:'kitnotclean',label:'Not clean',n,tone:n?'amber':'',tip:tipOf('kitnotclean',notRows)}]});
+  const half=(id,label,rows,tone)=>{const on=sel===id;
+    return `<button type="button" class="kit2-half ${tone}${on?' on':''}" data-focus-key="potile-${id}" aria-pressed="${on}" onclick="setPoTileFilter('${id}')"${tipAttr(`Kits ${label.toLowerCase()}: ${supLines(rows.length)} · ${pos(rows)} · ${money(rowOpenAmount(rows))} open\n${on?'Listed below.':'Click to list them.'}`)}><span class="kit2-n">${fmtNum(rows.length)}</span><span class="kit2-l">${esc(label)}</span></button>`;};
+  const on=sel==='kitclean'||sel==='kitnotclean';
+  return `<div class="dz-stat kit-stat kit-card kit2 po-pair po-risk${on?' sel':''}" role="group" aria-label="Kit Status"><span class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:var(--dz-amber)">${dzIconSvg('box')}</span>Kit Status</span><div class="kit2-row">${half('kitclean','Clean',cleanRows,'ok')}${half('kitnotclean','Not clean',notRows,notRows.length?'warn':'ok')}</div></div>`;
 }
 // Unconfirmed · Missing price (it was two cards): the POs with an unconfirmed or unpriced open line, each PO once
 // (amber while any, teal at none, as the two cards were); Unconfirmed / Missing price rows with their POs. The card
@@ -15950,7 +15963,7 @@ function dzCollapsedMap(){
 // 30d, '27) is left as it is, so names and codes never change. Runs on the text only; aria-labels and tips keep theirs.
 const DZ_TC_SEL=['.dz-title','.ohl-sec-title','.ohl-sec-sub','.section-title','.need-title','.misc-need-title','.sup-need-title','.stg-subt',
   '#results-screen h1','#results-screen h2','#results-screen h3','#results-screen thead th','.dz-th>span','.ohl-sup-th>span','.ohs2-cols>span',
-  '.dz-stat-l','.sup-tile-l','.shp-tile-l','.ohl-tile-l','.ohl-stat-l','.misc-tile-l','.mwm-kpi-l','.kpi-label','.stat-label','.ohl-fig-l','.po-pair-row .po-own-name'].join(','); // metric rows, not PO At Risk's owner names (people's names stay as typed)
+  '.dz-stat-l','.sup-tile-l','.shp-tile-l','.ohl-tile-l','.ohl-stat-l','.misc-tile-l','.mwm-kpi-l','.kpi-label','.stat-label','.ohl-fig-l','.po-pair-row .po-own-name','.kit2-l'].join(','); // metric rows, not PO At Risk's owner names (people's names stay as typed)
 const DZ_TC_MINOR=new Set(['a','an','the','and','but','or','nor','for','so','yet','as','at','by','in','of','off','on','per','to','up','via','vs','from','with','into']);
 function dzTitleCaseWords(words){
   // words: [{t, seg}] in order; seg = the part it belongs to. First and last word of each part always get a capital.

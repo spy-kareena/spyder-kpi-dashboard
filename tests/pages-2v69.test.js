@@ -121,10 +121,10 @@ test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirme
   assert.doesNotMatch(h, /data-focus-key="potile-duethisweek"|This week focus/);
   // Kits: the Not clean count, Clean / Not clean rows.
   assert.equal((h.match(/class="dz-stat kit-stat kit-card/g) || []).length, 1);
-  assert.match(h, /<div class="dz-stat kit-stat kit-card po-pair po-risk" role="group" aria-label="Kits"><button type="button" class="po-risk-main" data-focus-key="potile-kits" onclick="setPoTileFilter\('kitnotclean'\)" aria-pressed="false"/);
-  assert.match(h, /Kits<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">4<span class="po-unit">lines<\/span>/);
-  assert.match(h, /data-focus-key="potile-kitclean" aria-pressed="false" onclick="setPoTileFilter\('kitclean'\)"[^>]*><span class="po-own-name">Clean<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">0<\/span>/);
-  assert.match(h, /data-focus-key="potile-kitnotclean" aria-pressed="false" onclick="setPoTileFilter\('kitnotclean'\)"[^>]*><span class="po-own-name">Not clean<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">4<\/span>/);
+  // 2v6.9 (owner): "Kit Status" shows only two numbers, Clean and Not clean; each lists its lines.
+  assert.match(h, /<div class="dz-stat kit-stat kit-card kit2 po-pair po-risk" role="group" aria-label="Kit Status">[\s\S]*?Kit Status<\/span><div class="kit2-row">/);
+  assert.match(h, /data-focus-key="potile-kitclean" aria-pressed="false" onclick="setPoTileFilter\('kitclean'\)"[^>]*><span class="kit2-n">0<\/span><span class="kit2-l">Clean<\/span>/);
+  assert.match(h, /data-focus-key="potile-kitnotclean" aria-pressed="false" onclick="setPoTileFilter\('kitnotclean'\)"[^>]*><span class="kit2-n">4<\/span><span class="kit2-l">Not clean<\/span>/);
   // Unconfirmed · Missing price: three POs (502 once), rows Unconfirmed 2 and Missing price 2; the old cards are gone.
   assert.doesNotMatch(h, /<button type="button" class="dz-stat"[^>]*data-focus-key="potile-(unconfirmed|missingprice)"/);
   assert.match(h, /<div class="dz-stat po-follow po-pair po-risk" role="group" aria-label="Unconfirmed · Missing price"><button type="button" class="po-risk-main" data-focus-key="potile-followup" onclick="setPoTileFilter\('followup'\)" aria-pressed="false"[^>]*><span class="dz-stat-l dz-ico-l">[\s\S]*?Unconfirmed · Missing price<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">3<\/span><span class="dz-stat-s">\$3K · 3 lines<\/span>/);
@@ -146,8 +146,8 @@ test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirme
   assert.doesNotMatch(h, /Missing price · 2 lines/);
   page.run("setPoTileFilter('kitclean')");
   h = html(page);
-  assert.match(h, /class="dz-stat kit-stat kit-card po-pair po-risk sel"/);
-  assert.match(h, /class="po-own po-pair-row on" data-focus-key="potile-kitclean" aria-pressed="true"/);
+  assert.match(h, /class="dz-stat kit-stat kit-card kit2 po-pair po-risk sel"/);
+  assert.match(h, /class="kit2-half ok on" data-focus-key="potile-kitclean" aria-pressed="true"/);
   assert.deepEqual(page.errors, []);
 });
 
