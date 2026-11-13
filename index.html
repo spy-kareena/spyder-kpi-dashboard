@@ -14948,7 +14948,7 @@ function mwmRenderMetrics(m,legacy){
     {k:'days',label:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',sub:'Late deliveries only',tip:'Average days late, late deliveries only.'},
     {k:'hit',label:'Reschedule hit',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,color:'var(--dz-amber)',sub:'Shipped by the new date',tip:'Shipped by the reschedule date.'}
   ];
-  // 2v6.9 (owner): no Fill rate tile (the Monthly metrics table keeps its column).
+  // 2v6.9 (owner): no Fill rate tile, and no Fill rate column in the Monthly metrics table.
   const kpis=defs.filter(c=>c.k!=='fill').map((c,i)=>{
     const series=mo.map(r=>r[c.k]);
     const cur=series[L],prev=series[L-1];
@@ -14991,17 +14991,16 @@ function mwmRenderMetrics(m,legacy){
   const causes=`<div class="mwm-kpi mwm-kpi-cause dz-fade" style="--i:${defs.length-1}"${tipAttr(ohlTip(`Late orders by cause, ${lateMonth}: ${fmtNum(x.lateOrders)}`,['By the first reason on the late delivery']))}>
       <div class="mwm-kpi-l">Late orders by cause</div>
       ${shownCauses.length?`<ul class="mwm-causes">${shownCauses.map(([label,c,more])=>`<li${tipAttr(more?ohlTip(`Other: ${mwmOrders(c)}`,more.map(([l,n])=>`${l}: ${fmtNum(n)}`)):`${label}: ${mwmOrders(c)} of ${fmtNum(x.lateOrders)} late in ${lateMonth}.`)}><span class="mwm-cause-l">${esc(label)}</span><b class="mwm-cause-v">${fmtNum(c)}</b></li>`).join('')}</ul>`:'<p class="mwm-kpi-s">No late orders.</p>'}
-      <div class="mwm-kpi-s">${fmtNum(x.lateOrders)} late ${x.lateOrders===1?'order':'orders'} in ${esc(lateMonth)}</div>
     </div>`;
-  const cols='minmax(0,1.1fr) repeat(7,minmax(0,1fr))';
+  const cols='minmax(0,1.1fr) repeat(6,minmax(0,1fr))'; // owner: no Fill rate column
   // Newest first, 10 months a page; a new range or filter starts at page 1.
   const metPg=dzPageOf('mwm-metric-months',[...slice(mo)].reverse().map((r,ri)=>({r,ri})),JSON.stringify([mwmRange,weeklyFilterKey()]),DZ_MONTH_PAGE);
   const table=dzCard({title:'Monthly metrics',span:6,
     body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Monthly metrics" class="mwm-table wide" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
-      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[1].tip)}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num">Orders shipped</span><span role="columnheader" class="dz-num"${tipAttr(defs[0].tip)}>On time</span><span role="columnheader" class="dz-num"${tipAttr(defs[2].tip)}>Perfect order</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[3].tip)}>Avg days late</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr(defs[4].tip)}>Resched hit</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
       ${metPg.rows.map(({r,ri})=>{
         const cur=ri===0&&slice(mo).length&&r===mo[11];
-        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.fill)}</span><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
+        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}</span><b role="cell" class="dz-num">${fmtNum(r.orders)}</b><b role="cell" class="dz-num" style="color:${mwmRateColor(r.otd)}">${mwmPct(r.otd)}</b><span role="cell" class="dz-num mwm-soft">${mwmPct(r.perfect)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${r.days===null?'—':r.days.toFixed(1)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(r.hit)}</span><span role="cell" class="dz-num ${r.lateOrders?'mwm-lateN':'mwm-soft'}">${fmtNum(r.lateOrders)}</span></div>`;
       }).join('')}
     </div></div>${dzPageFoot('mwm-metric-months',metPg,'Monthly metrics','months')}`});
   return wrap(`<div class="mwm-kpis">${kpis}${causes}</div><div class="dz-grid">${line}${table}</div>${mwmMore('mwm-metrics','order quality, open value by due month and lines needing attention',legacy,'Covers the whole report.')}`);

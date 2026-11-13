@@ -249,7 +249,7 @@ test('Fill rate and On-track rate show no made-up 0% when no sales-order lines a
   const so = await loaded([sapRow({ DocumentNumber: '1' })]);
   so.run('setTab("metrics")');
   m = metrics(html(so));
-  // (Fill rate left the Metrics tiles, owner; the Monthly metrics table keeps it: 0% for the month, not a blank.)
+  // (Fill rate left the Metrics tiles and the Monthly metrics table, owner.)
   assert.doesNotMatch(m, /<div class="mwm-kpi-l">Fill rate<\/div>/);
   assert.match(m, /<div class="mwm-kpi-l">On-time delivery<\/div>/);
   assert.match(m, /<span class="kpi-label">On-track rate<\/span><span class="kpi-tag">target 90%<\/span><\/div>\s*<span class="kpi-value crit"[^>]*>0%<\/span>/);
