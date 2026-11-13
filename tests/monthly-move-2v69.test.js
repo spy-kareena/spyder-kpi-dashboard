@@ -106,7 +106,7 @@ test('Monthly is hidden by default, setTab and a stored page open Lagging; Hidde
   assert.equal(page.run('activeTab'), 'weekly');
   assert.equal(page.run('weeklyView'), 'lagging');
   // Lagging's detail grid, the Trend card first (it keeps the id the Metrics link scrolls to).
-  assert.match(html(page), /<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend">/);
+  assert.match(html(page), /<div class="dz-grid ohg-detail"><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2<\/span><h2 class="ohl-q-t" data-tc-skip>Which Way Is It Heading, and Why\?<\/h2><\/div><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend">/);
   page.run("setWeeklyView('leading');activeTab='monthly';renderResults()");
   assert.deepEqual(page.run('[activeTab,weeklyView]'), ['weekly', 'lagging'], 'a stored Monthly page opens Lagging');
   // Settings > Hidden Pages still lists Monthly (off); turning it on brings the page back as it was.
@@ -631,7 +631,7 @@ test('Print draws both views with their sections, the ship target calendar open;
   const page = await loaded();
   page.run("ohgSetTrendMetric('days');printMode=true;renderResults()");
   const h = html(page);
-  assert.match(h, /id="oh-panel-leading"[\s\S]*<section class="dz-card dz-span-6 ohl-card ohl-months [^>]*aria-label="Lists">[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
+  assert.match(h, /id="oh-panel-leading"[\s\S]*<section class="dz-card dz-span-6 ohl-card ohl-months [^>]*aria-label="Lists">[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2<\/span><h2 class="ohl-q-t" data-tc-skip>Which Way Is It Heading, and Why\?<\/h2><\/div><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
   // Paper opens both folds of Leading's Delivery months card (nothing is stored for it), with every row and no pager;
   // the fold chevrons are hidden. The bar chart is not on Leading's paper either.
   const f = folds(leading(h));

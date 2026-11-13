@@ -53,7 +53,9 @@ async function loadedAll() {
 // Quarterly it is four cards, Trend, Month by month, By warehouse and Booked vs shipped, with no page groups; its
 // Metrics and Shipments groups are gone.)
 const PAGE_LAYOUT = {
-  purchaseorders: { cards: ['Received on time', 'Vendors with the most late POs', 'Kits by CM and month', 'PO lines'], groups: [] },
+  // Purchase Order Health, Version 1 (owner's pick): the strip and PO At Risk, then Received on time (the vendors list
+  // inside it) and Kits (Kit Status, Build Risk and Kits by CM and month inside it), then PO lines.
+  purchaseorders: { cards: ['Where the open POs stand', 'PO At Risk', 'Received on time', 'Kits', 'PO lines'], groups: [] },
   buildrisk: { cards: ['Builds by month', 'Blocking builds', 'Orders at risk or late'], groups: [] },
   supplyweekly: { cards: ['Coverage', 'Short items by warehouse and month'], groups: [] },
   supplydemand: { cards: ['Demand by item group and month', 'Least covered', 'Demand by warehouse', 'Item groups'], groups: [] },
@@ -112,6 +114,11 @@ test('every page is a set of named cards (and named groups where it has sections
     assert.doesNotMatch(h, /class="section-title"/, `${tab}: an old section heading is left`);
     assert.doesNotMatch(h, /NaN|undefined|\[object Object\]/, tab);
   }
+  // Purchase Order Health: the vendors list and Kits by CM and month are no longer cards of their own; they are
+  // sections of the Received on time and Kits cards. The page reads as four questions.
+  const po = open(page, 'purchaseorders');
+  assert.deepEqual([...po.matchAll(/<div class="po-sec[^"]*"[^>]*><div class="ohs2-head"><div class="ohl-sec-title"[^>]*>([^<]+)</g)].map((m) => m[1]), ['Vendors with the most late POs', 'Kits by CM and month']);
+  assert.deepEqual([...po.matchAll(/<h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2>/g)].map((m) => m[1]), ['What Is Open, and What Needs Attention?', 'Are Vendors Delivering on Time?', 'Are the Kits Ready?', 'Which Lines?']);
   // Lagging (the page setTab('metrics') opens): Trend is the card other pages link to (id="ohg-metrics"), full width
   // like Month by month; By warehouse and Booked vs shipped share the last row. What left Lagging is still on the
   // Monthly page (its cards above): Orders shipped by month and Monthly's own Month by month.
@@ -136,8 +143,11 @@ test('at most three cards in a row: the pages are 6-column grids whose cards spa
   for (const tab of Object.keys(PAGE_LAYOUT).filter((t) => t !== 'search' && t !== 'shipping')) {
     const h = open(page, tab);
     assert.doesNotMatch(h, /class="grid-5\b/, tab);
-    const cards = [...h.matchAll(/<section class="dz-card([^"]*)"/g)].map((m) => m[1]);
+    // Purchase Order Health's two middle cards sit each in a question column (div.po-qcol.dz-span-3) that holds the
+    // question heading over the card; the column carries the span.
+    const cards = [...h.matchAll(/(<div class="po-qcol dz-span-3"><div class="ohl-q">[\s\S]*?<\/div>)?<section class="dz-card([^"]*)"/g)].map((m) => (m[1] ? ' dz-span-3 (column)' : '') + m[2]);
     assert.ok(cards.length && cards.every((c) => /\bdz-span-[2346]\b/.test(c)), `${tab}: ${cards.join(' | ')}`);
+    if (tab === 'purchaseorders') assert.deepEqual(cards.map((c) => c.match(/dz-span-\d/)[0]), ['dz-span-4', 'dz-span-2', 'dz-span-3', 'dz-span-3', 'dz-span-6']);
   }
   // Paper keeps the 6 columns (print rule).
   assert.match(CSS, /@media print\{[\s\S]*?\n  \.dz-grid\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\);gap:\.1in\}/);
@@ -151,9 +161,12 @@ test('the numbers on the cards are the same numbers the pages computed before', 
   let h = open(page, 'purchaseorders');
   const po = page.run('(()=>{const d=poData(currentMetrics());return {late:money(rowOpenAmount(d.poLateRows)),lateLines:d.poLateRows.length,latePos:rowDocCount(d.poLateRows),unconf:d.poUnconfirmedRows.length,open:d.poAllOpenRows.length,openPos:rowDocCount(d.poAllOpenRows),openValue:money(rowOpenAmount(d.poAllOpenRows))};})()');
   assert.deepEqual([po.late, po.lateLines, po.latePos, po.unconf, po.open, po.openPos, po.openValue], ['$4,400', 1, 1, 1, 3, 3, '$6,400']);
-  const tile = (key) => h.match(new RegExp(`data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">[\\s\\S]*?<span class="(?:sup|dz)-tile-v[^"]*"[^>]*>(\\d+)|data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">`)).filter(Boolean).slice(1);
-  assert.deepEqual(tile('late'), [`Late / missed commit: ${po.latePos} PO past their date\n• ${po.lateLines} line · 10 qty\n• ${po.late} open\nClick to list them.`, String(po.latePos)]);
-  assert.deepEqual(tile('allopen'), [`Open POs: ${po.openPos} POs open in view\n• ${po.open} lines · 30 qty\n• ${po.openValue} open\nClick to list them.`, String(po.openPos)]);
+  // Version 1 (Joined Strip): each tile is now a step of "Where the open POs stand": its count, its share of the open
+  // POs, and its lines (no money; the value is in the tip).
+  const tile = (key) => h.match(new RegExp(`data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">[\\s\\S]*?<span class="po-step-v[^"]*">(\\d+)</span>[\\s\\S]*?<span class="po-step-of">([^<]*)</span><span class="po-step-s">([^<]*)</span>`)).slice(1);
+  assert.deepEqual(tile('late'), [`Late / missed commit: ${po.latePos} PO past their date\n• ${po.lateLines} line · 10 qty\n• ${po.late} open\nClick to list them.`, String(po.latePos), '33% of open POs', `${po.lateLines} line`]);
+  assert.deepEqual(tile('allopen'), [`Open POs: ${po.openPos} POs open in view\n• ${po.open} lines · 30 qty\n• ${po.openValue} open\nClick to list them.`, String(po.openPos), 'every open PO', `${po.open} lines`]);
+  assert.match(h, new RegExp(`each bar is a share of the <b>${po.openPos}</b> open POs`));
   assert.match(h, new RegExp(`data-focus-key="potile-unconfirmed"[^>]*data-tip="Unconfirmed: ${po.unconf} PO not confirmed by the vendor`));
   // The PO lines card lists the late card's lines (the default pick), its chip the PO count.
   assert.match(h, new RegExp(`<h2 class="dz-title"[^>]*>PO lines</h2><span class="dz-chip red">${po.latePos} PO</span>`));

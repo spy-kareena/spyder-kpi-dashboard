@@ -532,10 +532,13 @@ test('Sales Order Health reads as cards in a set order: Leading is four question
   // with their tiles, charts, month cards and shipped-to-date strip, are gone).
   assert.deepEqual(cardNames(lag), ['Monthly', 'Quarterly', 'Trend', 'Month by month', 'By warehouse', 'Booked vs shipped']);
   assert.deepEqual(groups(lag), []);
+  // Lagging reads as questions: one over the period cards, one over each of Trend, Month by month and the last row.
+  assert.deepEqual([...lag.matchAll(/<div class="ohl-q([^"]*)"><span class="ohl-q-n" aria-hidden="true">(\d)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2>/g)].map((m) => [m[1], m[2], m[3]]),
+    [[' solo', '1', 'How Did We Do?'], [' dz-span-6', '2', 'Which Way Is It Heading, and Why?'], [' dz-span-6', '3', 'How Did Each Month Go?'], [' dz-span-6', '4', 'Who Shipped It, and What Is Still Open?']]);
   assert.doesNotMatch(lag, /class="pg-group|id="ohg-shipments"|class="mwm-kpi[ "]|month-card|month-spot|mini-strip/);
   // Trend (the card setTab('metrics') scrolls to) and Month by month run the full width; the last two share a row.
   assert.deepEqual([...lag.matchAll(/<section class="dz-card (dz-span-\d)/g)].map((x) => x[1]), ['dz-span-3', 'dz-span-3', 'dz-span-6', 'dz-span-6', 'dz-span-3', 'dz-span-3']);
-  assert.match(lag, /<\/section><\/div><div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title"[^>]*>Trend<\/h2><div class="ohgt-chips" role="group" aria-label="Metric">/);
+  assert.match(lag, /<\/section><\/div><div class="dz-grid ohg-detail"><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2<\/span><h2 class="ohl-q-t" data-tc-skip>Which Way Is It Heading, and Why\?<\/h2><\/div><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title"[^>]*>Trend<\/h2><div class="ohgt-chips" role="group" aria-label="Metric">/);
   // The cards carry this export's numbers. Its four deliveries all shipped in August (one early, one on time, one 2
   // and one 5 days late: 50% on time, 3.5 days late on average, 2 late orders, $3,000); nothing has shipped in
   // September, so August is the newest month with orders and By warehouse (this month) is empty.
