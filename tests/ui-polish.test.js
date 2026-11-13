@@ -724,7 +724,7 @@ test('Top offenders: four choices fit a phone card; the waffle blocks stand out 
 
 test('shadcn look: zinc tokens, 12/8/8 radii, one focus ring, Inter with a fallback, motion guard, compact print', () => {
   const root = CSS.match(/:root\{([\s\S]*?)\}/)[1];
-  for (const t of ['--gray-900:#18181b', '--gray-200:#e4e4e7', '--gray-100:#f4f4f5', '--gray-50:#fafafa', '--r-card:12px', '--r-ctl:8px', '--r-btn:8px', '--ring:var(--accent)']) assert.ok(root.includes(t), t);
+  for (const t of ['--gray-900:#0c1a2c', '--gray-200:#dde6ee', '--gray-100:#eef4fa', '--gray-50:#f6f9fc', '--r-card:12px', '--r-ctl:8px', '--r-btn:8px', '--ring:var(--accent)']) assert.ok(root.includes(t), t);
   assert.match(root, /--font:'Inter',ui-sans-serif,system-ui,/);
   assert.match(HTML, /<link href="https:\/\/fonts\.googleapis\.com\/css2\?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">/);
   assert.match(CSS, /:focus-visible\{outline:2px solid var\(--ring\);outline-offset:2px\}/);
