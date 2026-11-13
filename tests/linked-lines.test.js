@@ -339,11 +339,13 @@ test('an override redraws Order Health without building other pages\' aggregates
   page.run('parseDate=realParse');
 
   page.run("stgSet('hiddenPages',[])"); // 2v6.9: Warehouses is hidden by default; Settings > Hidden Pages brings it back
-  const pages = { groupByMonth: 'monthly', groupByOriginalHeaderMonth: 'monthly', buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
-  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
+  // 2v9: Order Health Leading shows Monthly's sections, so it builds the month groups (once per metrics object).
+  const pages = { buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
+  page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'groupByMonth', 'groupByOriginalHeaderMonth', 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
   page.run(`updateRowOverride(${JSON.stringify(keyOf(page, '1000'))},'status','Urgent')`);
   page.run('selectAllLinked(true);linkedBulkStatus="Hold";applyLinkedOverride()');
-  assert.deepEqual(page.run('built'), {});
+  assert.deepEqual(page.run('built'), { groupByMonth: 2, groupByOriginalHeaderMonth: 2 }, 'two redraws, two metrics objects');
+  page.run('built={}');
   // Each page builds what it shows on first view, once per metrics object, with the same numbers as before.
   for (const [fn, tab] of Object.entries(pages)) {
     page.run(`setTab('${tab}');renderResults()`);

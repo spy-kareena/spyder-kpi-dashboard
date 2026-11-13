@@ -130,6 +130,7 @@ test('every tab renders without errors or leaked undefined/NaN text', async () =
     sapRow({ SourceType: 'Purchase Order', KPIArea: 'Purchase Orders', OrderType: 'PO Receipt', DocumentNumber: '40', Status: 'Closed', KPIStatus: 'Closed', ClosedDate: '08/14/2026', CloseDateSource: 'Receipt', DeliveryDocNumber: '88', OpenQuantity: '0' }),
   ];
   await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
+  page.run("stgTogglePage('monthly')"); // 2v9: Monthly starts hidden; shown again it still renders
   for (const tab of ['weekly', 'purchaseorders', 'supplyweekly', 'monthly', 'warehouses', 'metrics', 'supplydemand']) {
     page.run(`setTab(${JSON.stringify(tab)})`);
     const text = page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ');
@@ -148,6 +149,7 @@ test('export values are HTML-escaped (no markup injection from SAP text)', async
   const page = loadPage();
   const evil = '<img src=x onerror=alert(1)>\'";</script>';
   await upload(page, [{ name: 'e.xls', bytes: sapExport([sapRow({ CustomerVendorName: evil, 'Item No.': evil, Warehouse: evil, DocumentDate: '07/01/2026', DueDate: '08/01/2026' })]) }]);
+  page.run("stgTogglePage('monthly')"); // 2v9: Monthly starts hidden; shown again it still renders
   for (const tab of ['weekly', 'monthly', 'warehouses', 'metrics']) {
     page.run(`weeklyTileFilter='allorders';setTab(${JSON.stringify(tab)})`);
     assert.doesNotMatch(page.els['results-screen'].innerHTML, /<img src=x/, `tab ${tab}`);

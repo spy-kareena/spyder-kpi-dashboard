@@ -71,7 +71,8 @@ test('Lagging: Monthly and Quarterly only (no Top offenders), five tiles each (n
   assert.deepEqual(cards, [['Monthly', five], ['Quarterly', five]]);
   assert.doesNotMatch(h, /class="dz-stat ohg-tile" data-tip="Fill rate|data-tip="(Monthly|Quarterly): orders shipped[^"]*Fill rate/);
   assert.match(HTML, /\.ohg-tiles>\.ohg-tile:nth-child\(n\+4\)\{grid-column:span 3\}/);
-  page.run("setTab('monthly')");
+  // 2v9: Monthly starts hidden (its sections are on Sales Order Health); shown again, it still has no ship target.
+  page.run("stgTogglePage('monthly');setTab('monthly')");
   for (const mode of ['shipped', 'booked']) {
     page.run(`mwmSetMode('${mode}')`);
     const h = html(page);

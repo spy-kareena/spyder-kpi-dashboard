@@ -115,6 +115,7 @@ test('the bridge fixture and every edge value load through Live SAP with the sam
 test('every page shows the same report from the bridge as from the Query Manager export, with no broken values', async () => {
   const live = await livePage(bridgeText);
   const qm = await importPage([{ name: 'export.xls', bytes: queryManager(bridgeText) }]);
+  for (const p of [live, qm]) p.run("stgTogglePage('monthly')"); // 2v9: Monthly starts hidden; shown again it still renders
   for (const tab of ['weekly', 'purchaseorders', 'supplyweekly', 'monthly', 'warehouses', 'metrics', 'supplydemand', 'buildrisk', 'search']) {
     const html = (page) => { page.run(`searchQuery=${tab === 'search' ? "'Café'" : "''"};setTab(${JSON.stringify(tab)})`); return page.els['results-screen'].innerHTML; };
     const a = html(live), b = html(qm);
