@@ -48,18 +48,22 @@ browser keeps that choice).
   `refresh=1`), so SAP is asked at most once per 5 minutes however many people have the page open. A read that falls
   due while the tab is hidden happens when it is shown again. If SAP sent the same text as before nothing is reloaded
   (filters, scroll and open lists stay); new data reloads in place, on the same page with the same filters.
-- **Refresh now** (in the export-date popover and in Settings → Data Source) reads SAP at once and skips the cache. The
-  bridge allows one such read every 30 seconds; a second one sooner gets the result just read.
-- **The dot** left of the export date: green with a slow pulse when the last read worked (tip: "Live · updated 2 min
-  ago"), red when it did not ("Disconnected · showing data from 10:42", or "SAP not reachable" when the bridge sent its
-  last good result because HANA could not be read: `X-Stale: 1`). No dot in import mode. With reduced motion it does
-  not pulse.
+- **Refresh now** (the circular-arrows icon in the export-date popover, and Settings → Data Source) reads SAP at once
+  and skips the cache. The bridge allows one such read every 30 seconds; a second one sooner gets the result just read.
+  In the popover the arrows turn while SAP is read and the popover stays open, so the status line shows the result.
+- **The live mark** left of the export date (on tablets and phones, on the date icon's corner): a short pipe with a
+  green pulse running along it when the last read worked (tip: "Live · updated 2 min ago"), red and still when it did
+  not ("Disconnected · showing data from 10:42", or "SAP not reachable" when the bridge sent its last good result
+  because HANA could not be read: `X-Stale: 1`). No mark in import mode. With reduced motion the green pulse stands
+  still. The popover's "Live SAP" label and Settings → Data Source show the same mark.
+- **The export-date popover** is short: "Live SAP", the status line (and the bridge's message when disconnected), then
+  three round icon buttons with tooltips: Refresh now, Add file, Share snapshot.
 - **When the link drops** everything on screen stays. The page tries again after 30 s, 1, 2 and 5 minutes, then every
   5 minutes, and shows a short message only when the link drops and when it is back. The bridge's message (for example
   "SAP HANA could not be reached from the bridge PC… (bridge log ref ab12cd34)") is shown as it comes, in the popover
   and in Settings.
 - **The last live data is kept in this browser** (IndexedDB `spyderKpiLive`, apart from the import copy): on the next
-  visit it shows at once, with a red dot until the first read works, so the data from just before a disconnection stays
+  visit it shows at once, with a red mark until the first read works, so the data from just before a disconnection stays
   until the link is back.
 - **Add file** adds a Clear To Build workbook or the Logican sheet to the live data; it stays with it (also in the kept
   copy) when the live data updates. Dropping files on the page is off in live mode.
@@ -75,7 +79,7 @@ browser keeps that choice).
 
 Settings → Data Source → **Import files**: exactly the upload flow of before. The last report reopens (the shared one,
 or this browser's copy), the load screen has the drop area (and **Load from SAP** when the site has a bridge), and the
-export-date popover has **Add file**, **New file** and **Share snapshot**. Settings → Data Source has **Upload files**,
+export-date popover has the file names and the icon buttons **Add file**, **New file** and **Share snapshot**. Settings → Data Source has **Upload files**,
 **Add file** and **New file**. Switching back to Live SAP shows the kept live data and reads SAP.
 
 ## Data types

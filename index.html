@@ -4017,21 +4017,34 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 @media print{.stg-cgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* 2v8:end settings */
 /* 2v8:live */
-/* Live SAP (2v6.8): the dot left of the export date (green with a calm 2 s pulse while live reads work, red when
-   disconnected; none in import mode), the short export-date popover, the Data Source card and the live load screen. */
-:root{--live-ok:#12b76a;--live-ok-ring:rgba(18,183,106,.45);--live-ok-ring-0:rgba(18,183,106,0);--live-ok-halo:rgba(18,183,106,.22)}
-.live-pulse{flex:none;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dz-ink-5);vertical-align:middle}
-.live-pulse.ok{background:var(--live-ok);animation:live-pulse 2s ease-in-out infinite}
-.live-pulse.down{background:var(--dz-risk);box-shadow:0 0 0 3px var(--dz-risk-bg)}
-@keyframes live-pulse{0%{box-shadow:0 0 0 0 var(--live-ok-ring)}70%{box-shadow:0 0 0 6px var(--live-ok-ring-0)}100%{box-shadow:0 0 0 0 var(--live-ok-ring-0)}}
+/* Live SAP (2v6.8): the live mark left of the export date (none in import mode), the short export-date popover, the
+   Data Source card and the live load screen. The mark (2v6.9) is a short pipe: while live reads work a pulse of green
+   light runs along it, left to right, every 1.8 s ("data flowing"); disconnected it is red and still; connecting, grey
+   and still; with reduced motion the green pulse stands still in the middle. */
+:root{--live-ok:#12b76a;--live-ok-0:rgba(18,183,106,0);--live-ok-track:rgba(18,183,106,.2)}
+.live-pulse{flex:none;display:inline-block;position:relative;width:16px;height:6px;border-radius:3px;background:var(--dz-line-8);overflow:hidden;vertical-align:middle}
+.live-pulse::before{content:"";position:absolute;top:0;left:5px;width:6px;height:6px;border-radius:3px;background:var(--dz-ink-5)}
+.live-pulse.ok{background:var(--live-ok-track)}
+.live-pulse.ok::before{left:0;width:9px;background:linear-gradient(90deg,var(--live-ok-0),var(--live-ok) 70%);animation:live-flow 1.8s cubic-bezier(.45,.05,.55,.95) infinite}
+.live-pulse.down{background:var(--dz-risk-bg)}
+.live-pulse.down::before{background:var(--dz-risk)}
+@keyframes live-flow{0%{transform:translateX(-9px)}100%{transform:translateX(16px)}}
 .hdr-date.has-live{position:relative;gap:7px}
 .hdr-date.none .live-pulse{margin-right:6px}
-.hdr-pop-label .live-pulse{width:7px;height:7px}
+/* The popover's actions (2v6.9): a row of round icon buttons (Refresh now, Add file, Share snapshot; import mode: Add
+   file, New file, Share snapshot), named by their tooltips and labels. Refresh's arrows turn while SAP is read. */
+.hdr-pop-actions.live-acts{gap:6px;flex-wrap:nowrap;margin-top:12px}
+.hdr-pop .live-act{width:32px;height:32px;background:var(--dz-surface-2);color:var(--dz-ink-2)}
+.hdr-pop .live-act:not(:disabled):not([aria-disabled="true"]):hover{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.hdr-pop .live-act[aria-disabled="true"]{cursor:default}
+.hdr-pop .live-act svg{width:16px;height:16px}
+.live-act.busy svg{animation:live-turn 1s linear infinite}
+@keyframes live-turn{to{transform:rotate(360deg)}}
 .hdr-pop-more{color:var(--dz-ink-4);font-weight:500}
 .hdr-pop .live-why,.stg-card .live-why{color:var(--dz-ink-4);overflow-wrap:anywhere}
 .stg-card .live-why{display:block;margin-top:2px;font-size:12px}
 .live-now{display:flex;align-items:flex-start;gap:9px}
-.live-now .live-pulse{margin-top:6px}
+.live-now .live-pulse{margin-top:7px}
 #upload-shell[hidden],.live-load[hidden],#upload-screen .privacy-pill[hidden]{display:none}
 .live-load{margin:4px 0 0}
 .live-load-box{background:var(--dz-glass-75);border:1px solid #fff;border-radius:var(--dz-r-card);padding:24px 26px;box-shadow:var(--dz-sh-card);color:var(--dz-ink-1)}
@@ -4040,12 +4053,20 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .live-load-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 /* Tablets and phones show the date as its icon: the dot sits on the icon's corner */
 @media (max-width:1180px){
-  .hdr-date.has-live .live-pulse{position:absolute;top:5px;right:4px;width:7px;height:7px}
+  .hdr-date.has-live .live-pulse{position:absolute;top:4px;right:1px;width:13px;height:5px;box-shadow:0 0 0 2px var(--dz-surface)}
+  .hdr-date.has-live .live-pulse::before{height:5px}
+  .hdr-date.has-live .live-pulse.down::before{left:4px;width:5px}
+  @keyframes live-flow-s{0%{transform:translateX(-9px)}100%{transform:translateX(13px)}}
+  .hdr-date.has-live .live-pulse.ok::before{animation-name:live-flow-s}
 }
-@media (prefers-reduced-motion:reduce){.live-pulse.ok{animation:none;box-shadow:0 0 0 3px var(--live-ok-halo)}}
+@media (prefers-reduced-motion:reduce){
+  .live-pulse.ok::before,.hdr-date.has-live .live-pulse.ok::before{animation:none;transform:none;left:3px;width:10px;background:var(--live-ok)}
+  .live-act.busy svg{animation:none}
+}
 @media (forced-colors:active){.live-pulse{forced-color-adjust:none;border:1px solid CanvasText}}
 @media screen{
-  [data-theme=dark]{--live-ok:#32d583;--live-ok-ring:rgba(50,213,131,.5);--live-ok-ring-0:rgba(50,213,131,0);--live-ok-halo:rgba(50,213,131,.25)}
+  [data-theme=dark]{--live-ok:#32d583;--live-ok-0:rgba(50,213,131,0);--live-ok-track:rgba(50,213,131,.24)}
+  [data-theme=dark] .hdr-pop .live-act{background:var(--dz-line-8)}
   [data-theme=dark] .live-load-box{background:var(--dz-surface);border-color:var(--dz-line-8)}
 }
 /* 2v8:end live */
@@ -6866,6 +6887,19 @@ function liveLabelTick(){
   },60000);
 }
 function liveDateLabel(st){return `${st.short}. Data from ${reportAsOfDate?displayDate(reportAsOfDate):'SAP'}: refresh, add a file or share.`;}
+// The export-date popover's round icon buttons (2v6.9): Refresh now (the board's refresh arrows), Add file (a page with
+// a plus), New file (a page with an arrow up) and Share snapshot (an arrow out of a tray).
+const LIVE_ICONS={
+  add:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9 14h6"/>',
+  swap:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 14.5l3-3 3 3"/>',
+  share:'<path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5"/>'
+};
+function liveIcon(name){
+  return name==='refresh'&&typeof dzIconSvg==='function'?dzIconSvg('refresh'):`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${LIVE_ICONS[name]||''}</svg>`;
+}
+function liveActBtn({key,label,tip,icon,onclick,disabled=false,busy=false}){
+  return `<button type="button" class="hdr-icon live-act${busy?' busy':''}" data-focus-key="${key}" aria-label="${esc(label)}" onclick="${onclick}"${disabled?' disabled':''}${busy?' aria-disabled="true" aria-busy="true"':''}${tipAttr(tip)}>${liveIcon(icon)}</button>`;
+}
 // Header, load screen and (when open) Settings show the new state. Settings is drawn again only when what its Data
 // Source card says has changed (a quiet 5-minute read does not redraw the page someone is working on).
 let liveSettingsShown='';
@@ -11720,38 +11754,38 @@ function renderSidebar(){
     const active=!!supplyOn&&supplyOn[0]===id;
     return `<button type="button" role="menuitem" class="dz-menu-item${active?' sel':''}" data-focus-key="nav-${id}" onclick="dzMenuClose(true);setTab('${id}')"${active?' aria-current="page"':''}${tipAttr(aboutOf(id,tipText))} data-tip-pos="right"><span>${esc(label)}</span><span class="dz-tick" aria-hidden="true">${active?'✓':''}</span></button>`;
   }).join('')}</div></div>`;
-  // The export date and its popover. Live mode (2v6.8): a dot left of the date (green, pulsing: the last live read
-  // worked; red: disconnected, the data on screen is from before), and a short popover: the live status, the line
-  // count, Refresh now / Add file / Share snapshot. Import mode: the file names, one quiet line, Add file / New file /
-  // Share snapshot. The import report's link only when the last import had problems.
-  const rowCount=allLoadedRows.length+supplyDemandRows.length+buildRiskRows.length;
+  // The export date and its popover. Live mode (2v6.8): a mark left of the date (green, flowing: the last live read
+  // worked; red: disconnected, the data on screen is from before), and a short popover: the live status (and the
+  // bridge's message when disconnected), then round icon buttons Refresh now / Add file / Share snapshot (2v6.9; no
+  // line count or export date line). Import mode: the file names, then Add file / New file / Share snapshot. The import
+  // report's link only when the last import had problems. Refresh keeps the popover open: its arrows turn while SAP is
+  // read and the status line updates when done.
   const asOf=reportAsOfDate?parseDate(reportAsOfDate):null;
   const dateText=asOf?`${asOf.getDate()} ${asOf.toLocaleDateString('en-US',{month:'short'})}`:'Export';
   const fileOpen=dzOpenMenu==='hdr-file';
   const live=liveMode(),st=live?liveStatusText():{tone:'',short:'',line:''};
-  const share=`<button type="button" class="dz-btn" data-focus-key="hdr-share" onclick="dzMenuClose(true);exportShareSnapshot()"${loaded?'':' disabled'}${tipAttr('Save an .html copy of the data and notes to send; anyone with the file sees all of it.')}>Share snapshot</button>`;
-  const addFile=isSnapshotView?'':`<button type="button" class="dz-btn" data-focus-key="sidebar-add" onclick="dzMenuClose(true);document.getElementById('add-file-input').click()"${tipAttr(live?'Add a Clear To Build workbook or the Logican sheet to the live data.':'Add supply / demand, Clear To Build or the Logican sheet to this report.')}>Add file</button>`;
-  const quiet=`${ohN(rowCount,'line')}${asOf?` · Export date ${esc(displayDate(asOf))}`:''}`;
+  const share=liveActBtn({key:'hdr-share',label:'Share snapshot',icon:'share',onclick:'dzMenuClose(true);exportShareSnapshot()',disabled:!loaded,tip:'Share snapshot: save an .html copy of the data and notes to send; anyone with the file sees all of it.'});
+  const addFile=isSnapshotView?'':liveActBtn({key:'sidebar-add',label:'Add file',icon:'add',onclick:"dzMenuClose(true);document.getElementById('add-file-input').click()",tip:live?'Add file: a Clear To Build workbook or the Logican sheet, added to the live data.':'Add file: supply / demand, Clear To Build or the Logican sheet, added to this report.'});
   const fileIco='<svg class="hdr-date-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
   let popLabel,popBody,popActions;
   if(live){
     const why=liveState.status==='down'&&liveState.message&&!liveState.stale?`<div class="hdr-pop-meta live-why">${esc(liveState.message)}</div>`:'';
     popLabel=`<span class="live-pulse${st.tone?` ${st.tone}`:''}" aria-hidden="true"></span>Live SAP`;
-    popBody=`<div class="hdr-pop-name">${esc(st.line||'Live SAP')}</div>${why}<div class="hdr-pop-meta">${quiet}</div>`;
+    popBody=`<div class="hdr-pop-name">${esc(st.line||'Live SAP')}</div>${why}`;
     const canRefresh=liveState.on&&liveState.status!=='off';
-    popActions=`${canRefresh?`<button type="button" class="dz-btn" data-focus-key="hdr-sap" onclick="dzMenuClose(true);loadFromSap()"${liveState.busy?' disabled':''}${tipAttr('Read SAP now, skipping the 5-minute cache.')}>Refresh now</button>`:''}${addFile}${share}`;
+    popActions=`${canRefresh?liveActBtn({key:'hdr-sap',label:'Refresh now',icon:'refresh',onclick:"if(this.getAttribute('aria-disabled')!=='true')loadFromSap()",busy:liveState.busy,tip:liveState.busy?'Reading SAP…':'Refresh now: read SAP, skipping the 5-minute cache.'}):''}${addFile}${share}`;
   }else{
     const names=loadedFiles.map(f=>esc(f.name));
     const fileNames=names.length?`${names.slice(0,2).join('<br>')}${names.length>2?` <span class="hdr-pop-more">+ ${names.length-2} more</span>`:''}`:esc(isSnapshotView?'Shared snapshot':'No export loaded');
     popLabel=isSnapshotView?'Shared snapshot':'Loaded export';
-    popBody=`<div class="hdr-pop-name">${fileNames}</div><div class="hdr-pop-meta">${quiet}</div>`;
-    popActions=`${addFile}<button type="button" class="dz-btn" data-focus-key="sidebar-new" onclick="dzMenuClose(true);showUpload()"${tipAttr('Replace this report with a new export; it stays until the new file is read.')}>New file</button>${share}`;
+    popBody=`<div class="hdr-pop-name">${fileNames}</div>`;
+    popActions=`${addFile}${liveActBtn({key:'sidebar-new',label:'New file',icon:'swap',onclick:'dzMenuClose(true);showUpload()',tip:'New file: replace this report with a new export; it stays until the new file is read.'})}${share}`;
   }
   const dot=st.tone?`<span class="live-pulse ${st.tone}" aria-hidden="true"></span>`:'';
   const dateLabel=live&&st.tone?liveDateLabel(st):`Export date ${dateText}: loaded files, Add file, New file and Share snapshot`;
   const dateTip=live&&st.tone?`${st.short}. Click for Refresh now, Add file and Share snapshot.`:'Export date. Click for the loaded files, Add file and New file.';
   const file=loaded
-    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date${dot?' has-live':''}" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(dateLabel)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr(dateTip)}>${dot}<span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="${live?'Live SAP':'Loaded export'}"${fileOpen?'':' hidden'}><div class="hdr-pop-label">${popLabel}</div>${popBody}${impPopoverLink()}<div class="hdr-pop-actions">${popActions}</div></div></div>`
+    ?`<div class="dz-menuwrap${fileOpen?' open':''}" data-dzmenu="hdr-file"><button type="button" class="hdr-date${dot?' has-live':''}" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="${fileOpen}" aria-controls="hdr-file-pop" aria-label="${esc(dateLabel)}" onclick="dzMenuToggle('hdr-file',event)"${tipAttr(dateTip)}>${dot}<span class="hdr-date-txt">${esc(dateText)}</span>${fileIco}</button><div class="dz-menu dz-menu-r hdr-pop" id="hdr-file-pop" role="dialog" aria-label="${live?'Live SAP':'Loaded export'}"${fileOpen?'':' hidden'}><div class="hdr-pop-label">${popLabel}</div>${popBody}${impPopoverLink()}<div class="hdr-pop-actions live-acts">${popActions}</div></div></div>`
     :`<span class="hdr-date none">${live&&st.tone==='down'?`<span class="live-pulse down" aria-hidden="true"></span>`:''}<span class="hdr-date-txt">${esc(live&&!isSnapshotView?(liveState.status==='off'?'Live SAP not set up':liveState.status==='down'?'SAP not reachable':'Live SAP'):'No export loaded')}</span></span>`;
   // Search: an icon that opens into a pill holding the box (Ctrl/Cmd+K, Esc and the Search page work as before).
   const sOpen=hdrSearchOpen||!!searchQuery;

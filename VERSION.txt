@@ -271,3 +271,6 @@ opens Sales Order Health; Warehouses is hidden by default. The menu, page title 
 new pages-2v69, settings-categories (Hidden Pages); order-health-v2, linked-lines and review-pages-css-print-a11y
 updated. Metrics left the menu: its content is a Metrics section of Sales Order Health > Lagging, under the Monthly and
 Quarterly cards (same numbers, Months switch, Show more); setTab('metrics') and a stored Metrics page open Lagging there.
+2v6.9 (header): the Live SAP mark is a short pipe with a green pulse running along it (red and still when
+disconnected, still with reduced motion); the export-date popover has round icon buttons (Refresh now, Add file,
+Share snapshot; import: Add file, New file, Share snapshot) and no line count / export date line. Tests: sap-live, mcp.
