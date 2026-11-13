@@ -29,7 +29,7 @@ test('Settings is five categories in order, every card in its own one; the bar l
   const h = html(page);
   assert.deepEqual(categories(h), [
     ['data', 'Data', ['dc', 'source', 'data']],
-    ['dash', 'Dashboard', ['oh', 'pages']],
+    ['dash', 'Dashboard', ['oh', 'pages', 'hiddenpages']],
     ['notes', 'Notes &amp; People', ['profile', 'notes']],
     ['ai', 'AI', ['ai', 'connect']],
     ['about', 'About', ['about']],
@@ -50,8 +50,8 @@ test('Settings is five categories in order, every card in its own one; the bar l
 
 test('stgShowCard opens Settings with the card\'s category marked: Connect in AI, your name in Notes & People, Data Check in Data', async () => {
   const page = await loaded([sapRow()]);
-  assert.deepEqual([...['source', 'dc', 'data', 'oh', 'pages', 'profile', 'notes', 'ai', 'connect', 'about']].map((c) => page.run(`stgCatOf('${c}')`)),
-    ['data', 'data', 'data', 'dash', 'dash', 'notes', 'notes', 'ai', 'ai', 'about']);
+  assert.deepEqual([...['source', 'dc', 'data', 'oh', 'pages', 'hiddenpages', 'profile', 'notes', 'ai', 'connect', 'about']].map((c) => page.run(`stgCatOf('${c}')`)),
+    ['data', 'data', 'data', 'dash', 'dash', 'dash', 'notes', 'notes', 'ai', 'ai', 'about']);
   page.run("setTab('weekly')");
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
@@ -94,6 +94,53 @@ test('a shared snapshot: settings read only, the category bar still there', asyn
   assert.match(h, /data-focus-key="stg-reset-all" onclick="stgResetAll\(\)" disabled/);
   assert.doesNotMatch(h, /data-focus-key="stg-export"/);
   assert.match(h, /id="stg-target"[^>]*disabled/);
+});
+
+// 2v6.9: Hidden Pages. A page in the hiddenPages setting leaves the top menu and the Supply menu; setTab to it, a
+// snapshot or search that would open it go to Order Health. Warehouses is hidden by default; Order Health cannot be.
+const header = (page) => page.els['app-header'].innerHTML;
+const card = (h) => (h.match(/<section class="dz-card stg-card[^"]*" id="stg-card-hiddenpages"[\s\S]*?<\/section>/) || [''])[0];
+test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden first), and a hidden page leaves the menus', async () => {
+  const page = await loaded([sapRow()]);
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['warehouses']);
+  assert.equal(page.run("stgPageHidden('warehouses')"), true);
+  assert.equal(page.run("stgPageHidden('weekly')"), false);
+  // The menus: no Warehouses link; the other Sales links and the Supply menu stay.
+  assert.doesNotMatch(header(page), /data-focus-key="nav-warehouses"/);
+  assert.match(header(page), /data-focus-key="nav-weekly"[\s\S]*data-focus-key="nav-monthly"[\s\S]*data-focus-key="nav-shipping"/);
+  // Metrics is a section of Lagging (2v6.9), so it is neither in the menu nor in Hidden Pages.
+  assert.doesNotMatch(header(page), /data-focus-key="nav-metrics"/);
+  assert.match(header(page), /data-focus-key="nav-purchaseorders"/);
+  // setTab to a hidden page opens Order Health.
+  page.run("setTab('monthly');setTab('warehouses')");
+  assert.equal(page.run('activeTab'), 'weekly');
+  // The card in Dashboard: the help line, Warehouses first and off, Order Health and Settings not offered.
+  page.run("setTab('settings')");
+  const c = card(html(page));
+  assert.match(c, /<h2 class="dz-title sm stg-title" id="stg-h-hiddenpages" tabindex="-1">[\s\S]*Hidden Pages<\/h2>/);
+  assert.match(c, /Hidden pages leave the top menu\. Turn one on to bring it back\./);
+  const rows = [...c.matchAll(/<button type="button" role="switch" class="stg-switch" id="stg-page-(\w+)" data-focus-key="stg-page-\1" aria-checked="(true|false)" aria-label="Show ([^"]+)" onclick="stgTogglePage\(&#39;\1&#39;\)"/g)].map((m) => [m[1], m[2], m[3]]);
+  assert.deepEqual(rows[0], ['warehouses', 'false', 'Warehouses']);
+  assert.ok(rows.length >= 7 && rows.slice(1).every((r) => r[1] === 'true'), JSON.stringify(rows));
+  assert.ok(!rows.some((r) => r[0] === 'weekly' || r[0] === 'settings' || r[0] === 'metrics'));
+  assert.match(c, /In the Supply menu/);
+  assert.equal(page.run("stgCatOf('hiddenpages')"), 'dash');
+  // Turn Warehouses on: it is back in the menu and opens; hide Monthly and Purchase Orders: both leave their menus.
+  page.run("stgTogglePage('warehouses')");
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), []);
+  assert.match(header(page), /data-focus-key="nav-warehouses"/);
+  page.run("setTab('warehouses')");
+  assert.equal(page.run('activeTab'), 'warehouses');
+  page.run("setTab('settings');stgTogglePage('purchaseorders');stgTogglePage('monthly')");
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['monthly', 'purchaseorders'], 'kept in menu order');
+  assert.doesNotMatch(header(page), /data-focus-key="nav-monthly"|data-focus-key="nav-purchaseorders"/);
+  // A remembered page that is now hidden (e.g. a snapshot's page, or the page a search started from) opens Order Health.
+  page.run("activeTab='monthly';renderResults()");
+  assert.equal(page.run('activeTab'), 'weekly');
+  // Unknown ids are dropped; Order Health cannot be hidden.
+  page.run("stgSet('hiddenPages',['weekly','nope','buildrisk'])");
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['buildrisk']);
+  assert.deepEqual(page.errors, []);
 });
 
 run();

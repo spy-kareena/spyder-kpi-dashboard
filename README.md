@@ -9,7 +9,7 @@ Live site: https://spyder-kpi-dashboard.pages.dev
 1. Sign in. By default the dashboard reads SAP live through the SAP bridge and reads it again every 5 minutes; a green dot next to the date means live, red means the link is down and the last data stays on screen ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)). To upload exports by hand instead, pick **Import files** in **Settings → Data Source** and load the KPI export (`queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql`). SAP's "Export to Excel" `.xls` works as-is, as do `.xlsx`, `.csv` and `.txt`.
 2. Pick a page in the top menu (see **Pages**). Click a KPI card to list its lines. Rest on any card, bar, heading or button for a short tip; **About these numbers** at the bottom of a page defines its terms.
 3. **Add note** on a line sets an override or a note (your name plus a ready-made or custom comment).
-4. On Order Health, tick rows to set an override or a cause on many lines at once, or to delete them. Deleted lines can be restored in **Settings → Data Check**.
+4. On Sales Order Health, tick rows to set an override or a cause on many lines at once, or to delete them. Deleted lines can be restored in **Settings → Data Check**.
 
 KPIs are calculated as of the export's `ExportDate`, so an older file or a shared snapshot keeps the numbers it had that day.
 
@@ -26,12 +26,11 @@ To print a page or save it as a PDF, use the browser's Print. In import mode, **
 
 | Page | Menu | What it shows |
 |---|---|---|
-| Order Health | Top | **Leading:** at-risk orders, status and top reasons, open lines by due week, customers at risk (also by supply source), when flagged, date changes and the Lines table. **Lagging:** monthly and quarterly on time, fill rate, perfect order, days late, reschedule hit, late orders and top offenders. |
-| Monthly | Top | Shipped and open sales-order value by month, year over year, and a ship target scenario |
-| Warehouses | Top | Open value, late lines and risk by warehouse and due month |
-| Metrics | Top | Order quality rates (on track, perfect order, backorder, partial ship) by due month |
+| Sales Order Health | Top | **Leading:** at-risk orders, this month's ship target, status and top reasons, open lines by due week, customers at risk (also by supply source), date changes and the Lines table. **Lagging:** monthly and quarterly on time, perfect order, days late, reschedule hit and late orders, then **Metrics** (it was its own page): the month's rates with 12-month trends, on-time delivery, late orders by cause, monthly metrics and, under Show more, order quality and open value by due month. |
+| Monthly | Top | Shipped and booked orders by month, month by month, and year over year |
+| Warehouses | Hidden | Open value, late lines and risk by warehouse and due month (turn it on in **Settings → Hidden Pages**) |
 | Shipping | Top | Recent SAP deliveries for every carrier, with statuses from AfterShip every 2 hours (or set by hand) and an icon to open each tracking page |
-| Purchase Orders | Supply ▾ | Late, unconfirmed and no-commit PO lines, PO At Risk with its owners, Kits Clean / Kits Not Clean, receiving and late POs by vendor |
+| Purchase Orders | Supply ▾ | Late and no-commit PO lines, PO At Risk with its owners, Unconfirmed · Missing price, Kits (clean and not clean), receiving and late POs by vendor |
 | Supply / Demand | Supply ▾ | Open demand against open PO supply by warehouse and month (needs the supply / demand snapshot, `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`) |
 | Supply Mix | Supply ▾ | Net quantity by month, demand by warehouse and risk by item group (needs the snapshot) |
 | Build Risk | Supply ▾ | The Clear To Build report against open sales orders by CM and week (needs the Clear To Build workbook) |
@@ -42,14 +41,14 @@ To print a page or save it as a PDF, use the browser's Print. In import mode, **
 The gear opens Settings, also before an export is loaded. A category bar at the top jumps to each group and marks the one in view:
 
 - **Data:** Data Source (Live SAP or Import files), Data Check (only when there is something to report: rows to fix in SAP, non-inventory charges, deleted lines with Restore) and Data (the loaded files, export date, where the report is saved).
-- **Dashboard:** Order Health (at-risk target, on-track tolerance, look-ahead window, lines shown, opening view) and Pages & Display (theme, background, line lists folded or open, when the Import report shows).
+- **Dashboard:** Sales Order Health (at-risk target, on-track tolerance, look-ahead window, lines shown, opening view), Pages & Display (theme, background, line lists folded or open, when the Import report shows) and Hidden Pages (a switch per page; a hidden page leaves the top menu, and Warehouses is hidden by default).
 - **Notes & People:** your name, stamped on the notes you save, and the ready-made comments for sales-order and purchase-order lines.
 - **AI:** Ask AI provider and model, and Connect An AI App (the MCP connector setup).
 - **About:** the version, Export / Import settings as a small JSON file, and Reset to defaults.
 
 ## Shared or per browser
 
-- **Shared** on the hosted site (Workers KV binding `REPORT_STORE`): the last loaded report (`functions/api/report.js`); notes, overrides, causes, deleted lines, Kit Clean ticks and shipping statuses (`functions/api/notes.js`, newest edit per line wins); the list of names (`functions/api/people.js`); and the weekly at-risk history behind When flagged (`functions/api/history.js`, 52 weeks).
+- **Shared** on the hosted site (Workers KV binding `REPORT_STORE`): the last loaded report (`functions/api/report.js`); notes, overrides, causes, deleted lines, Kit Clean ticks and shipping statuses (`functions/api/notes.js`, newest edit per line wins); the list of names (`functions/api/people.js`); and the weekly at-risk history behind "new this week" and first-flagged dates (`functions/api/history.js`, 52 weeks).
 - **Per browser:** Settings, Ask AI consent, folded lists and theme. Without the server (a file copy or IIS), everything stays in that browser.
 
 ## Ask AI and the MCP connector

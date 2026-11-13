@@ -338,6 +338,7 @@ test('an override redraws Order Health without building other pages\' aggregates
   assert.equal(page.run('parses'), 0);
   page.run('parseDate=realParse');
 
+  page.run("stgSet('hiddenPages',[])"); // 2v6.9: Warehouses is hidden by default; Settings > Hidden Pages brings it back
   const pages = { groupByMonth: 'monthly', groupByOriginalHeaderMonth: 'monthly', buildWarehouseKpis: 'warehouses', buildWarehouseTimeline: 'warehouses', buildMetricTimeline: 'metrics' };
   page.run(`var built={};${JSON.stringify([...Object.keys(pages), 'perfectOrderStats', 'backorderStats', 'buildRiskSummary', 'buildSupplyDemandSummary'])}.forEach(n=>{var f=globalThis[n];globalThis[n]=function(){built[n]=(built[n]||0)+1;return f.apply(this,arguments)};})`);
   page.run(`updateRowOverride(${JSON.stringify(keyOf(page, '1000'))},'status','Urgent')`);

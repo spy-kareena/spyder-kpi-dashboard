@@ -56,6 +56,7 @@ test('scorecard and PO warehouse rows name each value by its column; header rows
 
 test('heat map is an ARIA table; cells are focusable with their breakdown as text (and tip); badge has no aria-label; the legend names it', async () => {
   const page = await loaded(MIX);
+  page.run("stgSet('hiddenPages',[])"); // 2v6.9: Warehouses is hidden by default; Settings > Hidden Pages brings it back
   page.run('setTab("warehouses")');
   const m = html(page);
   assert.match(m, /class="heat-scroll" role="table" aria-label="Open value by warehouse and due month"/);
