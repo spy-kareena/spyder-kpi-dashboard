@@ -49,6 +49,29 @@ test('delivered: delivery date, no ETA; exception: the reason text and the locat
   assert.equal(carrierName('some-new-courier'), 'Some New Courier');
 });
 
+// 2v6.9 cities: the carrier's destination city and state, for the page's Order Map when SAP has no ship-to city.
+test('destination city and state: from destination_city / destination_state, tidied and clipped; \'\' when AfterShip has none or refuses the number', async () => {
+  const d = normalizeTracking(TRACKINGS.delivered, NUMBERS.delivered, NOW);
+  assert.deepEqual([d.destCity, d.destState, d.destCountry], ['Columbus', 'OH', 'USA']);
+  const t = normalizeTracking(TRACKINGS.transit, NUMBERS.transit, NOW);
+  assert.deepEqual([t.destCity, t.destState], ['', ''], 'none given');
+  const nul = normalizeTracking({ ...TRACKINGS.transit, destination_city: null, destination_state: null }, NUMBERS.transit, NOW);
+  assert.deepEqual([nul.destCity, nul.destState], ['', '']);
+  const long = normalizeTracking({ ...TRACKINGS.transit, destination_city: `  Saint-Jean-sur-\n  Richelieu ${'x'.repeat(80)}`, destination_state: ` ${'Q'.repeat(50)} ` }, NUMBERS.transit, NOW);
+  assert.equal(long.destCity.length, 60);
+  assert.match(long.destCity, /^Saint-Jean-sur- Richelieu x+$/, 'spaces and line breaks tidied');
+  assert.equal(long.destState, 'Q'.repeat(40));
+  // Through a check: a number read from AfterShip keeps them in the index; a refused one has them empty, with the
+  // same fields as any other status.
+  const e = env({ export: [NUMBERS.delivered, 'BAD000001'], manual: [] });
+  const doc = await poll(e, fakeAfterShip({ known: [NUMBERS.delivered], refuse: ['BAD000001'] }));
+  assert.deepEqual([doc.statuses[NUMBERS.delivered].destCity, doc.statuses[NUMBERS.delivered].destState], ['Columbus', 'OH']);
+  const bad = doc.statuses.BAD000001;
+  assert.deepEqual([bad.state, bad.destCity, bad.destState, bad.destCountry], ['', '', '', '']);
+  assert.deepEqual(Object.keys(bad).sort(), Object.keys(d).sort());
+  assert.equal(e.REPORT_STORE.json(INDEX_KEY).statuses[NUMBERS.delivered].destCity, 'Columbus');
+});
+
 test('numbers: cleaned, split, hand-added first; carriers become slugs only when obvious; key and limits read from env', () => {
   assert.equal(cleanTrackingNumber('7700 1234-5678'), '770012345678');
   assert.equal(cleanTrackingNumber('Will Call'), '');

@@ -52,6 +52,7 @@ export const TRACKINGS = {
   delivered: {
     id: 'as-delivered', tracking_number: NUMBERS.delivered, slug: 'fedex', tag: 'Delivered', subtag: 'Delivered_001', subtag_message: 'Delivered',
     updated_at: '2026-10-08T15:00:00Z', shipment_delivery_date: '2026-10-08T10:12:00-04:00', destination_country_region: 'USA',
+    destination_city: 'Columbus', destination_state: 'OH',
     checkpoints: [
       cp('2026-10-05T18:00:00-04:00', 'InTransit', 'International shipment release - Import', 'Buffalo', 'NY', 'USA'),
       cp('2026-10-08T10:12:00-04:00', 'Delivered', 'Delivered', 'Columbus', 'OH', 'USA'),
