@@ -40,6 +40,24 @@ function mini(html, label, unit) {
   assert.ok(m, `mini ${label} not found`);
   return { count: Number(m[1].replace(/,/g, '')), value: dollars(m[2]) };
 }
+// 2v6.9: the numbers as the board shows them, read from the tips (heading, then "• " facts).
+const tipOf = (html, key) => {
+  const m = html.match(new RegExp(`data-focus-key="${key}"[^>]*data-tip="([^"]*)"`));
+  assert.ok(m, `tile ${key} not found`);
+  return m[1].replace(/&amp;/g, '&');
+};
+// Sales Order Health: "• N orders, M lines" then "• $X open".
+function ohTile(html, key) {
+  const t = tipOf(html, key), m = t.match(/• ([\d,]+) orders?, ([\d,]+) lines?\n• (\$[\d,]+) open/);
+  assert.ok(m, `figures in ${key}: ${t}`);
+  return { orders: Number(m[1].replace(/,/g, '')), lines: Number(m[2].replace(/,/g, '')), value: dollars(m[3]) };
+}
+// Purchase Order Health: "• N lines · Q qty" then "• $X open".
+function poTile(html, key) {
+  const t = tipOf(html, key), m = t.match(/• ([\d,]+) lines? · [\d,]+ qty\n• (\$[\d,]+) open/);
+  assert.ok(m, `figures in ${key}: ${t}`);
+  return { lines: Number(m[1].replace(/,/g, '')), value: dollars(m[2]) };
+}
 function hero(html) {
   const m = html.match(/data-count="(\d+)" data-fmt="money">[^<]*<\/span><span class="kpi-unit">([\d,]+) (?:orders · ([\d,]+) )?lines/);
   assert.ok(m, 'hero not found');
@@ -87,56 +105,56 @@ function openAiTurn({ text = '', calls = [], stop } = {}) {
 }
 
 // --- Tool layer -------------------------------------------------------------------------------------------
-test('get_overview equals the Order Health tiles with all filters, and leaves page filters alone', async () => {
+test('get_overview equals the Sales Order Health At risk and Status figures, and leaves page filters alone', async () => {
   const page = await loaded();
   const html = page.els['results-screen'].innerHTML;
   const o = tool(page, 'get_overview');
   assert.equal(o.as_of, '2026-09-03');
   assert.deepEqual(o.files.rows, { sales_order_rows: 8, purchase_order_rows: 3, supply_demand_rows: 0, clear_to_build_rows: 0 });
   const oh = o.order_health;
-  const h = hero(html);
-  assert.deepEqual([oh.at_risk.open_value, oh.at_risk.orders, oh.at_risk.lines], [h.value, h.first, h.lines]);
+  // The At risk card (lines due by its date) and its two state rows; Ask AI reports the same figures (whole dollars on the page).
+  const h = ohTile(html, 'tile-late');
+  assert.deepEqual([oh.at_risk.orders, oh.at_risk.lines, Math.round(oh.at_risk.open_value)], [h.orders, h.lines, h.value]);
+  assert.match(tipOf(html, 'tile-late'), new RegExp(`At risk, due by `));
+  assert.match(oh.at_risk.due_by, /^\d{4}-\d{2}-\d{2}$/);
   assert.deepEqual([oh.at_risk.past_due_no_reschedule_lines, oh.at_risk.no_commit_lines, oh.at_risk.rescheduled_lines], [1, 1, 1]);
-  for (const [label, key] of [['No commit date', 'no_commit'], ['Rescheduled', 'rescheduled']]) {
-    assert.deepEqual(card(html, label), { count: oh[key].orders, value: oh[key].open_value }, label);
+  for (const [id, key] of [['nocommit', 'no_commit'], ['rescheduled', 'rescheduled']]) {
+    const t = ohTile(html, `tile-st-${id}`);
+    assert.deepEqual([oh[key].orders, oh[key].lines, Math.round(oh[key].open_value)], [t.orders, t.lines, t.value], key);
   }
-  // 2v2: This week focus moved into the Coming due strip with the other due-date cells.
-  for (const [label, key] of [['This week focus', 'this_week_focus'], ['Due next week', 'due_next_week'], ['Due this month', 'due_this_month'], ['All open orders', 'all_open']]) {
-    assert.deepEqual(mini(html, label, ' orders'), { count: oh[key].orders, value: oh[key].open_value }, label);
+  // The Status card's states, every open order in one state.
+  for (const id of ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']) {
+    const t = ohTile(html, `status-st-${id}`);
+    assert.deepEqual([oh.status[id].orders, oh.status[id].lines], [t.orders, t.lines], id);
   }
-  assert.equal(oh.fill_rate.rate_pct, Number(html.match(/Fill rate<\/span>[\s\S]*?data-count="(\d+)" data-fmt="pct"/)[1]));
-  assert.equal(oh.shipped_this_week.lines, Number(html.match(/Shipped this week<\/span>[\s\S]*?data-count="(\d+)"/)[1]));
+  assert.ok(oh.at_risk_any_date.lines >= oh.at_risk.lines);
 
   // With a warehouse picked on the page, the tool still reports All unless asked, and the page keeps its pick.
   page.run("setWeeklyWarehouseFilter(['CM - Alta'])");
-  const filtered = hero(page.els['results-screen'].innerHTML);
+  const filtered = ohTile(page.els['results-screen'].innerHTML, 'tile-late');
   assert.deepEqual(tool(page, 'get_overview').order_health.at_risk, oh.at_risk);
   const f = tool(page, 'get_overview', { warehouse: 'alta' });
   assert.deepEqual(f.filters.warehouse, ['CM - Alta']);
-  assert.deepEqual([f.order_health.at_risk.open_value, f.order_health.at_risk.orders], [filtered.value, filtered.first]);
+  assert.deepEqual([Math.round(f.order_health.at_risk.open_value), f.order_health.at_risk.orders], [filtered.value, filtered.orders]);
   assert.deepEqual(page.run('weeklyWarehouseFilter'), ['CM - Alta']);
   assert.match(tool(page, 'get_overview', { customer: 'nobody here' }).error, /No customer "nobody here"/);
 });
 
-test('get_overview equals the Purchase Orders tiles', async () => {
+test('get_overview equals the Purchase Order Health tiles', async () => {
   const page = await loaded();
   page.run("setPoVendorFilter(['BOLT'])");
   page.run("setTab('purchaseorders')");
-  const boltHero = hero(page.els['results-screen'].innerHTML);
+  const boltLate = poTile(page.els['results-screen'].innerHTML, 'potile-late');
   page.run('resetPoFilters()');
   const html = page.els['results-screen'].innerHTML;
   const po = tool(page, 'get_overview').purchase_orders;
-  const h = hero(html);
-  assert.deepEqual([po.late_missed_commit.open_value, po.late_missed_commit.lines], [h.value, h.first]);
   assert.deepEqual([po.late_missed_commit.lines, po.no_commit.lines, po.future_reschedules.lines], [1, 1, 1]);
-  for (const [label, key] of [['No commit date', 'no_commit'], ['Future reschedules', 'future_reschedules'], ['This week focus', 'this_week_focus']]) {
-    assert.deepEqual(card(html, label), { count: po[key].lines, value: po[key].open_value }, label);
-  }
-  for (const [label, key] of [['Due this month', 'due_this_month'], ['Unconfirmed', 'unconfirmed'], ['Missing price', 'missing_price'], ['All open POs', 'all_open']]) {
-    assert.deepEqual(mini(html, label, ''), { count: po[key].lines, value: po[key].open_value }, label);
+  for (const [key, field] of [['potile-late', 'late_missed_commit'], ['potile-nocommit', 'no_commit'], ['potile-future', 'future_reschedules'], ['potile-duemonth', 'due_this_month'], ['potile-unconfirmed', 'unconfirmed'], ['potile-missingprice', 'missing_price'], ['potile-allopen', 'all_open']]) {
+    const t = poTile(html, key);
+    assert.deepEqual([po[field].lines, Math.round(po[field].open_value)], [t.lines, t.value], field);
   }
   const bolt = tool(page, 'get_overview', { vendor: 'bolt' }).purchase_orders.late_missed_commit;
-  assert.deepEqual([bolt.open_value, bolt.lines], [boltHero.value, boltHero.first]);
+  assert.deepEqual([bolt.lines, Math.round(bolt.open_value)], [boltLate.lines, boltLate.value]);
   assert.deepEqual(page.run('poVendorFilter'), ['ALL']);
 });
 

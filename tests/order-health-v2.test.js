@@ -209,7 +209,8 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   assert.ok(undrilled.fill > 3);
   assert.equal(scorecard(), undrilled.scorecard);
   // The AI tools report the page with every filter at All and leave the page's filters alone.
-  assert.equal(page.run("aiRunTool('get_overview',{}).order_health.at_risk.lines"), 7);
+  assert.equal(page.run("aiRunTool('get_overview',{}).order_health.at_risk.lines"), 6); // the At risk card: due by its date
+  assert.equal(page.run("aiRunTool('get_overview',{}).order_health.at_risk_any_date.lines"), 7);
   assert.equal(page.run('weeklyCauseFilter'), 'us');
   // Reset clears them with the other filters. (2v6: the header's page links carry no count badge.)
   page.run('resetWeeklyFilters()');
@@ -524,9 +525,12 @@ test('an export with no sales order lines still draws Order Health without error
 test('get_overview gains leading / lagging and cause fields that match the page; search_lines filters by cause', async () => {
   const page = await withOverrides();
   const oh = page.run("aiRunTool('get_overview',{}).order_health");
-  assert.deepEqual(oh.at_risk.cause, { us: { lines: 3, orders: 3, value: 22000 }, them: { lines: 2, orders: 2, value: 6500 }, neutral: { lines: 0, orders: 0, value: 0 }, not_set: { lines: 2, orders: 2, value: 8500 } });
+  // at_risk is the At risk card (lines due by its date); at_risk_any_date counts every at-risk line, as leading does.
+  assert.deepEqual(oh.at_risk.cause, { us: { lines: 3, orders: 3, value: 22000 }, them: { lines: 1, orders: 1, value: 5000 }, neutral: { lines: 0, orders: 0, value: 0 }, not_set: { lines: 2, orders: 2, value: 8500 } });
+  assert.deepEqual(oh.at_risk_any_date.cause, { us: { lines: 3, orders: 3, value: 22000 }, them: { lines: 2, orders: 2, value: 6500 }, neutral: { lines: 0, orders: 0, value: 0 }, not_set: { lines: 2, orders: 2, value: 8500 } });
+  assert.equal(Object.values(oh.at_risk_any_date.cause).reduce((s, c) => s + c.lines, 0), oh.at_risk_any_date.lines);
   assert.equal(Object.values(oh.at_risk.cause).reduce((s, c) => s + c.lines, 0), oh.at_risk.lines);
-  assert.deepEqual(oh.leading.at_risk_by_cause, oh.at_risk.cause);
+  assert.deepEqual(oh.leading.at_risk_by_cause, oh.at_risk_any_date.cause);
   assert.deepEqual(Object.keys(oh.leading.states), ['on_track', 'due_this_week', 'rescheduled', 'past_due', 'no_commit']);
   assert.equal(Object.values(oh.leading.states).reduce((s, x) => s + x.lines, 0), oh.all_open.lines);
   assert.deepEqual(oh.leading.top_reasons[0], { reason: 'Past due · No reschedule', usual_cause: 'us', orders: 2, lines: 2, open_value: 15000 });

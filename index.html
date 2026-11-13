@@ -9721,12 +9721,20 @@ function aiScopeError(a,extra){
   if(a.scope.startsWith('po_')&&!poSourceRows().length)return {loaded:false,hint:'This export has no purchase order lines.'};
   return null;
 }
-function aiOrderHealth(oh){
+// The figures the board shows: At risk is the At risk card (open lines at risk that are due by the end of next month,
+// ohAtRiskData); Rescheduled and No commit are its two state rows (the Status card's states). Every at-risk line, whatever
+// its date, stays as at_risk_any_date.
+function aiOrderHealth(oh,m=currentMetrics()){
+  const d=ohAtRiskData(m),lead=ohLeadingData(m,oh),risk=new Set(d.risk);
+  const inRisk=rows=>rows.filter(r=>risk.has(r)).length;
   const inOther=new Set([...oh.pastDueNoReschedule,...oh.noCommitRows,...oh.activeRescheduleRows]);
+  const state=id=>(lead.states.find(s=>s.id===id)||{rows:[]}).rows;
   const otd=oh.otd3Mo,hit=oh.reschedulePerf;
   return {
-    at_risk:{...aiTile(oh.lateTileRows),past_due_no_reschedule_lines:oh.pastDueNoReschedule.length,no_commit_lines:oh.noCommitRows.length,rescheduled_lines:oh.activeRescheduleRows.length,other_marked_urgent_lines:oh.urgentRows.filter(r=>!inOther.has(r)).length,cause:ohAiCause(ohLeadingData(currentMetrics(),oh).cause)},
-    no_commit:aiTile(oh.noCommitRows),rescheduled:aiTile(oh.activeRescheduleRows),this_week_focus:aiTile(oh.dueThisWeekRows),
+    at_risk:{...aiTile(d.risk),due_by:displayDate(d.end),past_due_no_reschedule_lines:inRisk(oh.pastDueNoReschedule),no_commit_lines:inRisk(oh.noCommitRows),rescheduled_lines:inRisk(oh.activeRescheduleRows),other_marked_urgent_lines:inRisk(oh.urgentRows.filter(r=>!inOther.has(r))),cause:ohAiCause((()=>{const t=ohCauseTotals(d.risk,openLineValue,r=>ohRowInfo(r).cause);OH_CAUSE_IDS.forEach(c=>{t[c].orders=rowDocCount(t[c].rows);});return t;})())},
+    at_risk_any_date:{...aiTile(oh.lateTileRows),cause:ohAiCause(lead.cause)},
+    status:Object.fromEntries(lead.states.map(s=>[s.id,{orders:s.orders,lines:s.rows.length,open_value:aiR(s.value)}])),
+    no_commit:aiTile(state('nocommit')),rescheduled:aiTile(state('rescheduled')),this_week_focus:aiTile(oh.dueThisWeekRows),
     due_next_week:aiTile(oh.dueNextWeekRows),due_this_month:aiTile(oh.notShippedThisMonthRows),all_open:aiTile(oh.allOrderRows),
     otd_3mo:{rate_pct:otd.scored.length?otd.rate:null,early_or_on_time:otd.early.length+otd.onTime.length,deliveries_scored:otd.scored.length,shipped_value:aiR(oh.otd3MoAmt),target_pct:90},
     shipped_this_week:{lines:oh.closedThisWeekRows.length,value:aiR(oh.closedWkAmt),last_week_lines:oh.closedLastWeekRows.length,last_week_value:aiR(rowShippedAmount(oh.closedLastWeekRows))},
@@ -9771,7 +9779,7 @@ function aiOverview(a){
 const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
 const KPI_TOOLS=[
   {name:'get_overview',
-    description:'Headline numbers: every Sales Order Health tile (at risk = every open line past due with no reschedule, with no commit date, rescheduled or marked Urgent, with its past due / no commit / rescheduled split and its Us / Them cause split; the page\'s At risk card is the next-month view in order_health.leading.next_month.at_risk: lines due by its due_by date expected more than on_track_tolerance_days late, with no commit date or marked Urgent; no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
+    description:'Headline numbers: every Sales Order Health tile (at_risk = the page\'s At risk card: open at-risk lines due by its due_by date, with its past due / no commit / rescheduled split and its Us / Them cause split; at_risk_any_date = every at-risk line whatever its date; status = the Status card, every open order in one state; no commit and rescheduled = the At risk card\'s two state rows, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
     parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it (every matching warehouse is included)'},customer:{type:'string',description:'Customer code or name, or part of it (every match is included)'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name, or part of it (every match is included)'}},required:[]},
     run:(a={})=>aiOverview(a)},
   {name:'search_lines',
