@@ -3990,36 +3990,36 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 .ohl-sd .dz-chip.teal{color:var(--dz-teal)}
 .ohl-sd .sup-seg-sm{flex:none}
 .ohs-need-row{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-top:8px}
-/* 2v6.9: the card in three clear layers: the numbers under the title (plain data), the options in a tinted bar with
-   small labels (View, Filter, search: the things to click), then the list, its warehouse sub-headings on a soft band and
-   each status a dot and a word (data, so no pill). 10 lines a page. */
+/* 2v6.9: the card: the title and the Short or at risk | All demand switch on one row, the numbers under the title
+   (plain data), then the list. Every column title sorts. Each warehouse is a clear band with its icon; each status is a
+   dot and a word (data, so no pill) with its detail small to its right. 10 lines a page. */
+.ohl-sd .sup-thead{align-items:center}
 .ohl-sd .sup-tsub{margin-top:4px}
 .ohs-sum{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--dz-ink-4)}
 .ohs-sum-i b{font-weight:600;color:var(--dz-ink-1);font-variant-numeric:tabular-nums}
 .ohs-sum-i.red b{color:var(--dz-risk-text)}
 .ohs-sum-i.amber b{color:var(--dz-amber-text)}
-.ohs-tools{display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px;margin:16px 0 6px;padding:8px 10px 8px 14px;border-radius:16px;background:var(--dz-surface-2);box-shadow:inset 0 0 0 1px var(--dz-line-5)}
-.ohs-tgroup{display:flex;align-items:center;gap:10px;min-width:0}
-.ohs-tlabel{font-size:12px;font-weight:500;color:var(--dz-ink-4)}
-.ohs-find{margin-left:auto}
-.ohs-tools .dz-seg,.ohs-tools .dz-pillinput,.ohs-tools input{background:var(--dz-surface)}
-.ohs-toggle{display:inline-flex;align-items:center;gap:6px}
-.ohs-toggle svg{width:14px;height:14px;color:var(--dz-indigo)}
-.ohs-toggle[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--dz-indigo);color:var(--dz-indigo-deep)}
-.ohs-toggle-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--dz-amber-bg,var(--dz-fill-1));color:var(--dz-amber-text);font-size:11.5px;font-weight:600;line-height:18px;text-align:center}
-.ohl-sd .sup-grp td{padding:8px 12px;background:var(--dz-fill-1);border-radius:10px}
-.ohl-sd tr.sup-grp:not(:first-child) td{border-top:10px solid transparent;background-clip:padding-box}
+.ohl-sd table.sup-sd{margin-top:10px}
+.ohl-sd th .ohs-th{display:inline-flex;align-items:center;gap:3px;max-width:100%;padding:2px 0;border:0;background:none;font:inherit;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);border-radius:6px;white-space:nowrap;cursor:pointer}
+.ohl-sd th.num .ohs-th{flex-direction:row-reverse}
+.ohl-sd th .ohs-th:hover{color:var(--dz-ink-2)}
+.ohl-sd th .ohs-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+.ohl-sd th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
+.ohl-sd th .ohs-th:hover .sort-arrow,.ohl-sd th .ohs-th:focus-visible .sort-arrow{opacity:.5}
+.ohl-sd th[aria-sort] .ohs-th{color:var(--dz-indigo-deep);font-weight:500}
+.ohl-sd th[aria-sort] .sort-arrow{opacity:1}
+.ohl-sd .sup-grp td{padding:9px 14px;background:var(--dz-indigo-bg);border-radius:10px;box-shadow:inset 3px 0 0 var(--dz-indigo)}
+.ohl-sd tr.sup-grp:not(:first-child) td{border-top:14px solid transparent;background-clip:padding-box}
+.ohl-sd .sup-grp b{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--dz-indigo-deep)}
+.ohl-sd .sup-grp b svg{width:16px;height:16px;flex:none}
 .ohl-sd .sup-grp+.sup-row td{border-top:0}
-.ohs-st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--dz-ink-2)}
+.ohl-sd td.sup-status{white-space:nowrap}
+.ohs-st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--dz-ink-2);vertical-align:middle}
 .ohs-st i{width:7px;height:7px;border-radius:50%;background:var(--dz-ink-5);flex:none}
 .ohs-st.red{color:var(--dz-risk-text)}.ohs-st.red i{background:var(--dz-risk)}
-.ohs-st.amber{color:var(--dz-amber-text)}.ohs-st.amber i{background:var(--dz-amber,#f79009)}
-.ohl-sd .sup-status .sup-sub{display:block;margin-top:2px}
-@media (max-width:760px){
-  .ohs-tools{padding:10px;gap:10px}
-  .ohs-find{margin-left:0;flex:1 1 100%}
-  .ohs-find>*{flex:1}
-}
+.ohs-st.amber{color:var(--dz-amber-text)}.ohs-st.amber i{background:var(--dz-amber)}
+.ohs-st-sub{margin-left:8px;font-size:11px;color:var(--dz-ink-5);vertical-align:middle}
+@media (prefers-reduced-motion:reduce){.ohl-sd th .sort-arrow{transition:none}}
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v9:end pages */
 /* 2v9:pager */
@@ -4096,10 +4096,10 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 .hdr-date.none .live-pulse{margin-right:6px}
 /* The live popover (2v6.9): one small row, the line then the icon buttons */
 .hdr-pop.live-pop{width:max-content;padding:8px 8px 8px 12px}
-.live-pop-row{display:flex;align-items:center;gap:10px}
+.live-pop-row{display:flex;align-items:center;gap:12px}
 .live-pop-line{display:flex;align-items:center;gap:7px;min-width:0;font-size:12.5px;font-weight:500;color:var(--dz-ink-1);white-space:nowrap}
 .live-pop-line .live-pulse{width:14px;height:14px}
-.hdr-pop.live-pop .hdr-pop-actions.live-acts{margin-top:0;gap:4px}
+.hdr-pop.live-pop .hdr-pop-actions.live-acts{margin-top:0;gap:4px;align-self:stretch;align-items:center;padding-left:10px;border-left:1px solid var(--dz-line-8)} /* a hairline between the line and its buttons */
 .hdr-pop.live-pop .live-act{width:28px;height:28px}
 .hdr-pop.live-pop .live-act svg{width:15px;height:15px}
 .hdr-pop.live-pop .imp-poplink{margin-top:6px}
@@ -10359,7 +10359,8 @@ function supSdStatus(r){
 // The Short / Supply at risk numbers (Supply / Demand page) and the Supply at risk only toggle: the Short or at-risk
 // items card on Sales Order Health, Supply / Demand view (2v6.9 leading), revealed after the redraw.
 function supSdFocus(kind){
-  tableMore={...tableMore,'sup-sd-view':'risk','sd-risk-only':kind==='risk'};
+  // 2v6.9: the card has no Supply at risk only filter any more; both numbers open the Short or at risk view.
+  tableMore={...tableMore,'sup-sd-view':'risk','sd-risk-only':false};
   if(activeTab!=='weekly'||weeklyView!=='supply'){
     setWeeklyView('supply',false);
     setTab('weekly');
@@ -10442,43 +10443,77 @@ function supSdItemsCard(m){
   const hasOC=rows.some(r=>r.demandOrderCount>0);
   const itemKey=r=>`${r.itemCode}|${supplyWarehouse(r)}`;
   const view=supGet('sd-view','risk')==='all'?'all':'risk';
-  const riskOnly=!!tableMore['sd-risk-only'];
   const seg=dzSeg([{label:'Short or at risk',on:view==='risk',onclick:"supSet('sd-view','risk')",key:'sd-view-risk',tip:'Items short of usable open PO supply, or whose PO supply is at risk.'},{label:'All demand',on:view==='all',onclick:"supSet('sd-view','all')",key:'sd-view-all',tip:'Every open demand line in view.'}],{label:'Supply view',cls:'sup-seg-sm'});
-  const terms=supTerms(supGet('sd-q',''));
-  const listAll=view==='all'?demandRows:(riskOnly?riskRows:actRows);
-  const list=terms.length?listAll.filter(r=>supHit(terms,[r.itemCode,r.itemDescription,r.itemGroup])):listAll;
-  // 2v6.9: 10 lines a page (the board's rule for long lists); a new view, filter or search starts at page 1. The
-  // warehouse sub-heading repeats at the top of each page.
+  // 2v6.9 (owner): no search and no Supply at risk only filter; the view switch sits in the title row.
+  const list=view==='all'?demandRows:actRows;
   const curLbl=monthLabel(monthKey(reportToday()));
   const orderCell=r=>hasOC?`${fmtNum(r.demandOrderCount)} ${r.demandOrderCount===1?'order':'orders'}`:`${fmtNum(r.demandOpenQty)} qty`;
-  const groups=groupSupplyRowsByWarehouse(list);
-  const itemsIn=new Map(groups.map(g=>[g.warehouse,new Set(g.rows.map(r=>r.itemCode)).size]));
+  const shortOf=r=>r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
+  // Every column sorts (again to reverse), within each warehouse; the view's own order breaks ties.
+  const sort=SUP_SD_COLS.some(c=>c[0]===String(supGet('sd-sort','')).split(':')[0])?String(supGet('sd-sort','')).split(':'):null;
+  const sorted=sort?supSdSortRows(list,sort[0],sort[1]==='desc'?-1:1,shortOf):list;
+  const groups=groupSupplyRowsByWarehouse(sorted);
   const flat=groups.flatMap(g=>g.rows.map(r=>({r,wh:g.warehouse})));
-  const pg=dzPageOf('sd-rows',flat,JSON.stringify([view,riskOnly,supGet('sd-q',''),supplyWarehouseFilter,supGet('sd-group','')]));
+  // 10 lines a page (the board's rule for long lists); a new view, filter or sort starts at page 1. The warehouse
+  // heading repeats at the top of each page.
+  const pg=dzPageOf('sd-rows',flat,JSON.stringify([view,supplyWarehouseFilter,supGet('sd-group',''),supGet('sd-sort','')]));
+  const whIco='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V8l9-5 9 5v13"/><path d="M7 21v-8h10v8"/><path d="M7 17h10"/></svg>';
   let lastWh=null;
   const rowsHtml=pg.rows.map(({r,wh})=>{
-    const n=itemsIn.get(wh)||0;
-    const head=wh===lastWh?'':`<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${esc(supWh(wh))}</b><span>${fmtNum(n)} ${n===1?'item':'items'}</span></td></tr>`;
+    const head=wh===lastWh?'':`<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3">${whIco}${esc(supWh(wh))}</b></td></tr>`;
     lastWh=wh;
-    const st=supSdStatus(r),shortBy=r.isCumulativeShortage?-r.cumulativeNetQty:r.isMonthlyShortage?-r.monthlyNetQty:0;
-    // The status is data, not a control: a coloured dot and its word, no pill.
-    return `${head}<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply"><span class="ohs-st${st.tone?` ${st.tone}`:''}"><i aria-hidden="true"></i>${esc(st.label)}</span>${st.detail?`<span class="sup-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
+    const st=supSdStatus(r),shortBy=shortOf(r);
+    // The status is data, not a control: a coloured dot and its word, its detail small on the same line.
+    return `${head}<tr class="sup-row"><td class="sup-strong sup-nolabel" data-label="Item">${esc(r.itemCode||'No item')}</td><td class="sup-clip sup-soft sup-nolabel" data-label="Description" title="${esc(r.itemDescription||'')}">${esc(r.itemDescription||'')}</td><td class="sup-soft" data-label="Month">${esc(supMonthShort(r.yearMonth,curLbl)||r.yearMonth||'')}</td><td class="num sup-strong" data-label="${hasOC?'Demand Orders':'Demand Qty'}">${esc(orderCell(r))}</td><td class="num sup-soft" data-label="Supply Qty">${fmtNum(r.usableSupplyQty)}</td><td class="num sup-strong${shortBy?' red':' muted'}" data-label="Short Qty">${fmtNum(shortBy)}</td><td class="sup-status"${st.flag?tipAttr(`SAP flag: ${st.flag}.`):''} data-label="Supply"><span class="ohs-st${st.tone?` ${st.tone}`:''}"><i aria-hidden="true"></i>${esc(st.label)}</span>${st.detail?`<span class="ohs-st-sub">${esc(st.detail)}</span>`:''}</td></tr>`;
   }).join('');
   const shortN=new Set(shortageRows.map(itemKey)).size,riskN=new Set(riskRows.map(itemKey)).size;
-  const check='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-  const riskChip=`<button type="button" class="dz-pillinput sup-toggle ohs-toggle" data-focus-key="sd-risk-only" aria-pressed="${riskOnly?'true':'false'}"${tipAttr(riskOnly?'Show all short or at-risk lines.':'List only lines with supply at risk.')} onclick="supSdFocus(${riskOnly?"'short'":"'risk'"})">${riskOnly?check:''}Supply at risk only<span class="ohs-toggle-n">${fmtNum(riskN)}</span></button>`;
-  const nItems=new Set(list.map(itemKey)).size;
-  const chip=view==='all'?dzChip(supLines(list.length),''):dzChip(`${fmtNum(nItems)} ${nItems===1?'item':'items'}`,shortageRows.length?'red':'amber');
-  // The numbers (data) under the title; the options (what can be clicked) in their own tinted bar; then the list.
+  // The numbers (data) under the title.
   const sum=`<span class="ohs-sum"><span class="ohs-sum-i red"><b>${fmtNum(shortN)}</b> short</span><span class="ohs-sum-i amber"><b>${fmtNum(riskN)}</b> supply at risk</span><span class="ohs-sum-i"><b>${fmtNum(list.length)}</b> ${list.length===1?'line':'lines'} in view</span></span>`;
-  const tools=`<div class="ohs-tools print-hide" role="group" aria-label="List options"><div class="ohs-tgroup"><span class="ohs-tlabel">View</span>${seg}</div>${view==='risk'?`<div class="ohs-tgroup"><span class="ohs-tlabel">Filter</span>${riskChip}</div>`:''}<div class="ohs-tgroup ohs-find">${supSearchBox('sd','Search item')}</div></div>`;
+  const colHead=SUP_SD_COLS.map(([id,label,num,,tip])=>{
+    const l=id==='dem'?(hasOC?'Demand Orders':'Demand Qty'):label;
+    const t=id==='dem'?(hasOC?'Open sales orders for the item that month.':'Open demand quantity.'):tip;
+    const on=sort&&sort[0]===id;
+    return `<th${num?' class="num"':''}${on?` aria-sort="${sort[1]==='desc'?'descending':'ascending'}"`:''}><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-${id}" onclick="supSdSort('${id}')"${tipAttr(`${t} Click to sort.`)}>${esc(l)}<span class="sort-arrow" aria-hidden="true">${on&&sort[1]==='desc'?'↓':'↑'}</span></button></th>`;
+  }).join('');
   const table=list.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
-    <thead><tr><th>Item</th><th>Description</th><th>Month</th><th class="num"${tipAttr(hasOC?'Open sales orders for the item that month.':'Open demand quantity.')}>${hasOC?'Demand orders':'Demand qty'}</th><th class="num"${tipAttr('Qty on confirmed, committed POs.')}>Supply qty</th><th class="num"${tipAttr('Running shortfall, else the month’s.')}>Short qty</th><th${tipAttr('Short, or the risk on its PO supply.')}>Supply</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+    <thead><tr>${colHead}</tr></thead><tbody>${rowsHtml}</tbody></table></div>
     ${dzPageFoot('sd-rows',pg,view==='all'?'All open demand':'Short or at-risk items')}`
-    :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':riskOnly?'No supply risk lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
-  // No fold chevron on this card (owner, 2v6.9): it is the whole Supply / Demand view.
-  return supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),chip,tools:'',sub:sum,body:tools+table,cls:'ohl-sd dz-fade dz-nofold'});
+    :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
+  // No fold chevron and no count pill on this card (owner, 2v6.9): it is the whole Supply / Demand view.
+  return supTableCard({title:view==='all'?'All open demand':'Short or at-risk items',tip:sectionTipText('sd-shortages'),tools:seg,sub:sum,body:table,cls:'ohl-sd dz-fade dz-nofold'});
 }
+// Supply / Demand columns: [id, title, numeric, first click 'asc' | 'desc', tip].
+const SUP_SD_COLS=[
+  ['item','Item','','asc','SAP item number.'],
+  ['desc','Description','','asc','Item description.'],
+  ['month','Month','','asc','Demand month.'],
+  ['dem','Demand','num','desc',''],
+  ['sup','Supply Qty','num','desc','Qty on confirmed, committed POs.'],
+  ['short','Short Qty','num','desc','Running shortfall, else the month’s.'],
+  ['status','Supply','','asc','Short, or the risk on its PO supply.']
+];
+// A column title: the first click sorts it (text A to Z, months oldest first, numbers high to low, the worst status
+// first), the next click reverses it.
+function supSdSort(col){
+  const c=SUP_SD_COLS.find(x=>x[0]===col);
+  if(!c)return;
+  const [cur,dir]=String(supGet('sd-sort','')).split(':');
+  const next=cur===col?(dir==='asc'?'desc':'asc'):c[3];
+  supSet('sd-sort',`${col}:${next}`);
+  if(typeof announce==='function')announce(`Sorted by ${c[1]}, ${next==='asc'?'ascending':'descending'}.`);
+}
+function supSdSortRows(rows,col,sign,shortOf){
+  const text=(a,b)=>String(a??'').localeCompare(String(b??''),undefined,{numeric:true,sensitivity:'base'});
+  const rank=r=>{const st=supSdStatus(r);return (st.tone==='red'?0:st.tone==='amber'?1:2)*100+(['Short','Late PO','No commit date','Unconfirmed','Rescheduled','Supply risk'].indexOf(st.label)+1);};
+  const key={item:r=>r.itemCode,desc:r=>r.itemDescription,month:r=>r.yearMonth,dem:r=>r.demandOrderCount>0?r.demandOrderCount:r.demandOpenQty,sup:r=>r.usableSupplyQty,short:shortOf,status:rank}[col];
+  const num=col==='dem'||col==='sup'||col==='short'||col==='status';
+  return rows.map((r,i)=>({r,i})).sort((a,b)=>{
+    const ka=key(a.r),kb=key(b.r);
+    const d=num?((+ka||0)-(+kb||0)):text(ka,kb);
+    return d*sign||a.i-b.i;
+  }).map(x=>x.r);
+}
+
 
 
 // ---------- Supply Mix ----------

@@ -113,12 +113,21 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   assert.equal(page.run('weeklyView'), 'supply');
   h = html(page);
   assert.match(h, /<div class="oh-panel" role="tabpanel" id="oh-panel-supply" aria-labelledby="oh-tab-supply">/);
-  assert.match(h, /<section class="dz-card sup-tcard dz-span-6 ohl-sd dz-fade dz-nofold"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"[^>]*>Short or at-risk items<\/h2><span class="dz-chip red">2 items<\/span>/);
-  assert.match(h, /data-focus-key="sd-view-risk"[\s\S]*data-focus-key="sd-risk-only"[\s\S]*data-focus-key="sup-q-sd"/);
-  // 2v6.9: the numbers under the title (data), the options in their own labelled bar (View, Filter, search), no fold
-  // chevron on the card, each status a dot and a word, not a pill.
+  assert.match(h, /<section class="dz-card sup-tcard dz-span-6 ohl-sd dz-fade dz-nofold"><div class="sup-thead"><div class="sup-ttitle"><h2 class="dz-title"[^>]*>Short or at-risk items<\/h2><\/div><div class="sup-tools"><div class="dz-seg sup-seg-sm"[\s\S]*?data-focus-key="sd-view-risk"/);
+  // 2v6.9 (owner): no count pill, no search, no Supply at risk only filter; the view switch sits in the title row; the
+  // numbers under the title; no fold chevron; each status a dot and a word with its detail small beside it.
+  assert.doesNotMatch(h, /data-focus-key="sd-risk-only"|data-focus-key="sup-q-sd"|ohs-tools|class="dz-chip red">2 items/);
   assert.match(h, /<div class="dz-meta sup-tsub"><span class="ohs-sum"><span class="ohs-sum-i red"><b>\d+<\/b> short<\/span>/);
-  assert.match(h, /<div class="ohs-tools print-hide" role="group" aria-label="List options"><div class="ohs-tgroup"><span class="ohs-tlabel">View<\/span>/);
+  // Every column title sorts; Supply Qty and Short Qty with a capital Q; a warehouse heading has no item count.
+  const ths = [...h.matchAll(/data-focus-key="sd-sort-(\w+)" onclick="supSdSort\('\1'\)"[^>]*>([^<]+)</g)].map((m) => `${m[1]}:${m[2]}`);
+  assert.deepEqual(ths.slice(0, 7).map((t) => t.split(':')[0]), ['item', 'desc', 'month', 'dem', 'sup', 'short', 'status']);
+  assert.ok(ths.includes('sup:Supply Qty') && ths.includes('short:Short Qty'), ths.join(', '));
+  assert.match(h, /<tr class="sup-grp"><td colspan="7"><b role="heading" aria-level="3"><svg[\s\S]*?<\/svg>[^<]+<\/b><\/td><\/tr>/);
+  page.run("supSdSort('short')");
+  assert.match(html(page), /<th class="num" aria-sort="descending"><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-short"/);
+  page.run("supSdSort('short')");
+  assert.match(html(page), /<th class="num" aria-sort="ascending"><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-short"/);
+  page.run("supSet('sd-sort','')");
   assert.match(h, /<span class="ohs-st red"><i aria-hidden="true"><\/i>Short<\/span>/);
   // The filters that apply to items: the supply warehouse and the item group (no Segment / Customer pills).
   const row = h.slice(h.indexOf('dz-filterrow'), h.indexOf('<div class="oh-panel"'));
@@ -127,11 +136,12 @@ test('Views: Leading | Lagging | Supply / Demand tabs; the Supply / Demand view 
   assert.doesNotMatch(row, /Segment|Customer/);
   // No Lines card in this view.
   assert.doesNotMatch(h, /ohl-lines-card/);
-  // Item group and Supply at risk only narrow it, as on the Supply / Demand page before.
+  // Item group narrows it; Supply at risk (from the Supply / Demand page) opens the Short or at risk view.
   page.run("supSet('sd-group','Electronics')");
   assert.match(html(page), /No shortages or supply risk found for this selection\./);
   page.run("supSet('sd-group','');supSdFocus('risk')");
-  assert.match(html(page), /data-focus-key="sd-risk-only" aria-pressed="true"[^>]*>(?:<svg[^>]*>[\s\S]*?<\/svg>)?Supply at risk only<span class="ohs-toggle-n">1<\/span><\/button>/);
+  assert.equal(page.run("supGet('sd-view','risk')"), 'risk');
+  assert.doesNotMatch(html(page), /Supply at risk only/);
   assert.equal(page.run('activeTab'), 'weekly');
   // ArrowRight wraps to Leading.
   page.run("ohTabKey({key:'ArrowRight',preventDefault(){}})");
