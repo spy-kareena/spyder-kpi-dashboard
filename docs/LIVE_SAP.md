@@ -21,6 +21,11 @@ Browser ── /api/sap/kpi ──> functions/api/sap ──> Cloudflare Tunnel 
   report as the tab-delimited file SAP's Export to Excel makes. None of the keys reach the browser.
 - **`GET /api/sap/status`** tells the page whether the site has a bridge (`{"configured": true}`). It shows nothing else.
 - The function passes on the bridge's `X-Row-Count`, `X-Refreshed-At` and `X-Stale` headers.
+- **Ask AI's SAP lookups (2v6.9)**: `GET /api/sap/catalog` lists the lookups Ask AI may offer (the bridge's `/api/catalog`,
+  only the names on the function's list, kept 60 s). `GET /api/sap/data/<name>?…` runs one: the function sends only that
+  lookup's own params, checked first (whole numbers in range; text up to its length, letters, digits, space `. _ / -`), and
+  returns the bridge's JSON. Unknown lookup 404, bad params 400, no bridge 503, bridge down 502. The lookups need the
+  bridge update that adds them; until then Ask AI answers from the board only. See [AI_ASSISTANT.md](AI_ASSISTANT.md).
 
 ## Settings (Pages secrets)
 
@@ -98,7 +103,8 @@ by hand.
 
 ## Tests
 
-`node tests/sap-api.test.mjs` (the function), `node tests/sap-live.test.js` (the page through the function, with a
+`node tests/sap-api.test.mjs` (the function, with Ask AI's catalog and lookups), `node tests/ask-sap.test.js` (Ask AI's SAP
+tools, source line and tables), `node tests/sap-live.test.js` (the page through the function, with a
 stand-in bridge: start-up, the 5-minute read, disconnects, the kept data, Settings) and `node tests/bridge-data.test.js`
 (the bridge's data types against a Query Manager export, with the bridge repo's fixture in `tests/fixtures/`). All are
 part of `node tests/run-all.js`.

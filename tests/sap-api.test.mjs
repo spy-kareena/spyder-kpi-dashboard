@@ -94,6 +94,129 @@ test('bridge errors, Access refusals and an unreachable bridge become short mess
   assert.match((await res.json()).error, /could not be reached/);
 });
 
+// --- Ask AI's SAP lookups (2v6.9): /api/sap/catalog and /api/sap/data/<name> ----------------------------------
+const CATALOG = {
+  reports: { kpi: { description: 'KPI', cache_seconds: 300 } },
+  queries: {
+    so_detail: { description: 'Lines of one sales order', params: [{ name: 'docnum', default: null, min: 1, max: 2147483647, required: true }] },
+    item_stock: { description: '', params: [{ name: 'item', default: null, min: null, max: 50, required: true }] },
+    open_sales_orders: { description: 'Open sales orders with remaining open value (local currency)', params: [] },
+    drop_tables: { description: 'not on the allowlist', params: [] },
+  },
+};
+// A fake bridge that answers by path and records every request.
+let asked = [];
+const fakeBridge = (routes) => {
+  asked = [];
+  globalThis.fetch = async (url, init) => {
+    const u = new URL(String(url));
+    asked.push({ url: String(url), path: u.pathname, query: Object.fromEntries(u.searchParams), headers: init.headers });
+    const r = routes[u.pathname];
+    if (!r) return new Response(JSON.stringify({ error: `Unknown query '${u.pathname}'.` }), { status: 404, headers: { 'content-type': 'application/json' } });
+    const [status, body, type = 'application/json'] = typeof r === 'function' ? r(u) : r;
+    return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': type } });
+  };
+};
+let envN = 0;
+const freshEnv = () => ({ ...ENV, SAP_BRIDGE_URL: `https://sap-bridge-${++envN}.example.test` }); // the catalog is kept per bridge
+
+test('catalog: only allowlisted queries the bridge lists, with typed params; reports and other queries left out', async () => {
+  const env = freshEnv();
+  fakeBridge({ '/api/catalog': [200, CATALOG] });
+  const res = await call('catalog', { env });
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  const body = await res.json();
+  assert.equal(body.configured, true);
+  assert.deepEqual(Object.keys(body.queries).sort(), ['item_stock', 'open_sales_orders', 'so_detail']);
+  assert.ok(!('reports' in body));
+  assert.equal(body.queries.open_sales_orders.description, 'Open sales orders with remaining open value (local currency)');
+  assert.match(body.queries.item_stock.description, /Stock of one item/, 'an empty bridge description falls back to ours');
+  assert.deepEqual(body.queries.so_detail.params, [{ name: 'docnum', type: 'int', required: true, min: 1, max: 2147483647 }]);
+  assert.deepEqual(body.queries.item_stock.params, [{ name: 'item', type: 'str', required: true, max: 50 }]);
+  assert.equal(asked[0].url, `${env.SAP_BRIDGE_URL}/api/catalog`);
+  assert.deepEqual(asked[0].headers, { 'X-API-Key': 'bridge-key', 'CF-Access-Client-Id': 'id.access', 'CF-Access-Client-Secret': 'access-secret' });
+  const text = JSON.stringify(body);
+  for (const secret of Object.values(env)) assert.ok(!text.includes(secret), secret);
+  // Kept for 60 s: a second call does not ask the bridge again.
+  await call('catalog', { env });
+  assert.equal(asked.length, 1);
+});
+
+test('catalog: errors are clear JSON (not set up 503, bridge down 502, old bridge without a catalog 502)', async () => {
+  const off = await call('catalog', { env: {} });
+  assert.equal(off.status, 503);
+  assert.equal((await off.json()).configured, false);
+  globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
+  let res = await call('catalog', { env: freshEnv() });
+  assert.equal(res.status, 502);
+  assert.match((await res.json()).error, /could not be reached/);
+  fakeBridge({});
+  res = await call('catalog', { env: freshEnv() });
+  assert.equal(res.status, 502);
+  assert.match((await res.json()).error, /no catalog/);
+  fakeBridge({ '/api/catalog': [200, '<html>Sign in</html>', 'text/html'] });
+  assert.match((await (await call('catalog', { env: freshEnv() })).json()).error, /Cloudflare Access refused/);
+});
+
+const ROWS = { query: 'so_detail', params: { docnum: 45126 }, refreshed_at: '2026-11-13T14:14:05-06:00', row_count: 1, stale: false, rows: [{ DocNum: 45126, ItemCode: 'SPY-100', OpenQty: 4 }] };
+
+test('data: an allowlisted lookup is passed through as the bridge sent it, with only its declared params', async () => {
+  fakeBridge({ '/api/data/so_detail': [200, ROWS], '/api/data/customer_orders': [200, { ...ROWS, query: 'customer_orders' }], '/api/data/production_orders': [200, { ...ROWS, query: 'production_orders' }] });
+  const res = await call('data/so_detail?docnum=45126&refresh=1&sql=DROP%20TABLE&months=3');
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type'), /application\/json/);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await res.json(), ROWS);
+  assert.equal(asked[0].url, 'https://sap-bridge.example.test/api/data/so_detail?docnum=45126');
+  assert.equal(asked[0].headers['X-API-Key'], 'bridge-key');
+  await call('data/customer_orders?cardcode=%20C1001%20&months=6&docnum=1');
+  assert.deepEqual(asked[1].query, { cardcode: 'C1001', months: '6' });
+  await call('data/customer_orders?cardcode=C1001');
+  assert.deepEqual(asked[2].query, { cardcode: 'C1001' }, 'an optional param left out gets the bridge default');
+  await call('data/production_orders?status=ALL&item=SPY-100%2FA');
+  assert.deepEqual(asked[3].query, { item: 'SPY-100/A', status: 'all' });
+});
+
+test('data: unknown names 404 and bad params 400, before anything reaches the bridge', async () => {
+  fakeBridge({ '/api/data/so_detail': [200, ROWS] });
+  for (const p of ['data/drop_tables', 'data/kpi', 'data/SO_DETAIL', 'data/so_detail/x', 'data/../catalog', 'data/']) {
+    assert.equal((await call(p)).status, 404, p);
+  }
+  for (const p of ['data/so_detail', 'data/so_detail?docnum=', 'data/so_detail?docnum=abc', 'data/so_detail?docnum=0', 'data/so_detail?docnum=-5',
+    'data/so_detail?docnum=1.5', 'data/so_detail?docnum=99999999999', 'data/item_stock?item=', `data/item_stock?item=${'A'.repeat(51)}`,
+    "data/item_stock?item=X'%20OR%201%3D1", 'data/item_stock?item=%3Cscript%3E', 'data/customer_orders?cardcode=C1&months=61',
+    'data/customer_orders?cardcode=C1234567890123456', 'data/production_orders?status=closed']) {
+    const res = await call(p);
+    assert.equal(res.status, 400, p);
+    assert.ok((await res.json()).error, p);
+  }
+  assert.equal(asked.length, 0, 'nothing was sent to the bridge');
+  assert.equal((await call('data/so_detail?docnum=1', { env: {} })).status, 503);
+  assert.equal((await call('data/so_detail?docnum=1', { method: 'POST' })).status, 405);
+});
+
+test('data: bridge errors become clear JSON; a stale answer passes with its flag', async () => {
+  fakeBridge({ '/api/data/so_detail': [400, { error: "Parameter 'docnum' must be int." }] });
+  let res = await call('data/so_detail?docnum=7');
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /must be int/);
+  fakeBridge({});
+  res = await call('data/item_info?item=SPY-100');
+  assert.equal(res.status, 404);
+  assert.match((await res.json()).error, /update the bridge/);
+  fakeBridge({ '/api/data/so_detail': [502, { error: 'SAP HANA could not be reached (bridge log ref ab12cd34)' }] });
+  res = await call('data/so_detail?docnum=7');
+  assert.equal(res.status, 502);
+  assert.match((await res.json()).error, /HANA could not be reached/);
+  fakeBridge({ '/api/data/so_detail': [200, 'ok', 'text/plain'] });
+  assert.equal((await call('data/so_detail?docnum=7')).status, 502);
+  globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
+  assert.match((await (await call('data/so_detail?docnum=7')).json()).error, /could not be reached/);
+  fakeBridge({ '/api/data/so_detail': [200, { ...ROWS, stale: true }] });
+  assert.equal((await (await call('data/so_detail?docnum=7')).json()).stale, true);
+});
+
 test('the sign-in gate covers /api/sap (no public path added)', async () => {
   const mw = readFileSync(join(here, '..', 'functions', '_middleware.js'), 'utf8');
   assert.ok(!/api\/sap/.test(mw), 'the middleware has no exception for /api/sap');
