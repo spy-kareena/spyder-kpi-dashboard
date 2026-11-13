@@ -258,3 +258,11 @@ pr:<number>, read-only in snapshots, sortable). Rows get a state icon and a quie
 "Updated ... ago" is gone: "Updated · next" moved to the Shipments title row with Update all (POST /api/shipping,
 10-minute limit message). Shipments 10 a page, Cross-border and Delayed 5 a page, with page numbers. Tests:
 shipping-page, notes-store.
+
+2v6.9 (pages): Order Health Leading: the ship target card moved here from Monthly (same numbers and Dates control),
+above Status & top reasons, which is now a list without bars (label, value and lines, then the orders; rows still
+filter); When flagged and the Due this week tile are gone (the at-risk history stays). Lagging: the warehouse and vendor
+Top offenders cards are gone. Purchase Orders: This week focus left the strip; Kits Clean and Kits Not Clean are one
+Kits card (Not clean count, Clean / Not clean rows that filter). Settings > Dashboard > Hidden Pages: a switch per page
+(setting hiddenPages); a hidden page leaves the menus and opens Order Health; Warehouses is hidden by default. Tests:
+settings-categories (new Hidden Pages test); order-health-v2, linked-lines and review-pages-css-print-a11y updated.

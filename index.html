@@ -2030,7 +2030,7 @@ button.dz-barrow.sel{background:var(--dz-indigo-bg)}
 
 /* ===== Area markers: each page agent edits only inside its own pair (empty on purpose) ===== */
 /* 2v6:oh-leading */
-/* Order Health, Leading: At risk, Status & top reasons, Open lines by due week, Customers at risk, When flagged, Date changes, Lines */
+/* Order Health, Leading: At risk, Ship target, Status & top reasons, Open lines by due week, Customers at risk, Date changes, Lines */
 .ohl-card{position:relative;padding-bottom:24px}
 .ohl-card .empty-note{padding:6px 0;font-size:12.5px;color:var(--dz-ink-4)}
 .ohl-card .dz-card-head{align-items:center}
@@ -2108,14 +2108,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .ohl-track{display:block;flex:1;height:5px;border-radius:3px;background:var(--dz-line-6);overflow:hidden}
 .ohl-track>i{display:block;height:100%;min-width:2px;border-radius:3px;background:var(--dz-indigo);transform-origin:left}
 .ohl-cust-amt{font-size:11.5px;color:var(--dz-ink-4);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
-.ohl-age{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l n" "t n";gap:5px 10px;align-items:center}
-.ohl-age-l{grid-area:l;color:var(--dz-ink-2)}
-.ohl-age-n{grid-area:n;align-self:center;font-weight:600;font-variant-numeric:tabular-nums}
-.ohl-age .ohl-track{grid-area:t;height:6px}
-.ohl-age .ohl-track>i{background:var(--dz-teal)}
-.ohl-age.zero .ohl-track>i{display:none}
-.ohl-age.zero .ohl-age-n{color:var(--dz-ink-5)}
-.ohl-age.zero .ohl-age-l{color:var(--dz-ink-4)}
 .ohl-dc .dz-card-head .dz-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ohl-dc-meta{font-size:12.5px;color:var(--dz-ink-4)}
 .ohl-dc-table{--cols:minmax(0,1.4fr) 84px 64px minmax(0,1.5fr) minmax(0,1.2fr);--gap:14px;margin-top:12px}
@@ -2221,7 +2213,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 /* 2v6:end oh-leading */
 
 /* 2v6:oh-lagging */
-/* Lagging view: Monthly and Quarterly cards (order count headline, six metric tiles) and the Top offenders bars. */
+/* Lagging view: Monthly and Quarterly cards (order count headline, six metric tiles). */
 .ohg-grid{align-items:stretch}
 .ohg-card{padding-bottom:24px}
 .ohg-head{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin-top:12px}
@@ -2232,7 +2224,6 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .ohg-good{color:var(--dz-teal)}
 .ohg-bad{color:var(--dz-risk-text)}
 .ohg-flat{color:var(--dz-ink-4)}
-.ohg-bars{margin-top:16px}
 .ohg-empty{margin:16px 0 0}
 @media (max-width:640px){
   .ohg-orders{font-size:28px}
@@ -3898,6 +3889,81 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v9:pages */
+/* Order Health, Leading (2v6.9): the ship target card over Status & top reasons, the two in one column beside At risk
+   (the column stretches to At risk's height, Status takes the rest); Status & top reasons is a two-column list, no bars:
+   the label with its value and lines at the left, a dotted leader, the orders at the right in tabular figures. At risk
+   keeps three state tiles (Due this week left it): three across, two on phones with All open across the row. */
+.ohl-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ohl-col>.dz-card{margin:0}
+.ohl-col>.ohl-status-card{flex:1 1 auto}
+.ohl-ship .mwm-closers:empty{display:none}
+.ohl-sec.ohl-sec-first{margin-top:10px;padding-top:0;border-top:0}
+.ohl-kvs{display:flex;flex-direction:column;margin-top:8px}
+button.ohl-kv{display:flex;align-items:baseline;gap:8px;width:calc(100% + 16px);margin:0 -8px;padding:6px 8px;border:0;border-radius:10px;background:transparent;font:inherit;font-size:14px;text-align:left;color:inherit;cursor:pointer;transition:background-color .16s ease}
+button.ohl-kv:hover{background:var(--dz-hover)}
+button.ohl-kv.sel{background:var(--dz-indigo-bg)}
+button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.ohl-kv-l{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 6px;flex:0 1 auto;min-width:0}
+.ohl-kv-l .ohl-dot{align-self:center}
+.ohl-kv-name{font-weight:500;color:var(--dz-ink-1)}
+.ohl-kv-sub{font-size:13px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.ohl-kv-lead{flex:1 1 16px;min-width:16px;border-bottom:1px dotted var(--dz-ink-6);transform:translateY(-4px)}
+.ohl-kv-n{flex:none;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.ohl-kv.crit .ohl-kv-n{color:var(--dz-risk-text)}
+.ohl-kv.zero .ohl-kv-n,.ohl-kv.zero .ohl-kv-name{color:var(--dz-ink-5)}
+.ohl-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ohl-stats>.ohl-stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+@media (max-width:1290px){.ohl-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:900px) and (min-width:641px){.ohl-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){
+  .ohl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ohl-stats>:last-child{grid-column:1/-1}
+  .ohl-kv-sub{flex-basis:100%}
+  .ohl-kv-sep{display:none}
+  .ohl-kv-l .ohl-dot~.ohl-kv-sub{padding-left:13px}
+}
+@media (prefers-reduced-motion:reduce){button.ohl-kv{transition:none}}
+/* Monthly (2v6.9): the ship target moved to Order Health, so the month card spans the row: the headline and the bar at
+   the left, the three numbers at the right (stacked under 1180px). */
+@media (min-width:1181px){
+  .mwm-herocard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;align-content:start}
+  .mwm-herocard>.dz-card-head{grid-column:1/-1}
+  .mwm-herocard>.mwm-hero,.mwm-herocard>.mwm-bar,.mwm-herocard>.mwm-bar-l{grid-column:1}
+  .mwm-herocard>.mwm-stats{grid-column:2;grid-row:2/span 3;align-self:center;margin-top:0}
+}
+/* Purchase Orders (2v6.9): This week focus left the strip, so it is six columns with PO At Risk across two; under
+   1260px PO At Risk takes the first row and the other four share the second (two by two from 700px down). The Kits card
+   (Clean / Not clean in one) takes two columns of the second row and lays out like PO At Risk: the Not clean count at
+   the left, "Clean ··· N" and "Not clean ··· N" buttons at the right behind a hairline. */
+.sup-tiles.po-strip{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:1259px){.sup-tiles.po-strip{grid-template-columns:repeat(4,minmax(0,1fr))}.po-strip>.sup-tile:last-child{grid-column:auto}}
+@media (max-width:700px){.sup-tiles.po-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:359px){.sup-tiles.po-strip{grid-template-columns:minmax(0,1fr)}}
+.kit-card{position:relative;display:flex;align-items:stretch}
+.sup-more-views.po-fill>.kit-card{flex:2 1 calc((100% - (var(--po-cols,4) - 1)*10px)/var(--po-cols,4)*2 + 10px)}
+.kit-card:hover{background:var(--dz-glass-80)}
+.kit-card.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+:where([data-theme=dark]) .kit-card.sel{background-color:var(--dz-surface)}
+.kit-card .po-risk-main{gap:0}
+.kit-card .po-risk-main .dz-stat-v{margin-top:auto;padding-top:4px}
+.kit-card .po-risk-main{flex:1 1 0;min-width:0}
+.kit-card .po-owners{display:flex;flex-direction:column;justify-content:center;flex:1 1 0;gap:2px;margin-left:14px;padding-left:14px}
+.kit-card .po-own+.po-own{margin-top:0}
+.kit-row .po-own-n{color:var(--dz-teal)}
+.kit-row.amber .po-own-n{color:var(--dz-amber-text)}
+.kit-row.on{background:var(--dz-indigo-bg)}
+.kit-card:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
+@media (max-width:980px){.sup-more-views.po-fill>.kit-card{flex-basis:calc((100% - 20px)/3*2 + 10px)}}
+@media (max-width:640px){.sup-more-views.po-fill>.kit-card{flex-basis:100%}}
+/* Settings, Hidden Pages (2v6.9): across both columns of Dashboard, its rows in three columns (two, then one). */
+#stg-card-hiddenpages{grid-column:1/-1}
+.stg-hp-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:28px;margin-top:6px}
+.stg-hp.off .stg-label{color:var(--dz-ink-3)}
+.stg-hp-list>.stg-row:first-child{border-top:1px solid var(--dz-line-6);padding-top:12px}
+@media (max-width:1180px){.stg-hp-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.stg-hp-list{grid-template-columns:minmax(0,1fr)}}
+/* 2v9:end pages */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
    look, links instead of buttons; it sticks to the top while the page scrolls and scrolls sideways on phones. Cards
@@ -9722,14 +9788,13 @@ function supPurchaseOrders(m){
       ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
   }
 
-  // Open: the five order tiles, the other views, the vendors / warehouses card, the PO lines.
+  // Open: the five order tiles (2v6.9: This week focus left the strip), the other views, the vendors / warehouses card, the PO lines.
   // PO At Risk counts lines (the owner's rule), the other order cards count POs.
   const tiles=[
     ['allopen','var(--dz-teal)','Open POs',poAllOpenRows,'','open on purchase orders in view'],
     ['late','var(--dz-risk)','Late / missed commit',poLateRows,'red','past their date'],
     ['poatrisk','var(--dz-risk)','PO At Risk',tileRows.poatrisk,'red','',true],
     ['nocommit','var(--dz-ink-5)','No commit date',poNoCommitRows,'','with no valid vendor date'],
-    ['duethisweek','var(--dz-indigo)','This week focus',poDueThisWeekRows,'','at risk or due this week'],
     ['future','var(--dz-amber)','Rescheduled',poFutureRescheduleRows,'','with a reschedule date still ahead']];
   // PO At Risk: the wide tile (two of the strip's seven columns, CSS 2v7:e): label, line count and value at the left,
   // its top four PO owners (first names, most lines first) listed at the right; the tip lists them all.
@@ -9746,8 +9811,8 @@ function supPurchaseOrders(m){
   const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
   const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('')
-    +kitStatHtml('kitclean',kitCleanRows,sel)+kitStatHtml('kitnotclean',kitNotCleanRows,sel);
-  const extraCount=extra.length+2;
+    +kitCardHtml(kitCleanRows,kitNotCleanRows,sel);
+  const extraCount=extra.length+2; // the Kits card takes two columns of the row
 
   // Vendors with the most late POs, or open POs by warehouse (a click filters the page; again clears it).
   const by=supGet('po-by','vendor')==='wh'?'wh':'vendor';
@@ -9908,13 +9973,22 @@ function poSortRows(rows,{col,dir},{status,date,vendor},tie){
 
 // --- Kit Clean? (a tick per PO line) ---
 // Saved in the shared notes store like a note (rowOverrides[key].kitClean, stamped by / at, sent to
-// functions/api/notes.js; only true is kept). A tick changes no metric: the row and the two Kit cards change in place.
-const KIT_TILES={kitclean:['Kits Clean','boxCheck','var(--dz-teal)','var(--dz-teal)','ticked Kit Clean'],kitnotclean:['Kits Not Clean','box','var(--dz-amber)','var(--dz-amber-text)','not ticked Kit Clean yet']};
-function kitStatHtml(id,rows,sel){
-  const [label,icon,ico,col,what]=KIT_TILES[id];
-  const n=rows.length,docs=supDocs(rows),amt=rowOpenAmount(rows),pos=`${fmtNum(docs)} ${docs===1?'PO':'POs'}`;
-  const tipText=`${label}: ${supLines(n)} on ${pos} (${money(amt)} open) ${what} in PO lines; click to list them.`;
-  return `<button type="button" class="dz-stat kit-stat" onclick="setPoTileFilter('${id}')" data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}><div class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:${ico}">${dzIconSvg(icon)}</span>${esc(label)}</div><div class="dz-stat-v"${n?` style="color:${col}"`:''}>${fmtNum(n)}<span class="po-unit">${n===1?'line':'lines'}</span></div><div class="dz-stat-s">${esc(`${moneyShort(amt)} · ${pos}`)}</div></button>`;
+// functions/api/notes.js; only true is kept). A tick changes no metric: the row and the Kits card change in place.
+// 2v6.9: one Kits card (it was a Kits Clean and a Kits Not Clean card), laid out like PO At Risk: the Not clean line count
+// at the left (amber while any), and at the right two rows, "Clean ··· N" and "Not clean ··· N", each a button that lists
+// its lines (setPoTileFilter('kitclean' | 'kitnotclean')). The card itself lists the Not clean lines.
+const KIT_TILES={kitclean:['Clean','ticked Kit Clean'],kitnotclean:['Not clean','not ticked Kit Clean yet']};
+function kitCardHtml(cleanRows,notRows,sel){
+  const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
+  const n=notRows.length,amt=rowOpenAmount(notRows);
+  const on=sel==='kitnotclean'||sel==='kitclean';
+  const tipOf=(id,rows)=>{const [label,what]=KIT_TILES[id];return `Kits ${label.toLowerCase()}: ${supLines(rows.length)} on ${pos(rows)} (${money(rowOpenAmount(rows))} open) ${what} in PO lines; ${sel===id?'listed below.':'click to list them.'}`;};
+  const row=(id,rows)=>{
+    const [label]=KIT_TILES[id];
+    return `<button type="button" class="po-own kit-row${sel===id?' on':''}${id==='kitnotclean'&&rows.length?' amber':''}" data-focus-key="potile-${id}" aria-pressed="${sel===id}" onclick="setPoTileFilter('${id}')"${tipAttr(tipOf(id,rows))}><span class="po-own-name">${esc(label)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(rows.length)}</span></button>`;
+  };
+  const main=`<button type="button" class="po-risk-main" data-focus-key="potile-kits" onclick="setPoTileFilter('kitnotclean')" aria-pressed="${sel==='kitnotclean'}"${tipAttr(`Kits: ${supLines(n)} not ticked Kit Clean yet (${pos(notRows)}, ${money(amt)} open), ${fmtNum(cleanRows.length)} clean. Click to list the Not clean lines.`)}><span class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:var(--dz-amber)">${dzIconSvg('box')}</span>Kits</span><span class="dz-stat-v"${n?' style="color:var(--dz-amber-text)"':''}>${fmtNum(n)}<span class="po-unit">${n===1?'line':'lines'}</span></span><span class="dz-stat-s">${esc(`${moneyShort(amt)} · ${pos(notRows)}`)}</span></button>`;
+  return `<div class="dz-stat kit-stat kit-card po-risk${on?' sel':''}" role="group" aria-label="Kits">${main}<div class="po-owners kit-rows">${row('kitclean',cleanRows)}${row('kitnotclean',notRows)}</div></div>`;
 }
 function kitTipText(r){
   if(isSnapshotView)return `Kit ${r.kitClean?'clean':'not ticked clean'}. A shared snapshot cannot change the tick.`;
@@ -9941,28 +10015,27 @@ function kitToggle(el){
   if(label)tip(label,kitTipText(matches[0]));
   const print=label&&label.querySelector('.kit-print');
   if(print)print.textContent=on?'Yes':'';
-  // On the Kit Clean / Kit Not Clean list the line now belongs to the other card: it fades and leaves on the next redraw.
+  // On the Clean / Not clean list the line now belongs to the other one: it fades and leaves on the next redraw.
   const left=(poTileFilter==='kitclean'&&!on)||(poTileFilter==='kitnotclean'&&on);
   const tr=el.closest('tr');
   if(tr&&tr.classList)tr.classList.toggle('po-left',left);
   kitUpdateTiles();
   const r=matches[0];
-  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')}: kit ${on?'clean':'not clean'}${left?', moves to the other Kit card':''}.`);
+  announce(`${[r.documentNumber,r.itemCode].filter(Boolean).join(' ')}: kit ${on?'clean':'not clean'}${left?', moves to the other Kits list':''}.`);
 }
 function kitUpdateTiles(){
   const d=poData(currentMetrics());
   if(!d||!document.querySelector)return;
+  const el=document.querySelector('.kit-card');
+  if(!el)return;
   const open=d.filteredPoOpen;
-  [['kitclean',open.filter(r=>r.kitClean)],['kitnotclean',open.filter(r=>!r.kitClean)]].forEach(([id,rows])=>{
-    const el=document.querySelector(`[data-focus-key="potile-${id}"]`);
-    if(!el)return;
-    const box=document.createElement('div');
-    box.innerHTML=kitStatHtml(id,rows,poTileFilter||'late');
-    const fresh=box.firstElementChild;
-    // The button stays (focus, its place); only its contents and tip change.
-    el.innerHTML=fresh.innerHTML;
-    tip(el,fresh.getAttribute('data-tip'));
-  });
+  const box=document.createElement('div');
+  box.innerHTML=kitCardHtml(open.filter(r=>r.kitClean),open.filter(r=>!r.kitClean),poTileFilter||'late');
+  const fresh=box.firstElementChild;
+  // The card stays (its place); its buttons are drawn again and the focused one gets focus back.
+  const had=document.activeElement&&el.contains(document.activeElement)?document.activeElement.getAttribute('data-focus-key'):'';
+  el.innerHTML=fresh.innerHTML;
+  if(had){const b=el.querySelector(`[data-focus-key="${had}"]`);if(b)b.focus({preventScroll:true});}
 }
 
 // --- PO At Risk: open PO lines expected after the sales order that needs the item ships ---
@@ -10346,8 +10419,18 @@ function stgSpec(){
     noteCommentsPo:{def:()=>NOTE_COMMENTS_PO_DEFAULT.slice(),check:list},
     linesStart:{def:()=>'folded',check:oneOf(['folded','open'])},
     importReport:{def:()=>'problems',check:oneOf(['problems','always'])},
-    dataSource:{def:()=>'live',check:oneOf(['live','import'])}
+    dataSource:{def:()=>'live',check:oneOf(['live','import'])},
+    // 2v6.9: pages left out of the top menu (Settings > Hidden Pages); Warehouses is hidden by default.
+    hiddenPages:{def:()=>['warehouses'],check:v=>Array.isArray(v)?stgHideablePages().filter(id=>v.includes(id)):undefined}
   };
+}
+// The pages Hidden Pages can hide, in menu order: every page but Order Health and Settings.
+function stgHideablePages(){return ['monthly','warehouses','metrics','shipping','purchaseorders','supplyweekly','supplydemand','buildrisk','forecast'];}
+// True when the page is hidden: it leaves the menus, and setTab / a stored page go to Order Health instead.
+function stgPageHidden(id){return stgHideablePages().includes(id)&&stgValue('hiddenPages').includes(id);}
+function stgTogglePage(id){
+  const list=stgValue('hiddenPages');
+  stgSet('hiddenPages',list.includes(id)?list.filter(x=>x!==id):[...list,id]);
 }
 // Comments: text only, spaces collapsed, 1 to 120 characters, no repeats (any capitalisation), at most 30.
 function stgCleanList(v){
@@ -10532,7 +10615,7 @@ function stgReduceMotion(){
 // The page is five named categories (the shared .pg-group markup), in this order, each with its cards in a two-column
 // grid (one on phones). The category bar under the page title scrolls to a category and marks the one in view.
 const STG_CATS=[['data','Data'],['dash','Dashboard'],['notes','Notes & People'],['ai','AI'],['about','About']];
-const STG_CARD_CAT={source:'data',dc:'data',data:'data',oh:'dash',pages:'dash',profile:'notes',notes:'notes',ai:'ai',connect:'ai',about:'about'};
+const STG_CARD_CAT={source:'data',dc:'data',data:'data',oh:'dash',pages:'dash',hiddenpages:'dash',profile:'notes',notes:'notes',ai:'ai',connect:'ai',about:'about'};
 let stgNavCat='data',stgNavHold=0,stgNavIo=null,stgNavScroll=null;
 function stgCatOf(card){return STG_CARD_CAT[card]||'data';}
 function stgNavHtml(dcLevel){
@@ -10789,6 +10872,20 @@ function stgPagesCard(dis,i){
   ].join('');
   return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
+// Hidden Pages (2v6.9): one row per page with a show / hide switch, hidden pages first (then menu order). Order Health
+// and Settings cannot be hidden. A hidden page leaves the top menu and the Supply menu; turning it on brings it back.
+function stgHiddenPagesCard(dis,i){
+  const hidden=stgValue('hiddenPages');
+  const supply=new Set(((NAV_GROUPS.find(g=>g[0]==='Supply')||[])[1]||[]).map(x=>x[0]));
+  const ids=stgHideablePages().filter(id=>PAGE_TITLES[id]);
+  const rows=[...ids.filter(id=>hidden.includes(id)),...ids.filter(id=>!hidden.includes(id))].map(id=>{
+    const off=hidden.includes(id),name=NAV_LABELS[id]||PAGE_TITLES[id];
+    return stgRow(name,off?'Hidden':supply.has(id)?'In the Supply menu':'In the top menu',stgSwitch(`stg-page-${id}`,`Show ${name}`,!off,`stgTogglePage('${id}')`,dis),{cls:`stg-hp${off?' off':''}`});
+  }).join('');
+  return stgCard({id:'hiddenpages',title:'Hidden Pages',icon:'file',color:'#5468ff',i,changed:!stgIsDefault('hiddenPages'),
+    meta:`<span class="dz-meta">${dzChip(hidden.length?`${fmtNum(hidden.length)} hidden`:'None hidden',hidden.length?'':'teal')}</span>`,
+    body:`<p class="stg-now stg-lead">Hidden pages leave the top menu. Turn one on to bring it back.</p><div class="stg-hp-list">${rows}</div>`});
+}
 // Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
 function stgExport(){
   const data={app:'spyder-kpi-dashboard',kind:'settings',version:stgVersion(),settings:Object.fromEntries(Object.keys(stgSpec()).map(k=>[k,stgValue(k)]))};
@@ -10889,7 +10986,7 @@ function stgRenderPage(){
   let i=check?1:0;
   const cats={
     data:[check,stgDataSourceCard(dis,i++),stgDataCard(i++,dc)],
-    dash:[stgOrderHealthCard(dis,i++),stgPagesCard(dis,i++)],
+    dash:[stgOrderHealthCard(dis,i++),stgPagesCard(dis,i++),stgHiddenPagesCard(dis,i++)],
     notes:[stgProfileCard(dis,i++),stgNotesCard(dis,i++)],
     ai:[stgAiCard(dis,i++),stgConnectCard(i++)],
     about:[stgAboutCard(i++)]
@@ -11064,7 +11161,7 @@ function liveLoadHtml(){
 function renderUploadPages(){
   const box=document.getElementById('upload-pages');
   if(!box)return;
-  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="misc-pg-col"><h3>${esc(group)}</h3><ul>${items.map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
+  box.innerHTML=NAV_GROUPS.map(([group,items])=>`<div class="misc-pg-col"><h3>${esc(group)}</h3><ul>${items.filter(([id])=>!stgPageHidden(id)).map(([id,label,tipText])=>`<li><strong>${esc(label)}</strong><span class="page-desc">${esc(PAGE_TIPS[id]||tipText||'')}</span></li>`).join('')}</ul></div>`).join('');
 }
 function showUploadError(msg){
   const el=document.getElementById('upload-error');
@@ -11551,7 +11648,7 @@ function renderSidebar(){
   if(!el)return;
   const loaded=hasLoadedData();
   const onResults=document.getElementById('results-screen').style.display==='block';
-  const group=n=>(NAV_GROUPS.find(g=>g[0]===n)||[n,[]])[1];
+  const group=n=>(NAV_GROUPS.find(g=>g[0]===n)||[n,[]])[1].filter(([id])=>!stgPageHidden(id)); // 2v6.9: hidden pages leave the menus
   // Each page's one-line description (PAGE_TIPS, else the third NAV_GROUPS entry) is the link's tooltip.
   const aboutOf=(id,tipText)=>PAGE_TIPS[id]||tipText||'';
   const link=([id,label,tipText])=>{
@@ -11626,6 +11723,7 @@ function setTab(t){
   // The Connect an AI page moved into Settings: 'connect' opens Settings at its card. Settings opens before any export
   // is loaded.
   if(t==='connect'){stgShowCard('connect');return;}
+  if(stgPageHidden(t))t='weekly'; // 2v6.9: a hidden page (Settings > Hidden Pages) opens Order Health
   if(!hasLoadedData()&&t!=='settings')return;
   dzOpenMenu=''; // a page change closes the open menu
   const changed=activeTab!==t;
@@ -11688,6 +11786,15 @@ function rowOpenQty(rows){
 }
 function rowDocCount(rows){
   return new Set(rows.map(r=>`${r.sourceType||''}-${r.documentNumber||''}`)).size;
+}
+// The ship target scenario for the current range and basis (this month unless changed), following the Order Health filters
+// (the whole report when none is set). Monthly's Show more and Order Health's Ship target card share it.
+function shipScenarioFor(m,today=reportToday()){
+  const scenarioStart=parseDate(shipScenarioStartDate)||defaultShipScenarioStartDate(today);
+  shipScenarioStartDate=inputDateValue(scenarioStart);
+  const scenarioTarget=parseDate(shipScenarioTargetDate)||defaultShipScenarioDate(today);
+  shipScenarioTargetDate=inputDateValue(scenarioTarget);
+  return cachedByFilter(m,`scenario|${weeklyFilterKey()}|${shipScenarioStartDate}|${shipScenarioTargetDate}|${shipScenarioDateBasis}`,()=>shipScenarioData(mwmRows(m),scenarioTarget,today));
 }
 // Ship target scenario numbers for a start / end date range (the Monthly page's warehouse table uses the same range).
 function shipScenarioData(rows,targetDate,today){
@@ -11882,6 +11989,7 @@ function ohSetMoreOpen(key,open){
   tableMore=next;
 }
 function renderResults(){
+  if(stgPageHidden(activeTab))activeTab='weekly'; // 2v6.9: a stored or remembered hidden page opens Order Health
   cmLoadIfStale();
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
@@ -11998,7 +12106,7 @@ function renderResults(){
     if(ohViewShown('leading')&&!weeklyLeadingCollapsed)html+=ohlRenderLeading(m);
     html+=ohPanelClose()+ohPanelOpen('lagging');
 
-    // ---------- Lagging view (2v6): Monthly and Quarterly cards, then the Top offenders ----------
+    // ---------- Lagging view (2v6): Monthly and Quarterly cards ----------
     // The lagging maths runs only when the Lagging view is shown or printed (ohViewShown).
     if(ohViewShown('lagging'))html+=ohgRender(m);
     html+=ohPanelClose();
@@ -12295,7 +12403,7 @@ function renderResults(){
     if(weeklyTileFilter&&!weeklyTileRows[weeklyTileFilter])weeklyTileFilter='';
     const rawLinkedTileRows=weeklyTileFilter?(weeklyTileRows[weeklyTileFilter]||[]):[];
     const laggingTileIds=OH_LAGGING_TILES;
-    // 2v6: the Lagging view (Monthly / Quarterly cards, Top offenders) has no card to pick, so it lists no lines.
+    // 2v6: the Lagging view (Monthly / Quarterly cards) has no card to pick, so it lists no lines.
     const hideLinkedTile=weeklyView==='lagging'||(weeklyLaggingCollapsed&&laggingTileIds.has(weeklyTileFilter))||(weeklyLeadingCollapsed&&weeklyTileFilter&&!laggingTileIds.has(weeklyTileFilter));
     const otdLinkedStats=weeklyTileFilter==='otd3mo'?otdStats(rawLinkedTileRows):null;
     const rescheduleLinkedStats=weeklyTileFilter==='reschedhit'?rescheduleStats(rawLinkedTileRows):null;
@@ -12386,12 +12494,7 @@ function renderResults(){
     const originalMonthOptions=originalHeaderBase.filter(g=>g.key&&g.key!=='No Original Delivery Date');
     if(originalDeliveryMonthFilter!=='ALL'&&!originalHeaderBase.some(g=>g.key===originalDeliveryMonthFilter))originalDeliveryMonthFilter='ALL';
     const originalHeaderDisplay=originalDeliveryMonthFilter==='ALL'?originalHeaderBase:originalHeaderBase.filter(g=>g.key===originalDeliveryMonthFilter);
-    const scenarioStart=parseDate(shipScenarioStartDate)||defaultShipScenarioStartDate(today);
-    shipScenarioStartDate=inputDateValue(scenarioStart);
-    const scenarioTarget=parseDate(shipScenarioTargetDate)||defaultShipScenarioDate(today);
-    shipScenarioTargetDate=inputDateValue(scenarioTarget);
-    // 2v6: the ship target numbers follow the Order Health filters shown in the filter row (the whole report when none is set).
-    const scenario=cachedByFilter(m,`scenario|${weeklyFilterKey()}|${shipScenarioStartDate}|${shipScenarioTargetDate}|${shipScenarioDateBasis}`,()=>shipScenarioData(mwmRows(m),scenarioTarget,today));
+    const scenario=shipScenarioFor(m,today);
     const openOriginalRows=originalHeaderDisplay.flatMap(g=>g.rows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r))).sort((a,b)=>{
       const am=monthKey(originalHeaderDate(a))||'9999-99';
       const bm=monthKey(originalHeaderDate(b))||'9999-99';
@@ -12536,7 +12639,7 @@ function renderResults(){
     `,{rise:'rise-3'})}
     ${renderShipTargetScenario(scenario,today,{controls:false})}
     <details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}${aboutItems(notes.map(esc))}</ul></div></details>`;
-    html+=mwmRenderMonthly(m,{scenario,today,legacy});
+    html+=mwmRenderMonthly(m,{today,legacy});
   }
   // Metrics Timeline: on-track, perfect-order, and month-by-month open value.
   if(activeTab==='metrics'){
@@ -13410,7 +13513,7 @@ function mwmStatusChip(bucket){
   return /^(late|past due)$/i.test(bucket)?['Past due','red',3]:/no commit/i.test(bucket)?['No commit','red',2]:/resched/i.test(bucket)?['Rescheduled','amber',1]:['Open','teal',0];
 }
 function mwmRenderMonthly(m,ctx){
-  const {scenario:sd,today,legacy}=ctx;
+  const {today,legacy}=ctx;
   const d=mwmMonthlyData(m);
   const booked=mwmMode==='booked';
   const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders booked to ship in each month by their original delivery date, shipped or not.']]
@@ -13433,7 +13536,7 @@ function mwmRenderMonthly(m,ctx){
   const barW=target>0?Math.min(100,done/target*100):0;
   const tick=target>0&&done>target?target/done*100:100;
   const heroTip=`${monthName}${partial?' so far':''}: ${mwmOrders(s.orders)} ${verb}, ${money(s.value)} on ${ohN(s.lines,'line')}.${booked?' Booked means due to ship this month by the original delivery date.':''}`;
-  const heroCard=dzCard({title:partial?`${monthName} to date`:monthName,sm:true,span:3,cls:'dz-fade',
+  const heroCard=dzCard({title:partial?`${monthName} to date`:monthName,sm:true,span:6,cls:'dz-fade mwm-herocard',
     tip:`${monthName}${partial?' so far':''}, ${verb}.`,
     meta:pct===null?'':dzChip(booked?`${pct}% shipped`:`${pct}% of target`,chipTone),
     body:`<div class="mwm-hero"${tipAttr(heroTip)}><span class="dz-big sm">${mwmOrders(s.orders)}</span><span class="dz-sub">${moneyShort(s.value)} · ${ohN(s.lines,'line')} ${verb}</span></div>
@@ -13445,33 +13548,6 @@ function mwmRenderMonthly(m,ctx){
         ${dzStat({label:'On time',value:mwmPct(s.otd),tip:'Deliveries shipped on or before their original delivery date.'})}
         ${dzStat({label:'Shipped late',value:mwmOrders(s.late),tone:s.late?'red':'muted',tip:`Orders with a delivery shipped 1 or more days after its original date, ${verb==='booked'?'among the lines booked for this month':'among this month’s deliveries'}.`})}
       </div>`});
-
-  // Ship target card: the scenario's range (this month unless changed), the booked orders, and the largest past-due ones.
-  const pdOrders=rowDocCount(sd.pastOriginalDue),pdValue=rowOpenAmount(sd.pastOriginalDue);
-  const inOrders=rowDocCount(sd.onTrackWindow),inValue=rowOpenAmount(sd.onTrackWindow);
-  const byDoc=new Map();
-  sd.pastOriginalDue.forEach(r=>{
-    const k=`${r.sourceType||''}-${r.documentNumber||''}`;
-    if(!byDoc.has(k))byDoc.set(k,{so:r.documentNumber,name:r.name,value:0,chip:mwmStatusChip('')});
-    const g=byDoc.get(k);
-    g.value+=openLineValue(r);
-    const c=mwmStatusChip(r.statusBucket);
-    if(c[2]>g.chip[2])g.chip=c;
-  });
-  const closers=[...byDoc.values()].sort((a,b)=>b.value-a.value).slice(0,5);
-  const datesOpen=!!tableMore['mwm-dates'];
-  const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
-  const dates=datesOpen?`<div class="mwm-dates">
-      <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>End <input type="date" id="ship-scenario-end" class="dz-pillinput"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
-      <label>Basis <select id="ship-scenario-basis" class="dz-pillinput"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)"><option value="effective"${sd.useEffective?' selected':''}>With reschedules</option><option value="original"${!sd.useEffective?' selected':''}>Original only</option></select></label>
-    </div>`:'';
-  const targetCard=dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,span:3,cls:'dz-fade',
-    tip:'The ship target range: lines due by the end date that are still open, and the past-due ones that would close the gap.',
-    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the start date, the end date or the date basis of this ship target.')}>Dates</button>`,
-    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
-      <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
-      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 
   // Orders by month, twelve columns; the report month is the indigo one.
   const key=booked?'booked':'shipped';
@@ -13496,7 +13572,7 @@ function mwmRenderMonthly(m,ctx){
 
   const more=mwmMore('mwm-monthly','year over year, original dates, items not shipped yet and the ship calendar',legacy,
     'Year over year, the original delivery date summary, items not shipped yet, the ship target calendar and notes on the numbers. The ship target parts follow the filters; the rest covers the whole report.');
-  return `${filterRow}<div class="dz-grid">${heroCard}${targetCard}${chart}${table}</div>${more}`;
+  return `${filterRow}<div class="dz-grid">${heroCard}${chart}${table}</div>${more}`;
 }
 
 // ---------- Warehouse Timeline ----------
@@ -18196,7 +18272,7 @@ function ohRenderTabs(){
   const tab=(id,label,tip)=>({id:`oh-tab-${id}`,label,on:weeklyView===id,onclick:`setWeeklyView('${id}')`,tip,attrs:` aria-controls="oh-panel-${id}" onkeydown="ohTabKey(event)"`});
   return dzSeg([
     tab('leading','Leading','What is at risk now and why; arrow keys switch views.'),
-    tab('lagging','Lagging','How deliveries went and which warehouses shipped late; arrow keys switch views.')
+    tab('lagging','Lagging','How deliveries went last month and last quarter; arrow keys switch views.')
   ],{tabs:true,label:'Order Health view'});
 }
 // The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
@@ -18445,9 +18521,9 @@ function ohLaggingExtras(m,oh=orderHealthData(m)){
     };
   });
 }
-// --- 2v6 oh-lagging: Monthly and Quarterly cards, Top offenders (helpers start with ohg) ---
-// The Lagging view: the last complete month and quarter against the one before, then the warehouses and vendors with the
-// most late orders in the quarter. Every number comes from the app's own rules, scored for the calendar window instead of the
+// --- 2v6 oh-lagging: Monthly and Quarterly cards (helpers start with ohg) ---
+// The Lagging view: the last complete month and quarter against the one before (2v6.9: the warehouse and vendor Top
+// offenders cards are gone, the owner's ask). Every number comes from the app's own rules, scored for the calendar window instead of the
 // trailing 3 months: otdStats (on time, late orders), fillRateForRows, perfectOrderStats, deliveryLateDays, rescheduleStats.
 const OHG_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const OHG_MONTH=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -18470,7 +18546,7 @@ function ohgPeriods(){
   };
   return {month:{cur:month(0),prev:month(1)},quarter:{cur:quarter(0),prev:quarter(1)}};
 }
-// The numbers of the four windows and the two offender lists, for the current Order Health filters.
+// The numbers of the four windows, for the current Order Health filters.
 function ohgData(m){
   return cachedByFilter(m,`ohg|${weeklyFilterKey()}`,()=>{
     const oh=orderHealthData(m);
@@ -18517,26 +18593,7 @@ function ohgData(m){
     };
     const month={cur:win(per.month.cur),prev:win(per.month.prev)};
     const quarter={cur:win(per.quarter.cur),prev:win(per.quarter.prev)};
-    // Top offenders in the quarter: late = a delivery more than 2 days after its original date (otdStats' late, the same
-    // rule as the late-shipments-by-warehouse ranking); the count is orders (purchase orders for vendors).
-    const whRows=groupBy(quarter.cur.rows,rowWarehouse).map(g=>{
-      const s=otdStats(g.rows);
-      return {name:g.key,orders:rowDocCount(s.late),lines:s.late.length,value:rowShippedAmount(s.late),scored:s.scored.length,rate:s.scored.length?s.rate:null};
-    }).filter(x=>x.orders>0).sort((a,b)=>b.orders-a.orders||b.lines-a.lines||a.name.localeCompare(b.name));
-    // Vendors: PO receipts, as the Purchase Orders page scores them (isClosedPerformanceRow), narrowed by the Warehouse filter
-    // (Segment and Customer belong to sales orders).
-    const receipts=cachedByFilter(m,'ohg|po-receipts',()=>poSourceRows().filter(isClosedPerformanceRow));
-    const q=quarter.cur;
-    const venRows=receipts.filter(r=>{
-      const d=parseDate(r.closeDate);
-      return !!d&&d>=q.start&&d<=q.end&&(weeklyWarehouseFilter.includes('ALL')||weeklyWarehouseFilter.includes(rowWarehouse(r)));
-    });
-    const vendors=groupBy(venRows,poVendor).map(g=>{
-      const s=otdStats(g.rows);
-      const named=g.rows.find(r=>String(r.name||'').trim());
-      return {name:named?String(named.name).trim():g.key,orders:rowDocCount(s.late),lines:new Set(s.late.map(orderLineKey)).size,value:rowShippedAmount(s.late),scored:s.scored.length,rate:s.scored.length?s.rate:null};
-    }).filter(x=>x.orders>0).sort((a,b)=>b.orders-a.orders||b.lines-a.lines||a.name.localeCompare(b.name));
-    return {per,month,quarter,warehouses:whRows.slice(0,6),warehouseTotal:whRows.length,vendors:vendors.slice(0,6),vendorTotal:vendors.length,receiptsInWindow:venRows.length};
+    return {per,month,quarter};
   });
 }
 // A change against the previous window as text and tone: "+1 pts vs Aug" (teal when better, red when worse, grey when none).
@@ -18577,15 +18634,6 @@ function ohgPeriodCard(cur,prev,{title,span,tip,i}){
   const body=`<div class="ohg-head"><span class="dz-big sm ohg-orders">${fmtNum(cur.orders)} ${cur.orders===1?'order':'orders'} shipped</span>${sub?`<span class="dz-sub">${esc(sub)}</span>`:''}${cur.orders?`<span class="ohg-delta ohg-${od.c}">${esc(od.t)}</span>`:''}</div><div class="dz-stats ohg-tiles">${tiles}</div>`;
   return dzCard({title,meta:esc(cur.meta),span,cls:'ohg-card dz-fade',attrs:` style="--i:${i}"`,tip,body});
 }
-// A Top offenders card: up to 6 rows, the first in red, the others slate; the late-order count at the end of the bar.
-function ohgOffenderCard({title,meta,tip,rows,sub,rowTip,onclick,focusKey,selected,empty,span,i}){
-  const max=Math.max(1,...rows.map(r=>r.orders));
-  const body=rows.length
-    ?`<div class="dz-bars ohg-bars">${rows.map((r,k)=>dzBarRow({label:r.label,sub:sub(r),value:r.orders,max,color:k===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(r.orders),
-      onclick:onclick?onclick(r):'',selected:selected?selected(r):false,tip:rowTip(r),attrs:focusKey?` data-focus-key="${esc(focusKey(r))}"`:'',i:k})).join('')}</div>`
-    :`<p class="dz-sub ohg-empty">${esc(empty)}</p>`;
-  return dzCard({title,meta:esc(meta),span,sm:true,cls:'ohg-card dz-fade',attrs:` style="--i:${i}"`,tip,body});
-}
 function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
@@ -18596,23 +18644,7 @@ function ohgRender(m){
     tip:`Monthly: orders shipped in ${mo.label}, the last complete month at the report date, and the change against ${d.month.prev.label}. ${common}`});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:`Quarterly: orders shipped in ${q.label}, the last complete quarter at the report date, and the change against ${d.quarter.prev.label}. ${common}`});
-  const whName=n=>String(n).replace(/ - /g,' · ');
-  const focused=whFocusedWarehouse();
-  const warehouses=ohgOffenderCard({title:'Top offenders · warehouses',meta:`late orders · ${q.short}`,span:3,i:2,
-    tip:`Warehouses with the most late orders in ${q.label}: orders with a delivery more than 2 days after its original date. Click a warehouse to filter the page to it; click it again to show every warehouse.`,
-    rows:d.warehouses.map(r=>({...r,label:whName(r.name)})),
-    sub:r=>r.rate===null?'':`${fmtNum(r.rate)}% on time`,
-    rowTip:r=>`${r.name}: ${ohN(r.orders,'late order')} (${ohN(r.lines,'late delivery line')}, ${money(r.value)}) of ${ohN(r.scored,'delivery line')} in ${q.label}, ${r.rate===null?'none scored':`${fmtNum(r.rate)}% on time`}; ${focused===r.name?'click to show all.':'click to filter.'}`,
-    onclick:r=>`setWeeklyScorecardWarehouse(${dzJs(r.name)})`,
-    focusKey:r=>`ohg-wh-${r.name}`,selected:r=>focused===r.name,
-    empty:d.quarter.cur.scored?`No late shipments in ${q.label}: every delivery shipped within 2 days of its original date.`:`No deliveries in ${q.label} for these filters.`});
-  const vendors=ohgOffenderCard({title:'Top offenders · vendors',meta:`late orders · ${q.short}`,span:3,i:3,
-    tip:`Vendors with the most late purchase orders in ${q.label}: orders with a receipt more than 2 days after the original date. The Warehouse filter applies; Segment and Customer do not (they belong to sales orders).`,
-    rows:d.vendors.map(r=>({...r,label:r.name})),
-    sub:r=>`${ohN(r.lines,'late line')}${r.rate===null?'':` · ${fmtNum(r.rate)}% on time`}`,
-    rowTip:r=>`${r.name}: ${ohN(r.orders,'late purchase order')} (${ohN(r.lines,'late receipt line')}, ${money(r.value)}) of ${ohN(r.scored,'receipt line')} in ${q.label}${r.rate===null?'':`, ${fmtNum(r.rate)}% on time`}.`,
-    empty:d.receiptsInWindow?`No late receipts in ${q.label}: every purchase order arrived within 2 days of its original date.`:`No purchase-order receipts in ${q.label}.`});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}${warehouses}${vendors}</div>`;
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>`;
 }
 // --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.
@@ -18919,8 +18951,8 @@ function ohTopWarehouse(rows){
 // --- 2v6 oh-leading: the Leading view in the 2v6 design layout ("Order Health 2b") ---
 // Every number comes from the calculations that were already here (orderHealthData, ohLeadingData, ohAtRiskData,
 // ohReasonTileData, ohFlagAges, ohTopWarehouse, soDateChangeImpact, rowDocCount, rowOpenAmount); only layout and copy
-// are new. Cards on the 6-column grid: At risk (3) + Status & top reasons (3); Open lines by due week, Customers at
-// risk and When flagged (2 each); Date changes (6, only when a date moved); then the Lines card (6), which renderResults
+// are new. Cards on the 6-column grid: At risk (3) + a column of the ship target over Status & top reasons (3); Open
+// lines by due week and Customers at risk (3 each); Date changes (6, only when a date moved); then the Lines card (6), which renderResults
 // draws where OHL_LINES_MARK is (it needs the linked-lines list). Headlines are order counts; "$ · N lines" is secondary.
 const OHL_LINES_MARK='<!--ohl-lines-->';
 const OHL_COLOR={ontrack:'#0fa08e',duethisweek:'#5468ff',rescheduled:'#ffae1a',pastdue:'#ff3d68',nocommit:'#94a3b8'};
@@ -18974,19 +19006,19 @@ const ohlWhName=n=>String(n||'').replace(/ - /g,' · ');
 function ohlRenderLeading(m){
   const oh=orderHealthData(m);
   const c={m,oh,lead:ohLeadingData(m,oh),d:ohAtRiskData(m)};
+  // 2v6.9: the ship target (it was on Monthly) sits above Status & top reasons, the two in one column beside At risk.
   return `<div class="dz-grid ohl-grid">
     ${ohlAtRiskCard(c)}
-    ${ohlStatusCard(c)}
+    <div class="ohl-col dz-span-3">${ohlShipTargetCard(m)}${ohlStatusCard(c)}</div>
     ${ohlDueCard(c)}
     ${ohlCustomersCard(c)}
-    ${ohlFlaggedCard(c)}
     ${ohlSupplyCard(c)}
     ${ohlDateChangesCard(c)}
     ${OHL_LINES_MARK}
   </div>`;
 }
 
-// At risk: the order count, the four open-order states, the most affected warehouse with its production issues, and the
+// At risk: the order count, three open-order states (Rescheduled, No commit, All open), the most affected warehouse with its production issues, and the
 // override tiles. Every number is for the next-month at-risk lines (ohAtRiskData), as the card was before.
 function ohlAtRiskCard(c){
   const {m,oh,lead,d}=c;
@@ -19008,7 +19040,6 @@ function ohlAtRiskCard(c){
   const stats=`<div class="ohl-stats" role="group" aria-label="Open orders">
       ${stat('st-rescheduled','Rescheduled',OHL_COLOR.rescheduled,stateRows('rescheduled'))}
       ${stat('st-nocommit','No commit',OHL_COLOR.nocommit,stateRows('nocommit'))}
-      ${stat('st-duethisweek','Due this week',OHL_COLOR.duethisweek,stateRows('duethisweek'))}
       ${stat('allopen','All open',OHL_COLOR.ontrack,oh.allOrderRows)}
     </div>`;
   // The override tiles' lines (ohReasonTileData counts them with the picked reason off), in the owner's tile order.
@@ -19054,27 +19085,31 @@ function ohlAtRiskCard(c){
     body:`<div class="ohl-hero-row">${hero}</div>${stats}${whHtml}${ovrHtml}`});
 }
 
-// Status & top reasons: the five states of every open order, then the reasons behind the at-risk lines, as bars with the
-// order count at the end (a line can have several reasons).
+// Status & top reasons: the five states of every open order, then the reasons behind the at-risk lines (a line can have
+// several). 2v6.9: no bars, a two-column list: the label (with its value and lines) at the left, the orders at the right.
+// Each row filters the lines as before.
+function ohlKvRow({label,sub,num,dot,tone,on,onclick,key,tip,zero}){
+  return `<button type="button" class="ohl-kv${zero?' zero':''}${tone?` ${tone}`:''}${on?' sel':''}" data-focus-key="${key}" onclick="${esc(onclick)}" aria-pressed="${on}"${tipAttr(tip)}><span class="ohl-kv-l">${dot?`<i class="ohl-dot" style="background:${dot}" aria-hidden="true"></i>`:''}<span class="ohl-kv-name">${esc(label)}</span>${sub?`<span class="ohl-kv-sub"><span class="ohl-kv-sep"> · </span>${esc(sub)}</span>`:''}</span><span class="ohl-kv-lead" aria-hidden="true"></span><span class="ohl-kv-n">${esc(num)}</span></button>`;
+}
 function ohlStatusCard(c){
   const {m,lead}=c;
-  const maxS=Math.max(1,...lead.states.map(s=>s.orders));
-  const statusRows=lead.states.map((s,i)=>{
+  const statusRows=lead.states.map(s=>{
     const id=`st-${s.id}`,on=weeklyTileFilter===id;
-    return dzBarRow({label:s.label,sub:ohlMoney(s.rows),value:s.orders,max:maxS,color:OHL_COLOR[s.id],num:ohN(s.orders,'order'),i,
-      cls:`ohl-status${s.orders?'':' zero'}${s.id==='pastdue'&&s.orders?' crit':''}`,onclick:`setWeeklyTileFilter('${id}')`,selected:on,attrs:` data-focus-key="status-${id}"`,
+    return ohlKvRow({label:s.label,sub:ohlMoney(s.rows),num:ohN(s.orders,'order'),dot:OHL_COLOR[s.id],zero:!s.orders,tone:s.id==='pastdue'&&s.orders?'crit':'',
+      on,onclick:`setWeeklyTileFilter('${id}')`,key:`status-${id}`,
       tip:`${s.label}: ${ohN(s.orders,'order')}, ${ohN(s.rows.length,'line')}, ${money(s.value)} open. ${s.help} ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`});
   }).join('');
   const reasons=ohlReasons(m).slice(0,5);
-  const maxR=Math.max(1,...reasons.map(r=>r.orders));
-  const reasonRows=reasons.map((r,i)=>dzBarRow({label:overrideLabel(r.label),value:r.orders,max:maxR,color:i===0?OHL_RED:OHL_SLATE,num:fmtNum(r.orders),i:i+lead.states.length,
-    cls:'ohl-status',onclick:`setWeeklyReasonFilter(${dzJs(r.label)})`,selected:r.on,attrs:` data-focus-key="oh-reason-${esc(r.label)}"`,
+  const reasonRows=reasons.map(r=>ohlKvRow({label:overrideLabel(r.label),sub:ohlMoney(r.rows),num:ohN(r.orders,'order'),
+    on:r.on,onclick:`setWeeklyReasonFilter(${dzJs(r.label)})`,key:`oh-reason-${esc(r.label)}`,
     tip:`${overrideLabel(r.label)}: ${ohN(r.orders,'order')}, ${ohlMoney(r.rows)} at risk; ${r.on?'click to show all.':'click to list them.'}`})).join('');
-  return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:1"',
-    tip:'Every open order in exactly one state, then the top reasons behind the at-risk lines. Click a bar to list its lines.',
-    body:`<div class="ohl-bars ohl-bars-lg" role="group" aria-label="Open orders by state">${statusRows}</div>
+  return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1"',
+    tip:'Every open order in exactly one state, then the top reasons behind the at-risk lines. Click a row to list its lines.',
+    body:`<div class="ohl-sec ohl-sec-first"><div class="ohl-sec-title">Status</div>
+        <div class="ohl-kvs" role="group" aria-label="Open orders by state">${statusRows}</div>
+      </div>
       <div class="ohl-sec"><div class="ohl-sec-title">Top reasons</div>
-        ${reasonRows?`<div class="ohl-bars ohl-bars-lg" role="group" aria-label="Top at-risk reasons by orders">${reasonRows}</div>`:'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
+        ${reasonRows?`<div class="ohl-kvs" role="group" aria-label="Top at-risk reasons by orders">${reasonRows}</div>`:'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
         <div class="ohl-note ohl-foot-note">A line can have several reasons.</div>
       </div>`});
 }
@@ -19106,7 +19141,7 @@ function ohlDueCard(c){
   const labels=weeks.map((w,i)=>`<span>${i%2?'':i?`${w.s.getMonth()+1}/${w.s.getDate()}`:'Now'}</span>`).join('');
   const chip=past.length?`<button type="button" class="dz-chip red ohl-chipbtn${weeklyTileFilter==='st-pastdue'?' sel':''}" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter('st-pastdue')" aria-pressed="${weeklyTileFilter==='st-pastdue'}"${tipAttr(`${ohN(past.length,'open line')} (${ohN(rowDocCount(past),'order')}, ${money(rowOpenAmount(past))}) already past due; click to list them.`)}>${fmtNum(past.length)} ${past.length===1?'line':'lines'} already past due</button>`:'';
   const summary=weeks.map((w,i)=>`${wkText(w,i)}: ${counts[i]}`).join(', ');
-  return dzCard({title:'Open lines by due week',meta:chip,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:2"',
+  return dzCard({title:'Open lines by due week',meta:chip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:2"',
     tip:'Open lines by the week they are due (this week and the next seven); lines already past due are the red chip.',
     body:total?`<div class="ohl-chart" role="img" aria-label="${esc(`Open lines due by week, ${summary}`)}">
         <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ohlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5468ff" stop-opacity=".35"/><stop offset="1" stop-color="#5468ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#ohlG)"/><path d="${line}" fill="none" stroke="#5468ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
@@ -19131,28 +19166,44 @@ function ohlCustomersCard(c){
       <span class="ohl-cust-bar"><span class="ohl-track"><i class="dz-grow" style="width:${Math.max(x.orders/max*100,2).toFixed(1)}%;--i:${i}"></i></span><span class="ohl-cust-amt">${esc(ohlMoney(x.rows))}</span></span>
     </button>`;
   }).join('');
-  return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:3"',
+  return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
     tip:'The customers with the most at-risk orders; click one to filter Order Health to it.',
     body:rows?`<div class="ohl-list" role="group" aria-label="Customers at risk">${rows}</div>`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
-// When flagged: at-risk lines by whole weeks since each was first at risk in an upload (teal bars, line counts).
-function ohlFlaggedCard(c){
-  const {m}=c;
-  const ages=ohFlagAges(ohlRiskWithout(m,'age'));
-  const max=Math.max(1,...ages.map(a=>a.lines));
-  const rows=ages.map((a,i)=>{
-    const on=weeklyAgeFilter===a.id;
-    return `<button type="button" class="ohl-age${a.lines?'':' zero'}${on?' sel':''}" data-focus-key="oh-age-${a.id}" data-age="${a.id}" onclick="setWeeklyAgeFilter(this.dataset.age)" aria-pressed="${on}"${tipAttr(`${a.label}: ${ohN(a.lines,'at-risk line')} (${ohN(a.orders,'order')}), ${money(a.value)} open; ${on?'click to show all.':'click to filter.'}`)}>
-      <span class="ohl-age-l">${esc(a.label)}</span><span class="ohl-age-n">${esc(ohN(a.lines,'line'))}</span>
-      <span class="ohl-track thin"><i class="dz-grow" style="width:${(a.lines/max*100).toFixed(1)}%;--i:${i}"></i></span>
-    </button>`;
-  }).join('');
-  return dzCard({title:'When flagged',sm:true,cls:'ohl-card dz-fade',span:2,attrs:' style="--i:4"',
-    tip:'At-risk lines by whole weeks since each was first at risk in an upload; click a row to filter.',
-    body:`<div class="ohl-list" role="group" aria-label="At-risk lines by weeks since first flagged">${rows}</div>${ohFirstFlagged()?'':'<div class="ohl-note ohl-foot-note">No upload history yet, so every line counts as new.</div>'}`});
+// Ship target (2v6.9: on Order Health, Leading, above Status & top reasons; it was on Monthly): the scenario's range (this
+// month unless changed), the booked orders and the largest past-due ones. The same numbers, month and Dates control as the
+// Monthly page had (shipScenarioFor, the report month).
+function ohlShipTargetCard(m){
+  const today=reportToday();
+  const sd=shipScenarioFor(m,today);
+  const monthName=today.toLocaleDateString('en-US',{month:'long'});
+  const pdOrders=rowDocCount(sd.pastOriginalDue),pdValue=rowOpenAmount(sd.pastOriginalDue);
+  const inOrders=rowDocCount(sd.onTrackWindow),inValue=rowOpenAmount(sd.onTrackWindow);
+  const byDoc=new Map();
+  sd.pastOriginalDue.forEach(r=>{
+    const k=`${r.sourceType||''}-${r.documentNumber||''}`;
+    if(!byDoc.has(k))byDoc.set(k,{so:r.documentNumber,name:r.name,value:0,chip:mwmStatusChip('')});
+    const g=byDoc.get(k);
+    g.value+=openLineValue(r);
+    const c=mwmStatusChip(r.statusBucket);
+    if(c[2]>g.chip[2])g.chip=c;
+  });
+  const closers=[...byDoc.values()].sort((a,b)=>b.value-a.value).slice(0,5);
+  const datesOpen=!!tableMore['mwm-dates'];
+  const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
+  const dates=datesOpen?`<div class="mwm-dates">
+      <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range (this month unless you change it).')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>End <input type="date" id="ship-scenario-end" class="dz-pillinput"${tipAttr('Last day of the range; lines booked by this date count.')} value="${esc(inputDateValue(sd.target))}" onchange="setShipScenarioTargetDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
+      <label>Basis <select id="ship-scenario-basis" class="dz-pillinput"${tipAttr('Use reschedule dates, or original delivery dates only.')} onchange="setShipScenarioDateBasis(this.value)"><option value="effective"${sd.useEffective?' selected':''}>With reschedules</option><option value="original"${!sd.useEffective?' selected':''}>Original only</option></select></label>
+    </div>`:'';
+  return dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,cls:'dz-fade ohl-ship',attrs:' style="--i:1"',
+    tip:'The ship target range: lines due by the end date that are still open, and the past-due ones that would close the gap.',
+    meta:`<span class="mwm-by">by ${esc(shortDay(sd.target))}</span> <button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the start date, the end date or the date basis of this ship target.')}>Dates</button>`,
+    body:`${dates}<div class="mwm-hero"${tipAttr(`Past due: ${mwmOrders(pdOrders)} (${money(pdValue)} open) are dated before ${displayDate(sd.start)} and still open.`)}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
+      <p class="mwm-note">${mwmOrders(inOrders)} (${money(inValue)}) ${inOrders===1?'is':'are'} booked to ship by ${esc(shortDay(sd.target))}.${pdOrders?' These past-due orders are the largest still open:':' Nothing past due is still open.'}</p>
+      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
 }
-
 // Customers at risk by supply source: every at-risk sales line in the look-ahead window is traced to where its item's
 // supply comes from and counted under the first source in trouble: the CM sheet (Logican short, on hold, or committing
 // after the line is due), an open vendor PO for the item (late, no commit date, or expected after the line is due), or
