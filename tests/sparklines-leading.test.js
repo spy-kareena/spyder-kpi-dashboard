@@ -176,7 +176,7 @@ test('Hover: the nearest period is marked and its value shown; arrow keys step a
   page.run(`(()=>{
     const attrs=o=>({a:{},setAttribute(k,v){this.a[k]=String(v);}});
     const hair=attrs(),ring=attrs(),svg={getBoundingClientRect:()=>({left:100,top:50,width:120,height:30})};
-    const cls=new Set(),json=${JSON.stringify(JSON.stringify(d))};
+    const cls=new Set(['dz-spark']),json=${JSON.stringify(JSON.stringify(d))};
     const el={isConnected:true,cls,hair,ring,svg,classList:{add:c=>cls.add(c),remove:c=>cls.delete(c),contains:c=>cls.has(c)},
       getAttribute:k=>k==='data-spark'?json:k==='data-tip'?'Past-due orders at the start of each month\\n• Apr 1: 1 order':null,
       closest:sel=>sel==='.dz-spark'||sel==='[data-tip]'?el:null,matches:sel=>sel==='.dz-spark',
@@ -223,6 +223,19 @@ test('Hover: the nearest period is marked and its value shown; arrow keys step a
   assert.equal(page.run('sparkState.i'), 1);
   assert.deepEqual(shown()[1].map((r) => r[1]), ['1 order\n', 'May 1']);
   page.dispatch('pointerup', { target: page.ctx.fakeSpark, pointerType: 'touch' });
+  // The tap also focuses the figure (not from the keyboard): the bubble and the mark stay, and leave on their own timer.
+  page.dispatch('focusin', { target: page.ctx.fakeSpark });
+  assert.deepEqual([shown()[0], page.run("fakeSpark.cls.has('hov')")], [false, true]);
+  assert.ok(page.run('!!sparkState.timer'), 'its own 4-second timer');
+  // A scroll hides the bubble and takes the mark with it.
+  page.dispatch('scroll', {});
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), false);
+  // A swipe that starts on the line: the browser cancels the touch, and the mark goes at once.
+  page.dispatch('pointerdown', { target: page.ctx.fakeSpark, pointerType: 'touch', clientX: xOf(3), clientY: 60 });
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), true);
+  page.dispatch('pointercancel', { target: page.ctx.fakeSpark, pointerType: 'touch' });
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), false);
+  assert.equal(page.run('tipState.el'), null);
   // Other tips still queue on hover as before.
   const other = page.run(`(()=>{const o={isConnected:true,getAttribute:k=>k==='data-tip'?'A tip':null,closest:s=>s==='[data-tip]'?o:null,matches:()=>false};globalThis.otherTip=o;return true})()`);
   assert.ok(other);

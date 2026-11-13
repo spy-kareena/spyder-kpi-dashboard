@@ -853,6 +853,7 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:pre-line;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
 .tip-layer[data-side="bottom"]{transform:translateY(-2px)}
 .tip-layer.open{opacity:1;transform:none;pointer-events:auto}
+.tip-layer.open.spark{pointer-events:none}
 .tip-layer[hidden]{display:none}
 .tip-arrow{position:absolute;width:8px;height:8px;background:var(--tip-bg);transform:rotate(45deg)}
 .tip-layer[data-side="top"] .tip-arrow{bottom:-4px;left:calc(var(--arrow-x) - 4px)}
@@ -14944,8 +14945,12 @@ function tipGoHome(layer){
 }
 function hideTip(){
   clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
+  // A sparkline's period mark goes with its bubble (a scroll, a tap elsewhere, Esc).
+  const was=tipState.el;
   tipState.el=null;tipState.pending=null;
+  if(was&&was.classList&&was.classList.contains('dz-spark'))sparkClear(was);
   const layer=tipLayer();
+  if(layer&&layer.classList)layer.classList.remove('spark');
   if(layer&&!layer.hidden){layer.hidden=true;if(layer.classList)layer.classList.remove('open');}
   tipGoHome(layer);
 }
@@ -14957,7 +14962,7 @@ function showTip(el){
   if(!layer||!text||!el.isConnected||!el.getBoundingClientRect)return;
   tipState.el=el;
   tipFill(layer.querySelector('.tip-text'),text);
-  layer.classList.remove('open');
+  layer.classList.remove('open','spark');
   const dialog=tipHost(el);
   if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}
   else tipGoHome(layer);
@@ -15054,7 +15059,8 @@ if(document.addEventListener){
   document.addEventListener('focusin',e=>{
     const t=tipTarget(e.target);
     if(t&&tipFocusVisible(e.target))queueTip(t,TIP_DELAY);
-    else hideTip();
+    // A tap or a click focuses a sparkline too: its period bubble (sparkMark) stays.
+    else if(!(t&&t.matches&&t.matches('.dz-spark')))hideTip();
   });
   document.addEventListener('focusout',e=>{
     const to=e.relatedTarget;
@@ -15114,7 +15120,7 @@ if(typeof window.addEventListener==='function')window.addEventListener('resize',
 // that period's value (first, in bold), its name and the target if the line has one. A finger does the same with a tap
 // or a sideways drag (the bubble stays 4 seconds). With keyboard focus the bubble first lists every period; the arrow
 // keys, Home and End then step through them one at a time, each read out. The figure's label lists every period too.
-const sparkState={el:null,i:-1,touch:false};
+const sparkState={el:null,i:-1,touch:false,timer:0};
 function sparkData(el){
   try{const d=JSON.parse(tipGet(el,'data-spark')||'null');return d&&Array.isArray(d.pts)&&d.pts.length?d:null;}catch(e){return null;}
 }
@@ -15130,7 +15136,7 @@ function sparkNearest(el,clientX){
 }
 function sparkClear(el){
   if(el&&el.classList)el.classList.remove('hov');
-  if(!el||sparkState.el===el){sparkState.el=null;sparkState.i=-1;}
+  if(!el||sparkState.el===el){clearTimeout(sparkState.timer);sparkState.el=null;sparkState.i=-1;}
 }
 function sparkMark(el,i,{say=false}={}){
   const d=sparkData(el);
@@ -15138,6 +15144,7 @@ function sparkMark(el,i,{say=false}={}){
   i=Math.max(0,Math.min(d.pts.length-1,i));
   const [x,y,value,label]=d.pts[i];
   if(sparkState.el&&sparkState.el!==el)sparkClear(sparkState.el);
+  clearTimeout(sparkState.timer);
   const hair=el.querySelector('.dz-spark-x'),ring=el.querySelector('.dz-spark-hl'),svg=el.querySelector('svg');
   if(hair){hair.setAttribute('x1',x);hair.setAttribute('x2',x);}
   if(ring){ring.setAttribute('cx',x);ring.setAttribute('cy',y);}
@@ -15155,14 +15162,17 @@ function sparkMark(el,i,{say=false}={}){
   rows.forEach(([text,cls],k)=>{const s=document.createElement('span');s.className=cls;s.textContent=text+(k<rows.length-1?'\n':'');node.appendChild(s);});
   tipGoHome(layer);
   if(layer.style){layer.style.left='0px';layer.style.top='0px';}
+  // Above the whole figure at the period's x, so it never covers the line; it lets the pointer through (.spark).
+  if(layer.classList)layer.classList.add('spark');
   layer.hidden=false;
-  const r=svg.getBoundingClientRect(),px=r.left+x*(r.width/d.w),py=r.top+y*(r.height/d.h);
-  placeFloating(layer,{getBoundingClientRect:()=>({left:px-4,right:px+4,top:py-4,bottom:py+4,width:8,height:8})},'top',8);
+  const r=svg.getBoundingClientRect(),px=r.left+x*(r.width/d.w);
+  placeFloating(layer,{getBoundingClientRect:()=>({left:px-4,right:px+4,top:r.top,bottom:r.bottom,width:8,height:r.height})},'top',6);
   if(!was)(window.requestAnimationFrame||setTimeout)(()=>{if(tipState.el===el)layer.classList.add('open');});
 }
+// Its own timer: the tooltip code clears tipState's timers on focus, scroll and other tips.
 function sparkHideSoon(el,ms){
-  clearTimeout(tipState.hideTimer);
-  tipState.hideTimer=setTimeout(()=>{if(tipState.el===el)hideTip();sparkClear(el);},ms);
+  clearTimeout(sparkState.timer);
+  sparkState.timer=setTimeout(()=>{if(tipState.el===el)hideTip();sparkClear(el);},ms);
 }
 if(document.addEventListener){
   document.addEventListener('pointermove',e=>{
@@ -15185,7 +15195,13 @@ if(document.addEventListener){
   });
   const sparkUp=()=>{if(!sparkState.touch)return;sparkState.touch=false;if(sparkState.el)sparkHideSoon(sparkState.el,4000);};
   document.addEventListener('pointerup',sparkUp);
-  document.addEventListener('pointercancel',sparkUp);
+  // The browser took the touch (a scroll): the mark and its bubble go at once.
+  document.addEventListener('pointercancel',()=>{
+    if(!sparkState.touch)return;
+    sparkState.touch=false;
+    const el=sparkState.el;
+    if(el){if(tipState.el===el)hideTip();sparkClear(el);}
+  });
   document.addEventListener('keydown',e=>{
     const el=sparkOf(e.target);
     if(e.key==='Escape'){if(sparkState.el)sparkClear(sparkState.el);return;}
