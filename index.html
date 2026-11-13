@@ -4060,7 +4060,8 @@ table.ohgt-tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-n
 /* Leading as four questions (owner's pick, Version 1): the question headings, Status as one row of numbers, Top reasons
    beside Open lines by due week, customers with their supply source in one table, the two month lists as folds. */
 .ohl-q{display:flex;align-items:center;gap:10px;margin:8px 0 -4px}
-.ohl-grid>.ohl-q:first-child{margin-top:0}
+.ohl-grid>.ohl-q:first-child,.dz-grid>.ohl-q:first-child{margin-top:0}
+.oh-panel>.ohl-q.solo:first-child{margin-top:4px}
 .ohl-q-n{flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--dz-ink-1);color:var(--dz-surface);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
 .ohl-q-t{margin:0;font-size:15px;font-weight:600;letter-spacing:0;color:var(--dz-ink-1)}
 .ohs3-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:8px -8px 0}
@@ -10780,12 +10781,14 @@ function supPurchaseOrders(m){
     const stat=(label,v,s,tone,tipText)=>`<div class="sup-tile static dz-fade"${tipAttr(tipText)}><span class="sup-tile-l">${esc(label)}</span><span class="sup-tile-v${tone?` ${tone}`:''}">${v}</span><span class="sup-tile-s">${esc(s)}</span></div>`;
     const hitRate=poReschedulePerf.closed.length;
     return `<div class="sup-page po-page">${filterRow}<div class="print-only">Filters: ${esc(filterNote)}</div>
+      ${dzQ(1,'How Is Receiving Going?','solo')}
       <div class="sup-tiles">
         ${stat('On time · 3 mo',scored?`${fmtNum(poOtd3Mo.rate)}%`:'—',scored?`${fmtNum(onTime)} of ${fmtNum(scored)} lines early or on time`:'no receipts to score',scored?(poOtd3Mo.rate>=90?'teal':poOtd3Mo.rate>=75?'amber':'red'):'',scored?`On time, last 3 months: ${fmtNum(poOtd3Mo.rate)}%\n• ${fmtNum(onTime)} of ${fmtNum(scored)} receipts by the original date\n• ${money(poOtdAmt)} received`:'On time, last 3 months: no receipts to score.')}
         ${stat('Received this week',fmtNum(supDocs(poReceivedThisWeekRows)),`${moneyShort(poReceivedWeekAmt)} · ${supLines(poReceivedThisWeekRows.length)}`,'',`Received Sunday to ${today.toLocaleDateString('en-CA',{weekday:'long'})}\n• ${ordersN(supDocs(poReceivedThisWeekRows))} · ${supLines(poReceivedThisWeekRows.length)}\n• ${money(poReceivedWeekAmt)}`)}
         ${stat('Fill rate',`${fmtNum(poFillRate)}%`,`${supLines(filteredPoOpen.length)} still open`,poFillRate>=90?'teal':poFillRate>=70?'amber':'red',`Fill rate: ${fmtNum(poFillRate)}% of PO lines received or closed · ${fmtNum(filteredPoOpen.length)} still open.`)}
         ${stat('Reschedule hit · 12 mo',hitRate?`${fmtNum(poReschedulePerf.rate)}%`:'—',hitRate?`${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} met commit`:'no closed reschedules',hitRate?(poReschedulePerf.rate>=90?'teal':poReschedulePerf.rate>=75?'amber':'red'):'',hitRate?`Reschedule hit, 12 months: ${fmtNum(poReschedulePerf.rate)}%\n• ${fmtNum(poReschedulePerf.met.length)} of ${fmtNum(hitRate)} rescheduled receipts on time\n• ${money(poReschedulePerfAmt)} rescheduled`:'Reschedule hit: no rescheduled receipts in 12 months.')}
       </div>
+      ${dzQ(2,'Is It Arriving on Time, and When?','solo')}
       <div class="dz-grid">${recvCard(3)}${weekCard(3)}</div>
       ${renderAbout(['po-commitments','po-receiving','po-warehouse','po-vendors','po-linked'])}</div>`;
   }
@@ -15092,7 +15095,7 @@ function ohgTrendChart(pts,k){
       <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`;
 }
 const OHG_PAGE=6;
-function ohgDetailSection(m){
+function ohgDetailSection(m,q0=2){
   if(!m.allRows.length)return `<div class="dz-grid ohg-detail">${dzCard({title:'Trend',span:6,attrs:' id="ohg-metrics"',body:'<p class="empty-note">No order lines are loaded yet.</p>'})}</div>`;
   const today=reportToday();
   const x=mwmMetricsData(m),mo=x.months,L=x.L;
@@ -15148,7 +15151,7 @@ function ohgDetailSection(m){
       const booked=g.openAmount+g.closedAmount,pctV=booked>0?Math.round(g.closedAmount/booked*100):0;
       return `<tr${tipAttr(ohlTip(g.label,[`${money(g.closedAmount)} shipped of ${money(booked)} booked`,`${ohN(g.openRows,'open line')} · ${ohN(g.closedRows,'closed line')}`,`${fmtNum(g.openQty)} qty open`]))}><td class="k">${esc(g.label)}</td><td class="num">${fmtNum(pctV)}%</td><td class="num">${money(g.openAmount)}</td><td class="num${g.shippedLateRows?' late':''}">${fmtNum(g.shippedLateRows)}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-orig',ogPg,'Booked vs shipped','months')}`:'<p class="empty-note">No original delivery dates in this export.</p>'});
   const notes=[p.notes.find(t=>/closed lines have no delivery/.test(t)),p.notes.find(t=>/^Delivery history starts/.test(t))].filter(Boolean);
-  return `<div class="dz-grid ohg-detail">${trend}${months}${wh}${orig}</div>${notes.length?`<p class="mom-foot">${notes.map(esc).join(' ')}</p>`:''}`;
+  return `<div class="dz-grid ohg-detail">${dzQ(q0,'Which Way Is It Heading, and Why?','dz-span-6')}${trend}${dzQ(q0+1,'How Did Each Month Go?','dz-span-6')}${months}${dzQ(q0+2,'Who Shipped It, and What Is Still Open?','dz-span-6')}${wh}${orig}</div>${notes.length?`<p class="mom-foot">${notes.map(esc).join(' ')}</p>`:''}`;
 }
 // ===== end 2v6 monthly-wh-metrics JS =====
 
@@ -18746,7 +18749,8 @@ function renderShippingPage(m){
   // 2v6.9: the map card across the page with the small cards over its faded right part (stacked, cards first, below
   // 981px); --pw is the cards' width the map was laid out for.
   const lay=shpMapLayout();
-  return head+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+`<div class="shp-grid">${list}${side}</div>`+about;
+  // Owner: Shipping reads as questions too.
+  return head+dzQ(1,'Where Is Everything?','solo')+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+dzQ(2,'Which Shipments Need Attention?','solo')+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
@@ -19759,7 +19763,7 @@ function ohsFilterRow(m){
 }
 function ohsRender(m){
   const card=supSdItemsCard(m);
-  if(card)return `<div class="dz-grid ohs-grid">${card}</div>`;
+  if(card)return `<div class="dz-grid ohs-grid">${dzQ(1,'What Are We Short Of?','dz-span-6')}${card}</div>`;
   if(printMode)return '';
   const live=liveMode();
   const act=live
@@ -20130,13 +20134,14 @@ function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgDetailSection(m)}`;
+  if(!hasShipments)return `${dzQ(1,'How Did We Do?','solo')}<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgDetailSection(m,2)}`;
   const common=['An order counts once, however many shipments','Page filters apply'];
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgDetailSection(m)}`;
+  // Owner: Lagging reads as questions too. 1 How did we do (Monthly, Quarterly), then the detail's three.
+  return `${dzQ(1,'How Did We Do?','solo')}<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgDetailSection(m,2)}`;
 }
 // --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.
