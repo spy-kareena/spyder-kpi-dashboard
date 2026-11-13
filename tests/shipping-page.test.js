@@ -785,6 +785,11 @@ const FAR_ROWS = FAR.flatMap(([, , country, n], i) => Array.from({ length: n }, 
 const FAR_AS = Object.fromEntries(FAR.flatMap(([destCity, destState, destCountry, n], i) => Array.from({ length: n }, (_, k) => [farNum(i, k), asStatus(farNum(i, k), 'transit', { destCity, destState, destCountry })])));
 // Their map names, busiest first.
 const FAR_NAMES = FAR.map(([city, state]) => `${city}, ${state}`);
+// Ten destinations, half of them in the West around Lacombe, busiest first (Calgary 11 shipments ... Lethbridge 2).
+const WEST = [['Calgary', 'AB', 'CAN', 11], ['Kelowna', 'BC', 'CAN', 10], ['Toronto', 'ON', 'CAN', 9], ['Fort McMurray', 'AB', 'CAN', 8], ['Edmonton', 'AB', 'CAN', 7], ['Minneapolis', 'MN', 'USA', 6], ['Halifax', 'NS', 'CAN', 5], ['Chicago', 'IL', 'USA', 4], ['Great Falls', 'MT', 'USA', 3], ['Lethbridge', 'AB', 'CAN', 2]];
+const westNum = (i, k) => `77007${String(i).padStart(2, '0')}${String(k).padStart(5, '0')}`;
+const WEST_ROWS = WEST.flatMap(([, , country, n], i) => Array.from({ length: n }, (_, k) => delivery({ DocumentNumber: String(500 + i * 20 + k), DeliveryDocNumber: String(9500 + i * 20 + k), TrackingNumber: westNum(i, k), ShipToCountry: country.slice(0, 2), ShipDate: '10/06/2026', ...due('10/12/2026') })));
+const WEST_AS = Object.fromEntries(WEST.flatMap(([destCity, destState, destCountry, n], i) => Array.from({ length: n }, (_, k) => [westNum(i, k), asStatus(westNum(i, k), 'transit', { destCity, destState, destCountry })])));
 // A browser on the hosted site with this export, AfterShip having saved these statuses.
 async function asPage(rows, statuses) {
   return hostedBrowser(await hostedSite({ index: { ...INDEX, statuses } }), 'Pat', TODAY, [exportFile(rows)]);
@@ -917,9 +922,9 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
     [N.parcel]: { ...AS[N.parcel], destCity: 'Seattle', destState: 'WA', destCountry: 'USA' },
     // No city, a province: the province.
     [N.ups]: { ...AS[N.ups], destState: 'ON', destCountry: 'CAN' },
-    // On the way, no destination: the last scan (Winnipeg) is not where it goes.
-    [N.freight]: { ...AS[N.freight], lastEvent: { at: '2026-10-08T16:00:00-05:00', city: 'Winnipeg, MB, CAN', desc: 'Arrived at terminal' } },
-    // N.delivered (no destination): delivered at Columbus, OH, USA. N.puro: no AfterShip record.
+    // A number AfterShip does not track: nowhere, whatever it says.
+    [N.freight]: { ...asStatus(N.freight, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', notFound: true, error: 'AfterShip does not recognise this tracking number.', destCity: 'Denver', destState: 'CO', destCountry: 'USA' },
+    // N.delivered (no destination): delivered at Columbus, OH, USA. N.puro: no AfterShip record yet.
   };
   const page = await asPage(ROWS, statuses);
   assert.deepEqual(toOf(page, N.usa), ['Dallas', 'TX', 'US', 'AfterShip', 'US-TX:dallas']);
@@ -930,12 +935,14 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.deepEqual(toOf(page, N.puro), ['', '', '', '', '']);
   assert.deepEqual(page.run(`(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number==='${N.parcel}'))`), ['CA', false]);
   assert.deepEqual(mapDots(page).map((d) => d.label).sort(), ['Columbus, OH: 1 shipment', 'Dallas, TX: 1 shipment', 'Ontario, Canada: 1 shipment', 'Seattle, WA: 1 shipment']);
-  assert.equal(mapNote(page), '2 shipments waiting for AfterShip');
+  // Off the map: the one waiting for AfterShip and the one it does not track, apart.
+  assert.equal(mapNote(page), '1 shipment waiting for AfterShip · 1 not tracked by AfterShip');
   // The details say where it came from; the Cross-border list (SAP's: the US one on its way) names its city.
-  page.run(`toggleShipment('${N.usa}');toggleShipment('${N.parcel}');toggleShipment('${N.puro}')`);
+  page.run(`toggleShipment('${N.usa}');toggleShipment('${N.parcel}');toggleShipment('${N.ups}');toggleShipment('${N.puro}')`);
   assert.equal(factOf(page, N.usa, 'Ship to'), 'Dallas, TX · United States (US)');
   assert.equal(factTip(page, N.usa, 'Ship to'), 'Destination from AfterShip (the carrier).');
   assert.equal(factOf(page, N.parcel, 'Ship to'), 'Seattle, WA · United States (US)');
+  assert.equal(factOf(page, N.ups, 'Ship to'), 'Ontario · Canada (CA)', 'only a province: its name');
   assert.equal(factOf(page, N.puro, 'Ship to'), 'Canada (CA)');
   assert.equal(factTip(page, N.puro, 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
   assert.deepEqual(crossRows(page), [[N.usa, 'SO 601 · Dallas, TX']]);
@@ -950,6 +957,13 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.deepEqual(place({ country: 'CA' }, { state: 'delivered', destCity: '', destCountry: '', lastEvent: { city: 'Buffalo, NY, USA' } }), ['Buffalo', 'NY', 'US', 'AfterShip'], 'the scan\'s own country');
   assert.deepEqual(place({ country: 'CA' }, { state: 'transit', destCity: '', destCountry: '', lastEvent: { city: 'Winnipeg, MB, CAN' } }), ['', '', '', '']);
   assert.deepEqual(place({ country: 'US' }, { state: 'transit', destCity: '', destState: 'TX', destCountry: 'USA' }), ['', 'TX', 'US', 'AfterShip']);
+  // Every country on the map has its three-letter code (PHL: Manila); a code the page does not know places nothing,
+  // never at the SAP country instead.
+  assert.deepEqual(page.run("Object.keys(SHIP_PLACES).filter(k=>k.length===2&&!Object.values(SHIP_ISO3).includes(k))"), []);
+  assert.deepEqual(page.run('Object.values(SHIP_ISO3).filter(c=>!SHIP_PLACES[c])'), []);
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Manila', destState: '', destCountry: 'PHL' }), ['Manila', '', 'PH', 'AfterShip']);
+  assert.equal(page.run("shipPlaceKey({toCountry:'PH',toCity:'Manila'})"), 'PH:manila');
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Toronto', destState: 'ON', destCountry: 'ZZZ' }), ['', '', '', 'AfterShip']);
   // A shared snapshot keeps them: AfterShip's statuses travel with it.
   let payload = '';
   Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
@@ -973,7 +987,15 @@ test('2v6.9 cities: the 8 busiest dots are named on a wide screen or in print, 5
   assert.deepEqual(mapDots(page).map((d) => d.key.includes('+')), Array(FAR.length).fill(false), 'far apart: a dot each');
   assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, 8).sort());
   assert.doesNotMatch(mapOf(page), /class="shp-lbl minor"/, 'city labels are not dimmed');
-  assert.match(mapOf(page), /<span class="shp-lbl hub" /, 'the hub keeps its label');
+  // The hub's label ("Spyder · Lacombe") still finds room with eight cities named. Labels come after the dot buttons
+  // in the markup, on the same layer, so a label is drawn over a small unnamed dot it covers.
+  assert.match(mapOf(page), /<span class="shp-lbl hub" style="[^"]*">Spyder · Lacombe<\/span>/, 'the hub keeps its label');
+  const mm = mapOf(page);
+  assert.ok(mm.lastIndexOf('<button type="button" class="shp-dot') < mm.indexOf('<span class="shp-lbl'), 'labels after the dots');
+  assert.ok(mm.indexOf('<span class="shp-hub"') < mm.indexOf('<button type="button" class="shp-dot'), 'the hub mark under the dots');
+  const css = page.ctx.document.documentElement.outerHTML;
+  assert.match(css, /\n\.shp-lbl\{position:absolute;z-index:2;/);
+  assert.match(css, /\n\.shp-dot\{position:absolute;z-index:2;/);
   assert.match(mapDots(page).find((d) => d.key === 'CA-QC:montreal').tip, /^Montréal, QC: 1 shipment\n/, 'an unnamed dot names its city in its tip');
   // Miami (one shipment) picked: pressed and named first, in place of the 8th busiest (Los Angeles); the table lists
   // its shipment.
@@ -1003,6 +1025,53 @@ test('2v6.9 cities: the 8 busiest dots are named on a wide screen or in print, 5
   page.run('printMode=true;renderResults()');
   assert.deepEqual(mapLabels(page).sort(), FAR_NAMES.slice(0, 8).sort(), 'print');
   page.run('printMode=false;renderResults()');
+  assert.deepEqual(page.errors, []);
+});
+
+// Lacombe's own label is placed after the first three city labels (not after all of them), so the cities around it
+// on the wide map do not crowd it out.
+test('2v6.9 cities: "Spyder · Lacombe" keeps its label on the wide map among eight named cities, several of them around Lacombe', async () => {
+  const page = await asPage(WEST_ROWS, WEST_AS);
+  assert.ok(page.run('shpMapLayout()'), 'the wide layout');
+  // Nine dots (Lethbridge shares Calgary's), eight of them named, the three busiest first, and the hub.
+  assert.equal(mapDots(page).length, 9);
+  assert.equal(mapLabels(page).length, 8);
+  assert.deepEqual(mapLabels(page).slice(0, 3), ['Calgary, AB +1', 'Kelowna, BC', 'Toronto, ON']);
+  assert.match(mapOf(page), /<span class="shp-lbl hub" style="[^"]*">Spyder · Lacombe<\/span>/);
+  assert.deepEqual(page.errors, []);
+});
+
+// How many places are named follows the layout (shpMapLabelCount: 8 on the wide layout or in print, 5 from 641 to
+// 980px, 3 on a phone); a resize that changes it draws the page again (a phone turned from 844x390 to 390x844), even
+// when the map's scale hardly changes; one that changes neither does not.
+test('2v6.9 cities: shpMapLabelCount follows the layout, and turning a phone (844 to 390px wide) redraws the map with the new count', async () => {
+  const page = await asPage(FAR_ROWS, FAR_AS);
+  const count = (w, print = false) => { page.ctx.innerWidth = w; return page.run(`(()=>{printMode=${print};const n=shpMapLabelCount(shpMapLayout());printMode=false;return n})()`); };
+  assert.deepEqual([1440, 981, 980, 844, 641, 640, 390].map((w) => count(w)), [8, 8, 5, 5, 5, 3, 3]);
+  assert.equal(count(390, true), 8, 'print');
+  // The test page has no real DOM: the results screen says it holds the map, and draws are counted.
+  page.els['results-screen'].querySelector = (sel) => (sel === '.shp-map' ? {} : null);
+  page.run('globalThis.shpDraws=0;globalThis.shpRealRender=renderResults;renderResults=function(){shpDraws++;return shpRealRender.apply(this,arguments)}');
+  const settled = () => new Promise((r) => setTimeout(r, 400));
+  page.ctx.innerWidth = 844;
+  page.run('renderResults()');
+  assert.equal(page.run('shpMapDrawn.labels'), 5);
+  assert.equal(mapLabels(page).length, 5);
+  page.run('shpDraws=0');
+  // Turned: 390px wide. The scale alone would not call for a new draw; the label count does.
+  page.ctx.innerWidth = 390;
+  assert.ok(page.run('(d=>Math.abs(shpMapScale(d.vw,d.vh,d.zoom)-d.k)/d.k)(shpMapDrawn)') < 0.12, 'about the same scale');
+  page.run('shpMapRefit()');
+  await settled();
+  assert.equal(page.run('shpDraws'), 1);
+  assert.equal(page.run('shpMapDrawn.labels'), 3);
+  assert.equal(mapLabels(page).length, 3);
+  // 390 to 400px: still a phone, about the same scale: no new draw.
+  page.ctx.innerWidth = 400;
+  page.run('shpMapRefit()');
+  await settled();
+  assert.equal(page.run('shpDraws'), 1);
+  page.run('renderResults=shpRealRender');
   assert.deepEqual(page.errors, []);
 });
 
@@ -1042,6 +1111,7 @@ test('2v6.9 cities: the Destination filter, a shared dot\'s pick, the Ship to de
   assert.equal(text({ toCountry: 'US', dest: 'US', toCity: 'Nowhereville', toRegion: 'IN' }), 'Nowhereville, IN · United States (US)');
   assert.equal(text({ toCountry: 'US', dest: 'US', toCity: 'Smallville, IN', toRegion: 'IN' }), 'Smallville, IN · United States (US)');
   assert.equal(text({ toCountry: 'MX', dest: 'US', toCity: 'Monterrey' }), 'Monterrey · Mexico (MX)');
+  assert.equal(text({ toCountry: 'US', dest: 'CA', toCity: '', toRegion: 'TX' }), 'Texas · United States (US)', 'only a state: its name');
   // The Shipments search finds the destination city, not the country names.
   page.run("shipSearch('goshen')");
   assert.deepEqual(tableRows(page).sort(), [townNum(3), townNum(4)].sort());
