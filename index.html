@@ -3983,7 +3983,7 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
    pills, each customer's name and each number are buttons that list those lines in the Lines card (indigo when picked);
    the Lines card head carries a Clear for the pick. Tips can hold short lines ("Line\n• fact"). */
 .tip-layer .tip-text{white-space:pre-line}
-.ohl-sup-row{grid-template-columns:minmax(0,2.2fr) repeat(3,minmax(64px,.6fr)) minmax(90px,1.1fr);cursor:default}
+.ohl-sup-row{grid-template-columns:minmax(0,2.2fr) repeat(4,minmax(64px,.6fr)) minmax(90px,1.1fr);cursor:default}
 button.ohl-sup-pill{border:0;font:inherit;font-size:12.5px;cursor:pointer;transition:background-color .16s ease}
 button.ohl-sup-pill:hover:not(:disabled){background:var(--dz-hover)}
 button.ohl-sup-pill.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
@@ -3995,7 +3995,19 @@ button.ohl-sup-name:hover,button.ohl-sup-n:hover{background:var(--dz-hover)}
 button.ohl-sup-name.sel,button.ohl-sup-n.sel{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
 button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-sup-n:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
 .ohl-lines-clear{margin-left:2px;font-size:13px}
-@media (max-width:760px){.ohl-sup-row{grid-template-columns:minmax(0,1fr) repeat(3,44px)}}
+@media (max-width:760px){.ohl-sup-row{grid-template-columns:minmax(0,1fr) repeat(4,44px)}}
+/* 2v6.9: Supply to pull in (one row per PO line; the PO number is the button that lists its lines) and the action line
+   under a Lines row's status. */
+.ohl-pull-tbl .c-po{width:120px}.ohl-pull-tbl .c-item{width:110px}.ohl-pull-tbl .c-date{width:92px}.ohl-pull-tbl .c-gap{width:64px}.ohl-pull-tbl .c-val{width:84px}
+.ohl-pull-tbl tr.sel td{background:var(--dz-indigo-bg)}
+button.ohl-pull-po{margin:-4px -6px;padding:4px 6px;border:0;border-radius:8px;background:transparent;font:inherit;font-weight:600;color:var(--dz-indigo-deep);cursor:pointer;white-space:nowrap;transition:background-color .16s ease}
+button.ohl-pull-po:hover{background:var(--dz-hover)}
+button.ohl-pull-po.sel{background:var(--dz-indigo-bg)}
+button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.ohl-pull-gap{font-weight:600;color:var(--dz-indigo-deep)}
+.ohl-pull-cust{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ohl-pull-note{display:block;margin-top:2px;font-size:10.5px;font-weight:600;line-height:1.3;color:var(--dz-indigo-deep)}
+@media (prefers-reduced-motion:reduce){button.ohl-pull-po{transition:none}}
 @media (prefers-reduced-motion:reduce){button.ohl-sup-pill,button.ohl-sup-name,button.ohl-sup-n{transition:none}}
 /* Order Health, Supply / Demand view (2v6.9 leading): the Short or at-risk items card (from the Supply / Demand page)
    full width, its Short or at risk | All demand switch in the head with the search; or a short note when no supply /
@@ -12689,7 +12701,7 @@ function renderResults(){
               <td class="c-date" data-label="${esc(dateHeader)}">${orderLeadTime==='—'?esc(displayDate(cellDate(r))||'—'):`<span${tipAttr(`Lead time ${orderLeadTime} (order to original delivery).`)}>${esc(displayDate(cellDate(r))||'—')}</span>`}</td>
               <td class="num c-qty" data-label="${esc(qtyHeader)}">${fmtNum(rowQty)}</td>
               <td class="num c-val">${money(rowValue)}</td>
-              <td class="c-st"><div class="c-status">${dzChip(status,ohlStatusTone)}<span class="dz-cell-sub timing">${esc(timing)}</span>${ohLineWhy(r)}${renderPrintOverride(r)}</div></td>
+              <td class="c-st"><div class="c-status">${dzChip(status,ohlStatusTone)}<span class="dz-cell-sub timing">${esc(timing)}</span>${ohLineWhy(r)}${ohlPullNote(m,r)}${renderPrintOverride(r)}</div></td>
               <td class="c-resched">${rescheduleLabel}</td>
               <td class="c-notes print-hide">${renderNoteButton(r)}${renderNoteByline(r)}</td>
             </tr>${renderNoteEditorRow(r,11)}${renderPrintNoteRow(r,11)}`;
@@ -19475,6 +19487,7 @@ function ohlRenderLeading(m){
     ${ohlDueCard(c)}
     ${ohlCustomersCard(c)}
     ${ohlSupplyCard(c)}
+    ${ohlPullCard(c)}
     ${ohlDateChangesCard(c)}
     ${OHL_LINES_MARK}
   </div>`;
@@ -19664,7 +19677,9 @@ function ohlShipTargetCard(m){
 // whose supply is fine are "Not supply" (at risk for their own dates or overrides). One row per customer, orders first.
 // 2v6.9 leading: no CM sheet source (its lines go to the open PO, stock or none like any other line); a click on a
 // customer, a number or a source pill lists exactly those at-risk lines in the Lines card (the "ohlsup" tile).
-const OHL_SUPPLY_SOURCES=[['po','Vendor PO','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
+// 2v6.9 (owner): "Pull in" first (the PO that covers the order comes after its due date: ask for an earlier date), then
+// a PO that is late or has no commit date, then stock short, then not supply.
+const OHL_SUPPLY_SOURCES=[['pull','Pull in','var(--dz-indigo)'],['po','Late / no commit','var(--dz-amber)'],['stock','Stock short','var(--dz-risk)'],['none','Not supply','var(--dz-ink-6)']];
 // ohlSupplyAll: every at-risk customer, else only those held up by supply; either list is 10 a page.
 let ohlSupplyAll=false;
 // The picked customer and / or source ({cust, src}; '' = all), listed by the Lines card while its tile is "ohlsup".
@@ -19682,48 +19697,103 @@ function ohlPoByItem(){
   });
   return by;
 }
-function ohlSupplySource(r,poBy,today){
-  const item=String(r.itemCode||'').trim().toUpperCase();
-  const due=parseDate(r.effectiveDueDate||ohOriginalDue(r));
-  const bad=(item?poBy.get(item)||[]:[]).map(p=>{
-    const exp=parseDate(cmPoDue(p));
-    const nc=isNoCommitDate(p.lineRescheduleDate)||isNoCommitDate(p.rescheduleDate)||!!p.noCommitDate;
-    return {p,exp,why:nc?'no commit date':exp&&exp<today?`late since ${cmShort(exp)}`:exp&&due&&exp>due?`expected ${cmShort(exp)}, after due`:''};
-  }).filter(x=>x.why);
-  if(bad.length){
-    const x=bad[0];
-    return {id:'po',text:`PO ${x.p.documentNumber||'—'} ${poVendorLabel(x.p)}: ${x.why}`};
+// Date-order matching (2v6.9): for each item, open PO lines (earliest expected date first, no commit date last) are
+// handed to the open sales lines (earliest due first) by open quantity. A sales line is covered by the PO line that
+// supplies its last unit; a line the open POs cannot fully cover is not matched to a PO. Stock on hand is not in the
+// data, so this can overstate how much a later PO is needed.
+function ohlPoExpected(p){return parseDate(cmExpectedDate(p)||cmPoDue(p));}
+function ohlPoNoCommit(p){return isNoCommitDate(p.lineRescheduleDate)||isNoCommitDate(p.rescheduleDate)||!!p.noCommitDate;}
+function ohlSalesDue(r){return parseDate(r.effectiveDueDate||ohOriginalDue(r));}
+function ohlAllocate(poBy){
+  const sales=new Map();
+  allLoadedRows.forEach(r=>{
+    if(!ohIsSalesRow(r)||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
+    const item=String(r.itemCode||'').trim().toUpperCase();
+    if(!item||!poBy.has(item))return;
+    if(!sales.has(item))sales.set(item,[]);
+    sales.get(item).push(r);
+  });
+  const cover=new Map();
+  const t=d=>d?+d:Infinity;
+  sales.forEach((rows,item)=>{
+    const sup=poBy.get(item).map(p=>({p,exp:ohlPoExpected(p),nc:ohlPoNoCommit(p),left:Math.max(0,num(p.openQuantity)||0)}))
+      .filter(x=>x.left>0)
+      .sort((a,b)=>(a.nc-b.nc)||t(a.exp)-t(b.exp)||String(a.p.documentNumber||'').localeCompare(String(b.p.documentNumber||''),undefined,{numeric:true}));
+    rows.sort((a,b)=>t(ohlSalesDue(a))-t(ohlSalesDue(b))||String(a.documentNumber||'').localeCompare(String(b.documentNumber||''),undefined,{numeric:true}));
+    let i=0;
+    rows.forEach(r=>{
+      let need=Math.max(0,num(r.openQuantity)||0),last=null;
+      if(!need&&i<sup.length)last=sup[i];
+      while(need>0&&i<sup.length){
+        const x=sup[i],take=Math.min(need,x.left);
+        x.left-=take;need-=take;last=x;
+        if(x.left<=0)i++;
+      }
+      if(!need&&last)cover.set(r,last);
+    });
+  });
+  return cover;
+}
+function ohlSupplySource(r,cover,today){
+  const c=cover.get(r),due=ohlSalesDue(r);
+  if(c){
+    const who=`PO ${c.p.documentNumber||'—'} ${poVendorLabel(c.p)}`;
+    if(c.nc)return {id:'po',text:`${who}: no commit date`};
+    if(c.exp&&c.exp<today)return {id:'po',text:`${who}: late since ${cmShort(c.exp)}`};
+    if(c.exp&&due&&c.exp>due){
+      const gap=Math.max(1,Math.round((c.exp-due)/864e5));
+      return {id:'pull',c,due,gap,text:`${who}: due ${cmShort(c.exp)}, needed by ${cmShort(due)} (${gap}d)`};
+    }
   }
   if(ohHasShortage(r))return {id:'stock',text:`short at ${rowWarehouse(r)} (supply / demand snapshot)`};
   return {id:'none',text:''};
+}
+// The work orders a contract manufacturer builds on a PO line (Logican sheet), if any.
+function ohlPoWorkOrders(p){
+  const i=typeof cmLineInfo==='function'?cmLineInfo(p):null;
+  if(!i)return [];
+  return [...new Set(i.orders.map(o=>String(o.wo||'').split('\n')[0].trim()).filter(w=>w&&!/^stock$/i.test(w)))];
 }
 function ohlSupplyData(m){
   return cachedByFilter(m,`ohlsup|${weeklyFilterKey()}|${ohStamp()}`,()=>{
     const risk=ohAtRiskData(m).risk.filter(ohIsSalesRow);
     const poBy=ohlPoByItem(),today=reportToday();
+    const cover=ohlAllocate(poBy);
     const ids=OHL_SUPPLY_SOURCES.map(x=>x[0]);
     const blank=()=>Object.fromEntries(ids.map(id=>[id,new Set()]));
     const lists=()=>Object.fromEntries(ids.map(id=>[id,[]]));
-    const by=new Map(),tot=blank(),totRows=lists();
+    const by=new Map(),tot=blank(),totRows=lists(),pullBy=new Map(),pulls=new Map();
     risk.forEach(r=>{
-      const src=ohlSupplySource(r,poBy,today);
+      const src=ohlSupplySource(r,cover,today);
       const key=rowCustomer(r),doc=String(r.documentNumber||'');
       if(!by.has(key))by.set(key,{key,label:rowCustomerLabel(r),orders:blank(),rows:lists(),all:new Set(),allRows:[],value:0,notes:lists()});
       const c=by.get(key);
       c.orders[src.id].add(doc);c.rows[src.id].push(r);c.all.add(doc);c.allRows.push(r);c.value+=openLineValue(r);tot[src.id].add(doc);totRows[src.id].push(r);
       if(src.text&&c.notes[src.id].length<4)c.notes[src.id].push(`SO ${doc} ${r.itemCode||''}: ${src.text}`);
+      if(src.id==='pull'){
+        // One "Supply to pull in" row per PO line: the earliest date its at-risk orders need it by.
+        const pk=rowKey(src.c.p);
+        pullBy.set(r,{p:src.c.p,exp:src.c.exp,due:src.due,gap:src.gap});
+        if(!pulls.has(pk))pulls.set(pk,{key:pk,p:src.c.p,exp:src.c.exp,need:src.due,rows:[],customers:new Set(),orders:new Set(),value:0});
+        const x=pulls.get(pk);
+        if(src.due<x.need)x.need=src.due;
+        x.rows.push(r);x.customers.add(rowCustomerLabel(r));x.orders.add(doc);x.value+=openLineValue(r);
+      }
     });
-    const supplyOrders=c=>new Set([...c.orders.po,...c.orders.stock]).size;
+    const supplyOrders=c=>new Set([...c.orders.pull,...c.orders.po,...c.orders.stock]).size;
     const customers=[...by.values()].map(c=>({...c,supply:supplyOrders(c)}))
       .sort((a,b)=>b.supply-a.supply||b.all.size-a.all.size||b.value-a.value||a.label.localeCompare(b.label));
+    const pullList=[...pulls.values()].map(x=>({...x,gap:Math.max(1,Math.round((x.exp-x.need)/864e5)),wo:ohlPoWorkOrders(x.p)}))
+      .sort((a,b)=>a.need-b.need||b.value-a.value);
     const hasSources=!!(poBy.size||supplyDemandRows.length);
-    return {customers,tot,totRows,hasSources,withSupply:customers.filter(c=>c.supply>0).length};
+    return {customers,tot,totRows,hasSources,withSupply:customers.filter(c=>c.supply>0).length,pullBy,pulls:pullList};
   });
 }
 // The lines behind a pick: one customer (every source, or one), or one source across every customer.
 function ohlSupplyRows(m,pick){
   if(!pick)return null;
   const d=ohlSupplyData(m);
+  if(pick.po){const x=d.pulls.find(y=>y.key===pick.po);return x?x.rows:null;}
   if(!pick.cust)return pick.src&&d.totRows[pick.src]?d.totRows[pick.src]:null;
   const c=d.customers.find(x=>x.key===pick.cust);
   if(!c)return null;
@@ -19732,11 +19802,31 @@ function ohlSupplyRows(m,pick){
 // "Firefly RV · Vendor PO", "Firefly RV", "Vendor PO · All customers": the Lines card's title for the pick.
 function ohlSupplyTitle(m,pick){
   if(!pick)return '';
+  if(pick.po){const x=ohlSupplyData(m).pulls.find(y=>y.key===pick.po);return x?`PO ${x.p.documentNumber||'—'} · Pull in`:'';}
   const src=OHL_SUPPLY_SOURCES.find(x=>x[0]===pick.src);
   const c=pick.cust&&ohlSupplyData(m).customers.find(x=>x.key===pick.cust);
   return c?`${c.label}${src?` · ${src[1]}`:''}`:`${src?src[1]:''} · All customers`;
 }
-function ohlSupPicked(cust,src){return weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&ohlSupPick.cust===cust&&ohlSupPick.src===src;}
+function ohlSupPicked(cust,src){return weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&!ohlSupPick.po&&ohlSupPick.cust===cust&&ohlSupPick.src===src;}
+function ohlPullPicked(key){return weeklyTileFilter==='ohlsup'&&!!ohlSupPick&&ohlSupPick.po===key;}
+// A "Supply to pull in" row: list the at-risk lines waiting on that PO line (again: back to the at-risk lines).
+function ohlPullPick(key){
+  const same=ohlPullPicked(String(key||''));
+  ohlSupPick=same?null:{po:String(key||'')};
+  weeklyTileFilter=same?'late':'ohlsup';
+  linkedSelection.clear();
+  renderResults();
+  dzRevealList(!same&&'#results-screen .ohl-lines-card');
+}
+// The action under a Lines row's status while a supply pick is listed: "Pull in PO 4501 · Acme · due Nov 20 → needed by
+// Nov 5 (15d)".
+function ohlPullNote(m,r){
+  if(weeklyTileFilter!=='ohlsup')return '';
+  const x=ohlSupplyData(m).pullBy.get(r);
+  if(!x)return '';
+  const wo=ohlPoWorkOrders(x.p);
+  return `<span class="ohl-pull-note">Pull in PO ${esc(x.p.documentNumber||'—')}${wo.length?` (WO ${esc(wo[0])})`:''} · ${esc(poVendorLabel(x.p))} · due ${esc(cmShort(x.exp))} → needed by ${esc(cmShort(x.due))} (${fmtNum(x.gap)}d)</span>`;
+}
 // Click: list those lines (the Lines card shows the pick in its title and reveals); the same click again shows the
 // at-risk lines again.
 function ohlSupplyPick(cust,src){
@@ -19758,13 +19848,38 @@ function ohlSupplyClear(){
   const back=typeof document!=='undefined'&&document.querySelector&&document.querySelector('.ohl-sup .ohl-sup-name');
   if(back&&back.focus)back.focus({preventScroll:true});
 }
+// Supply to pull in (2v6.9): one row per PO line that covers at-risk orders but is due after them, earliest need first;
+// the PO number lists those orders' lines in the Lines card. 10 a page.
+function ohlPullCard(c){
+  const {m}=c;
+  const d=ohlSupplyData(m);
+  if(!d.pulls.length)return '';
+  const pg=dzPageOf('ohl-pull',d.pulls,JSON.stringify([weeklyFilterKey(),stgValue('horizon')]));
+  const rows=pg.rows.map(x=>{
+    const on=ohlPullPicked(x.key),cust=[...x.customers];
+    const tip=ohlTip(`PO ${x.p.documentNumber||'—'}: pull in ${ohN(x.gap,'day')}`,[`${ohN(x.orders.size,'at-risk order')} · ${money(x.value)}`,`Due ${cmShort(x.exp)}, needed by ${cmShort(x.need)}`,x.wo.length?`WO ${x.wo.slice(0,3).join(', ')}`:''],on?'Click to show the at-risk lines again.':'Click to list those lines.');
+    return `<tr class="${on?'sel':''}"><td><button type="button" class="ohl-pull-po${on?' sel':''}" data-focus-key="ohl-pull-${esc(x.key)}" data-off="${esc(x.key)}" aria-pressed="${on}" onclick="ohlPullPick(this.dataset.off)"${tipAttr(tip)}>PO ${esc(x.p.documentNumber||'—')}</button>${x.wo.length?`<span class="dz-cell-sub">WO ${esc(x.wo[0])}${x.wo.length>1?` +${x.wo.length-1}`:''}</span>`:''}</td>
+      <td class="sup-soft">${esc(poVendorLabel(x.p))}</td>
+      <td><span class="sup-strong">${esc(x.p.itemCode||'—')}</span></td>
+      <td class="sup-soft">${esc(cmShort(x.exp))}</td>
+      <td class="sup-strong">${esc(cmShort(x.need))}</td>
+      <td class="num ohl-pull-gap">${fmtNum(x.gap)}d</td>
+      <td class="sup-soft ohl-pull-cust" title="${esc(cust.join(', '))}">${esc(cust.slice(0,2).join(', '))}${cust.length>2?` +${cust.length-2}`:''}</td>
+      <td class="num sup-strong">${esc(moneyShort(x.value))}</td></tr>`;
+  }).join('');
+  return dzCard({title:'Supply to pull in',sm:true,cls:'ohl-card ohl-pull dz-fade',span:6,attrs:' style="--i:5"',
+    tip:'PO lines due after the orders they cover\n• Matched to orders by date\n• Ask the vendor or CM for an earlier date\nClick a PO to list its lines.',
+    body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Supply to pull in"><table class="sup-tbl ohl-pull-tbl"><colgroup><col class="c-po"><col><col class="c-item"><col class="c-date"><col class="c-date"><col class="c-gap"><col><col class="c-val"></colgroup>
+      <thead><tr><th${tipAttr('Purchase order, and the CM work order if any.')}>PO / WO</th><th>Vendor / CM</th><th>Item</th><th${tipAttr('The date the PO line is expected.')}>Supply due</th><th${tipAttr('The earliest due date of the at-risk orders it covers.')}>Needed by</th><th class="num"${tipAttr('Days to pull the PO in.')}>Gap</th><th>Customers</th><th class="num"${tipAttr('Open value of the at-risk lines waiting on it.')}>At risk</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>${dzPageFoot('ohl-pull',pg,'Supply to pull in','PO lines')}`});
+}
 function ohlSupplyCard(c){
   const {m}=c;
   const d=ohlSupplyData(m);
   if(!d.customers.length)return '';
   const head=`<div class="ohl-sup-sum" role="group" aria-label="At-risk orders by supply source">${OHL_SUPPLY_SOURCES.map(([id,label,color])=>{
     const n=d.tot[id].size,on=ohlSupPicked('',id);
-    const what=id==='none'?'Supply looks fine: at risk for their own dates or overrides.':id==='po'?'An open PO for the item is late, has no commit date or comes after due.':'Short in the supply / demand snapshot.';
+    const what=id==='none'?'Supply looks fine: at risk for their own dates or overrides.':id==='pull'?'The PO that covers it is due after the order: ask for an earlier date.':id==='po'?'The PO that covers it is late or has no commit date.':'Short in the supply / demand snapshot.';
     return `<button type="button" class="ohl-sup-pill${on?' sel':''}" data-focus-key="ohl-sup-src-${id}" aria-pressed="${on}"${n?` onclick="ohlSupplyPick('','${id}')"`:' disabled'}${tipAttr(`${label}: ${ohN(n,'order')}\n• ${what}${n?`\n• ${on?'Click to show the at-risk lines again.':'Click to list the lines.'}`:''}`)}><i style="background:${color}"></i>${esc(label)} <b>${fmtNum(n)}</b></button>`;
   }).join('')}</div>`;
   if(!d.hasSources)return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
@@ -19791,7 +19906,7 @@ function ohlSupplyCard(c){
   }).join('');
   const more=d.customers.length>list.length||ohlSupplyAll?`<button type="button" class="link-btn ohl-sup-more" data-focus-key="ohl-sup-more" onclick="ohlToggleSupplyAll()">${ohlSupplyAll?'Show customers held up by supply':`Show all ${fmtNum(d.customers.length)} customers →`}</button>`:'';
   return dzCard({title:'Customers at risk by supply source',sm:true,cls:'ohl-card ohl-sup dz-fade',span:6,attrs:' style="--i:5"',
-    tip:'At-risk orders by supply source\n• Vendor PO: late, no commit or after due\n• Stock short in supply / demand\nClick a customer or number to list its lines.',
+    tip:'At-risk orders by supply source\n• Pull in: the covering PO is due after the order\n• Late / no commit: the covering PO\n• Stock short in supply / demand\nPOs are matched to orders by date.\nClick a customer or number to list its lines.',
     body:`${head}<div class="ohl-sup-table" role="group" aria-label="At-risk orders by customer and supply source">
       <div class="ohl-sup-row ohl-sup-th" aria-hidden="true"><span>Customer</span>${OHL_SUPPLY_SOURCES.map(([,label])=>`<span class="ohl-sup-n">${esc(label)}</span>`).join('')}<span>Split</span></div>
       ${rows||'<div class="empty-note">No customer has an at-risk order held up by supply.</div>'}

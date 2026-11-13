@@ -58,9 +58,9 @@ test('Supply source card: no CM sheet; every at-risk line counted once under ope
   const h = html(page);
   const card = h.slice(h.indexOf('Customers at risk by supply source'), h.indexOf('ohl-sup-foot') > 0 ? h.indexOf('ohl-sup-foot') : h.indexOf('<!--') > 0 ? h.length : h.length);
   assert.doesNotMatch(card, /CM sheet|Logican/);
-  assert.deepEqual(page.run('OHL_SUPPLY_SOURCES.map(x=>x[0])'), ['po', 'stock', 'none']);
+  assert.deepEqual(page.run('OHL_SUPPLY_SOURCES.map(x=>x[0])'), ['pull', 'po', 'stock', 'none']);
   const pills = [...h.matchAll(/<button type="button" class="ohl-sup-pill[^"]*" data-focus-key="ohl-sup-src-(\w+)" aria-pressed="false"[^>]*>[\s\S]*?<b>(\d+)<\/b>/g)].map((m) => `${m[1]}:${m[2]}`);
-  assert.deepEqual(pills, ['po:1', 'stock:1', 'none:1']);
+  assert.deepEqual(pills, ['pull:0', 'po:1', 'stock:1', 'none:1']);
   const all = page.run('ohAtRiskData(currentMetrics()).risk.filter(ohIsSalesRow).length');
   assert.equal(page.run('Object.values(ohlSupplyData(currentMetrics()).totRows).reduce((s,r)=>s+r.length,0)'), all);
   assert.equal(all, 3);
@@ -72,7 +72,7 @@ test('Supply source card: a customer, a number or a source lists exactly those l
   let h = html(page);
   // Each row: the name and each non-zero number are buttons with aria-pressed and focus keys.
   assert.match(h, /<div class="ohl-sup-row dz-fade" style="--i:0" role="group" aria-label="FIREFLY - Firefly RV">\s*<button type="button" class="ohl-sup-name" data-focus-key="ohl-sup-FIREFLY" data-off="FIREFLY" aria-pressed="false" onclick="ohlSupplyPick\(this\.dataset\.off,''\)"/);
-  assert.match(h, /data-focus-key="ohl-sup-FIREFLY-po" data-off="FIREFLY" aria-pressed="false" aria-label="FIREFLY - Firefly RV, Vendor PO: 1 order"/);
+  assert.match(h, /data-focus-key="ohl-sup-FIREFLY-po" data-off="FIREFLY" aria-pressed="false" aria-label="FIREFLY - Firefly RV, Late \/ no commit: 1 order"/);
   // The customer: both of Firefly's lines; the title names it; the chip counts them.
   page.run("ohlSupplyPick('FIREFLY','')");
   assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['100', '101'] });
@@ -185,11 +185,47 @@ test('Without a snapshot the view says how to load it; Settings offers Supply / 
 
 test('the new CSS sits in the 2v9:pages marker pair, on colour tokens', () => {
   const css = HTML.slice(HTML.indexOf('/* 2v9:pages */'), HTML.indexOf('/* 2v9:end pages */'));
-  assert.match(css, /\.ohl-sup-row\{grid-template-columns:minmax\(0,2\.2fr\) repeat\(3,minmax\(64px,\.6fr\)\) minmax\(90px,1\.1fr\)/);
+  assert.match(css, /\.ohl-sup-row\{grid-template-columns:minmax\(0,2\.2fr\) repeat\(4,minmax\(64px,\.6fr\)\) minmax\(90px,1\.1fr\)/);
   assert.match(css, /button\.ohl-sup-name\.sel,button\.ohl-sup-n\.sel\{background:var\(--dz-indigo-bg\);color:var\(--dz-indigo-deep\)\}/);
   assert.match(css, /\.ohl-sd \.dz-chip\.red\{color:var\(--dz-risk-text\)\}/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{button\.ohl-sup-pill,button\.ohl-sup-name,button\.ohl-sup-n\{transition:none\}\}/);
   assert.doesNotMatch(HTML, /\.ohl-hero-quiet|\.mwm-note/);
+});
+
+test('Pull in: POs are handed to orders by date; a covering PO due after the order is Pull in, listed per PO line', async () => {
+  // Item P: SO 200 (due Aug 10) and SO 201 (due Aug 20) need 10 each; SO 202 (due Aug 25) needs 10 more. PO 601 (Sep 20)
+  // and PO 600 (Sep 10) bring 10 each: by date, 600 covers 200 and 601 covers 201; nothing is left for 202.
+  const rows = [
+    so('200', '08/10/2026', { 'Item No.': 'P' }),
+    so('201', '08/20/2026', { 'Item No.': 'P', CustomerVendorCode: 'BARLETTA', CustomerVendorName: 'Barletta Boats' }),
+    so('202', '08/25/2026', { 'Item No.': 'P' }),
+    po('601', '09/20/2026', { 'Item No.': 'P' }),
+    po('600', '09/10/2026', { 'Item No.': 'P' }),
+  ];
+  const page = loadPage({ storage: IMPORT });
+  await new Promise((r) => setTimeout(r, 0));
+  page.run('isSnapshotView=false');
+  await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
+  const src = page.run(`(()=>{const d=ohlSupplyData(currentMetrics());return Object.fromEntries(Object.entries(d.totRows).map(([k,v])=>[k,v.map(r=>r.documentNumber).sort()]));})()`);
+  assert.deepEqual(src, { pull: ['200', '201'], po: [], stock: [], none: ['202'] });
+  const pulls = page.run(`ohlSupplyData(currentMetrics()).pulls.map(x=>[x.p.documentNumber,cmShort(x.exp),cmShort(x.need),x.gap,[...x.customers].join('/')])`);
+  assert.deepEqual(pulls, [['600', 'Sep 10', 'Aug 10', 31, 'FIREFLY - Firefly RV'], ['601', 'Sep 20', 'Aug 20', 31, 'BARLETTA - Barletta Boats']]);
+  let h = html(page);
+  // The customer card: Pull in first; the Supply to pull in card: one row per PO line, its number a button.
+  assert.match(h, /data-focus-key="ohl-sup-src-pull" aria-pressed="false"/);
+  assert.match(h, /<section[^>]*class="[^"]*ohl-pull[^"]*"[\s\S]*?Supply to pull in[\s\S]*?<th[^>]*>PO \/ WO<\/th><th>Vendor \/ CM<\/th><th>Item<\/th><th[^>]*>Supply due<\/th><th[^>]*>Needed by<\/th><th class="num"[^>]*>Gap<\/th><th>Customers<\/th><th class="num"[^>]*>At risk<\/th>/);
+  assert.match(h, /<button type="button" class="ohl-pull-po" data-focus-key="ohl-pull-[^"]+" data-off="[^"]+" aria-pressed="false" onclick="ohlPullPick\(this\.dataset\.off\)"[^>]*>PO 600<\/button>/);
+  // A PO: its lines in the Lines card, each with the action under its status; again: back to the at-risk lines.
+  const key = page.run('ohlSupplyData(currentMetrics()).pulls[0].key');
+  page.run(`ohlPullPick(${JSON.stringify(key)})`);
+  assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['200'] });
+  h = html(page);
+  assert.deepEqual(linesMeta(h), ['1 line · $1,000', 'PO 600 · Pull in']);
+  assert.match(h, /<span class="ohl-pull-note">Pull in PO 600 · [^<]+ · due Sep 10 → needed by Aug 10 \(31d\)<\/span>/);
+  page.run(`ohlPullPick(${JSON.stringify(key)})`);
+  assert.equal(linesState(page).tile, 'late');
+  assert.doesNotMatch(html(page), /ohl-pull-note/);
+  assert.deepEqual(page.errors, []);
 });
 
 run();
