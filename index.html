@@ -4335,7 +4335,7 @@ button.ohc2-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset
 #results-screen:has(#oh-tab-leading) .dz-pillinput:focus-visible,.stg-bento .dz-pillinput:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 /* Touch: controls at least 40px tall; small marks (switches, swatches, chips, row links) get a 40px hit area. */
 @media (pointer:coarse){
-  #results-screen:has(#oh-tab-leading) :is(.dz-seg>button,.dz-filter,select.select,.dz-pillinput,.mwm-datebtn,button.ohl-sup-pill,button.ohs2-row,button.ohs2-rname,button.ohl-sup-name,button.ohl-sup-n,button.ohl-pull-po),
+  #results-screen:has(#oh-tab-leading) :is(.dz-seg>button,.dz-filter,select.select,.dz-pillinput,.mwm-datebtn,button.ohl-sup-pill,button.ohs2-row,button.ohs2-rname,button.ohl-sup-name,button.ohl-sup-n,button.ohl-pull-po,button.ohc3-n,button.ohs3-cell),
   .stg-bento :is(.dz-seg>button,.dz-btn,.dz-pillinput,.stg-select,summary.stg-setup-sum){min-height:40px}
   #results-screen:has(#oh-tab-leading) .mwm-datebtn{height:auto}
   .stg-bento .stg-item{min-height:40px}.stg-bento .stg-x{width:36px;height:36px}
@@ -6452,7 +6452,7 @@ function resetWeeklyFilters(){
   weeklyOrderTypeFilter=['ALL'];
   weeklyDepartmentFilter=['ALL'];
   weeklyProjectFilter=['ALL'];
-  weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';
+  weeklyReasonFilter='';weeklyReasonMain=false;weeklyCauseFilter='';weeklyAgeFilter='';if(typeof ohlDoView!=='undefined')ohlDoView='pull';
   renderResults();
 }
 // The Warehouse dropdown: a group ("preset:CM") or one warehouse.
