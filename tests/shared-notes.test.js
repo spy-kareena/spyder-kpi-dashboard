@@ -423,7 +423,9 @@ test('clearing a line and restoring deleted lines reach the other browsers too',
   // 2v7: the deleted lines are listed in the Settings Data Check card (it was a pill in the page head).
   b.run("setTab('settings')");
   assert.match(html(b), /1 line you deleted is hidden/);
-  assert.match(html(b), /Left out of every page and KPI for everyone who signs in/);
+  // 2v9: no where-it-is-kept words on Settings (owner).
+  assert.match(html(b), /Deleted lines<\/span><span class="stg-help">Left out of every page and KPI\.<\/span>/);
+  assert.doesNotMatch(html(b), /for everyone who signs in|in this browser/);
 
   // a clears the note and restores the line: the entries go, and markers tell the server.
   clock(a, '2026-10-08T16:00:00Z');

@@ -154,7 +154,7 @@ test('the menu calls Order Health "Sales Order Health": link, page title, logo, 
   assert.match(hdr, /data-focus-key="nav-weekly" onclick="setTab\('weekly'\)" aria-current="page"[^>]*>Sales Order Health</);
   assert.match(html(page), /<h1 class="dz-h1 dz-h1-hidden" tabindex="-1">Sales Order Health<\/h1>/);
   page.run("setTab('settings')");
-  assert.match(html(page), /id="stg-h-oh" tabindex="-1">[\s\S]*?Sales Order Health<\/h2>/);
+  assert.match(html(page), /id="stg-h-oh" tabindex="-1"[^>]*>[\s\S]*?Sales Order Health<\/h2>/);
   assert.equal(page.run('activeTab'), 'settings');
   assert.deepEqual(page.errors, []);
 });
@@ -166,7 +166,9 @@ test('the new CSS sits in its own marker pair just before the Settings block, on
   assert.match(css, /\.ohl-col\{display:flex;flex-direction:column;gap:16px/);
   assert.match(css, /\.ohl-kv-n\{[^}]*font-variant-numeric:tabular-nums/);
   assert.match(css, /\.sup-tiles\.po-strip\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\)\}/);
-  assert.match(css, /#stg-card-hiddenpages\{grid-column:1\/-1\}/);
+  // 2v9: Hidden Pages keeps its list here; its span is in the settings bento block (no fixed full row).
+  assert.match(css, /\.stg-hp-list\{display:grid;/);
+  assert.doesNotMatch(css, /#stg-card-hiddenpages\{grid-column/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{button\.ohl-kv\{transition:none\}\}/);
 });
 
