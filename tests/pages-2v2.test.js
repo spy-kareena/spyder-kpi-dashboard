@@ -47,9 +47,11 @@ async function loadedAll() {
   return page;
 }
 // 2v6: every page is a bento grid of titled cards (dzCard: .dz-card on a 6-column .dz-grid); named page groups
-// (.pg-group) remain where a page has sections: Monthly, Warehouses, and Sales Order Health's Lagging (Shipments, Metrics).
+// (.pg-group) remain where a page has sections: Monthly and Warehouses.
 // Per page: its cards in order (each named by its title, else its aria-label) and its top-level groups.
-// (2v6.9: Metrics is a section of Lagging, so setTab('metrics') opens Sales Order Health on Lagging.)
+// (2v6.9: setTab('metrics') opens Sales Order Health on Lagging. Lagging, Version 1 (owner's pick): under Monthly and
+// Quarterly it is four cards, Trend, Month by month, By warehouse and Booked vs shipped, with no page groups; its
+// Metrics and Shipments groups are gone.)
 const PAGE_LAYOUT = {
   purchaseorders: { cards: ['Received on time', 'Vendors with the most late POs', 'Kits by CM and month', 'PO lines'], groups: [] },
   buildrisk: { cards: ['Builds by month', 'Blocking builds', 'Orders at risk or late'], groups: [] },
@@ -57,7 +59,7 @@ const PAGE_LAYOUT = {
   supplydemand: { cards: ['Demand by item group and month', 'Least covered', 'Demand by warehouse', 'Item groups'], groups: [] },
   monthly: { cards: ['September to date', 'Orders shipped by month', 'Month by month'], groups: ['Open and shipped, month by month', 'By delivery month', 'By original delivery date', 'Ship target scenario'] },
   warehouses: { cards: ['Late orders by week', 'Getting worse', 'Getting better', 'Warehouses to watch'], groups: ['By late shipments', 'By due month', 'By warehouse'] },
-  metrics: { cards: ['Monthly', 'Quarterly', 'On-time delivery', 'Monthly metrics', 'Orders shipped by month', 'Month by month', 'Shipped by warehouse / CM · this month', 'Original line delivery summary'], groups: ['Metrics', 'Shipments'] }, // owner: Metrics above Shipments; Late orders by cause is a tile
+  metrics: { cards: ['Monthly', 'Quarterly', 'Trend', 'Month by month', 'By warehouse', 'Booked vs shipped'], groups: [] }, // owner: one Trend card, then three tables
   shipping: { cards: ['No shipments to show'], groups: [] },
   search: { cards: ['Order lines'], groups: [] },
 };
@@ -110,6 +112,13 @@ test('every page is a set of named cards (and named groups where it has sections
     assert.doesNotMatch(h, /class="section-title"/, `${tab}: an old section heading is left`);
     assert.doesNotMatch(h, /NaN|undefined|\[object Object\]/, tab);
   }
+  // Lagging (the page setTab('metrics') opens): Trend is the card other pages link to (id="ohg-metrics"), full width
+  // like Month by month; By warehouse and Booked vs shipped share the last row. What left Lagging is still on the
+  // Monthly page (its cards above): Orders shipped by month and Monthly's own Month by month.
+  const lag = open(page, 'metrics');
+  assert.deepEqual([...lag.matchAll(/<section class="dz-card (dz-span-\d)[^"]*"( id="[\w-]+")?/g)].map((m) => [m[1], m[2] || '']),
+    [['dz-span-3', ''], ['dz-span-3', ''], ['dz-span-6', ' id="ohg-metrics"'], ['dz-span-6', ''], ['dz-span-3', ''], ['dz-span-3', '']]);
+  assert.doesNotMatch(lag, /class="pg-group|id="ohg-shipments"|Orders shipped by month|Original line delivery summary|Shipped by warehouse \/ CM/);
   // Sales Order Health (Leading) has no old section heading either.
   page.run("setTab('weekly');setWeeklyView('leading')");
   assert.doesNotMatch(results(page), /class="section-title"/);
@@ -180,6 +189,21 @@ test('the numbers on the cards are the same numbers the pages computed before', 
   assert.match(h, new RegExp(`<div class="mwm-bar" role="img" aria-label="\\$1K shipped of \\$3K booked for September" data-tip="Target: \\${thisMonth} booked for September\\n• \\$1,000 shipped`));
   h = open(page, 'metrics');
   assert.doesNotMatch(h, /On-track rate/); // owner: Order quality left with Metrics' Show more
+  // Sales Order Health > Lagging (Version 1): the Trend card and the three tables show the numbers the page computes.
+  // Delivery 901 shipped 07/30 for 08/01 (on time); 902 shipped 09/01 for 08/01 (31 days late), from CM - Alta.
+  assert.deepEqual(page.run('mwmMetricsData(currentMetrics()).months.slice(9).map(r=>[shortMonth(r.date),r.orders,r.otd,r.perfect,r.days,r.lateOrders])'), [['Jul', 1, 100, null, 0, 0], ['Aug', 0, null, null, null, 0], ['Sep', 1, 0, null, 31, 1]]);
+  assert.deepEqual(page.run('mwmMonthlyData(currentMetrics()).entries.slice(9).map(e=>e.shipped.value)'), [1000, 0, 1000]);
+  assert.match(h, /<h3 data-tip="Shipped by the original date\.">On-time delivery · September to date<\/h3>\s*<div class="ohgt-now"><span>0%<\/span><\/div>/);
+  assert.match(h, /Why orders were late · September<\/h3><ul class="mwm-causes"><li data-tip="Past due · No reschedule: 1 order of 1 late in September\."><span class="mwm-cause-l">Past due · No reschedule<\/span><b class="mwm-cause-v">1<\/b><\/li><\/ul>/);
+  assert.match(h, /<td class="k">Sep 2026 <span class="mwm-todate">to date<\/span><\/td><td class="num">1<\/td><td class="num">\$1K<\/td><td class="num"><span class="dz-chip red">0%<\/span><\/td><td class="num">—<\/td><td class="num">31\.0<\/td><td class="num late">1<\/td>/);
+  assert.match(h, /<td class="k">Aug 2026<\/td><td class="num">0<\/td><td class="num">\$0<\/td><td class="num">—<\/td><td class="num">—<\/td><td class="num">—<\/td><td class="num">0<\/td>/);
+  assert.match(h, /<td class="k">Jul 2026<\/td><td class="num">1<\/td><td class="num">\$1K<\/td><td class="num"><span class="dz-chip teal">100%<\/span><\/td><td class="num">—<\/td><td class="num">0\.0<\/td><td class="num">0<\/td>/);
+  // By warehouse: September's one delivery. Booked vs shipped: August has $2,000 shipped of $25,500 booked (8%) and
+  // one line shipped late; September is the $3,250 booked for this month (thisMonth above), nothing shipped yet.
+  assert.match(h, /By warehouse<\/h2><span class="dz-meta">September · 1 order<\/span>/);
+  assert.match(h, /<td class="k">CM · Alta<\/td><td class="num">1<\/td><td class="num">\$1,000<\/td><td class="num"><span class="dz-chip red">0%<\/span><\/td>/);
+  assert.match(h, /<td class="k">Aug 2026<\/td><td class="num">8%<\/td><td class="num">\$23,500<\/td><td class="num late">1<\/td>/);
+  assert.match(h, new RegExp(`<td class="k">Sep 2026</td><td class="num">0%</td><td class="num">\\${thisMonth}</td><td class="num">0</td>`));
   assert.deepEqual(page.errors, []);
 });
 
@@ -414,12 +438,26 @@ test('phone header: no page buttons; the export date folds the loaded files, Add
   assert.deepEqual(page.errors, []);
 });
 
-test('Monthly: month cards line up (short labels on one row, values under them), coming months with nothing are left out; one number-strip layout', async () => {
+test('Monthly: month cards line up (short labels on one row, values under them), coming months with nothing are left out; one number-strip layout; Lagging has neither any more', async () => {
   const page = await loadedAll();
-  // Export date 2026-09-03: Aug, Sep (this month), Oct, Nov. Oct and Nov have open lines; a month with no value goes.
-  let h = open(page, 'monthly');
   const months = (x) => [...x.matchAll(/<div class="card month-card[^"]*"[^>]*>\s*<div class="kpi-top"><span class="kpi-label">([^<]+)<\/span>/g)].map((m) => m[1]);
+  // Lagging, Version 1 (owner's pick): while Monthly is hidden its link opens Sales Order Health on Lagging, which no
+  // longer draws the month cards or the shipped-to-date strip. Month to date and year to date are its one "so far"
+  // line (year over year is gone).
+  let h = open(page, 'monthly');
+  assert.deepEqual(page.run('[activeTab,weeklyView]'), ['weekly', 'lagging']);
+  assert.deepEqual(months(h), []);
+  assert.doesNotMatch(h, /month-card|month-spot|month-stats|mini-strip|Year over year/);
+  assert.match(h, /<p class="ohgt-sofar" data-tip="September so far\n• 1 order shipped, \$1,000 on 1 delivery line\n• Year to date: \$2,000 on 2 delivery lines"><b>September so far:<\/b> 1 order · \$1K shipped · year to date \$2K<\/p>/);
+  // The month cards and the strip are still on the Monthly page (Settings > Hidden Pages shows it again).
+  showAll(page);
+  h = open(page, 'monthly');
+  assert.equal(page.run('activeTab'), 'monthly');
+  // Export date 2026-09-03: Aug, Sep (this month), Oct, Nov. Oct and Nov have open lines; a month with no value goes.
   assert.deepEqual(months(h), ['Aug 2026', 'Sep 2026', 'Oct 2026']);
+  // The strip's month to date and year to date are the two figures of Lagging's "so far" line.
+  assert.deepEqual([...h.matchAll(/<span class="ms-label">([^<]+)<\/span>[\s\S]*?<span class="ms-big lg ?">([^<]+)<\/span>/g)].map((m) => [m[1], m[2]]),
+    [['Month to date shipped', '$1,000'], ['Year to date shipped', '$2,000'], ['Year over year · Sep 1–3', '—']]);
   assert.match(h, /<div class="month-spot n3">/);
   const stats = h.match(/<div class="month-stats">([\s\S]*?)<\/div>\s*<\/div>/)[1];
   assert.deepEqual([...stats.matchAll(/<span class="stat-label">([^<]+)<\/span>/g)].map((m) => m[1]), ['Closed', 'At risk', 'Rescheduled']);
@@ -429,7 +467,9 @@ test('Monthly: month cards line up (short labels on one row, values under them),
   // The last month and this month always show, even at $0.
   const quiet = loadPage();
   await upload(quiet, [{ name: 'kpi.xls', bytes: sapExport([sapRow({ DocumentNumber: '9', ...due('12/15/2026') })]) }]);
+  showAll(quiet);
   quiet.run("setTab('monthly')");
+  assert.equal(quiet.run('activeTab'), 'monthly');
   assert.deepEqual(months(results(quiet)), ['Aug 2026', 'Sep 2026']);
   assert.match(results(quiet), /<div class="month-spot n2">/);
   assert.deepEqual(quiet.errors, []);
