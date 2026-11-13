@@ -228,13 +228,14 @@ test('Pull in: POs are handed to orders by date; a covering PO due after the ord
   assert.deepEqual(page.errors, []);
 });
 
-test('Customers at risk is a unit chart against each customer\'s own open orders; Top reasons are tiles with a share ring', async () => {
+test('Customers at risk is a ranked table against each customer\'s own open orders; Top reasons are tiles with a share ring', async () => {
   const page = await loaded();
   const h = html(page);
-  // Firefly: SO 100 and 101, both open and past due: "2 of 2 at risk", two red squares; a legend names the colours.
-  assert.match(h, /data-focus-key="offrow-FIREFLY"[\s\S]*?<span class="ohc-fig"><b>2<\/b> of 2 at risk<\/span>[\s\S]*?<span class="ohc-pips" role="img" aria-label="FIREFLY - Firefly RV: 2 of 2 open orders at risk \(2 past due\)"><i class="pd"><\/i><i class="pd"><\/i><\/span>/);
-  assert.match(h, /<div class="ohc-legend" aria-hidden="true"><span><i class="pd"><\/i>Past due<\/span><span><i class="ar"><\/i>At risk<\/span><span><i><\/i>Fine<\/span><span class="ohc-unit">Each square: 1 open order<\/span><\/div>/);
-  assert.doesNotMatch(h.slice(h.indexOf('ohc-list'), h.indexOf('ohc-legend')), /ohl-track|dz-grow/);
+  // Customers at risk (owner, option F): a ranked table: past due, at risk otherwise, open; a thin split under each name; no money.
+  // Firefly: SO 100 and 101, both open and past due.
+  assert.match(h, /<table class="ohc2-tbl"><thead><tr><th scope="col">Customer<\/th><th scope="col" class="num">Past due<\/th><th scope="col" class="num">At risk<\/th><th scope="col" class="num">Open<\/th><\/tr><\/thead>/);
+  assert.match(h, /data-focus-key="offrow-FIREFLY"[^>]*onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)"[\s\S]*?<\/th><td class="num ohc2-pd">2<\/td><td class="num ohc2-ar">0<\/td><td class="num">2<\/td><\/tr>/);
+  assert.doesNotMatch(h.slice(h.indexOf('ohc2-tbl'), h.indexOf('</table>', h.indexOf('ohc2-tbl'))), /\$/);
   // Top reasons (2v6.9 redesign): a tile per reason with a ring for its share of the at-risk orders, its figures and
   // where it is worst; the tile filters to the reason.
   const tiles = h.slice(h.indexOf('<div class="ohr-grid"'), h.indexOf('ohl-foot-note', h.indexOf('<div class="ohr-grid"')));

@@ -4027,6 +4027,26 @@ button.kit2-half:focus-visible{outline:2px solid var(--dz-indigo);outline-offset
 .kit2-l{font-size:12.5px;color:var(--dz-ink-4)}
 @media (prefers-reduced-motion:reduce){button.kit2-half{transition:none}}
 /* 2v9:end kit-status */
+/* 2v9:cust-table */
+/* Customers at risk, option F (owner): a ranked table, a thin past-due / at-risk split under each name, no money */
+table.ohc2-tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ohc2-tbl thead th{padding:0 0 6px;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);text-align:left}
+.ohc2-tbl thead th.num,.ohc2-tbl td.num{text-align:right;width:64px}
+.ohc2-tbl tbody th,.ohc2-tbl td{padding:8px 0;border-top:1px solid var(--dz-line-6);vertical-align:middle}
+.ohc2-tbl tbody th{font-weight:400;text-align:left}
+.ohc2-tbl td{font-size:14px;color:var(--dz-ink-2)}
+td.ohc2-pd{font-weight:600;color:var(--dz-risk-text)}
+td.ohc2-ar{font-weight:600;color:var(--dz-amber-text)}
+button.ohc2-name{display:flex;flex-direction:column;gap:5px;width:calc(100% + 12px);margin:-4px -6px;padding:4px 6px;border:0;border-radius:8px;background:transparent;font:inherit;text-align:left;color:inherit;cursor:pointer;transition:background-color .16s ease}
+button.ohc2-name:hover{background:var(--dz-hover)}
+.ohc2-tr.sel button.ohc2-name{background:var(--dz-indigo-bg)}
+button.ohc2-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.ohc2-label{font-size:14px;font-weight:500;color:var(--dz-ink-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ohc2-split{display:flex;height:3px;max-width:180px;border-radius:2px;background:var(--dz-fill-1);overflow:hidden}
+.ohc2-split i{display:block;height:100%}
+.ohc2-split i.pd{background:var(--dz-risk)}.ohc2-split i.ar{background:var(--dz-amber)}
+@media (prefers-reduced-motion:reduce){button.ohc2-name{transition:none}}
+/* 2v9:end cust-table */
 /* 2v9:revise1 */
 /* Board revision (2v6.9): Purchase Order Health and Shipping space their cards like the rest of the board (16px, 14px
    on phones, as .dz-grid); week labels under a narrow column chart show every other week instead of clipping; Kits by
@@ -20390,18 +20410,16 @@ function ohlCustomersCard(c){
     return `${'<i class="pd"></i>'.repeat(pd)}${'<i class="ar"></i>'.repeat(Math.max(0,ot))}${'<i></i>'.repeat(Math.max(0,n-pd-Math.max(0,ot)))}`;
   };
   const cur=weeklyCustomerFilter;
-  const rows=custPg.rows.map((x,i)=>{
+  // 2v6.9 (owner, option F): a ranked table: past due, at risk otherwise and open orders, a thin split under each name
+  // (past due red, at risk amber, of the customer's open orders); no money. A row filters to the customer.
+  const rows=custPg.rows.map(x=>{
     const on=cur.length===1&&cur[0]===x.key,share=x.open?Math.round(x.orders/x.open*100):0;
-    const said=`${x.name}: ${x.orders} of ${x.open} open orders at risk (${x.pd} past due)`;
-    return `<button type="button" class="ohl-cust ohc-row${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.name,[`${x.orders} of ${ohN(x.open,'open order')} at risk (${share}%)`,`${ohN(x.pd,'order')} past due`,`${ohN(x.rows.length,'line')} · ${money(x.value)} at risk`],on?'':'Click to filter to it.'))}>
-      <span class="ohl-cust-top"><span class="ohl-cust-name">${esc(x.name)}</span><span class="ohc-fig"><b>${fmtNum(x.orders)}</b> of ${fmtNum(x.open)} at risk</span></span>
-      <span class="ohc-strip"><span class="ohc-pips" role="img" aria-label="${esc(said)}">${pips(x)}</span><span class="ohl-cust-amt">${esc(moneyShort(x.value))} · ${esc(ohN(x.rows.length,'line'))}</span></span>
-    </button>`;
+    const pdW=x.open?x.pd/x.open*100:0,arW=x.open?x.other/x.open*100:0;
+    return `<tr class="ohc2-tr${on?' sel':''}"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" aria-pressed="${on}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)"${tipAttr(ohlTip(x.name,[`${x.orders} of ${ohN(x.open,'open order')} at risk (${share}%)`,`${ohN(x.pd,'order')} past due · ${ohN(x.other,'order')} at risk otherwise`,ohN(x.rows.length,'at-risk line')],on?'':'Click to filter to it.'))}><span class="ohc2-label">${esc(x.name)}</span><span class="ohc2-split" aria-hidden="true"><i class="pd" style="width:${pdW.toFixed(1)}%"></i><i class="ar" style="width:${arW.toFixed(1)}%"></i></span></button></th><td class="num ohc2-pd">${fmtNum(x.pd)}</td><td class="num ohc2-ar">${fmtNum(x.other)}</td><td class="num">${fmtNum(x.open)}</td></tr>`;
   }).join('');
-  const legend=`<div class="ohc-legend" aria-hidden="true"><span><i class="pd"></i>Past due</span><span><i class="ar"></i>At risk</span><span><i></i>Fine</span><span class="ohc-unit">${unit>1?`Each square: ${unit} orders`:'Each square: 1 open order'}</span></div>`;
   return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
-    tip:'Each customer\'s open orders, one square each\n• Red: past due\n• Amber: at risk otherwise\n• Grey: fine\nClick to filter to the customer.',
-    body:rows?`<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">${rows}</div>${legend}${dzPageFoot('ohl-customers',custPg,'Customers at risk','customers')}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
+    tip:'Customers with at-risk orders, most first\n• Past due, and at risk otherwise, of their open orders\n• The bar under a name: that split\nClick a customer to filter to it.',
+    body:rows?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Customers at risk"><table class="ohc2-tbl"><thead><tr><th scope="col">Customer</th><th scope="col" class="num">Past due</th><th scope="col" class="num">At risk</th><th scope="col" class="num">Open</th></tr></thead><tbody>${rows}</tbody></table></div>${dzPageFoot('ohl-customers',custPg,'Customers at risk','customers')}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
 // Ship target (2v6.9: on Order Health, Leading, above Status & top reasons; it was on Monthly): the scenario's range (this
