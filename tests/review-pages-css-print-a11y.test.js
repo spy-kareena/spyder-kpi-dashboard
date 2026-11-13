@@ -236,23 +236,75 @@ test('BUG: empty text fields have a 3:1 border (header search, Ask AI question, 
   assert.deepEqual(weak.map(([sel, c, r]) => `${sel}: ${c} ${r.toFixed(2)}:1`), []);
 });
 
-// 2v6.9: Metrics is a section of Sales Order Health > Lagging; Fill rate is one of its month figures (it left the
-// Monthly / Quarterly cards); On-track rate left with Order quality (owner removed Metrics' Show more).
+// 2v6.9: Metrics is a part of Sales Order Health > Lagging. Lagging, Version 1 (owner): its KPI tiles, the On-time chart
+// and the Monthly metrics table are one Trend card and one Month by month table now; Fill rate and On-track rate are on
+// neither (Fill rate left with the old tables, On-track rate with Order quality).
 test('Fill rate and On-track rate show no made-up 0% when no sales-order lines are loaded', async () => {
+  // Everything from the Trend card to the end of the Lagging panel: Trend, Month by month, By warehouse, Booked vs shipped.
+  const detail = (h) => h.slice(h.indexOf('<div class="dz-grid ohg-detail">'), h.indexOf('<div class="oh-panel"', h.indexOf('id="ohg-metrics"')));
+  const cards = (m) => Object.fromEntries([...m.matchAll(/<section class="dz-card[^"]*"[^>]*>[\s\S]*?<\/section>/g)].map((x) => [x[0].match(/<h2 class="dz-title"[^>]*>([^<]*)<\/h2>/)[1], x[0]]));
+  const cells = (card) => [...card.match(/<tbody>([\s\S]*?)<\/tbody>/)[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].map((r) => [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((c) => c[1].replace(/<[^>]+>/g, '')));
+  // The tiles' markup (the change beside the Trend card's figure keeps the tiles' mwm-kpi-d pill).
+  const NO_TILES = /class="mwm-kpi[ "]|mwm-kpi-[lv]|Fill rate|On-track rate/;
   const page = await loaded([PO({ DocumentNumber: '700' })]);
   page.run('setTab("metrics")');
-  const metrics = (h) => h.slice(h.indexOf('id="ohg-metrics"'), h.indexOf('<div class="oh-panel"', h.indexOf('id="ohg-metrics"')));
-  let m = metrics(html(page));
-  assert.match(m, /<p class="empty-note">No order lines are loaded yet\.<\/p>/);
-  assert.doesNotMatch(m, /Fill rate|On-track rate|\b0%/);
-  // With lines loaded the figures still score them (one line due Aug 1, nothing shipped).
+  assert.deepEqual(page.run('[activeTab,weeklyView]'), ['weekly', 'lagging']);
+  let m = detail(html(page));
+  // No sales-order lines: the Trend card says so and nothing else is drawn (no chart, no tables, no rates).
+  assert.deepEqual(Object.keys(cards(m)), ['Trend']);
+  assert.match(cards(m).Trend, /^<section class="dz-card dz-span-6" id="ohg-metrics"><div class="dz-card-head"><h2 class="dz-title">Trend<\/h2><\/div><p class="empty-note">No order lines are loaded yet\.<\/p><\/section>$/);
+  assert.doesNotMatch(m, /Fill rate|On-track rate|\d%|<table|mwm-plot|ohgt-chip/);
+  assert.deepEqual(page.errors, []);
+
+  // One open line due Aug 1 and nothing shipped: every rate is a dash, never 0%.
   const so = await loaded([sapRow({ DocumentNumber: '1' })]);
   so.run('setTab("metrics")');
-  m = metrics(html(so));
-  // (Fill rate left the Metrics tiles and the Monthly metrics table, owner.)
-  assert.doesNotMatch(m, /<div class="mwm-kpi-l">Fill rate<\/div>/);
-  assert.match(m, /<div class="mwm-kpi-l">On-time delivery<\/div>/);
-  assert.doesNotMatch(m, /On-track rate/); // Order quality left with Metrics' Show more (owner)
+  m = detail(html(so));
+  let c = cards(m);
+  assert.deepEqual(Object.keys(c), ['Trend', 'Month by month', 'By warehouse', 'Booked vs shipped']);
+  // (Fill rate left with the Metrics tiles and the old month tables, On-track rate with Order quality: owner.)
+  assert.doesNotMatch(m, NO_TILES);
+  assert.match(c.Trend, /<h3[^>]*>On-time delivery · August<\/h3>\s*<div class="ohgt-now"><span>—<\/span><\/div>/);
+  assert.doesNotMatch(c.Trend, /class="mwm-pt"/); // no month has a delivery, so the chart has no dot
+  assert.match(c.Trend, /<h3[^>]*>Why orders were late · August<\/h3><p class="ohgt-none">No late orders\.<\/p>/);
+  assert.match(c.Trend, /<b>September so far:<\/b> 0 orders · \$0 shipped · year to date \$0<\/p>/);
+  assert.deepEqual(cells(c['Month by month']), ['Sep 2026 to date', 'Aug 2026', 'Jul 2026', 'Jun 2026', 'May 2026', 'Apr 2026'].map((mo) => [mo, '0', '$0', '—', '—', '—', '0']));
+  // The only percentages on the two cards are the chart's axis (50% to 100%).
+  assert.deepEqual([...(c.Trend + c['Month by month']).replace(/<button\b[^>]*>[^<]*<\/button>/g, '').replace(/data-tip="[^"]*"/g, '').matchAll(/>(\d+%)</g)].map((x) => x[1]), ['100%', '75%', '50%']);
+  assert.match(c['By warehouse'], /<span class="dz-meta">September · 0 orders<\/span><\/div><p class="empty-note">No deliveries in this range\.<\/p>/);
+  // Booked vs shipped has a real 0%: $1,000 was booked for August and none of it has shipped.
+  assert.deepEqual(cells(c['Booked vs shipped']), [['Aug 2026', '0%', '$1,000', '0']]);
+  assert.match(c['Booked vs shipped'], /<tr data-tip="Aug 2026\n• \$0 shipped of \$1,000 booked\n• 1 open line · 0 closed lines\n• 10 qty open">/);
+  assert.deepEqual(so.errors, []);
+
+  // With deliveries the Trend card and the Month by month table score them: in August one order 2 days early and one
+  // 6 days late (SAP marks it Not Perfect), in September (the report month) one on its date.
+  const closed = (doc, d, o = {}) => sapRow({ DocumentNumber: doc, DueDate: d, HeaderDueDate: d, LineDueDate: d, Status: 'Closed', KPIStatus: 'Closed', OpenQuantity: '0', FillStatus: 'Complete', ...o });
+  const pair = (doc, d, shippedOn, amount, o = {}) => [closed(doc, d, { AmountLocal: '0', ...o }),
+    closed(doc, d, { OrderType: 'Sales Delivery', ClosedDate: shippedOn, CloseDateSource: 'Delivery', DeliveryDocNumber: `D${doc}`, AmountLocal: amount, ...o })];
+  const sh = await loaded([sapRow({ DocumentNumber: '1' }), ...pair('2', '08/20/2026', '08/18/2026', '1,200.00', { PerfectOrder: 'Perfect' }), ...pair('3', '08/20/2026', '08/26/2026', '800.00'),
+    ...pair('4', '09/01/2026', '09/01/2026', '500.00', { PerfectOrder: 'Perfect', Warehouse: 'CM - Alta' })]);
+  sh.run('setTab("metrics")');
+  m = detail(html(sh));
+  c = cards(m);
+  assert.deepEqual(cells(c['Month by month']), [
+    ['Sep 2026 to date', '1', '$500', '100%', '100%', '0.0', '0'],
+    ['Aug 2026', '2', '$2K', '50%', '50%', '6.0', '1'],
+    ...['Jul 2026', 'Jun 2026', 'May 2026', 'Apr 2026'].map((mo) => [mo, '0', '$0', '—', '—', '—', '0']),
+  ]);
+  assert.match(c['Month by month'], /<span class="dz-chip teal">100%<\/span>[\s\S]*<span class="dz-chip red">50%<\/span>[\s\S]*<td class="num late">1<\/td>/);
+  assert.match(c['Month by month'], /<span class="dz-pagecount">1–6 of 12 months<\/span>/);
+  // The side panel is the newest month with a shipment (September, still running) against the month before.
+  assert.match(c.Trend, /<h3[^>]*>On-time delivery · September to date<\/h3>\s*<div class="ohgt-now"><span>100%<\/span><span class="mwm-kpi-d teal">\+50 pts vs Aug<\/span><\/div>/);
+  assert.deepEqual([...c.Trend.matchAll(/<span class="mwm-pt"[^>]*data-tip="([^"]+)"><\/span><span class="mwm-pt-l"[^>]*>([^<]*)<\/span>/g)].map((x) => [x[1], x[2]]),
+    [['August 2026: On-time delivery 50%\n• 2 orders shipped\n• 1 order late', '50%'], ['September 2026: On-time delivery 100%\n• 1 order shipped\n• 0 orders late', '100%']]);
+  assert.match(c.Trend, /<h3[^>]*>Why orders were late · September<\/h3><p class="ohgt-none">No late orders\.<\/p>/);
+  assert.match(c.Trend, /<p class="ohgt-sofar" data-tip="September so far\n• 1 order shipped, \$500 on 1 delivery line\n• Year to date: \$2,500 on 3 delivery lines"><b>September so far:<\/b> 1 order · \$500 shipped · year to date \$3K<\/p>/);
+  assert.match(c['By warehouse'], /<span class="dz-meta">September · 1 order<\/span>/);
+  assert.deepEqual(cells(c['By warehouse']), [['CM · Alta', '1', '$500', '100%']]);
+  assert.deepEqual(cells(c['Booked vs shipped']), [['Aug 2026', '67%', '$1,000', '1'], ['Sep 2026', '100%', '$0', '0']]);
+  assert.doesNotMatch(m, NO_TILES);
+  assert.deepEqual(sh.errors, []);
 });
 
 // The Metrics strip with "Rescheduled, commit ahead" left with Metrics' Show more (owner); nothing on Lagging draws it.

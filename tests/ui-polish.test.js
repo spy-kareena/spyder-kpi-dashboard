@@ -75,10 +75,30 @@ function eachView(page, fn) {
   }
 }
 
+// A button of a pager (dzPager on every page, Shipping's own): a page number or an arrow, named by its aria-label
+// ("Page 1 of 2", "Previous page") instead of a tip. Nothing else matches: the whole tag is spelled out.
+const PAGER_BTN = /^<button type="button" class="shp-pg(?: arrow| on)?" data-focus-key="(?:ship-)?pg-[^"]+-(?:prev|next|\d+)" aria-label="(?:Previous page|Next page|Page \d+ of \d+)"(?: aria-current="page"| aria-disabled="true")? onclick="(?:dzGoPage|shpGoPage)\([^"]*\)">$/;
+// Every pager in the markup is a nav named for its list ("Month by month pages") that takes the arrow keys, and holds
+// nothing but named pager buttons; no pager button is drawn outside one. Returns the pagers' ids.
+function checkPagers(html, view) {
+  const navs = [...html.matchAll(/<nav class="shp-pager[^"]*"[^>]*>[\s\S]*?<\/nav>/g)].map((m) => m[0]);
+  let inside = 0;
+  for (const nav of navs) {
+    assert.match(nav, /^<nav class="shp-pager[^"]*"[^>]*\saria-label="[^"]+ pages"[^>]*\sonkeydown="[^"]+"/, `${view}: a pager is a named nav`);
+    const buttons = [...nav.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]);
+    assert.ok(buttons.length >= 4, `${view}: a pager has two arrows and at least two pages`);
+    assert.deepEqual(buttons.filter((t) => !PAGER_BTN.test(t)), [], `${view}: pager buttons without a name`);
+    inside += buttons.length;
+  }
+  assert.equal([...html.matchAll(/<button\b[^>]*>/g)].filter((m) => PAGER_BTN.test(m[0])).length, inside, `${view}: a pager button outside a pager`);
+  return navs.map((nav) => (nav.match(/\sdata-dzpager="([^"]+)"/) || [])[1] || 'shipping');
+}
+
 test('every KPI card, chip, sortable heading and button on every page has a tooltip (data-tip or title)', async () => {
   const page = await loadedAll();
   let checked = 0;
   const drawn = new Set();
+  const pagers = new Set();
   eachView(page, (html, view) => {
     for (const k of ['class="row-override"', 'class="row-note"', 'class="shp-', '<summary', '<a href']) if (html.includes(k)) drawn.add(k);
     // (2v6: the dz-* buttons, filter pills, pill inputs and header links are checked too.)
@@ -98,13 +118,50 @@ test('every KPI card, chip, sortable heading and button on every page has a tool
       || (/\srole="switch"/.test(t) && /\saria-label="[^"]+"/.test(t)) || /\saria-haspopup="menu"/.test(t) || /\stype="submit"/.test(t);
     const bare = tags.filter((t) => !hasTip(t) && !selfNamed(t));
     assert.deepEqual(bare, [], `${view}: controls without a tooltip`);
-    // Every button in the page and the header (tiles, presets, toggles, rows) explains itself too.
+    // Every button in the page and the header (tiles, presets, toggles, rows) explains itself too. The buttons of a
+    // pager are named instead (checkPagers below): a page number needs no tip.
     const buttons = [...html.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]).filter((t) => !/class="(row-check|note-btn)/.test(t));
-    assert.deepEqual(buttons.filter((t) => !hasTip(t) && !selfNamed(t)), [], `${view}: buttons without a tooltip`);
+    assert.deepEqual(buttons.filter((t) => !hasTip(t) && !selfNamed(t) && !PAGER_BTN.test(t)), [], `${view}: buttons without a tooltip`);
+    for (const id of checkPagers(html, view)) pagers.add(id);
   });
   assert.ok(checked > 300, `checked ${checked} controls`);
   assert.equal(drawn.size, 5, `the note editor, Shipping, About toggles and links were all checked: ${[...drawn]}`);
+  // Lagging's Month by month table is 12 months, 6 a page, so its pager is always drawn (Metrics opens Lagging too).
+  assert.ok(pagers.has('ohg-months'), `pagers checked: ${[...pagers]}`);
+
+  // Lagging, Version 1: the Trend card's metric chips and its Months switch each say what they show.
+  page.run("weeklyView='leading';setTab('weekly');setWeeklyView('lagging')");
+  const lag = results(page);
+  const trend = lag.match(/<section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"[\s\S]*?<\/section>/)[0];
+  assert.deepEqual([...trend.matchAll(/<button type="button" class="ohgt-chip(?: on)?" data-focus-key="ohg-trend-(\w+)" aria-pressed="(?:true|false)" onclick="ohgSetTrendMetric\('\1'\)" data-tip="([^"]+)">([^<]+)<\/button>/g)].map((x) => [x[1], x[3], x[2]]), [
+    ['otd', 'On Time', 'Shipped by the original date.'], ['perfect', 'Perfect Order', 'Shipped complete, on time, never rescheduled.'],
+    ['days', 'Avg Days Late', 'Average days late, late deliveries only.'], ['lateOrders', 'Late Orders', 'Orders shipped 1+ days late.'],
+    ['orders', 'Orders Shipped', 'Orders shipped in the month.'],
+  ]);
+  assert.equal((trend.match(/<button\b/g) || []).length, 8, 'the Trend card has the five chips and the three Months choices, nothing else to press');
+  assert.match(trend, /<div class="ohgt-chips" role="group" aria-label="Metric">/);
+  // (A plain switch choice would pass the check above with no tip, so these are checked by name.)
+  assert.match(trend, /<div class="dz-seg sup-seg-sm" role="group" aria-label="Months shown">/);
+  assert.deepEqual([...trend.matchAll(/<button type="button" data-focus-key="mwm-range-(\d+)"(?: class="on")? aria-pressed="(?:true|false)" onclick="mwmSetRange\(\1\)" data-tip="([^"]+)">([^<]+)<\/button>/g)].map((x) => [x[1], x[3], x[2]]),
+    [['12', '12 months', 'Last 12 months.'], ['6', '6 months', 'Last 6 months.'], ['3', '3 months', 'Last 3 months.']]);
   assert.deepEqual(page.errors, []);
+
+  // The By warehouse and Booked vs shipped tables page too (6 a page): seven warehouses shipped in the report month, on
+  // lines first due in seven different months. Every button on Lagging still explains or names itself.
+  const WH = ['Spyder - Lacombe', 'CM - Alta', 'CM - Beta', 'CM - DSM', 'CM SFG - Gamma', 'CM SFG - Delta', 'CM - Echo'];
+  const wide = loadPage();
+  await upload(wide, [{ name: 'kpi.xls', bytes: sapExport(WH.map((w, i) => shipped({ DocumentNumber: String(40 + i), Warehouse: w, ...due(`0${3 + i}/01/2026`), ClosedDate: '09/01/2026', DeliveryDocNumber: String(940 + i) }))) }]);
+  wide.run("setTab('weekly');setWeeklyView('lagging')");
+  const wideLag = results(wide);
+  assert.deepEqual(checkPagers(wideLag, 'Lagging, seven warehouses'), ['ohg-months', 'ohg-wh', 'ohg-orig']);
+  for (const [id, label, count] of [['ohg-months', 'Month by month pages', '1–6 of 12 months'], ['ohg-wh', 'By warehouse pages', '1–6 of 7 warehouses'], ['ohg-orig', 'Booked vs shipped pages', '1–6 of 7 months']]) {
+    assert.ok(wideLag.includes(`<span class="dz-pagecount">${count}</span><nav class="shp-pager dz-pager print-hide" data-dzpager="${id}" aria-label="${label}" onkeydown="dzPagerKey(event,&quot;${id}&quot;)">`), `${id}: the range and a named pager`);
+    assert.deepEqual([...wideLag.matchAll(new RegExp(`<button type="button" class="shp-pg[^"]*" data-focus-key="pg-${id}-[^"]+" aria-label="([^"]+)"`, 'g'))].map((x) => x[1]), ['Previous page', 'Page 1 of 2', 'Page 2 of 2', 'Next page']);
+  }
+  const wideButtons = [...wideLag.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]);
+  assert.deepEqual(wideButtons.filter((t) => !hasTip(t) && !PAGER_BTN.test(t) && !/\srole="menuitem(radio)?"/.test(t) && !/\saria-haspopup="menu"/.test(t)), [], 'Lagging: buttons without a tooltip');
+  assert.equal(wideButtons.filter((t) => PAGER_BTN.test(t)).length, 12);
+  assert.deepEqual(wide.errors, []);
 });
 
 test('tooltips say what a card counts with the numbers written in full ($1,721,806, not $1.72M)', async () => {
