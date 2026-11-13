@@ -244,9 +244,10 @@ test('live is the default: start-up reads SAP (status, then both reports through
   assert.equal(summary(page).rows, 5);
   assert.equal(page.els['results-screen'].style.display, 'block');
   assert.equal(page.run('liveState.status'), 'ok');
-  // The dot: green and pulsing, left of the date; its words in the tooltip and the date button's name.
+  // The mark: a green activity line drawing itself, left of the date; its words in the tooltip and the button's name.
   const h = header(page);
-  assert.match(h, /id="hdr-date-btn"[^>]*aria-label="Live · Updated [^"]+"[^>]*data-tip="Live · Updated [^"]+"><span class="live-pulse ok" aria-hidden="true"><\/span><span class="hdr-date-txt">10 Sep<\/span>/);
+  assert.match(h, /id="hdr-date-btn"[^>]*aria-label="Live · Updated [^"]+"[^>]*data-tip="Live · Updated [^"]+"><svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span class="hdr-date-txt">10 Sep<\/span>/);
+  assert.match(h, /<path class="live-trace" pathLength="1" d="M22 12h-2\.48/, 'the activity line');
   // Live reads are kept in this browser's live copy, never in the import copy or the shared report.
   assert.deepEqual([...page.liveDb.last.files].map((f) => f.name), summary(page).files);
   assert.equal(page.liveDb.last.dataAt, Date.parse('2026-09-24T09:58:00-06:00'));
@@ -265,7 +266,10 @@ test('the header has no Upload or Export PDF icon; the live popover is short: st
   const pop = h.slice(h.indexOf('id="hdr-file-pop"'));
   assert.match(pop, /aria-label="Live SAP"/);
   // 2v6.9: no line count / export date line; the actions are round icon buttons named by aria-label and tooltip.
-  assert.match(pop, /<div class="hdr-pop-label"><span class="live-pulse ok" aria-hidden="true"><\/span>Live SAP<\/div><div class="hdr-pop-name">Connected · Updated [^<]+<\/div><div class="hdr-pop-actions live-acts">/);
+  // 2v6.9: one small row: the mark, "Live SAP · Updated 7:23 PM" (no "Connected"), then the icon buttons.
+  assert.match(h, /class="dz-menu dz-menu-r hdr-pop live-pop" id="hdr-file-pop"/);
+  assert.match(pop, /<div class="live-pop-row"><div class="live-pop-line"><svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span>Live SAP · Updated \d{1,2}:\d\d [AP]M<\/span><\/div><div class="hdr-pop-actions live-acts">/);
+  assert.ok(!/hdr-pop-label|hdr-pop-name/.test(pop), 'no separate label and status lines');
   assert.ok(!/hdr-pop-meta|Export date|\d+ lines?\b/.test(pop), 'no quiet meta line');
   const acts = (x) => [...x.matchAll(/<button type="button" class="hdr-icon live-act[^"]*" data-focus-key="([^"]+)" aria-label="([^"]+)"[^>]*data-tip="([^"]+)"><svg[^>]*aria-hidden="true">/g)].map((m) => [m[1], m[2], m[3].split(':')[0]]);
   assert.deepEqual(acts(pop), [['hdr-sap', 'Refresh now', 'Refresh now'], ['sidebar-add', 'Add file', 'Add file'], ['hdr-share', 'Share snapshot', 'Share snapshot']]);
@@ -340,7 +344,7 @@ test('SAP cannot be read: the data stays, the dot turns red, retries at 30 s, 1,
   assert.equal(summary(page).rows, 5, 'the data on screen stays');
   assert.equal(page.els['results-screen'].style.display, 'block');
   assert.match(page.els['toast'].innerHTML, /Live SAP disconnected: The SAP bridge could not be reached\. Is the bridge PC on and its tunnel running\?\. The data on screen stays\.|Live SAP disconnected: The SAP bridge could not be reached/);
-  assert.match(header(page), /aria-label="Disconnected · Showing data from [^"]+"[^>]*><span class="live-pulse down" aria-hidden="true">/);
+  assert.match(header(page), /aria-label="Disconnected · Showing data from [^"]+"[^>]*><svg class="live-pulse down"/);
   const waits = [page.timers.live()[0]];
   page.els['toast'].innerHTML = '';
   for (let i = 0; i < 4; i++) { page.timers.fire(); await until(() => !page.run('liveState.busy') && page.timers.live().length, 'retry'); waits.push(page.timers.live()[0]); }
@@ -348,12 +352,13 @@ test('SAP cannot be read: the data stays, the dot turns red, retries at 30 s, 1,
   assert.equal(page.els['toast'].innerHTML, '', 'no toast for each retry');
   assert.equal(summary(page).rows, 5);
   page.run("dzOpenMenu='hdr-file';renderSidebar()");
-  assert.match(header(page), /<div class="hdr-pop-name">Disconnected since [^<]+ · Showing data from [^<]+<\/div><div class="hdr-pop-meta live-why">The SAP bridge could not be reached/);
+  // Red and still: one line, the longer story (since when, the error) in its tooltip.
+  assert.match(header(page), /<div class="live-pop-line" data-tip="Disconnected since [^"]+ · Showing data from [^"]+\n• The SAP bridge could not be reached[^"]*"><svg class="live-pulse down"[\s\S]*?<\/svg><span>Live SAP · Disconnected · Updated [^<]+<\/span>/);
   site.down = false;
   page.timers.fire();
   await until(() => page.run('liveState.status') === 'ok', 'back');
   assert.match(page.els['toast'].innerHTML, /Live SAP is back\./);
-  assert.match(header(page), /<span class="live-pulse ok"/);
+  assert.match(header(page), /<svg class="live-pulse ok"/);
   assert.deepEqual(page.timers.live(), [300000]);
 });
 
@@ -384,12 +389,12 @@ test('the last live data shows at once on the next visit, red until the first re
   page.ctx.startApp();
   await until(() => page.run('allLoadedRows.length') === 5, 'kept data shown');
   assert.equal(page.run('liveState.status'), 'connecting');
-  assert.match(header(page), /<span class="live-pulse down" aria-hidden="true"><\/span>/);
+  assert.match(header(page), /<svg class="live-pulse down"/);
   assert.match(header(page), /aria-label="Connecting · Showing data from [^"]+"/);
   assert.equal(page.els['results-screen'].style.display, 'block');
   release();
   await until(() => page.run('liveState.status') === 'ok', 'read');
-  assert.match(header(page), /<span class="live-pulse ok"/);
+  assert.match(header(page), /<svg class="live-pulse ok"/);
   // Without a kept copy and with SAP down, the load screen says so and offers Try again and Use import files.
   const down = liveSite();
   down.down = true;
@@ -445,7 +450,7 @@ test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (
   // 2v8: the first card of the Data category (no Data Check card here), the first category.
   assert.match(html, /<section class="pg-group stg-cat" id="stg-cat-data"[^>]*>[\s\S]*?<div class="stg-cgrid"><section class="dz-card stg-card dz-fade" id="stg-card-source"/);
   assert.match(card(), /aria-label="Data source"><button type="button" data-focus-key="stg-ds-live" class="on" aria-pressed="true"[^>]*>Live SAP<\/button><button type="button" data-focus-key="stg-ds-import" aria-pressed="false"[^>]*>Import files<\/button>/);
-  assert.match(card(), /<span class="live-pulse ok" aria-hidden="true"><\/span><span>Connected · Updated [^<]+<\/span>/);
+  assert.match(card(), /<svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span>Connected · Updated [^<]+<\/span>/);
   assert.match(card(), />Refresh now<\/button>/);
   page.ctx.loadFromSap();
   await until(() => site.bridgeCalls.some((c) => c.path === '/api/reports/kpi?refresh=1') && !page.run('liveState.busy'), 'refresh now');
