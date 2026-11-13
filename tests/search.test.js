@@ -38,7 +38,7 @@ test('every term must match (AND) across document, PO, customer, item, warehouse
   assert.deepEqual(search(page, 'spy-100'), [['Sales order', '500'], ['Purchase order', '40'], ['Delivery', '500']]);
   search(page, 'SPY-100 vendor');
   assert.equal(page.run('activeTab'), 'search');
-  assert.match(html(page), /<h1 class="page-title"[^>]*>Search<\/h1>/);
+  assert.match(html(page), /<h1 class="dz-h1"[^>]*>Search<\/h1>/);
   assert.match(html(page), /<span class="page-meta"[^>]*>1 match for “SPY-100 vendor”<\/span>/);
   assert.match(html(page), /<mark>Vendor<\/mark> Co/);
   assert.match(html(page), /<td class="c-type">Purchase order<\/td>/);
@@ -55,7 +55,7 @@ test('highlighting escapes first: search text and SAP text cannot inject markup'
   assert.doesNotMatch(html(page), /<script/i);
   assert.match(html(page), /<mark>&lt;script&gt;<\/mark>alert\(1\)&lt;\/script&gt; Co/);
   assert.match(html(page), /match(es)? for “&lt;script&gt;”/);
-  assert.match(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*value="&lt;script&gt;"/);
+  assert.match(page.els['app-header'].innerHTML, /id="global-search"[^>]*value="&lt;script&gt;"/);
   search(page, 'amp');
   assert.match(html(page), /<mark>Amp<\/mark> &amp; Co/);
   assert.doesNotMatch(html(page), /&<mark>/);
@@ -88,8 +88,9 @@ test('typing opens Search after the debounce; Esc, clearing and nav return to th
   assert.equal(page.run('activeTab'), 'purchaseorders', 'debounced');
   await wait();
   assert.equal(page.run('activeTab'), 'search');
-  assert.match(html(page), /Back to Purchase Orders/);
-  assert.doesNotMatch(page.els['app-sidebar'].innerHTML, /nav-item active/);
+  assert.match(html(page), /Back to Purchase Order Health/);
+  // The header's page links: none is marked current while Search shows.
+  assert.doesNotMatch(page.els['app-header'].innerHTML, /hdr-link active|aria-current="page"/);
   page.run('onGlobalSearchInput("spy-100")');
   await wait();
   assert.equal(page.run('searchPrevTab'), 'purchaseorders', 'refining keeps the page to go back to');
@@ -98,22 +99,22 @@ test('typing opens Search after the debounce; Esc, clearing and nav return to th
   assert.ok(prevented);
   assert.equal(page.run('activeTab'), 'purchaseorders');
   assert.equal(page.run('searchQuery'), '');
-  assert.match(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*value=""/);
+  assert.match(page.els['app-header'].innerHTML, /id="global-search"[^>]*value=""/);
   // Clearing the box goes back too.
   page.run('onGlobalSearchInput("spy")');
   await wait();
   page.run('onGlobalSearchInput("")');
   await wait();
   assert.equal(page.run('activeTab'), 'purchaseorders');
-  // Picking a page in the sidebar ends the search.
+  // Picking a page in the header ends the search.
   page.run('onGlobalSearchInput("spy")');
   await wait();
-  page.run('setTab("monthly")');
+  page.run('setTab("settings")'); // (Monthly and Warehouses start hidden; Settings is always in the header)
   assert.equal(page.run('searchQuery'), '');
   page.run('onGlobalSearchInput("spy")');
   await wait();
   page.run('clearGlobalSearch()');
-  assert.equal(page.run('activeTab'), 'monthly');
+  assert.equal(page.run('activeTab'), 'settings');
 });
 
 test('the match count is announced from one persistent status node, only when it changes', async () => {
@@ -134,12 +135,12 @@ test('no data: the box is disabled, typing and shortcuts do nothing', async () =
   const page = loadPage();
   page.run('renderSidebar()');
   // 2v6.9 (owner): no placeholder text in the open search box; its name stays for screen readers.
-  assert.match(page.els['app-sidebar'].innerHTML, /<input type="search" id="global-search" aria-label="[^"]+"[^>]* disabled>/);
-  assert.doesNotMatch(page.els['app-sidebar'].innerHTML, /id="global-search"[^>]*placeholder=/);
+  assert.match(page.els['app-header'].innerHTML, /<input type="search" id="global-search" aria-label="[^"]+"[^>]* disabled>/);
+  assert.doesNotMatch(page.els['app-header'].innerHTML, /id="global-search"[^>]*placeholder=/);
   page.run('onGlobalSearchInput("spy")');
   await wait();
   assert.equal(page.run('activeTab'), 'weekly');
-  assert.doesNotMatch(html(page), /page-title"[^>]*>Search/);
+  assert.doesNotMatch(html(page), /dz-h1"[^>]*>Search/);
   let focused = 0;
   page.els['global-search'] = { disabled: true, focus: () => { focused++; } };
   page.ctx.globalSearchShortcut({ key: 'k', ctrlKey: true, target: { tagName: 'BODY' }, preventDefault() {} });
@@ -163,17 +164,20 @@ test('Ctrl/Cmd+K focuses the box unless the user is typing in a field; a bare "/
   for (const tag of ['INPUT', 'TEXTAREA', 'SELECT']) assert.equal(key('k', tag, { ctrlKey: true }), false, tag);
   assert.equal(key('k', 'BODY'), false);
   assert.equal(focused, 2);
-  assert.ok(page.els['app-sidebar'].innerHTML.includes('title="Search (Ctrl+K)" aria-keyshortcuts="Control+K Meta+K"'));
+  // The header's search button and box both name the shortcut; the button's tip says it too.
+  const head = page.els['app-header'].innerHTML;
+  assert.match(head, /id="hdr-search-btn"[^>]*aria-keyshortcuts="Control\+K Meta\+K"[^>]*data-tip="[^"]*\(Ctrl\+K\)/);
+  assert.match(head, /id="global-search"[^>]*aria-keyshortcuts="Control\+K Meta\+K"/);
 });
 
 test('redraws keep focus, typed text and caret in the search box', async () => {
   const page = await loaded();
-  const sidebar = page.els['app-sidebar'];
+  const header = page.els['app-header'];
   const old = { id: 'global-search', dataset: {}, value: 'spy-1', selectionStart: 3, selectionEnd: 3, selectionDirection: 'none' };
   const fresh = { value: 'spy-', focus() { this.focused = true; }, setSelectionRange(a, b, d) { this.range = [a, b, d]; } };
   page.ctx.document.activeElement = old;
-  sidebar.contains = (n) => n === old;
-  sidebar.querySelector = (sel) => (sel === '[id="global-search"]' ? fresh : null);
+  header.contains = (n) => n === old;
+  header.querySelector = (sel) => (sel === '[id="global-search"]' ? fresh : null);
   page.run('renderSidebar()');
   assert.equal(fresh.focused, true);
   assert.equal(fresh.value, 'spy-1');
@@ -194,14 +198,14 @@ test('redraws keep focus, typed text and caret in the search box', async () => {
 test('"Back to <page>" moves focus to the new page heading instead of dropping it', async () => {
   const page = await loaded();
   search(page, 'spy');
-  assert.match(html(page), /data-focus-key="search-back" onclick="clearGlobalSearch\(\)">Back to Order Health</);
+  assert.match(html(page), /data-focus-key="search-back" onclick="clearGlobalSearch\(\)">Back to Sales Order Health</);
   const results = page.els['results-screen'];
   const back = { dataset: { focusKey: 'search-back' } };
   const h1 = { focus() { this.focused = true; } };
   page.ctx.document.activeElement = back;
   results.contains = (n) => n === back;
   // Mimics the DOM: a selector only finds what the redrawn markup contains.
-  results.querySelector = (sel) => (sel === 'h1[tabindex="-1"]' && /<h1 class="page-title" tabindex="-1">Order Health</.test(results.innerHTML) ? h1
+  results.querySelector = (sel) => (sel === 'h1[tabindex="-1"]' && /<h1 class="dz-h1" tabindex="-1">Sales Order Health</.test(results.innerHTML) ? h1
     : sel === '[data-focus-key="search-back"]' && results.innerHTML.includes('data-focus-key="search-back"') ? back : null);
   page.run('clearGlobalSearch()');
   assert.equal(page.run('activeTab'), 'weekly');

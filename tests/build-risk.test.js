@@ -70,8 +70,19 @@ async function loaded(sheets = [CROSS_TAB, SEP30, JUNK, SEP24], extra = []) {
   return page;
 }
 const html = (page, setup = '') => { page.run(`${setup};stgSet("hiddenPages",[]);setTab("buildrisk")`); return page.els['results-screen'].innerHTML; };
-// 2v2: the report's row count sits in the report-week bar (four cards per row); the other numbers are cards.
-const stat = (h, label) => Number((h.match(label === 'CTB report lines' ? /<strong class="ctb-rows">([\d,]+)<\/strong> CTB report lines/ : new RegExp(`${label}</span><span class="kpi-value[^"]*">([\\d,]+)<`)) || [])[1]);
+// The report's row count sits in the report-week bar. 2v6: the clear / at risk / late totals are no longer cards of
+// their own; each CM has a card with its three counts, so a page total is the sum over the CM cards.
+const CM_NUM = { 'Clear to build': ['teal', 'clear'], 'At risk': ['amber', 'at risk'], Late: ['red', 'late'] };
+const stat = (h, label) => {
+  if (label === 'CTB report lines') return Number((h.match(/<strong class="ctb-rows">([\d,]+)<\/strong> CTB report lines?/) || [])[1]);
+  const [cls, word] = CM_NUM[label];
+  const cards = h.match(/<button type="button" class="sup-cmcard[\s\S]*?<\/button>/g);
+  if (!cards) return NaN;
+  return cards.reduce((s, c) => s + Number(c.match(new RegExp(`<b class="${cls}">([\\d,]+)</b><i>${word}</i>`))[1].replace(/,/g, '')), 0);
+};
+// The report-week pill (2v6: a menu in the filter row, not a select): [week key, label, picked] in menu order.
+const weeks = (h) => [...h.matchAll(/role="menuitemradio" aria-checked="(true|false)"[^>]*onclick="dzMenuClose\(true\);setBuildRiskSnapshot\(&quot;([^&]+)&quot;\)"><span class="dz-menu-txt">([^<]+)<\/span>/g)].map((m) => [m[2], m[3], m[1] === 'true']);
+const weekShown = (h) => (h.match(/id="dzf-sup-week"[\s\S]*?<span class="dz-filter-v">([^<]+)<\/span>/) || [])[1];
 
 test('every weekly sheet is read and the newest week is shown by default; other sheets are ignored', async () => {
   const page = await loaded();
@@ -79,7 +90,8 @@ test('every weekly sheet is read and the newest week is shown by default; other 
     [['2026-09-30', 'Sep 30', '0930 - Orders at Risk'], ['2026-09-24', 'Sep 24', '0924 - Orders at Risk']]);
   assert.equal(page.run('buildRiskRows.filter(r=>/May|Sheet10/.test(r.snapshotSheet)).length'), 0);
   const h = html(page);
-  assert.match(h, /<select id="build-risk-snapshot"[^>]*><option value="2026-09-30" selected>Sep 30<\/option><option value="2026-09-24">Sep 24<\/option>/);
+  assert.deepEqual(weeks(h), [['2026-09-30', 'Sep 30', true], ['2026-09-24', 'Sep 24', false]]);
+  assert.equal(weekShown(h), 'Sep 30');
   assert.match(h, /\(sheet 0930 - Orders at Risk\)\.">[\s\S]*?CTB report lines · 2 weeks loaded<\/span>/);
   // Sep 30 only: DSM 10+6, Price 0+28, Lacombe 13. The Sep 24 week is never added in.
   assert.equal(stat(h, 'Clear to build'), 8 + 6 + 26 + 9);
@@ -96,7 +108,8 @@ test('picking another report week changes every number and the risk-bucket order
   const m = page.run('currentMetrics()===currentMetrics()');
   assert.equal(m, true);
   const h = html(page, 'setBuildRiskSnapshot("2026-09-24")');
-  assert.match(h, /<option value="2026-09-24" selected>/);
+  assert.deepEqual(weeks(h).map((w) => w[2]), [false, true]);
+  assert.equal(weekShown(h), 'Sep 24');
   assert.equal(stat(h, 'Clear to build'), 15);
   assert.equal(stat(h, 'At risk'), 15);
   assert.equal(stat(h, 'CTB report lines'), 2);
@@ -128,41 +141,47 @@ test('merged CM cells, Grand Total rows, stale blocks and the Lacombe / Firm Sal
   assert.doesNotMatch(h, /matched to the Spyder - Lacombe warehouse/);
 });
 
-test('risk-bucket orders: the override as text with its cause, one Edit button opens the note editor, an Amount column', async () => {
+// 2v6: the risk-bucket orders are the "Orders at risk or late" card (sup-br table); the Cause control and the Us / Them
+// tags were removed on purpose (2v6, owner), so the row shows the override and the note.
+test('risk-bucket orders: the override and note as text, one Edit button opens the note editor, an Amount column', async () => {
   const page = await loaded();
-  const table = () => { const h = html(page); return h.slice(h.indexOf('Sales orders in risk buckets') - 200); };
+  const table = () => { const h = html(page); return h.slice(h.indexOf('aria-label="Sales orders in risk buckets"')); };
   let t = table();
-  assert.match(t, /<section class="table editable-rows">[\s\S]*?<table class="data-table cards" style="min-width:960px"/);
+  assert.match(t, /^aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br">/);
   const heads = [...t.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
-  assert.deepEqual(heads, ['Doc #', 'Customer / vendor', 'Effective due', 'Warehouse', 'Item', 'Qty open', 'Amount', 'Status', 'Override', '']);
+  assert.deepEqual(heads, ['SO #', 'Customer', 'CM', 'Item', 'Build date', 'Status', 'Override', 'Amount']);
   // No dropdowns or note boxes in the rows: the override reads as text and the editor opens on Edit.
   assert.doesNotMatch(t.split('</table>')[0], /<select|<textarea/);
-  // Phone cards: every cell carries its column name and card place (doc # and amount on top, status line, override).
-  let row = t.match(/<tr class="">\s*<td class="strong" data-label="Doc #" data-card="key">71001<\/td>[\s\S]*?<\/tr>/)[0];
-  assert.match(row, /<td class="date due-cell soft" data-label="Effective due">2026-09-15<span class="sub [a-z-]+">Due in [^<]+<\/span><\/td>/, 'due timing under the date');
-  assert.match(row, /<td class="num strong" data-label="Amount" data-card="amt">\$1,000<\/td>/, 'the amount');
-  assert.match(row, /<td data-label="Status" data-card="st"><span class="pill /);
-  assert.match(row, /<td class="ovr-cell" data-label="Override" data-card="edit"><span class="ovr-line"><span class="muted">—<\/span><\/span><\/td>/);
-  assert.match(row, /<td class="c-edit print-hide" data-card="edit"><button type="button" class="note-btn" data-key="[^"]+" onclick="toggleRowNote\(this\.dataset\.key\)" aria-expanded="false" aria-label="Edit override, cause and note for 71001" data-tip="[^"]+">Edit<\/button><\/td>/);
-  // Edit opens the shared editor row under the line (Override, Cause, Note, Done), as on Purchase Orders.
+  // Phone cards: every cell carries its column name.
+  const rowOf = (x) => x.match(/<tr class="sup-row[^"]*"[^>]*>\s*<td class="sup-strong" data-label="SO #">71001<\/td>[\s\S]*?<\/tr>/)[0];
+  let row = rowOf(t);
+  assert.match(row, /<td class="sup-soft" data-label="Build date">Sep 15<span class="sup-sub">Due in [^<]+<\/span><\/td>/, 'due timing under the date');
+  assert.match(row, /<td class="num sup-strong" data-label="Amount">\$1,000<\/td>/, 'the amount');
+  assert.match(row, /<td class="sup-status" data-label="Status"><span class="dz-chip[^"]*">/);
+  assert.match(row, /<td class="sup-ovr" data-label="Override"><div class="sup-ovr-in"><span class="sup-ovr-t"><span class="muted">—<\/span><\/span>/);
+  assert.match(row, /<span class="sup-ovr-b print-hide"><button type="button" class="note-btn" data-key="[^"]+" onclick="toggleRowNote\(this\.dataset\.key\)" aria-expanded="false" aria-label="Edit override, cause and note for 71001" data-tip="[^"]+">Edit<\/button><\/span>/);
+  // Edit opens the shared editor row under the line (Override, Comment, Done), as on Purchase Order Health.
   const key = JSON.stringify(page.run("rowKey(parsedRows.find(r=>r.documentNumber==='71001'))"));
   page.run(`toggleRowNote(${key})`);
   t = table();
-  assert.match(t, /aria-expanded="true"[^>]*>Edit<\/button><\/td>\s*<\/tr><tr class="note-editor-row print-hide"><td colspan="10">[\s\S]*?<select class="row-override"[\s\S]*?<select class="row-cause"[\s\S]*?<textarea class="row-note"[\s\S]*?>Done<\/button>/);
+  assert.match(t, /aria-expanded="true"[^>]*>Edit<\/button><\/span><\/div><\/td>\s*<td[^>]*>[^<]*<\/td>\s*<\/tr><tr class="note-editor-row print-hide"><td colspan="8">[\s\S]*?<select class="row-override"[\s\S]*?>Done<\/button>/);
+  assert.doesNotMatch(t, /class="row-cause"/, 'no Cause control (Us / Them removed, 2v6)');
   // What was saved shows as text in the row (and on paper) in the owner's words; the button stays one short Edit.
-  page.run(`updateRowOverride(${key},'status','Supplier Late');updateRowOverride(${key},'cause','us');updateRowOverride(${key},'notes','Boards <Friday>');toggleRowNote(${key})`);
+  page.run(`updateRowOverride(${key},'status','Supplier Late');updateRowOverride(${key},'notes','Boards <Friday>');toggleRowNote(${key})`);
   t = table();
   assert.doesNotMatch(t, /note-editor-row/);
-  row = t.match(/<tr class="">\s*<td class="strong" data-label="Doc #" data-card="key">71001<\/td>[\s\S]*?<\/tr>/)[0];
-  assert.match(row, /<td class="ovr-cell" data-label="Override" data-card="edit"><span class="ovr-line"><span class="ovr-text">Supplier Delay<\/span><span class="cause-tag us">Us<\/span><\/span><span class="ovr-note" title="Boards &lt;Friday&gt;">Boards &lt;Friday&gt;<\/span><\/td>/);
+  row = rowOf(t);
+  assert.match(row, /<span class="sup-ovr-t">Supplier Delay<span class="sup-sub" title="Boards &lt;Friday&gt;">Boards &lt;Friday&gt;<\/span><\/span>/);
   assert.doesNotMatch(row, />Supplier Late</);
+  assert.doesNotMatch(row, /cause-tag|>Us<|>Them</);
   assert.match(row, /class="note-btn has-note"[^>]*data-tip="Override: Supplier Delay\.\nNote: Boards &lt;Friday&gt;"[^>]*>Edit<\/button>/);
   assert.equal(page.run(`parsedRows.find(r=>r.documentNumber==='71001').overrideStatus`), 'Supplier Late', 'the stored value keeps the original words');
-  // The bucket legend's Clear is green, like the Clear bars (blue is not a status colour here).
+  // The bucket legend's Clear has the Clear bars' colour (teal), not the accent blue.
   const h = html(page);
-  assert.match(h, /<span><i class="sw" style="background:var\(--good\)"><\/i>Clear<\/span>/);
+  assert.match(h, /<span><i style="background:var\(--dz-teal\)"><\/i>Clear<\/span>/);
+  assert.match(h, /<span class="dz-grow" style="flex:\d+;background:var\(--dz-teal\);--i:0"><\/span>/);
   assert.doesNotMatch(h, /var\(--accent\)"><\/i>Clear/);
-  // Screen widths for the editor's controls and the due cell stay; print hides the editor.
+  // Screen widths for the editor's controls stay; print hides the editor.
   assert.match(HTML, /@media screen\{\.editable-rows \.row-override\{min-width:140px\}\.editable-rows \.row-note\{min-width:200px\}\.editable-rows \.due-cell\{white-space:nowrap\}\}/);
   assert.deepEqual(page.errors, []);
 });
@@ -178,10 +197,12 @@ test('the blank notes header is read as Notes; notes keep their line breaks and 
 test('CTB % by CM trend: one row per CM, weeks oldest to newest, tone and tooltip', async () => {
   const page = await loaded();
   const h = html(page);
-  const card = h.slice(h.indexOf('CTB % by CM'));
+  // 2v6: under Show more (Clear To Build by CM and month); tone as a chip colour (90%+ teal, 70%+ amber, else red).
+  const card = h.slice(h.indexOf('>CTB % by CM'));
+  assert.match(card, /<span class="dz-meta">last 2 report weeks, oldest first<\/span>/);
   assert.match(card, /<th class="num">Sep 24<\/th><th class="num">Sep 30<\/th>/);
-  assert.match(card, /<td class="m">DSM<\/td><td class="num"><span class="pill bad" title="15 of 30 clear to build · 15 at risk · 0 late">50%<\/span><\/td><td class="num"><span class="pill warn" title="14 of 16 clear to build · 2 at risk · 0 late">88%<\/span>/);
-  assert.match(card, /<td class="m">Price<\/td><td class="num muted">—<\/td><td class="num"><span class="pill good"[^>]*>93%</);
+  assert.match(card, /<td class="sup-strong">DSM<\/td><td class="num"><span class="dz-chip red">50%<\/span><\/td><td class="num"><span class="dz-chip amber">88%<\/span>/);
+  assert.match(card, /<td class="sup-strong">Price<\/td><td class="num muted">—<\/td><td class="num"><span class="dz-chip teal">93%</);
 });
 
 test('sheet names give the report week; the year comes from today and months take the nearest year', async () => {
@@ -212,7 +233,7 @@ test('an export older than the workbook does not push the newest weeks back a ye
   await upload(july, [{ name: 'kpi.xls', bytes: kpi('07/15/2026', '09/20/2026') },
     { name: 'ctb.xlsx', bytes: workbook(july, [sheet('0930 - Orders at Risk', ['September']), sheet('0908 - Orders at Risk', ['September']), sheet('0521 - Orders at Risk', ['May'])]) }]);
   assert.deepEqual(july.run('currentMetrics().buildRisk.snapshots.map(s=>s.key)'), ['2026-09-30', '2026-09-08', '2026-05-21']);
-  assert.match(html(july), /<option value="2026-09-30" selected>/);
+  assert.deepEqual(weeks(html(july)).map((w) => w.slice(0, 1).concat(w[2])), [['2026-09-30', true], ['2026-09-08', false], ['2026-05-21', false]]);
   // A late-December export next to a January sheet: the January week is the newest, and its months are next year.
   const jan = loadPage({ today: '2027-01-10' });
   await upload(jan, [{ name: 'kpi.xls', bytes: kpi('12/28/2026', '01/20/2027') },
@@ -282,12 +303,13 @@ test('a single CTB report as CSV still works: no week picker, and it is a separa
   const page = loadPage();
   await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }]);
   const h = html(page);
-  assert.doesNotMatch(h, /build-risk-snapshot|CTB % by CM/);
+  assert.doesNotMatch(h, /data-dzmenu="sup-week"|aria-label="CTB % by CM"/, 'no week picker and no CTB % trend with one report');
+  assert.match(h, /<span class="dz-filter sup-static">Clear To Build report<\/span>/);
   assert.equal(stat(h, 'Clear to build'), 4);
   assert.match(h, /a<br>b/);
   const mixed = loadPage();
   await upload(mixed, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.xlsx', bytes: workbook(mixed, [SEP30]) }, { name: 'ctb.csv', bytes: csv }]);
-  assert.match(html(mixed), /<option value="2026-09-30" selected>Sep 30<\/option><option value="undated">Undated report<\/option>/);
+  assert.deepEqual(weeks(html(mixed)), [['2026-09-30', 'Sep 30', true], ['undated', 'Undated report', false]]);
   assert.equal(stat(html(mixed, 'setBuildRiskSnapshot("undated")'), 'Clear to build'), 4);
 });
 
@@ -295,15 +317,29 @@ test('the workbook alone works, sheet names are escaped, and a share snapshot ke
   const page = loadPage();
   await upload(page, [{ name: 'ctb.xlsx', bytes: workbook(page, [{ ...SEP30, name: '0930 <img src=x onerror=x>' }, SEP24]) }]);
   const h = html(page);
-  assert.match(h, /<option value="2026-09-30" selected>/);
+  assert.deepEqual(weeks(h).map((w) => w[0]), ['2026-09-30', '2026-09-24']);
+  assert.equal(weekShown(h), 'Sep 30');
   assert.match(h, /\(sheet 0930 &lt;img src=x onerror=x&gt;\)\.">[\s\S]*?CTB report lines · 2 weeks loaded<\/span>/);
   assert.doesNotMatch(h, /<img|NaN|undefined/);
   assert.match(h, /No open sales orders fall in CM \/ month buckets/);
   // A share snapshot carries the normalized rows (report week included) and is read back as-is.
+  // (Build Risk starts hidden, 2v6.9, and settings cannot change in a snapshot: this viewer's browser shows it.)
   const shared = loadPage();
+  shared.run('isSnapshotView=false;stgSet("hiddenPages",[])');
   shared.run(`isSnapshotView=true;buildRiskRows=JSON.parse(${JSON.stringify(page.run('JSON.stringify(buildRiskRows)'))});invalidateMetrics();showResults()`);
   assert.equal(stat(html(shared), 'Clear to build'), 49);
   assert.equal(stat(html(shared, 'setBuildRiskSnapshot("2026-09-24")'), 'Clear to build'), 15);
+});
+
+// KNOWN BUG (left failing on purpose, see the 2v6.9 test round report): an undated report's label is "Undated report",
+// and renderBuildRisk adds " report" after it in the CM card tips and the print-only filter line ("Undated report report").
+test('BUG: an undated report is named once, not "Undated report report", in the CM card tips and the print filter line', async () => {
+  const csv = new Uint8Array(Buffer.from('CM,Month,Total,Clear To Build,At Risk,Late\r\nIMS,Sep 2026,5,4,1,0\r\n'));
+  const page = loadPage();
+  await upload(page, [{ name: 'kpi.xls', bytes: KPI }, { name: 'ctb.csv', bytes: csv }]);
+  const h = html(page);
+  assert.match(h, /data-focus-key="brcm-IMS"/);
+  assert.doesNotMatch(h, /report report/i);
 });
 
 test('CM names in the report map to their warehouses', () => {
