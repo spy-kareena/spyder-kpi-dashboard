@@ -12548,9 +12548,10 @@ function renderResults(){
   const said=activeTab==='search'?headMeta:'';
   if(announce&&announce.textContent!==said)announce.textContent=said;
   const snapshotTag=isSnapshotView?`<span class="snapshot-note"${tipAttr('Numbers as of the day it was saved; note changes are not kept.')}>Shared snapshot${displayDate(new Date(snapshotCreatedAt))?` · Saved ${esc(displayDate(new Date(snapshotCreatedAt)))}`:''}</span>`:'';
-  // Page head: the title (28px) with a muted line at the right; Order Health has a visually hidden title. Ask AI and
-  // Export PDF live in the header, Share snapshot in its export-date popover, Data check in Settings (the gear's dot).
-  const showTitle=activeTab!=='weekly';
+  // Page head: the title (28px) with a muted line at the right; every page shows its title (2v6.9, owner: Sales Order
+  // Health too). Ask AI and Export PDF live in the header, Share snapshot in its export-date popover, Data check in
+  // Settings (the gear's dot).
+  const showTitle=true;
   const headNotes=snapshotTag;
   const headRight=loaded?(showTitle&&headMeta?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
     :`<button type="button" class="dz-btn primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`;

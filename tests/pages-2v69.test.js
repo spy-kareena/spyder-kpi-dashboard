@@ -152,7 +152,8 @@ test('the menu calls Order Health "Sales Order Health": link, page title, logo, 
   const hdr = page.els['app-header'].innerHTML;
   assert.match(hdr, /aria-label="Spyder Controls Corp, Sales Order Health"/);
   assert.match(hdr, /data-focus-key="nav-weekly" onclick="setTab\('weekly'\)" aria-current="page"[^>]*>Sales Order Health</);
-  assert.match(html(page), /<h1 class="dz-h1 dz-h1-hidden" tabindex="-1">Sales Order Health<\/h1>/);
+  // 2v6.9 (owner): the Sales Order Health title shows, like every other page.
+  assert.match(html(page), /<div class="dz-pagehead rise"><h1 class="dz-h1" tabindex="-1">Sales Order Health<\/h1>/);
   page.run("setTab('settings')");
   assert.match(html(page), /id="stg-h-oh" tabindex="-1">[\s\S]*?Sales Order Health<\/h2>/);
   assert.equal(page.run('activeTab'), 'settings');
