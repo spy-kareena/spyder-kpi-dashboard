@@ -274,3 +274,9 @@ Quarterly cards (same numbers, Months switch, Show more); setTab('metrics') and 
 2v6.9 (header): the Live SAP mark is a short pipe with a green pulse running along it (red and still when
 disconnected, still with reduced motion); the export-date popover has round icon buttons (Refresh now, Add file,
 Share snapshot; import: Add file, New file, Share snapshot) and no line count / export date line. Tests: sap-live, mcp.
+2v6.9 (leading): Sales Order Health has a third view, Supply / Demand (Leading | Lagging | Supply / Demand; also an
+Opening view choice): the Short or at-risk items card moved there from the Supply / Demand page (same list, filters,
+search, Supply at risk only, Show all); without a snapshot it says how to load one. At risk loses its quiet share /
+target line, the ship target its note. Customers at risk by supply source has no CM sheet source (those lines fall to
+open PO, stock or none); a click on a customer, number or source lists exactly those lines in the Lines card. Tests:
+leading-2v69.

@@ -61,7 +61,7 @@ Instead of listing files in the arguments, you can set `SPYDER_KPI_FILES` to the
 | `group_totals` | Lines, orders and open value by warehouse, customer, owner, vendor, due month or status |
 | `get_monthly` | The Monthly page: shipped and open value by month |
 | `get_build_risk` | The Build Risk page (needs a Clear To Build report) |
-| `get_supply_demand` | The Supply / Demand page (needs a supply / demand snapshot) |
+| `get_supply_demand` | Supply / Demand: the page and the Short or at-risk items on Sales Order Health (needs a supply / demand snapshot) |
 | `load_exports` | Loads other export files, replacing what is loaded |
 | `loaded_files` | What is loaded: files, kind, rows and the as-of date |
 
