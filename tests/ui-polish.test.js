@@ -186,8 +186,8 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
   }
   // 2v6 pages give many cards a short tip of their own, and some sections left with the old designs (Order Health's
   // At risk / On track groups, the scorecard, the Forecast page when no Logican file is loaded), so fewer titles carry a
-  // SECTION_INFO text than before.
-  assert.ok(keys.size >= 20, `${keys.size} section titles carry their help`);
+  // SECTION_INFO text than before; Metrics' Show more (order quality, by due month, lines to act on) left too (owner).
+  assert.ok(keys.size >= 18, `${keys.size} section titles carry their help`);
   // The popover, its script and its styles are gone; the help pointer marks a titled heading with a tip.
   assert.doesNotMatch(HTML, /id="info-pop"|class="info-pop|\.info-btn|\.info-pop|\.title-row|function (infoButton|toggleInfo|openInfo|closeInfo|infoPopKey)\b|INFO_ICON|syncInfoPop|queuePlaceInfo/);
   assert.match(CSS, /\nh2\[data-tip\]\{cursor:help\}\n/);
