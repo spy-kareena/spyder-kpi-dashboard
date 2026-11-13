@@ -1,8 +1,12 @@
 // 2v6.9 leading: Sales Order Health has a third view, Supply / Demand (Leading | Lagging | Supply / Demand), with the
 // Short or at-risk items card that was on the Supply / Demand page; At risk has no quiet share / target line and the
-// ship target no note; Customers at risk by supply source has no CM sheet source, and a click on a customer, a number or
-// a source lists exactly those at-risk lines in the Lines card. Run with `node tests/leading-2v69.test.js`. Fixtures are
-// synthetic.
+// ship target no note.
+// Leading, Version 1 (owner's pick): the view reads as four questions. 1 What Is at Risk? (At risk beside the ship
+// target over Status, one row of five numbers). 2 Why, and When? (Top reasons beside Open lines by due week, one card).
+// 3 Who? (Customers at risk, one table with each customer's supply source: no CM sheet source; a number or a source
+// total lists exactly those at-risk lines in the Lines card). 4 What Can We Do? (Supply to pull in | Date changes behind
+// one switch; gone when neither has rows). Then the two month lists as folds, and the Lines card.
+// Run with `node tests/leading-2v69.test.js`. Fixtures are synthetic.
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
@@ -36,6 +40,70 @@ async function loaded({ sd = true, storage = {} } = {}) {
 const linesState = (page) => page.run(`(()=>{const rows=weeklyTileFilter==='ohlsup'?ohlSupplyRows(currentMetrics(),ohlSupPick):null;return {tile:weeklyTileFilter,docs:rows?rows.map(r=>r.documentNumber).sort():null};})()`);
 const linesMeta = (h) => ((h.match(/<div class="ohl-lines-title">[\s\S]*?<\/h2><span class="dz-chip[^"]*">([^<]*)<\/span>(?:<span class="dz-meta">([^<]*)<\/span>)?/) || []).slice(1));
 
+// --- Leading, Version 1: readers for the four-question layout -----------------------------------------------------------
+// The Leading grid from its start to the About panel; one card of it by a class on its <section> (none of these cards
+// holds another section); a tag stripped to its words; the order numbers the Lines card lists.
+const loadRows = async (rows) => {
+  const page = loadPage({ storage: { ...IMPORT } });
+  await new Promise((r) => setTimeout(r, 0));
+  page.run('isSnapshotView=false');
+  await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
+  return page;
+};
+const grid = (page) => {
+  const h = html(page), from = h.indexOf('<div class="dz-grid ohl-grid">');
+  if (from < 0) return '';
+  const to = h.indexOf('<details class="about', from);
+  return h.slice(from, to < 0 ? undefined : to);
+};
+const card = (h, cls) => {
+  const m = new RegExp(`<section class="dz-card(?: [^"]*)? ${cls}(?: [^"]*)?"[^>]*>`).exec(h);
+  return m ? h.slice(m.index, h.indexOf('</section>', m.index) + '</section>'.length) : '';
+};
+const plain = (s) => String(s || '').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, ' ').trim();
+const lineDocs = (page) => [...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((m) => m[1]);
+// The question headings as [number, words]; every heading has to be the numbered h2 (the count checks none is missed).
+const questions = (g) => {
+  const q = [...g.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d+)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((m) => [+m[1], m[2]]);
+  assert.equal((g.match(/class="ohl-q[ "]/g) || []).length, q.length, 'every question heading is a numbered h2');
+  return q;
+};
+// What the grid holds, in order: a question (its words), the ship target and Status column, or a card (by its class).
+const layout = (g) => [...g.matchAll(/<div class="ohl-q dz-span-6">[\s\S]*?<h2[^>]*>([^<]+)<\/h2>|<div class="(ohl-col) dz-span-3">|<section class="dz-card([^"]*)"/g)]
+  .map((m) => m[1] || m[2] || (/ ohl-(ship|status-card|why|who|do|months|lines-card)(?= |$)/.exec(m[3]) || [' at-risk'])[0].trim());
+// Status: the five cells under the bar, each a button.
+const statusCells = (s) => [...s.matchAll(/<button type="button" class="ohs3-cell([^"]*)" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\('st-\2'\)" data-tip="([^"]+)"><span class="ohs3-l"><i class="ohl-dot" style="background:[^"]+" aria-hidden="true"><\/i>([^<]+)<\/span><span class="ohs3-n">(\d+)<\/span><span class="ohs3-s">([^<]+)<\/span><\/button>/g)]
+  .map((m) => ({ id: m[2], cls: m[1].trim(), pressed: m[3] === 'true', tip: m[4], label: m[5], orders: +m[6], sub: m[7] }));
+// Customers at risk: a table row as its cells' words, and the buttons in it as [focus key, pressed, aria-label, click].
+const whoRows = (t, part) => [...((new RegExp(`<${part}>([\\s\\S]*?)</${part}>`).exec(t) || ['', ''])[1]).matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
+  .map((m) => [...m[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)].map((x) => plain(x[1])));
+const whoButtons = (t) => [...t.matchAll(/<button type="button" class="ohc3-n([^"]*)" data-focus-key="(ohl-sup-[^"]+)"(?: data-off="[^"]*")? aria-pressed="(true|false)" aria-label="([^"]+)" onclick="([^"]+)" data-tip="[^"]+">(\d+)<\/button>/g)]
+  .map((m) => ({ key: m[2], cls: m[1].trim(), pressed: m[3] === 'true', name: m[4], click: m[5], n: +m[6] }));
+// A second fixture, for the states and the weeks. The export is dated Thursday 3 September 2026, so "this week" is
+// Aug 30 to Sep 5. Past due: 100, 101 (Firefly) and 102 (Barletta). Due this week: 110. On track: 111 (two lines,
+// Sep 15) and 112 (Oct 20). Rescheduled: 113 (due Aug 20, now Sep 25). No commit: 114 (SAP's 11/11/1111).
+const BAR = { CustomerVendorCode: 'BARLETTA', CustomerVendorName: 'Barletta Boats' };
+const later = (d) => ({ LineRescheduleDate: d, RescheduleDate: d, RescheduleFlag: 'Rescheduled Later Than Original Delivery' });
+const MIX = [
+  ...ROWS.slice(0, 3),
+  so('110', '09/04/2026', { 'Item No.': 'C' }),
+  so('111', '09/15/2026', { 'Item No.': 'D', LineNumber: '0', ...BAR }), so('111', '09/15/2026', { 'Item No.': 'E', LineNumber: '1', ...BAR }),
+  so('112', '10/20/2026', { 'Item No.': 'F' }),
+  so('113', '08/20/2026', { 'Item No.': 'G', ...later('09/25/2026') }),
+  so('114', '08/25/2026', { 'Item No.': 'H', ...BAR, LineRescheduleDate: '11/11/1111', RescheduleDate: '11/11/1111' }),
+  ROWS[3],
+];
+// A third, for "What Can We Do?": customers 1 to n. With pull, each has an order for its own item due in August whose
+// covering PO is due a month later (a PO line to pull in). With dates, each has an order due in September that SAP
+// moved a month later (a date change), worth $1,000 times its number; customer 1 has two such lines.
+const two = (i) => String(i).padStart(2, '0');
+const cust = (i) => ({ CustomerVendorCode: `CUST${two(i)}`, CustomerVendorName: `Customer ${two(i)}` });
+const doRows = (n, { pull = true, dates = true } = {}) => Array.from({ length: n }, (_, k) => k + 1).flatMap((i) => [
+  ...(pull ? [so(String(200 + i), `08/${two(10 + i)}/2026`, { 'Item No.': `P${i}`, ...cust(i) }), po(String(600 + i), `09/${two(10 + i)}/2026`, { 'Item No.': `P${i}` })] : []),
+  ...(dates ? [so(String(300 + i), `09/${two(10 + i)}/2026`, { 'Item No.': `R${i}`, LineNumber: '0', ...cust(i), ...later(`10/${two(10 + i)}/2026`), AmountLocal: `${i},000.00` })] : []),
+  ...(dates && i === 1 ? [so('301', '09/11/2026', { 'Item No.': 'R1B', LineNumber: '1', ...cust(1), ...later('10/11/2026'), AmountLocal: '500.00' })] : []),
+]);
+
 test('Leading: no quiet share / target line under At risk, no note in the ship target (its list stays)', async () => {
   const page = await loaded();
   const h = html(page);
@@ -53,53 +121,95 @@ test('Leading: no quiet share / target line under At risk, no note in the ship t
   assert.deepEqual(page.errors, []);
 });
 
-test('Supply source card: no CM sheet; every at-risk line counted once under open PO, stock or none', async () => {
+test('Supply source: no CM sheet; every at-risk line counted once under pull in, open PO, stock or none; the source totals are the All Customers row (no separate card, no pills)', async () => {
   const page = await loaded();
   const h = html(page);
-  const card = h.slice(h.indexOf('Customers at risk by supply source'), h.indexOf('ohl-sup-foot') > 0 ? h.indexOf('ohl-sup-foot') : h.indexOf('<!--') > 0 ? h.length : h.length);
-  assert.doesNotMatch(card, /CM sheet|Logican/);
+  const who = card(grid(page), 'ohl-who');
+  assert.ok(who.length > 500, 'Customers at risk is drawn');
+  assert.doesNotMatch(who, /CM sheet|Logican/);
   assert.deepEqual(page.run('OHL_SUPPLY_SOURCES.map(x=>x[0])'), ['pull', 'po', 'stock', 'none']);
-  const pills = [...h.matchAll(/<button type="button" class="ohl-sup-pill[^"]*" data-focus-key="ohl-sup-src-(\w+)" aria-pressed="false"[^>]*>[\s\S]*?<b>(\d+)<\/b>/g)].map((m) => `${m[1]}:${m[2]}`);
-  assert.deepEqual(pills, ['pull:0', 'po:1', 'stock:1', 'none:1']);
+  // Gone on purpose (Version 1): the Customers at risk by supply source card, its pills, its rows and its Show all toggle.
+  assert.doesNotMatch(h, /Customers at risk by supply source|class="ohl-sup-(sum|pill|table|row|th|name|n|foot)[ "]|ohlToggleSupplyAll\(|Show all \d+ customers|data-dzpager="ohl-supply"/);
+  // The sources are columns of the one table now: a group row over them, each column with its dot and a tip.
+  assert.match(who, /<table class="ohc2-tbl ohc3-tbl src"><thead><tr class="ohc3-grp"><td><\/td><th scope="colgroup" colspan="3" data-tip="[^"]+">Open orders<\/th><th scope="colgroup" colspan="5" data-tip="[^"]+">At-risk orders by supply source<\/th><\/tr>/);
+  const cols = [...who.matchAll(/<th scope="col"(?: class="num")? data-tip="([^"]+)">(?:<i class="ohl-dot" style="background:([^"]+)" aria-hidden="true"><\/i>)?([^<]+)<\/th>/g)].map((m) => [m[3], m[2] || '']);
+  assert.deepEqual(cols, [['Customer', ''], ['Past due', ''], ['At risk', ''], ['Open', ''], ['Pull in', 'var(--dz-indigo)'], ['Late / no commit', 'var(--dz-amber)'], ['Stock short', 'var(--dz-risk)'], ['Not supply', 'var(--dz-ink-6)'], ['Split', '']]);
+  assert.equal((who.match(/<th scope="col/g) || []).length, 11, 'every column heading (two group headings, nine columns) has a tip');
+  // The totals row replaces the pills: distinct orders, then one button per source with orders (none to pull in here).
+  assert.deepEqual(whoRows(who, 'tfoot'), [['All Customers', '3', '0', '3', '—', '1', '1', '1', '']]);
+  const foot = who.slice(who.indexOf('<tfoot>'));
+  assert.deepEqual(whoButtons(foot).map((b) => [b.key, b.pressed, b.name, b.click, b.n]), [
+    ['ohl-sup-src-po', false, 'All Customers, Late / no commit: 1 order', "ohlSupplyPick('','po')", 1],
+    ['ohl-sup-src-stock', false, 'All Customers, Stock short: 1 order', "ohlSupplyPick('','stock')", 1],
+    ['ohl-sup-src-none', false, 'All Customers, Not supply: 1 order', "ohlSupplyPick('','none')", 1],
+  ]);
+  assert.match(foot, /<td class="num ohc3-zero" data-tip="Pull in: none">—<\/td>/);
+  assert.match(foot, /<td class="ohc3-split"><span class="ohl-sup-bar" aria-hidden="true"><i style="width:33\.3%;background:var\(--dz-amber\)"><\/i><i style="width:33\.3%;background:var\(--dz-risk\)"><\/i><i style="width:33\.3%;background:var\(--dz-ink-6\)"><\/i><\/span><\/td>/);
+  // Each at-risk line sits under exactly one source: 100 a late PO, 101 short stock, 102 not supply.
   const all = page.run('ohAtRiskData(currentMetrics()).risk.filter(ohIsSalesRow).length');
   assert.equal(page.run('Object.values(ohlSupplyData(currentMetrics()).totRows).reduce((s,r)=>s+r.length,0)'), all);
   assert.equal(all, 3);
+  assert.deepEqual(page.run('(()=>{const d=ohlSupplyData(currentMetrics());return Object.fromEntries(Object.entries(d.totRows).map(([k,v])=>[k,v.map(r=>r.documentNumber)]))})()'), { pull: [], po: ['100'], stock: ['101'], none: ['102'] });
   assert.deepEqual(page.errors, []);
 });
 
-test('Supply source card: a customer, a number or a source lists exactly those lines; again (or Clear) goes back', async () => {
+test('Supply source: a number or a source total lists exactly those lines; again (or Clear) goes back, Clear with focus on the table; a customer name filters the page', async () => {
   const page = await loaded();
-  let h = html(page);
-  // Each row: the name and each non-zero number are buttons with aria-pressed and focus keys.
-  assert.match(h, /<div class="ohl-sup-row dz-fade" style="--i:0" role="group" aria-label="FIREFLY - Firefly RV">\s*<button type="button" class="ohl-sup-name" data-focus-key="ohl-sup-FIREFLY" data-off="FIREFLY" aria-pressed="false" onclick="ohlSupplyPick\(this\.dataset\.off,''\)"/);
-  assert.match(h, /data-focus-key="ohl-sup-FIREFLY-po" data-off="FIREFLY" aria-pressed="false" aria-label="FIREFLY - Firefly RV, Late \/ no commit: 1 order"/);
-  // The customer: both of Firefly's lines; the title names it; the chip counts them.
-  page.run("ohlSupplyPick('FIREFLY','')");
-  assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['100', '101'] });
-  h = html(page);
-  assert.deepEqual(linesMeta(h), ['2 lines · $2,000', 'FIREFLY - Firefly RV']);
-  assert.match(h, /data-focus-key="ohl-sup-FIREFLY" data-off="FIREFLY" aria-pressed="true"/);
-  assert.match(h, /data-focus-key="ohl-sup-clear" onclick="ohlSupplyClear\(\)"/);
-  // A number: that customer and source (1 order = 1 line here).
+  const who = () => card(grid(page), 'ohl-who');
+  // Each customer: its name (a page filter, as before), then a button per source with orders, a dash for the others.
+  assert.deepEqual(whoRows(who(), 'tbody'), [['FIREFLY - Firefly RV', '2', '0', '2', '—', '1', '1', '—', ''], ['BARLETTA - Barletta Boats', '1', '0', '1', '—', '—', '—', '1', '']]);
+  const body = who().slice(who().indexOf('<tbody>'), who().indexOf('<tfoot>'));
+  assert.deepEqual(whoButtons(body).map((b) => [b.key, b.cls, b.pressed, b.name, b.click]), [
+    ['ohl-sup-FIREFLY-po', '', false, 'FIREFLY - Firefly RV, Late / no commit: 1 order', "ohlSupplyPick(this.dataset.off,'po')"],
+    ['ohl-sup-FIREFLY-stock', '', false, 'FIREFLY - Firefly RV, Stock short: 1 order', "ohlSupplyPick(this.dataset.off,'stock')"],
+    ['ohl-sup-BARLETTA-none', 'quiet', false, 'BARLETTA - Barletta Boats, Not supply: 1 order', "ohlSupplyPick(this.dataset.off,'none')"],
+  ]);
+  assert.match(body, /data-focus-key="ohl-sup-FIREFLY-po" data-off="FIREFLY" aria-pressed="false"[^>]*data-tip="Late \/ no commit: 1 order, 1 line\n• SO 100 A: PO 500 VEND - Vendor Co: late since Jul 15\nClick to list them\."/);
+  assert.match(body, /data-focus-key="ohl-sup-FIREFLY-stock" data-off="FIREFLY" aria-pressed="false"[^>]*data-tip="Stock short: 1 order, 1 line\n• SO 101 B: short at Spyder - Lacombe \(supply \/ demand snapshot\)\nClick to list them\."/);
+  // A number: that customer and source (1 order = 1 line here); the title names both, the chip counts the lines.
   page.run("ohlSupplyPick('FIREFLY','stock')");
   assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['101'] });
+  assert.deepEqual(lineDocs(page), ['101']);
   assert.deepEqual(linesMeta(html(page)), ['1 line · $1,000', 'FIREFLY - Firefly RV · Stock short']);
+  assert.deepEqual(whoButtons(who()).filter((b) => b.pressed).map((b) => [b.key, b.cls]), [['ohl-sup-FIREFLY-stock', 'sel']]);
+  assert.match(html(page), /data-focus-key="ohl-sup-clear" onclick="ohlSupplyClear\(\)"/);
   // The same click again: the at-risk lines.
   page.run("ohlSupplyPick('FIREFLY','stock')");
   assert.equal(linesState(page).tile, 'late');
+  assert.deepEqual(lineDocs(page), ['100', '101', '102']);
   assert.doesNotMatch(html(page), /data-focus-key="ohl-sup-clear"/);
-  // A source pill: every customer, that source.
+  assert.deepEqual(whoButtons(who()).filter((b) => b.pressed), []);
+  // A source total (All Customers): every customer, that source.
   page.run("ohlSupplyPick('','none')");
   assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['102'] });
   assert.deepEqual(linesMeta(html(page)), ['1 line · $1,000', 'Not supply · All customers']);
-  assert.match(html(page), /data-focus-key="ohl-sup-src-none" aria-pressed="true"/);
+  assert.deepEqual(whoButtons(who()).filter((b) => b.pressed).map((b) => [b.key, b.cls]), [['ohl-sup-src-none', 'quiet sel']]);
+  // Clear: the at-risk lines again, and focus goes back to the Customers at risk table.
+  const focused = [];
+  page.ctx.document.querySelector = (sel) => (/^\.ohl-who /.test(sel) ? { focus: (o) => focused.push([sel, JSON.stringify(o)]) } : null);
   page.run('ohlSupplyClear()');
+  page.ctx.document.querySelector = () => null;
   assert.equal(linesState(page).tile, 'late');
+  assert.deepEqual(focused, [['.ohl-who .ohc3-n,.ohl-who .ohc2-name', '{"preventScroll":true}']]);
+  // A customer with every source (no button asks for it now; the function still lists the customer's at-risk lines).
+  page.run("ohlSupplyPick('FIREFLY','')");
+  assert.deepEqual(linesState(page), { tile: 'ohlsup', docs: ['100', '101'] });
+  assert.deepEqual(linesMeta(html(page)), ['2 lines · $2,000', 'FIREFLY - Firefly RV']);
+  page.run('ohlSupplyClear()');
   // Another card's click gives way to it; a stale pick never lists anything.
-  page.run("ohlSupplyPick('BARLETTA','');setWeeklyTileFilter('allopen')");
+  page.run("ohlSupplyPick('BARLETTA','none');setWeeklyTileFilter('allopen')");
   assert.equal(page.run('weeklyTileFilter'), 'allopen');
   page.run("weeklyTileFilter='ohlsup';ohlSupPick=null;renderResults()");
   assert.equal(page.run('weeklyTileFilter'), 'late');
+  // The name is the page's customer filter (again shows every customer); the row is marked, the others drop out.
+  assert.match(who(), /<tr class="ohc2-tr"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-FIREFLY" data-off="FIREFLY" aria-pressed="false" onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)" data-tip="FIREFLY - Firefly RV\n• 2 of 2 open orders at risk \(100%\)\n• 2 orders past due · 0 orders at risk otherwise\n• 2 at-risk lines\nClick to filter to it\.">/);
+  page.run("setWeeklyOffenderFilter('customers','FIREFLY')");
+  assert.deepEqual(page.run('weeklyCustomerFilter'), ['FIREFLY']);
+  assert.deepEqual(whoRows(who(), 'tbody').map((r) => r[0]), ['FIREFLY - Firefly RV']);
+  assert.match(who(), /<tr class="ohc2-tr sel"><th scope="row"><button type="button" class="ohc2-name" data-focus-key="offrow-FIREFLY" data-off="FIREFLY" aria-pressed="true"/);
+  assert.deepEqual(whoRows(who(), 'tfoot'), [['All Customers', '2', '0', '2', '—', '1', '1', '—', '']]);
+  page.run("setWeeklyOffenderFilter('customers','FIREFLY')");
+  assert.deepEqual(page.run('weeklyCustomerFilter'), ['ALL']);
   assert.deepEqual(page.errors, []);
 });
 
@@ -228,24 +338,68 @@ test('Pull in: POs are handed to orders by date; a covering PO due after the ord
   assert.deepEqual(page.errors, []);
 });
 
-test('Customers at risk is a ranked table against each customer\'s own open orders; Top reasons show which reasons come together', async () => {
+test('Customers at risk is one ranked table against each customer\'s own open orders, 5 customers a page; Top reasons show which reasons come together', async () => {
   const page = await loaded();
-  const h = html(page);
-  // Customers at risk (owner, option F): a ranked table: past due, at risk otherwise, open; a thin split under each name; no money.
+  const who = card(grid(page), 'ohl-who');
+  // Customers at risk (owner, option F, then Version 1): one ranked table, the full width of the grid: past due, at
+  // risk otherwise, open; a thin split under each name; then the supply sources; no money.
   // Firefly: SO 100 and 101, both open and past due.
-  assert.match(h, /<table class="ohc2-tbl"><thead><tr><th scope="col"[^>]*>Customer<\/th><th scope="col" class="num"[^>]*>Past due<\/th><th scope="col" class="num"[^>]*>At risk<\/th><th scope="col" class="num"[^>]*>Open<\/th><\/tr><\/thead>/);
-  assert.match(h, /data-focus-key="offrow-FIREFLY"[^>]*onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)"[\s\S]*?<\/th><td class="num ohc2-pd">2<\/td><td class="num ohc2-ar">0<\/td><td class="num">2<\/td><\/tr>/);
-  assert.doesNotMatch(h.slice(h.indexOf('ohc2-tbl'), h.indexOf('</table>', h.indexOf('ohc2-tbl'))), /\$/);
+  assert.match(who, /^<section class="dz-card dz-span-6 ohl-card ohl-who dz-fade" style="--i:3"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]+">Customers at risk<\/h2><span class="dz-meta">Most at-risk orders first<\/span><\/div><div class="sup-scroll" tabindex="0" role="region" aria-label="Customers at risk"><table class="ohc2-tbl ohc3-tbl src"><thead>/);
+  assert.match(who, /<tr><th scope="col"[^>]*>Customer<\/th><th scope="col" class="num"[^>]*>Past due<\/th><th scope="col" class="num"[^>]*>At risk<\/th><th scope="col" class="num"[^>]*>Open<\/th><th scope="col" class="num"[^>]*><i class="ohl-dot"/);
+  assert.match(who, /data-focus-key="offrow-FIREFLY"[^>]*onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)"[^>]*><span class="ohc2-label">FIREFLY - Firefly RV<\/span><span class="ohc2-split" aria-hidden="true"><i class="pd" style="width:100\.0%"><\/i><i class="ar" style="width:0\.0%"><\/i><\/span><\/button><\/th><td class="num ohc2-pd">2<\/td><td class="num ohc2-ar">0<\/td><td class="num">2<\/td>/);
+  assert.doesNotMatch(who, /\$/);
+  assert.doesNotMatch(who, /dz-pagefoot/, 'two customers, one page');
+  // Without purchase-order lines or a supply / demand snapshot: the first four columns only, and a note saying why.
+  const bare = await loadRows(ROWS.slice(0, 3));
+  const plainWho = card(grid(bare), 'ohl-who');
+  assert.match(plainWho, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th scope="col" data-tip="[^"]+">Customer<\/th><th scope="col" class="num" data-tip="[^"]+">Past due<\/th><th scope="col" class="num" data-tip="[^"]+">At risk<\/th><th scope="col" class="num" data-tip="[^"]+">Open<\/th><\/tr><\/thead>/);
+  assert.deepEqual(whoRows(plainWho, 'tbody'), [['FIREFLY - Firefly RV', '2', '0', '2'], ['BARLETTA - Barletta Boats', '1', '0', '1']]);
+  assert.deepEqual(whoRows(plainWho, 'tfoot'), [['All Customers', '3', '0', '3']]);
+  assert.doesNotMatch(plainWho, /ohc3-grp|ohc3-n|ohc3-split|ohl-sup-bar|by supply source<\/th>/);
+  assert.match(plainWho, /<\/table><\/div><p class="ohl-note ohl-foot-note">Load purchase-order lines or the supply \/ demand snapshot to see which supply source holds each customer's orders\.<\/p><\/section>$/);
+  assert.deepEqual(bare.errors, []);
+  // Most at-risk orders first, each against its own open orders; All Customers counts each order once. Firefly: 100
+  // and 101 past due, 113 rescheduled, 110 and 112 fine. Barletta: 102 past due, 114 no commit, 111 fine.
+  const mix = await loadRows(MIX);
+  const mixWho = card(grid(mix), 'ohl-who');
+  assert.deepEqual(whoRows(mixWho, 'tbody'), [['FIREFLY - Firefly RV', '2', '1', '5', '—', '1', '—', '2', ''], ['BARLETTA - Barletta Boats', '1', '1', '3', '—', '—', '—', '2', '']]);
+  assert.deepEqual(whoRows(mixWho, 'tfoot'), [['All Customers', '3', '2', '8', '—', '1', '—', '4', '']]);
+  assert.match(mixWho, /<span class="ohc2-label">FIREFLY - Firefly RV<\/span><span class="ohc2-split" aria-hidden="true"><i class="pd" style="width:40\.0%"><\/i><i class="ar" style="width:20\.0%"><\/i><\/span>/);
+  assert.deepEqual(mix.run("(()=>{const m=currentMetrics(),oh=orderHealthData(m);return [rowDocCount(ohAtRiskData(m).risk),rowDocCount(oh.allOrderRows.filter(r=>r.isOpen))]})()"), [5, 8]);
+  assert.deepEqual(mix.errors, []);
+  // Seven customers with two at-risk orders each (one past due, one rescheduled): 5 a page, the bigger value first;
+  // the totals row is the same on every page.
+  const many = await loadRows(doRows(7));
+  const names = () => whoRows(card(grid(many), 'ohl-who'), 'tbody').map((r) => r.slice(0, 4).join(' | '));
+  assert.deepEqual(names(), [7, 6, 5, 4, 3].map((i) => `CUST0${i} - Customer 0${i} | 1 | 1 | 2`));
+  assert.match(card(grid(many), 'ohl-who'), /<span class="dz-pagecount">1–5 of 7 customers<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="ohl-customers" aria-label="Customers at risk pages"/);
+  const totals = [['All Customers', '7', '7', '14', '7', '—', '—', '7', '']];
+  assert.deepEqual(whoRows(card(grid(many), 'ohl-who'), 'tfoot'), totals);
+  many.run("dzGoPage('ohl-customers',2)");
+  assert.deepEqual(names(), [2, 1].map((i) => `CUST0${i} - Customer 0${i} | 1 | 1 | 2`));
+  assert.match(card(grid(many), 'ohl-who'), /<span class="dz-pagecount">6–7 of 7 customers<\/span>/);
+  assert.deepEqual(whoRows(card(grid(many), 'ohl-who'), 'tfoot'), totals);
+  // A page filter starts the list at page 1 again.
+  many.run("setWeeklyCustomerFilter(['CUST03'])");
+  assert.deepEqual(names(), ['CUST03 - Customer 03 | 1 | 1 | 2']);
+  many.run("setWeeklyCustomerFilter(['ALL'])");
+  assert.equal(names().length, 5);
+  assert.deepEqual(many.errors, []);
+
   // Top reasons (owner, option S): which reasons come together. A column per exact set of reasons (its line count as a
-  // bar), a dot per reason under it; the reason names keep their own line counts and filter as before.
-  const ups = h.slice(h.indexOf('<div class="ohu"'), h.indexOf('</section>', h.indexOf('<div class="ohu"')));
+  // bar), a dot per reason under it; the reason names keep their own line counts and filter as before. Version 1: it
+  // is the first half of the "Why, and When?" card (tests below), not part of Status.
+  const h = html(page);
+  const ups = h.slice(h.indexOf('<div class="ohu"'), h.indexOf('<div class="ohl-why-half">', h.indexOf('<div class="ohu"')));
   assert.ok(ups.length > 100, 'the reason sets are drawn');
   assert.match(ups, /aria-label="Which reasons come together"/);
   assert.match(ups, /<button type="button" class="ohu-name" data-focus-key="oh-reason-[^"]+" aria-pressed="false" onclick="setWeeklyReasonFilter\(/);
+  // 100 and 102 are past due only; 101 is past due and short in the snapshot.
+  assert.deepEqual([...ups.matchAll(/<span class="ohu-nm">([^<]+)<\/span><span class="ohu-tot">(\d+)<\/span>/g)].map((m) => [m[1], +m[2]]), [['Past due · No reschedule', 3], ['Supply shortage', 1]]);
   const cols = [...ups.matchAll(/<button type="button" class="ohu-col" style="--h:[\d.]+;--a:\d+;--b:\d+" data-focus-key="oh-rset-([^"]+)"[\s\S]*?<span class="ohu-n">(\d+)<\/span>/g)];
   assert.ok(cols.length >= 1 && cols.length <= 8, `1 to 8 sets: ${cols.length}`);
   const n = cols.map((c) => +c[2]);
-  assert.deepEqual(n, [...n].sort((x, y) => y - x), 'biggest set first');
+  assert.deepEqual(n, [2, 1], 'biggest set first');
   assert.ok(ups.includes('<i class="ohu-dot on"></i>'), 'dots mark the reasons in each set');
   // A column lists exactly its lines, and the filter chip names the set.
   const key = cols[0][1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');
@@ -253,8 +407,370 @@ test('Customers at risk is a ranked table against each customer\'s own open orde
   const after = html(page);
   assert.match(after, new RegExp(`data-focus-key="oh-rset-[^"]+" aria-pressed="true"`));
   assert.match(after, /Reasons<\/span>|Reasons:/);
+  assert.deepEqual(lineDocs(page), ['100', '102']);
   page.run(`setWeeklyReasonFilter(${JSON.stringify(key)})`);
   assert.doesNotMatch(html(page), /data-focus-key="oh-rset-[^"]+" aria-pressed="true"/);
+  assert.deepEqual(page.errors, []);
+});
+
+// --- Leading, Version 1 (owner's pick): four questions -------------------------------------------------------------------
+test('Leading reads as four questions, in order; question 4 and its card are left out (the questions number 1 to 3) when there is neither supply to pull in nor a date change', async () => {
+  // Two customers with a PO to pull in and a date change each, and Barletta with one past-due order and neither.
+  const page = await loadRows([...doRows(2), so('900', '08/05/2026', { 'Item No.': 'Z', ...BAR })]);
+  const FOUR = [[1, 'What Is at Risk?'], [2, 'Why, and When?'], [3, 'Who?'], [4, 'What Can We Do?']];
+  let g = grid(page);
+  assert.deepEqual(questions(g), FOUR);
+  // Each question, then its card (question 1: At risk beside the ship target over Status); the month lists and Lines close.
+  assert.deepEqual(layout(g), ['What Is at Risk?', 'at-risk', 'ohl-col', 'ohl-ship', 'ohl-status-card', 'Why, and When?', 'ohl-why', 'Who?', 'ohl-who', 'What Can We Do?', 'ohl-do', 'ohl-months', 'ohl-lines-card']);
+  // The grid is six columns: At risk and the column share a row (3 + 3); every other card and question takes the row.
+  assert.match(g, /^<div class="dz-grid ohl-grid">\s*<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">1<\/span><h2 class="ohl-q-t" data-tc-skip>What Is at Risk\?<\/h2><\/div>\s*<section class="dz-card dz-span-3 ohl-card dz-fade" style="--i:0"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>At risk<\/h2>/);
+  assert.match(g, /<\/section>\s*<div class="ohl-col dz-span-3"><section class="dz-card dz-fade ohl-ship" style="--i:1">[\s\S]*?<\/section><section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status">[\s\S]*?<\/section><\/div>\s*<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2<\/span>/);
+  for (const cls of ['ohl-why', 'ohl-who', 'ohl-do', 'ohl-months', 'ohl-lines-card']) assert.match(card(g, cls), /^<section class="dz-card dz-span-6 /, cls);
+  assert.match(g, /<h2 class="ohl-q-t" data-tc-skip>What Can We Do\?<\/h2><\/div><section class="dz-card dz-span-6 ohl-card ohl-do /);
+  // Barletta only: nothing to pull in and no date moved, so there is no question 4 and no card under it.
+  page.run("setWeeklyCustomerFilter(['BARLETTA'])");
+  g = grid(page);
+  assert.deepEqual(questions(g), FOUR.slice(0, 3));
+  assert.deepEqual(layout(g), ['What Is at Risk?', 'at-risk', 'ohl-col', 'ohl-ship', 'ohl-status-card', 'Why, and When?', 'ohl-why', 'Who?', 'ohl-who', 'ohl-months', 'ohl-lines-card']);
+  assert.doesNotMatch(g, /What Can We Do\?|ohl-do[ "]|ohl-pull-tbl|ohl-dc-row|data-focus-key="ohl-do-/);
+  assert.deepEqual(page.run('(()=>{const m=currentMetrics();return [ohlSupplyData(m).pulls.length,soDateChangeImpact(m).totals.lines]})()'), [0, 0]);
+  // Every customer again: the fourth question is back.
+  page.run("setWeeklyCustomerFilter(['ALL'])");
+  assert.deepEqual(questions(grid(page)), FOUR);
+  assert.deepEqual(page.run('(()=>{const m=currentMetrics();return [ohlSupplyData(m).pulls.length,soDateChangeImpact(m).totals.lines]})()'), [2, 3]);
+  // The file's first fixture (a late PO, short stock, nothing to pull in, no date moved): three questions.
+  const three = await loaded();
+  assert.deepEqual(questions(grid(three)), FOUR.slice(0, 3));
+  assert.doesNotMatch(grid(three), /ohl-do[ "]/);
+  // The questions are Leading's: Lagging and Supply / Demand have none.
+  for (const view of ['lagging', 'supply']) {
+    page.run(`setWeeklyView('${view}')`);
+    assert.doesNotMatch(html(page), /class="ohl-q[ "]|ohl-q-t/, view);
+  }
+  assert.deepEqual(page.errors, []);
+  assert.deepEqual(three.errors, []);
+});
+
+test('Status: one row of five cells under the bar, each state\'s open orders and lines; a cell lists its lines in the Lines card; the list and Top reasons left the card', async () => {
+  const page = await loadRows(MIX);
+  const status = () => card(grid(page), 'ohl-status-card');
+  let s = status();
+  assert.match(s, /^<section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status"><div class="ohs2-head"><div class="ohl-sec-title" data-tip="[^"]+">Status<\/div><span class="ohs2-meta"><b>8<\/b> open orders<\/span><\/div>/);
+  // The bar: one part per state with orders, as wide as its share of the eight open orders.
+  assert.deepEqual([...s.matchAll(/<button type="button" class="ohs2-seg" style="flex-grow:(\d+);background:[^"]+" data-focus-key="status-seg-st-(\w+)" aria-label="([^"]+)" aria-pressed="false" onclick="setWeeklyTileFilter\('st-\2'\)" data-tip="[^"]+"><\/button>/g)].map((m) => [m[2], +m[1], m[3]]),
+    [['ontrack', 2, 'On track: 2 orders, 25%'], ['duethisweek', 1, 'Due this week: 1 order, 13%'], ['rescheduled', 1, 'Rescheduled: 1 order, 13%'], ['pastdue', 3, 'Past due: 3 orders, 38%'], ['nocommit', 1, 'No commit: 1 order, 13%']]);
+  // One row of five cells: the orders large, "orders · N lines" under it. Order 111 has two lines.
+  assert.match(s, /<\/div>\s*<div class="ohs3-row" role="group" aria-label="Open orders by state, with figures">(?:<button type="button" class="ohs3-cell[^"]*"[\s\S]*?<\/button>){5}<\/div><\/section>$/);
+  const WANT = [['ontrack', 'On track', 2, 'orders · 3 lines', ''], ['duethisweek', 'Due this week', 1, 'order · 1 line', ''], ['rescheduled', 'Rescheduled', 1, 'order · 1 line', ''], ['pastdue', 'Past due', 3, 'orders · 3 lines', 'crit'], ['nocommit', 'No commit', 1, 'order · 1 line', '']];
+  assert.deepEqual(statusCells(s).map((c) => [c.id, c.label, c.orders, c.sub, c.cls]), WANT);
+  assert.ok(statusCells(s).every((c) => !c.pressed));
+  assert.equal(statusCells(s)[0].tip, 'On track\n• 2 orders, 3 lines\n• $3,000 open\n• No risk signal, not due this week\nClick to list them.');
+  // The cells are the data's: every open order in exactly one state.
+  assert.deepEqual(page.run("ohLeadingData(currentMetrics()).states.map(s=>[s.id,s.orders,s.rows.length,s.rows.map(r=>r.documentNumber).join()])"),
+    [['ontrack', 2, 3, '111,111,112'], ['duethisweek', 1, 1, '110'], ['rescheduled', 1, 1, '113'], ['pastdue', 3, 3, '100,101,102'], ['nocommit', 1, 1, '114']]);
+  assert.equal(statusCells(s).reduce((t, c) => t + c.orders, 0), 8);
+  // Gone on purpose: the list with its Lines / Orders columns, and Top reasons (now in "Why, and When?").
+  assert.doesNotMatch(s, /ohs2-cols|ohs2-list|ohs2-row|ohs2-name|ohs2-lines|class="ohs2-n"|ohl-kv|Top reasons|class="ohu"/);
+  assert.doesNotMatch(html(page), /class="ohs2-(cols|list|row[ "]|name|lines|n")/);
+  // A cell lists its lines in the Lines card (the cell and its part of the bar show as picked); again goes back to At risk.
+  assert.deepEqual(lineDocs(page), ['100', '101', '102', '113', '114']);
+  page.run("setWeeklyTileFilter('st-ontrack')");
+  s = status();
+  assert.deepEqual(statusCells(s).filter((c) => c.pressed).map((c) => [c.id, c.cls]), [['ontrack', 'sel']]);
+  assert.match(s, /<button type="button" class="ohs2-seg sel" style="flex-grow:2;[^"]*" data-focus-key="status-seg-st-ontrack" aria-label="On track: 2 orders, 25%" aria-pressed="true"/);
+  assert.deepEqual(lineDocs(page).sort(), ['111', '111', '112']);
+  assert.deepEqual(linesMeta(html(page))[0], '3 lines · $3,000');
+  assert.doesNotMatch(statusCells(s)[0].tip, /Click to list them/);
+  page.run("setWeeklyTileFilter('st-nocommit')");
+  assert.deepEqual(statusCells(status()).filter((c) => c.pressed).map((c) => c.id), ['nocommit']);
+  assert.deepEqual(lineDocs(page), ['114']);
+  page.run("setWeeklyTileFilter('st-nocommit')");
+  assert.ok(statusCells(status()).every((c) => !c.pressed));
+  assert.deepEqual(lineDocs(page), ['100', '101', '102', '113', '114']);
+  assert.deepEqual(page.errors, []);
+  // A state with no orders is greyed (zero) and has no part in the bar; past due is red only while it has orders.
+  const three = await loaded();
+  const t = card(grid(three), 'ohl-status-card');
+  assert.match(t, /<span class="ohs2-meta"><b>3<\/b> open orders<\/span>/);
+  assert.deepEqual(statusCells(t).map((c) => [c.id, c.orders, c.sub, c.cls]), [['ontrack', 0, 'orders · 0 lines', 'zero'], ['duethisweek', 0, 'orders · 0 lines', 'zero'], ['rescheduled', 0, 'orders · 0 lines', 'zero'], ['pastdue', 3, 'orders · 3 lines', 'crit'], ['nocommit', 0, 'orders · 0 lines', 'zero']]);
+  assert.equal((t.match(/class="ohs2-seg/g) || []).length, 1);
+  three.run("setWeeklyCustomerFilter(['NOBODY'])");
+  const none = card(grid(three), 'ohl-status-card');
+  assert.match(none, /<span class="ohs2-meta"><b>0<\/b> open orders<\/span>/);
+  assert.doesNotMatch(none, /ohs2-bar/);
+  assert.deepEqual(statusCells(none).map((c) => [c.orders, c.cls]), Array(5).fill([0, 'zero']));
+  assert.deepEqual(three.errors, []);
+});
+
+test('Why, and When?: one card, Top reasons beside Open lines by due week (no card of its own for either)', async () => {
+  const page = await loadRows(MIX);
+  const g = grid(page);
+  const why = card(g, 'ohl-why');
+  assert.match(why, /^<section class="dz-card dz-span-6 ohl-card ohl-why dz-fade" style="--i:2" aria-label="Top reasons and open lines by due week"><div class="ohl-why-grid"><div class="ohl-why-half"><div class="ohs2-head"><div class="ohl-sec-title" data-tip="[^"]+">Top reasons<\/div><span class="ohs2-meta"><b>5<\/b> at-risk lines<\/span><\/div>/);
+  assert.equal((why.match(/<div class="ohl-why-half">/g) || []).length, 2, 'two halves');
+  assert.equal((g.match(/ohl-why-grid/g) || []).length, 1);
+  const [reasons, due] = why.split('<div class="ohl-why-half">').slice(1);
+  // Left: the reason sets of the five at-risk lines (100, 101, 102 past due; 113 rescheduled; 114 no commit).
+  assert.match(reasons, /<div class="ohu" style="--rows:3;--cols:3" role="group" aria-label="Which reasons come together">/);
+  assert.deepEqual([...reasons.matchAll(/<span class="ohu-nm">([^<]+)<\/span><span class="ohu-tot">(\d+)<\/span>/g)].map((m) => [m[1], +m[2]]), [['Past due · No reschedule', 3], ['No commit date', 1], ['Rescheduled later', 1]]);
+  assert.deepEqual([...reasons.matchAll(/<span class="ohu-n">(\d+)<\/span>/g)].map((m) => +m[1]), [3, 1, 1]);
+  assert.doesNotMatch(reasons, /Open lines by due week|ohl-chart|tile-st-pastdue-chip/);
+  // Right: the red chip counts the lines already past due; the chart counts the open lines of the next eight weeks
+  // (110 this week, 111's two lines on Sep 15, 113 on its new date Sep 25, 112 on Oct 20).
+  assert.match(due, /^<div class="ohs2-head"><div class="ohl-sec-title" data-tip="Open lines due per week, next 8 weeks\. Past due is the red chip\.">Open lines by due week<\/div><button type="button" class="dz-chip red ohl-chipbtn" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter\('st-pastdue'\)" aria-pressed="false" data-tip="3 lines already past due\n• 3 orders\n• \$3,000 open\nClick to list them\.">3 lines already past due<\/button><\/div>/);
+  assert.match(due, /<div class="ohl-chart" role="img" aria-label="Open lines due by week, this week: 1, Sep 6: 0, Sep 13: 2, Sep 20: 1, Sep 27: 0, Oct 4: 0, Oct 11: 0, Oct 18: 1">/);
+  assert.deepEqual([...due.matchAll(/<span class="ohl-pt" style="[^"]+" data-tip="([^"]+)"><\/span>/g)].map((m) => m[1]), ['This week: 1 open line due, $1,000.', 'Week of Sep 6: 0 open lines due, $0.', 'Week of Sep 13: 2 open lines due, $2,000.', 'Week of Sep 20: 1 open line due, $1,000.',
+    'Week of Sep 27: 0 open lines due, $0.', 'Week of Oct 4: 0 open lines due, $0.', 'Week of Oct 11: 0 open lines due, $0.', 'Week of Oct 18: 1 open line due, $1,000.']);
+  assert.match(due, /<span class="ohl-peak" style="--x:31\.25%;top:[\d.]+%">2 lines peak · Sep 13<\/span>/);
+  assert.deepEqual([...(/<div class="ohl-weeks" aria-hidden="true">([\s\S]*?)<\/div>/.exec(due) || ['', ''])[1].matchAll(/<span>([^<]*)<\/span>/g)].map((m) => m[1]), ['Now', '', '9/13', '', '9/27', '', '10/11', '']);
+  assert.doesNotMatch(due, /class="ohu"|Top reasons/);
+  // The five lines in the weeks and the three in the chip are every open line with a date (114 has no commit date).
+  assert.equal(page.run("orderHealthData(currentMetrics()).allOrderRows.filter(r=>r.isOpen).length"), 9);
+  // Neither has a card or an h2 of its own any more; the only h2 in the card's row is the question.
+  assert.doesNotMatch(g, /<h2[^>]*>(Open lines by due week|Top reasons|Status &amp; top reasons)<\/h2>/);
+  assert.doesNotMatch(why, /<h2|dz-card-head/);
+  assert.match(g, /<h2 class="ohl-q-t" data-tc-skip>Why, and When\?<\/h2><\/div>\s*<section class="dz-card dz-span-6 ohl-card ohl-why /);
+  // The chip lists the past-due lines (and shows as picked, with the Status cell); a reason name lists its lines.
+  page.run("setWeeklyTileFilter('st-pastdue')");
+  assert.match(card(grid(page), 'ohl-why'), /<button type="button" class="dz-chip red ohl-chipbtn sel" data-focus-key="tile-st-pastdue-chip" onclick="setWeeklyTileFilter\('st-pastdue'\)" aria-pressed="true"/);
+  assert.deepEqual(statusCells(card(grid(page), 'ohl-status-card')).filter((c) => c.pressed).map((c) => c.id), ['pastdue']);
+  assert.deepEqual(lineDocs(page), ['100', '101', '102']);
+  page.run("setWeeklyTileFilter('st-pastdue');setWeeklyReasonFilter('Rescheduled later')");
+  assert.match(card(grid(page), 'ohl-why'), /<button type="button" class="ohu-name sel" data-focus-key="oh-reason-Rescheduled later" aria-pressed="true"/);
+  assert.deepEqual(lineDocs(page), ['113']);
+  page.run("setWeeklyReasonFilter('Rescheduled later')");
+  assert.deepEqual(lineDocs(page), ['100', '101', '102', '113', '114']);
+  assert.deepEqual(page.errors, []);
+  // Nothing due in the next eight weeks and nothing at risk: each half says so in words (the card still holds both).
+  const quiet = await loadRows([so('700', '12/15/2026')]);
+  const q = card(grid(quiet), 'ohl-why');
+  assert.match(q, /<b>0<\/b> at-risk lines<\/span><\/div>\s*<div class="empty-note">No reasons set on the at-risk lines\.<\/div>/);
+  assert.match(q, /Open lines by due week<\/div><\/div>\s*<div class="empty-note ohl-empty">No open lines are due in the next eight weeks\.<\/div>/);
+  assert.doesNotMatch(q, /tile-st-pastdue-chip|ohl-chart/);
+  assert.deepEqual(quiet.errors, []);
+});
+
+test('What Can We Do?: Supply to pull in | Date changes behind one switch (ohlSetDoView), 5 rows a page; one block alone when the other has no rows; print shows both', async () => {
+  // Twelve customers: twelve PO lines to pull in, and thirteen lines (twelve customers) whose date moved a month later.
+  const page = await loadRows(doRows(12));
+  const doCard = () => card(grid(page), 'ohl-do');
+  const seg = (c) => [...((/<div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">([\s\S]*?)<\/div>/.exec(c) || ['', ''])[1]).matchAll(/<button type="button" data-focus-key="(ohl-do-\w+)"( class="on")? aria-pressed="(true|false)" onclick="ohlSetDoView\(&#39;(\w+)&#39;\)" data-tip="([^"]+)">([^<]+)<\/button>/g)]
+    .map((m) => [m[1], !!m[2], m[3] === 'true', m[4], m[6]]);
+  const pos = (c) => [...c.matchAll(/<button type="button" class="ohl-pull-po[^"]*" data-focus-key="ohl-pull-[^"]+" data-off="[^"]+" aria-pressed="(?:true|false)" onclick="ohlPullPick\(this\.dataset\.off\)" data-tip="[^"]+">PO (\d+)<\/button>/g)].map((m) => +m[1]);
+  const moved = (c) => [...c.matchAll(/<button type="button" class="dz-tr ohl-dc-row[^"]*" data-focus-key="dc-(CUST\d+)" data-off="\1" onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)" aria-pressed="(?:true|false)" data-tip="[^"]+">/g)].map((m) => m[1]);
+  const count = (c) => (/<span class="dz-pagecount">([^<]*)<\/span>/.exec(c) || [])[1] || '';
+  assert.equal(page.run('ohlDoView'), 'pull');
+  assert.deepEqual(page.run('(()=>{const m=currentMetrics(),t=soDateChangeImpact(m).totals;return [ohlSupplyData(m).pulls.length,t.lines,t.customers]})()'), [12, 13, 12]);
+  // Supply to pull in first: the card is named for the block shown; the switch sits in the title row with the counts.
+  let c = doCard();
+  assert.match(c, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-pull dz-fade" style="--i:5" aria-label="Supply to pull in"><div class="dz-card-head"><h2 class="dz-title" data-tip="PO lines due after the orders they cover\n[^"]+">Supply to pull in<\/h2><span class="dz-meta"><div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">/);
+  const SEG = [['ohl-do-pull', 'pull', 'Supply to pull in · 12'], ['ohl-do-dates', 'dates', 'Date changes · 13 lines']];
+  assert.deepEqual(seg(c), SEG.map(([key, id, label]) => [key, id === 'pull', id === 'pull', id, label]));
+  assert.equal((c.match(/<h2/g) || []).length, 1);
+  assert.match(c, /<table class="sup-tbl ohl-pull-tbl">/);
+  assert.doesNotMatch(c, /ohl-dc-row|data-card="date-change"/);
+  // Five PO lines a page, the earliest need first.
+  assert.deepEqual(pos(c), [601, 602, 603, 604, 605]);
+  assert.equal(count(c), '1–5 of 12 PO lines');
+  assert.match(c, /<nav class="shp-pager dz-pager print-hide" data-dzpager="ohl-pull" aria-label="Supply to pull in pages"/);
+  page.run("dzGoPage('ohl-pull',3)");
+  assert.deepEqual(pos(doCard()), [611, 612]);
+  assert.equal(count(doCard()), '11–12 of 12 PO lines');
+  page.run("dzPagerKey({key:'Home',preventDefault(){}},'ohl-pull')");
+  assert.deepEqual(pos(doCard()), [601, 602, 603, 604, 605]);
+  // The other side of the switch: Date changes, five customers a page, the most value moved first.
+  page.run("ohlSetDoView('dates')");
+  assert.equal(page.run('ohlDoView'), 'dates');
+  c = doCard();
+  assert.match(c, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-dcwrap dz-fade" style="--i:5" aria-label="Date changes"><div class="dz-card-head"><h2 class="dz-title" data-tip="Lines whose date moved over 2 days past due\n[^"]+">Date changes<\/h2><span class="dz-meta"><div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">/);
+  assert.deepEqual(seg(c), SEG.map(([key, id, label]) => [key, id === 'dates', id === 'dates', id, label]));
+  assert.match(c, /<div class="ohl-dc" data-card="date-change"><div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">/);
+  assert.doesNotMatch(c, /ohl-pull-tbl|ohl-pull-po/);
+  assert.deepEqual(moved(c), ['CUST12', 'CUST11', 'CUST10', 'CUST09', 'CUST08']);
+  assert.equal(count(c), '1–5 of 12 customers');
+  assert.match(c, /<nav class="shp-pager dz-pager print-hide" data-dzpager="ohl-datechange" aria-label="Date changes pages"/);
+  assert.match(c, /data-focus-key="dc-CUST12"[^>]*data-tip="CUST12 - Customer 12\n• 1 line, \$12,000 moved later\n• Worst: SO 312 R12 due Sep 22, now Oct 22 \(SAP\)\nClick to filter to it\.">\s*<span class="ohl-dc-cust">CUST12 - Customer 12<\/span>\s*<span class="ohl-dc-lines">1 line<span class="dz-cell-sub">\$12K<\/span><\/span>\s*<span class="dz-num ohl-dc-slip">\+30d<\/span>/);
+  page.run("dzGoPage('ohl-datechange',3)");
+  c = doCard();
+  assert.deepEqual(moved(c), ['CUST02', 'CUST01']);
+  assert.equal(count(c), '11–12 of 12 customers');
+  assert.match(c, /data-focus-key="dc-CUST01"[\s\S]*?<span class="ohl-dc-lines">2 lines<span class="dz-cell-sub">\$1\.5K<\/span><\/span>/);
+  // The switch keeps its side through a redraw; anything but 'dates' is Supply to pull in. Pull in kept its page 1.
+  page.run('renderResults()');
+  assert.match(doCard(), /aria-label="Date changes"/);
+  for (const v of ["'pull'", "'nonsense'", 'undefined']) {
+    page.run("ohlSetDoView('dates')");
+    page.run(`ohlSetDoView(${v})`);
+    assert.equal(page.run('ohlDoView'), 'pull', v);
+    assert.match(doCard(), /aria-label="Supply to pull in"/, v);
+  }
+  assert.deepEqual(pos(doCard()), [601, 602, 603, 604, 605]);
+  // Print: both blocks, each under its own title, every row, no switch and no pager.
+  page.run("ohlSetDoView('dates')");
+  page.run('printMode=true;renderResults()');
+  c = doCard();
+  assert.match(c, /^<section class="dz-card dz-span-6 ohl-card ohl-do" aria-label="What we can do"><div class=" ohl-pull"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]+">Supply to pull in<\/h2><\/div>/);
+  assert.match(c, /<\/table><\/div><\/div><div class="ohl-sec ohl-dcwrap"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]+">Date changes<\/h2><\/div><div class="ohl-dc" data-card="date-change">/);
+  assert.deepEqual(pos(c), Array.from({ length: 12 }, (_, i) => 601 + i));
+  assert.deepEqual(moved(c), Array.from({ length: 12 }, (_, i) => `CUST${two(12 - i)}`));
+  assert.doesNotMatch(c, /dz-seg|data-focus-key="ohl-do-|dz-pagefoot|shp-pager/);
+  assert.deepEqual(questions(grid(page)).slice(0, 4).map((x) => x[1]), ['What Is at Risk?', 'Why, and When?', 'Who?', 'What Can We Do?']);
+  page.run('printMode=false;renderResults()');
+  c = doCard();
+  assert.match(c, /aria-label="Date changes"/);
+  assert.equal(seg(c).length, 2);
+  // A date-change row is the page's customer filter, as before: that customer's line, and its PO in the other block.
+  page.run("setWeeklyOffenderFilter('customers','CUST05')");
+  c = doCard();
+  assert.deepEqual(moved(c), ['CUST05']);
+  assert.match(c, /class="dz-tr ohl-dc-row sel" data-focus-key="dc-CUST05" data-off="CUST05" onclick="[^"]+" aria-pressed="true"/);
+  assert.deepEqual(seg(c).map((x) => x[4]), ['Supply to pull in · 1', 'Date changes · 1 line']);
+  assert.doesNotMatch(c, /dz-pagefoot/);
+  page.run("ohlSetDoView('pull')");
+  assert.deepEqual(pos(doCard()), [605]);
+  page.run("setWeeklyOffenderFilter('customers','CUST05')");
+  assert.deepEqual(page.errors, []);
+
+  // Only supply to pull in: that block alone, no switch, whichever side the switch was left on.
+  const pullOnly = await loadRows(doRows(6, { dates: false }));
+  for (const v of ['pull', 'dates']) {
+    pullOnly.run(`ohlSetDoView('${v}')`);
+    const p = card(grid(pullOnly), 'ohl-do');
+    assert.match(p, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-pull dz-fade" style="--i:5" aria-label="Supply to pull in"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]+">Supply to pull in<\/h2><\/div><div class="sup-scroll"/, v);
+    assert.doesNotMatch(p, /dz-seg|data-focus-key="ohl-do-|Date changes|ohl-dc/, v);
+    assert.deepEqual(pos(p), [601, 602, 603, 604, 605], v);
+    assert.equal(count(p), '1–5 of 6 PO lines', v);
+  }
+  assert.equal(questions(grid(pullOnly)).length, 4);
+  assert.deepEqual(pullOnly.errors, []);
+  // Only date changes: that block alone, no switch.
+  const datesOnly = await loadRows(doRows(6, { pull: false }));
+  for (const v of ['pull', 'dates']) {
+    datesOnly.run(`ohlSetDoView('${v}')`);
+    const d = card(grid(datesOnly), 'ohl-do');
+    assert.match(d, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-dcwrap dz-fade" style="--i:5" aria-label="Date changes"><div class="dz-card-head"><h2 class="dz-title" data-tip="[^"]+">Date changes<\/h2><\/div><div class="ohl-dc" data-card="date-change">/, v);
+    assert.doesNotMatch(d, /dz-seg|data-focus-key="ohl-do-|Supply to pull in|ohl-pull/, v);
+    assert.deepEqual(moved(d), ['CUST06', 'CUST05', 'CUST04', 'CUST03', 'CUST02'], v);
+    assert.equal(count(d), '1–5 of 6 customers', v);
+  }
+  assert.equal(questions(grid(datesOnly)).length, 4);
+  assert.deepEqual(datesOnly.errors, []);
+});
+
+test('The two month lists are folds in one card: shut on load; opening one sets tableMore and survives a redraw; print opens both; the bar chart is not on Leading', async () => {
+  const page = await loadRows(MIX);
+  const months = () => card(grid(page), 'ohl-months');
+  const folds = () => [...months().matchAll(/<details class="ohl-fold"( open)? data-more="(ohl-fold-\w+)" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="more-\2" data-tip="([^"]+)"><svg class="dz-chev"[^>]*>[\s\S]*?<\/svg><span class="dz-title sm ohl-fold-t">([^<]+)<\/span><span class="ohl-fold-m">([^<]*)<\/span><\/summary><div class="ohl-fold-body">/g)]
+    .map((m) => ({ key: m[2], open: !!m[1], tip: m[3], title: m[4], meta: m[5] }));
+  const open = () => folds().map((f) => f.open);
+  const toggle = (key, to) => page.run(`ohlFoldToggle({dataset:{more:${JSON.stringify(key)}},open:${to}})`);
+  // One card, after question 3 (no question 4 here) and before Lines; two folds, both shut, each with a tip.
+  assert.match(months(), /^<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Delivery months">\s*<details class="ohl-fold" data-more="ohl-fold-months"/);
+  assert.equal((months().match(/<details\b/g) || []).length, 2);
+  assert.deepEqual(folds().map((f) => [f.key, f.open, f.title, f.meta]), [['ohl-fold-months', false, 'Open orders by delivery month', '2026'], ['ohl-fold-items', false, 'Items not shipped yet', '9 lines']]);
+  assert.deepEqual(folds().map((f) => f.tip), ['Shipped and open value per month, against last year.', 'Open lines by original delivery month, oldest first.']);
+  assert.deepEqual(page.run("Object.keys(tableMore).filter(k=>/ohl-fold/.test(k))"), []);
+  // Fold 1: the monthly delivery summary (the Monthly page's table) and the undated-lines note in Leading's words.
+  const [, first, second] = months().split('<details class="ohl-fold"');
+  assert.match(first, /<div class="ohl-fold-body"><div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div>/);
+  assert.match(first, /<div class="table-scroll" tabindex="0" role="region" aria-label="Monthly delivery summary · 2026"><table class="data-table"/);
+  assert.deepEqual([...first.matchAll(/<td class="m">([^<]+)<\/td>/g)].map((m) => m[1]), ['Aug 2026', 'Sep 2026', 'Oct 2026']);
+  assert.match(first, /<p class="ohl-note ohl-foot-note">1 open lines \(\$1,000\) with no commit date are not in these months\.<\/p>/);
+  assert.doesNotMatch(first, /monthly cards or chart|ohl-original-month/);
+  // Fold 2: the Month pick and the open lines by original delivery month (10 a page).
+  assert.match(second, /<div class="ohl-fold-body"><div class="ohl-fold-tools"><label class="inline-controls">Month <select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="[^"]+" onchange="setOriginalDeliveryMonthFilter\(this\.value\)">/);
+  assert.match(second, /<div class="table-scroll" tabindex="0" role="region" aria-label="Items not shipped yet"><table class="data-table"/);
+  assert.deepEqual([...second.matchAll(/<td class="strong">(\d+)<\/td>/g)].map((m) => m[1]), ['100', '101', '102', '113', '114', '110', '111', '111', '112']);
+  // Gone on purpose: the two separate cards with their h2 titles and the collapse chevron on the Items card's head.
+  assert.doesNotMatch(grid(page), /ohl-notshipped|<h2[^>]*>(Open orders by delivery month|Items not shipped yet)<\/h2>|dz-collapse-btn/);
+  // The delivery-month bar chart left Leading (the summary table has the same shipped and open values) ...
+  assert.doesNotMatch(grid(page), /mom-pair|pair-chart|pair-labels|pair-col|class="legend chart"/);
+  // Opening a fold is remembered without a redraw (the browser has already opened it), and the next redraw keeps it.
+  const before = html(page);
+  toggle('ohl-fold-items', true);
+  assert.equal(html(page), before, 'no redraw');
+  assert.deepEqual(page.run("Object.entries(tableMore).filter(([k])=>/ohl-fold/.test(k))"), [['more-ohl-fold-items', true]]);
+  page.run('renderResults()');
+  assert.deepEqual(open(), [false, true]);
+  // It stays open through the page's own redraws: a Status pick, a page filter, the fold's Month pick.
+  page.run("setWeeklyTileFilter('st-pastdue')");
+  page.run("setWeeklyCustomerFilter(['BARLETTA'])");
+  assert.deepEqual(open(), [false, true]);
+  assert.deepEqual(folds().map((f) => f.meta), ['2026', '4 lines']);
+  page.run("setWeeklyCustomerFilter(['ALL']);setWeeklyTileFilter('st-pastdue')");
+  page.run("setOriginalDeliveryMonthFilter('2026-09')");
+  assert.deepEqual(open(), [false, true]);
+  assert.deepEqual(folds().map((f) => f.meta), ['2026', '3 lines']);
+  assert.match(months(), /<select id="ohl-original-month"[\s\S]*?<option value="2026-09" selected>Sep 2026<\/option>/);
+  page.run("setOriginalDeliveryMonthFilter('ALL')");
+  // Both open; shutting one forgets it.
+  toggle('ohl-fold-months', true);
+  page.run('renderResults()');
+  assert.deepEqual(open(), [true, true]);
+  toggle('ohl-fold-items', false);
+  assert.deepEqual(page.run("Object.entries(tableMore).filter(([k])=>/ohl-fold/.test(k))"), [['more-ohl-fold-months', true]]);
+  page.run('renderResults()');
+  assert.deepEqual(open(), [true, false]);
+  toggle('ohl-fold-months', false);
+  page.run('renderResults()');
+  assert.deepEqual(open(), [false, false]);
+  // Print opens both (and a toggle while printing is not remembered); after printing they are shut again.
+  page.run('printMode=true;renderResults()');
+  assert.deepEqual(open(), [true, true]);
+  toggle('ohl-fold-months', true);
+  assert.doesNotMatch(grid(page).slice(0, grid(page).indexOf('ohl-lines-card')), /mom-pair|pair-chart/);
+  page.run('printMode=false;renderResults()');
+  assert.deepEqual(open(), [false, false]);
+  assert.deepEqual(page.run("Object.keys(tableMore).filter(k=>/ohl-fold/.test(k))"), []);
+  // A new report starts with both shut.
+  toggle('ohl-fold-months', true);
+  page.run('resetViewState();renderResults()');
+  assert.deepEqual(open(), [false, false]);
+  // ... and the bar chart is still on the Monthly page (hidden by default; shown from Settings).
+  page.run("stgTogglePage('monthly');setTab('monthly')");
+  assert.match(html(page), /<div class="pair-chart"><div class="pair-col/);
+  assert.deepEqual(page.errors, []);
+});
+
+// Every button in Leading's cards (not the Lines card's own rows) is pressed twice, by the click the page gave it:
+// nothing is logged as an error, nothing throws, and Leading still draws its questions after each one.
+test('Leading, every control: each button\'s click runs clean (page.errors stays empty) and the questions stay; focus keys are unique', async () => {
+  const page = await loadRows([...MIX, ...doRows(7)]);
+  const decode = (s) => String(s || '').replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const attr = (tag, name) => decode((new RegExp(` ${name}="([^"]*)"`).exec(tag) || [])[1]);
+  const buttons = () => {
+    const g = grid(page);
+    return [...g.slice(0, g.indexOf('<section class="dz-card dz-span-6 ohl-card ohl-lines-card"')).matchAll(/<button type="button"[^>]*>/g)]
+      .map((m) => ({ key: attr(m[0], 'data-focus-key'), click: attr(m[0], 'onclick'), off: attr(m[0], 'data-off'), wh: attr(m[0], 'data-wh'), named: / (data-tip|aria-label)="[^"]+"/.test(m[0]) }));
+  };
+  const first = buttons();
+  assert.ok(first.length > 60, `${first.length} buttons`);
+  assert.deepEqual(first.filter((b) => !b.key || !b.click).map((b) => b.key || b.click), [], 'every button has a focus key and a click');
+  assert.deepEqual(first.filter((b) => !b.named).map((b) => b.key), [], 'every button has a tip or a name');
+  const keys = first.map((b) => b.key);
+  assert.deepEqual(keys.filter((k, i) => keys.indexOf(k) !== i), [], 'no focus key is used twice');
+  // The new cards' controls are all there.
+  for (const want of ['status-st-ontrack', 'status-seg-st-pastdue', 'tile-st-pastdue-chip', 'offrow-FIREFLY', 'ohl-sup-FIREFLY-po', 'ohl-sup-src-pull', 'ohl-do-pull', 'ohl-do-dates', 'pg-ohl-customers-2', 'pg-ohl-pull-2']) assert.ok(keys.includes(want), want);
+  const summaries = [...grid(page).matchAll(/<summary data-focus-key="([^"]+)" data-tip="[^"]+">/g)].map((m) => m[1]);
+  assert.deepEqual(summaries, ['more-ohl-fold-months', 'more-ohl-fold-items']);
+  let pressed = 0;
+  for (const key of keys) {
+    for (let i = 0; i < 2; i++) {
+      const b = buttons().find((x) => x.key === key);
+      if (!b) break; // a pick can take the button away (a page filter, the other side of the switch)
+      page.ctx.__btn = { dataset: { off: b.off, wh: b.wh } };
+      assert.doesNotThrow(() => page.run(`(function(){${b.click}}).call(__btn)`), `${key}: ${b.click}`);
+      pressed++;
+      assert.deepEqual(page.errors, [], `${key}: ${b.click}`);
+      assert.equal(page.run('activeTab+"/"+weeklyView'), 'weekly/leading', key);
+      const q = questions(grid(page)).map((x) => x[0]);
+      assert.ok(q.length >= 3 && q.every((n, j) => n === j + 1), `${key}: questions ${q.join()}`);
+    }
+  }
+  assert.ok(pressed > 120, `${pressed} clicks`);
+  // Back where it started: no page filter, no pick, the switch on either side.
+  page.run("resetWeeklyFilters();ohlSupplyClear();ohlSetDoView('pull')");
+  assert.deepEqual(questions(grid(page)).map((x) => x[1]), ['What Is at Risk?', 'Why, and When?', 'Who?', 'What Can We Do?']);
   assert.deepEqual(page.errors, []);
 });
 
