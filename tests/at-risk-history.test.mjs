@@ -252,6 +252,52 @@ test('GET falls back to the full history until the compact copy exists, or when 
   assert.deepEqual(await (await getHistory(env)).json(), { v: 1, weeks: [] });
 });
 
+test('the At Risk card figures (counts) are stored per week and served in the compact copy for the sparkline', async () => {
+  const env = { REPORT_STORE: kv() };
+  const counts = (lines, orders, extra = {}) => ({ lines, orders, by: { wh: { 'Spyder - Lacombe': [lines, orders] }, seg: { OEM: [lines, orders] }, cust: { C1: [lines, orders] } }, ...extra });
+  await put(env, { asOf: day(0), keys: [key(1), key(2)], counts: counts(2, 2) });
+  // A second upload the same week: the later export's figures win (also when the earlier one is uploaded last).
+  await put(env, { asOf: '2025-10-08', keys: [key(3)], counts: counts(5, 4) });
+  await put(env, { asOf: '2025-10-07', keys: [key(4)], counts: counts(9, 9) });
+  const text = (k) => JSON.parse(new TextDecoder().decode(env.REPORT_STORE.map.get(k)));
+  const w = await weeks(env);
+  assert.equal(w.length, 1);
+  assert.deepEqual(w[0].counts, { asOf: '2025-10-08', ...counts(5, 4) });
+  assert.deepEqual(text('history').weeks[0].counts, w[0].counts, 'the full history keeps them too');
+  // POST (live SAP data) carries them the same way.
+  const post = (body) => history({ request: new Request(ORIGIN + '/api/history', { method: 'POST', body: JSON.stringify(body), headers: { Origin: ORIGIN, 'content-type': 'application/json' } }), env, params: {} });
+  assert.equal((await post({ atRisk: { asOf: day(1), keys: [key(1)], counts: { lines: 1, orders: 1 } } })).status, 200);
+  assert.deepEqual((await weeks(env))[1].counts, { asOf: day(1), lines: 1, orders: 1 });
+  // The by-filter figures go out only for the newest 8 weeks; lines and orders for every week.
+  for (let i = 2; i < 12; i++) await put(env, { asOf: day(i), keys: [key(i)], counts: counts(i, i) });
+  const served = await weeks(env);
+  assert.equal(served.length, 12);
+  assert.ok(served.every((x) => x.counts && Number.isInteger(x.counts.lines) && Number.isInteger(x.counts.orders)));
+  assert.deepEqual(served.map((x) => !!x.counts.by), [false, false, false, false, true, true, true, true, true, true, true, true]);
+  assert.ok(text('history').weeks.every((x, i) => i === 1 || x.counts.by), 'the full history keeps every split');
+});
+
+test('weeks saved without counts (older data, an older page, malformed counts) still work and simply have none', async () => {
+  const env = { REPORT_STORE: kv() };
+  await env.REPORT_STORE.put('history', JSON.stringify({ v: 1, weeks: [{ asOf: '2026-09-01', savedAt: 'a', keys: [key(1)] }] }));
+  await put(env, { asOf: '2026-09-08', keys: [key(1), key(2)] });
+  const bad = [{ lines: -1, orders: 1 }, { lines: 1.5, orders: 1 }, { lines: 1 }, 'x', { lines: 1, orders: 1, by: { wh: { 'bad\tname': [1, 1] } } }];
+  for (let i = 0; i < bad.length; i++) {
+    const res = await put(env, { asOf: day(49 + i), keys: [key(10 + i)], counts: bad[i] });
+    assert.equal(res.status, 200);
+    assert.ok((await res.json()).history.weeks, 'the lines are still saved');
+  }
+  const list = await weeks(env);
+  assert.deepEqual(list.map((w) => w.asOf), ['2026-09-01', '2026-09-08', ...bad.map((_, i) => day(49 + i))]);
+  assert.deepEqual(list.map((w) => w.counts), [undefined, undefined, undefined, undefined, undefined, undefined, { asOf: day(53), lines: 1, orders: 1 }],
+    'a bad split is dropped, its lines and orders kept');
+  // First flagged is unchanged by the new field.
+  assert.deepEqual(list.map((w) => w.keys), [[key(1)], [key(2)], ...bad.map((_, i) => [key(10 + i)])]);
+  // A week without counts merged with one that has them keeps the figures.
+  await put(env, { asOf: '2026-09-09', keys: [key(3)], counts: { lines: 3, orders: 2 } });
+  assert.deepEqual((await weeks(env))[1].counts, { asOf: '2026-09-09', lines: 3, orders: 2 });
+});
+
 let failed = 0;
 for (const t of tests) {
   try { await t.fn(); console.log(`ok   ${t.name}`); }

@@ -192,15 +192,15 @@ test('tooltips stay short on every page: about 20 words, never a paragraph', asy
   const page = await loadedAll();
   let checked = 0;
   eachView(page, (html, view) => {
-    for (const [, tag, raw] of html.matchAll(/(<[^<>]*?)data-tip="([^"]+)"/g)) {
-      const t = raw.replace(/&[a-z#0-9]+;/gi, ' ');
+    for (const mt of html.matchAll(/data-tip="([^"]+)"/g)) {
+      const t = mt[1].replace(/&[a-z#0-9]+;/gi, ' ');
       checked++;
       // Prose tips are one short sentence. 2v6 tips may be a heading and a few bullets (one fact a line): then each
-      // line is short and there are at most 7 lines. A sparkline's tip (dzSpark) lists every period it draws, one
-      // short line each, so only its lines are checked.
+      // line is short and there are at most 7 lines. A sparkline's tip lists every period it draws (one short line each).
+      const spark = html.slice(html.lastIndexOf('<', mt.index), mt.index).includes('class="dz-spark"');
       if (t.includes('\n')) {
         const lines = t.split('\n');
-        if (!/class="dz-spark"/.test(tag)) assert.ok(lines.length <= 7, `${view}: tip with ${lines.length} lines: ${t}`);
+        assert.ok(lines.length <= (spark ? 16 : 7), `${view}: tip with ${lines.length} lines: ${t}`);
         for (const l of lines) assert.ok(l.trim().split(/\s+/).length <= 20, `${view}: long tip line (${l.trim().split(/\s+/).length} words): ${l}`);
       } else assert.ok(t.split(/\s+/).length <= 30, `${view}: long tip (${t.split(/\s+/).length} words): ${t}`);
     }

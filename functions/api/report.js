@@ -6,7 +6,8 @@
  *   PUT /api/report -> saves a bundle and returns {savedAt, files, history}
  * Bundle: 4-byte big-endian header length, a UTF-8 JSON header {v:1, savedAt, files:[{name, type,
  * lastModified, length}], atRisk?}, then each file's gzip bytes in header order. The server never reads the files.
- * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...]} lists the lines on the report's At Risk card. It is not
+ * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...], counts?} lists the lines on the report's At Risk card
+ * (counts: the card's own figures, for its weekly sparkline; see shared/history.mjs). It is not
  * stored with the report; it is added to the at-risk history (KV key 'history', plus the compact copy
  * 'history:first' that GET /api/history in functions/api/history.js serves): one entry per week (Monday to Sunday),
  * a second upload in the same week is merged into it, 52 weeks kept. A bad atRisk, or a history that cannot be
