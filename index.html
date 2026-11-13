@@ -19670,14 +19670,15 @@ function ohlStatusCard(c){
       <thead><tr><th scope="col"><span class="sr-only">Reason</span></th>${cols.map(col=>`<th scope="col" class="ohs2-wh"${tipAttr(col===''?'Every other warehouse':ohlWhName(col))}>${esc(shortWh(col))}</th>`).join('')}<th scope="col" class="num">At risk</th><th scope="col" class="num">Lines</th><th scope="col" class="num">Orders</th></tr></thead>
       <tbody>${reasonRows}</tbody></table></div>`:'';
   const pd=lead.states.find(s=>s.id==='pastdue');
-  return dzCard({title:'Status & top reasons',sm:true,cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1"',
-    tip:'Status: every open order in one state\nTop reasons: the at-risk reasons, by orders\nClick a part or a row to list its lines.',
-    body:`<div class="ohl-sec ohl-sec-first"><div class="ohs2-head"><div class="ohl-sec-title">Status</div><span class="ohs2-meta"><b>${fmtNum(totO)}</b> open orders · ${esc(moneyShort(totV))}${pd&&pd.orders?` · <span class="ohs2-crit">${pct(pd.orders)}% past due</span>`:''}</span></div>
+  // 2v6.9 (owner): no card title; the two section titles (Status, Top reasons) lead, the card keeps its name for
+  // screen readers.
+  return dzCard({cls:'ohl-card ohl-status-card dz-fade',attrs:' style="--i:1" aria-label="Status and top reasons"',
+    body:`<div class="ohl-sec ohl-sec-first"><div class="ohs2-head"><div class="ohl-sec-title"${tipAttr('Every open order in one state. Click a part or a row to list its lines.')}>Status</div><span class="ohs2-meta"><b>${fmtNum(totO)}</b> open orders · ${esc(moneyShort(totV))}${pd&&pd.orders?` · <span class="ohs2-crit">${pct(pd.orders)}% past due</span>`:''}</span></div>
         ${totO?`<div class="ohs2-bar" role="group" aria-label="Open orders by state">${seg}</div>`:''}
         <div class="ohs2-cols" aria-hidden="true"><span></span><span>Share</span><span>Open</span><span>Lines</span><span>Orders</span></div>
         <div class="ohs2-list" role="group" aria-label="Open orders by state, with figures">${statusRows}</div>
       </div>
-      <div class="ohl-sec"><div class="ohs2-head"><div class="ohl-sec-title">Top reasons</div><span class="ohs2-meta">At-risk orders by warehouse · <b>${fmtNum(riskO)}</b> in all</span></div>
+      <div class="ohl-sec"><div class="ohs2-head"><div class="ohl-sec-title"${tipAttr('At-risk orders by reason and warehouse. Click a reason to list its lines.')}>Top reasons</div><span class="ohs2-meta">At-risk orders by warehouse · <b>${fmtNum(riskO)}</b> in all</span></div>
         ${heat||'<div class="empty-note">No reasons set on the at-risk lines.</div>'}
         <div class="ohl-note ohl-foot-note">A line can have several reasons, so an order can count in more than one row.</div>
       </div>`});
@@ -19735,14 +19736,17 @@ function ohlCustomersCard(c){
     const open=new Set([...(openBy.get(x.key)||[]),...x.risk]);
     const pd=[...x.risk].filter(k=>pastDocs.has(k)).length;
     return {...x,orders:x.risk.size,pd,other:x.risk.size-pd,open:open.size,value:rowOpenAmount(x.rows)};
-  }).sort((a,b)=>b.orders-a.orders||b.value-a.value||a.name.localeCompare(b.name)).slice(0,6);
+  }).sort((a,b)=>b.orders-a.orders||b.value-a.value||a.name.localeCompare(b.name));
+  // 2v6.9 (owner): every customer with at-risk orders, 5 a page (the card keeps its height beside Open lines by due
+  // week); one square size for every page; a new Order Health filter starts at page 1.
   const unit=Math.max(1,Math.ceil(Math.max(1,...list.map(x=>x.open))/48));
+  const custPg=dzPageOf('ohl-customers',list,weeklyFilterKey(),5);
   const pips=x=>{
     const n=Math.max(1,Math.round(x.open/unit)),pd=Math.round(x.pd/unit),ot=Math.min(n-pd,Math.round((x.pd+x.other)/unit)-pd);
     return `${'<i class="pd"></i>'.repeat(pd)}${'<i class="ar"></i>'.repeat(Math.max(0,ot))}${'<i></i>'.repeat(Math.max(0,n-pd-Math.max(0,ot)))}`;
   };
   const cur=weeklyCustomerFilter;
-  const rows=list.map((x,i)=>{
+  const rows=custPg.rows.map((x,i)=>{
     const on=cur.length===1&&cur[0]===x.key,share=x.open?Math.round(x.orders/x.open*100):0;
     const said=`${x.name}: ${x.orders} of ${x.open} open orders at risk (${x.pd} past due)`;
     return `<button type="button" class="ohl-cust ohc-row${on?' sel':''}" data-focus-key="offrow-${esc(x.key)}" data-off="${esc(x.key)}" onclick="setWeeklyOffenderFilter('customers',this.dataset.off)" aria-pressed="${on}"${tipAttr(ohlTip(x.name,[`${x.orders} of ${ohN(x.open,'open order')} at risk (${share}%)`,`${ohN(x.pd,'order')} past due`,`${ohN(x.rows.length,'line')} · ${money(x.value)} at risk`],on?'':'Click to filter to it.'))}>
@@ -19753,7 +19757,7 @@ function ohlCustomersCard(c){
   const legend=`<div class="ohc-legend" aria-hidden="true"><span><i class="pd"></i>Past due</span><span><i class="ar"></i>At risk</span><span><i></i>Fine</span><span class="ohc-unit">${unit>1?`Each square: ${unit} orders`:'Each square: 1 open order'}</span></div>`;
   return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
     tip:'Each customer\'s open orders, one square each\n• Red: past due\n• Amber: at risk otherwise\n• Grey: fine\nClick to filter to the customer.',
-    body:rows?`<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">${rows}</div>${legend}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
+    body:rows?`<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">${rows}</div>${legend}${dzPageFoot('ohl-customers',custPg,'Customers at risk','customers')}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
 // Ship target (2v6.9: on Order Health, Leading, above Status & top reasons; it was on Monthly): the scenario's range (this
