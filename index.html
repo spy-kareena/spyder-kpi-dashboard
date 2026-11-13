@@ -19659,7 +19659,11 @@ function ohlShipTargetCard(m){
     const c=mwmStatusChip(r.statusBucket);
     if(c[2]>g.chip[2])g.chip=c;
   });
-  const closers=[...byDoc.values()].sort((a,b)=>b.value-a.value).slice(0,5);
+  // 2v6.9 (owner): every past-due order, largest first, 5 a page (the card keeps its height beside At risk); a new
+  // range, basis or Order Health filter starts at page 1.
+  const closersAll=[...byDoc.values()].sort((a,b)=>b.value-a.value||String(a.so).localeCompare(String(b.so),undefined,{numeric:true}));
+  const shipPg=dzPageOf('ohl-ship',closersAll,JSON.stringify([weeklyFilterKey(),inputDateValue(sd.start),inputDateValue(sd.target),sd.useEffective]),5);
+  const closers=shipPg.rows;
   const datesOpen=!!tableMore['mwm-dates'];
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   const dates=datesOpen?`<div class="mwm-dates">
@@ -19671,7 +19675,7 @@ function ohlShipTargetCard(m){
     tip:'Open lines due by the end date, and the largest past-due orders.',
     meta:`<button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
     body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
-      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>`});
+      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>${dzPageFoot('ohl-ship',shipPg,'Past-due orders','orders')}`});
 }
 // Customers at risk by supply source: every at-risk sales line in the look-ahead window is traced to where its item's
 // supply comes from and counted under the first source in trouble: an open PO for the item (late, no commit date, or
