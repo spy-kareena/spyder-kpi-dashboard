@@ -11024,7 +11024,7 @@ function stgSet(key,value){
   if(JSON.stringify(v)===JSON.stringify(stgValue(key)))return true;
   const next={...stgStore()};
   if(JSON.stringify(v)===JSON.stringify(s.def()))delete next[key];else next[key]=v;
-  if(key==='hiddenPages')next.hiddenMonthly2v69=true; // 2v9: a choice made after Monthly moved is kept as made
+  if(key==='hiddenPages'){next.hiddenMonthly2v69=true;next.hiddenSupply2v69=true;} // 2v9: a choice made after the Supply pages and Monthly were hidden is kept as made
   const saved=stgWrite(next);
   stgAfterChange([key]);
   showToast(saved?'Saved':'Changed for now: this browser does not keep settings');
