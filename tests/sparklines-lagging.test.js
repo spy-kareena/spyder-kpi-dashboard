@@ -46,9 +46,10 @@ const unesc = (s) => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&
 // A sparkline read back from its markup: the tip's title and its per-month points, whether it draws the dashed target or
 // the tick, and its colour.
 const spark = (s) => {
-  const m = /<span class="dz-spark" role="img" tabindex="0" aria-label="[^"]*" data-tip="([^"]*)"><svg[\s\S]*?<\/svg><\/span>/.exec(s || '');
+  const m = /<span class="dz-spark" role="img" tabindex="0" aria-label="[^"]*" data-tip="([^"]*)" data-spark="[^"]*"><svg[\s\S]*?<\/svg><\/span>/.exec(s || '');
   if (!m) return null;
-  const lines = unesc(m[1]).split('\n');
+  // The keyboard hint every sparkline tip ends with (2v9 spark hover) is left out.
+  const lines = unesc(m[1]).split('\n').filter((t) => !/arrow keys: one period at a time$/.test(t));
   return {
     title: lines[0],
     points: lines.slice(1).filter((l) => /^• \w{3} \d{4}: /.test(l)).map((l) => l.replace(/^• /, '')),

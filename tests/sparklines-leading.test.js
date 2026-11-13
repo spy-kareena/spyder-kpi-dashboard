@@ -33,12 +33,14 @@ const card = (h, cls) => {
   return m ? h.slice(m.index, h.indexOf('</section>', m.index) + '</section>'.length) : '';
 };
 const unesc = (s) => s.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-// The sparkline in a card: its tip lines (title first) and the number of points on its line, or null with none.
+// The keyboard hint every sparkline tip ends with (2v9 spark hover); left out of the tip lines below.
+const ARROW_HINT = 'Left and right arrow keys: one period at a time';
+// The sparkline in a card: its tip lines (title first, without the keyboard hint) and the number of points on its line, or null with none.
 const spark = (c) => {
-  const m = /<span class="dz-spark" role="img" tabindex="0" aria-label="[^"]*" data-tip="([^"]*)"><svg[^>]*>([\s\S]*?)<\/svg><\/span>/.exec(c);
+  const m = /<span class="dz-spark" role="img" tabindex="0" aria-label="[^"]*" data-tip="([^"]*)" data-spark="[^"]*"><svg[^>]*>([\s\S]*?)<\/svg><\/span>/.exec(c);
   if (!m) return null;
   const line = /<path d="([^"]*)" fill="none"/.exec(m[2]);
-  return { tip: unesc(m[1]).split('\n').map((t) => t.replace(/^• /, '')), points: (line[1].match(/[ML]/g) || []).length };
+  return { tip: unesc(m[1]).split('\n').map((t) => t.replace(/^• /, '')).filter((t) => t !== ARROW_HINT), points: (line[1].match(/[ML]/g) || []).length };
 };
 const atRiskCard = (page) => card(html(page), 'ohl-card');
 const shipCard = (page) => card(html(page), 'ohl-ship');
@@ -152,6 +154,81 @@ test('At Risk: the page sends the card figures with the week, and keeps them thr
   assert.deepEqual(merged[0].keys.sort(), ['x', 'y', 'z']);
   // Malformed figures are dropped, the week kept.
   assert.deepEqual(page.run(`cleanAtRiskWeeks([{asOf:'2026-09-01',keys:[],counts:{lines:-1,orders:2}}])`), [{ asOf: '2026-09-01', savedAt: '', keys: [] }]);
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 spark hover: the figure carries its periods (data-spark: x, y, value, name); the pointer marks the nearest one with
+// a hairline and a ring and the bubble shows that period's value (bold), its name and the target; the general tooltip
+// does not cover it with the full list; the arrow keys, Home and End step through the periods and read each out; leaving
+// clears the mark; a finger taps one (no long-press list). The figure here is a stand-in with the real data-spark.
+test('Hover: the nearest period is marked and its value shown; arrow keys step and read out; a tap works; the full list stays for keyboard focus', async () => {
+  const page = await loaded();
+  const c = shipCard(page);
+  assert.match(c, /data-tip="[^"]*Left and right arrow keys: one period at a time"/, 'the keyboard hint ends the tip');
+  const d = JSON.parse(unesc(/<span class="dz-spark"[^>]* data-spark="([^"]*)">/.exec(c)[1]));
+  assert.deepEqual(d.pts.map((p) => p[3]), ['Apr 1', 'May 1', 'Jun 1', 'Jul 1', 'Aug 1', 'Sep 1 (still open today)']);
+  assert.deepEqual(d.pts.map((p) => p[2]), ['1 order', '1 order', '2 orders', '2 orders', '2 orders', '3 orders']);
+  assert.deepEqual([d.w, d.h, d.target], [120, 30, '']);
+  assert.ok(d.pts.every((p, i) => i === 0 || p[0] > d.pts[i - 1][0]), 'left to right');
+  assert.match(c, /<line class="dz-spark-x"[^>]*\/><path d="M[^"]*" fill="none"/, 'the hairline sits under the line');
+  assert.match(c, /<circle class="dz-spark-hl"[^>]*\/><\/svg>/, 'the ring on top');
+  // The stand-in: the svg 120 x 30 px at (100, 50); a tip layer that records what it shows.
+  page.run(`(()=>{
+    const attrs=o=>({a:{},setAttribute(k,v){this.a[k]=String(v);}});
+    const hair=attrs(),ring=attrs(),svg={getBoundingClientRect:()=>({left:100,top:50,width:120,height:30})};
+    const cls=new Set(),json=${JSON.stringify(JSON.stringify(d))};
+    const el={isConnected:true,cls,hair,ring,svg,classList:{add:c=>cls.add(c),remove:c=>cls.delete(c),contains:c=>cls.has(c)},
+      getAttribute:k=>k==='data-spark'?json:k==='data-tip'?'Past-due orders at the start of each month\\n• Apr 1: 1 order':null,
+      closest:sel=>sel==='.dz-spark'||sel==='[data-tip]'?el:null,matches:sel=>sel==='.dz-spark',
+      contains:n=>n===el||n===svg,querySelector:sel=>sel==='.dz-spark-x'?hair:sel==='.dz-spark-hl'?ring:sel==='svg'?svg:null};
+    const text={kids:[],get textContent(){return this.kids.map(k=>k.textContent).join('');},set textContent(v){this.kids=[];},appendChild(n){this.kids.push(n);return n;}};
+    const layer={hidden:true,style:{setProperty(){}},dataset:{},offsetWidth:80,offsetHeight:40,classList:{add(){},remove(){}},querySelector:s=>s==='.tip-text'?text:null};
+    document.getElementById=(orig=>id=>id==='tip-layer'?layer:orig(id))(document.getElementById);
+    globalThis.fakeSpark=el;globalThis.fakeLayer=layer;globalThis.fakeText=text;
+    globalThis.said=[];announce=t=>said.push(t);
+  })()`);
+  const xOf = (i) => 100 + d.pts[i][0];
+  const shown = () => page.run('[fakeLayer.hidden,fakeText.kids.map(k=>[k.className,k.textContent])]');
+  // The pointer near the third period: hairline and ring there, the bubble shows "2 orders" (bold) then "Jun 1".
+  page.dispatch('pointerover', { target: page.ctx.fakeSpark, pointerType: 'mouse' });
+  assert.notEqual(page.run('tipState.pending===fakeSpark'), true, 'no full-list tip queued on hover');
+  page.dispatch('pointermove', { target: page.ctx.fakeSpark, pointerType: 'mouse', clientX: xOf(2) + 3, clientY: 60 });
+  assert.equal(page.run('fakeSpark.hair.a.x1'), String(d.pts[2][0]));
+  assert.deepEqual(page.run('[fakeSpark.ring.a.cx,fakeSpark.ring.a.cy]'), [String(d.pts[2][0]), String(d.pts[2][1])]);
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), true);
+  assert.deepEqual(shown(), [false, [['tip-line tip-head', '2 orders\n'], ['tip-line', 'Jun 1']]]);
+  // Past the right end: the last period.
+  page.dispatch('pointermove', { target: page.ctx.fakeSpark, pointerType: 'mouse', clientX: 400, clientY: 60 });
+  assert.deepEqual(shown()[1].map((r) => r[1]), ['3 orders\n', 'Sep 1 (still open today)']);
+  // Leaving clears the mark.
+  page.dispatch('pointerout', { target: page.ctx.fakeSpark, pointerType: 'mouse', relatedTarget: null });
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), false);
+  // Keys: the first arrow goes to the latest period, then one at a time; Home and End; each is read out.
+  const key = (k) => page.dispatch('keydown', { target: page.ctx.fakeSpark, key: k });
+  assert.equal(key('ArrowLeft').defaultPrevented, true);
+  key('ArrowLeft');
+  assert.equal(page.run('sparkState.i'), 4);
+  key('Home');
+  assert.deepEqual(shown()[1].map((r) => r[1]), ['1 order\n', 'Apr 1']);
+  key('ArrowLeft');
+  assert.equal(page.run('sparkState.i'), 0, 'stays at the first');
+  key('End');
+  assert.deepEqual(page.run('said'), ['Sep 1 (still open today): 3 orders', 'Aug 1: 2 orders', 'Apr 1: 1 order', 'Apr 1: 1 order', 'Sep 1 (still open today): 3 orders']);
+  assert.equal(key('Tab').defaultPrevented, false, 'other keys are left alone');
+  key('Escape');
+  assert.equal(page.run("fakeSpark.cls.has('hov')"), false);
+  // A finger: a tap marks the nearest period at once, with no long-press list waiting.
+  page.dispatch('pointerdown', { target: page.ctx.fakeSpark, pointerType: 'touch', clientX: xOf(1), clientY: 60 });
+  assert.equal(page.run('tipState.press'), null);
+  assert.equal(page.run('sparkState.i'), 1);
+  assert.deepEqual(shown()[1].map((r) => r[1]), ['1 order\n', 'May 1']);
+  page.dispatch('pointerup', { target: page.ctx.fakeSpark, pointerType: 'touch' });
+  // Other tips still queue on hover as before.
+  const other = page.run(`(()=>{const o={isConnected:true,getAttribute:k=>k==='data-tip'?'A tip':null,closest:s=>s==='[data-tip]'?o:null,matches:()=>false};globalThis.otherTip=o;return true})()`);
+  assert.ok(other);
+  page.dispatch('pointerover', { target: page.ctx.otherTip, pointerType: 'mouse' });
+  assert.equal(page.run('tipState.pending===otherTip'), true);
+  page.run('hideTip()');
   assert.deepEqual(page.errors, []);
 });
 

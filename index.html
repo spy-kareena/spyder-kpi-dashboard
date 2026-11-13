@@ -4175,8 +4175,11 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 /* 2v9:end po-v1 */
 /* 2v9:spark */
 /* Sparklines (Style A): a small figure beside or under a number; focusable, its tip lists every period. */
-.dz-spark{display:inline-flex;flex:none;vertical-align:middle;border-radius:6px;line-height:0;cursor:default}
+.dz-spark{display:inline-flex;flex:none;vertical-align:middle;border-radius:6px;line-height:0;cursor:crosshair;touch-action:pan-y}
 .dz-spark svg{display:block;overflow:visible}
+/* The hovered (or arrow-key) period: a hairline and a ring, shown while the pointer or focus is on the line */
+.dz-spark .dz-spark-x,.dz-spark .dz-spark-hl{visibility:hidden;pointer-events:none}
+.dz-spark.hov .dz-spark-x,.dz-spark.hov .dz-spark-hl{visibility:visible}
 .dz-spark:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 @media print{.dz-spark{break-inside:avoid}}
 @media (forced-colors:active){.dz-spark svg path,.dz-spark svg circle{forced-color-adjust:none}}
@@ -13136,8 +13139,11 @@ function dzSpark(vals,{labels=[],target=null,color='var(--dz-indigo)',fmt=v=>fmt
   const ref=target!==null?`<line x1="0" x2="${w}" y1="${Y(target).toFixed(1)}" y2="${Y(target).toFixed(1)}" stroke="var(--dz-ink-4)" stroke-width="1" stroke-dasharray="3 3"/>`
     :prevI!==undefined?`<line x1="${(X(lastI)+3).toFixed(1)}" x2="${(X(lastI)+9).toFixed(1)}" y1="${Y(pts[prevI]).toFixed(1)}" y2="${Y(pts[prevI]).toFixed(1)}" stroke="var(--dz-ink-2)" stroke-width="1.5"/>`:'';
   const list=pts.map((v,i)=>`${labels[i]||''}: ${v===null?'no data':fmt(v)}`).filter((t,i)=>labels[i]);
-  const tip=ohlTip(title||'Trend',[...list,target!==null?`Dashed line: target ${fmt(target)}`:prevI!==undefined?`Tick: ${labels[prevI]||'the period before'}`:'']);
-  return `<span class="dz-spark" role="img" tabindex="0" aria-label="${esc(ohlPlain(tip))}"${tipAttr(tip)}><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true" focusable="false"><path d="${area}" fill="${color}" fill-opacity=".14"/>${ref}<path d="${line}" fill="none" stroke="${color}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(lastI).toFixed(1)}" cy="${Y(pts[lastI]).toFixed(1)}" r="3.25" fill="${color}" stroke="var(--dz-surface)" stroke-width="1.5"/></svg></span>`;
+  const tip=ohlTip(title||'Trend',[...list,target!==null?`Dashed line: target ${fmt(target)}`:prevI!==undefined?`Tick: ${labels[prevI]||'the period before'}`:'',
+    'Left and right arrow keys: one period at a time']);
+  // 2v9 spark hover: the periods with a value, for the pointer and the arrow keys (sparkMark): [x, y, value, name].
+  const data={w,h,target:target!==null?fmt(target):'',pts:pts.map((v,i)=>v===null?null:[+X(i).toFixed(1),+Y(v).toFixed(1),fmt(v),labels[i]||'']).filter(Boolean)};
+  return `<span class="dz-spark" role="img" tabindex="0" aria-label="${esc(ohlPlain(tip))}"${tipAttr(tip)} data-spark="${esc(JSON.stringify(data))}"><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true" focusable="false"><path d="${area}" fill="${color}" fill-opacity=".14"/>${ref}<line class="dz-spark-x" x1="0" x2="0" y1="1" y2="${h-1}" stroke="var(--dz-ink-4)" stroke-width="1"/><path d="${line}" fill="none" stroke="${color}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(lastI).toFixed(1)}" cy="${Y(pts[lastI]).toFixed(1)}" r="3.25" fill="${color}" stroke="var(--dz-surface)" stroke-width="1.5"/><circle class="dz-spark-hl" cx="0" cy="0" r="4" fill="${color}" stroke="var(--dz-surface)" stroke-width="2"/></svg></span>`;
 }
 // A numbered question above a group of cards (owner): a page reads as questions, in working order. The text is written
 // in Title Case as it should show (data-tc-skip keeps it).
@@ -15031,7 +15037,8 @@ if(document.addEventListener){
     const layer=tipLayer();
     if(layer&&layer.contains&&layer.contains(e.target)){clearTimeout(tipState.hideTimer);return;}
     const t=tipTarget(e.target);
-    if(t)queueTip(t,TIP_DELAY);
+    // A sparkline shows the period under the pointer instead (sparkMark below).
+    if(t&&!(t.matches&&t.matches('.dz-spark')))queueTip(t,TIP_DELAY);
   });
   document.addEventListener('pointerout',e=>{
     if(e.pointerType==='touch')return;
@@ -15076,7 +15083,7 @@ if(document.addEventListener){
     if(e.pointerType!=='touch')return;
     // Touch: a long press shows the tip; the tap that ends the press does not also click the control.
     const t=tipTarget(e.target);
-    if(!t)return;
+    if(!t||(t.matches&&t.matches('.dz-spark')))return;
     tipState.press={x:e.clientX,y:e.clientY,timer:setTimeout(()=>{
       tipState.press=null;
       tipState.swallowClick=true;
@@ -15103,6 +15110,96 @@ if(document.addEventListener){
   },true);
 }
 if(typeof window.addEventListener==='function')window.addEventListener('resize',()=>hideTip());
+// Sparklines (dzSpark) answer the pointer: on one, the nearest period gets a hairline and a ring and the bubble shows
+// that period's value (first, in bold), its name and the target if the line has one. A finger does the same with a tap
+// or a sideways drag (the bubble stays 4 seconds). With keyboard focus the bubble first lists every period; the arrow
+// keys, Home and End then step through them one at a time, each read out. The figure's label lists every period too.
+const sparkState={el:null,i:-1,touch:false};
+function sparkData(el){
+  try{const d=JSON.parse(tipGet(el,'data-spark')||'null');return d&&Array.isArray(d.pts)&&d.pts.length?d:null;}catch(e){return null;}
+}
+function sparkOf(node){return node&&node.closest?node.closest('.dz-spark'):null;}
+// The period nearest a pointer's x (-1 without data).
+function sparkNearest(el,clientX){
+  const d=sparkData(el),svg=el&&el.querySelector?el.querySelector('svg'):null;
+  if(!d||!svg||!svg.getBoundingClientRect)return -1;
+  const r=svg.getBoundingClientRect(),x=r.width>0?(clientX-r.left)/r.width*d.w:0;
+  let best=0;
+  d.pts.forEach((p,i)=>{if(Math.abs(p[0]-x)<Math.abs(d.pts[best][0]-x))best=i;});
+  return best;
+}
+function sparkClear(el){
+  if(el&&el.classList)el.classList.remove('hov');
+  if(!el||sparkState.el===el){sparkState.el=null;sparkState.i=-1;}
+}
+function sparkMark(el,i,{say=false}={}){
+  const d=sparkData(el);
+  if(!d||!el.isConnected)return;
+  i=Math.max(0,Math.min(d.pts.length-1,i));
+  const [x,y,value,label]=d.pts[i];
+  if(sparkState.el&&sparkState.el!==el)sparkClear(sparkState.el);
+  const hair=el.querySelector('.dz-spark-x'),ring=el.querySelector('.dz-spark-hl'),svg=el.querySelector('svg');
+  if(hair){hair.setAttribute('x1',x);hair.setAttribute('x2',x);}
+  if(ring){ring.setAttribute('cx',x);ring.setAttribute('cy',y);}
+  if(el.classList)el.classList.add('hov');
+  sparkState.el=el;sparkState.i=i;
+  if(say&&typeof announce==='function')announce(`${label}: ${value}`);
+  const layer=tipLayer(),node=layer&&layer.querySelector('.tip-text');
+  if(!layer||!node||!svg||!svg.getBoundingClientRect)return;
+  const was=!layer.hidden&&tipState.el===el;
+  clearTimeout(tipState.timer);clearTimeout(tipState.hideTimer);
+  tipState.pending=null;tipState.el=el;
+  // Value first and strong, then the period; built with textContent (the names come from the data).
+  node.textContent='';
+  const rows=[[value,'tip-line tip-head'],[label,'tip-line'],[d.target?`Target ${d.target}`:'','tip-line']].filter(r=>r[0]);
+  rows.forEach(([text,cls],k)=>{const s=document.createElement('span');s.className=cls;s.textContent=text+(k<rows.length-1?'\n':'');node.appendChild(s);});
+  tipGoHome(layer);
+  if(layer.style){layer.style.left='0px';layer.style.top='0px';}
+  layer.hidden=false;
+  const r=svg.getBoundingClientRect(),px=r.left+x*(r.width/d.w),py=r.top+y*(r.height/d.h);
+  placeFloating(layer,{getBoundingClientRect:()=>({left:px-4,right:px+4,top:py-4,bottom:py+4,width:8,height:8})},'top',8);
+  if(!was)(window.requestAnimationFrame||setTimeout)(()=>{if(tipState.el===el)layer.classList.add('open');});
+}
+function sparkHideSoon(el,ms){
+  clearTimeout(tipState.hideTimer);
+  tipState.hideTimer=setTimeout(()=>{if(tipState.el===el)hideTip();sparkClear(el);},ms);
+}
+if(document.addEventListener){
+  document.addEventListener('pointermove',e=>{
+    const el=sparkOf(e.target);
+    if(!el||(e.pointerType==='touch'&&!sparkState.touch))return;
+    const i=sparkNearest(el,e.clientX);
+    if(i>=0&&(sparkState.el!==el||sparkState.i!==i||!tipVisible()))sparkMark(el,i);
+  });
+  document.addEventListener('pointerout',e=>{
+    const el=sparkOf(e.target);
+    if(!el||e.pointerType==='touch'||(e.relatedTarget&&el.contains&&el.contains(e.relatedTarget)))return;
+    sparkClear(el);
+  });
+  document.addEventListener('pointerdown',e=>{
+    const el=sparkOf(e.target);
+    if(!el||e.pointerType!=='touch')return;
+    sparkState.touch=true;
+    const i=sparkNearest(el,e.clientX);
+    if(i>=0){sparkMark(el,i);sparkHideSoon(el,4000);}
+  });
+  const sparkUp=()=>{if(!sparkState.touch)return;sparkState.touch=false;if(sparkState.el)sparkHideSoon(sparkState.el,4000);};
+  document.addEventListener('pointerup',sparkUp);
+  document.addEventListener('pointercancel',sparkUp);
+  document.addEventListener('keydown',e=>{
+    const el=sparkOf(e.target);
+    if(e.key==='Escape'){if(sparkState.el)sparkClear(sparkState.el);return;}
+    if(!el||e.target!==el||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+    const d=sparkData(el);
+    if(!d)return;
+    const last=d.pts.length-1,on=sparkState.el===el;
+    const i=e.key==='Home'?0:e.key==='End'?last:e.key==='ArrowLeft'?(on?sparkState.i-1:last):e.key==='ArrowRight'?(on?sparkState.i+1:last):null;
+    if(i===null)return;
+    e.preventDefault();
+    sparkMark(el,i,{say:true});
+  });
+  document.addEventListener('focusout',e=>{const el=sparkOf(e.target);if(el&&e.target===el)sparkClear(el);});
+}
 
 // Section help: each section's short text (SECTION_INFO below: what it shows, what clicking does) is the tooltip of
 // its title (group, card or chart heading). A titled heading with a tip is a Tab stop and its tip is read out (wireTip),
