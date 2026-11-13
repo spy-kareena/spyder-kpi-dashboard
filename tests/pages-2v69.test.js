@@ -42,8 +42,11 @@ test('Leading: the ship target sits over Status & top reasons in one column; Sta
   assert.match(status, /<div class="ohs2-bar" role="group" aria-label="Open orders by state">/);
   const rows = [...status.matchAll(/<button type="button" class="ohs2-row[^"]*" data-focus-key="status-st-(\w+)" aria-pressed="(true|false)" onclick="setWeeklyTileFilter\((?:&#39;|')st-\1(?:&#39;|')\)"/g)].map((m) => m[1]);
   assert.deepEqual(rows, ['ontrack', 'duethisweek', 'rescheduled', 'pastdue', 'nocommit']);
-  assert.match(status, /<div class="ohs2-cols" aria-hidden="true"><span><\/span><span>Share<\/span><span>Open<\/span><span>Lines<\/span><span>Orders<\/span><\/div>/);
-  assert.match(status, /<span class="ohs2-name">On track<\/span>\s*<span class="ohs2-pct">\d+%<\/span><span class="ohs2-val">\$[\d.]+[KM]?<\/span><span class="ohs2-lines">\d+<\/span><span class="ohs2-n">\d+<\/span>/);
+  // 2v6.9 (owner): Lines and Orders only (no Share or Open columns); the head says only the open order count.
+  assert.match(status, /<div class="ohs2-cols" aria-hidden="true"><span><\/span><span>Lines<\/span><span>Orders<\/span><\/div>/);
+  assert.match(status, /<span class="ohs2-name">On track<\/span>\s*<span class="ohs2-lines">\d+<\/span><span class="ohs2-n">\d+<\/span>/);
+  assert.match(status, /<span class="ohs2-meta"><b>\d+<\/b> open orders<\/span>/);
+  assert.doesNotMatch(status, /ohs2-pct|ohs2-val|% past due/);
   assert.match(status, /<div class="ohl-sec-title"[^>]*>Status<\/div>[\s\S]*<div class="ohl-sec-title"[^>]*>Top reasons<\/div>/);
   assert.match(status, /<table class="ohs2-heat">[\s\S]*<th scope="col" class="num">At risk<\/th><th scope="col" class="num">Lines<\/th><th scope="col" class="num">Orders<\/th>/);
   assert.doesNotMatch(status, /ohs2-track|ohl-track|dz-barrow/);
