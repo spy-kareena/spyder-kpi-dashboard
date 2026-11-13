@@ -233,7 +233,7 @@ test('Customers at risk is a ranked table against each customer\'s own open orde
   const h = html(page);
   // Customers at risk (owner, option F): a ranked table: past due, at risk otherwise, open; a thin split under each name; no money.
   // Firefly: SO 100 and 101, both open and past due.
-  assert.match(h, /<table class="ohc2-tbl"><thead><tr><th scope="col">Customer<\/th><th scope="col" class="num">Past due<\/th><th scope="col" class="num">At risk<\/th><th scope="col" class="num">Open<\/th><\/tr><\/thead>/);
+  assert.match(h, /<table class="ohc2-tbl"><thead><tr><th scope="col"[^>]*>Customer<\/th><th scope="col" class="num"[^>]*>Past due<\/th><th scope="col" class="num"[^>]*>At risk<\/th><th scope="col" class="num"[^>]*>Open<\/th><\/tr><\/thead>/);
   assert.match(h, /data-focus-key="offrow-FIREFLY"[^>]*onclick="setWeeklyOffenderFilter\('customers',this\.dataset\.off\)"[\s\S]*?<\/th><td class="num ohc2-pd">2<\/td><td class="num ohc2-ar">0<\/td><td class="num">2<\/td><\/tr>/);
   assert.doesNotMatch(h.slice(h.indexOf('ohc2-tbl'), h.indexOf('</table>', h.indexOf('ohc2-tbl'))), /\$/);
   // Top reasons (2v6.9 redesign): a tile per reason with a ring for its share of the at-risk orders, its figures and

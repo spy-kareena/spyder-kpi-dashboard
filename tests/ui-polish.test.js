@@ -695,7 +695,7 @@ test('warehouse scorecard: CM SFG and all other warehouses in one card, each wit
   assert.deepEqual([other.subtotal.otdN, other.subtotal.otdRate], [1, 100]);
   // The subtotal row shows and tells the same numbers (full amounts in its tip and its name for screen readers).
   assert.match(card, /<div class="dz-tr mwm-sub" role="group" aria-label="CM SFG subtotal \(2 warehouses\); Open \$7,000, at risk \$5,000; 2 lines past due; OTD 3 mo 50%" data-tip="CM SFG subtotal \(2 warehouses\)\n• Open \$7,000, at risk \$5,000\n• 2 lines past due\n• OTD 3 mo 50%">/);
-  assert.match(card, /aria-label="All other warehouses subtotal \(3 warehouses\); Open \$56,000, at risk \$40,000; 1 line past due; OTD 3 mo 100%"/);
+  assert.match(card, /aria-label="Spyder and CM warehouses subtotal \(3 warehouses\); Open \$56,000, at risk \$40,000; 1 line past due; OTD 3 mo 100%"/);
   assert.ok(sfgPart.indexOf('mwm-sub') > sfgPart.lastIndexOf('data-wh='), 'the subtotal closes its group');
   assert.deepEqual(page.errors, []);
 });
@@ -719,7 +719,7 @@ test('warehouse scorecard: 10 warehouses a page, the group heading repeats on th
   assert.equal(rowsShown(), 3);
   assert.deepEqual(heads(), ['Spyder and CM warehouses', 'CM SFG']);
   assert.match(card(), /11–13 of 13 warehouses/);
-  assert.match(card(), /aria-label="All other warehouses subtotal \(11 warehouses\); Open \$11,055,/);
+  assert.match(card(), /aria-label="Spyder and CM warehouses subtotal \(11 warehouses\); Open \$11,055,/);
   // Print lists every warehouse.
   page.run('printMode=true;renderResults()');
   assert.equal(rowsShown(), 13);
