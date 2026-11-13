@@ -1,5 +1,5 @@
 // 2v9 monthly-move: Monthly is dissolved into Sales Order Health. Its forward-looking sections are on Leading (Open
-// orders by delivery month and Items not shipped yet, two folds of one Delivery months card, shut on load, without the
+// orders by delivery month and Items not shipped yet, two folds of one Lists card (with Lines after them, in the same card), shut on load, without the
 // shipped / open bar chart; the ship target's Calendar & lines). Lagging (Version 1, the owner's
 // pick) is the Monthly and Quarterly cards over one grid of four cards: Trend (a metric switch, one chart, the newest
 // month and why its orders were late), Month by month, By warehouse and Booked vs shipped. The Shipments section that
@@ -463,20 +463,20 @@ test('Why orders were late: each first reason and its late orders, most first; p
 });
 
 // --- Leading (Version 1, four questions): how these tests read it ----------------------------------------------------
-// The Leading panel, its question heads ("1 What Is at Risk?"), and the Delivery months card with its two folds (each:
+// The Leading panel, its question heads ("1 What Is at Risk?"), and the Lists card with its two folds (each:
 // its key, whether it is open, the summary's tip, title and meta, and what is inside).
 const leading = (h) => { const i = h.indexOf('id="oh-panel-leading"'); const j = h.indexOf('<div class="oh-panel"', i); return i < 0 ? '' : h.slice(i, j < 0 ? undefined : j); };
 const questions = (h) => [...h.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((x) => `${x[1]} ${x[2]}`);
-const monthsCard = (h) => { const i = h.indexOf('<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Delivery months">'); return i < 0 ? '' : h.slice(i, h.indexOf('</section>', i)); };
+const monthsCard = (h) => { const i = h.indexOf('<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">'); return i < 0 ? '' : h.slice(i, h.indexOf('</section>', i)); };
 const folds = (h) => [...monthsCard(h).matchAll(/<details class="ohl-fold"( open)? data-more="([\w-]+)" ontoggle="ohlFoldToggle\(this\)"><summary data-focus-key="more-\2" data-tip="([^"]+)"><svg class="dz-chev"[^>]*>[\s\S]*?<\/svg><span class="dz-title sm ohl-fold-t">([^<]+)<\/span><span class="ohl-fold-m">([^<]*)<\/span><\/summary><div class="ohl-fold-body">([\s\S]*?)<\/div><\/details>/g)]
   .map((x) => ({ open: !!x[1], key: x[2], tip: x[3], title: x[4], meta: x[5], body: x[6] }));
 
 test('Leading: Open orders by delivery month and Items not shipped yet are two folds of one card before the Lines card, shut on load, with no bar chart; the ship target opens Calendar & lines', async () => {
   const page = await loaded();
   let h = html(page);
-  // Nothing to pull in and no date changes in this export: three questions, then the Delivery months card, then Lines.
+  // Nothing to pull in and no date changes in this export: three questions, then the Lists card, then Lines.
   assert.deepEqual(questions(h), ['1 What Is at Risk?', '2 Why, and When?', '3 Who?']);
-  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Delivery months', 'Lines']);
+  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Lists', 'Lines']);
   // One card, two folds, both shut on load; each summary has its tip, its title and a short meta (the year, the lines).
   let f = folds(h);
   assert.equal((monthsCard(h).match(/<details\b/g) || []).length, 2);
@@ -534,7 +534,7 @@ test('Leading: Open orders by delivery month and Items not shipped yet are two f
   for (const tip of ['Aug 2026: $2,000 shipped', 'Aug 2026: $2,000 open (late: this month has passed)', 'Sep 2026: $1,000 shipped', 'Sep 2026: $13,000 open', 'Oct 2026: $0 shipped', 'Oct 2026: $1,000 open']) assert.ok(mo.includes(`data-tip="${tip}"`), tip);
   assert.deepEqual(page.errors, []);
 
-  // With a date change (900, moved from Sep 10 to Sep 25) there is a fourth question: the Delivery months card comes
+  // With a date change (900, moved from Sep 10 to Sep 25) there is a fourth question: the Lists card comes
   // after its card. Two lines with no commit date (901, 902) are in no month: the first fold says so under its table,
   // and they are still items not shipped yet (17 + 3 lines).
   const noCommit = { LineRescheduleDate: '11/11/1111', RescheduleDate: '11/11/1111', RescheduleFlag: 'No Commit Date' };
@@ -542,7 +542,7 @@ test('Leading: Open orders by delivery month and Items not shipped yet are two f
     so('901', '08/25/2026', noCommit), so('902', '08/26/2026', noCommit)]);
   h = html(more);
   assert.deepEqual(questions(h), ['1 What Is at Risk?', '2 Why, and When?', '3 Who?', '4 What Can We Do?']);
-  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Date changes', 'Delivery months', 'Lines']);
+  assert.deepEqual(cardNames(leading(h)), ['At risk', 'September ship target', 'Status', 'Top reasons and open lines by due week', 'Customers at risk', 'Date changes', 'Lists', 'Lines']);
   f = folds(h);
   assert.deepEqual(f.map((x) => [x.title, x.open, x.meta]), [['Open orders by delivery month', false, '2026'], ['Items not shipped yet', false, '20 lines']]);
   assert.match(f[0].body, /<\/table><\/div>\s*<p class="ohl-note ohl-foot-note">2 open lines \(\$2,000\) with no commit date are not in these months\.<\/p>$/);
@@ -570,7 +570,7 @@ test('The page filters apply to Leading\'s moved sections and to all four Laggin
   assert.ok(want > 0 && want < all);
   // 2v6.9 (owner): the card shows no note; the filtered count is still what its spec carries.
   assert.match(page.run("(()=>{const m=currentMetrics();return moMonthlyParts(m,momSource(m),reportToday()).notShippedSpec().note})()"), new RegExp(`By original line delivery month · ${want} open lines`));
-  assert.ok(monthsCard(html(page)).length > 1000, 'the Delivery months card is drawn');
+  assert.ok(monthsCard(html(page)).length > 1000, 'the Lists card is drawn');
   assert.doesNotMatch(monthsCard(html(page)), /By original line delivery month ·/);
   // The Items not shipped yet fold counts the filtered lines in its summary: nine DSM lines, six of them in September.
   assert.equal(want, 9);
@@ -611,7 +611,7 @@ test('The page filters apply to Leading\'s moved sections and to all four Laggin
 });
 
 // Was a bug, fixed since (the test stays as a guard): the Month pick on Leading's Items not shipped yet (now a fold of
-// the Delivery months card, index.html ohlMonthsCard, p.monthSelect('ohl-original-month', ...)) said "One original
+// the Lists card, index.html ohlMonthsCard, p.monthSelect('ohl-original-month', ...)) said "One original
 // month, here and in Original line delivery summary on Lagging." Lagging has no Original line delivery summary since
 // Version 1, and the pick changes nothing there (Booked vs shipped lists every month), so the tip named a table that is
 // gone. It only speaks of Items not shipped yet.
@@ -631,7 +631,7 @@ test('Print draws both views with their sections, the ship target calendar open;
   const page = await loaded();
   page.run("ohgSetTrendMetric('days');printMode=true;renderResults()");
   const h = html(page);
-  assert.match(h, /id="oh-panel-leading"[\s\S]*<section class="dz-card dz-span-6 ohl-card ohl-months [^>]*aria-label="Delivery months">[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
+  assert.match(h, /id="oh-panel-leading"[\s\S]*<section class="dz-card dz-span-6 ohl-card ohl-months [^>]*aria-label="Lists">[\s\S]*id="oh-panel-lagging"[\s\S]*<div class="dz-grid ohg-grid">[\s\S]*<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics"/);
   // Paper opens both folds of Leading's Delivery months card (nothing is stored for it), with every row and no pager;
   // the fold chevrons are hidden. The bar chart is not on Leading's paper either.
   const f = folds(leading(h));

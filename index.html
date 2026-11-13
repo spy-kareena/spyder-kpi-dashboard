@@ -13303,7 +13303,7 @@ function moMonthlyParts(m,src,today){
 
   const notes=[];
   const undated=src.byMonth.filter(g=>g.key==='No Commit'||g.key==='No Date').filter(g=>g.openRows);
-  if(undated.length)notes.push(`${undated.map(g=>`${fmtNum(g.openRows)} open lines (${money(g.openAmount)}) with ${g.key==='No Commit'?'no commit date':'no due date'}`).join(' and ')} are not in the monthly cards or chart.`);
+  if(undated.length)notes.push(`${undated.map(g=>`${ohN(g.openRows,'open line')} (${money(g.openAmount)}) with ${g.key==='No Commit'?'no commit date':'no due date'}`).join(' and ')} ${undated.reduce((t,g)=>t+g.openRows,0)===1?'is':'are'} not in the monthly cards or chart.`);
   if(closedUnknown.closedUnknownRows)notes.push(`${fmtNum(closedUnknown.closedUnknownRows)} closed lines have no delivery here, so are not in shipped totals.`);
   notes.push(`Ship target uses ${scenario.scenarioDateLabel}.`);
   if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
@@ -20721,14 +20721,14 @@ function ohlFoldToggle(el){ohSetMoreOpen(el.dataset.more,el.open);if(el.open&&ty
 function ohlMonthsCard(p){
   if(!p)return `<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">${OHL_LINES_MARK}</section>`;
   const s=p.summarySpec(),ns=p.notShippedSpec();
-  const undated=p.notes.find(t=>/are not in the monthly cards or chart/.test(t));
+  const undated=p.notes.find(t=>/(?:is|are) not in the monthly cards or chart/.test(t));
   const fold=(key,title,meta,tip,body)=>{
     const open=!!tableMore[`more-${key}`]||printMode;
     return `<details class="ohl-fold"${open?' open':''} data-more="${key}" ontoggle="ohlFoldToggle(this)"><summary data-focus-key="more-${key}"${tipAttr(tip)}>${DZ_CHEV}<span class="dz-title sm ohl-fold-t">${title}</span><span class="ohl-fold-m">${meta}</span></summary><div class="ohl-fold-body">${body}</div></details>`;
   };
   return `<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">
     ${fold('ohl-fold-months','Open orders by delivery month',esc(String(p.thisYear)),sectionTipText('mo-summary'),`<div class="ohl-sec-head"><div class="ohl-sec-title">${esc(momPlain(s.title))}</div>${s.note?`<span class="mom-note">${s.note}</span>`:''}</div>
-      ${renderTableCard({...s,bare:true})}${undated?`<p class="ohl-note ohl-foot-note">${esc(undated.replace('are not in the monthly cards or chart.','are not in these months.'))}</p>`:''}`)}
+      ${renderTableCard({...s,bare:true})}${undated?`<p class="ohl-note ohl-foot-note">${esc(undated.replace(/(is|are) not in the monthly cards or chart\./,'$1 not in these months.'))}</p>`:''}`)}
     ${fold('ohl-fold-items','Items not shipped yet',esc(ohN((ns.items||[]).length,'line')),sectionTipText(ns.info),`<div class="ohl-fold-tools">${p.monthSelect('ohl-original-month','Show one original month.')}</div>${renderTableCard({...ns,bare:true})}`)}
     ${OHL_LINES_MARK}
   </section>`;

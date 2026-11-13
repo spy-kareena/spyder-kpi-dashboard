@@ -94,11 +94,11 @@ test('Leading is one bento grid of four questions: At risk first, the ship targe
   // Beside it, one column of the other half: the ship target over Status, with the grid's own gap between them.
   assert.match(lead, /<\/section>\s*<div class="ohl-col dz-span-3"><section class="dz-card dz-fade ohl-ship" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>September ship target<\/h2>[\s\S]*?<\/section><section class="dz-card ohl-card ohl-status-card dz-fade" style="--i:1" aria-label="Status">/);
   assert.match(CSS, /\n\.ohl-col\{display:flex;flex-direction:column;gap:16px;min-width:0\}/);
-  // The four questions, numbered, each a full row above its card; then the Delivery months card and Lines.
+  // The four questions, numbered, each a full row above its card; then the Lists card and Lines.
   assert.deepEqual([...lead.matchAll(/<div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">(\d)<\/span><h2 class="ohl-q-t" data-tc-skip>([^<]+)<\/h2><\/div>/g)].map((m) => `${m[1]} ${m[2]}`),
     ['1 What Is at Risk?', '2 Why, and When?', '3 Who?', '4 What Can We Do?']);
   const marks = ['>What Is at Risk?</h2>', '>At risk</h2>', 'ship target</h2>', 'aria-label="Status"', '>Why, and When?</h2>', 'aria-label="Top reasons and open lines by due week"', '>Who?</h2>', '>Customers at risk</h2>',
-    '>What Can We Do?</h2>', 'aria-label="Supply to pull in"', 'aria-label="Delivery months"', 'aria-label="Lines"'];
+    '>What Can We Do?</h2>', 'aria-label="Supply to pull in"', 'aria-label="Lists"', 'aria-label="Lines"'];
   const at = marks.map((s) => lead.indexOf(s));
   at.forEach((pos, i) => assert.ok(pos > (i ? at[i - 1] : 0), `${marks[i]} comes after ${marks[i - 1] || 'the grid opens'}`));
   // Every card under the first row takes the whole row.
