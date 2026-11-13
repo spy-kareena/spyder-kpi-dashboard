@@ -3980,7 +3980,9 @@ button.kc3-n:focus-visible,button.kc3-cm:focus-visible{outline:2px solid var(--d
 /* 2v9:kits-bars */
 /* Kits by CM and month as small column charts (owner): one card section per CM, one stacked column per month (clean
    teal at the base, not clean amber or red on top, 2px gap, 4px rounded top), shared scale, the not-clean count above. */
-.kc4-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px 32px;margin-top:14px}
+.kc4-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+/* 2v9 (owner): each CM on a soft panel, so the CMs read apart */
+.kc4-cm{background:var(--dz-fill-1);border-radius:14px;padding:12px 12px 10px;min-width:0}
 .kc4-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .kc4-sum{font-size:12px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}.kc4-sum b{font-weight:600}
 .kc4-sum b.warn{color:var(--dz-amber-text)}.kc4-sum b.ok{color:var(--dz-teal-text,var(--dz-teal))}
