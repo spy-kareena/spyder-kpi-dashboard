@@ -3882,6 +3882,19 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v9:pager */
+/* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
+   stacked and centred on phones. */
+.dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
+.dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
+.dz-pagefoot .shp-pager{margin-top:0}
+/* The older framed table cards (renderTableCard, the scorecard, the heat grid, the Lagging warehouse summaries): the foot sits inside the frame's
+   padding, flat in the glass cards (.misc-flat), and inside the phone cards' gutters. */
+.table>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+.misc-flat .table>.dz-pagefoot{padding:12px 0 0}
+.card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
+@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
+/* 2v9:end pager */
 /* 2v9:pages */
 /* Order Health, Leading (2v6.9): the ship target card over Status & top reasons, the two in one column beside At risk
    (the column stretches to At risk's height, Status takes the rest); Status & top reasons is a two-column list, no bars:
@@ -4021,19 +4034,6 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 @media (prefers-reduced-motion:reduce){.ohl-sd th .sort-arrow{transition:none}}
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v9:end pages */
-/* 2v9:pager */
-/* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
-   stacked and centred on phones. */
-.dz-pagefoot{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid var(--dz-line-6,var(--dz-line-8))}
-.dz-pagecount{font-size:12.5px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
-.dz-pagefoot .shp-pager{margin-top:0}
-/* The older framed table cards (renderTableCard, the scorecard, the heat grid, the Lagging warehouse summaries): the foot sits inside the frame's
-   padding, flat in the glass cards (.misc-flat), and inside the phone cards' gutters. */
-.table>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
-.misc-flat .table>.dz-pagefoot{padding:12px 0 0}
-.card.flush>.dz-pagefoot{margin-top:0;padding:10px 24px 12px}
-@media (max-width:640px){.dz-pagefoot{justify-content:center}.dz-pagecount{width:100%;text-align:center}.table>.dz-pagefoot,.card.flush>.dz-pagefoot{padding:10px 16px 12px}.misc-flat .table>.dz-pagefoot{padding:12px 0 0}}
-/* 2v9:end pager */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
    look, links instead of buttons; it sticks to the top while the page scrolls and scrolls sideways on phones. Cards
