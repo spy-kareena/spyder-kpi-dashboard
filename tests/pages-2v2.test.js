@@ -1,5 +1,5 @@
-// Version 2v2 page layout (every page but Order Health): page groups, at most four cards per row, the tidy page
-// header, sidebar and load screen, long lists behind Show, and the same numbers as before.
+// Version 2v2 page layout (every page but Order Health), as the pages are today (2v6 / 2v6.9): named cards on the
+// bento grid, the page head and top header, the load screen, long lists on request, and the same numbers as before.
 // Run with `node tests/pages-2v2.test.js`. Fixtures are synthetic (harness.js); no SAP data.
 'use strict';
 const assert = require('node:assert/strict');
@@ -8,8 +8,6 @@ const { test, run } = createSuite();
 
 const CSS = HTML.match(/<style>([\s\S]*?)<\/style>/)[1];
 const results = (page) => page.els['results-screen'].innerHTML;
-const sidebar = (page) => page.els['app-sidebar'].innerHTML;
-const text = (h) => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 const due = (d) => ({ DueDate: d, HeaderDueDate: d, LineDueDate: d });
 const PO = (o) => sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...o });
 const shipped = (o) => sapRow({ OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', CloseDateSource: 'Delivery', OpenQuantity: '0', FillStatus: 'Complete', ...o });
@@ -48,21 +46,34 @@ async function loadedAll() {
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }, { name: 'supply.xls', bytes: utf16Tsv(SD_HEADERS, SD_ROWS) }, { name: 'Orders At Risk - Clear to Build.xlsx', bytes: ctbWorkbook(page) }]);
   return page;
 }
-// The groups each page is built from, in order: [id, title].
-const PAGE_GROUPS = {
-  purchaseorders: [['po-commitments', 'Leading · Supply commitments'], ['po-receiving', 'Lagging · Receiving performance'], ['po-where', 'By warehouse and vendor'], ['po-linked', 'Lines to act on']],
-  buildrisk: [['br-week', 'This report week'], ['br-buckets', 'By CM and month'], ['br-orders', 'Lines to act on']],
-  // 2v2 design fixes: Supply / Demand's shortage and risk lines are one table (All open lines a collapsed card in
-  // the same group); Supply Mix leaves the totals and those lines to Supply / Demand.
-  supplyweekly: [['sd-coverage', 'Coverage'], ['sd-shortages', 'Lines to act on']],
-  supplydemand: [['mix-gaps', 'By month and warehouse'], ['mix-items', 'By item group']],
-  monthly: [['mo-months', 'Month by month'], ['mo-shipped', 'By delivery month'], ['mo-open', 'By original delivery date'], ['mo-scenario', 'Ship target scenario']],
-  warehouses: [['wh-open', 'Open work'], ['wh-kpis', 'By warehouse']],
-  metrics: [['mt-quality', 'Order quality'], ['mt-month', 'By due month'], ['mt-lines', 'Lines to act on']],
-  shipping: [['ship-status', 'Status'], ['ship-list', 'Shipments'], ['ship-cross', 'Cross-border']],
-  search: [['search-lines', 'Order lines'], ['search-more', 'Other matches']],
+// 2v6: every page is a bento grid of titled cards (dzCard: .dz-card on a 6-column .dz-grid); named page groups
+// (.pg-group) remain where a page has sections: Monthly, Warehouses, and Sales Order Health's Lagging (Shipments, Metrics).
+// Per page: its cards in order (each named by its title, else its aria-label) and its top-level groups.
+// (2v6.9: Metrics is a section of Lagging, so setTab('metrics') opens Sales Order Health on Lagging.)
+const PAGE_LAYOUT = {
+  purchaseorders: { cards: ['Received on time', 'Vendors with the most late POs', 'Kits by CM and month', 'PO lines'], groups: [] },
+  buildrisk: { cards: ['Builds by month', 'Blocking builds', 'Orders at risk or late'], groups: [] },
+  supplyweekly: { cards: ['Coverage', 'Short items by warehouse and month'], groups: [] },
+  supplydemand: { cards: ['Demand by item group and month', 'Least covered', 'Demand by warehouse', 'Item groups'], groups: [] },
+  monthly: { cards: ['September to date', 'Orders shipped by month', 'Month by month'], groups: ['Open and shipped, month by month', 'By delivery month', 'By original delivery date', 'Ship target scenario'] },
+  warehouses: { cards: ['Late orders by week', 'Getting worse', 'Getting better', 'Warehouses to watch'], groups: ['By late shipments', 'By due month', 'By warehouse'] },
+  metrics: { cards: ['Monthly', 'Quarterly', 'Orders shipped by month', 'Month by month', 'Shipped by warehouse / CM · this month', 'Original line delivery summary', 'On-time delivery', 'Late orders by cause', 'Monthly metrics'], groups: ['Shipments', 'Metrics', 'Order quality', 'By due month', 'Lines to act on'] },
+  shipping: { cards: ['No shipments to show'], groups: [] },
+  search: { cards: ['Order lines'], groups: [] },
 };
 const open = (page, tab) => { page.run(tab === 'search' ? "searchQuery='SPY';applyGlobalSearch()" : `setTab(${JSON.stringify(tab)})`); return results(page); };
+// 2v6.9: Monthly, Warehouses and the Supply menu's pages start hidden (Settings > Hidden Pages); show them all.
+const showAll = (page) => page.run("stgSet('hiddenPages',[])");
+// Each card's name: the first heading inside it before any nested card, else its aria-label.
+const cardNames = (h) => [...h.matchAll(/<section class="dz-card[^"]*"([^>]*)>/g)].map((m) => {
+  const rest = h.slice(m.index + m[0].length);
+  const end = rest.search(/<section\b|<\/section>/);
+  const h2 = /<h2\b[^>]*>([\s\S]*?)<\/h2>/.exec(end < 0 ? rest : rest.slice(0, end));
+  const label = /aria-label="([^"]+)"/.exec(m[1]);
+  return (h2 ? h2[1].replace(/<[^>]+>/g, '').trim() : '') || (label ? label[1] : '') || '(no name)';
+});
+const groupNames = (h) => [...h.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]+")? aria-labelledby="(pg-[\w-]+)" data-group="[\w-]+"><div class="pg-group-head"><h2 class="pg-group-title" id="(pg-[\w-]+)"(?: data-tip="[^"]+")?>([^<]+)<\/h2>/g)]
+  .map((m) => { assert.equal(m[1], m[2], `${m[3]}: labelled by its own title`); return m[3]; });
 
 test('the canonical page-group CSS is in the main stylesheet, as the 2v2 contract writes it', () => {
   for (const rule of [
@@ -86,97 +97,113 @@ test('the canonical page-group CSS is in the main stylesheet, as the 2v2 contrac
   assert.match(CSS, /@media print\{\n[^]*?section,\.section,[^{]*\.card\{break-inside:avoid;page-break-inside:avoid\}/, 'cards stay whole');
 });
 
-test('every page but Order Health is a few named groups; each group is labelled by its own title', async () => {
+test('every page is a set of named cards (and named groups where it has sections); each group is labelled by its own title', async () => {
   const page = await loadedAll();
-  for (const [tab, groups] of Object.entries(PAGE_GROUPS)) {
+  showAll(page);
+  for (const [tab, want] of Object.entries(PAGE_LAYOUT)) {
     const h = open(page, tab);
-    const found = [...h.matchAll(/<section class="pg-group[^"]*"(?: id="[^"]+")? aria-labelledby="pg-([\w-]+)" data-group="\1"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-\1"(?: data-tip="[^"]+")?>([^<]+)<\/h2>/g)].map((m) => [m[1], m[2]]);
-    assert.deepEqual(found, groups, tab);
-    // Nothing else on the page uses the old section headings: the group titles replaced them.
+    assert.equal(page.run('activeTab'), tab === 'metrics' ? 'weekly' : tab);
+    assert.deepEqual(cardNames(h), want.cards, `${tab} cards`);
+    assert.deepEqual(groupNames(h), want.groups, `${tab} groups`);
+    // The page title is the one h1; nothing uses the old section headings any more.
+    assert.equal((h.match(/<h1 class="dz-h1" tabindex="-1">/g) || []).length, 1, tab);
     assert.doesNotMatch(h, /class="section-title"/, `${tab}: an old section heading is left`);
     assert.doesNotMatch(h, /NaN|undefined|\[object Object\]/, tab);
   }
-  // Order Health uses the same group titles (no old section heading left either).
-  // (The Big picture card, on by default on Order Health, keeps its own in-card heading.)
-  assert.doesNotMatch(open(page, 'weekly').replace(/<div class="sk-head">[\s\S]*?<\/h2>/, ''), /class="section-title"/);
+  // Sales Order Health (Leading) has no old section heading either.
+  page.run("setTab('weekly');setWeeklyView('leading')");
+  assert.doesNotMatch(results(page), /class="section-title"/);
   assert.deepEqual(page.errors, []);
 });
 
-test('at most four cards in a row: stat rows are four-column grids, Shipping\'s four counts are one strip', async () => {
+// 2v6: the "at most four cards a row" rule is now the bento grid's: 6 columns, cards spanning 2, 3, 4 or 6, so no row
+// holds more than three cards. (Shipping's four counts as one strip: tests/shipping-page.test.js.)
+test('at most three cards in a row: the pages are 6-column grids whose cards span 2, 3, 4 or 6 columns', async () => {
   const page = await loadedAll();
-  for (const tab of Object.keys(PAGE_GROUPS)) assert.doesNotMatch(open(page, tab), /class="grid-5\b/, tab);
-  assert.match(CSS, /\.grid-4\{display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
-  assert.match(CSS, /\.grid-lead\{display:grid;grid-template-columns:1\.5fr 1fr 1fr 1fr/);
-  for (const tab of ['buildrisk', 'supplyweekly']) {
-    const grid = open(page, tab).match(/<div class="grid-4 pg-stats">([\s\S]*?)<\/div>\s*(?:<div class="mini-strip|`|<\/section>)/)[1];
-    assert.equal(grid.split('class="card kpi static"').length - 1, 4, tab);
+  showAll(page);
+  assert.match(CSS, /\n\.dz-grid\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\);gap:16px\}/);
+  for (const n of [2, 3, 4, 6]) assert.match(CSS, new RegExp(`\\n\\.dz-span-${n}\\{grid-column:span ${n}\\}`));
+  assert.doesNotMatch(CSS, /\.dz-span-1\{/);
+  for (const tab of Object.keys(PAGE_LAYOUT).filter((t) => t !== 'search' && t !== 'shipping')) {
+    const h = open(page, tab);
+    assert.doesNotMatch(h, /class="grid-5\b/, tab);
+    const cards = [...h.matchAll(/<section class="dz-card([^"]*)"/g)].map((m) => m[1]);
+    assert.ok(cards.length && cards.every((c) => /\bdz-span-[2346]\b/.test(c)), `${tab}: ${cards.join(' | ')}`);
   }
-  const ship = open(page, 'shipping');
-  assert.match(ship, /<div class="ship-kpis" role="group" aria-label="Shipment status">/);
-  assert.equal((ship.match(/class="card kpi ship-kpi/g) || []).length, 4);
-  assert.match(CSS, /\.ship-kpis>\.card\.kpi\{border:0;border-right:1px solid var\(--gray-100\);border-radius:0;box-shadow:none;/);
-  // Paper (about 990px wide) keeps the desktop columns instead of the 1180px two-column rule.
-  assert.match(CSS, /@media print\{\.grid-lead\{grid-template-columns:1\.5fr 1fr 1fr 1fr\}\.grid-4,\.month-spot\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)\}/);
+  // Paper keeps the 6 columns (print rule).
+  assert.match(CSS, /@media print\{[\s\S]*?\n  \.dz-grid\{grid-template-columns:repeat\(6,minmax\(0,1fr\)\);gap:\.1in\}/);
 });
 
 test('the numbers on the cards are the same numbers the pages computed before', async () => {
   const page = await loadedAll();
-  const card = (h, label) => (h.match(new RegExp(`>${label}</span>(?:<div class="kpi-row[^"]*">)?\\s*<span class="kpi-value[^"]*"[^>]*>([^<]+)<`)) || [])[1];
-  // Purchase Orders: the late card, the strip and the linked lines all come from poData.
+  showAll(page);
+  // Purchase Orders (2v6 strip): the tiles and the linked lines all come from poData; counts are POs (orders), the
+  // value and lines under them, in full in the tips.
   let h = open(page, 'purchaseorders');
-  const po = page.run('(()=>{const d=poData(currentMetrics());return {late:money(rowOpenAmount(d.poLateRows)),lateLines:d.poLateRows.length,unconf:d.poUnconfirmedRows.length,open:d.poAllOpenRows.length,openValue:money(rowOpenAmount(d.poAllOpenRows))};})()');
-  assert.match(h, new RegExp(`Late / missed commit</span>\\s*<div class="kpi-row"><span class="kpi-value hero crit"[^>]*>\\${po.late}</span><span class="kpi-unit">${po.lateLines} lines</span>`));
-  assert.match(text(h), new RegExp(`Unconfirmed ${po.unconf} `));
-  assert.match(text(h), new RegExp(`All open POs ${po.open} \\${po.openValue}`));
-  assert.match(h, new RegExp(`<span class="count-badge bad">Late / missed commit · ${po.lateLines} lines? · `));
-  // Build Risk: the newest week's four totals and its row count.
+  const po = page.run('(()=>{const d=poData(currentMetrics());return {late:money(rowOpenAmount(d.poLateRows)),lateLines:d.poLateRows.length,latePos:rowDocCount(d.poLateRows),unconf:d.poUnconfirmedRows.length,open:d.poAllOpenRows.length,openPos:rowDocCount(d.poAllOpenRows),openValue:money(rowOpenAmount(d.poAllOpenRows))};})()');
+  assert.deepEqual([po.late, po.lateLines, po.latePos, po.unconf, po.open, po.openPos, po.openValue], ['$4,400', 1, 1, 1, 3, 3, '$6,400']);
+  const tile = (key) => h.match(new RegExp(`data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">[\\s\\S]*?<span class="(?:sup|dz)-tile-v[^"]*"[^>]*>(\\d+)|data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">`)).filter(Boolean).slice(1);
+  assert.deepEqual(tile('late'), [`Late / missed commit: ${po.latePos} PO past their date\n• ${po.lateLines} line · 10 qty\n• ${po.late} open\nClick to list them.`, String(po.latePos)]);
+  assert.deepEqual(tile('allopen'), [`Open POs: ${po.openPos} POs open in view\n• ${po.open} lines · 30 qty\n• ${po.openValue} open\nClick to list them.`, String(po.openPos)]);
+  assert.match(h, new RegExp(`data-focus-key="potile-unconfirmed"[^>]*data-tip="Unconfirmed: ${po.unconf} PO not confirmed by the vendor`));
+  // The PO lines card lists the late card's lines (the default pick), its chip the PO count.
+  assert.match(h, new RegExp(`<h2 class="dz-title"[^>]*>PO lines</h2><span class="dz-chip red">${po.latePos} PO</span>`));
+  assert.equal((h.slice(h.indexOf('<table class="sup-tbl sup-po">')).match(/<tr class="sup-row/g) || []).length, po.lateLines);
+  // Build Risk: the newest week's totals per CM add up to the report's totals; the row count beside the week.
   h = open(page, 'buildrisk');
-  const br = page.run('(()=>{const b=currentMetrics().buildRisk.snapshots[0];return {ctb:b.totalClearToBuild,risk:b.totalAtRisk,late:b.totalLate,value:money(b.matchedOpenValue),rows:b.rows.length};})()');
-  assert.deepEqual([card(h, 'Clear to build'), card(h, 'At risk'), card(h, 'Late'), card(h, 'Matched SO value')], [String(br.ctb), String(br.risk), String(br.late), br.value]);
+  const br = page.run('(()=>{const b=currentMetrics().buildRisk.snapshots[0];return {ctb:b.totalClearToBuild,risk:b.totalAtRisk,late:b.totalLate,rows:b.rows.length};})()');
   assert.deepEqual([br.ctb, br.risk, br.late, br.rows], [11, 2, 1, 2]);
+  const cm = [...h.matchAll(/<span class="sup-cmnums"><span><b class="teal">(\d+)<\/b><i>clear<\/i><\/span><span><b class="amber">(\d+)<\/b><i>at risk<\/i><\/span><span><b class="red">(\d+)<\/b><i>late<\/i><\/span>/g)].map((m) => m.slice(1).map(Number));
+  assert.deepEqual(cm, [[7, 2, 1], [4, 0, 0]]);
+  assert.deepEqual([0, 1, 2].map((i) => cm.reduce((t, r) => t + r[i], 0)), [br.ctb, br.risk, br.late]);
   assert.match(h, new RegExp(`<strong class="ctb-rows">${br.rows}</strong> CTB report lines · 2 weeks loaded`));
-  // Supply Mix no longer repeats the four totals (or the lines): Supply / Demand's Coverage cards carry the same
-  // numbers for all warehouses, and Supply Mix links there.
-  h = open(page, 'supplydemand');
-  assert.doesNotMatch(h, /class="grid-4 pg-stats"|Worst shortage (?:rows|lines)|Supply risk (?:rows|lines)<|Demand qty<\/span>/);
-  assert.match(h, /<div class="pg-group-tools"><button type="button" class="link-btn" data-focus-key="mix-open-sd" onclick="setTab\('supplyweekly'\)" data-tip="The 1 shortage and 1 supply-risk lines, with the totals, are on Supply \/ Demand\.">Lines on Supply \/ Demand<\/button><\/div>/);
+  // Supply Mix shows demand by item group and month (no totals strip, no lines: those are on Supply / Demand and
+  // Sales Order Health's Supply / Demand view).
   const sd = page.run('(()=>{const s=currentMetrics().supplyDemand;return {d:s.demandQty,u:s.usableQty,sh:s.shortageQty,r:s.riskQty,shRows:s.shortageRows.length,rRows:s.riskRows.length};})()');
   assert.deepEqual([sd.d, sd.u, sd.sh, sd.r, sd.shRows, sd.rRows], [25, 27, 6, 7, 1, 1]);
-  // Supply / Demand: coverage cards for all warehouses.
+  h = open(page, 'supplydemand');
+  assert.doesNotMatch(h, /class="grid-4 pg-stats"|Worst shortage (?:rows|lines)|Supply risk (?:rows|lines)<|class="sup-tbl sup-sd"/);
+  assert.match(h, new RegExp(`<span class="sup-heat-t">${sd.d}</span>`));
+  assert.match(h, new RegExp(`data-tip="No Item Group: about ${sd.sh} qty short\\."`));
+  // Supply / Demand: the Coverage card for all warehouses.
   h = open(page, 'supplyweekly');
-  assert.deepEqual([card(h, 'Shortage lines'), card(h, 'Open demand'), card(h, 'Usable supply'), card(h, 'Supply risk lines')].map(Number), [sd.shRows, sd.d, sd.u, sd.rRows]);
-  assert.match(h, new RegExp(`>${sd.sh} qty short</span>`));
-  assert.match(h, new RegExp(`>${sd.r} risk qty</span>`));
-  // Monthly: this month's open value; Metrics Timeline: the on-track rate.
+  assert.match(h, new RegExp(`<div data-tip="Open demand: ${sd.d} qty · \\$1,690"><div class="sup-meter-h"><span>Open demand</span><b>${sd.d} qty</b>`));
+  assert.match(h, new RegExp(`<div class="sup-meter-h"><span>Open PO supply</span><b>${sd.u} qty</b>`));
+  assert.match(h, new RegExp(`data-focus-key="sd-stat-short"[^>]*\\(${sd.sh} qty\\)[^>]*><div class="dz-stat-l">Short</div><div class="dz-stat-v"[^>]*>${sd.shRows} item</div>`));
+  assert.match(h, new RegExp(`data-focus-key="sd-stat-risk"[^>]*\\(${sd.r} qty\\)[^>]*><div class="dz-stat-l">Supply at risk</div><div class="dz-stat-v"[^>]*>${sd.rRows} item</div>`));
+  assert.match(h, new RegExp(`<span class="dz-big"[^>]*>${Math.round((sd.d - sd.sh) / sd.d * 100)}%</span><span class="dz-sub">of demand has open PO supply</span>`));
+  // Monthly: this month so far against its ship target (booked for the month: open plus shipped, by original date).
   h = open(page, 'monthly');
-  const thisMonth = page.run("money((currentMetrics().byMonth.find(g=>g.key===monthKey(reportToday()))||{openAmount:0}).openAmount)");
-  assert.match(h, new RegExp(`<span class="month-tag">This month</span></div>\\s*<div class="kpi-row"><span class="kpi-value"[^>]*>\\${thisMonth}</span>`));
+  // (by original date, so line 3 rescheduled into September from August is not booked for September).
+  const thisMonth = page.run("money((groupByOriginalHeaderMonth(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).find(g=>g.key===monthKey(reportToday()))||{openAmount:0}).openAmount)");
+  assert.equal(thisMonth, '$3,250');
+  assert.match(h, new RegExp(`<div class="mwm-bar" role="img" aria-label="\\$1K shipped of \\$3K booked for September" data-tip="Target: \\${thisMonth} booked for September\\n• \\$1,000 shipped`));
   h = open(page, 'metrics');
   assert.match(h, new RegExp(`On-track rate</span><span class="kpi-tag">target 90%</span></div>\\s*<span class="kpi-value [a-z]+" data-count="${page.run('pct(currentMetrics().onTrackRows.length,currentMetrics().rows.length)')}"`));
   assert.deepEqual(page.errors, []);
 });
 
-test('long lists open on request and always print: All open lines, the scenario lines', async () => {
+test('long lists open on request and always print: All demand, the scenario lines', async () => {
   const page = await loadedAll();
-  let h = open(page, 'supplyweekly');
-  // All open lines is a collapsed card (title, line count, Show all) under the shortages table, not a group heading
-  // with only a link.
-  assert.doesNotMatch(h, /aria-labelledby="pg-sd-all"/);
-  const collapsed = h.match(/<section class="table pg-collapsed"><div class="card-head lg"><h2>All open lines<\/h2>[\s\S]*?<\/section>/)[0];
-  assert.match(collapsed, /<div class="inline-controls"><span class="section-sub">3 lines<\/span><button type="button" class="link-btn" data-focus-key="more-sd-all-group" data-table-key="sd-all-group" aria-expanded="false" data-tip="Show the 3 open demand lines\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Show all<\/button><\/div><\/div><\/section>/);
-  assert.ok(h.indexOf('<h2>All open lines</h2>') > h.indexOf('aria-labelledby="pg-sd-shortages"'), 'in the shortages group');
-  page.run("toggleTableMore('sd-all-group')");
-  h = results(page);
-  const all = () => results(page).slice(results(page).indexOf('<h2>All open lines</h2>'));
-  assert.match(all(), /aria-expanded="true" data-tip="Hide the open demand lines\." onclick="toggleTableMore\(this\.dataset\.tableKey\)">Hide<\/button>/);
-  assert.match(all(), /<table class="data-table cards"/);
-  assert.equal((all().split('</table>')[0].match(/<tr>\s*<td class="date soft"[ >]/g) || []).length, 3);
-  page.run("toggleTableMore('sd-all-group');printMode=true;renderResults()");
-  assert.match(all(), /<table class="data-table cards"/);
-  assert.doesNotMatch(results(page), /data-focus-key="more-sd-all-group"/);
-  page.run('printMode=false');
+  showAll(page);
+  // 2v6.9: the supply lines moved to Sales Order Health's Supply / Demand view; the short or at-risk lines show first,
+  // every open demand line on request (All demand), 10 a page on screen and all of them on paper.
+  page.run("setTab('weekly');setWeeklyView('supply')");
+  const rows = () => (results(page).match(/<tr class="sup-row">/g) || []).length;
+  const card = () => results(page).match(/<section class="dz-card sup-tcard[^"]*ohl-sd[^"]*">[\s\S]*?<\/section>/)[0];
+  assert.match(card(), /<h2 class="dz-title"[^>]*>Short or at-risk items<\/h2>/);
+  assert.match(card(), /data-focus-key="sd-view-all" aria-pressed="false" onclick="supSet\(&#39;sd-view&#39;,&#39;all&#39;\)" data-tip="Every open demand line in view\.">All demand<\/button>/);
+  assert.equal(rows(), 2);
+  page.run("supSet('sd-view','all')");
+  assert.match(card(), /<h2 class="dz-title"[^>]*>All open demand<\/h2>/);
+  assert.match(card(), /data-focus-key="sd-view-all" class="on" aria-pressed="true"/);
+  assert.equal(rows(), 3);
+  page.run('printMode=true;renderResults()');
+  assert.equal(rows(), 3, 'print lists every line');
+  page.run("printMode=false;supSet('sd-view','risk')");
+  assert.equal(rows(), 2);
   // Monthly: the strip and the calendar sum the scenario up; its lines open with Show lines.
-  h = open(page, 'monthly');
+  let h = open(page, 'monthly');
   assert.match(h, /<section class="table pg-collapsed"><div class="card-head lg"><h2>Scenario lines<\/h2><div class="inline-controls"><span class="section-sub">\d+ open lines booked by [\d-]+<\/span><button [^>]*data-focus-key="more-monthly-scenario-lines"[^>]*>Show lines<\/button>/);
   assert.doesNotMatch(h, /aria-label="Scenario lines"/);
   page.run("toggleTableMore('monthly-scenario-lines')");
@@ -187,34 +214,58 @@ test('long lists open on request and always print: All open lines, the scenario 
   assert.deepEqual(page.errors, []);
 });
 
-test('page header: title, then the as-of line and Data check; the actions on the right; phones keep the full button names', async () => {
+// 2v6 (header redesign): the page head is the title (supply pages add their as-of line); the page actions moved into
+// the top header, where the export date opens Add file / Share snapshot as round icon buttons named by aria-label (so
+// phones keep the full names); no PDF button (print from the browser; print styles still apply); Data check is the
+// Settings gear's dot.
+test('page header: the title (and the as-of line where a page has one); the actions in the top header, named for screen readers; filters with Clear', async () => {
   const page = await loadedAll();
-  const h = open(page, 'purchaseorders');
-  assert.match(h, /<div class="page-head-main"><h1 class="page-title" tabindex="-1">Purchase Orders<\/h1><div class="page-sub"><span class="page-meta"[^>]*>As of 2026-09-03 · \d+ open PO lines<\/span><\/div><\/div>\s*<div class="actions">/);
-  assert.match(h, />Share<span class="btn-long"> snapshot<\/span><\/button>/);
-  // The long part of a label is clipped, not display:none, so it stays in the button's accessible name.
-  const phone = CSS.slice(CSS.indexOf('/* --- 2v2 (pages)'));
-  assert.match(phone, /\.btn \.btn-long\{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect\(0 0 0 0\);white-space:nowrap\}/);
-  assert.doesNotMatch(phone, /btn-long\{[^}]*display:none/);
-  assert.match(CSS, /\.page-head \.actions\{flex-wrap:wrap;justify-content:flex-end;align-items:center\}/);
-  // Filter bars: no line that repeats the picked values on screen (print keeps it), Reset at the far right.
-  assert.match(h, /<button type="button" class="link-btn filter-reset" data-focus-key="po-filters-reset"/);
+  showAll(page);
+  let h = open(page, 'purchaseorders');
+  assert.match(h, /^<div class="dz-pagehead rise"><h1 class="dz-h1" tabindex="-1">Purchase Order Health<\/h1><\/div>/);
+  h = open(page, 'supplyweekly');
+  assert.match(h, /^<div class="dz-pagehead rise"><h1 class="dz-h1" tabindex="-1">Supply \/ Demand<\/h1><span class="page-meta" data-tip="As of export date 2026-09-03">As of 2026-09-03 · 3 supply \/ demand lines<\/span><\/div>/);
+  assert.doesNotMatch(h, /class="actions"|data-focus-key="export-pdf"|btn-long/);
+  const head = page.els['app-header'].innerHTML;
+  assert.match(head, /<button type="button" class="hdr-date[^"]*" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="false" aria-controls="hdr-file-pop" aria-label="[^"]{20,}"/);
+  for (const [key, label] of [['sidebar-add', 'Add file'], ['hdr-share', 'Share snapshot']]) {
+    assert.match(head, new RegExp(`<button type="button" class="hdr-icon live-act" data-focus-key="${key}" aria-label="${label}"[^>]*data-tip="${label}: [^"]+"`));
+  }
+  for (const label of ['Search orders, items and customers', 'Ask AI', 'Dark mode', 'Settings']) assert.match(head, new RegExp(`aria-label="${label}"`));
+  assert.doesNotMatch(head + h, /export-pdf/);
+  // Phones: the round icons and the logo share one row (32px icons, no gaps).
+  assert.match(CSS, /@media \(max-width:420px\)\{\n  \.app-header\{column-gap:8px\}\n  \.hdr-right\{gap:0\}\n  \.hdr-right \.hdr-icon,\.hdr-right \.hdr-date\{width:32px;height:32px\}/);
+  // Filter rows: the picked values print (Filters: line); Clear shows only while a filter is set, at the right.
+  h = open(page, 'purchaseorders');
   assert.match(h, /<div class="print-only">Filters: All warehouses · All vendors<\/div>/);
-  assert.match(CSS, /\.filter-reset\{margin-left:auto\}/);
+  assert.doesNotMatch(h, /data-focus-key="filters-reset"/);
+  page.run("setPoVendorFilter(['ACME'])");
+  assert.match(results(page), /<button type="button" class="dz-clear" data-focus-key="filters-reset" onclick="resetPoFilters\(\)" data-tip="[^"]+">Clear<\/button><\/div><\/div><div class="print-only">Filters: All warehouses · Acme Parts<\/div>/);
+  page.run('resetPoFilters()');
+  assert.deepEqual(page.run('poVendorFilter'), ['ALL']);
+  assert.deepEqual(page.errors, []);
 });
 
-test('sidebar: clear group labels, the current page marked, page descriptions in the tooltips', async () => {
+// 2v6: the side bar became the top header: Sales Order Health, Purchase Order Health (2v6.9) and the other shown
+// pages as links; the Supply pages in one Supply menu whose button names the current one; Settings is the gear.
+test('page links: the current page marked once, the Supply pages in one menu, page descriptions in the tooltips', async () => {
   const page = await loadedAll();
   page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
-  const s = sidebar(page);
-  assert.deepEqual([...s.matchAll(/<div class="nav-label">([^<]+)<\/div>/g)].map((m) => m[1]), ['Sales', 'Supply', 'Help']);
+  const s = page.els['app-header'].innerHTML;
+  const nav = s.match(/<nav class="hdr-nav" aria-label="Pages">([\s\S]*?)<\/nav>/)[1];
+  assert.deepEqual([...nav.matchAll(/data-focus-key="nav-(\w+)"[^>]*>([^<]+)<\/button>/g)].map((m) => [m[1], m[2]]),
+    [['weekly', 'Sales Order Health'], ['purchaseorders', 'Purchase Order Health'], ['monthly', 'Monthly'], ['warehouses', 'Warehouses'], ['shipping', 'Shipping']]);
   assert.equal((s.match(/aria-current="page"/g) || []).length, 1);
-  assert.match(s, /<button type="button" class="nav-item active" data-focus-key="nav-supplyweekly" onclick="setTab\('supplyweekly'\)" aria-current="page" data-tip="[^"]+"><span class="nav-text">Supply \/ Demand<\/span><\/button>/);
-  assert.doesNotMatch(s, /nav-desc|has-desc/);
-  assert.match(CSS, /\.nav-label\{padding:0 10px 8px;font-size:11px;font-weight:600;letter-spacing:\.06em;text-transform:uppercase\}/);
-  assert.match(CSS, /\.nav-item\.active::before\{background:var\(--accent\)\}/);
-  // The loaded-report card: file names, export date (what was loaded is in its tip), where the report is kept.
-  assert.match(s, /<div class="loaded-meta"><span data-tip="\d+ lines loaded: SO \+ PO \+ supply \/ demand \+ CTB\.">Export date 2026-09-03<\/span>/);
+  assert.match(s, /<button type="button" class="hdr-link active" id="hdr-supply-btn" aria-haspopup="menu" aria-expanded="false" onclick="dzMenuToggle\('hdr-supply',event\)">Supply · Supply \/ Demand/);
+  assert.match(s, /<div class="dz-menu dz-menu-l" role="menu" aria-label="Supply pages" hidden><button type="button" role="menuitem" class="dz-menu-item sel" data-focus-key="nav-supplyweekly" onclick="dzMenuClose\(true\);setTab\('supplyweekly'\)" aria-current="page" data-tip="[^"]+"/);
+  // Each link's tip is the page's one-line description.
+  for (const id of ['weekly', 'purchaseorders', 'shipping', 'supplyweekly', 'supplydemand', 'buildrisk']) {
+    assert.match(s, new RegExp(`data-focus-key="nav-${id}"[^>]*data-tip="${page.run(`esc(PAGE_TIPS.${id})`).replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}"`), id);
+  }
+  assert.match(s, /<button type="button" class="hdr-icon hdr-gear" id="hdr-gear" data-focus-key="hdr-gear" aria-label="Settings[^"]*"/);
+  assert.doesNotMatch(s, /nav-label|nav-item|loaded-meta/);
+  // The export date (what was loaded is in its popover).
+  assert.match(s, /<span class="hdr-date-txt">3 Sep<\/span>/);
 });
 
 test('load screen: one drop area until a report is loaded, then the loaded report beside it; every page listed with what it shows', async () => {
@@ -223,44 +274,69 @@ test('load screen: one drop area until a report is loaded, then the loaded repor
   assert.equal(page.els['upload-side'].hidden, true);
   const pages = page.els['upload-pages'].innerHTML;
   assert.deepEqual([...pages.matchAll(/<h3>([^<]+)<\/h3>/g)].map((m) => m[1]), ['Sales', 'Help']); // 2v6.9: the Supply group's pages start hidden
-  for (const id of ['weekly', 'monthly', 'warehouses', 'metrics', 'shipping', 'purchaseorders', 'supplyweekly', 'supplydemand', 'buildrisk', 'connect']) {
-    assert.ok(pages.includes(`<span class="page-desc">${page.run(`esc(PAGE_TIPS.${id})`)}</span>`), id);
+  // Every page in the menus is listed with its description; 2v6.9: Monthly, Warehouses and the Supply pages start
+  // hidden (so are left out until shown again), Metrics is part of Sales Order Health, Connect is in Settings.
+  assert.deepEqual([...pages.matchAll(/<strong>([^<]+)<\/strong>/g)].map((m) => m[1]), ['Sales Order Health', 'Purchase Order Health', 'Shipping', 'Settings']);
+  for (const id of ['weekly', 'purchaseorders', 'shipping', 'settings']) {
+    const tip = page.run(`PAGE_TIPS.${id}||NAV_GROUPS.flatMap(g=>g[1]).find(p=>p[0]===${JSON.stringify(id)})[2]`);
+    assert.ok(pages.includes(`<span class="page-desc">${page.run(`esc(${JSON.stringify(tip)})`)}</span>`), id);
   }
-  assert.match(HTML, /<section class="pg-group rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-upload-pages">What each page shows<\/h2><\/div><div class="upload-pages" id="upload-pages"><\/div><\/section>/);
-  assert.match(HTML, /<p class="page-lead">Load SAP exports into one offline summary\.<\/p>/);
+  for (const id of ['monthly', 'warehouses', 'metrics', 'supplyweekly', 'supplydemand', 'buildrisk']) {
+    assert.ok(!pages.includes(`<span class="page-desc">${page.run(`esc(PAGE_TIPS.${id})`)}</span>`), id);
+  }
+  assert.match(HTML, /<section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows<\/h2><\/div><div class="upload-pages" id="upload-pages"><\/div><\/section>/);
+  assert.match(HTML, /<h1 class="dz-h1 page-title">Load KPI export<\/h1><p class="dz-sub page-lead">Load SAP exports into one offline summary\.<\/p>/);
   assert.doesNotMatch(HTML, /class="flow-step"/);
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }]);
   page.run('showUpload()');
   assert.equal(page.els['upload-side'].hidden, false);
   assert.match(page.els['upload-current'].innerHTML, /Currently loaded<\/span><strong>kpi\.xls · Export date 2026-09-03<\/strong>/);
-  // On a phone the empty "No export loaded" card is not drawn as a blank box.
-  assert.match(CSS, /\.loaded-card\.empty\{display:none\}/);
+  // Before a report is loaded the side card is not drawn at all (no blank box on a phone).
+  assert.match(CSS, /\n\.upload-side\[hidden\]\{display:none\}/);
   assert.deepEqual(page.errors, []);
 });
 
 test('Purchase Orders lines: the reschedule date sits under the status; the table fits a 1366px screen', async () => {
   const page = await loadedAll();
   page.run("setTab('purchaseorders');setPoTileFilter('allopen')");
-  const table = results(page).match(/<table class="lines-table po">[\s\S]*?<\/table>/)[0];
-  assert.doesNotMatch(table, />Reschedule<\/th>|class="badge /);
-  assert.match(table, /<span class="status-chip warn">Future Reschedule<\/span><span class="timing">[^<]+<\/span><span class="timing">↻ 2026-09-25<\/span>/);
-  assert.equal((table.match(/<th\b/g) || []).length, 9);
-  const fixed = [...table.match(/<colgroup>([\s\S]*?)<\/colgroup>/)[1].matchAll(/width:(\d+)px/g)].reduce((t, m) => t + Number(m[1]), 0);
-  assert.ok(fixed + 190 <= 1040 && 1040 <= 1055, `fixed ${fixed}px`);
-  assert.match(CSS, /\.lines-table\.po\{min-width:1040px\}/);
+  // 2v6 (2v6.5): the PO lines card's table (sup-tbl sup-po): 11 columns with Owner and Kit Clean?; no Reschedule column.
+  const table = results(page).match(/<table class="sup-tbl sup-po">[\s\S]*?<\/table>/)[0];
+  assert.deepEqual([...table.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]+>|↕/g, '').trim()),
+    ['PO #', 'Vendor', 'Item', 'Owner', 'Warehouse', 'Promised', 'Open qty', 'Value', 'Status', 'Kit Clean?', 'Note']); // Title Case is a DOM pass in the browser
+  assert.doesNotMatch(table, />Reschedule<|class="badge /);
+  // The reschedule date sits under the status word, after its timing line.
+  assert.match(table, /<span class="dz-chip amber">Rescheduled<\/span><span class="sup-sub">\d+d pushed out<\/span><span class="sup-sub">↻ Sep 25<\/span>/);
+  // It fits the 1366px screen's card (1248px for the table, see tests/linked-lines.test.js): every column but Item has a
+  // set width; below 1240px it scrolls sideways in its card.
+  assert.equal((table.match(/<colgroup>([\s\S]*?)<\/colgroup>/)[1].match(/<col\b/g) || []).length, 11);
+  assert.match(CSS, /\n\.sup-po\{--min:1240px\}/);
+  assert.match(results(page), /<div class="sup-scroll" tabindex="0" role="region" aria-label="Linked purchase-order lines"><table class="sup-tbl sup-po">/);
 });
 
 test('supply rows: Supply / Demand and Search give a row the same status (shortage, then risky supply), the SAP flag in the tip', async () => {
   const page = await loadedAll();
-  // SPY-200 (CM - Alta) is covered but its PO supply is unconfirmed and late: "Supply risk", the quantities under it.
-  // Both tables stack as cards on a phone, so the cell also names its column (Supply risk / Risk) and its card place.
-  const cell = /<td data-tip="SAP flag: PO Not Confirmed\." data-label="(?:Supply risk|Risk)" data-card="st"><span class="pill warn">Supply risk<\/span><span class="sub">Unconfirmed 5 · Late 2<\/span><\/td>/;
-  let h = open(page, 'supplyweekly');
-  assert.match(h, cell);
+  showAll(page);
+  // SPY-200 (CM - Alta) is covered but its PO supply is unconfirmed and late: risky supply, the quantities under it,
+  // the SAP flag in the tip. Search says "Supply risk" (supplyRowStatus); since 2v6 the Supply / Demand view's status
+  // (supSdStatus, now on Sales Order Health) names the riskiest PO problem ("Late PO") from the same row status, so
+  // the two never disagree on short versus covered, and show the same quantities and flag.
+  page.run("setTab('weekly');setWeeklyView('supply')");
+  assert.match(results(page), /<td class="sup-status" data-tip="SAP flag: PO Not Confirmed\." data-label="Supply"><span class="ohs-st red"><i aria-hidden="true"><\/i>Late PO<\/span><span class="ohs-st-sub">Unconfirmed 5 · Late 2<\/span><\/td>/);
+  assert.match(results(page), /<td class="sup-status" data-label="Supply"><span class="ohs-st red"><i aria-hidden="true"><\/i>Short<\/span><\/td>/, 'SPY-100 is short');
   page.run("searchQuery='SPY-200';applyGlobalSearch()");
   const search = results(page).match(/<h2>Supply \/ demand<\/h2>[\s\S]*?<\/table>/)[0];
   assert.deepEqual([...search.matchAll(/<th\b[^>]*>([^<]+)<\/th>/g)].map((m) => m[1]), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
-  assert.match(search, cell);
+  // The Search table stacks as cards on a phone, so the cell also names its column and its card place.
+  assert.match(search, /<td data-tip="SAP flag: PO Not Confirmed\." data-label="Risk" data-card="st"><span class="pill warn">Supply risk<\/span><span class="sub">Unconfirmed 5 · Late 2<\/span><\/td>/);
+  const base = { isCumulativeShortage: false, isMonthlyShortage: false, hasSupplyRisk: false, hasDemandRisk: false, unconfirmedSupplyQty: 0, noCommitSupplyQty: 0, rescheduledSupplyQty: 0, lateSupplyQty: 0, demandNoCommitQty: 0, supplyRiskFlag: '' };
+  for (const r of [{ isCumulativeShortage: true, hasSupplyRisk: true, unconfirmedSupplyQty: 3 }, { isMonthlyShortage: true }, { hasSupplyRisk: true, lateSupplyQty: 2, supplyRiskFlag: 'Late' },
+    { hasSupplyRisk: true, noCommitSupplyQty: 4 }, { hasSupplyRisk: true, unconfirmedSupplyQty: 1 }, { hasSupplyRisk: true, rescheduledSupplyQty: 1 }, { hasDemandRisk: true, demandNoCommitQty: 2 }, {}]) {
+    const x = { ...base, ...r };
+    const [a, b] = [page.run(`supplyRowStatus(${JSON.stringify(x)})`), page.run(`supSdStatus(${JSON.stringify(x)})`)];
+    assert.equal(a.tone === 'bad', b.label === 'Short', JSON.stringify(r));
+    assert.equal(a.label === 'Covered', b.label === 'Covered', JSON.stringify(r));
+    assert.deepEqual([b.detail, b.flag], [a.detail, a.flag], JSON.stringify(r));
+  }
   // The case the design review found: a short row whose SupplyRiskFlag column is blank read "OK · 3 qty" (green) on
   // Supply Mix but "Shortage · Unconfirmed 3" on Supply / Demand. Every supply table now uses supplyRowStatus.
   const row = { isCumulativeShortage: true, isMonthlyShortage: true, hasSupplyRisk: true, hasDemandRisk: false, unconfirmedSupplyQty: 3, noCommitSupplyQty: 0, rescheduledSupplyQty: 0, lateSupplyQty: 0, demandNoCommitQty: 0, supplyRiskFlag: '' };
@@ -278,47 +354,32 @@ test('supply rows: Supply / Demand and Search give a row the same status (shorta
   assert.deepEqual(page.errors, []);
 });
 
-test('Supply / Demand: the short or at-risk lines are one table with warehouse sub-heading rows; Supply at risk only narrows it', async () => {
+// 2v6.9 (owner, cf78fce / c0baac5 / 155bfec): the short or at-risk lines left the Supply / Demand page for Sales Order
+// Health's Supply / Demand view; the warehouse is a column (no sub-heading rows); no Supply at risk only chip (the
+// page's Short / Supply at risk numbers open the view). The view's sorting, status words and filters:
+// tests/leading-2v69.test.js ("Views: Leading | Lagging | Supply / Demand ..."); 10 a page is dzPageOf (tests/pager-2v69.test.js).
+test('Supply / Demand: the short or at-risk lines are one table with a Warehouse column; the page\'s numbers open it', async () => {
   const page = await loadedAll();
+  showAll(page);
   let h = open(page, 'supplyweekly');
-  const group = () => { const x = results(page); return x.slice(x.indexOf('aria-labelledby="pg-sd-shortages"'), x.indexOf('<h2>All open lines</h2>')); };
-  // One table (no card per warehouse with its own header row), the lines short or with risky supply; the group is
-  // "Lines to act on" with its help as the title's tip and the line count in the pill (the card head keeps only the chip).
-  assert.match(group(), /^aria-labelledby="pg-sd-shortages" data-group="sd-shortages"><div class="pg-group-head"><h2 class="pg-group-title" id="pg-sd-shortages" data-tip="Lines short of usable PO supply, or with supply at risk\.">Lines to act on<\/h2><span class="count-badge bad">2 lines<\/span><\/div>/);
-  assert.equal((group().match(/<table class="data-table cards"/g) || []).length, 1);
-  assert.equal((group().match(/<thead>/g) || []).length, 1);
-  assert.match(group(), /<section class="table sd-rows">\s*<div class="card-head lg"><h2>Short or at risk<\/h2><div class="inline-controls"><button type="button" class="chip" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="false" data-tip="[^"]+" onclick="toggleTableMore\(this\.dataset\.tableKey\)">Supply at risk only · 1<\/button><\/div><\/div>/);
-  const subHeads = (x) => [...x.matchAll(/<tr class="grp-row"><td colspan="9"><span class="grp-name" role="heading" aria-level="3">([^<]+)<\/span><span class="grp-sub">([^<]+)<\/span><\/td><\/tr>/g)].map((m) => [m[1], m[2]]);
-  assert.deepEqual(subHeads(group()), [['CM - Alta', '1 line · 12 demand qty · $600'], ['Spyder - Lacombe', '1 line · 10 demand qty · $1,000']]);
-  // Phone cards: the sub-heading row is left as it is; every data line names its columns (month and value on top).
-  assert.match(group(), /<tr>\s*<td class="date soft" data-label="Month" data-card="key">Oct 2026<\/td>\s*<td data-label="Item" data-card="item"><span class="m">SPY-100<\/span>[\s\S]*?<td class="num strong" data-label="Demand value" data-card="amt">\$1,000<\/td>/);
-  assert.doesNotMatch(group(), /<td colspan="9" data-label/);
-  assert.match(group(), /<span class="pill bad">Shortage<\/span>/);
-  assert.match(group(), /<span class="pill warn">Supply risk<\/span>/);
-  // The chip lists the risky-supply rows only; it is kept with the view, printed, and cleared by a new report.
-  page.run("toggleTableMore('sd-risk-only')");
-  assert.match(group(), /<span class="count-badge warn">1 line<\/span>/);
-  assert.match(group(), /<h2>Supply at risk<\/h2><div class="inline-controls"><button type="button" class="chip active" data-focus-key="sd-risk-only" data-table-key="sd-risk-only" aria-pressed="true"/);
-  assert.deepEqual(subHeads(group()).map((x) => x[0]), ['CM - Alta']);
-  assert.doesNotMatch(group(), /pill bad/);
-  assert.match(results(page), /<div class="print-only">Filters: All warehouses · Supply at risk only<\/div>/);
-  // The Coverage numbers do not move with the chip.
-  assert.match(results(page), />Shortage lines<\/span><span class="kpi-value crit">1</);
-  page.run('resetViewState()');
-  assert.equal(page.run("!!tableMore['sd-risk-only']"), false);
-  // A warehouse pick narrows the table and its sub-headings; more than 10 lines go 10 a page, the sub-heading repeating.
-  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly');setSupplyWarehouseFilter(['Spyder - Lacombe'])");
-  assert.deepEqual(subHeads(group()).map((x) => x[0]), ['Spyder - Lacombe']);
-  const manyRows = "Array.from({length:25},(_,i)=>({...supplyDemandRows[0],itemCode:'X'+i,warehouseName:i<15?'A':'B'}))";
-  const many = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:${manyRows}})`);
-  assert.equal((many.match(/<tr>\s*<td class="date soft"[ >]/g) || []).length, 10);
-  assert.deepEqual(subHeads(many), [['A', '15 lines · 150 demand qty · $15,000']], 'a sub-heading counts all its lines');
-  assert.match(many, /<span class="dz-pagecount">1–10 of 25 lines<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="t-many"/);
-  page.run("dzPg['t-many'].page=2");
-  const many2 = page.run(`renderSupplyRowsTable({key:'t-many',title:'T',rows:${manyRows}})`);
-  assert.deepEqual(subHeads(many2), [['A', '15 lines · 150 demand qty · $15,000'], ['B', '10 lines · 100 demand qty · $10,000']], 'the heading repeats on page 2');
-  assert.match(many2, /11–20 of 25 lines/);
-  assert.match(CSS, /\.data-table tr\.grp-row>td\{/);
+  assert.doesNotMatch(h, /<table|grp-row|data-focus-key="sd-risk-only"|Supply at risk only/, 'the page keeps Coverage and the heat map');
+  page.run("supSdFocus('risk')");
+  assert.deepEqual(page.run('[activeTab,weeklyView]'), ['weekly', 'supply']);
+  h = results(page);
+  const card = h.match(/<section class="dz-card sup-tcard[^"]*ohl-sd[^"]*">[\s\S]*?<\/section>/)[0];
+  assert.equal((card.match(/<table class="sup-tbl sup-sd"/g) || []).length, 1);
+  assert.equal((card.match(/<thead>/g) || []).length, 1);
+  assert.doesNotMatch(card, /grp-row|role="heading"|Supply at risk only/);
+  // One row per item and month: its warehouse, demand, supply, the quantity short and the status.
+  const rows = [...card.matchAll(/<tr class="sup-row"><td[^>]*>([^<]*)<\/td><td[^>]*>[^<]*<\/td><td class="ohs-wh sup-soft" data-label="Warehouse">([^<]+)<\/td><td[^>]*>([^<]+)<\/td><td[^>]*>([^<]+)<\/td><td[^>]*>([^<]+)<\/td><td[^>]*>([^<]+)<\/td><td class="sup-status"[^>]*><span class="ohs-st (\w+)"><i aria-hidden="true"><\/i>([^<]+)<\/span>/g)].map((m) => m.slice(1));
+  assert.deepEqual(rows, [['SPY-200', 'CM · Alta', 'Sep', '12 qty', '20', '0', 'red', 'Late PO'], ['SPY-100', 'Spyder · Lacombe', 'Oct', '10 qty', '4', '6', 'red', 'Short']]);
+  assert.match(card, /<span class="ohs-sum"><span class="ohs-sum-i red"><b>1<\/b> short<\/span><span class="ohs-sum-i amber"><b>1<\/b> supply at risk<\/span><span class="ohs-sum-i"><b>2<\/b> lines in view<\/span><\/span>/);
+  // Phone cards: every cell names its column.
+  assert.ok([...card.matchAll(/<td\b[^>]*>/g)].every((m) => /data-label="[^"]+"/.test(m[0])));
+  // A warehouse pick narrows the table.
+  page.run("setSupplyWarehouseFilter(['Spyder - Lacombe'])");
+  assert.deepEqual([...results(page).matchAll(/data-label="Warehouse">([^<]+)</g)].map((m) => m[1]), ['Spyder · Lacombe']);
+  page.run("setSupplyWarehouseFilter(['ALL'])");
   assert.deepEqual(page.errors, []);
 });
 
@@ -334,30 +395,22 @@ test('load screen: What each page shows is filled on the first visit, before any
   assert.deepEqual(page.errors, []);
 });
 
-test('phone header: no icons, Share and PDF, actions on one row, Data check on the as-of line; the sidebar file card folds to one line', async () => {
+// 2v6: no Share / PDF buttons and no side bar file card any more (they were the phone-header problems this test
+// guarded); the loaded files sit behind the header's export date, one small button on every width.
+test('phone header: no page buttons; the export date folds the loaded files, Add file, New file and Share snapshot into one popover', async () => {
   const page = await loadedAll();
+  page.run("stgSet('dataSource','import')"); // the import screen's popover (live mode shows the SAP status instead)
   const h = open(page, 'purchaseorders');
-  // "Export PDF" on wider screens, "PDF" on a phone (the long part stays in the accessible name).
-  assert.match(h, /data-focus-key="export-pdf"[^>]*><svg class="ico"[^]*?<\/svg><span class="btn-long">Export&nbsp;<\/span>PDF<\/button>/);
-  const phone = CSS.slice(CSS.indexOf('/* --- 2v2 design fixes (D3'));
-  for (const rule of ['.page-head .actions{flex-wrap:nowrap;gap:6px;max-width:100%}', '.page-head .actions .btn .ico{display:none}', '.page-sub{flex-wrap:nowrap;max-width:100%;min-width:0}', '.page-sub .page-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}']) {
-    assert.ok(phone.match(/@media \(max-width:640px\)\{\n  \.page-head\{[\s\S]*?\n\}/)[0].includes(rule), rule);
-  }
-  // Sidebar: the file card is a <details> whose one-line summary shows only on a phone; it is open on wider screens
-  // (no matchMedia here = not a phone), closed on a phone until opened, and the choice is kept across redraws.
-  const fold = () => page.els['app-sidebar'].innerHTML.match(/<details class="loaded-fold"[^>]*>[\s\S]*?<\/details>/)[0];
-  assert.match(fold(), /^<details class="loaded-fold" open ontoggle="if\(isPhoneWidth\(\)\)loadedFoldOpen=this\.open"><summary class="loaded-sum" data-focus-key="sidebar-file" data-tip="[^"]+"><span class="live-dot"><\/span><span class="loaded-sum-text">kpi\.xls, supply\.xls, Orders At Risk - Clear to Build\.xlsx<\/span><\/summary><div class="loaded-card">/);
-  assert.match(fold(), /data-focus-key="notes-editor"|data-focus-key="sidebar-add"/);
-  page.ctx.matchMedia = (q) => ({ matches: q === '(max-width:640px)', addEventListener() {} });
-  page.run('renderSidebar()');
-  assert.match(fold(), /^<details class="loaded-fold" ontoggle=/);
-  page.run('loadedFoldOpen=true;renderSidebar()');
-  assert.match(fold(), /^<details class="loaded-fold" open /);
-  delete page.ctx.matchMedia;
-  assert.match(phone, /\.loaded-fold>summary\{display:none\}/);
-  assert.match(phone, /@media \(max-width:640px\)\{\n  \.loaded-fold\{[^}]+\}\n  \.loaded-fold>summary\{display:flex;/);
-  // The compact top bar keeps its tight gaps (the roomy side-column gaps are for wide screens).
-  assert.match(phone, /@media \(max-width:980px\)\{\.sidebar\{gap:10px\}\.nav\{gap:4px\}/);
+  assert.doesNotMatch(h, /data-focus-key="export-pdf"|class="actions"|class="page-sub"/);
+  const head = () => page.els['app-header'].innerHTML;
+  assert.doesNotMatch(head(), /loaded-fold|loaded-card|class="sidebar/);
+  assert.match(head(), /<button type="button" class="hdr-date" id="hdr-date-btn" data-focus-key="sidebar-file" aria-haspopup="dialog" aria-expanded="false" aria-controls="hdr-file-pop" aria-label="Export date 3 Sep: loaded files, Add file, New file and Share snapshot" onclick="dzMenuToggle\('hdr-file',event\)"/);
+  const pop = head().match(/<div class="dz-menu dz-menu-r hdr-pop[^"]*" id="hdr-file-pop" role="dialog"[^>]*hidden>[\s\S]*?(?=<div class="hdr-search)/)[0];
+  // The first two file names, then "+ 1 more"; the actions as round icon buttons, each named.
+  assert.match(pop, /<div class="hdr-pop-name">kpi\.xls<br>supply\.xls <span class="hdr-pop-more">\+ 1 more<\/span><\/div>/);
+  assert.deepEqual([...pop.matchAll(/data-focus-key="([\w-]+)" aria-label="([^"]+)"/g)].map((m) => [m[1], m[2]]), [['sidebar-add', 'Add file'], ['sidebar-new', 'New file'], ['hdr-share', 'Share snapshot']]);
+  // Mid widths show the date as its file icon (the text label stays in the button's name).
+  assert.match(CSS, /@media \(min-width:761px\) and \(max-width:1180px\)\{[^}]*\}[^@]*\.hdr-date \.hdr-date-txt\{display:none\}\n  \.hdr-date \.hdr-date-ico\{display:block\}/);
   assert.deepEqual(page.errors, []);
 });
 

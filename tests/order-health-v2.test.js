@@ -107,20 +107,24 @@ test('reasons: every signal on an at-risk line counts, ranked by open value; top
   const d = lead(page);
   // Only the CM - DSM line has a shortage (that warehouse's snapshot row is short; the Lacombe row is not).
   assert.deepEqual(page.run(`[${row('100')},${row('102')}].map(lineReasons)`), [['Past due · No reschedule', 'Supply shortage'], ['Rescheduled later']]);
-  // "No Commit" override and the SAP no-commit signal are one reason.
-  assert.deepEqual(page.run(`lineReasons(${row('101')})`), ['No commit date']);
+  // 2v6.5 (C): the "No Commit" override is its own reason, "No Commit (override)"; "No commit date" is only SAP's
+  // 1111-11-11 date (OH_OVERRIDE_REASON).
+  assert.deepEqual(page.run(`lineReasons(${row('101')})`), ['No commit date', 'No Commit (override)']);
   assert.deepEqual(d.reasons, [
     ['Past due · No reschedule', 3, 15700, 'us'], // 108 counts too: no Not At Risk override in this test
     ['Rescheduled later', 3, 12500, 'unknown'],
     ['Supply shortage', 1, 10000, 'us'],
+    ['No Commit (override)', 1, 8000, 'us'],
     ['No commit date', 1, 8000, 'us'],
     ['Hold', 1, 5000, 'them'],
     ['Missed commit', 1, 4000, 'us'],
     ['Unconfirmed', 1, 4000, 'us'],
   ]);
   assert.equal(d.top, 6);
-  const bars = [...html(page).matchAll(/class="oh-bar-row[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(bars, ['Past due · No reschedule', 'Rescheduled later', 'Supply shortage', 'No commit date', 'Hold', 'Missed commit']);
+  // The Top reasons heatmap (2v6.9): the at-risk lines due by the At Risk end date, top 5 by orders, then value.
+  const bars = [...html(page).matchAll(/class="ohs2-rname[^"]*" data-focus-key="oh-reason-([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(bars, page.run('ohlReasons(currentMetrics()).slice(0,5).map(r=>r.label)'));
+  assert.deepEqual(bars, ['Past due · No reschedule', 'Rescheduled later', 'Supply shortage', 'No Commit (override)', 'No commit date']);
   // Lines not at risk have no reasons, even when unconfirmed.
   setStatus(page, '103', 'Not At Risk');
   assert.deepEqual(page.run(`lineReasons(${row('103')})`), []);
@@ -144,9 +148,10 @@ test('open order states partition the open lines (count and value) and match the
   assert.deepEqual(lead(page).states.map(([, r]) => r.length), [0, 0, 0, 1, 0]);
   // Each state is a card: clicking lists its lines.
   page.run("setWeeklyWarehouseFilter(['ALL']);setWeeklyTileFilter('st-pastdue')");
-  assert.match(html(page), /<span class="count-badge[^"]*">Past due · \d+ lines? · /);
+  // The Lines card (2v6): its chip has the lines and their value, the picked state's name beside it.
+  assert.match(html(page), /<h2 class="dz-title"[^>]*>Lines<\/h2><span class="dz-chip red">3 lines · \$19,000<\/span><span class="dz-meta">Past due<\/span>/);
   assert.deepEqual([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((m) => m[1]).sort(), ['100', '103', '106']);
-  assert.match(html(page), /<span class="status-chip bad">Past due<\/span>/);
+  assert.match(html(page).slice(html(page).indexOf('id="linked-lines"')), /<span class="dz-chip red">Past due<\/span>/);
 });
 
 // --- When flagged ---------------------------------------------------------------------------------------
@@ -173,9 +178,11 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   page.ctx.firstFlagged = { [key(page, '103')]: '2026-08-06', [key(page, '100')]: '2026-08-06' };
   const risk = () => docs(page, 'orderHealthData(currentMetrics()).lateTileRows');
   const keyBefore = page.run('weeklyFilterKey()');
-  const scorecard = () => html(page).match(/<section class="table" aria-label="Warehouse scorecard">[\s\S]*?<\/section>/)[0];
-  const fillCard = () => html(page).match(/data-focus-key="tile-fillrate"[\s\S]*?<\/button>/)[0];
-  const undrilled = { fill: page.run('orderHealthData(currentMetrics()).fillOpenRows.length'), scorecard: scorecard(), fillCard: fillCard() };
+  // 2v6.9: no Fill rate card on Lagging and no Warehouse scorecard any more; the fill-rate lines and the scorecard data
+  // (warehouseScorecardData, still read by the AI tools) must still ignore the chart filters.
+  const scorecard = () => JSON.stringify(page.run('warehouseScorecardData(currentMetrics())'));
+  const undrilled = { fill: page.run('orderHealthData(currentMetrics()).fillOpenRows.length'), scorecard: scorecard() };
+  assert.doesNotMatch(html(page), /data-focus-key="tile-fillrate"|aria-label="Warehouse scorecard"/);
   page.run("setWeeklyCauseFilter('us')");
   assert.deepEqual(risk(), ['100', '101', '103']);
   assert.notEqual(page.run('weeklyFilterKey()'), keyBefore);
@@ -200,18 +207,15 @@ test('reason, cause and when-flagged filters compose with each other and the pag
   assert.equal(page.run('orderHealthData(currentMetrics()).otd3Mo.scored.length'), 4);
   assert.equal(page.run('orderHealthData(currentMetrics()).fillOpenRows.length'), undrilled.fill);
   assert.ok(undrilled.fill > 3);
-  assert.equal(fillCard(), undrilled.fillCard);
   assert.equal(scorecard(), undrilled.scorecard);
-  page.run("setWeeklyTileFilter('fillrate')");
-  assert.equal([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].length, undrilled.fill);
-  page.run("setWeeklyTileFilter('late')");
   // The AI tools report the page with every filter at All and leave the page's filters alone.
   assert.equal(page.run("aiRunTool('get_overview',{}).order_health.at_risk.lines"), 7);
   assert.equal(page.run('weeklyCauseFilter'), 'us');
-  // Reset clears them with the other filters; the sidebar badge always follows the At Risk card.
+  // Reset clears them with the other filters. (2v6: the header's page links carry no count badge.)
   page.run('resetWeeklyFilters()');
   assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyCauseFilter'), page.run('weeklyAgeFilter')], ['', '', '']);
-  assert.match(page.els['app-sidebar'].innerHTML, /class="nav-badge"[^>]*>7</);
+  assert.match(page.els['app-header'].innerHTML, /data-focus-key="nav-weekly"[^>]*>Sales Order Health<\/button>/);
+  assert.equal(page.run('orderHealthData(currentMetrics()).lateTileRows.length'), 7);
   assert.doesNotMatch(html(page), /oh-chip/);
 });
 
@@ -226,7 +230,7 @@ test('a Big picture reason box filters to its own lines (first reason only); the
   assert.equal(page.run('orderHealthData(currentMetrics()).lateAmt'), box.value);
   assert.deepEqual([page.run('weeklyReasonFilter'), page.run('weeklyReasonMain')], ['Rescheduled later', true]);
   assert.match(html(page), /class="chip active oh-chip" data-kind="reason"[^>]*>Main reason: Rescheduled later </);
-  assert.doesNotMatch(html(page), /class="oh-bar-row selected"/, 'the Top 6 bar is a different filter');
+  assert.doesNotMatch(html(page), /class="ohs2-rname sel"/, 'the Top reasons row is a different filter');
   assert.equal(page.run("sankeyNodeSelected(sankeyFlows('weekly')[1].nodes.find(n=>n.id==='0:Rescheduled later'))"), true);
   assert.deepEqual(page.run('ohSnapshotView()').weeklyReasonMain, true);
   // The Top 6 bar of the same reason: every at-risk line that has it.
@@ -292,22 +296,22 @@ test('a cause pick, a bulk cause or a teammate\'s note redraws from the cached m
 });
 
 // --- Tabs -------------------------------------------------------------------------------------------------
-test('tabs: an ARIA tablist with one visible panel, arrow keys, and the linked lines follow the tab', async () => {
+test('tabs: an ARIA tablist (Leading, Lagging, Supply / Demand) with one visible panel, arrow keys, and the Lines card in Leading', async () => {
   const page = await withOverrides();
   const m = html(page);
-  assert.match(m, /<div class="oh-tabs" role="tablist" aria-label="Order Health indicators">/);
-  assert.match(m, /role="tab" class="oh-tab" id="oh-tab-leading" aria-selected="true" aria-controls="oh-panel-leading" tabindex="0"/);
-  assert.match(m, /role="tab" class="oh-tab" id="oh-tab-lagging" aria-selected="false" aria-controls="oh-panel-lagging" tabindex="-1"/);
+  // 2v6: the switch is a segmented pill (dzSeg) with three tabs: Leading | Lagging | Supply / Demand (2v6.9).
+  assert.match(m, /<div class="dz-seg" role="tablist" aria-label="Sales Order Health view">/);
+  assert.match(m, /role="tab" id="oh-tab-leading" class="on" aria-selected="true" tabindex="0" onclick="setWeeklyView\(&#39;leading&#39;\)" aria-controls="oh-panel-leading" onkeydown="ohTabKey\(event\)"/);
+  assert.match(m, /role="tab" id="oh-tab-lagging" aria-selected="false" tabindex="-1" onclick="setWeeklyView\(&#39;lagging&#39;\)" aria-controls="oh-panel-lagging" onkeydown="ohTabKey\(event\)"/);
+  assert.match(m, /role="tab" id="oh-tab-supply" aria-selected="false" tabindex="-1"[^>]*aria-controls="oh-panel-supply"/);
   assert.match(m, /<div class="oh-panel" role="tabpanel" id="oh-panel-leading" aria-labelledby="oh-tab-leading">/);
   assert.match(m, /<div class="oh-panel" role="tabpanel" id="oh-panel-lagging" aria-labelledby="oh-tab-lagging" hidden>/);
-  // The existing sections live in their tab; 2v2: the tabs are the page's main switch, right under the page head and
-  // above the filter bar, and the linked lines are below both panels.
-  assert.ok(m.indexOf('class="page-head') < m.indexOf('role="tablist"') && m.indexOf('role="tablist"') < m.indexOf('class="filter-bar'));
-  const attention = m.indexOf('>At risk now</h2>');
-  assert.ok(m.indexOf('id="oh-panel-leading"') < attention && attention < m.indexOf('id="oh-panel-lagging"'));
-  const performed = m.indexOf('>Delivery performance</h2>');
-  assert.ok(m.indexOf('id="oh-panel-lagging"') < performed && performed < m.indexOf('Warehouse scorecard'));
-  assert.ok(m.indexOf('id="linked-lines"') > m.indexOf('Warehouse scorecard'));
+  assert.match(m, /<div class="oh-panel" role="tabpanel" id="oh-panel-supply" aria-labelledby="oh-tab-supply" hidden>/);
+  // The tabs are the page's main switch: right under the page head, at the left of the filter row (before the
+  // filter pills). The cards live in their tab; the Lines card is the last card of the Leading grid.
+  assert.ok(m.indexOf('class="dz-pagehead') < m.indexOf('role="tablist"') && m.indexOf('role="tablist"') < m.indexOf('class="dz-filters"'));
+  const atRisk = m.indexOf('data-focus-key="tile-late"');
+  assert.ok(m.indexOf('id="oh-panel-leading"') < atRisk && atRisk < m.indexOf('id="linked-lines"') && m.indexOf('id="linked-lines"') < m.indexOf('id="oh-panel-lagging"'));
   // Right arrow shows Lagging and focuses its tab; a Leading card gives way to OTD.
   const focused = [];
   page.ctx.document.getElementById('oh-tab-lagging').focus = () => focused.push('lagging');
@@ -315,15 +319,22 @@ test('tabs: an ARIA tablist with one visible panel, arrow keys, and the linked l
   page.run('ohTabKey')({ key: 'ArrowRight', preventDefault() { prevented = true; } });
   assert.deepEqual([page.run('weeklyView'), page.run('weeklyTileFilter'), focused, prevented], ['lagging', 'otd3mo', ['lagging'], true]);
   assert.match(html(page), /id="oh-panel-leading" aria-labelledby="oh-tab-leading" hidden>/);
-  assert.match(html(page), /<span class="count-badge[^"]*">OTD · 3 mo · \d+ delivered lines? · /);
-  page.run("ohTabKey({key:'End'});ohTabKey({key:'Home'})");
+  assert.match(html(page), /id="oh-panel-lagging" aria-labelledby="oh-tab-lagging">[\s\S]*?>Monthly<\/h2>/);
+  // Lagging shows figures only (2v6.9): the Lines card stays with Leading.
+  assert.doesNotMatch(html(page), /id="linked-lines"/);
+  page.run("ohTabKey({key:'End'})");
+  assert.equal(page.run('weeklyView'), 'supply', 'End: the last tab');
+  page.run("ohTabKey({key:'Home'})");
   assert.equal(page.run('weeklyView'), 'leading');
   assert.equal(page.run('weeklyTileFilter'), 'late');
+  assert.match(html(page), /id="linked-lines"/);
   page.run("ohTabKey({key:'Tab'})");
   assert.equal(page.run('weeklyView'), 'leading', 'other keys are left alone');
-  // No card picked: switching keeps it that way.
-  page.run("setWeeklyTileFilter('late');setWeeklyView('lagging')");
-  assert.equal(page.run('weeklyTileFilter'), '');
+  // 2v6: Leading always lists a card: clicking the picked card again falls back to At Risk; Lagging then picks OTD.
+  page.run("setWeeklyTileFilter('st-ontrack');setWeeklyTileFilter('st-ontrack')");
+  assert.equal(page.run('weeklyTileFilter'), 'late');
+  page.run("setWeeklyView('lagging')");
+  assert.equal(page.run('weeklyTileFilter'), 'otd3mo');
 });
 
 test('tab and chart filters are saved in a shared snapshot (with the flag history), and reset with a new report', async () => {
@@ -362,33 +373,34 @@ test('tab and chart filters are saved in a shared snapshot (with the flag histor
 });
 
 // --- Lagging ----------------------------------------------------------------------------------------------
-test('Lagging: perfect order and average days late, Us / Them on every rate, built only when the tab is open', async () => {
+test('Lagging: perfect order and average days late on the Monthly card, late orders by reason, built only when the tab is open', async () => {
   const page = await withOverrides();
   page.run('var built=0;var realPerfect=perfectOrderStats;perfectOrderStats=function(){built++;return realPerfect.apply(this,arguments)}');
   page.run('renderResults()');
   assert.equal(page.run('built'), 0, 'the default tab does not score perfect orders');
   assert.doesNotMatch(html(page), /data-focus-key="tile-perfect"/);
   page.run("setWeeklyView('lagging')");
-  assert.equal(page.run('built'), 1);
+  // 2v6.9: the Monthly / Quarterly cards, the Shipments section and Metrics each score their own lines, once per metrics.
+  assert.ok(page.run('built') >= 1);
+  page.run('built=0;renderResults()');
+  assert.equal(page.run('built'), 0, 'a Lagging redraw reuses the scores');
   const x = page.run('(()=>{const x=ohLaggingExtras(currentMetrics());return {rate:x.perfect.rate,perfect:x.perfect.perfect.map(r=>r.documentNumber),scored:x.perfect.scored.length,avg:x.daysLate.avg,late:x.daysLate.late.map(r=>r.documentNumber),scoredDeliveries:x.daysLate.scored.length,notPerfectCause:x.perfect.totals.us.lines}})()');
   assert.deepEqual(x, { rate: 25, perfect: ['201'], scored: 4, avg: 7.3, late: ['202', '200', '203'], scoredDeliveries: 4, notPerfectCause: 3 });
   // Same rule as the Metrics page.
   assert.equal(x.rate, page.run('realPerfect(currentMetrics().allRows,indexShipmentsByLine(currentMetrics().allRows)).rate'));
-  const m = html(page);
-  assert.match(m, /Perfect order · 12 mo<\/span>[\s\S]*?<span class="kpi-value crit">25%<\/span>/);
-  assert.match(m, /Avg days late · 3 mo<\/span>[\s\S]*?<span class="kpi-value crit">7\.3 d<\/span>/);
-  assert.match(m, /3 of 4 deliveries late · \$/);
-  // Each lagging card says who caused its misses.
-  assert.match(m, /OTD · 3 mo<\/span>[\s\S]*?1\+ days late: <b class="cause-text-us">Us 3<\/b><\/span>/);
-  assert.match(m, /Fill rate<\/span>[\s\S]*?Past due, open: <b class="cause-text-us">Us 3<\/b> · <b class="cause-text-them">Them 1<\/b> · <b class="cause-text-neutral">Neutral 1<\/b> · <b class="cause-text-unknown">Not set 2<\/b><\/span>/);
-  assert.match(m, /Shipped this week<\/span>[\s\S]*?Shipped late: none/);
-  // The new cards list their lines like OTD does.
-  page.run("setWeeklyTileFilter('dayslate')");
-  assert.match(html(page), /<span class="count-badge[^"]*">Late deliveries · 3 mo · \d+ lines? · /);
-  assert.match(html(page), /Delivery date/);
-  page.run("setWeeklyTileFilter('perfect')");
-  assert.deepEqual([...html(page).matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((r) => r[1]).sort(), ['200', '202', '203']);
-  assert.match(html(page), /status-chip bad">Missed commit<\/span>/);
+  // The Monthly card (August 2026, every delivery of the fixture) shows the same numbers, the counts in the tips.
+  const lag = html(page).slice(html(page).indexOf('id="oh-panel-lagging"'));
+  const monthly = lag.match(/<section class="dz-card[^"]*ohg-card[^"]*"[^>]*><div class="dz-card-head"><h2 class="dz-title"[^>]*>Monthly<\/h2><span class="dz-meta">August 2026<\/span>[\s\S]*?<\/section>/)[0];
+  const tile = (label) => monthly.match(new RegExp(`<div class="dz-stat ohg-tile" data-tip="([^"]*)"><div class="dz-stat-l">${label}</div><div class="dz-stat-v"[^>]*>([^<]*)</div>`)).slice(1);
+  assert.deepEqual(tile('Perfect order'), ['Perfect order, August 2026: 25%\n• 1 of 4 completed lines on time, never rescheduled\n• July 2026: none', '25%']);
+  assert.deepEqual(tile('Avg days late'), ['Avg days late, August 2026: 7.3\n• 3 late delivery lines of 4 scored\n• July 2026: none scored', '7.3']);
+  // 2v6.9 (owner): the Lagging tiles are figures, not buttons, so there is no Lines card and no Us / Them line on them;
+  // why orders were late is the Metrics section's Late orders by cause (each late order under its first reason).
+  assert.doesNotMatch(lag, /id="linked-lines"|cause-text-|<button[^>]*data-focus-key="tile-(perfect|dayslate|otd3mo|fillrate)"/);
+  const causes = lag.match(/>Late orders by cause<\/h2>[\s\S]*?<\/section>/)[0];
+  assert.match(causes, /<span class="mwm-cause-n">3<\/span><span class="dz-meta">late orders in August<\/span>/);
+  assert.deepEqual([...causes.matchAll(/data-tip="([^"]+)"><span class="dz-barrow-l">/g)].map((x) => x[1]), ['Past due · No reschedule: 2 orders of 3 late.', 'Missed commit: 1 order of 3 late.']);
+  assert.deepEqual(page.errors, []);
 });
 
 // --- Waffle -------------------------------------------------------------------------------------------------
@@ -403,33 +415,41 @@ test('waffle blocks: one per $20,000, a half block under $10,000, capped at 50, 
   assert.equal(page.run('BLOCK_VALUE'), 20000);
 });
 
-test('Top offenders draws the waffle; clicking a row filters the page to it, a vendor opens Purchase Orders', async () => {
+// 2v6.9 (owner, 96c6ae9 / 6401b31): Top offenders and its $20k waffle left the page; Customers at risk is a unit
+// chart, one square per open order of the customer (red past due, amber at risk otherwise, grey fine).
+test('Customers at risk draws each customer\'s open orders as squares; clicking a row filters the page to it; a vendor pick opens Purchase Orders', async () => {
   const rows = [...ROWS,
     open('110', { ...due('08/02/2026'), AmountLocal: '45,000.00', CustomerVendorCode: 'PATRICK', CustomerVendorName: 'Patrick' }),
     sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', DocumentNumber: '700', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...due('08/10/2026'), AmountLocal: '30,000.00' })];
   const page = await loaded(rows);
   setStatus(page, '106', 'Hold');
   const m = html(page);
-  const offenders = m.match(/<div class="waffle-list" role="group" aria-label="Top offenders">[\s\S]*?<\/div><div class="legend oh-waffle-legend">[\s\S]*?<\/div>/)[0];
-  const blocks = (code) => offenders.match(new RegExp(`data-off="${code}"[\\s\\S]*?<span class="waffle" aria-hidden="true">([\\s\\S]*?)</span>\\s*</button>`))[1].match(/class="pop wb-(\w+)( half)?"/g).map((x) => x.replace(/class="pop wb-|"/g, ''));
-  assert.deepEqual(blocks('PATRICK'), ['us', 'us']); // $45,000 -> 2 blocks, all Us
-  assert.deepEqual(blocks('FIREFLY'), ['us']); // $23,500 -> 1 block; Us has the biggest share ($10,000)
-  assert.deepEqual(blocks('AQUHOT'), ['us half']); // $8,000 -> half block
-  assert.match(offenders, /data-tip="Patrick: \$45,000 at-risk value on 1 line \(Us \$45,000\); click to filter\."/);
-  assert.match(offenders, /■ = \$20k/);
+  assert.doesNotMatch(m, /aria-label="Top offenders"|class="waffle-row/);
+  const card = m.match(/<div class="ohl-list ohc-list" role="group" aria-label="Customers at risk">[\s\S]*?<\/section>/)[0];
+  const row = (code) => card.match(new RegExp(`<button type="button" class="ohl-cust ohc-row[^"]*" data-focus-key="offrow-${code}"[\\s\\S]*?</button>`))[0];
+  const pips = (code) => [...row(code).match(/<span class="ohc-pips"[^>]*>([\s\S]*?)<\/span>/)[1].matchAll(/<i( class="(\w+)")?><\/i>/g)].map((x) => x[2] || 'fine');
+  // Most at-risk orders first, then value. Firefly: 8 open orders, 5 at risk (100, 106, 108 past due; 102, 109 rescheduled).
+  assert.deepEqual([...card.matchAll(/data-off="(\w+)"/g)].map((x) => x[1]), ['FIREFLY', 'PATRICK', 'AQUHOT', 'BARLETTA']);
+  assert.deepEqual(pips('FIREFLY'), ['pd', 'pd', 'pd', 'ar', 'ar', 'fine', 'fine', 'fine']);
+  assert.deepEqual(pips('PATRICK'), ['pd']);
+  assert.deepEqual(pips('AQUHOT'), ['ar']); // no commit date, not past due
+  assert.match(row('FIREFLY'), /<span class="ohc-fig"><b>5<\/b> of 8 at risk<\/span>/);
+  assert.match(row('FIREFLY'), /data-tip="FIREFLY - Firefly RV\n• 5 of 8 open orders at risk \(63%\)\n• 3 orders past due\n• 5 lines · \$24,200 at risk\nClick to filter to it\."/);
+  assert.match(row('PATRICK'), /<span class="ohl-cust-amt">\$45K · 1 line<\/span>/);
+  assert.match(card, /<span class="ohc-unit">Each square: 1 open order<\/span>/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['PATRICK']);
-  assert.match(html(page), /class="waffle-row selected"[^>]*data-off="PATRICK"[^>]*aria-pressed="true"/);
+  assert.match(html(page), /class="ohl-cust ohc-row sel" data-focus-key="offrow-PATRICK"[^>]*aria-pressed="true"/);
   page.run("setWeeklyOffenderFilter('customers','PATRICK')");
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['ALL']);
-  page.run("setWeeklyOffenderView('vendors')");
-  assert.match(html(page), /data-view="vendors" data-off="ACME"[\s\S]*?class="pop wb-po"/);
+  // The vendors branch of the same setter (no control on the page draws it now) still opens that vendor's late POs.
   page.run("setWeeklyOffenderFilter('vendors','ACME')");
   assert.deepEqual([page.run('activeTab'), page.run('poVendorFilter'), page.run('poTileFilter')], ['purchaseorders', ['ACME'], 'late']);
+  assert.deepEqual(page.errors, []);
 });
 
 // --- Search, tables, tips, About ---------------------------------------------------------------------------
-test('Search finds lines by reason or cause, and tables show each line\'s cause and first reason', async () => {
+test('Search finds lines by reason or cause, and tables show each line\'s reasons (the cause as its colour)', async () => {
   const page = await withOverrides();
   const found = (q) => page.run(`(searchQuery=${JSON.stringify(q)},globalSearchResults(currentMetrics()).rows.map(x=>x.r.documentNumber).sort())`);
   assert.deepEqual(found('no commit date'), ['101']);
@@ -442,12 +462,14 @@ test('Search finds lines by reason or cause, and tables show each line\'s cause 
   assert.deepEqual(found('caused by them'), ['102', '106', '107']);
   page.run("searchQuery='106';setTab('search')");
   // The other reasons and the first-flagged upload are visible text (a muted second line), not only in the tip.
-  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · No reschedule, Hold\.">Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span>/);
+  // 2v4 (ohLineWhy): the words Us / Them are no longer shown; the line shows its reasons (the cause stays in the data
+  // for Search and the AI tools, and in the text colour class).
+  assert.match(html(page), /<span class="oh-why cause-text-them" data-tip="Reasons: Past due · No reschedule, Hold\.">Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span>/);
   page.ctx.firstFlagged = { [key(page, '106')]: '2026-07-02' };
   page.run('renderResults()');
-  assert.match(html(page), /Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold · first at risk in the 2026-07-02 upload<\/span>/);
+  assert.match(html(page), /data-tip="Reasons: Past due · No reschedule, Hold\. First at risk: week of 2026-07-02\.">Past due · No reschedule<\/span><span class="timing oh-why-more">Hold · first at risk in the 2026-07-02 upload<\/span>/);
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
-  assert.match(html(page), /<span class="oh-why cause-text-us"[^>]*>Us · No commit date<\/span>(?!<span class="timing oh-why-more">)/);
+  assert.match(html(page), /<span class="oh-why cause-text-us"[^>]*>No commit date<\/span>(?!<span class="timing oh-why-more">)/);
 });
 
 test('every new control and chart carries a plain-English tip with full numbers; markup stays balanced', async () => {
@@ -456,13 +478,17 @@ test('every new control and chart carries a plain-English tip with full numbers;
   for (const view of ['leading', 'lagging']) {
     page.run(`setWeeklyView('${view}')`);
     const m = html(page);
-    const controls = [...m.matchAll(/<button [^>]*class="(?:oh-tab|oh-bar-row|oh-cause-btn|waffle-row|chip active oh-chip|card kpi lag)[^"]*"[^>]*>/g)].map((x) => x[0])
-      .concat([...m.matchAll(/<button [^>]*data-focus-key="tile-st-[^"]*"[^>]*>/g)].map((x) => x[0]));
-    assert.ok(controls.length >= (view === 'leading' ? 15 : 4), `${view}: ${controls.length}`);
-    for (const c of controls.filter((x) => !/tile-(otd3mo|shippedweek|fillrate|reschedhit)"/.test(x))) assert.match(c, /data-tip="[^"]{20,}"/, c.slice(0, 120));
-    assert.match(m, /data-tip="Us: \$22,000 at-risk open value on 3 lines/);
+    // 2v6 controls: the tabs and chips; Leading: the At risk hero, its states, warehouse, override bars and tiles, the
+    // Status segments and rows, the Top reasons rows and Customers at risk; Lagging: the Monthly / Quarterly figures.
+    const controls = [...m.matchAll(/<button [^>]*(?:role="tab"|class="(?:chip active oh-chip|ohl-hero|dz-stat ohl-stat|ohl-wh|dz-barrow|ohl-tile|ohs2-seg|ohs2-row|ohs2-rname|ohl-cust))[^>]*>/g)].map((x) => x[0])
+      .concat([...m.matchAll(/<div class="dz-stat ohg-tile"[^>]*>/g)].map((x) => x[0]));
+    assert.ok(controls.length >= (view === 'leading' ? 30 : 13), `${view}: ${controls.length}`);
+    for (const c of controls) assert.match(c, /data-tip="[^"]{20,}"/, c.slice(0, 120));
+    // Full numbers in the tips: the At risk hero with the Us cause filter on (100, 101 and 103).
+    if (view === 'leading') assert.match(m, /data-focus-key="tile-late"[^>]*data-tip="At risk, due by Oct 3\n• 3 orders, 3 lines\n• \$22,000 open\nClick to list them\."/);
+    else assert.match(m, /data-tip="Avg days late, August 2026: 7\.3\n• 3 late delivery lines of 4 scored/);
     const count = (needle) => m.split(needle).length - 1;
-    for (const tag of ['div', 'section', 'button', 'span', 'details']) {
+    for (const tag of ['div', 'section', 'button', 'span', 'details', 'table', 'tr', 'td']) {
       assert.equal(count(`<${tag} `) + count(`<${tag}>`), count(`</${tag}>`), `${view}: unbalanced <${tag}>`);
     }
     assert.doesNotMatch(m.replace(/<[^>]+>/g, ' '), /\bundefined\b|\bNaN\b|\[object Object\]/);
@@ -472,11 +498,13 @@ test('every new control and chart carries a plain-English tip with full numbers;
 
 test('About these numbers defines every new number in plain English', async () => {
   const page = await loaded();
-  const about = html(page).match(/<details class="about rise"><summary data-tip="[^"]+">About these numbers<\/summary>[\s\S]*?<\/details>/)[0];
+  // 2v6: an (i) summary named by aria-label; the bullets sit in .about-body.
+  const about = html(page).match(/<details class="about rise"><summary aria-label="About these numbers" data-tip="[^"]{20,}">[\s\S]*?<span class="about-l">About these numbers<\/span><\/summary>[\s\S]*?<\/details>/)[0];
   // Short: 3 to 5 bullets with the definitions people need (the cards' own tips carry the rest).
   const bullets = about.match(/<li>/g) || [];
   assert.ok(bullets.length >= 3 && bullets.length <= 5, `${bullets.length} bullets`);
-  for (const term of ['At risk', 'Us / Them', 'OTD', 'Reschedule hit', 'Fill rate', 'When flagged', '90%']) {
+  // 2v4 / 2v6.9: Us / Them are no longer shown, and Reschedule hit is defined in its Lagging tile's own tip.
+  for (const term of ['At risk', 'On track', 'OTD', 'Fill rate', 'When flagged', '90%']) {
     assert.ok(about.includes(term), term);
   }
   for (const li of about.match(/<li>[\s\S]*?<\/li>/g)) assert.ok(li.replace(/<[^>]+>/g, '').split(/\s+/).length <= 25, li);
@@ -523,7 +551,9 @@ test('the MCP server (index.html in a Node vm) returns the new fields', () => {
   fs.rmSync(dir, { recursive: true, force: true });
   assert.equal(out.status, 0, out.stderr);
   const oh = JSON.parse(out.stdout).order_health;
-  assert.deepEqual(Object.keys(oh.leading), ['cause_rule', 'at_risk_by_cause', 'open_orders', 'states', 'top_reasons', 'when_flagged']);
+  // 2v4 added next_month: the page's next-month view (At risk against its target, On track, reason tiles, top warehouse).
+  assert.deepEqual(Object.keys(oh.leading), ['cause_rule', 'at_risk_by_cause', 'open_orders', 'states', 'top_reasons', 'when_flagged', 'next_month']);
+  assert.deepEqual(Object.keys(oh.leading.next_month), ['due_by', 'open_value', 'at_risk_pct', 'at_risk_target_pct', 'on_track_tolerance_days', 'at_risk', 'on_track', 'reasons', 'top_problem_warehouse']);
   assert.deepEqual(Object.keys(oh.lagging), ['otd_3mo', 'shipped_this_week', 'fill_rate', 'reschedule_hit_12mo', 'perfect_order_12mo', 'avg_days_late_3mo']);
   assert.equal(oh.at_risk.cause.not_set.lines, 2);
   assert.equal(oh.lagging.perfect_order_12mo.rate_pct, 25);
