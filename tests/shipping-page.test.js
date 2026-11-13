@@ -155,7 +155,7 @@ test('each row has an external-link icon (not a Check button) that opens the Aft
   assert.equal(page.run("shipTrackUrl('A B/1')"), 'https://www.aftership.com/track/A%20B%2F1');
   // The CSS: the icon is a 30px round button in its own marker block.
   const css = page.ctx.document.documentElement.outerHTML;
-  assert.match(css, /\/\* 2v8:ship \*\/[\s\S]*a\.dz-btn\.shp-open\{width:30px;height:30px;[\s\S]*\/\* 2v8:end ship \*\/\n\/\* 2v9:ship \*\/[\s\S]*\/\* 2v9:end ship \*\/\n\/\* 2v7:motion \*\//);
+  assert.match(css, /\/\* 2v8:ship \*\/[\s\S]*a\.dz-btn\.shp-open\{width:30px;height:30px;[\s\S]*\/\* 2v8:end ship \*\/\n\/\* 2v9:ship \*\/[\s\S]*\/\* 2v9:end ship \*\/\n(?:\/\* 2v9:colour \*\/[\s\S]*?\/\* 2v9:end colour \*\/\n)?\/\* 2v7:motion \*\//);
 });
 
 test('a file copy or a static host: no AfterShip, one short note, statuses by hand; the page never calls a carrier or AfterShip itself', async () => {

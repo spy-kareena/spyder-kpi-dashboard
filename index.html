@@ -48,29 +48,32 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
    nudged one step darker so small grey text keeps 4.5:1 contrast on the tinted backgrounds too.
    Font: Outfit from Google Fonts (link in <head>), with the system font as fallback. */
 :root{
-  --gray-900:#18181b;--gray-800:#27272a;--gray-700:#3f3f46;--gray-600:#52525b;--gray-500:#6e6e78;--gray-400:#a1a1aa;
-  --gray-300:#d4d4d8;--gray-200:#e4e4e7;--gray-100:#f4f4f5;--gray-50:#fafafa;--white:#fff;
-  --accent:#5468ff;--accent-strong:#3f57ff;--accent-tint:#eceffc;--accent-border:#cdd5f6;--accent-ring:rgba(84,104,255,.22);--accent-mid:#8b98ff;
-  --crit:#ff3d68;--crit-text:#e0244f;--crit-tint:#fdeef1;--crit-border:#f6d2da;--crit-dark:#912018;--crit-soft:#ff7a93;
-  --warn:#f59e0b;--warn-fill:#ffae1a;--warn-text:#b45309;--warn-tint:#fbf1d9;--warn-border:#f5e2a6;
-  --good:#12b5a0;--good-text:#0e8f7f;--good-tint:#e3f6f2;--good-border:#bfe9df;
+  --gray-900:#0c1a2c;--gray-800:#1d2d40;--gray-700:#2e4157;--gray-600:#41566c;--gray-500:#4d6379;--gray-400:#97a7b7;
+  --gray-300:#cad6e1;--gray-200:#dde6ee;--gray-100:#eef4fa;--gray-50:#f6f9fc;--white:#fff;
+  --accent:#4063f0;--accent-strong:#3052d6;--accent-tint:#e5efff;--accent-border:#c2d5f9;--accent-ring:rgba(64,99,240,.22);--accent-mid:#759bf5;
+  --crit:#ff3d68;--crit-text:#cb2348;--crit-tint:#fdeef1;--crit-border:#f6d2da;--crit-dark:#912018;--crit-soft:#ff7a93;
+  --warn:#ffae1a;--warn-fill:#ffae1a;--warn-text:#a14f09;--warn-tint:#fff3d6;--warn-border:#f5e2a6;
+  --good:#0fa08e;--good-text:#007565;--good-tint:#e3f6f2;--good-border:#bfe9df;
   --age-1:#f6d2da;--age-2:#ff7a93;--age-3:#ff3d68;--age-4:#912018;
   --r-card:12px;--r-bar:12px;--r-ctl:8px;--r-btn:8px;--r-badge:6px;--r-pill:999px;--r-cell:6px;
-  --border:var(--gray-200);--muted:var(--gray-100);--muted-fg:var(--gray-500);--ring:var(--accent);--tip-bg:#18181b;--tip-fg:#fafafa;
-  --sh-rest:0 1px 2px 0 rgba(0,0,0,.05);--sh-hover:0 4px 12px -2px rgba(0,0,0,.08),0 2px 4px -2px rgba(0,0,0,.05);--sh-select:0 0 0 2px var(--accent-ring),0 1px 2px rgba(0,0,0,.05);
-  --sh-pop:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+  --border:var(--gray-200);--muted:var(--gray-100);--muted-fg:var(--gray-500);--ring:var(--accent);--tip-bg:#0c1a2c;--tip-fg:#f6f9fc;
+  --sh-rest:0 1px 2px 0 rgba(12,26,44,.05);--sh-hover:0 4px 12px -2px rgba(12,26,44,.08),0 2px 4px -2px rgba(12,26,44,.05);--sh-select:0 0 0 2px var(--accent-ring),0 1px 2px rgba(12,26,44,.05);
+  --sh-pop:0 10px 15px -3px rgba(12,26,44,.1),0 4px 6px -4px rgba(12,26,44,.1);
   --dur:.16s;--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1);
   --font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
   /* 2v6 design tokens (the 2v6 redesign). The legacy tokens above stay until every page is restyled. */
-  --dz-ink-1:#0f172a;--dz-ink-2:#334155;--dz-ink-3:#475569;--dz-ink-4:#64748b;--dz-ink-5:#94a3b8;--dz-ink-6:#cbd5e1;
-  --dz-indigo:#5468ff;--dz-indigo-link:#3f57ff;--dz-indigo-hover:#2c3fd1;--dz-indigo-deep:#3346e0;--dz-indigo-bg:#eceffc;
-  --dz-risk:#ff3d68;--dz-risk-text:#e0244f;--dz-risk-bg:#fdeef1;
-  --dz-amber:#ffae1a;--dz-amber-text:#b45309;--dz-amber-bg:#fbf1d9;
-  --dz-teal:#0fa08e;--dz-teal-bg:#d6f2ec;--dz-teal-bg-2:#eef8f6;
-  --dz-fill-1:#f1f5f9;--dz-glass-55:rgba(255,255,255,.55);--dz-glass-60:rgba(255,255,255,.6);--dz-glass-75:rgba(255,255,255,.75);--dz-glass-80:rgba(255,255,255,.8);
-  --dz-line-5:rgba(15,23,42,.05);--dz-line-6:rgba(15,23,42,.06);--dz-line-8:rgba(15,23,42,.08);
+  --dz-ink-1:#0c1a2c;--dz-ink-2:#2e4157;--dz-ink-3:#41566c;--dz-ink-4:#4d6379;--dz-ink-5:#5c7187;--dz-ink-6:#cad6e1;
+  --dz-indigo:#4063f0;--dz-indigo-link:#3052d6;--dz-indigo-hover:#2744b4;--dz-indigo-deep:#2c4dcc;--dz-indigo-bg:#e5efff;
+  --dz-indigo-rgb:64,99,240;--dz-indigo-bg-2:#d8e7ff;--dz-indigo-soft:#b4cbf9;--dz-indigo-soft-2:#8aacfa;
+  --dz-risk:#ff3d68;--dz-risk-text:#cb2348;--dz-risk-bg:#fdeef1;--dz-risk-soft:#ff7a93;
+  --dz-amber:#ffae1a;--dz-amber-text:#a14f09;--dz-amber-bg:#fff3d6;--dz-amber-bg-2:#ffe6a8;
+  --dz-teal:#0fa08e;--dz-teal-text:#007565;--dz-teal-bg:#d6f2ec;--dz-teal-bg-2:#eef8f6;--dz-mute:#97a7b7;
+  --dz-heat-r1:#fbe3e8;--dz-heat-r2:#f6d2da;--dz-heat-r3:#ff7a93;--dz-heat-r4:#ff3d68;
+  --dz-heat-r1-fg:#b01c3f;--dz-heat-r2-fg:#b01c3f;--dz-heat-r3-fg:#0c1a2c;--dz-heat-r4-fg:#0c1a2c;
+  --dz-fill-1:#eef4fa;--dz-glass-55:rgba(255,255,255,.55);--dz-glass-60:rgba(255,255,255,.6);--dz-glass-75:rgba(255,255,255,.75);--dz-glass-80:rgba(255,255,255,.8);
+  --dz-line-5:rgba(12,26,44,.05);--dz-line-6:rgba(12,26,44,.06);--dz-line-8:rgba(12,26,44,.08);
   --dz-r-pill:999px;--dz-r-card:24px;--dz-r-menu:14px;--dz-r-stat:14px;--dz-r-item:9px;--dz-r-seg:2px;
-  --dz-sh-card:0 10px 40px rgba(15,23,42,.06);--dz-sh-menu:0 14px 40px rgba(15,23,42,.14);
+  --dz-sh-card:0 10px 40px rgba(22,56,100,.06);--dz-sh-menu:0 14px 40px rgba(22,56,100,.16);
   --dz-page-base:#eaf1fd;--dz-page-bg:#eaf1fd;
 }
 *{box-sizing:border-box}
@@ -203,7 +206,7 @@ th[data-tip-tab]:focus-visible,.col-bar[data-tip-tab]:focus-visible{outline-offs
 .chart-card,.list-card,.rate-card,.month-card,.card.kpi,.need-main,.need-preview,.stack{grid-template-columns:minmax(0,1fr)}
 .col-chart .col-val{overflow:hidden;text-overflow:clip}
 
-.live-dot{width:7px;height:7px;border-radius:99px;background:#12b76a;box-shadow:0 0 0 3px #d1fadf}
+.live-dot{width:7px;height:7px;border-radius:99px;background:var(--dz-teal);box-shadow:0 0 0 3px var(--dz-teal-bg)}
 .live-dot.off{background:var(--gray-300);box-shadow:0 0 0 3px var(--gray-100)}
 
 /* Page header */
@@ -502,7 +505,7 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 /* Monthly */
 .month-spot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
 .month-card{display:grid;gap:10px;align-content:start}
-.month-card.current{border-color:var(--accent);box-shadow:0 0 0 2.5px rgba(84,104,255,.18)}
+.month-card.current{border-color:var(--accent);box-shadow:0 0 0 2.5px rgba(var(--dz-indigo-rgb),.18)}
 .month-tag{font-size:12px;font-weight:500;border-radius:var(--r-pill);padding:2px 9px;background:var(--gray-100);color:var(--gray-600)}
 .month-card.current .month-tag{background:var(--accent-tint);color:var(--accent-strong)}
 .month-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;border-top:1px solid var(--gray-100);padding-top:10px}
@@ -1833,7 +1836,7 @@ body{background:var(--dz-page-base)}
 .hdr-search input{display:none;width:0;min-width:0;height:100%;border:0;background:transparent;font:inherit;font-size:13px;color:var(--dz-ink-1);outline:none;padding:0}
 .hdr-search input::placeholder{color:var(--dz-ink-5)}
 .hdr-search.open{background:var(--dz-glass-80);border-color:var(--dz-line-8);padding-right:14px}
-.hdr-search.open:focus-within{border-color:rgba(84,104,255,.45)}
+.hdr-search.open:focus-within{border-color:rgba(var(--dz-indigo-rgb),.45)}
 .hdr-search.open input{display:block;width:230px}
 .hdr-search.open .hdr-icon:hover{background:transparent}
 .hdr-search input:disabled{cursor:not-allowed}
@@ -1894,7 +1897,7 @@ body{background:var(--dz-page-base)}
 .dz-filters{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
 .dz-filter{height:38px;padding:0 12px 0 16px;border-radius:999px;background:var(--dz-glass-55);border:1px solid #fff;font:inherit;font-size:13px;color:var(--dz-ink-1);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;cursor:pointer;max-width:100%}
 .dz-filter:hover{background:var(--dz-glass-75)}
-.dz-filter.set{background:#fff;border-color:rgba(84,104,255,.35)}
+.dz-filter.set{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.35)}
 .dz-filter-l{color:var(--dz-ink-4)}
 .dz-filter-v{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .dz-clear{height:38px;padding:0 12px;border:0;border-radius:999px;background:transparent;font:inherit;font-size:13px;font-weight:500;color:var(--dz-indigo-link);cursor:pointer}
@@ -1963,7 +1966,7 @@ button.dz-stat:hover{background:var(--dz-glass-80)}
 /* Search / sort pill inside a card (also a select or a button) */
 .dz-pillinput{height:34px;border-radius:999px;background:var(--dz-glass-80);border:1px solid var(--dz-line-8);padding:0 14px;font:inherit;font-size:13px;color:var(--dz-ink-1);min-width:0}
 .dz-pillinput::placeholder{color:var(--dz-ink-5)}
-.dz-pillinput:focus{outline:none;border-color:rgba(84,104,255,.45)}
+.dz-pillinput:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.45)}
 select.dz-pillinput{appearance:none;-webkit-appearance:none;padding-right:30px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:14px}
 button.dz-pillinput{cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 
@@ -2054,7 +2057,7 @@ button.ohl-chipbtn.sel{box-shadow:0 0 0 2px rgba(255,61,104,.3)}
 @media (max-width:1290px){.ohl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:900px) and (min-width:641px){.ohl-stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .ohl-stat{display:block;width:100%}
-.ohl-stat.sel,.ohl-stat.sel:hover{background:#fff;border-color:rgba(84,104,255,.45)}
+.ohl-stat.sel,.ohl-stat.sel:hover{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .ohl-stat-l{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--dz-ink-4)}
 .ohl-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex:none}
 .ohl-stat-v{display:block;margin-top:4px;font-size:19px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
@@ -2089,7 +2092,7 @@ button.ohl-chipbtn.sel{box-shadow:0 0 0 2px rgba(255,61,104,.3)}
 .ohl-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px}
 .ohl-tile{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;border:1px solid var(--dz-line-6);border-radius:12px;background:transparent;padding:9px 12px;font:inherit;text-align:left;color:var(--dz-ink-1);cursor:pointer}
 .ohl-tile:hover{background:rgba(255,255,255,.7)}
-.ohl-tile.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+.ohl-tile.sel{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .ohl-tile-l{min-width:0;line-height:1.25;overflow-wrap:anywhere;font-size:12.5px;color:var(--dz-ink-4)} /* a long override name (Supply Chain Delay) wraps to two lines */
 .ohl-tile-n{flex:none;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .ohl-tile.zero{color:var(--dz-ink-5)}
@@ -2425,7 +2428,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .mwm-closer .dz-chip{font-size:12px;padding:3px 9px}
 .mwm-by{font-size:12px;color:var(--dz-ink-4)}
 .mwm-datebtn{height:26px;padding:0 10px;font-size:12px;margin-left:6px}
-.mwm-datebtn[aria-expanded="true"]{background:#fff;border-color:rgba(84,104,255,.45)}
+.mwm-datebtn[aria-expanded="true"]{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .mwm-dates{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:12px;font-size:12px;color:var(--dz-ink-4)}
 .mwm-dates label{display:inline-flex;align-items:center;gap:6px}
 .mwm-dates .dz-pillinput{height:32px;font-size:12.5px}
@@ -2551,7 +2554,7 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
 .shp-tile{min-width:0;display:block;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card)}
 .shp-tile:hover{background:rgba(255,255,255,.9)}
-.shp-tile.sel{background:#fff;border-color:rgba(84,104,255,.35)}
+.shp-tile.sel{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.35)}
 .shp-tile:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 .shp-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
 .shp-tile-l i{width:8px;height:8px;border-radius:50%;flex:none}
@@ -2578,7 +2581,7 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-dot::before{content:"";position:absolute;left:-7px;top:-7px;right:-7px;bottom:-7px;border-radius:50%}
 .shp-dot.late{border-color:var(--dz-risk)}
 .shp-dot.done{border-color:var(--dz-teal)}
-.shp-dot:hover,.shp-dot.sel{box-shadow:0 0 0 4px rgba(84,104,255,.2)}
+.shp-dot:hover,.shp-dot.sel{box-shadow:0 0 0 4px rgba(var(--dz-indigo-rgb),.2)}
 .shp-dot.late:hover,.shp-dot.late.sel{box-shadow:0 0 0 4px rgba(255,61,104,.2)}
 .shp-dot.done:hover,.shp-dot.done.sel{box-shadow:0 0 0 4px rgba(15,118,110,.2)}
 .shp-dot.sel{border-width:4px}
@@ -2754,7 +2757,7 @@ a.dz-btn{text-decoration:none}
 .error-box .imp-errlink{margin-left:6px;color:var(--dz-risk-text);font-size:inherit;text-decoration:underline}
 .imp-drop{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:24px;background:rgba(234,241,253,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .imp-drop[hidden]{display:none}
-.imp-drop-box{pointer-events:none;display:grid;justify-items:center;gap:8px;width:min(560px,100%);padding:52px 28px;border:2px dashed rgba(84,104,255,.45);border-radius:var(--dz-r-card);background:rgba(255,255,255,.88);box-shadow:var(--dz-sh-menu);text-align:center;color:var(--dz-ink-1);font-family:var(--font)}
+.imp-drop-box{pointer-events:none;display:grid;justify-items:center;gap:8px;width:min(560px,100%);padding:52px 28px;border:2px dashed rgba(var(--dz-indigo-rgb),.45);border-radius:var(--dz-r-card);background:rgba(255,255,255,.88);box-shadow:var(--dz-sh-menu);text-align:center;color:var(--dz-ink-1);font-family:var(--font)}
 .imp-drop-ico{display:grid;place-items:center;width:56px;height:56px;margin-bottom:6px;border-radius:18px;background:var(--dz-indigo-bg);color:var(--dz-indigo)}
 .imp-drop-ico svg{width:26px;height:26px}
 .imp-drop-box h2{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em}
@@ -2797,7 +2800,7 @@ a.dz-btn{text-decoration:none}
 .imp-issue.info .imp-missing code{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
 .imp-ai{margin-top:10px}
 .imp-ai-btn{height:32px;padding:0 14px;color:var(--dz-ink-3)}
-.imp-ai-btn.on{border-color:rgba(84,104,255,.35);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
+.imp-ai-btn.on{border-color:rgba(var(--dz-indigo-rgb),.35);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
 .imp-ai-btn.on:hover{background:#e3e7fb}
 .imp-ai-btn[aria-disabled="true"]{opacity:.7;cursor:default;background:#fff}
 .imp-ai-btn[aria-disabled="true"]:hover{background:#fff}
@@ -2852,13 +2855,13 @@ a.dz-btn{text-decoration:none}
 .sup-tile{min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;font:inherit;color:var(--dz-ink-1);background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card)}
 button.sup-tile{cursor:pointer}
 button.sup-tile:hover{background:var(--dz-glass-80)}
-.sup-tile.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+.sup-tile.sel{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .sup-tile-l{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--dz-ink-4)}
 .sup-dot{display:block;width:8px;height:8px;border-radius:50%;flex:none}
 .sup-tile-v{margin-top:6px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.2;font-variant-numeric:tabular-nums}
 .sup-tile-s{margin-top:2px;font-size:12px;color:var(--dz-ink-4)}
 .sup-more-views{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
-.sup-page button.dz-stat[aria-pressed="true"]{background:#fff;border-color:rgba(84,104,255,.45)}
+.sup-page button.dz-stat[aria-pressed="true"]{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .sup-page .dz-stat-v{font-size:20px}
 
 /* Card pieces */
@@ -2899,7 +2902,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-ttitle .dz-chip{font-size:12.5px}
 .sup-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
 .sup-search{flex:1 1 200px;min-width:180px;max-width:260px}
-.sup-toggle[aria-pressed="true"]{background:#fff;border-color:rgba(84,104,255,.45)}
+.sup-toggle[aria-pressed="true"]{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .sup-tsub{margin-top:8px}
 .sup-scroll{overflow-x:auto;margin-top:12px;scrollbar-width:thin}
 .sup-scroll:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px;border-radius:6px}
@@ -2950,7 +2953,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 /* Add note / Edit and the note editor */
 .sup-page .note-btn{height:30px;padding:0 12px;border-radius:999px;border:1px solid rgba(15,23,42,.1);background:#fff;font:inherit;font-size:12px;font-weight:400;color:var(--dz-ink-1);white-space:nowrap;cursor:pointer}
 .sup-page .note-btn:hover{background:var(--dz-fill-1)}
-.sup-page .note-btn.has-note{background:var(--dz-indigo-bg);border-color:rgba(84,104,255,.35);color:var(--dz-indigo-deep)}
+.sup-page .note-btn.has-note{background:var(--dz-indigo-bg);border-color:rgba(var(--dz-indigo-rgb),.35);color:var(--dz-indigo-deep)}
 .sup-tbl tr.note-editor-row>td{padding:0;border-bottom:1px solid var(--dz-line-5)}
 .sup-page .note-editor{display:grid;grid-template-columns:220px minmax(0,1fr) auto;gap:12px;align-items:start;margin:0 0 12px;padding:14px 16px;background:var(--dz-glass-60);border:1px solid var(--dz-line-6);border-radius:16px}
 .sup-page .note-editor label{display:grid;gap:4px;font-size:12px;font-weight:500;color:var(--dz-ink-4)}
@@ -2958,7 +2961,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-page .note-editor select,.sup-page .note-editor textarea{font:inherit;font-size:13px;color:var(--dz-ink-1);background-color:var(--dz-glass-80);border:1px solid var(--dz-line-8);border-radius:12px;padding:7px 10px}
 .sup-page .note-editor select{height:34px;border-radius:999px}
 .sup-page .note-editor textarea{min-height:76px;resize:vertical}
-.sup-page .note-editor select:focus,.sup-page .note-editor textarea:focus{outline:none;border-color:rgba(84,104,255,.45)}
+.sup-page .note-editor select:focus,.sup-page .note-editor textarea:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .sup-page .note-editor .note-done{align-self:end;height:34px;padding:0 18px;border-radius:999px;background:var(--dz-ink-1);border:1px solid var(--dz-ink-1);color:#fff;font:inherit;font-size:13px;font-weight:500;box-shadow:none;cursor:pointer}
 .sup-page .note-editor .note-done:hover{background:var(--dz-ink-2)}
 
@@ -3007,7 +3010,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-cmcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
 .sup-cmcard{min-width:0;display:flex;flex-direction:column;align-items:stretch;text-align:left;font:inherit;color:var(--dz-ink-1);background:var(--dz-glass-75);border:1px solid #fff;border-radius:22px;padding:18px 20px;box-shadow:var(--dz-sh-card);cursor:pointer}
 .sup-cmcard:hover{background:var(--dz-glass-80)}
-.sup-cmcard.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+.sup-cmcard.sel{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 .sup-cmhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .sup-cmhead b{min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sup-cmhead span{flex:none;font-size:12px;color:var(--dz-ink-4)}
@@ -3215,7 +3218,7 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
    snapshot note, Ask AI panel, "Your name" dialog, hints, toasts, tooltips, focus rings), and the shell polish (phone menus,
    header date contrast, tablet header, print). Same language as the handoff: gradient page, glass cards (radius 24), pills,
    indigo / teal / red / amber chips. Classes here start with misc-. */
-:root{--tip-bg:#0f172a}
+:root{--tip-bg:#0c1a2c}
 a.dz-btn,a.dz-btn:hover{color:var(--dz-ink-1);text-decoration:none}
 a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
 :focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
@@ -3229,9 +3232,9 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
 #upload-screen .privacy-pill{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:4px 10px;background:var(--dz-teal-bg);color:var(--dz-teal);font-size:12px;font-weight:500;line-height:1.2}
 #upload-screen .privacy-pill::before{width:6px;height:6px;background:var(--dz-teal)}
 #upload-screen .upload-shell{gap:16px}
-#upload-screen .upload-zone,#upload-screen .upload-shell.single .upload-zone{min-height:260px;padding:44px 32px;gap:22px;align-items:center;justify-content:center;text-align:center;border:1.5px dashed rgba(84,104,255,.32);border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card);transition:border-color .2s,background-color .2s,box-shadow .2s}
-#upload-screen .upload-zone:hover{border-color:rgba(84,104,255,.6);background:var(--dz-glass-80)}
-#upload-screen .upload-zone.drag{border-color:var(--dz-indigo);background:var(--dz-indigo-bg);box-shadow:0 0 0 4px rgba(84,104,255,.14)}
+#upload-screen .upload-zone,#upload-screen .upload-shell.single .upload-zone{min-height:260px;padding:44px 32px;gap:22px;align-items:center;justify-content:center;text-align:center;border:1.5px dashed rgba(var(--dz-indigo-rgb),.32);border-radius:var(--dz-r-card);background:var(--dz-glass-75);box-shadow:var(--dz-sh-card);transition:border-color .2s,background-color .2s,box-shadow .2s}
+#upload-screen .upload-zone:hover{border-color:rgba(var(--dz-indigo-rgb),.6);background:var(--dz-glass-80)}
+#upload-screen .upload-zone.drag{border-color:var(--dz-indigo);background:var(--dz-indigo-bg);box-shadow:0 0 0 4px rgba(var(--dz-indigo-rgb),.14)}
 #upload-screen .upload-zone:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:3px;border-color:var(--dz-indigo);box-shadow:var(--dz-sh-card)}
 #upload-screen .upload-copy,#upload-screen .upload-shell.single .upload-copy{display:grid;justify-items:center;gap:8px}
 #upload-screen .upload-icon{width:52px;height:52px;border-radius:50%;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);margin:0 0 8px}
@@ -3409,7 +3412,7 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
   .misc-flat .lines-table>tbody>tr.line-row{padding-left:0;padding-right:0}
   .misc-flat>.dz-card-head{gap:10px}
 }
-.search-results mark{padding:0 2px;border-radius:4px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);box-shadow:inset 0 0 0 1px rgba(84,104,255,.22)}
+.search-results mark{padding:0 2px;border-radius:4px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);box-shadow:inset 0 0 0 1px rgba(var(--dz-indigo-rgb),.22)}
 
 /* ---------- Notes next to the page title: Data check and the shared-snapshot note ---------- */
 details.data-check>summary{padding:4px 10px;border:0;background:var(--dz-amber-bg);color:var(--dz-amber-text);font-size:12px;font-weight:500;line-height:1.2}
@@ -3420,7 +3423,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .data-check-pop .btn{height:30px;padding:0 14px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:12px;font-weight:500}
 .data-check-pop .btn:hover{background:var(--dz-fill-1)}
 .data-check-pop .link-btn{color:var(--dz-indigo-link);font-weight:500}
-.snapshot-note{padding:4px 10px;border:0;box-shadow:inset 0 0 0 1px rgba(84,104,255,.2);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font-size:12px;font-weight:500;line-height:1.2}
+.snapshot-note{padding:4px 10px;border:0;box-shadow:inset 0 0 0 1px rgba(var(--dz-indigo-rgb),.2);background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);font-size:12px;font-weight:500;line-height:1.2}
 .snapshot-download-box{padding:12px 18px;border:1px solid rgba(15,118,110,.18);border-radius:18px;background:var(--dz-teal-bg-2);color:var(--dz-teal);font-size:12.5px}
 .snapshot-download-box .btn{height:30px;padding:0 14px;border:1px solid var(--dz-line-8);border-radius:999px;background:#fff;color:var(--dz-ink-1);font-size:12px;font-weight:500}
 
@@ -3468,10 +3471,10 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .ai-msg th,.ai-msg td{border-bottom-color:var(--dz-line-6)}
 .ai-chips{padding:0 20px 10px}
 .ai-chips .chip{padding:6px 12px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-2);font-size:12.5px;font-weight:500}
-.ai-chips .chip:hover{border-color:rgba(84,104,255,.35);background:#fff}
+.ai-chips .chip:hover{border-color:rgba(var(--dz-indigo-rgb),.35);background:#fff}
 .ai-compose{padding:12px 20px 16px;border-top:1px solid var(--dz-line-6)}
 .ai-compose textarea{padding:10px 14px;border:1px solid var(--dz-line-8);border-radius:16px;background:var(--dz-glass-80)}
-.ai-compose textarea:focus{outline:none;border-color:rgba(84,104,255,.5);box-shadow:0 0 0 3px rgba(84,104,255,.16)}
+.ai-compose textarea:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.5);box-shadow:0 0 0 3px rgba(var(--dz-indigo-rgb),.16)}
 @media (max-width:640px){.ai-panel{top:8px;right:8px;bottom:8px;left:8px;width:auto;max-width:none;border-radius:20px}}
 
 /* ---------- "Your name" dialog ---------- */
@@ -3482,10 +3485,10 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .editor-form p{color:var(--dz-ink-4)}
 .editor-form label,.editor-form .editor-sub{font-size:12.5px;font-weight:500;color:var(--dz-ink-4)}
 .editor-form input{height:42px;padding:0 16px;border:1px solid var(--dz-line-8);border-radius:999px;background:var(--dz-glass-80);color:var(--dz-ink-1)}
-.editor-form input:focus{outline:none;border-color:rgba(84,104,255,.5);background:#fff;box-shadow:0 0 0 3px rgba(84,104,255,.16)}
+.editor-form input:focus{outline:none;border-color:rgba(var(--dz-indigo-rgb),.5);background:#fff;box-shadow:0 0 0 3px rgba(var(--dz-indigo-rgb),.16)}
 .editor-pick{border-color:var(--dz-line-8)}
-.editor-pick:hover{border-color:rgba(84,104,255,.35)}
-.editor-pick:has(.editor-chip[aria-current="true"]){border-color:rgba(84,104,255,.35)}
+.editor-pick:hover{border-color:rgba(var(--dz-indigo-rgb),.35)}
+.editor-pick:has(.editor-chip[aria-current="true"]){border-color:rgba(var(--dz-indigo-rgb),.35)}
 .editor-chip[aria-current="true"]{background:var(--dz-indigo-bg);color:var(--dz-indigo-deep)}
 .editor-chip:focus-visible,.editor-chip-x:focus-visible{outline-color:var(--dz-indigo)}
 .editor-form .editor-error{color:var(--dz-risk-text)}
@@ -3606,10 +3609,10 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
    @media screen, so printing is always light. Overrides of older rules use :where([data-theme=dark]) so they keep the
    original rule's specificity: its :hover / .sel / .on variants still win, as if the rule itself had been edited. */
 :root{
-  --dz-page:#fff;--dz-surface:#fff;--dz-surface-2:#f1f5f9;--dz-surface-up:#fff;--dz-hover:rgba(15,23,42,.03);--dz-on-ink:#fff;
+  --dz-page:#fff;--dz-surface:#fff;--dz-surface-2:#eef4fa;--dz-surface-up:#fff;--dz-hover:rgba(12,26,44,.035);--dz-on-ink:#fff;
   --dz-page-base:var(--dz-page);--dz-page-bg:var(--dz-page);
-  --dz-sh-card:0 1px 2px rgba(15,23,42,.04),0 6px 24px rgba(15,23,42,.05);
-  --dz-badge:#e0244f;
+  --dz-sh-card:0 1px 2px rgba(22,56,100,.05),0 6px 24px rgba(22,56,100,.06);
+  --dz-badge:#cb2348;
 }
 
 /* ---------- White page: cards keep white, so they get a hairline and a soft shadow; pills and panels that sat on the
@@ -3619,7 +3622,7 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .dz-filter{background:var(--dz-surface)}
 .dz-filter:hover,.dz-btn.shp-pill:hover,.mwm-more>summary:hover{background:var(--dz-surface-2)}
 .dz-seg{background:var(--dz-surface)}
-button.shp-tile:hover,.shp-tile:hover,button.sup-tile:hover,.sup-cmcard:hover{border-color:rgba(84,104,255,.28)}
+button.shp-tile:hover,.shp-tile:hover,button.sup-tile:hover,.sup-cmcard:hover{border-color:rgba(var(--dz-indigo-rgb),.28)}
 #loading-screen .skeleton{background:linear-gradient(100deg,var(--dz-surface-2) 40%,var(--dz-surface) 50%,var(--dz-surface-2) 60%);background-size:200% 100%}
 /* Row and item hovers were a white wash over the glass cards: on white cards they use a faint ink wash */
 button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,button.ohl-cust:hover,button.ohl-age:hover,
@@ -3654,24 +3657,27 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 /* ---------- Dark mode (screen only) ---------- */
 @media screen{
 [data-theme=dark]{
-  --dz-page:#0b1120;--dz-surface:#131b2e;--dz-surface-2:#1a2437;--dz-surface-up:#182238;--dz-hover:rgba(255,255,255,.04);--dz-on-ink:#0b1120;
-  --dz-ink-1:#f1f5f9;--dz-ink-2:#dbe3ee;--dz-ink-3:#c0cad8;--dz-ink-4:#97a3b6;--dz-ink-5:#7a879b;--dz-ink-6:#3e4a5e;
-  --dz-indigo:#7383ff;--dz-indigo-link:#9aa6ff;--dz-indigo-hover:#b8c0ff;--dz-indigo-deep:#aab4ff;--dz-indigo-bg:#222b55;
-  --dz-risk:#ff5c82;--dz-risk-text:#ff8aa3;--dz-risk-bg:#3b1824;
-  --dz-amber:#ffb53d;--dz-amber-text:#fcc35a;--dz-amber-bg:#3a2b10;
-  --dz-teal:#2cc8b2;--dz-teal-bg:#0f3a35;--dz-teal-bg-2:#0f2b2a;
-  --dz-fill-1:#1a2437;--dz-glass-55:rgba(255,255,255,.03);--dz-glass-60:rgba(255,255,255,.035);--dz-glass-75:rgba(255,255,255,.05);--dz-glass-80:rgba(255,255,255,.06);
+  --dz-page:#0b1120;--dz-surface:#182c3e;--dz-surface-2:#22384e;--dz-surface-up:#1d3246;--dz-hover:rgba(255,255,255,.045);--dz-on-ink:#0c1a29;
+  --dz-ink-1:#eff4f9;--dz-ink-2:#d8e1e9;--dz-ink-3:#bfcad6;--dz-ink-4:#a1b0bf;--dz-ink-5:#90a1b1;--dz-ink-6:#415262;
+  --dz-indigo:#6993fa;--dz-indigo-link:#99b8fd;--dz-indigo-hover:#bcd1ff;--dz-indigo-deep:#a6c0fc;--dz-indigo-bg:#273d6f;
+  --dz-indigo-rgb:105,147,250;--dz-indigo-bg-2:#2e4880;--dz-indigo-soft:#3c5898;--dz-indigo-soft-2:#5576c4;
+  --dz-risk:#ff5c82;--dz-risk-text:#ff8aa3;--dz-risk-bg:#3b1824;--dz-risk-soft:#c2405f;
+  --dz-amber:#ffb53d;--dz-amber-text:#fcc35a;--dz-amber-bg:#3a2b10;--dz-amber-bg-2:#4a3712;
+  --dz-teal:#2cc8b2;--dz-teal-text:#2cc8b2;--dz-teal-bg:#0f3a35;--dz-teal-bg-2:#0f2b2a;--dz-mute:#91a0b1;
+  --dz-heat-r1:#3b1824;--dz-heat-r2:#5a2234;--dz-heat-r3:#b8385a;--dz-heat-r4:#ff5c82;
+  --dz-heat-r1-fg:#ff8aa3;--dz-heat-r2-fg:#ffb0c0;--dz-heat-r3-fg:#fff;--dz-heat-r4-fg:#0c1a29;
+  --dz-fill-1:#22384e;--dz-glass-55:rgba(255,255,255,.03);--dz-glass-60:rgba(255,255,255,.035);--dz-glass-75:rgba(255,255,255,.05);--dz-glass-80:rgba(255,255,255,.06);
   --dz-line-5:rgba(226,232,240,.07);--dz-line-6:rgba(226,232,240,.09);--dz-line-8:rgba(226,232,240,.13);
   --dz-sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.28);--dz-sh-menu:0 16px 44px rgba(0,0,0,.55);
-  --dz-seg-on-bg:#f1f5f9;--dz-seg-on-fg:#0b1120;--dz-seg-off-fg:#c0cad8;
+  --dz-seg-on-bg:#eff4f9;--dz-seg-on-fg:#0c1a29;--dz-seg-off-fg:#bfcad6;
   /* the older scale (zinc), turned over */
-  --gray-900:#f1f5f9;--gray-800:#e2e8f0;--gray-700:#cbd5e1;--gray-600:#b6c1d0;--gray-500:#97a3b6;--gray-400:#6b778b;
-  --gray-300:#3a4659;--gray-200:#2a3548;--gray-100:#1a2437;--gray-50:#162033;--white:#131b2e;
-  --accent:#5468ff;--accent-strong:#9aa6ff;--accent-tint:#222b55;--accent-border:#37438f;--accent-ring:rgba(115,131,255,.35);--accent-mid:#4a58c9;
+  --gray-900:#eff4f9;--gray-800:#e3eaf1;--gray-700:#cdd7e1;--gray-600:#b5c2cf;--gray-500:#a1b0bf;--gray-400:#6f8193;
+  --gray-300:#3a4d60;--gray-200:#2c4054;--gray-100:#22384e;--gray-50:#1d3246;--white:#182c3e;
+  --accent:#456cd7;--accent-strong:#99b8fd;--accent-tint:#273d6f;--accent-border:#3c5898;--accent-ring:rgba(105,147,250,.35);--accent-mid:#4a6cc0;
   --crit:#ff5c82;--crit-text:#ff8aa3;--crit-tint:#3b1824;--crit-border:#5e2536;
   --warn-text:#fcc35a;--warn-tint:#3a2b10;--warn-border:#5c4518;
   --good-text:#2cc8b2;--good-tint:#0f3a35;--good-border:#1b5a50;
-  --tip-bg:#334155;--tip-fg:#f8fafc;
+  --tip-bg:#2c4054;--tip-fg:#f6f9fc;
   --sh-rest:0 1px 2px rgba(0,0,0,.3);--sh-hover:0 4px 12px -2px rgba(0,0,0,.4);--sh-pop:0 10px 24px -4px rgba(0,0,0,.55);
   color-scheme:dark;
 }
@@ -3862,7 +3868,7 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 /* PO At Risk card: a group whose main button covers the whole card (its ::after), with the owners' names as buttons
    above it. Looks and hovers like the other cards. */
 .sup-tile.po-risk{position:relative}
-.sup-tile.po-risk:hover{border-color:rgba(84,104,255,.28)}
+.sup-tile.po-risk:hover{border-color:rgba(var(--dz-indigo-rgb),.28)}
 .po-risk-main{appearance:none;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .po-risk-main::after{content:"";position:absolute;inset:0;border-radius:inherit}
 .po-risk-main:focus-visible{outline:none}
@@ -4045,7 +4051,7 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .po-pair{position:relative;display:flex;align-items:stretch}
 .sup-more-views.po-fill>.po-pair{flex:2 1 calc((100% - (var(--po-cols,4) - 1)*10px)/var(--po-cols,4)*2 + 10px)}
 .po-pair:hover{background:var(--dz-glass-80)}
-.po-pair.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+.po-pair.sel{background:#fff;border-color:rgba(var(--dz-indigo-rgb),.45)}
 :where([data-theme=dark]) .po-pair.sel{background-color:var(--dz-surface)}
 .po-pair .po-risk-main{flex:1 1 0;min-width:0;gap:0}
 .po-pair .po-risk-main .dz-stat-v{margin-top:auto;padding-top:4px}
@@ -4245,7 +4251,7 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
    Data Source card and the live load screen. The mark (2v6.9) is an activity line: while live reads work it is green
    and draws itself on a loop over a faint track; disconnected it is red and still (fully drawn); connecting, grey and
    still; with reduced motion the green line stands still. */
-:root{--live-ok:#12b76a}
+:root{--live-ok:#007565}
 .live-pulse{flex:none;display:inline-block;width:15px;height:15px;color:var(--dz-ink-5);vertical-align:middle;overflow:visible}
 .live-pulse .live-track{opacity:.22}
 .live-pulse .live-trace{stroke-dasharray:1 2}
@@ -4303,7 +4309,7 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
 }
 @media (forced-colors:active){.live-pulse{forced-color-adjust:none}}
 @media screen{
-  [data-theme=dark]{--live-ok:#32d583}
+  [data-theme=dark]{--live-ok:#2cc8b2}
   [data-theme=dark] .hdr-pop .live-act{background:var(--dz-line-8)}
   [data-theme=dark] .live-load-box{background:var(--dz-surface);border-color:var(--dz-line-8)}
 }
@@ -4459,6 +4465,57 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 }
 @media (forced-colors:active){.shp-pg.on{border:1px solid Highlight}}
 /* 2v9:end ship */
+/* 2v9:colour */
+/* One palette in harmony with the blue page (prefix none; tokens in :root and the dark block). Inks, lines and fills are a
+   blue-tinted ramp (hue of the page) instead of zinc / slate greys; the accent is a blue-leaning indigo; status keeps its
+   meaning (teal ok, amber warn, red risk, grey no commit) on one set of tokens. Dark cards are a step lighter than the
+   dark blue page, in its hue. The rules below only swap literals for tokens, so both themes follow:
+     --dz-teal-text    teal as text (chips, deltas): 4.5:1 on white and on --dz-teal-bg
+     --dz-risk-soft    the light red bar / heat step       --dz-mute       neutral mark (no commit, not supply)
+     --dz-heat-r1..r4  red heat ramp, -fg its text         --dz-indigo-soft(-2)  accent bars (Forecast), hover
+     --dz-indigo-bg-2  a hovered accent tint               --dz-amber-bg-2 a stronger amber tint
+     --dz-indigo-rgb   the accent as r,g,b for rgba() rings and washes */
+/* Teal used as text: the darker teal token */
+.dz-chip.teal,.sup-page .dz-chip.teal,.ohl-sd .dz-chip.teal,.sup-page .teal,.mwm-trow-d.teal,.mwm-kpi-d.teal,.po-pair-row .po-own-n,
+.sup-page .status-chip.cm.good,#upload-screen .privacy-pill,.misc-code-status,.misc-flat .status-chip.good,.misc-flat .pill.good,
+.snapshot-download-box,.kc-cell.ok button.kc-btn{color:var(--dz-teal-text)}
+/* Red used as small text: the text red */
+.data-table .crit-strong,.trow .risk-cell{color:var(--crit-text)}
+/* Zero markers ("·", "—") and the empty heat cell: muted ink, not the faint line colour */
+.ohl-sup-n.zero,td.ohs2-hc.zero,.kc-tbl td.kc-cell.none{color:var(--dz-ink-5)}
+/* Status dots and tints drawn as hex */
+.live-dot{background:var(--dz-teal);box-shadow:0 0 0 3px var(--dz-teal-bg)}
+.dot.halo{background:var(--dz-risk);box-shadow:0 0 0 3px var(--dz-risk-bg)}
+details.data-check>summary:hover,details.data-check[open]>summary{background:var(--dz-amber-bg-2)}
+.imp-sum.amber{background:var(--dz-amber-bg)}
+.ohl-wh{background:var(--dz-amber-bg);box-shadow:inset 0 0 0 1px var(--dz-amber-bg-2)}
+.ohl-wh:hover{background:var(--dz-amber-bg-2)}
+.ohl-wh.sel{box-shadow:inset 0 0 0 2px var(--dz-amber)}
+.ohl-wh .ohl-fig-v.ohl-crit{color:var(--dz-amber-text)}
+/* Lavender accent tints: the accent's own tints */
+.upload-zone:hover{background:var(--dz-indigo-bg)}
+.shp-chipbtn:hover,.imp-ai-btn.on:hover{background:var(--dz-indigo-bg-2)}
+.misc-fc-legend .sw,.misc-fc-col>i,.misc-fc-spark>i{background:var(--dz-indigo-soft)}
+.misc-fc-col:hover>i{background:var(--dz-indigo-soft-2)}
+.misc-fc-spark>i.over{background:var(--dz-risk-soft)}
+.sup-whrow-bar i.short{background:var(--dz-risk-soft)}
+/* Reason by warehouse heat: the deep accent at the top end, so white numbers keep 4.5:1 (dark: the accent fill) */
+td.ohs2-hc{background:color-mix(in oklab,var(--dz-indigo-deep) var(--mix,0%),var(--dz-surface))}
+/* Dark: raised layers and the map in the page's blue, not slate */
+@media screen{
+:where([data-theme=dark]) .toast-item{background:#2c4054}
+:where([data-theme=dark]) .shp-land-p{fill:#263a4e}
+:where([data-theme=dark]) .ohl-wh{background:rgba(255,181,61,.09);box-shadow:inset 0 0 0 1px rgba(255,181,61,.24)}
+:where([data-theme=dark]) .ohl-wh:hover{background:rgba(255,181,61,.14)}
+:where([data-theme=dark]) .ohl-wh.sel{box-shadow:inset 0 0 0 2px rgba(255,181,61,.6)}
+:where([data-theme=dark]) td.ohs2-hc{background:color-mix(in oklab,var(--accent) var(--mix,0%),var(--dz-surface))}
+:where([data-theme=dark]) .data-table .crit-dark{color:var(--crit-text)}
+:where([data-theme=dark]) .sup-skel{background:linear-gradient(90deg,var(--dz-fill-1),rgba(34,56,78,.45))}
+:where([data-theme=dark]) .imp-drop{background:rgba(12,26,41,.8)}
+:where([data-theme=dark]) .imp-drop-box{background:rgba(29,50,70,.92)}
+:where([data-theme=dark]) .ai-msg.user code{background:rgba(12,26,41,.12)}
+}
+/* 2v9:end colour */
 /* 2v7:motion */
 /* Type scale, the blue page, and motion (prefix mo-). Last in the sheet on purpose: the rules below re-declare earlier
    rules with the same selectors, so they win without raising specificity.
@@ -4467,8 +4524,8 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
    motionAllowed() too. Nothing runs longer than ~450ms; no springs. */
 :root{
   --mo-ease:cubic-bezier(.22,1,.36,1);--mo-fast:160ms;--mo-med:240ms;--mo-slow:380ms;
-  --mo-lift:0 1px 2px rgba(15,23,42,.04),0 10px 24px -10px rgba(30,41,90,.22);
-  --mo-glow:84,104,255;
+  --mo-lift:0 1px 2px rgba(12,26,44,.04),0 10px 24px -10px rgba(22,56,100,.24);
+  --mo-glow:64,99,240;
 }
 
 /* ---------- The page: one solid soft blue behind the white cards (screen only; print stays white) ----------
@@ -4480,7 +4537,7 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
   body,.app-shell{background:transparent}
   [data-theme=dark]{--dz-page:#102232}
   html[data-theme=dark]{background:#102232}
-  [data-theme=dark]{--mo-lift:0 1px 2px rgba(0,0,0,.35),0 12px 28px -10px rgba(0,0,0,.6);--mo-glow:115,131,255}
+  [data-theme=dark]{--mo-lift:0 1px 2px rgba(0,0,0,.35),0 12px 28px -10px rgba(0,0,0,.6);--mo-glow:105,147,250}
   /* Tiles that sit on the page itself (not in a card), their hovers and the map card: solid card colour, not glass */
   .dz-stat:not(.dz-card .dz-stat),button.dz-stat:not(.dz-card .dz-stat):hover,button.sup-tile:hover,.sup-cmcard:hover,
   .dz-card.shp-map{background-color:var(--dz-surface)}
@@ -7718,7 +7775,7 @@ document.addEventListener('keydown',e=>{
   e.preventDefault();impClose();
 });
 const IMP_TONE={ok:['teal','OK'],warn:['amber','Warning'],error:['red','Error'],idle:['indigo','Not loaded'],info:['indigo','Info']};
-const IMP_ICO={ok:'#0fa08e',warn:'#ffae1a',error:'#ff3d68',idle:'#5468ff',info:'#5468ff'};
+const IMP_ICO={ok:'var(--dz-teal)',warn:'var(--dz-amber)',error:'var(--dz-risk)',idle:'var(--dz-indigo)',info:'var(--dz-indigo)'};
 function impRender(){
   const panel=document.getElementById('imp-panel'),r=impState.report;
   if(!panel||!r||panel.hidden)return;
@@ -9110,7 +9167,7 @@ function renderSparkline(values,tone,height=42){
   });
   const color=TONE_COLOR[tone]||'var(--accent)';
   const ty=y(90);
-  return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="${w}" y1="${ty}" y2="${ty}" stroke="#d0d5dd" stroke-dasharray="3 3" stroke-width="1"></line><path d="${d}L${last} ${h} L${first} ${h} Z" fill="${color}" opacity=".12"></path><path class="draw" d="${d.trim()}" pathLength="1" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"></path></svg>`;
+  return `<svg class="${cls}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><line x1="0" x2="${w}" y1="${ty}" y2="${ty}" stroke="var(--dz-ink-6)" stroke-dasharray="3 3" stroke-width="1"></line><path d="${d}L${last} ${h} L${first} ${h} Z" fill="${color}" opacity=".12"></path><path class="draw" d="${d.trim()}" pathLength="1" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"></path></svg>`;
 }
 // Bullet bar with a target (or limit) tick.
 function renderBullet(rate,tone,target=90,thin=false){
@@ -10658,11 +10715,11 @@ function supSupplyDemand(m){
   const cellN=new Map();
   shortageRows.forEach(r=>{const k=`${supplyWarehouse(r)}|${r.yearMonth}`;cellN.set(k,(cellN.get(k)||0)+1);});
   const heat=heatWh.map(w=>({w,cells:months.map(mo=>cellN.get(`${w}|${mo}`)||0)})).map(h=>({...h,t:h.cells.reduce((a,b)=>a+b,0)})).sort((a,b)=>b.t-a.t||a.w.localeCompare(b.w));
-  const lc=n=>n===0?['#f1f5f9','#94a3b8']:n<=4?['#f6d2da','#e0244f']:n<=9?['#ff7a93','#0f172a']:['#ff3d68','#fff'];
+  const lc=n=>n===0?['var(--dz-fill-1)','var(--dz-ink-5)']:n<=4?['var(--dz-heat-r2)','var(--dz-heat-r2-fg)']:n<=9?['var(--dz-heat-r3)','var(--dz-heat-r3-fg)']:['var(--dz-heat-r4)','var(--dz-heat-r4-fg)'];
   const cols=`grid-template-columns:minmax(120px,180px) repeat(${Math.max(1,months.length)},minmax(0,1fr))`;
   // 10 warehouses a page; a new warehouse filter or item group starts at page 1.
   const heatPg=dzPageOf('sd-heat',heat,JSON.stringify([supplyWarehouseFilter,supGet('sd-group','')]));
-  const heatCard=`<section class="dz-card dz-span-4 sup-heatcard dz-fade" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm">Short items by warehouse and month</h2>${supLegend([['#f1f5f9','0'],['#f6d2da','1–4'],['#ff7a93','5–9'],['#ff3d68','10+']])}</div>
+  const heatCard=`<section class="dz-card dz-span-4 sup-heatcard dz-fade" style="--i:1"><div class="dz-card-head"><h2 class="dz-title sm">Short items by warehouse and month</h2>${supLegend([['var(--dz-fill-1)','0'],['var(--dz-heat-r2)','1–4'],['var(--dz-heat-r3)','5–9'],['var(--dz-heat-r4)','10+']])}</div>
     <div class="sup-scroll sup-heat"><div class="sup-heat-in" style="min-width:${150+months.length*70}px">
       <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,monthLabel(months[0])))}</span>`).join('')}</div>
       ${heatPg.rows.map(h=>`<div class="sup-heat-row" style="${cols}"><span class="sup-heat-w" title="${esc(h.w)}">${esc(supWh(h.w))}</span>${h.cells.map((n,i)=>{const [bg,fg]=lc(n);const tp=`${h.w} · ${monthLabel(months[i])||months[i]}: ${n?`${fmtNum(n)} short ${n===1?'item':'items'}`:'no short items'}`;return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(tp)}"${n?' tabindex="0"':''}>${fmtNum(n)}</span>`;}).join('')}</div>`).join('')||'<p class="sup-empty">No warehouses in view.</p>'}
@@ -10781,7 +10838,7 @@ function supSupplyMix(m){
   const ord=r=>hasOC?r.demandOrderCount:r.demandOpenQty;
   // A cell's coverage: demand met by usable open PO supply in the same month. Short orders weigh each row's orders by what is uncovered.
   const agg=list=>{let dem=0,cov=0,orders=0,short=0,value=0;list.forEach(r=>{const d=r.demandOpenQty,c=Math.min(d,r.usableSupplyQty),o=ord(r);dem+=d;cov+=c;orders+=o;value+=r.demandOpenValue;if(d>0)short+=o*(1-c/d);});return {dem,cov,orders,short,value,pct:dem>0?cov/dem*100:100};};
-  const band=p=>p>=90?['#d6f2ec','#0fa08e']:p>=60?['#f5e2a6','#b45309']:['#ff7a93','#0f172a'];
+  const band=p=>p>=90?['var(--dz-teal-bg)','var(--dz-teal-text)']:p>=60?['var(--dz-amber-bg-2)','var(--dz-amber-text)']:['var(--dz-heat-r3)','var(--dz-heat-r3-fg)'];
   const dimKey=by==='wh'?supplyWarehouse:supGroup;
   const groupMap=(list,key)=>{const mp=new Map();list.forEach(r=>{const k=key(r);if(!mp.has(k))mp.set(k,[]);mp.get(k).push(r);});return mp;};
   const dims=[...groupMap(inM,dimKey)].map(([k,list])=>({k,list,a:agg(list),cells:months.map(mo=>agg(list.filter(r=>r.yearMonth===mo)))})).sort((a,b)=>b.a.orders-a.a.orders);
@@ -10797,11 +10854,11 @@ function supSupplyMix(m){
   const filterRow=dzFilterRow(seg,supWarehousePill(options)+monthsPill,anyFilter?dzClear("setSupplyWarehouseFilter(['ALL']);supSet('mix-months',6)",'Show all warehouses, next 6 months.'):'');
   const cols=`grid-template-columns:minmax(120px,190px) repeat(${Math.max(1,months.length)},minmax(0,1fr)) 80px`;
   const first=monthLabel(months[0]);
-  const matrixCard=`<section class="dz-card dz-span-6 dz-fade"><div class="dz-card-head"><h2 class="dz-title"${tipAttr(sectionTipText('mix-net'))}>${by==='wh'?'Demand by warehouse and month':'Demand by item group and month'}</h2>${supLegend([['#d6f2ec','Covered'],['#f5e2a6','Partly covered'],['#ff7a93','Short']])}</div>
+  const matrixCard=`<section class="dz-card dz-span-6 dz-fade"><div class="dz-card-head"><h2 class="dz-title"${tipAttr(sectionTipText('mix-net'))}>${by==='wh'?'Demand by warehouse and month':'Demand by item group and month'}</h2>${supLegend([['var(--dz-teal-bg)','Covered'],['var(--dz-amber-bg-2)','Partly covered'],['var(--dz-heat-r3)','Short']])}</div>
     <div class="dz-meta sup-tsub">Each cell is open demand in ${hasOC?'orders':'qty'}, coloured by open PO coverage.</div>
     <div class="sup-scroll sup-heat"><div class="sup-heat-in" style="min-width:${260+months.length*80}px">
       <div class="sup-heat-row sup-heat-head" style="${cols}"><span></span>${months.map(mo=>`<span>${esc(supMonthShort(mo,first))}</span>`).join('')}<span class="num">Total</span></div>
-      ${matrixShown.map(d=>`<div class="sup-heat-row tall" style="${cols}"><span class="sup-heat-w" title="${esc(d.k)}">${esc(label(d.k))}</span>${d.cells.map((c,i)=>{const empty=!c.dem&&!c.orders;const [bg,fg]=empty?['#f1f5f9','#94a3b8']:band(c.pct);return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(`${d.k} · ${monthLabel(months[i])||months[i]}: ${empty?'no open demand':`${fmtNum(Math.round(c.orders))} ${unit}, ${Math.round(c.pct)}% covered, ${fmtNum(Math.round(c.short))} short`}`)}"${empty?'':' tabindex="0"'}>${empty?'—':fmtNum(Math.round(c.orders))}</span>`;}).join('')}<span class="sup-heat-t">${fmtNum(Math.round(d.a.orders))}</span></div>`).join('')||'<p class="sup-empty">No demand in these months.</p>'}
+      ${matrixShown.map(d=>`<div class="sup-heat-row tall" style="${cols}"><span class="sup-heat-w" title="${esc(d.k)}">${esc(label(d.k))}</span>${d.cells.map((c,i)=>{const empty=!c.dem&&!c.orders;const [bg,fg]=empty?['var(--dz-fill-1)','var(--dz-ink-5)']:band(c.pct);return `<span class="sup-heat-c" style="background:${bg};color:${fg}" data-tip="${esc(`${d.k} · ${monthLabel(months[i])||months[i]}: ${empty?'no open demand':`${fmtNum(Math.round(c.orders))} ${unit}, ${Math.round(c.pct)}% covered, ${fmtNum(Math.round(c.short))} short`}`)}"${empty?'':' tabindex="0"'}>${empty?'—':fmtNum(Math.round(c.orders))}</span>`;}).join('')}<span class="sup-heat-t">${fmtNum(Math.round(d.a.orders))}</span></div>`).join('')||'<p class="sup-empty">No demand in these months.</p>'}
     </div></div>
     ${dzPageFoot('sup-mix-matrix',matrixPg,by==='wh'?'Demand by warehouse and month':'Demand by item group and month',by==='wh'?'warehouses':'item groups')}</section>`;
 
@@ -10811,7 +10868,7 @@ function supSupplyMix(m){
     body:`<div class="sup-cardbody">${least.length?`<div class="dz-bars sup-bars">${least.map((d,i)=>supBar(dzBarRow({label:label(d.k),value:d.s,max:least[0].s,color:i===0?'var(--dz-risk)':'var(--dz-ink-6)',num:fmtNum(d.s),i,tip:`${d.k}: about ${fmtNum(d.s)} ${unit} short.`}),'short')).join('')}</div>`:'<p class="sup-empty">Everything in view is covered.</p>'}</div>`});
   const whDims=[...groupMap(inM,supplyWarehouse)].map(([k,list])=>({k,a:agg(list)})).sort((a,b)=>b.a.orders-a.a.orders).slice(0,8);
   const whMax=Math.max(1,...whDims.map(d=>d.a.orders));
-  const whCard=dzCard({title:'Demand by warehouse',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Covered'],['#ff7a93','Short']]),tip:sectionTipText('mix-demand'),
+  const whCard=dzCard({title:'Demand by warehouse',sm:true,span:3,cls:'dz-fade',meta:supLegend([['var(--dz-teal)','Covered'],['var(--dz-risk-soft)','Short']]),tip:sectionTipText('mix-demand'),
     body:`<div class="sup-cardbody">${whDims.length?`<div class="sup-stack-list">${whDims.map((d,i)=>{const sh=Math.min(d.a.orders,Math.round(d.a.short)),cv=Math.max(0,d.a.orders-sh),w=d.a.orders/whMax*100;const on=supplyWarehouseFilter.length===1&&supplyWarehouseFilter[0]===d.k;
       return `<button type="button" class="sup-whrow${on?' sel':''}" data-focus-key="mixwh-${esc(d.k)}" aria-pressed="${on?'true':'false'}" onclick="setSupplyWarehouseFilter(${esc(on?"['ALL']":`[${dzJs(d.k)}]`)})"${tipAttr(`${d.k}: ${fmtNum(d.a.orders)} ${unit}, about ${fmtNum(sh)} short. ${on?'Click to show all.':'Click to filter.'}`)}><span class="sup-whrow-l">${esc(supWh(d.k))}</span><span class="sup-whrow-track"><span class="sup-whrow-bar" style="width:${w.toFixed(1)}%"><i class="dz-grow" style="flex:${cv};--i:${i}"></i><i class="dz-grow short" style="flex:${sh};--i:${i}"></i></span></span><span class="sup-whrow-n">${fmtNum(d.a.orders)}</span></button>`;}).join('')}</div>`:'<p class="sup-empty">No warehouse demand in these months.</p>'}</div>`});
 
@@ -11214,7 +11271,7 @@ function stgProfileCard(dis,i){
   const names=[...new Set([current,...sharedPeople.map(p=>p.name)].filter(Boolean))];
   const opts=`${current?'':'<option value="" selected disabled>Pick your name</option>'}${names.map(n=>`<option value="${esc(n)}"${n===current?' selected':''}>${esc(n)}</option>`).join('')}<option value="__new">Add a new name…</option>`;
   const select=`<select class="dz-pillinput stg-select stg-name" id="stg-name" data-focus-key="stg-name" onchange="stgPickName(this)"${tipAttr(isSnapshotView?'Not saved from a shared snapshot.':'Stamped on the notes you save.')}${dis}>${opts}</select>`;
-  return stgCard({id:'profile',title:'Profile',icon:'users',color:'#5468ff',i,tip:'Profile\n• Your name is stamped on the notes you save',
+  return stgCard({id:'profile',title:'Profile',icon:'users',color:'var(--dz-indigo)',i,tip:'Profile\n• Your name is stamped on the notes you save',
     body:stgRow('Your name','',select,{labelFor:'stg-name'})});
 }
 function stgOrderHealthCard(dis,i){
@@ -11228,7 +11285,7 @@ function stgOrderHealthCard(dis,i){
     stgRow('Opening view','',seg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view'))
   ].join('');
   const tip='Sales Order Health\n• At-risk target: share of open value at risk\n• Tolerance: days late still on track\n• Look-ahead: lines due within it count\n• Defaults: 5%, 2 days, 1 month, 10, Leading';
-  return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
+  return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'var(--dz-risk)',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 function stgNotesCard(dis,i){
   const kind=stgNotesKind,key=stgListKey(kind),list=stgValue(key),what=kind==='po'?'purchase-order':'sales-order';
@@ -11242,7 +11299,7 @@ function stgNotesCard(dis,i){
   const body=`<div class="stg-row stg-row-top"><div class="stg-l"><span class="stg-label">Ready-made comments</span></div><div class="stg-ctl">${tabs}</div></div>
     <ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">None: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}`;
-  return stgCard({id:'notes',title:'Notes',icon:'file',color:'#ffae1a',i,tip:'Notes\n• The choices in the comment picker on order lines',changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
+  return stgCard({id:'notes',title:'Notes',icon:'file',color:'var(--dz-amber)',i,tip:'Notes\n• The choices in the comment picker on order lines',changed:!stgIsDefault('noteCommentsSo')||!stgIsDefault('noteCommentsPo'),body});
 }
 // Data Source: Live SAP (the default: read through the SAP bridge every 5 minutes) or Import files (uploads, as
 // before). The live state, Refresh now, or the import actions. Self-contained (liveStatusText, liveRead, impPick).
@@ -11266,7 +11323,7 @@ function stgDataSourceCard(dis,i){
     actions=`<div class="stg-actions print-hide"><button type="button" class="dz-btn primary" data-focus-key="stg-ds-upload" onclick="impPick()"${tipAttr('Pick one or more exports to load.')}>Upload files</button><button type="button" class="dz-btn" data-focus-key="stg-ds-add" onclick="document.getElementById('add-file-input').click()"${loaded?'':' disabled'}${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add file</button><button type="button" class="dz-btn" data-focus-key="stg-ds-new" onclick="showUpload()"${tipAttr('Replace this report with a new export.')}>New file</button></div>`;
   }
   const tip='Data Source\n• Live SAP: read every 5 minutes; the last data stays if the link drops\n• Import files: upload Query Manager exports';
-  return stgCard({id:'source',title:'Data Source',icon:'trend',color:'#12b76a',i,tip,changed:!live,body:`<div class="stg-solo">${seg}</div>${status}${actions}`});
+  return stgCard({id:'source',title:'Data Source',icon:'trend',color:'var(--dz-teal)',i,tip,changed:!live,body:`<div class="stg-solo">${seg}</div>${status}${actions}`});
 }
 function stgDataCard(i,dc){
   const loaded=hasLoadedData();
@@ -11295,7 +11352,7 @@ function stgDataCard(i,dc){
     </dl>`:`<p class="stg-now">No export loaded yet.</p>`;
   // In import mode the Data Source card carries the same buttons.
   const actions=!liveMode()&&!isSnapshotView?'':`<div class="stg-actions print-hide">${loaded&&!isSnapshotView?`<button type="button" class="dz-btn" data-focus-key="stg-add-files" onclick="document.getElementById('add-file-input').click()"${tipAttr('Add supply / demand, Clear To Build or Logican files.')}>Add files</button>`:''}<button type="button" class="dz-btn${loaded?'':' primary'}" data-focus-key="stg-new-export" onclick="showUpload()"${tipAttr(loaded?'Replace this report; it stays until the new file is read.':'Open the load screen to add a SAP export.')}>${loaded?'Load new export':'Load an export'}</button></div>`;
-  return stgCard({id:'data',title:'Data',icon:'layers',color:'#3f57ff',i,body:body+actions});
+  return stgCard({id:'data',title:'Data',icon:'layers',color:'var(--dz-indigo)',i,body:body+actions});
 }
 function stgAiCard(dis,i){
   const st=aiState.status;
@@ -11315,7 +11372,7 @@ function stgAiCard(dis,i){
       +`<div class="stg-chiprow">${allowed?dzChip('Allowed','teal'):dzChip('Not allowed yet','amber')}${p&&p.tier==='free'?dzChip('Free tier','amber'):p?dzChip('Paid','indigo'):''}</div>`;
   }
   const open=isSnapshotView||!(aiHosted()||(st&&st.hosted))?'':`<div class="stg-actions print-hide"><button type="button" class="dz-btn" data-focus-key="stg-open-ai" aria-controls="ai-panel" aria-expanded="${aiState.open?'true':'false'}" onclick="stgOpenAi()"${tipAttr('Provider, model and data terms.')}>Open Ask AI settings</button></div>`;
-  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'#8b5cf6',i,tip:'Ask AI\n• A new model starts a new chat',body:body+open});
+  return stgCard({id:'ai',title:'Ask AI',icon:'ai',color:'var(--dz-indigo)',i,tip:'Ask AI\n• A new model starts a new chat',body:body+open});
 }
 // Theme: saved like every setting; the page's colours follow it through applyTheme (the shell's theme code, which
 // also re-applies it from stgAfterChange). The typeof guard keeps this working where that code is absent.
@@ -11351,7 +11408,7 @@ function stgPagesCard(dis,i){
     stgRow('Import report','',seg('importReport',[['problems','With problems'],['always','Every load']],'Import report'))
   ].join('');
   const tip='Pages & Display\n• Match system follows this device\n• Each line list then keeps your choice\n• Import report: after a load with file problems, or every load';
-  return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'#0fa08e',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
+  return stgCard({id:'pages',title:'Pages & Display',icon:'layers',color:'var(--dz-teal)',i,tip,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 // Hidden Pages (2v6.9): one row per page with a show / hide switch, hidden pages first (then menu order). Order Health
 // and Settings cannot be hidden. A hidden page leaves the top menu and the Supply menu; turning it on brings it back.
@@ -11362,7 +11419,7 @@ function stgHiddenPagesCard(dis,i){
     const off=hidden.includes(id),name=NAV_LABELS[id]||PAGE_TITLES[id];
     return stgRow(name,'',stgSwitch(`stg-page-${id}`,`Show ${name}`,!off,`stgTogglePage('${id}')`,dis),{cls:`stg-hp${off?' off':''}`});
   }).join('');
-  return stgCard({id:'hiddenpages',title:'Hidden Pages',icon:'file',color:'#5468ff',i,changed:!stgIsDefault('hiddenPages'),
+  return stgCard({id:'hiddenpages',title:'Hidden Pages',icon:'file',color:'var(--dz-indigo)',i,changed:!stgIsDefault('hiddenPages'),
     tip:'Hidden Pages\n• A hidden page leaves the top menu and the Supply menu\n• Turn one on to bring it back',
     meta:`<span class="dz-meta">${dzChip(hidden.length?`${fmtNum(hidden.length)} hidden`:'None hidden',hidden.length?'':'teal')}</span>`,
     body:`<div class="stg-hp-list">${rows}</div>`});
@@ -11415,7 +11472,7 @@ function stgAboutCard(i){
       <div class="stg-kv"><dt>Version</dt><dd>${esc(stgVersion())}</dd></div>
       <div class="stg-kv"><dt>Changed</dt><dd>${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'None'}</dd></div>
     </dl><div class="stg-actions print-hide">${move}${reset}</div>`;
-  return stgCard({id:'about',title:'About',icon:'help',color:'#64748b',i,tip:'About\n• Export and Import move your settings to another browser',body});
+  return stgCard({id:'about',title:'About',icon:'help',color:'var(--dz-ink-4)',i,tip:'About\n• Export and Import move your settings to another browser',body});
 }
 // Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
 function stgDataCheckLevel(){return dcReport().level;}
@@ -11436,7 +11493,7 @@ function stgDataCheckCard(dc,i){
   const deleted=d.length?stgRow('Deleted lines','Left out of every page and KPI.',`<button type="button" class="dz-btn" data-focus-key="restore-deleted"${tipAttr(`Bring back ${d.length===1?'the deleted line':`all ${fmtNum(d.length)} deleted lines`}.`)} onclick="restoreDeletedLines()">Restore all</button>`,{cls:'stg-dc-row'})
     +`<ul class="stg-dc-deleted" aria-label="Deleted lines">${delPg.rows.map(r=>`<li><span class="stg-dc-line">${esc(r.documentNumber||'—')} · ${esc(r.name||'—')} · ${esc(r.itemCode||'—')}</span><button type="button" class="dc-restore link-btn" data-key="${esc(rowKey(r))}" aria-label="Restore ${esc(r.documentNumber||'line')} ${esc(r.itemCode||'')}"${tipAttr('Bring this line back.')} onclick="restoreDeletedLines(this.dataset.key)">Restore</button></li>`).join('')}</ul>${dzPageFoot('stg-dc-deleted',delPg,'Deleted lines')}`:'';
   const meta=dc.level==='red'?dzChip(`${fmtNum(dc.red)} to fix in SAP`,'red'):dc.level==='yellow'?dzChip(`${fmtNum(dc.yellow)} to review`,'amber'):'<span class="dz-meta">By design</span>';
-  const color=dc.level==='red'?'#ff3d68':dc.level==='yellow'?'#ffae1a':'#64748b';
+  const color=dc.level==='red'?'var(--dz-risk)':dc.level==='yellow'?'var(--dz-amber)':'var(--dz-ink-4)';
   return stgCard({id:'dc',title:'Data Check',icon:'alert',color,i,dot:dc.level,tip:dc.nonInventory?'Data Check\n• PPV, tariff and NRE close by invoice, so they are left out of late, OTD and fill KPIs':'',meta:`<span class="dz-meta">${meta}</span>`,
     body:`<div class="stg-dc${issues||scope||deleted?'':' solo'}"><div class="stg-dc-lead">${sum}${dateHelp}</div>${issues||scope||deleted?`<div class="stg-dc-side">${issues}${scope}${deleted}</div>`:''}</div>`});
 }
@@ -11459,7 +11516,7 @@ function stgConnectCard(i){
         <div class="stg-actions print-hide"><a class="dz-btn" href="docs/MCP.md" target="_blank" rel="noopener" data-focus-key="stg-connect-guide"${tipAttr('Paths, updates and fixes.')}>Setup guide</a></div>
       </div>
     </details>`;
-  return stgCard({id:'connect',title:'Connect An AI App',icon:'link',color:'#5468ff',i,body});
+  return stgCard({id:'connect',title:'Connect An AI App',icon:'link',color:'var(--dz-indigo)',i,body});
 }
 function stgRenderPage(){
   const ro=isSnapshotView,dis=ro?' disabled':'';
@@ -14213,9 +14270,9 @@ function mwmRenderWarehouses(m,legacy){
   // 10 warehouses a page; a new measure, week range or Order Health filter starts at page 1.
   const heatPg=dzPageOf('mwm-heat',rows,JSON.stringify([mwmWhMetric,n,weeklyFilterKey()]));
   const shown=heatPg.rows;
-  const lateC=v=>v===0?['#f1f5f9','#94a3b8']:v<=2?['#fbe3e8','#e0244f']:v<=5?['#f6d2da','#e0244f']:v<=9?['#ff7a93','#0f172a']:['#ff3d68','#fff'];
-  const otdC=v=>v===null?['rgba(15,23,42,.03)','#cbd5e1']:v>=85?['#d6f2ec','#0fa08e']:v>=70?['#f1f5f9','#334155']:v>=40?['#fbe3e8','#e0244f']:['#ff7a93','#0f172a'];
-  const legend=(late?[['0','#f1f5f9'],['1–5','#f6d2da'],['6–9','#ff7a93'],['10+','#ff3d68']]:[['85%+','#d6f2ec'],['70–84%','#f1f5f9'],['40–69%','#fbe3e8'],['under 40%','#ff7a93']])
+  const lateC=v=>v===0?['var(--dz-fill-1)','var(--dz-ink-5)']:v<=2?['var(--dz-heat-r1)','var(--dz-heat-r1-fg)']:v<=5?['var(--dz-heat-r2)','var(--dz-heat-r2-fg)']:v<=9?['var(--dz-heat-r3)','var(--dz-heat-r3-fg)']:['var(--dz-heat-r4)','var(--dz-heat-r4-fg)'];
+  const otdC=v=>v===null?['var(--dz-hover)','var(--dz-ink-5)']:v>=85?['var(--dz-teal-bg)','var(--dz-teal-text)']:v>=70?['var(--dz-fill-1)','var(--dz-ink-2)']:v>=40?['var(--dz-heat-r1)','var(--dz-heat-r1-fg)']:['var(--dz-heat-r3)','var(--dz-heat-r3-fg)'];
+  const legend=(late?[['0','var(--dz-fill-1)'],['1–5','var(--dz-heat-r2)'],['6–9','var(--dz-heat-r3)'],['10+','var(--dz-heat-r4)']]:[['85%+','var(--dz-teal-bg)'],['70–84%','var(--dz-fill-1)'],['40–69%','var(--dz-heat-r1)'],['under 40%','var(--dz-heat-r3)']])
     .map(([l,c])=>`<span><i class="mwm-sw" style="background:${c}"></i>${l}</span>`).join('');
   const step=n>16?2:1;
   const focused=whFocusedWarehouse();
@@ -15534,21 +15591,21 @@ const DZ_ICON_PATHS={
 };
 // [label words, icon, colour when the tile has no dot]; the first match wins.
 const DZ_ICON_RULES=[
-  [/urgent/,'flame','#ff3d68'],[/\bqc\b|quality/,'shield','#ffae1a'],[/shipping delay/,'truck','#ffae1a'],
-  [/supply chain/,'link','#ffae1a'],[/supplier/,'hand','#ffae1a'],[/r&d|hold/,'pause','#ffae1a'],
-  [/wait(ing)? on prod|production/,'wrench','#ffae1a'],[/waiting on po/,'file','#ffae1a'],
-  [/close short|short ship/,'scissors','#ffae1a'],[/partial/,'half','#ffae1a'],
-  [/logican|cm commit|\bcm\b|clear to build|kit/,'factory','#5468ff'],[/short/,'pause','#ff3d68'],
-  [/no commit/,'calX','#94a3b8'],[/missed/,'alert','#ff3d68'],[/reschedule hit|hit/,'target','#5468ff'],
-  [/resched/,'calMove','#ffae1a'],[/not checked|never checked/,'search','#ffae1a'],
-  [/days late/,'timer','#ff3d68'],[/past due|late|delayed|overdue|at risk|exception|gap|over forecast/,'alert','#ff3d68'],
-  [/on time|on track|delivered|perfect/,'check','#0fa08e'],[/fill/,'gauge','#0fa08e'],
-  [/in transit|shipped|shipment|carrier/,'truck','#5468ff'],[/received/,'boxCheck','#0fa08e'],
-  [/due this week|this week|week|month|quarter|vs |date/,'cal','#5468ff'],[/forecast/,'trend','#5468ff'],
-  [/sales order|demand/,'cart','#5468ff'],[/\bpo\b|purchase|vendor|supply/,'file','#5468ff'],
-  [/unconfirmed/,'help','#ffae1a'],[/price/,'tag','#ffae1a'],[/customer/,'users','#5468ff'],
-  [/warehouse/,'warehouse','#5468ff'],[/item|part|build/,'box','#5468ff'],[/value|\$|amount/,'dollar','#5468ff'],
-  [/open|all/,'layers','#0fa08e']
+  [/urgent/,'flame','var(--dz-risk)'],[/\bqc\b|quality/,'shield','var(--dz-amber)'],[/shipping delay/,'truck','var(--dz-amber)'],
+  [/supply chain/,'link','var(--dz-amber)'],[/supplier/,'hand','var(--dz-amber)'],[/r&d|hold/,'pause','var(--dz-amber)'],
+  [/wait(ing)? on prod|production/,'wrench','var(--dz-amber)'],[/waiting on po/,'file','var(--dz-amber)'],
+  [/close short|short ship/,'scissors','var(--dz-amber)'],[/partial/,'half','var(--dz-amber)'],
+  [/logican|cm commit|\bcm\b|clear to build|kit/,'factory','var(--dz-indigo)'],[/short/,'pause','var(--dz-risk)'],
+  [/no commit/,'calX','var(--dz-mute)'],[/missed/,'alert','var(--dz-risk)'],[/reschedule hit|hit/,'target','var(--dz-indigo)'],
+  [/resched/,'calMove','var(--dz-amber)'],[/not checked|never checked/,'search','var(--dz-amber)'],
+  [/days late/,'timer','var(--dz-risk)'],[/past due|late|delayed|overdue|at risk|exception|gap|over forecast/,'alert','var(--dz-risk)'],
+  [/on time|on track|delivered|perfect/,'check','var(--dz-teal)'],[/fill/,'gauge','var(--dz-teal)'],
+  [/in transit|shipped|shipment|carrier/,'truck','var(--dz-indigo)'],[/received/,'boxCheck','var(--dz-teal)'],
+  [/due this week|this week|week|month|quarter|vs |date/,'cal','var(--dz-indigo)'],[/forecast/,'trend','var(--dz-indigo)'],
+  [/sales order|demand/,'cart','var(--dz-indigo)'],[/\bpo\b|purchase|vendor|supply/,'file','var(--dz-indigo)'],
+  [/unconfirmed/,'help','var(--dz-amber)'],[/price/,'tag','var(--dz-amber)'],[/customer/,'users','var(--dz-indigo)'],
+  [/warehouse/,'warehouse','var(--dz-indigo)'],[/item|part|build/,'box','var(--dz-indigo)'],[/value|\$|amount/,'dollar','var(--dz-indigo)'],
+  [/open|all/,'layers','var(--dz-teal)']
 ];
 const DZ_ICON_LABELS='.dz-stat-l,.ohl-stat-l,.ohl-tile-l,.mwm-kpi-l,.shp-tile-l,.sup-tile-l,.misc-tile-l,.sup-cmhead>b';
 function dzIconSvg(name){
@@ -15563,10 +15620,10 @@ function dzDecorateIcons(root){
     const rule=DZ_ICON_RULES.find(([re])=>re.test(text));
     // A coloured dot in the label gives the icon its colour, then makes way for it.
     const dot=[...label.children].find(c=>!String(c.textContent||'').trim()&&c.style&&c.style.background);
-    let color=dot?dot.style.background:(rule?rule[2]:'#5468ff');
+    let color=dot?dot.style.background:(rule?rule[2]:'var(--dz-indigo)');
     if(dot)dot.remove();
     const tile=label.closest('button,.dz-stat,.mwm-kpi,.shp-tile,.misc-tile,.ohl-tile,div');
-    if(tile&&tile.classList&&tile.classList.contains('zero'))color='#94a3b8';
+    if(tile&&tile.classList&&tile.classList.contains('zero'))color='var(--dz-mute)';
     const ico=document.createElement('span');
     ico.className='dz-ico';
     ico.setAttribute('aria-hidden','true');
@@ -18637,10 +18694,10 @@ function renderForecastPage(m){
   const unmatchedTip=f.unmatched.length?`Not matched to a SAP item: ${f.unmatched.slice(0,8).map(u=>u.label).join(', ')}${f.unmatched.length>8?', …':''}.`:'Every forecast line matched a SAP item.';
   const tile=(label,value,sub,dot,tone,tipText)=>`<div class="misc-tile"${tipAttr(tipText)}><div class="misc-tile-l"><span class="misc-dot" style="background:${dot}"></span>${esc(label)}</div><div class="misc-tile-v"${tone?` style="color:${tone}"`:''}>${esc(value)}</div><div class="misc-tile-s">${esc(sub)}</div></div>`;
   const tiles=`<div class="misc-tiles dz-fade" aria-label="Forecast totals, next 12 months">
-    ${tile('Forecast',fmtNum(fcT),range,'#5468ff','',`Forecast: ${fmtNum(fcT)} qty for ${fmtNum(f.items.length)} SAP items, ${range}.`)}
-    ${tile('Open sales orders',fmtNum(soT),'same items, due by then','#0f172a','',`Open sales orders: ${fmtNum(soT)} qty due by ${monthLabel(f.months[11])}, past due included.`)}
-    ${tile('Open PO / CM',fmtNum(poT),'expected by then','#ffae1a','',`Open PO / CM: ${fmtNum(poT)} qty expected by ${monthLabel(f.months[11])}.`)}
-    ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'#ff3d68':'#0fa08e',above.length?'#e0244f':'',`Items over forecast: ${fmtNum(above.length)} items with more on order than forecast in a month.`)}
+    ${tile('Forecast',fmtNum(fcT),range,'var(--dz-indigo)','',`Forecast: ${fmtNum(fcT)} qty for ${fmtNum(f.items.length)} SAP items, ${range}.`)}
+    ${tile('Open sales orders',fmtNum(soT),'same items, due by then','var(--dz-ink-1)','',`Open sales orders: ${fmtNum(soT)} qty due by ${monthLabel(f.months[11])}, past due included.`)}
+    ${tile('Open PO / CM',fmtNum(poT),'expected by then','var(--dz-amber)','',`Open PO / CM: ${fmtNum(poT)} qty expected by ${monthLabel(f.months[11])}.`)}
+    ${tile('Items over forecast',fmtNum(above.length),`${fmtNum(f.unmatched.length)} forecast ${f.unmatched.length===1?'line':'lines'} unmatched`,above.length?'var(--dz-risk)':'var(--dz-teal)',above.length?'var(--dz-risk-text)':'',`Items over forecast: ${fmtNum(above.length)} items with more on order than forecast in a month.`)}
   </div>`;
   const spark=g=>{const mx=Math.max(1,...g.fc,...g.so);return `<span class="misc-fc-spark" aria-hidden="true">${g.fc.map((v,i)=>`<i style="height:${Math.max(v||g.so[i]>v?3:0,v/mx*22).toFixed(1)}px"${g.so[i]>v?' class="over"':''}></i>`).join('')}</span>`;};
   // 10 items a page; a new forecast (another month range or item count) starts at page 1.
@@ -18696,8 +18753,8 @@ const OH_STATES=[
   ['ontrack','on_track','On track','var(--good)','No risk signal, not due this week.'],
   ['duethisweek','due_this_week','Due this week','var(--accent)','Due this week (Sun–Sat), no risk signal.'],
   ['rescheduled','rescheduled','Rescheduled','var(--warn-fill)','Commit date is today or later.'],
-  ['pastdue','past_due','Past due','#ff4f73','Past the original date with no reschedule, or past the commit date.'],
-  ['nocommit','no_commit','No commit','var(--crit-text)','No commit date in SAP.']
+  ['pastdue','past_due','Past due','var(--dz-risk)','Past the original date with no reschedule, or past the commit date.'],
+  ['nocommit','no_commit','No commit','var(--dz-mute)','No commit date in SAP.']
 ];
 const OH_TILE_TITLES={'st-ontrack':'On track','st-duethisweek':'Due this week (no risk signal)','st-rescheduled':'Rescheduled (commit date ahead)','st-pastdue':'Past due','st-nocommit':'No commit','allopen':'All open orders','perfect':'Not perfect · 12 mo','dayslate':'Late deliveries · 3 mo'};
 
@@ -19706,8 +19763,8 @@ function ohTopWarehouse(rows){
 // lines by due week and Customers at risk (3 each); Date changes (6, only when a date moved); then the Lines card (6), which renderResults
 // draws where OHL_LINES_MARK is (it needs the linked-lines list). Headlines are order counts; "$ · N lines" is secondary.
 const OHL_LINES_MARK='<!--ohl-lines-->';
-const OHL_COLOR={ontrack:'#0fa08e',duethisweek:'#5468ff',rescheduled:'#ffae1a',pastdue:'#ff3d68',nocommit:'#94a3b8'};
-const OHL_RED='#ff3d68',OHL_SLATE='#cbd5e1';
+const OHL_COLOR={ontrack:'var(--dz-teal)',duethisweek:'var(--dz-indigo)',rescheduled:'var(--dz-amber)',pastdue:'var(--dz-risk)',nocommit:'var(--dz-mute)'};
+const OHL_RED='var(--dz-risk)',OHL_SLATE='var(--dz-ink-6)';
 let ohlLineQuery='',ohlQueryTimer=0;
 // The Lines card's search box: remembered at once, the list redraws when typing pauses (focus and caret survive a redraw).
 function ohlSetQuery(v){
@@ -19936,7 +19993,7 @@ function ohlDueCard(c){
   return dzCard({title:'Open lines by due week',meta:chip,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:2"',
     tip:'Open lines due per week, next 8 weeks. Past due is the red chip.',
     body:total?`<div class="ohl-chart" role="img" aria-label="${esc(`Open lines due by week, ${summary}`)}">
-        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ohlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5468ff" stop-opacity=".35"/><stop offset="1" stop-color="#5468ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#ohlG)"/><path d="${line}" fill="none" stroke="#5468ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ohlG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--dz-indigo)" stop-opacity=".35"/><stop offset="1" stop-color="#5468ff" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#ohlG)"/><path d="${line}" fill="none" stroke="#5468ff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
         ${dots}${pill}
       </div>
       <div class="ohl-weeks" aria-hidden="true">${labels}</div>`:'<div class="empty-note ohl-empty">No open lines are due in the next eight weeks.</div>'});
