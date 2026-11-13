@@ -18729,7 +18729,7 @@ function shipToPlace(s,as){
   const none={city:'',region:'',country:'',from:''};
   if(!as||as.notFound)return none;
   // A country AfterShip names that the page does not know: no place (never SAP's country instead).
-  if(String(as.destCountry||'').trim()&&!shipCountryCode(as.destCountry))return {...none,from:'AfterShip'};
+  if(String(as.destCountry||'').trim()&&!shipCountryCode(as.destCountry))return none;
   const asCc=shipCountryCode(as.destCountry),cc=asCc||shipCountryCode(s&&s.country);
   const from='AfterShip';
   if(as.destCity)return {city:String(as.destCity),region:String(as.destState||''),country:cc,from};
@@ -19009,9 +19009,11 @@ function renderShipMap(list){
   // they may cover a small unnamed dot (and are drawn over it). The hub's label comes after the first three.
   const maxLabels=shpMapLabelCount(lay);
   const order=dots.map((dt,i)=>({...dt,i,sel:shpDotSel(dt.p)})).sort((a,b)=>(b.sel-a.sel)||(a.i-b.i));
-  order.slice(0,maxLabels+4).forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
+  // The hub's label may lie over a dot past the first three (it is placed before their boxes are kept clear).
+  const reserve=list=>list.forEach(({xy,d})=>{taken.push([xy[0]-d*u/2,xy[1]-d*u/2,d*u,d*u]);});
+  reserve(order.slice(0,3));
   let hubLbl=null,hubTried=false;
-  const tryHub=()=>{hubTried=true;hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);};
+  const tryHub=()=>{hubTried=true;hubLbl=place(hub[0],hub[1],11*u,hubText.length*6.6+8);reserve(order.slice(3,maxLabels+4));};
   for(const {p,xy,d} of order){
     if(labels.length>=maxLabels)break;
     if(labels.length===3&&!hubTried)tryHub();

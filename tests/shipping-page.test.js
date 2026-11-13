@@ -963,7 +963,8 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.deepEqual(page.run('Object.values(SHIP_ISO3).filter(c=>!SHIP_PLACES[c])'), []);
   assert.deepEqual(place({ country: 'CA' }, { destCity: 'Manila', destState: '', destCountry: 'PHL' }), ['Manila', '', 'PH', 'AfterShip']);
   assert.equal(page.run("shipPlaceKey({toCountry:'PH',toCity:'Manila'})"), 'PH:manila');
-  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Toronto', destState: 'ON', destCountry: 'ZZZ' }), ['', '', '', 'AfterShip']);
+  // ... and counts as no destination at all, so its details do not call SAP's country AfterShip's.
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Toronto', destState: 'ON', destCountry: 'ZZZ' }), ['', '', '', '']);
   // A shared snapshot keeps them: AfterShip's statuses travel with it.
   let payload = '';
   Object.assign(page.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
@@ -1038,6 +1039,20 @@ test('2v6.9 cities: "Spyder · Lacombe" keeps its label on the wide map among ei
   assert.equal(mapLabels(page).length, 8);
   assert.deepEqual(mapLabels(page).slice(0, 3), ['Calgary, AB +1', 'Kelowna, BC', 'Toronto, ON']);
   assert.match(mapOf(page), /<span class="shp-lbl hub" style="[^"]*">Spyder · Lacombe<\/span>/);
+  assert.deepEqual(page.errors, []);
+});
+
+// The hub's label is placed before the dots past the first three are kept clear, so Edmonton, Saskatoon or Regina
+// further down the list do not crowd it out either (it may lie over one of those dots).
+test('2v6.9 cities: "Spyder · Lacombe" keeps its label when the busiest places are far away and smaller ones sit around Lacombe', async () => {
+  const MIX = [['Toronto', 'ON', 'CAN', 9], ['Dallas', 'TX', 'USA', 8], ['Atlanta', 'GA', 'USA', 7], ['Edmonton', 'AB', 'CAN', 6], ['Calgary', 'AB', 'CAN', 5], ['Saskatoon', 'SK', 'CAN', 4], ['Vancouver', 'BC', 'CAN', 3], ['Regina', 'SK', 'CAN', 2], ['Winnipeg', 'MB', 'CAN', 2]];
+  const num = (i, k) => `77008${String(i).padStart(2, '0')}${String(k).padStart(5, '0')}`;
+  const rows = MIX.flatMap(([, , country, n], i) => Array.from({ length: n }, (_, k) => delivery({ DocumentNumber: String(700 + i * 20 + k), DeliveryDocNumber: String(9700 + i * 20 + k), TrackingNumber: num(i, k), ShipToCountry: country.slice(0, 2), ShipDate: '10/05/2026' })));
+  const statuses = Object.fromEntries(MIX.flatMap(([destCity, destState, destCountry, n], i) => Array.from({ length: n }, (_, k) => [num(i, k), asStatus(num(i, k), 'transit', { destCity, destState, destCountry })])));
+  const page = await asPage(rows, statuses);
+  assert.ok(page.run('shpMapLayout()'), 'the wide layout');
+  assert.match(mapOf(page), /<span class="shp-lbl hub" style="[^"]*">Spyder · Lacombe<\/span>/);
+  assert.deepEqual(mapLabels(page).slice(0, 3), ['Toronto, ON', 'Dallas, TX', 'Atlanta, GA']);
   assert.deepEqual(page.errors, []);
 });
 
