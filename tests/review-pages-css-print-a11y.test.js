@@ -301,7 +301,8 @@ test('Fill rate and On-track rate show no made-up 0% when no sales-order lines a
   assert.match(c.Trend, /<h3[^>]*>Why orders were late · September<\/h3><p class="ohgt-none">No late orders\.<\/p>/);
   assert.match(c.Trend, /<p class="ohgt-sofar" data-tip="September so far\n• 1 order shipped, \$500 on 1 delivery line\n• Year to date: \$2,500 on 3 delivery lines"><b>September so far:<\/b> 1 order · \$500 shipped · year to date \$3K<\/p>/);
   assert.match(c['By warehouse'], /<span class="dz-meta">September · 1 order<\/span>/);
-  assert.deepEqual(cells(c['By warehouse']), [['CM · Alta', '1', '$500', '100%']]);
+  // One month of deliveries: the Last 6 months cell is empty (a line needs two months).
+  assert.deepEqual(cells(c['By warehouse']), [['CM · Alta', '1', '$500', '100%', '']]);
   assert.deepEqual(cells(c['Booked vs shipped']), [['Aug 2026', '67%', '$1,000', '1'], ['Sep 2026', '100%', '$0', '0']]);
   assert.doesNotMatch(m, NO_TILES);
   assert.deepEqual(sh.errors, []);

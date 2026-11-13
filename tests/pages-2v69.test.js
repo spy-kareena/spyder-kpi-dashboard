@@ -113,7 +113,7 @@ const cards = (d) => [...d.matchAll(/<section class="dz-card ([^"]*)"[^>]*>[\s\S
   .map((m) => ({ cls: m[1], html: m[0], title: plain((/<h2 class="dz-title"[^>]*>([\s\S]*?)<\/h2>/.exec(m[0]) || [])[1]) }));
 const card = (d, title) => (cards(d).find((c) => c.title === title) || { html: '' }).html;
 const table = (c) => ({
-  head: [...c.matchAll(/<th scope="col"(?: class="num")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)].map((m) => [m[2], m[1] || '']),
+  head: [...c.matchAll(/<th scope="col"(?: class="(?:num|ohgt-spk)")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)].map((m) => [m[2], m[1] || '']),
   rows: [...c.matchAll(/<tr(?: data-tip="[^"]*")?>(<td[\s\S]*?)<\/tr>/g)].map((m) => [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((x) => plain(x[1]))),
   tips: [...c.matchAll(/<tr data-tip="([^"]*)"><td/g)].map((m) => m[1]),
 });
@@ -346,8 +346,8 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   // Every column heading of the three tables carries a tip; each table scrolls in a named, focusable region.
   assert.equal((d.match(/<table class="ohgt-tbl">/g) || []).length, 3);
   assert.equal((d.match(/<table\b/g) || []).length, 3);
-  assert.equal((d.match(/<th\b/g) || []).length, 15);
-  assert.equal((d.match(/<th scope="col"(?: class="num")? data-tip="[^"]+">[^<]+<\/th>/g) || []).length, 15, 'every th has a tip');
+  assert.equal((d.match(/<th\b/g) || []).length, 16);
+  assert.equal((d.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")? data-tip="[^"]+">[^<]+<\/th>/g) || []).length, 16, 'every th has a tip');
   assert.deepEqual([...d.matchAll(/<div class="sup-scroll" tabindex="0" role="region" aria-label="([^"]+)"><table class="ohgt-tbl">/g)].map((m) => m[1]), ['Month by month', 'By warehouse', 'Booked vs shipped']);
   // --- Month by month: the twelve months, newest first, six a page.
   let months = card(d, 'Month by month');
@@ -392,9 +392,10 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   d = detail(page);
   let wh = card(d, 'By warehouse');
   assert.match(wh, /<h2 class="dz-title" data-tip="Deliveries by the warehouse or CM that shipped them\.">By warehouse<\/h2><span class="dz-meta">September · 8 orders<\/span>/);
-  assert.deepEqual(table(wh).head, [['Warehouse / CM', 'The warehouse or CM that shipped.'], ['Orders', 'Sales orders with a delivery in the range.'], ['Shipped', 'Shipped value.'], ['On time', 'Deliveries early or on time.']]);
-  const WH1 = [['Spyder · Lacombe', '1', '$7,000', '100%'], ['CM · Alta', '2', '$6,500', '100%'], ['CM · Beta', '1', '$5,000', '0%'], ['CM · DSM', '1', '$4,000', '0%'], ['CM SFG · Gamma', '1', '$3,000', '100%'], ['CM SFG · Delta', '1', '$2,000', '0%']];
-  const WH2 = [['CM · Echo', '1', '$1,000', '0%']];
+  assert.deepEqual(table(wh).head, [['Warehouse / CM', 'The warehouse or CM that shipped.'], ['Orders', 'Sales orders with a delivery in the range.'], ['Shipped', 'Shipped value.'], ['On time', 'Deliveries early or on time.'],
+    ['Last 6 months', 'On time each month, Apr 2026 to Sep 2026, by delivery date. Dashed line: the 90% target.']]);
+  const WH1 = [['Spyder · Lacombe', '1', '$7,000', '100%', ''], ['CM · Alta', '2', '$6,500', '100%', ''], ['CM · Beta', '1', '$5,000', '0%', ''], ['CM · DSM', '1', '$4,000', '0%', ''], ['CM SFG · Gamma', '1', '$3,000', '100%', ''], ['CM SFG · Delta', '1', '$2,000', '0%', '']];
+  const WH2 = [['CM · Echo', '1', '$1,000', '0%', '']];
   assert.deepEqual(table(wh).rows, WH1);
   assert.equal(count(wh), '1–6 of 7 warehouses');
   // The columns left out (lines, quantity, early / on time / late) are in each row's tip.
@@ -410,7 +411,7 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   const groups = page.run("(()=>{const m=currentMetrics(),s=moMonthlyParts(m,momSource(m),reportToday()).scenario;return {orders:s.shippedWeekOrders,isDefault:s.isDefaultRange,groups:s.shippedWeekGroups.map(g=>[g.warehouse,g.orders.size,g.value,g.early+g.onTime,g.rows.length])}})()");
   assert.deepEqual(groups, { orders: 8, isDefault: true, groups: [['Spyder - Lacombe', 1, 7000, 1, 1], ['CM - Alta', 2, 6500, 2, 2], ['CM - Beta', 1, 5000, 0, 1], ['CM - DSM', 1, 4000, 0, 1], ['CM SFG - Gamma', 1, 3000, 1, 1], ['CM SFG - Delta', 1, 2000, 0, 1], ['CM - Echo', 1, 1000, 0, 1]] });
   const usd = (v) => `$${v.toLocaleString('en-US')}`;
-  assert.deepEqual([...WH1, ...WH2], groups.groups.map(([name, orders, value, ok, lines]) => [name.replace(/ - /g, ' · '), String(orders), usd(value), `${Math.round(ok / lines * 100)}%`]));
+  assert.deepEqual([...WH1, ...WH2], groups.groups.map(([name, orders, value, ok, lines]) => [name.replace(/ - /g, ' · '), String(orders), usd(value), `${Math.round(ok / lines * 100)}%`, '']));
   assert.deepEqual(page.run('shipScenarioFor(currentMetrics()).shippedWeekGroups.map(g=>g.warehouse)'), groups.groups.map((g) => g[0]));
 
   // --- Booked vs shipped: lines by the month they were first due, oldest first (this year's months and any with open lines).
@@ -446,7 +447,7 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   d = detail(page);
   assert.deepEqual(table(card(d, 'Month by month')).rows[0], ['Sep 2026 to date', '2', '$7K', '100%', '50%', '0.0', '0']);
   assert.equal(count(card(d, 'Month by month')), '1–6 of 12 months');
-  assert.deepEqual(table(card(d, 'By warehouse')).rows, [['CM · Alta', '2', '$6,500', '100%']]);
+  assert.deepEqual(table(card(d, 'By warehouse')).rows, [['CM · Alta', '2', '$6,500', '100%', '']]);
   assert.match(card(d, 'By warehouse'), /<span class="dz-meta">September · 2 orders<\/span>/);
   assert.doesNotMatch(card(d, 'By warehouse'), /dz-pagefoot/, 'one page, no pager');
   assert.deepEqual(table(card(d, 'Booked vs shipped')).rows, [['Sep 2026', '100%', '$0', '0']]);
@@ -455,7 +456,7 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   page.run("setShipScenarioStartDate('2026-08-01');setShipScenarioTargetDate('2026-08-31')");
   wh = card(detail(page), 'By warehouse');
   assert.match(wh, /<span class="dz-meta">2026-08-01 to 2026-08-31 · 4 orders<\/span>/);
-  assert.deepEqual(table(wh).rows, [['Spyder · Lacombe', '4', '$10,000', '75%']]);
+  assert.deepEqual(table(wh).rows, [['Spyder · Lacombe', '4', '$10,000', '75%', '']]);
   page.run("setShipScenarioStartDate('');setShipScenarioTargetDate('')");
   assert.match(card(detail(page), 'By warehouse'), /<span class="dz-meta">September · 8 orders<\/span>/);
 

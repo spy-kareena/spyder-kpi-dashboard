@@ -4525,6 +4525,12 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
   .ohg-tiles>.ohg-tile,.ohg-tiles>.ohg-tile:nth-child(n+4){grid-column:auto}
   .ohg-tiles>.ohg-tile:last-child{grid-column:1/-1}
 }
+/* Lagging sparklines (2v9, Style A, dzSpark): the Monthly tiles' 6 months under the change line; By warehouse's Last 6
+   months column (left out on narrow phones, where the table would otherwise scroll sideways). */
+.ohg-spk{margin-top:8px;line-height:0}
+.ohgt-tbl td.ohgt-spk{padding-top:6px;padding-bottom:6px;width:1%}
+@media (max-width:480px){.ohgt-tbl .ohgt-spk{display:none}}
+@media print{.ohgt-tbl .ohgt-spk{display:table-cell}}
 /* Order Health (2v6.9 leading): Customers at risk by supply source has no CM sheet column (three sources); the source
    pills, each customer's name and each number are buttons that list those lines in the Lines card (indigo when picked);
    the Lines card head carries a Clear for the pick. Tips can hold short lines ("Line\n• fact"). */
@@ -15127,6 +15133,27 @@ function ohgTrendChart(pts,k){
       <div class="mwm-plot-wrap"><span></span><div class="mwm-xax" style="--n:${pts.length}">${pts.map(r=>`<span>${esc(shortMonth(r.date))}</span>`).join('')}</div></div>`;
 }
 const OHG_PAGE=6;
+// By warehouse, Last 6 months: each warehouse's on-time rate in each of the last 6 months (this month last), from the
+// delivery lines the Lagging month figures score (the page's filtered lines, closed by a delivery; otdStats), by the
+// month of their close date. A month with nothing scored is a gap (null). {months, series: Map(warehouse -> 6 values)}.
+function ohgWhMonths(m){
+  return cachedByFilter(m,`ohg|wh6|${weeklyFilterKey()}`,()=>{
+    const months=trailingMonths(6);
+    const key=dt=>`${dt.getFullYear()}-${dt.getMonth()}`;
+    const at=new Map(months.map((dt,i)=>[key(dt),i]));
+    const by=new Map();
+    mwmRows(m).filter(isClosedPerformanceRow).forEach(r=>{
+      const dt=parseDate(r.closeDate),i=dt?at.get(key(dt)):undefined;
+      if(i===undefined)return;
+      const w=rowWarehouse(r);
+      if(!by.has(w))by.set(w,months.map(()=>[]));
+      by.get(w)[i].push(r);
+    });
+    const series=new Map();
+    by.forEach((list,w)=>series.set(w,list.map(rows=>{const s=otdStats(rows);return s.scored.length?s.rate:null;})));
+    return {months,series};
+  });
+}
 function ohgDetailSection(m,q0=2){
   if(!m.allRows.length)return `<div class="dz-grid ohg-detail">${dzCard({title:'Trend',span:6,attrs:' id="ohg-metrics"',body:'<p class="empty-note">No order lines are loaded yet.</p>'})}</div>`;
   const today=reportToday();
@@ -15171,10 +15198,15 @@ function ohgDetailSection(m,q0=2){
   const sd=p.scenario;
   const whPg=dzPageOf('ohg-wh',sd.shippedWeekGroups,sig,OHG_PAGE);
   const whRange=sd.isDefaultRange?monthName(today):`${displayDate(sd.scenarioRangeStart)} to ${displayDate(sd.scenarioRangeEnd)}`;
+  // On time is scored as the Lagging month figures are (otdStats: early or on time of the deliveries with an original
+  // date), so this month's point of the Last 6 months line is the chip. A warehouse with nothing scored shows a dash.
+  const wm=ohgWhMonths(m),wLabels=wm.months.map(dt=>`${OHG_MON[dt.getMonth()]} ${dt.getFullYear()}`);
+  const wSpan=`${wLabels[0]} to ${wLabels[wLabels.length-1]}`;
   const wh=dzCard({title:'By warehouse',span:3,tip:'Deliveries by the warehouse or CM that shipped them.',meta:`${esc(whRange)} · ${esc(mwmOrders(sd.shippedWeekOrders))}`,
-    body:whPg.total?`<div class="sup-scroll" tabindex="0" role="region" aria-label="By warehouse"><table class="ohgt-tbl"><thead><tr>${th('Warehouse / CM','The warehouse or CM that shipped.',false)}${th('Orders','Sales orders with a delivery in the range.')}${th('Shipped','Shipped value.')}${th('On time','Deliveries early or on time.')}</tr></thead><tbody>${whPg.rows.map(g=>{
-      const otd=g.rows.length?Math.round((g.early+g.onTime)/g.rows.length*100):0;
-      return `<tr${tipAttr(ohlTip(ohlWhName(g.warehouse),[`${ohN(g.rows.length,'delivery line')}, ${fmtNum(g.qty)} qty`,`${fmtNum(g.early)} early · ${fmtNum(g.onTime)} on time · ${fmtNum(g.late)} late`]))}><td class="k">${esc(ohlWhName(g.warehouse))}</td><td class="num">${fmtNum(g.orders.size)}</td><td class="num">${money(g.value)}</td><td class="num">${dzChip(`${fmtNum(otd)}%`,rateTone(otd))}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-wh',whPg,'By warehouse','warehouses')}`:'<p class="empty-note">No deliveries in this range.</p>'});
+    body:whPg.total?`<div class="sup-scroll" tabindex="0" role="region" aria-label="By warehouse"><table class="ohgt-tbl"><thead><tr>${th('Warehouse / CM','The warehouse or CM that shipped.',false)}${th('Orders','Sales orders with a delivery in the range.')}${th('Shipped','Shipped value.')}${th('On time','Deliveries early or on time.')}${`<th scope="col" class="ohgt-spk"${tipAttr(`On time each month, ${wSpan}, by delivery date. Dashed line: the 90% target.`)}>Last 6 months</th>`}</tr></thead><tbody>${whPg.rows.map(g=>{
+      const st=otdStats(g.rows),otd=st.scored.length?st.rate:null;
+      const spark=dzSpark(wm.series.get(g.warehouse)||[],{labels:wLabels,target:90,fmt:v=>`${fmtNum(v)}%`,title:`${ohlWhName(g.warehouse)} on time, ${wSpan}`,color:otd!==null&&otd>=90?'var(--dz-teal)':'var(--dz-risk)',w:84,h:22});
+      return `<tr${tipAttr(ohlTip(ohlWhName(g.warehouse),[`${ohN(g.rows.length,'delivery line')}, ${fmtNum(g.qty)} qty`,`${fmtNum(g.early)} early · ${fmtNum(g.onTime)} on time · ${fmtNum(g.late)} late`]))}><td class="k">${esc(ohlWhName(g.warehouse))}</td><td class="num">${fmtNum(g.orders.size)}</td><td class="num">${money(g.value)}</td><td class="num">${otd===null?'—':dzChip(`${fmtNum(otd)}%`,rateTone(otd))}</td><td class="ohgt-spk">${spark}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-wh',whPg,'By warehouse','warehouses')}`:'<p class="empty-note">No deliveries in this range.</p>'});
   // Booked vs shipped: lines by the month they were first due.
   const og=p.originalGroups.filter(g=>g.key&&g.key!=='No Original Delivery Date');
   const ogPg=dzPageOf('ohg-orig',og,sig,OHG_PAGE);
@@ -20114,7 +20146,9 @@ function ohgData(m){
       return {...w,rows,
         orders:rowDocCount(rows),lines:new Set(rows.map(orderLineKey)).size,value:rowShippedAmount(rows),
         scored:otd.scored.length,onTimeN:otd.early.length+otd.onTime.length,otd:otd.scored.length?otd.rate:null,
-        lateRows:otd.late,late:rowDocCount(otd.late),
+        // Late orders: shipped 1+ days late (mwmIsLate), the rule of the Trend card and Month by month, so the Monthly
+        // tile and its line agree (before 2v9 the tile counted only lines more than 2 days late).
+        lateRows:rows.filter(mwmIsLate),late:rowDocCount(rows.filter(mwmIsLate)),
         fill:fl.some(r=>(num(r.quantity)||0)>0)?fillRateForRows(fl):null,fillN:fl.length,
         perfect:pl.length?Math.round(perfectOk/pl.length*100):null,perfectN:pl.length,perfectOk,
         avgDays:days.length?(late.length?Math.round(late.reduce((s,x)=>s+x,0)/late.length*10)/10:0):null,lateDeliveries:late.length,
@@ -20136,31 +20170,57 @@ function ohgDelta(cur,prev,{vs,dp=0,suffix='',lowerBetter=false}){
 }
 // One card: the order count shipped (headline), its value and lines, the change against the window before, five metric tiles
 // (2v6.9: Fill rate left the cards, the owner's ask; ohgData still works it out).
-function ohgPeriodCard(cur,prev,{title,span,tip,i}){
+// sparks (Monthly only): a ready line per tile (otd, perfect, days, hit, late), drawn under the change line.
+function ohgPeriodCard(cur,prev,{title,span,tip,i,sparks={}}){
   const vs=prev.short;
   const od=ohgDelta(cur.orders,prev.orders?prev.orders:null,{vs,suffix:' orders'});
   const pct=v=>`${fmtNum(v)}%`;
-  const tile=(label,value,delta,tipText,{tone=''}={})=>{
-    const none=value===null;
+  const tile=(label,value,delta,tipText,{tone='',key=''}={})=>{
+    const none=value===null,spark=none?'':sparks[key]||'';
     const col=none?'var(--dz-ink-5)':tone==='teal'?'var(--dz-teal)':tone==='red'?'var(--dz-risk-text)':'';
-    return `<div class="dz-stat ohg-tile"${tipAttr(tipText)}><div class="dz-stat-l">${esc(label)}</div><div class="dz-stat-v"${col?` style="color:${col}"`:''}>${none?'—':esc(value)}</div><div class="dz-stat-s ohg-d ohg-${delta.c}">${esc(delta.t)}</div></div>`;
+    return `<div class="dz-stat ohg-tile"${tipAttr(tipText)}><div class="dz-stat-l">${esc(label)}</div><div class="dz-stat-v"${col?` style="color:${col}"`:''}>${none?'—':esc(value)}</div><div class="dz-stat-s ohg-d ohg-${delta.c}">${esc(delta.t)}</div>${spark?`<div class="ohg-spk">${spark}</div>`:''}</div>`;
   };
   const w=cur.label,pw=prev.label;
   const tiles=[
     tile('On time',cur.otd===null?null:pct(cur.otd),ohgDelta(cur.otd,prev.otd,{vs,suffix:' pts'}),
-      cur.otd===null?`On time: no scored deliveries in ${w}.`:ohlTip(`On time, ${w}: ${pct(cur.otd)}`,[`${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries by the original date`,`${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}`]),{tone:cur.otd!==null&&cur.otd>=90?'teal':''}),
+      cur.otd===null?`On time: no scored deliveries in ${w}.`:ohlTip(`On time, ${w}: ${pct(cur.otd)}`,[`${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries by the original date`,`${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}`]),{tone:cur.otd!==null&&cur.otd>=90?'teal':'',key:'otd'}),
     tile('Perfect order',cur.perfect===null?null:pct(cur.perfect),ohgDelta(cur.perfect,prev.perfect,{vs,suffix:' pts'}),
-      cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:ohlTip(`Perfect order, ${w}: ${pct(cur.perfect)}`,[`${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines on time, never rescheduled`,`${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}`])),
+      cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:ohlTip(`Perfect order, ${w}: ${pct(cur.perfect)}`,[`${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines on time, never rescheduled`,`${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}`]),{key:'perfect'}),
     tile('Avg days late',cur.avgDays===null?null:cur.avgDays.toFixed(1),ohgDelta(cur.avgDays,prev.avgDays,{vs,dp:1,suffix:' days',lowerBetter:true}),
-      cur.avgDays===null?`Avg days late: no scored deliveries in ${w}.`:ohlTip(`Avg days late, ${w}: ${cur.avgDays.toFixed(1)}`,[`${ohN(cur.lateDeliveries,'late delivery line')} of ${fmtNum(cur.scored)} scored`,`${pw}: ${prev.avgDays===null?'none scored':prev.avgDays.toFixed(1)}`])),
+      cur.avgDays===null?`Avg days late: no scored deliveries in ${w}.`:ohlTip(`Avg days late, ${w}: ${cur.avgDays.toFixed(1)}`,[`${ohN(cur.lateDeliveries,'late delivery line')} of ${fmtNum(cur.scored)} scored`,`${pw}: ${prev.avgDays===null?'none scored':prev.avgDays.toFixed(1)}`]),{key:'days'}),
     tile('Reschedule hit',cur.hit===null?null:pct(cur.hit),ohgDelta(cur.hit,prev.hit,{vs,suffix:' pts'}),
-      cur.hit===null?`Reschedule hit: no rescheduled deliveries in ${w}.`:ohlTip(`Reschedule hit, ${w}: ${pct(cur.hit)}`,[`${fmtNum(cur.hitMet)} of ${fmtNum(cur.hitN)} shipped by the reschedule date`,`${pw}: ${prev.hit===null?'none':pct(prev.hit)}`])),
+      cur.hit===null?`Reschedule hit: no rescheduled deliveries in ${w}.`:ohlTip(`Reschedule hit, ${w}: ${pct(cur.hit)}`,[`${fmtNum(cur.hitMet)} of ${fmtNum(cur.hitN)} shipped by the reschedule date`,`${pw}: ${prev.hit===null?'none':pct(prev.hit)}`]),{key:'hit'}),
     tile('Late orders',cur.scored?fmtNum(cur.late):null,cur.scored?ohgDelta(cur.late,prev.scored?prev.late:null,{vs,lowerBetter:true}):ohgDelta(null,null,{vs}),
-      cur.scored?ohlTip(`Late orders, ${w}: ${fmtNum(cur.late)}`,[`${ohN(cur.lateRows.length,'delivery line')} more than 2 days late`,`${pw}: ${prev.scored?fmtNum(prev.late):'none scored'}`]):`Late orders: no scored deliveries in ${w}.`,{tone:cur.late?'red':''})
+      cur.scored?ohlTip(`Late orders, ${w}: ${fmtNum(cur.late)}`,[`${ohN(cur.lateRows.length,'delivery line')} 1 or more days late`,`${pw}: ${prev.scored?fmtNum(prev.late):'none scored'}`]):`Late orders: no scored deliveries in ${w}.`,{tone:cur.late?'red':'',key:'late'})
   ].join('');
   const sub=cur.orders?`${moneyShort(cur.value)} · ${ohN(cur.lines,'line')}`:'';
   const body=`<div class="ohg-head"><span class="dz-big sm ohg-orders">${fmtNum(cur.orders)} ${cur.orders===1?'order':'orders'} shipped</span>${sub?`<span class="dz-sub">${esc(sub)}</span>`:''}${cur.orders?`<span class="ohg-delta ohg-${od.c}">${esc(od.t)}</span>`:''}</div><div class="dz-stats ohg-tiles">${tiles}</div>`;
   return dzCard({title,meta:esc(cur.meta),span,cls:'ohg-card dz-fade',attrs:` style="--i:${i}"`,tip,body});
+}
+// The Monthly tiles' lines (owner's pick, Style A): the 6 months ending at the card's month (the month before the newest
+// while that one is under way), read from the Trend card's figures (mwmMetricsData), which score each month exactly as
+// ohgData scores the card, so the last point is the tile's number. Rates carry the dashed 90% target; Avg days late and
+// Late orders are red with a tick at the month before (rising is bad). Fewer than two months with a figure: no line.
+function ohgMonthSparks(m,cur){
+  const all=mwmMetricsData(m).months;
+  const key=dt=>`${dt.getFullYear()}-${dt.getMonth()}`;
+  const end=all.findIndex(r=>key(r.date)===key(cur.start));
+  if(end<0)return {};
+  const six=all.slice(Math.max(0,end-5),end+1);
+  const labels=six.map(r=>`${OHG_MON[r.date.getMonth()]} ${r.date.getFullYear()}`);
+  const a=six[0].date,b=six[six.length-1].date;
+  const span=a.getFullYear()===b.getFullYear()?`${OHG_MONTH[a.getMonth()]} to ${OHG_MONTH[b.getMonth()]} ${b.getFullYear()}`:`${labels[0]} to ${labels[labels.length-1]}`;
+  const pct=v=>`${fmtNum(v)}%`,rate=v=>v!==null&&v>=90?'var(--dz-teal)':'var(--dz-risk)';
+  const line=(vals,name,o)=>dzSpark(vals,{labels,title:`${name}, ${span}`,w:116,h:28,...o});
+  const last=k=>six[six.length-1][k];
+  return {
+    otd:line(six.map(r=>r.otd),'On time',{target:90,fmt:pct,color:rate(last('otd'))}),
+    perfect:line(six.map(r=>r.perfect),'Perfect order',{target:90,fmt:pct,color:rate(last('perfect'))}),
+    days:line(six.map(r=>r.days),'Avg days late',{fmt:v=>`${v.toFixed(1)} days`,color:'var(--dz-risk)'}),
+    hit:line(six.map(r=>r.hit),'Reschedule hit',{target:90,fmt:pct,color:rate(last('hit'))}),
+    // A month with no scored delivery has no late-order figure (its tile shows a dash), so it is a gap, not a zero.
+    late:line(six.map(r=>r.otdScored?r.lateOrders:null),'Late orders',{fmt:mwmOrders,color:'var(--dz-risk)'})
+  };
 }
 function ohgRender(m){
   const d=ohgData(m);
@@ -20168,7 +20228,7 @@ function ohgRender(m){
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
   if(!hasShipments)return `${dzQ(1,'How Did We Do?','solo')}<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgDetailSection(m,2)}`;
   const common=['An order counts once, however many shipments','Page filters apply'];
-  const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
+  const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,sparks:ohgMonthSparks(m,mo),
     tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});

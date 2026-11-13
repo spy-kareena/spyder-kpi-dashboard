@@ -54,7 +54,7 @@ const cardNames = (h) => [...h.matchAll(/<section class="dz-card[^"]*"([^>]*)>(?
 const ohgTable = (h, label) => {
   const m = h.match(new RegExp(`<h2 class="dz-title" data-tip="([^"]+)">${label}</h2>(?:<span class="dz-meta">([^<]*)</span>)?</div><div class="sup-scroll" tabindex="0" role="region" aria-label="${label}"><table class="ohgt-tbl"><thead><tr>([\\s\\S]*?)</tr></thead><tbody>([\\s\\S]*?)</tbody></table></div>(?:<div class="dz-pagefoot"><span class="dz-pagecount">([^<]*)</span><nav class="shp-pager dz-pager print-hide" data-dzpager="([\\w-]+)")?`));
   if (!m) return null;
-  const ths = [...m[3].matchAll(/<th scope="col"( class="num")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)];
+  const ths = [...m[3].matchAll(/<th scope="col"( class="[\w -]+")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)];
   assert.equal(ths.length, (m[3].match(/<th\b/g) || []).length, `${label}: every heading is read`);
   const trs = [...m[4].matchAll(/<tr(?: data-tip="([^"]*)")?>([\s\S]*?)<\/tr>/g)];
   return { tip: m[1], meta: m[2] || '', head: ths.map((x) => x[3]), tips: ths.map((x) => x[2] || ''), rows: trs.map((r) => [...r[2].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((c) => text(c[1]))),
@@ -160,15 +160,15 @@ test('Lagging: the Monthly and Quarterly cards, then one grid of Trend, Month by
   assert.deepEqual([ohgTable(l, 'By warehouse').tip, ohgTable(l, 'By warehouse').meta], ['Deliveries by the warehouse or CM that shipped them.', 'September · 1 order']);
   assert.deepEqual([ohgTable(l, 'Booked vs shipped').tip, ohgTable(l, 'Booked vs shipped').meta], ['Lines by the month they were first due: how much of the booked value has shipped.', 'By original delivery month']);
   // Every column heading of the three tables has a tip.
-  const heads = { 'Month by month': ['Month', 'Orders', 'Value', 'On time', 'Perfect order', 'Avg days late', 'Late orders'], 'By warehouse': ['Warehouse / CM', 'Orders', 'Shipped', 'On time'], 'Booked vs shipped': ['Original month', 'Booked $ shipped', 'Open', 'Late lines'] };
+  const heads = { 'Month by month': ['Month', 'Orders', 'Value', 'On time', 'Perfect order', 'Avg days late', 'Late orders'], 'By warehouse': ['Warehouse / CM', 'Orders', 'Shipped', 'On time', 'Last 6 months'], 'Booked vs shipped': ['Original month', 'Booked $ shipped', 'Open', 'Late lines'] };
   assert.equal((l.match(/<table class="ohgt-tbl">/g) || []).length, 3);
   for (const [label, want] of Object.entries(heads)) {
     const t = ohgTable(l, label);
     assert.deepEqual(t.head, want, label);
     t.tips.forEach((tip, i) => assert.ok(tip.length > 8 && /\.$/.test(tip), `${label} > ${t.head[i]}: a tip`));
   }
-  assert.equal((l.match(/<th\b/g) || []).length, 15);
-  assert.equal((l.match(/<th scope="col"(?: class="num")? data-tip="[^"]+">/g) || []).length, 15, 'every th has a tip');
+  assert.equal((l.match(/<th\b/g) || []).length, 16);
+  assert.equal((l.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")? data-tip="[^"]+">/g) || []).length, 16, 'every th has a tip');
   // The on-time and perfect-order headings explain themselves in the chips' words.
   assert.deepEqual(ohgTable(l, 'Month by month').tips.slice(3), ['Shipped by the original date.', 'Shipped complete, on time, never rescheduled.', 'Average days late, late deliveries only.', 'Orders shipped 1+ days late.']);
   assert.doesNotMatch(l, /NaN|undefined|\[object Object\]/);
@@ -317,14 +317,14 @@ test('By warehouse is the ship target range\'s deliveries (moMonthlyParts scenar
   const page = await loaded();
   const groups = () => page.run(`(()=>{const m=currentMetrics(),sd=moMonthlyParts(m,momSource(m),reportToday()).scenario;
     return {orders:sd.shippedWeekOrders,rows:sd.shippedWeekGroups.map(g=>({warehouse:g.warehouse,orders:g.orders.size,value:g.value,lines:g.rows.length,qty:g.qty,early:g.early,onTime:g.onTime,late:g.late}))}})()`);
-  const whRow = (g) => [g.warehouse.replace(/ - /g, ' · '), String(g.orders), dollars(g.value), `${Math.round((g.early + g.onTime) / g.lines * 100)}%`];
+  const whRow = (g) => [g.warehouse.replace(/ - /g, ' · '), String(g.orders), dollars(g.value), `${Math.round((g.early + g.onTime) / g.lines * 100)}%`, ''];
   const whTip = (g) => `${g.warehouse.replace(/ - /g, ' · ')}\n• ${g.lines} delivery line${g.lines === 1 ? '' : 's'}, ${g.qty} qty\n• ${g.early} early · ${g.onTime} on time · ${g.late} late`;
   // September (the default range): only 302, a day late, from Lacombe.
   let g = groups();
   assert.deepEqual(g, { orders: 1, rows: [{ warehouse: 'Spyder - Lacombe', orders: 1, value: 1000, lines: 1, qty: 10, early: 0, onTime: 0, late: 1 }] });
   let l = lag(page);
   let t = ohgTable(l, 'By warehouse');
-  assert.deepEqual(t.rows, [['Spyder · Lacombe', '1', '$1,000', '0%']]);
+  assert.deepEqual(t.rows, [['Spyder · Lacombe', '1', '$1,000', '0%', '']]);
   assert.deepEqual(t.rows, g.rows.map(whRow));
   assert.deepEqual(t.rowTips, ['Spyder · Lacombe\n• 1 delivery line, 10 qty\n• 0 early · 0 on time · 1 late']);
   assert.deepEqual([t.meta, t.count], ['September · 1 order', '']);
@@ -334,7 +334,7 @@ test('By warehouse is the ship target range\'s deliveries (moMonthlyParts scenar
   assert.deepEqual(g, { orders: 3, rows: [{ warehouse: 'Spyder - Lacombe', orders: 2, value: 2000, lines: 2, qty: 20, early: 1, onTime: 0, late: 1 }, { warehouse: 'CM - DSM', orders: 1, value: 1000, lines: 1, qty: 10, early: 0, onTime: 0, late: 1 }] });
   l = lagging(html(page));
   t = ohgTable(l, 'By warehouse');
-  assert.deepEqual(t.rows, [['Spyder · Lacombe', '2', '$2,000', '50%'], ['CM · DSM', '1', '$1,000', '0%']]);
+  assert.deepEqual(t.rows, [['Spyder · Lacombe', '2', '$2,000', '50%', ''], ['CM · DSM', '1', '$1,000', '0%', '']]);
   assert.deepEqual(t.rows, g.rows.map(whRow));
   assert.deepEqual(t.rowTips, g.rows.map(whTip));
   assert.equal(t.meta, '2026-08-01 to 2026-09-30 · 3 orders');
@@ -342,7 +342,7 @@ test('By warehouse is the ship target range\'s deliveries (moMonthlyParts scenar
   page.run("stgTogglePage('monthly');setTab('monthly')");
   const full = [...html(page).match(/role="region" aria-label="Shipped by warehouse \/ CM · 2026-08-01 to 2026-09-30"><table[^>]*>[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/)[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
     .map((r) => [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((c) => text(c[1])));
-  assert.deepEqual(full.map((r) => [r[0].replace(/ - /g, ' · '), r[1], r[4], r[5]]), t.rows);
+  assert.deepEqual(full.map((r) => [r[0].replace(/ - /g, ' · '), r[1], r[4], r[5]]), t.rows.map((r) => r.slice(0, 4)));
   page.run("setShipScenarioStartDate('');setTab('weekly')");
   l = lag(page);
   assert.equal(ohgTable(l, 'By warehouse').meta, 'September · 1 order');
@@ -380,7 +380,7 @@ const BIG = [
 test('By warehouse and Booked vs shipped go six a page, each with its own pager (ohg-wh, ohg-orig); a page filter starts every list at page 1', async () => {
   const page = await loaded(BIG);
   let l = lag(page);
-  const wh = WAREHOUSES.map((w, i) => [w.replace(/ - /g, ' · '), '1', dollars((7 - i) * 1000), '0%']);
+  const wh = WAREHOUSES.map((w, i) => [w.replace(/ - /g, ' · '), '1', dollars((7 - i) * 1000), '0%', '']);
   let t = ohgTable(l, 'By warehouse');
   assert.deepEqual(t.rows, wh.slice(0, 6), 'most shipped value first');
   assert.deepEqual([t.meta, t.count, t.pager], ['September · 7 orders', '1–6 of 7 warehouses', 'ohg-wh']);
@@ -602,7 +602,7 @@ test('The page filters apply to Leading\'s moved sections and to all four Laggin
   assert.equal(page.run('originalDeliveryMonthFilter'), '2026-09');
   // With the range back to August the filtered By warehouse table is DSM alone.
   page.run("setShipScenarioStartDate('2026-08-01')");
-  assert.deepEqual(ohgTable(lagging(html(page)), 'By warehouse').rows, [['CM · DSM', '1', '$1,000', '0%']]);
+  assert.deepEqual(ohgTable(lagging(html(page)), 'By warehouse').rows, [['CM · DSM', '1', '$1,000', '0%', '']]);
   // Clearing the filter brings the whole report back.
   page.run("setShipScenarioStartDate('');setWeeklyWarehouseFilter(['ALL'])");
   assert.deepEqual(trend(lagging(html(page))).heading[1], 'On-time delivery · September to date');
