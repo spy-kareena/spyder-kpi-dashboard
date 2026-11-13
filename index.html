@@ -4168,6 +4168,14 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 @media (pointer:coarse){button.po-step-main,.po-step-rows .po-own{min-height:40px}}
 @media print{.po-v1top,.po-v1mid{break-inside:avoid}}
 /* 2v9:end po-v1 */
+/* 2v9:spark */
+/* Sparklines (Style A): a small figure beside or under a number; focusable, its tip lists every period. */
+.dz-spark{display:inline-flex;flex:none;vertical-align:middle;border-radius:6px;line-height:0;cursor:default}
+.dz-spark svg{display:block;overflow:visible}
+.dz-spark:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+@media print{.dz-spark{break-inside:avoid}}
+@media (forced-colors:active){.dz-spark svg path,.dz-spark svg circle{forced-color-adjust:none}}
+/* 2v9:end spark */
 /* 2v9:kit-status */
 /* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
 .dz-stat.kit2{display:flex;flex-direction:column;gap:8px}
@@ -12638,6 +12646,31 @@ function dzJs(v){return JSON.stringify(String(v??''));}
 function dzChip(text,tone){return `<span class="dz-chip${/^(red|amber|teal|indigo)$/.test(tone||'')?` ${tone}`:''}">${esc(text)}</span>`;}
 // Glass card. title is escaped; meta (shown at the right of the title), body and attrs (e.g. ' id="x"'+tipAttr(..)) are
 // ready HTML. span 2 | 3 | 4 | 6 sets the columns inside a .dz-grid; sm gives the 16px title; tip is the title's hover tip.
+// Sparklines (owner's pick, Style A): a thin line over a soft area with the latest point as a dot, on one scale per line.
+// vals: numbers or null (a gap), oldest first; labels: one short name per point. A target draws a dashed line (the
+// value must be on the scale); without one, a short tick at the end marks the period before. The wrapper is a focusable
+// figure whose tip lists every period, so the history reads in full by mouse, keyboard or screen reader.
+// opts: {labels, target, color, fmt, title, w, h, lo, hi}.
+function dzSpark(vals,{labels=[],target=null,color='var(--dz-indigo)',fmt=v=>fmtNum(v),title='',w=120,h=30,lo=null,hi=null}={}){
+  const pts=vals.map((v,i)=>v===null||v===undefined||!isFinite(v)?null:+v);
+  const real=pts.filter(v=>v!==null);
+  if(real.length<2)return '';
+  const all=target!==null?[...real,target]:real;
+  let a=lo!==null?lo:Math.min(...all),b=hi!==null?hi:Math.max(...all);
+  if(a===b){a-=1;b+=1;}
+  const pad=(b-a)*.12;a-=pad;b+=pad;
+  const n=pts.length,top=4,bot=h-4,X=i=>4+i*(w-16)/Math.max(1,n-1),Y=v=>bot-(v-a)/(b-a)*(bot-top);
+  let line='',area='',seg=[],pen=false;
+  const flush=()=>{if(seg.length>1)area+=`M${seg[0][0]} ${h-2} `+seg.map(q=>`L${q[0]} ${q[1]}`).join(' ')+` L${seg[seg.length-1][0]} ${h-2} Z `;seg=[];};
+  pts.forEach((v,i)=>{if(v===null){pen=false;flush();return;}const q=[X(i).toFixed(1),Y(v).toFixed(1)];line+=`${pen?'L':'M'}${q[0]} ${q[1]} `;pen=true;seg.push(q);});
+  flush();
+  const lastI=pts.map((v,i)=>v===null?-1:i).filter(i=>i>=0).pop(),prevI=pts.slice(0,lastI).map((v,i)=>v===null?-1:i).filter(i=>i>=0).pop();
+  const ref=target!==null?`<line x1="0" x2="${w}" y1="${Y(target).toFixed(1)}" y2="${Y(target).toFixed(1)}" stroke="var(--dz-ink-4)" stroke-width="1" stroke-dasharray="3 3"/>`
+    :prevI!==undefined?`<line x1="${(X(lastI)+3).toFixed(1)}" x2="${(X(lastI)+9).toFixed(1)}" y1="${Y(pts[prevI]).toFixed(1)}" y2="${Y(pts[prevI]).toFixed(1)}" stroke="var(--dz-ink-2)" stroke-width="1.5"/>`:'';
+  const list=pts.map((v,i)=>`${labels[i]||''}: ${v===null?'no data':fmt(v)}`).filter((t,i)=>labels[i]);
+  const tip=ohlTip(title||'Trend',[...list,target!==null?`Dashed line: target ${fmt(target)}`:prevI!==undefined?`Tick: ${labels[prevI]||'the period before'}`:'']);
+  return `<span class="dz-spark" role="img" tabindex="0" aria-label="${esc(ohlPlain(tip))}"${tipAttr(tip)}><svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true" focusable="false"><path d="${area}" fill="${color}" fill-opacity=".14"/>${ref}<path d="${line}" fill="none" stroke="${color}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(lastI).toFixed(1)}" cy="${Y(pts[lastI]).toFixed(1)}" r="3.25" fill="${color}" stroke="var(--dz-surface)" stroke-width="1.5"/></svg></span>`;
+}
 // A numbered question above a group of cards (owner): a page reads as questions, in working order. The text is written
 // in Title Case as it should show (data-tc-skip keeps it).
 function dzQ(n,text,cls=''){return `<div class="ohl-q${cls?` ${cls}`:''}"><span class="ohl-q-n" aria-hidden="true">${n}</span><h2 class="ohl-q-t" data-tc-skip>${esc(text)}</h2></div>`;}
