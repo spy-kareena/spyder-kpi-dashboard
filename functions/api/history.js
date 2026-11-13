@@ -6,8 +6,10 @@
  *   GET /api/history -> {v:1, weeks:[{asOf:'YYYY-MM-DD', savedAt, keys:[rowKey, ...]}]}, oldest first, one per week
  *                       (asOf is the earliest export date loaded that week), up to 52. Each line key is listed only
  *                       under the first week it was at risk, which is all the page needs ("first flagged" is the
- *                       first week a key appears).
- *   POST /api/history -> body {atRisk:{asOf:'YYYY-MM-DD', keys:[rowKey, ...]}}: adds one week's at-risk lines without a
+ *                       first week a key appears). A week saved with the At Risk card's figures also has
+ *                       counts:{asOf, lines, orders, by?:{wh, seg, cust}} (by only on the newest 8 weeks), which the
+ *                       page's weekly sparkline draws; older weeks have none.
+ *   POST /api/history -> body {atRisk:{asOf:'YYYY-MM-DD', keys:[rowKey, ...], counts?}}: adds one week's at-risk lines without a
  *                       report upload. Live SAP data (2v6.8) is never uploaded, so the page sends its At Risk lines
  *                       here once a day; same rules as an upload (one entry per week, 52 weeks). Returns {weeks}.
  * KV keys: 'history' holds every at-risk line of each week (what report.js merges new uploads into); 'history:first'

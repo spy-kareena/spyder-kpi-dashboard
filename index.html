@@ -4175,6 +4175,10 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 .dz-spark:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 @media print{.dz-spark{break-inside:avoid}}
 @media (forced-colors:active){.dz-spark svg path,.dz-spark svg circle{forced-color-adjust:none}}
+/* Leading: the At Risk and Ship target lines sit beside the big number */
+.ohl-hero-row{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.mwm-hero>.dz-spark{align-self:center;margin-left:auto}
+.ohl-hero-row>.dz-spark{margin-left:auto}
 /* 2v9:end spark */
 /* 2v9:kit-status */
 /* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
@@ -16658,12 +16662,41 @@ function reportAtRiskWeek(){
     if(!parsedRows.length)return null;
     const late=()=>orderHealthData(currentMetrics()).lateTileRows;
     const rows=typeof aiWithFilters==='function'?aiWithFilters({},late):late();
-    return {asOf:displayDate(reportToday()),keys:[...new Set(rows.map(rowKey))].filter(k=>NOTE_KEY_RE.test(k)).slice(0,5000)};
+    const asOf=displayDate(reportToday());
+    const week={asOf,keys:[...new Set(rows.map(rowKey))].filter(k=>NOTE_KEY_RE.test(k)).slice(0,5000)};
+    const counts=atRiskCardCounts(asOf);
+    return counts?{...week,counts}:week;
   }catch(err){console.warn('At-risk lines not worked out:',err);return null;}
+}
+// The At Risk card's own figures with every filter off (its orders and lines, due by the horizon), and the same split by
+// warehouse, segment and customer ({name:[lines, orders]}), saved with the week so the card's weekly sparkline can
+// follow those filters (atRiskSparkValue). A dimension with a name the server would refuse is left out.
+function atRiskCardCounts(asOf){
+  try{
+    const risk=typeof aiWithFilters==='function'?aiWithFilters({},()=>ohAtRiskData(currentMetrics()).risk):ohAtRiskData(currentMetrics()).risk;
+    const split=fn=>{
+      const g=new Map();
+      risk.forEach(r=>{const k=String(fn(r));if(!g.has(k))g.set(k,[]);g.get(k).push(r);});
+      if(g.size>2000||[...g.keys()].some(k=>!/^[^\u0000-\u001f\u007f]{1,300}$/.test(k)))return null;
+      return Object.fromEntries([...g].map(([k,rows])=>[k,[rows.length,rowDocCount(rows)]]));
+    };
+    const by={};
+    [['wh',rowWarehouse],['seg',rowCustomerSegment],['cust',rowCustomer]].forEach(([dim,fn])=>{const v=split(fn);if(v)by[dim]=v;});
+    return {asOf,lines:risk.length,orders:rowDocCount(risk),by};
+  }catch(err){console.warn('At-risk figures not worked out:',err);return null;}
+}
+function cleanAtRiskCounts(c,asOf){
+  if(!c||typeof c!=='object'||!Number.isInteger(c.lines)||!Number.isInteger(c.orders)||c.lines<0||c.orders<0)return null;
+  return {asOf:typeof c.asOf==='string'?c.asOf:asOf,lines:c.lines,orders:c.orders,...(c.by&&typeof c.by==='object'?{by:c.by}:{})};
 }
 function cleanAtRiskWeeks(list){
   return (Array.isArray(list)?list:[]).filter(w=>w&&typeof w.asOf==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(w.asOf)&&Array.isArray(w.keys))
-    .map(w=>({asOf:w.asOf,savedAt:String(w.savedAt||''),keys:w.keys.filter(k=>typeof k==='string')}));
+    .map(w=>{
+      const out={asOf:w.asOf,savedAt:String(w.savedAt||''),keys:w.keys.filter(k=>typeof k==='string')};
+      const counts=cleanAtRiskCounts(w.counts,w.asOf);
+      if(counts)out.counts=counts;
+      return out;
+    });
 }
 // The Monday (UTC) of the week a YYYY-MM-DD export date falls in.
 function atRiskWeekOf(asOf){
@@ -16673,12 +16706,17 @@ function atRiskWeekOf(asOf){
   return d.toISOString().slice(0,10);
 }
 // Same rule as the server (addHistoryWeek in functions/api/report.js): one entry per week, uploads in the same week
-// merged (the earlier export date, the newer savedAt, the lines of both), the newest 52 weeks kept.
+// merged (the earlier export date, the newer savedAt, the lines of both, the At Risk figures of the later export), the
+// newest 52 weeks kept.
 function mergeAtRiskWeeks(...lists){
   const byWeek=new Map();
   lists.flat().forEach(w=>{
     const id=atRiskWeekOf(w.asOf),had=byWeek.get(id);
-    byWeek.set(id,!had?w:{asOf:had.asOf<w.asOf?had.asOf:w.asOf,savedAt:had.savedAt>w.savedAt?had.savedAt:w.savedAt,keys:[...new Set([...had.keys,...w.keys])]});
+    if(!had){byWeek.set(id,w);return;}
+    const next={asOf:had.asOf<w.asOf?had.asOf:w.asOf,savedAt:had.savedAt>w.savedAt?had.savedAt:w.savedAt,keys:[...new Set([...had.keys,...w.keys])]};
+    const a=had.counts,b=w.counts,counts=!a?b:!b?a:b.asOf>=a.asOf?b:a;
+    if(counts)next.counts=counts;
+    byWeek.set(id,next);
   });
   return [...byWeek.values()].sort((a,b)=>a.asOf<b.asOf?-1:a.asOf>b.asOf?1:0).slice(-52);
 }
@@ -20585,6 +20623,36 @@ function ohlRenderLeading(m){
 
 // At risk: the order count, three open-order states (Rescheduled, No commit, All open), the most affected warehouse with its production issues, and the
 // override tiles. Every number is for the next-month at-risk lines (ohAtRiskData), as the card was before.
+// At Risk sparkline (owner, Style A): at-risk orders for the last 8 weeks. Past weeks are the card's own figures saved
+// with the at-risk history (counts on each week, functions/api/history.js); this week is the card's number, so the last
+// point always matches it. Saved figures are for every filter off, split by warehouse, segment and customer, so a past
+// week has a point with no filter, or with one of those three set (one warehouse at a time: an order can span two);
+// any other filter (owner, order type, department, project, a chart drill) leaves only this week, so no line.
+function atRiskSparkValue(counts){
+  if(!counts)return null;
+  if(ohDrillActive()||[weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter].some(f=>!f.includes('ALL')))return null;
+  const dims=[['wh',weeklyWarehouseFilter],['seg',weeklySegmentFilter],['cust',weeklyCustomerFilter]].filter(([,f])=>!f.includes('ALL'));
+  if(!dims.length)return counts.orders;
+  if(dims.length>1)return null;
+  const [dim,picked]=dims[0],map=counts.by&&counts.by[dim];
+  if(!map||typeof map!=='object'||(dim==='wh'&&picked.length>1))return null;
+  return picked.reduce((t,k)=>t+(Array.isArray(map[k])&&Number.isInteger(map[k][1])?map[k][1]:0),0);
+}
+function atRiskSpark(orders){
+  const thisWeek=atRiskWeekOf(displayDate(reportToday()));
+  const day=iso=>new Date(`${iso}T00:00:00`);
+  const ids=[],vals=[],labels=[];
+  for(let i=7;i>=0;i--){
+    const d=new Date(`${thisWeek}T00:00:00Z`);d.setUTCDate(d.getUTCDate()-7*i);
+    ids.push(d.toISOString().slice(0,10));
+  }
+  ids.forEach((id,i)=>{
+    const w=i<7?atRiskWeeks.find(x=>atRiskWeekOf(x.asOf)===id):null;
+    vals.push(i===7?orders:atRiskSparkValue(w&&w.counts));
+    labels.push(i===7?'This week':i===6?'Last week':`Week of ${shortDay(day(id))}`);
+  });
+  return dzSpark(vals,{labels,color:'var(--dz-risk)',fmt:v=>ohN(v,'order'),title:'At-risk orders, last 8 weeks'});
+}
 function ohlAtRiskCard(c){
   const {m,oh,lead,d}=c;
   const sel=id=>weeklyTileFilter===id;
@@ -20641,7 +20709,7 @@ function ohlAtRiskCard(c){
   // 2v6.9 (owner): no "+N new this week" chip in the head.
   return dzCard({title:'At risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:0"',
     tip:`Lines due by ${shortDay(d.end)} that are past due, uncommitted, rescheduled or urgent.`,
-    body:`<div class="ohl-hero-row">${hero}</div>${stats}${whHtml}${ovrHtml}`});
+    body:`<div class="ohl-hero-row">${hero}${atRiskSpark(orders)}</div>${stats}${whHtml}${ovrHtml}`});
 }
 
 // Status & top reasons: the five states of every open order, then the reasons behind the at-risk lines (a line can have
@@ -20804,6 +20872,35 @@ function ohlWhoCard(c){
     body:rows?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Customers at risk"><table class="ohc2-tbl ohc3-tbl${src?' src':''}">${head}<tbody>${rows}</tbody><tfoot>${foot}</tfoot></table></div>${dzPageFoot('ohl-customers',custPg,'Customers at risk','customers')}${src?'':'<p class="ohl-note ohl-foot-note">Load purchase-order lines or the supply / demand snapshot to see which supply source holds each customer\'s orders.</p>'}`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
+// Ship target sparkline (owner, Style A): the past-due orders the ship target started each of the last 6 months with,
+// rebuilt from the export's own dates the way the card counts its past due (shipScenarioData: order lines on the
+// Order Health filters, dated before the start by the scenario's date basis). An earlier month counts a line that was
+// booked before that month began and still open then: open now, or closed on or after that day. This month is the
+// card's number (lines past due at the start and still open today), so the last point always matches it.
+function shipPastDueSpark(m,sd,pdOrders){
+  const start=new Date(sd.start);start.setHours(0,0,0,0);
+  const past=cachedByFilter(m,`shipspark|${weeklyFilterKey()}|${inputDateValue(start)}|${sd.useEffective}`,()=>{
+    const lines=mwmRows(m).filter(r=>isOrderLineRow(r)&&sd.scenarioDate(r));
+    const out=[];
+    for(let k=5;k>=1;k--){
+      const at=new Date(start.getFullYear(),start.getMonth()-k,1);
+      const open=lines.filter(r=>{
+        if(!(sd.scenarioDate(r)<at))return false;
+        const booked=hasRealDate(r.documentDate)?parseDate(r.documentDate):null;
+        if(booked&&booked>=at)return false;
+        if(hasOpenWork(r))return true;
+        const closed=hasRealDate(r.closeDate)?parseDate(r.closeDate):null;
+        return !!closed&&closed>=at;
+      });
+      out.push({at,orders:rowDocCount(open)});
+    }
+    return out;
+  });
+  const month=d=>d.toLocaleDateString('en-US',{month:'short'});
+  const vals=[...past.map(p=>p.orders),pdOrders];
+  const labels=[...past.map(p=>`${month(p.at)} 1`),start.getDate()===1?`${month(start)} 1 (still open today)`:`${displayDate(start)} (still open today)`];
+  return dzSpark(vals,{labels,color:'var(--dz-risk)',fmt:mwmOrders,title:'Past-due orders at the start of each month'});
+}
 // Ship target (2v6.9: on Order Health, Leading, above Status & top reasons; it was on Monthly): the scenario's range (this
 // month unless changed), the booked orders and the largest past-due ones. The same numbers, month and Dates control as the
 // Monthly page had (shipScenarioFor, the report month).
@@ -20837,7 +20934,7 @@ function ohlShipTargetCard(m){
   return dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,cls:'dz-fade ohl-ship',attrs:' style="--i:1"',
     tip:'Open lines due by the end date, and the largest past-due orders.',
     meta:`<button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button><button type="button" class="dz-pillinput mwm-datebtn mom-calbtn print-hide" data-focus-key="ohl-ship-cal" aria-expanded="${calOpen?'true':'false'}"${calOpen?' aria-controls="ohl-ship-cal"':''} onclick="toggleTableMore('ohl-ship-cal')"${tipAttr('The range in numbers, the open ship calendar and its lines.')}>Calendar &amp; lines</button>`,
-    body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
+    body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span>${shipPastDueSpark(m,sd,pdOrders)}</div>
       <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>${dzPageFoot('ohl-ship',shipPg,'Past-due orders','orders')}${calOpen?ohlShipCalendar(sd):''}`});
 }
 // The three long lists in one card (owner): Open orders by delivery month, Items not shipped yet and Lines, each behind
