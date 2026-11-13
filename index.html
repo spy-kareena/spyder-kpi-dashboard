@@ -4232,7 +4232,7 @@ button.ohc2-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset
 /* 2v9:end settings-bento */
 /* 2v9:monthly-move */
 /* Monthly's sections on Sales Order Health (2v9): the older tables sit flat in glass cards (.misc-flat); the card's meta
-   holds a short note and, where there is one, the Month pick. Lagging: the Shipments section; Leading: Open orders by
+   holds a short note and, where there is one, the Month pick. Leading: Open orders by
    delivery month, Items not shipped yet and the ship target's Calendar & lines. */
 .mom-card>.dz-card-head .dz-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px 14px;flex-wrap:wrap}
 .mom-note{font-size:12.5px;color:var(--dz-ink-4)}
@@ -14907,8 +14907,8 @@ const OHG_TREND={
   otd:{label:'On Time',long:'On-time delivery',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,pct:true,target:90,color:'var(--dz-indigo)',tip:'Shipped by the original date.'},
   perfect:{label:'Perfect Order',long:'Perfect order',fmt:v=>`${fmtNum(v)}%`,unit:' pts',inv:false,pct:true,color:'var(--dz-indigo)',tip:'Shipped complete, on time, never rescheduled.'},
   days:{label:'Avg Days Late',long:'Avg days late',fmt:v=>v.toFixed(1),unit:' days',inv:true,color:'var(--dz-risk)',tip:'Average days late, late deliveries only.'},
-  lateOrders:{label:'Late Orders',long:'Late orders',fmt:v=>fmtNum(v),unit:'',inv:true,color:'var(--dz-risk)',tip:'Orders shipped 1+ days late.'},
-  orders:{label:'Orders Shipped',long:'Orders shipped',fmt:v=>fmtNum(v),unit:'',inv:false,color:'var(--dz-teal)',tip:'Orders shipped in the month.'}
+  lateOrders:{label:'Late Orders',long:'Late orders',fmt:v=>fmtNum(v),unit:'',int:true,inv:true,color:'var(--dz-risk)',tip:'Orders shipped 1+ days late.'},
+  orders:{label:'Orders Shipped',long:'Orders shipped',fmt:v=>fmtNum(v),unit:'',int:true,inv:false,color:'var(--dz-teal)',tip:'Orders shipped in the month.'}
 };
 function ohgSetTrendMetric(k){ohgTrendMetric=OHG_TREND[k]?k:'otd';renderResults();}
 // The chart: the months shown on one scale (percent metrics from 50 %, or lower when a month needs it, to 100 %; counts
@@ -14918,7 +14918,7 @@ function ohgTrendChart(pts,k){
   const real=pts.map(r=>r[k]).filter(v=>v!==null&&v!==undefined);
   let lo=0,hi=100;
   if(c.pct)lo=Math.min(50,Math.floor((real.length?Math.min(...real):50)/10)*10);
-  else{const mx=real.length?Math.max(...real):0,pw=Math.pow(10,Math.floor(Math.log10(mx||1))),n=mx/pw;hi=Math.max(1,(n<=1?1:n<=2?2:n<=5?5:10)*pw);if(hi>2&&hi%2)hi+=1;}
+  else{const mx=real.length?Math.max(...real):0,pw=Math.pow(10,Math.floor(Math.log10(mx||1))),n=mx/pw;hi=Math.max(1,(n<=1?1:n<=2?2:n<=5?5:10)*pw);if(c.int)hi=Math.max(2,Math.ceil(hi));if(hi>2&&hi%2)hi+=1;}
   const yOf=v=>(hi-v)/(hi-lo)*100;
   const axis=v=>c.pct?`${fmtNum(v)}%`:Number.isInteger(v)?fmtNum(v):v.toFixed(1);
   let path='',pen=false;
@@ -14952,7 +14952,7 @@ function ohgDetailSection(m){
   const cur=mo[L][k],prev=mo[L-1][k];
   const diff=cur!==null&&prev!==null?Math.round((cur-prev)*10)/10:null;
   const goodMove=diff===null||diff===0?null:c.inv?diff<0:diff>0;
-  const dText=diff===null?'':`${mwmSigned(diff,c.unit)} vs ${shortMonth(mo[L-1].date)}`;
+  const dText=diff===null?'':`${diff===0?'no change':mwmSigned(diff,c.unit===' days'&&Math.abs(diff)===1?' day':c.unit)} vs ${shortMonth(mo[L-1].date)}`;
   const rest=x.causes.slice(5);
   const shownCauses=x.causes.length>6?[...x.causes.slice(0,5),['Other',rest.reduce((t,q)=>t+q[1],0),rest]]:x.causes;
   const lateMonth=monthName(mo[L].date);
@@ -14974,7 +14974,8 @@ function ohgDetailSection(m){
   const months=dzCard({title:'Month by month',span:6,tip:'Orders shipped each month, by delivery date.',
     body:`<div class="sup-scroll" tabindex="0" role="region" aria-label="Month by month"><table class="ohgt-tbl"><thead><tr>${th('Month','The month the orders shipped.',false)}${th('Orders','Orders shipped in the month.')}${th('Value','Shipped value of the month.')}${th('On time',OHG_TREND.otd.tip)}${th('Perfect order',OHG_TREND.perfect.tip)}${th('Avg days late',OHG_TREND.days.tip)}${th('Late orders',OHG_TREND.lateOrders.tip)}</tr></thead><tbody>${moPg.rows.map(({r,i})=>{
       const label=r.date.toLocaleDateString('en-US',{month:'short',year:'numeric'});
-      return `<tr><td class="k">${esc(label)}${i===11&&partial?' <span class="mwm-todate">to date</span>':''}</td><td class="num">${fmtNum(r.orders)}</td><td class="num">${esc(moneyShort(d.entries[i].shipped.value))}</td><td class="num">${r.otd===null?'—':dzChip(`${fmtNum(r.otd)}%`,rateTone(r.otd))}</td><td class="num">${mwmPct(r.perfect)}</td><td class="num">${r.days===null?'—':r.days.toFixed(1)}</td><td class="num${r.lateOrders?' late':''}">${fmtNum(r.lateOrders)}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-months',moPg,'Month by month','months')}`});
+      const e=d.entries[i].shipped;
+      return `<tr${tipAttr(ohlTip(`${r.date.toLocaleDateString('en-US',{month:'long',year:'numeric'})}${i===11&&partial?' to date':''}`,[`${mwmOrders(r.orders)} shipped, ${money(e.value)} on ${ohN(e.lines,'delivery line')}`,r.otd===null?'':`${fmtNum(r.otd)}% on time of ${ohN(r.otdScored,'delivery line')} scored`,`${mwmOrders(r.lateOrders)} late`]))}><td class="k">${esc(label)}${i===11&&partial?' <span class="mwm-todate">to date</span>':''}</td><td class="num">${fmtNum(r.orders)}</td><td class="num">${esc(moneyShort(d.entries[i].shipped.value))}</td><td class="num">${r.otd===null?'—':dzChip(`${fmtNum(r.otd)}%`,rateTone(r.otd))}</td><td class="num">${mwmPct(r.perfect)}</td><td class="num">${r.days===null?'—':r.days.toFixed(1)}</td><td class="num${r.lateOrders?' late':''}">${fmtNum(r.lateOrders)}</td></tr>`;}).join('')}</tbody></table></div>${dzPageFoot('ohg-months',moPg,'Month by month','months')}`});
   // By warehouse: the ship target range's deliveries (this month unless a scenario range is set).
   const sd=p.scenario;
   const whPg=dzPageOf('ohg-wh',sd.shippedWeekGroups,sig,OHG_PAGE);
@@ -20626,12 +20627,11 @@ function ohlOpenByMonthCard(p){
       <div class="ohl-sec"><div class="ohl-sec-head"><div class="ohl-sec-title"${tipAttr(sectionTipText('mo-summary'))}>${esc(momPlain(s.title))}</div>${s.note?`<span class="mom-note">${s.note}</span>`:''}</div>
       ${renderTableCard({...s,bare:true})}</div>${undated?`<p class="ohl-note ohl-foot-note">${esc(undated)}</p>`:''}`});
 }
-// Items not shipped yet: open lines by original delivery month, near the Lines card; its Month pick is the one the Original
-// line delivery summary on Lagging uses.
+// Items not shipped yet: open lines by original delivery month, near the Lines card, with its own Month pick.
 function ohlNotShippedCard(p){
   const s=p.notShippedSpec();
   // 2v6.9 (owner): no "By original line delivery month · N open lines" note; the card folds and starts folded on each load.
-  return momTableCard(s,{cls:'ohl-card ohl-notshipped',meta:p.monthSelect('ohl-original-month','One original month, here and in Original line delivery summary on Lagging.')});
+  return momTableCard(s,{cls:'ohl-card ohl-notshipped',meta:p.monthSelect('ohl-original-month','Show one original month.')});
 }
 // The ship target card's Calendar & lines disclosure (it was Monthly's Ship target scenario): the scenario's five numbers,
 // the open ship calendar and the scenario lines, for the card's range and basis. Shut by default; print opens it.

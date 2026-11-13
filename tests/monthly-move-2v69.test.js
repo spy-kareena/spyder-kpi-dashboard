@@ -190,8 +190,8 @@ test('Trend: five chips switch the chart and the side heading and figure; an unk
     days: { plot: 'Avg days late, last 12 months', yaxis: ['6', '3', '0'], dots: [['August 2026: Avg days late 5.0\n• 2 orders shipped\n• 1 order late', '5.0'], ['September 2026: Avg days late 1.0\n• 1 order shipped\n• 1 order late', '1.0']],
       stroke: 'var(--dz-risk)', heading: ['Average days late, late deliveries only.', 'Avg days late · September to date'], now: '1.0', tone: 'teal', change: '−4 days vs Aug' },
     // The two counts have a figure every month (0 where nothing shipped), so a dot every month.
-    lateOrders: { plot: 'Late orders, last 12 months', top: '1', zeros: 10, dots: [['August 2026: Late orders 1\n• 2 orders shipped\n• 1 order late', '1'], ['September 2026: Late orders 1\n• 1 order shipped\n• 1 order late', '1']],
-      stroke: 'var(--dz-risk)', heading: ['Orders shipped 1+ days late.', 'Late orders · September to date'], now: '1', tone: '', change: '0 vs Aug' },
+    lateOrders: { plot: 'Late orders, last 12 months', top: '2', zeros: 10, dots: [['August 2026: Late orders 1\n• 2 orders shipped\n• 1 order late', '1'], ['September 2026: Late orders 1\n• 1 order shipped\n• 1 order late', '1']],
+      stroke: 'var(--dz-risk)', heading: ['Orders shipped 1+ days late.', 'Late orders · September to date'], now: '1', tone: '', change: 'no change vs Aug' },
     orders: { plot: 'Orders shipped, last 12 months', yaxis: ['2', '1', '0'], zeros: 10, dots: [['August 2026: Orders shipped 2\n• 2 orders shipped\n• 1 order late', '2'], ['September 2026: Orders shipped 1\n• 1 order shipped\n• 1 order late', '1']],
       stroke: 'var(--dz-teal)', heading: ['Orders shipped in the month.', 'Orders shipped · September to date'], now: '1', tone: 'red', change: '−1 vs Aug' },
   };
