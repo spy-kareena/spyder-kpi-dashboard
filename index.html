@@ -4176,6 +4176,14 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 @media print{.dz-spark{break-inside:avoid}}
 @media (forced-colors:active){.dz-spark svg path,.dz-spark svg circle{forced-color-adjust:none}}
 /* 2v9:end spark */
+/* 2v9:ship-btns */
+/* Ship target's Dates and Calendar & lines (owner): the same soft pill edge as the What can we do switch (Supply to
+   pull in), not the darker field border. */
+.dz-pillinput.mwm-datebtn{border:1px solid var(--dz-line-8);background:var(--dz-surface);font-weight:500;color:var(--dz-ink-2);cursor:pointer}
+.dz-pillinput.mwm-datebtn:hover{border-color:var(--dz-indigo)}
+.dz-pillinput.mwm-datebtn[aria-expanded="true"]{border-color:rgba(var(--dz-indigo-rgb),.45);background:var(--dz-indigo-bg);color:var(--dz-indigo)}
+.dz-pillinput.mwm-datebtn:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* 2v9:end ship-btns */
 /* 2v9:kit-status */
 /* Kit Status (owner): the label, then two numbers side by side, Clean (teal) and Not clean (amber while any) */
 .dz-stat.kit2{display:flex;flex-direction:column;gap:8px}
