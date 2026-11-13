@@ -3882,6 +3882,25 @@ button.dz-tr:hover,.dz-tr.dz-click:hover,button.dz-barrow:hover,.ohl-tile:hover,
 .ohg-head .ohg-delta{font-size:12px;font-weight:500;opacity:.8}
 @media print{.ohg-tile .dz-stat-s.ohg-d,.ohg-head .ohg-delta{opacity:1}}
 /* 2v7:end ohg-sub */
+/* 2v9:monthly-move */
+/* Monthly's sections on Sales Order Health (2v9): the older tables sit flat in glass cards (.misc-flat); the card's meta
+   holds a short note and, where there is one, the Month pick. Lagging: the Shipments section; Leading: Open orders by
+   delivery month, Items not shipped yet and the ship target's Calendar & lines. */
+.mom-card>.dz-card-head .dz-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px 14px;flex-wrap:wrap}
+.mom-note{font-size:12.5px;color:var(--dz-ink-4)}
+.mom-card>.table-scroll,.mom-card .ohl-sec>.table-scroll{margin-top:8px}
+.mom-card .legend.chart{font-size:12px;color:var(--dz-ink-4)}
+.mom-pair{margin-top:18px}
+.mom-pair .pair-labels{margin-top:6px}
+.mom-foot{margin:0;font-size:12px;line-height:1.5;color:var(--dz-ink-4)}
+.mom-cal{margin-top:18px}
+.mom-stats{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.mom-stats .dz-stat-v{font-size:17px}
+.mom-cal .ohl-sec>.table-scroll{margin-top:10px}
+.mom-cal .day-chart{min-height:120px}
+@media (max-width:640px){.mom-card>.dz-card-head .dz-meta{justify-content:flex-start}.mom-pair .pair-labels>span{font-size:10.5px}}
+@media print{.mom-cal .table-scroll,.mom-card .table-scroll{overflow:visible}.mom-card{break-inside:auto;page-break-inside:auto}}
+/* 2v9:end monthly-move */
 /* 2v9:pager */
 /* Paged card lists (2v6.9: more than 10 items show 10 a page): the range on the left, the Shipping pager on the right;
    stacked and centred on phones. */
@@ -9163,20 +9182,21 @@ function labelTableCells(rowHtml,head){
 }
 // sig: the filters / view / sort that built the list (a change starts it at page 1); without one the list's own
 // fingerprint stands in. limit is kept for older callers and no longer used (10 a page). noun names the rows.
-function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false,sig,noun='rows',pageSize=DZ_PAGE_SIZE}){
+// bare (2v9): only the scrolling table and its pager, for a table inside a dzCard that carries the title.
+function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,minWidth=760,className='',headExtra='',empty='Nothing to show.',info='',cards=false,sig,noun='rows',pageSize=DZ_PAGE_SIZE,bare=false}){
   const all=items||rows;
   const pg=dzPageOf(key,all,sig===undefined?dzListSig(all):sig,pageSize);
   const plain=String(title).replace(/<[^>]*>/g,'');
   let shown=renderRow?pg.rows.map(renderRow):pg.rows;
   if(cards)shown=shown.map(row=>labelTableCells(row,head));
-  return `<section class="table ${className}">
-    <div class="card-head lg"><h2${sectionTip(info)}>${title}</h2>${headExtra||`<span class="section-sub">${note}</span>`}</div>
+  return `${bare?'':`<section class="table ${className}">
+    <div class="card-head lg"><h2${sectionTip(info)}>${title}</h2>${headExtra||`<span class="section-sub">${note}</span>`}</div>`}
     <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table${cards?' cards':''}" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width])=>`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
     </table></div>
     ${dzPageFoot(key,pg,plain,noun)}
-  </section>`;
+  ${bare?'':'</section>'}`;
 }
 function renderBarCell(width,text,color='var(--accent)',size=''){
   return `<div class="bar-cell${size?` ${size}`:''}"><div class="track"><i class="grow-w" style="width:${Math.max(0,Math.min(100,width)).toFixed(1)}%;background:${color}"></i></div><span>${text}</span></div>`;
@@ -10919,7 +10939,8 @@ function stgSpec(){
     // 2v6.9: pages left out of the top menu (Settings > Hidden Pages); Warehouses is hidden by default.
     // 2v6.9 (owner): the Supply menu's pages (Supply / Demand, Supply Mix, Build Risk, Forecast) start hidden, like
     // Warehouses; Settings > Hidden Pages brings any of them back.
-    hiddenPages:{def:()=>['warehouses',...stgSupplyHidden()],check:v=>Array.isArray(v)?stgHideablePages().filter(id=>v.includes(id)):undefined}
+    // 2v9 (owner): Monthly is dissolved into Sales Order Health (Leading and Lagging), so it starts hidden too.
+    hiddenPages:{def:()=>['monthly','warehouses',...stgSupplyHidden()],check:v=>Array.isArray(v)?stgHideablePages().filter(id=>v.includes(id)):undefined}
   };
 }
 // The pages Hidden Pages can hide, in menu order: every page but Order Health and Settings.
@@ -10949,6 +10970,11 @@ function stgStore(){
     // they can be shown again in Settings.
     if(Array.isArray(stgMemo.hiddenPages)&&!stgMemo.hiddenSupply2v69){
       stgMemo={...stgMemo,hiddenPages:[...new Set([...stgMemo.hiddenPages,...stgSupplyHidden()])],hiddenSupply2v69:true};
+      try{localStorage.setItem(stgKey(),JSON.stringify(stgMemo));}catch(err){/* kept for this visit */}
+    }
+    // 2v9: the same, once, for Monthly (its sections are on Sales Order Health now; Settings can show it again).
+    if(Array.isArray(stgMemo.hiddenPages)&&!stgMemo.hiddenMonthly2v69){
+      stgMemo={...stgMemo,hiddenPages:[...new Set([...stgMemo.hiddenPages,'monthly'])],hiddenMonthly2v69:true};
       try{localStorage.setItem(stgKey(),JSON.stringify(stgMemo));}catch(err){/* kept for this visit */}
     }
   }
@@ -10998,6 +11024,7 @@ function stgSet(key,value){
   if(JSON.stringify(v)===JSON.stringify(stgValue(key)))return true;
   const next={...stgStore()};
   if(JSON.stringify(v)===JSON.stringify(s.def()))delete next[key];else next[key]=v;
+  if(key==='hiddenPages')next.hiddenMonthly2v69=true; // 2v9: a choice made after Monthly moved is kept as made
   const saved=stgWrite(next);
   stgAfterChange([key]);
   showToast(saved?'Saved':'Changed for now: this browser does not keep settings');
@@ -12249,6 +12276,7 @@ function setTab(t){
   // The Connect an AI page moved into Settings: 'connect' opens Settings at its card. Settings opens before any export
   // is loaded.
   if(t==='connect'){stgShowCard('connect');return;}
+  if(t==='monthly'&&stgPageHidden(t)){t='weekly';setWeeklyView('lagging',false);} // 2v9: Monthly's sections are on Lagging
   if(stgPageHidden(t))t='weekly'; // 2v6.9: a hidden page (Settings > Hidden Pages) opens Sales Order Health
   if(!hasLoadedData()&&t!=='settings')return;
   // 2v6.9: Metrics is a section of Sales Order Health > Lagging now: open Lagging and scroll to it.
@@ -12413,7 +12441,9 @@ function shipScenarioData(rows,targetDate,today){
   const isDefaultRange=displayDate(start)===displayDate(defaultShipScenarioStartDate(today))&&displayDate(target)===displayDate(defaultShipScenarioDate(today));
   return {target,start,useEffective,scenarioDate,scenarioDateLabel,bookedByTarget,stillOpenByTarget,pastOriginalDue,onTrackWindow,bookedValue,shippedValue,shippedPct,MAX_CALENDAR_DAYS,days,forward,calendarClipped,maxDayValue,openLines,scenarioRangeStart,scenarioRangeEnd,shippedWeekRows,shippedWeekGroups,shippedWeekValue,shippedWeekQty,shippedWeekOrders,shippedWeekEarly,shippedWeekSameDay,shippedWeekLate,shippedWeekOtd,isDefaultRange};
 }
-function renderShippedByWarehouseCard(sd,today){
+function renderShippedByWarehouseCard(sd,today){return renderTableCard(shippedByWarehouseSpec(sd,today));}
+// The Shipped by warehouse / CM table as a renderTableCard spec (2v9: Sales Order Health Lagging draws it in a card).
+function shippedByWarehouseSpec(sd,today){
   const rangeLabel=sd.isDefaultRange?'this month':`${displayDate(sd.scenarioRangeStart)} to ${displayDate(sd.scenarioRangeEnd)}`;
   const max=Math.max(1,...sd.shippedWeekGroups.map(g=>g.value));
   const rows=sd.shippedWeekGroups.map(g=>{
@@ -12430,14 +12460,15 @@ function renderShippedByWarehouseCard(sd,today){
       <td class="num ${g.late?'crit-soft':'muted'}">${fmtNum(g.late)}</td>
     </tr>`;
   });
-  return renderTableCard({key:'monthly-wh',info:'mo-warehouse',title:`Shipped by warehouse / CM · ${esc(rangeLabel)}`,
+  return {key:'monthly-wh',info:'mo-warehouse',title:`Shipped by warehouse / CM · ${esc(rangeLabel)}`,
     note:`${sd.isDefaultRange?`Deliveries dated ${esc(today.toLocaleDateString('en-US',{month:'short',year:'numeric'}))}`:'Deliveries in the ship target scenario range'} · ${money(sd.shippedWeekValue)} across ${fmtNum(sd.shippedWeekOrders)} SOs · ${fmtNum(sd.shippedWeekOtd)}% on time`,
     head:[['Warehouse / CM'],['SO count','num'],['Lines','num'],['Qty shipped','num'],['Shipped value','','30%'],['OTD','num'],['Early','num'],['On time','num'],['Late','num']],
-    rows,limit:9,minWidth:820,noun:'warehouses / CMs',empty:'No shipped or closed sales order delivery lines in this range.'});
+    rows,limit:9,minWidth:820,noun:'warehouses / CMs',empty:'No shipped or closed sales order delivery lines in this range.'};
 }
 // controls:false leaves out the date inputs (the Monthly page's ship target card carries them).
-function renderShipTargetScenario(sd,today,{controls=true}={}){
-  const stat=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${esc(label)}</span><span class="ms-sub">${esc(sub)}</span></div><div class="ms-num"><span class="ms-big ${tone||''}">${esc(value)}</span></div></div>`;
+// 2v9 monthly-move: the scenario's pieces (its five numbers, the day calendar, the lines table) for this page group
+// and for the ship target card on Sales Order Health Leading (its Calendar & lines disclosure).
+function shipScenarioPieces(sd){
   const lineRow=r=>{
     const originalDue=originalHeaderDate(r);
     const plannedDate=sd.scenarioDate(r);
@@ -12456,13 +12487,36 @@ function renderShipTargetScenario(sd,today,{controls=true}={}){
     </tr>`;
   };
   const calendarMax=sd.maxDayValue;
-  // The strip and the calendar sum the scenario up; its line list opens on request (always printed).
+  const stats=[
+    ['Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`${ohN(sd.bookedByTarget.length,'line')} due by ${displayDate(sd.target)}, ${money(sd.bookedValue)} (open plus shipped).`],
+    ['% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${money(sd.shippedValue)} of ${money(sd.bookedValue)} booked has shipped or closed.`],
+    ['On track window',ohN(sd.onTrackWindow.length,'line'),`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`Open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}.`],
+    ['Past original due',ohN(sd.pastOriginalDue.length,'line'),`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Open lines dated before ${displayDate(sd.start)}.`],
+    ['Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Booked lines not shipped yet.`]
+  ];
+  const calendarSub=`${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · First ${sd.MAX_CALENDAR_DAYS} days shown`:''}`;
+  const calendar=()=>`<div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
+        ${sd.days.map(d=>{
+          const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
+          const isToday=displayDate(d.date)===displayDate(reportToday());
+          return `<div class="day-col${isToday?' today':''}"${tipAttr(`${displayDate(d.date)}: ${fmtNum(d.rows.length)} open ${d.rows.length===1?'line':'lines'} · ${fmtNum(d.qty)} qty · ${money(d.value)}`)}><div class="day-bar-wrap"><i class="grow-h ${d.rows.length?'fill-accent':'fill-soft'}" style="height:${h}px"></i></div><strong>${fmtNum(d.rows.length)}</strong><span>${d.date.getDate()===1||d===sd.days[0]?esc(shortDay(d.date)):d.date.getDate()}</span></div>`;
+        }).join('')}
+      </div></div>`;
   const linesNote=`${fmtNum(sd.openLines.length)} open lines booked by ${esc(displayDate(sd.target))}`;
+  const linesSpec=extra=>({key:'monthly-scenario',title:'Scenario lines',headExtra:`<div class="inline-controls"><span class="section-sub">${linesNote}</span>${extra||''}</div>`,
+      head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
+      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(sd.openLines.map(r=>rowKey(r))),empty:'No open lines are booked by this end date.'});
+  return {stats,calendarSub,calendar,linesNote,linesSpec};
+}
+// controls:false leaves out the date inputs (the Monthly page's ship target card carries them).
+function renderShipTargetScenario(sd,today,{controls=true}={}){
+  const stat=(label,value,sub,tone,tipText)=>`<div${tipAttr(tipText)}><div class="ms-text"><span class="ms-label">${esc(label)}</span><span class="ms-sub">${esc(sub)}</span></div><div class="ms-num"><span class="ms-big ${tone||''}">${esc(value)}</span></div></div>`;
+  const pc=shipScenarioPieces(sd);
+  // The strip and the calendar sum the scenario up; its line list opens on request (always printed).
+  const linesNote=pc.linesNote;
   const linesOpen=!!tableMore['monthly-scenario-lines']||printMode;
   const linesToggle=sd.openLines.length&&!printMode?groupMoreButton('monthly-scenario-lines',sd.openLines.length,'scenario lines','Show lines'):'';
-  const scenarioLines=linesOpen?renderTableCard({key:'monthly-scenario',title:'Scenario lines',headExtra:`<div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div>`,
-      head:[['Scenario month'],['SO #'],['Customer','','15%'],['Warehouse','','13%'],['Item / description','','22%'],['Original date'],['Scenario date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:sd.openLines,renderRow:lineRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(sd.openLines.map(r=>rowKey(r))),empty:'No open lines are booked by this end date.'})
+  const scenarioLines=linesOpen?renderTableCard(pc.linesSpec(linesToggle))
     :`<section class="table pg-collapsed"><div class="card-head lg"><h2>Scenario lines</h2><div class="inline-controls"><span class="section-sub">${linesNote}</span>${linesToggle}</div></div></section>`;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   return pageGroupHtml('mo-scenario','Ship target scenario',`
@@ -12475,23 +12529,219 @@ function renderShipTargetScenario(sd,today,{controls=true}={}){
       </select></label>
     </div>`:''}
     <div class="mini-strip cols-5">
-      ${stat('Booked by target',ohN(sd.bookedByTarget.length,'line'),money(sd.bookedValue),'',`${ohN(sd.bookedByTarget.length,'line')} due by ${displayDate(sd.target)}, ${money(sd.bookedValue)} (open plus shipped).`)}
-      ${stat('% booked $ shipped',`${fmtNum(sd.shippedPct)}%`,`${money(sd.shippedValue)} shipped / closed`,'good-text',`${money(sd.shippedValue)} of ${money(sd.bookedValue)} booked has shipped or closed.`)}
-      ${stat('On track window',ohN(sd.onTrackWindow.length,'line'),`${fmtNum(rowOpenQty(sd.onTrackWindow))} qty · ${money(rowOpenAmount(sd.onTrackWindow))}`,'',`Open lines due ${displayDate(sd.start)} to ${displayDate(sd.target)}.`)}
-      ${stat('Past original due',ohN(sd.pastOriginalDue.length,'line'),`${fmtNum(rowOpenQty(sd.pastOriginalDue))} qty · ${money(rowOpenAmount(sd.pastOriginalDue))}`,'crit-text',`Open lines dated before ${displayDate(sd.start)}.`)}
-      ${stat('Still open by target',ohN(sd.stillOpenByTarget.length,'line'),`${fmtNum(rowOpenQty(sd.stillOpenByTarget))} qty · ${money(rowOpenAmount(sd.stillOpenByTarget))}`,'',`Booked lines not shipped yet.`)}
+      ${pc.stats.map(x=>stat(...x)).join('\n      ')}
     </div>
     ${sd.forward?`<div class="card chart-card tight">
-      <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${esc(displayDate(sd.start))} to ${esc(displayDate(sd.calendarClipped?sd.days[sd.days.length-1].date:sd.target))}${sd.calendarClipped?` · First ${sd.MAX_CALENDAR_DAYS} days shown`:''}</span></div>
-      <div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab style="grid-template-columns:repeat(${Math.max(1,sd.days.length)},minmax(26px,1fr))">
-        ${sd.days.map(d=>{
-          const h=Math.max(d.value?4:0,Math.round((d.value/calendarMax)*90));
-          const isToday=displayDate(d.date)===displayDate(reportToday());
-          return `<div class="day-col${isToday?' today':''}"${tipAttr(`${displayDate(d.date)}: ${fmtNum(d.rows.length)} open ${d.rows.length===1?'line':'lines'} · ${fmtNum(d.qty)} qty · ${money(d.value)}`)}><div class="day-bar-wrap"><i class="grow-h ${d.rows.length?'fill-accent':'fill-soft'}" style="height:${h}px"></i></div><strong>${fmtNum(d.rows.length)}</strong><span>${d.date.getDate()===1||d===sd.days[0]?esc(shortDay(d.date)):d.date.getDate()}</span></div>`;
-        }).join('')}
-      </div></div>
+      <div class="chart-head"><h2${sectionTip('mo-calendar')}>Open ship calendar</h2><span class="section-sub">${pc.calendarSub}</span></div>
+      ${pc.calendar()}
     </div>`:`<div class="card"><p class="empty-note">Pick an end date on or after the start date to show the calendar.</p></div>`}
     ${scenarioLines}`,{info:'mo-scenario',rise:'rise-4'});
+}
+
+// 2v9 monthly-move: the Monthly page's sections, built once for the Monthly page (whole report: src is m) and for
+// Sales Order Health Leading / Lagging (src is momSource(m): the report, or its lines for the page filters, grouped by
+// the same groupByMonth / groupByOriginalHeaderMonth). Each part is a function so a view draws only what it shows.
+function moMonthlyParts(m,src,today){
+  const ck=src===m?'monthly':`monthly|${weeklyFilterKey()}`;
+  const thisYear=today.getFullYear();
+  const lastYear=thisYear-1;
+  const thisMk=monthKey(today);
+  const thisYearMonths=src.byMonth.filter(g=>g.key&&g.key.startsWith(String(thisYear)));
+  // Period comparisons use the same days on both sides (month-to-date vs the same days of the other period),
+  // and only when the export's delivery history reaches back to the start of the comparison period.
+  const shipmentRows=cachedByFilter(m,`${ck}|shipments`,()=>src.allRows.filter(r=>isShipmentRow(r)&&parseDate(r.closeDate)));
+  const coverageStart=cachedByFilter(m,`${ck}|coverage`,()=>shipmentRows.reduce((min,r)=>{const d=parseDate(r.closeDate);return !min||d<min?d:min;},null));
+  const covers=start=>!!coverageStart&&coverageStart<=start;
+  const shippedBetween=(start,end)=>cachedByFilter(m,`${ck}|shipped|${start.getTime()}|${end.getTime()}`,()=>{
+    const rows=shipmentRows.filter(r=>{const d=parseDate(r.closeDate);return d>=start&&d<=end;});
+    return {amount:rowShippedAmount(rows),rows:rows.length};
+  });
+  const sameDayIn=(year,month)=>new Date(year,month,Math.min(today.getDate(),new Date(year,month+1,0).getDate()));
+  const monthStart=new Date(thisYear,today.getMonth(),1);
+  const prevMonthStart=new Date(thisYear,today.getMonth()-1,1);
+  const prevMonthEnd=sameDayIn(prevMonthStart.getFullYear(),prevMonthStart.getMonth());
+  const lastYearMonthStart=new Date(lastYear,today.getMonth(),1);
+  const lastYearSameDay=sameDayIn(lastYear,today.getMonth());
+  const mtd=shippedBetween(monthStart,today);
+  const prevMtd=shippedBetween(prevMonthStart,prevMonthEnd);
+  const ytd=shippedBetween(new Date(thisYear,0,1),today);
+  const lastYtd=shippedBetween(new Date(lastYear,0,1),lastYearSameDay);
+  const lastYearMtd=shippedBetween(lastYearMonthStart,lastYearSameDay);
+  const momOk=covers(prevMonthStart);
+  const ytdOk=covers(new Date(lastYear,0,1));
+  const yoyOk=covers(lastYearMonthStart);
+  const signed=v=>`${v>=0?'+':''}${money(v)}`;
+  const pctChange=(cur,base)=>base>0?`${cur>=base?'+':''}${Math.round(((cur-base)/base)*100)}%`:'—';
+  const dayRange=(start,end)=>`${start.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}–${end.getDate()}`;
+  const notCovered=`delivery history starts ${coverageStart?displayDate(coverageStart):'—'}`;
+  const allMonths=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  // Last-year months that began before the export's delivery history have no data (not $0).
+  const lastYearMonthCovered=mo=>covers(new Date(lastYear,Number(mo)-1,1));
+  const closedUnknown=src.byMonth.find(g=>g.key==='Closed No Delivery Date')||{closedUnknownRows:0,closedUnknownAmount:0};
+  const originalHeaderMonths=src.byOriginalHeaderMonth.filter(g=>g.key&&(g.key.startsWith(String(thisYear))||g.openRows>0));
+  const originalHeaderBase=originalHeaderMonths.length?originalHeaderMonths:src.byOriginalHeaderMonth;
+  const originalMonthOptions=originalHeaderBase.filter(g=>g.key&&g.key!=='No Original Delivery Date');
+  if(originalDeliveryMonthFilter!=='ALL'&&!originalHeaderBase.some(g=>g.key===originalDeliveryMonthFilter))originalDeliveryMonthFilter='ALL';
+  const originalHeaderDisplay=originalDeliveryMonthFilter==='ALL'?originalHeaderBase:originalHeaderBase.filter(g=>g.key===originalDeliveryMonthFilter);
+  const scenario=shipScenarioFor(m,today);
+  const openOriginalRows=originalHeaderDisplay.flatMap(g=>g.rows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r))).sort((a,b)=>{
+    const am=monthKey(originalHeaderDate(a))||'9999-99';
+    const bm=monthKey(originalHeaderDate(b))||'9999-99';
+    if(am!==bm)return String(am).localeCompare(String(bm));
+    return String(a.documentNumber||'').localeCompare(String(b.documentNumber||''))||String(a.itemCode||'').localeCompare(String(b.itemCode||''));
+  });
+  const emptyMonth=key=>({key,label:monthLabel(key),openAmount:0,closedAmount:0,openRows:0,closedRows:0,lateRows:0,atRiskRows:0,rescheduledRows:0});
+  const monthGroup=key=>src.byMonth.find(g=>g.key===key)||emptyMonth(key);
+
+  // Spotlight: last month, this month, and the next two; a coming month with nothing open or shipped is left out.
+  const spotMonths=[-1,0,1,2].map(offset=>({offset,g:monthGroup(monthKey(addMonths(new Date(thisYear,today.getMonth(),1),offset)))}))
+    .filter(({offset,g})=>offset<=0||g.openAmount||g.closedAmount);
+  const spotlight=spotMonths.map(({offset,g})=>{
+    const isCurrent=offset===0,isPast=offset<0;
+    const totalRows=g.openRows+g.closedRows;
+    const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
+    const atRisk=g.lateRows+g.atRiskRows;
+    const lateOpen=isPast&&g.openAmount>0;
+    return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(ohlTip(g.label,[`${money(g.openAmount)} open${lateOpen?', now late':''}`,`${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines)`,`${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled`]))}>
+      <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
+      <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · Now late':'open'}</span></div>
+      <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
+      <div class="month-stats">
+        <div><span class="stat-label">${isPast?'Closed':'Open'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
+        <div><span class="stat-label">At risk</span><span class="stat-val${atRisk?' crit-text':''}">${fmtNum(atRisk)}</span></div>
+        <div><span class="stat-label">Rescheduled</span><span class="stat-val${g.rescheduledRows?' warn-text':''}">${fmtNum(g.rescheduledRows)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Paired bars for the twelve months of this year: shipped (by delivery date) and open (by current due date).
+  const yearGroups=allMonths.map(mo=>monthGroup(`${thisYear}-${mo}`));
+  const pairMax=Math.max(1,...yearGroups.flatMap(g=>[g.openAmount,g.closedAmount]));
+  const barH=v=>`${Math.max(v?2:0,v/pairMax*170).toFixed(1)}px`;
+
+  // Monthly delivery summary (this year). The YoY columns only appear when the export holds last year's months.
+  const anyLastYear=thisYearMonths.some(g=>lastYearMonthCovered(g.key.split('-')[1]));
+  const shippedMax=Math.max(1,...thisYearMonths.map(g=>g.closedAmount));
+  const summaryRows=thisYearMonths.map(g=>{
+    const tr=g.openRows+g.closedRows;
+    const fr=tr>0?Math.round((g.closedRows/tr)*100):0;
+    const atRisk=g.lateRows+g.atRiskRows;
+    const lyMonth=g.key.split('-')[1];
+    const lyCovered=lastYearMonthCovered(lyMonth);
+    const lyG=src.byMonth.find(x=>x.key===`${lastYear}-${lyMonth}`)||{closedAmount:0};
+    // Months after the report date have not shipped yet; the current month compares the same days last year.
+    const isFuture=g.key>thisMk;
+    const isCurrent=g.key===thisMk;
+    const compareOk=lyCovered&&!isFuture;
+    const lastYearValue=isCurrent?lastYearMtd.amount:lyG.closedAmount;
+    const delta=(isCurrent?mtd.amount:g.closedAmount)-lastYearValue;
+    return `<tr${isCurrent?' class="current"':''}>
+      <td class="m">${esc(g.label)}${isCurrent?' <span class="sub">to date</span>':''}</td>
+      <td>${renderBarCell(g.closedAmount/shippedMax*100,money(g.closedAmount),'var(--accent)','money')}</td>
+      ${anyLastYear?`<td class="num ${lyCovered?'soft':'muted'}">${lyCovered?`${money(lastYearValue)}${isCurrent?' (same days)':''}`:'not in export'}</td>
+      <td class="num strong ${!compareOk?'muted':delta>=0?'good-soft':'crit-soft'}">${compareOk?`${delta>=0?'+':''}${money(delta)}`:'—'}</td>`:''}
+      <td class="num">${money(g.openAmount)}</td>
+      <td>${isFuture?'<span class="muted">—</span>':renderBarCell(fr,`${fr}%`,'var(--accent-border)','sm')}</td>
+      <td class="num">${fmtNum(g.openRows)}</td>
+      <td class="num soft">${fmtNum(g.closedRows)}</td>
+      <td class="num ${atRisk?'crit-strong':'muted'}">${fmtNum(atRisk)}</td>
+    </tr>`;
+  });
+
+  // Original line delivery summary
+  const originalRows=originalHeaderDisplay.map(g=>{
+    const bookedValue=g.openAmount+g.closedAmount;
+    const bookedRows=g.openRows+g.closedRows;
+    const shippedValuePct=bookedValue>0?Math.round((g.closedAmount/bookedValue)*100):0;
+    const shippedLinePct=bookedRows>0?Math.round((g.closedRows/bookedRows)*100):0;
+    return `<tr>
+      <td class="m">${esc(g.label)}</td>
+      <td>${renderBarCell(shippedValuePct,`${shippedValuePct}%`,rateColor(shippedValuePct,90,70),'sm')}</td>
+      <td class="num soft">${fmtNum(shippedLinePct)}%</td>
+      <td class="num ${g.openAmount?'':'muted'}">${money(g.openAmount)}</td>
+      <td class="num">${money(g.closedAmount)}</td>
+      <td class="num">${fmtNum(g.openRows)}</td>
+      <td class="num soft">${fmtNum(g.closedRows)}</td>
+      <td class="num good-soft">${fmtNum(g.shippedEarlyRows)}</td>
+      <td class="num ${g.shippedLateRows?'crit-soft':'muted'}">${fmtNum(g.shippedLateRows)}</td>
+      <td class="num soft">${fmtNum(g.openQty)}</td>
+    </tr>`;
+  });
+  const monthSelect=(id='original-month-select',tip='One original month, here and in Items not shipped yet.')=>`<label class="inline-controls">Month <select id="${id}" class="select" data-focus-key="${id}"${tipAttr(tip)} onchange="setOriginalDeliveryMonthFilter(this.value)">
+      <option value="ALL"${originalDeliveryMonthFilter==='ALL'?' selected':''}>All months</option>
+      ${originalMonthOptions.map(g=>`<option value="${esc(g.key)}"${originalDeliveryMonthFilter===g.key?' selected':''}>${esc(g.label)}</option>`).join('')}
+    </select></label>`;
+
+  // Items not shipped yet
+  const notShippedRow=r=>{
+    const originalDue=originalHeaderDate(r);
+    const status=r.statusBucket;
+    const chip=status==='Late'||status==='Past Due'||status==='No Commit'?'bad':status==='Rescheduled'?'warn':'neutral';
+    return `<tr>
+      <td class="soft date">${esc(monthLabel(monthKey(originalDue))||'No original date')}</td>
+      <td class="strong">${esc(r.documentNumber)}</td>
+      <td>${esc(r.name)}</td>
+      <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
+      <td><span class="m${r.itemCode?'':' muted'}">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
+      <td class="soft date">${esc(displayDate(originalDue)||'')}</td>
+      <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
+      <td class="num strong">${money(openLineValue(r))}</td>
+      <td><span class="pill ${chip}">${esc(status)}</span></td>
+    </tr>`;
+  };
+
+  const notes=[];
+  const undated=src.byMonth.filter(g=>g.key==='No Commit'||g.key==='No Date').filter(g=>g.openRows);
+  if(undated.length)notes.push(`${undated.map(g=>`${fmtNum(g.openRows)} open lines (${money(g.openAmount)}) with ${g.key==='No Commit'?'no commit date':'no due date'}`).join(' and ')} are not in the monthly cards or chart.`);
+  if(closedUnknown.closedUnknownRows)notes.push(`${fmtNum(closedUnknown.closedUnknownRows)} closed lines have no delivery here, so are not in shipped totals.`);
+  notes.push(`Ship target uses ${scenario.scenarioDateLabel}.`);
+  if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
+
+  const spot=()=>`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`;
+  const strip=()=>`<section class="mini-strip cols-3" aria-label="Shipped to date">
+      <div${tipAttr(ohlTip(`Month to date: ${money(mtd.amount)} shipped`,[`${ohN(mtd.rows,'delivery line')}, ${dayRange(monthStart,today)}`,momOk?`Same days last month: ${money(prevMtd.amount)}`:`No earlier month (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'No earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(ohlTip(`Year to date: ${money(ytd.amount)} shipped`,[ohN(ytd.rows,'delivery line'),ytdOk?`Same period ${lastYear}: ${money(lastYtd.amount)}`:`No ${lastYear} data (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
+      <div${tipAttr(yoyOk?`${dayRange(monthStart,today)}: ${money(mtd.amount)} vs ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data (${notCovered}).`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
+    </section>`;
+  const chartLegend=`<div class="legend chart"><span><i class="sw lg" style="background:var(--accent)"></i>Shipped</span><span><i class="sw lg" style="background:var(--crit-soft)"></i>Open, past month</span><span><i class="sw lg" style="background:var(--accent-border)"></i>Open, current / upcoming</span></div>`;
+  const pairBars=()=>`<div class="pair-chart">${yearGroups.map((g,i)=>{const past=g.key<thisMk,current=g.key===thisMk;return `<div class="pair-col${current?' current':''}"><i class="grow-h" style="height:${barH(g.closedAmount)};background:var(--accent);animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.closedAmount)} shipped`)}></i><i class="grow-h" style="height:${barH(g.openAmount)};background:${past?'var(--crit-soft)':'var(--accent-border)'};animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.openAmount)} open${past?' (late: this month has passed)':''}`)}></i></div>`;}).join('')}</div>
+      <div class="pair-labels">${yearGroups.map(g=>`<span class="${g.key===thisMk?'current':''}">${esc(shortMonth(parseDate(`${g.key}-01`)))} '${String(thisYear).slice(2)}</span>`).join('')}</div>`;
+  const chart=()=>`<section class="card chart-card">
+      <div class="chart-head"><div class="card-head-text"><h2${sectionTip('mo-chart')}>Shipped and open value by month · ${thisYear}</h2></div>
+        ${chartLegend}</div>
+      ${pairBars()}
+    </section>`;
+  const summarySpec=()=>({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
+      note:anyLastYear?'':`No ${lastYear} months in the export for year over year`,
+      head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% lines shipped','','14%'],['Open lines','num'],['Closed lines','num'],['At risk / late','num']],
+      rows:summaryRows,pageSize:DZ_MONTH_PAGE,minWidth:anyLastYear?980:820,noun:'months'});
+  const originalSpec=(id,tip)=>({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect(id,tip)}</div>`,
+      head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open lines','num'],['Closed lines','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
+      rows:originalRows,limit:14,minWidth:980,noun:'months',empty:'No original SO line delivery dates were found in this export.'});
+  const notShippedNote=`${originalDeliveryMonthFilter==='ALL'?'By original line delivery month':esc(monthLabel(originalDeliveryMonthFilter)||originalDeliveryMonthFilter)} · ${fmtNum(openOriginalRows.length)} open lines`;
+  const notShippedSpec=()=>({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
+      note:notShippedNote,
+      head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
+      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(openOriginalRows.map(r=>rowKey(r))),empty:'Every line in these months has shipped.'});
+  return {scenario,notes,undated,spotMonths,yearGroups,thisYear,spot,strip,chart,chartLegend,pairBars,summarySpec,originalSpec,notShippedSpec,notShippedNote,monthSelect,
+    warehouseSpec:()=>shippedByWarehouseSpec(scenario,today)};
+}
+// 2v9 monthly-move: what moMonthlyParts reads on Sales Order Health: the whole report, or (while a page filter is set)
+// the filtered lines grouped by the same groupByMonth / groupByOriginalHeaderMonth, as mwmMonthlyData does.
+function momSource(m){
+  if(!mwmFiltered())return m;
+  return cachedByFilter(m,`mom|src|${weeklyFilterKey()}`,()=>{
+    const rows=filterWeeklyRows(m.allRows);
+    const ship=indexShipmentsByLine(rows);
+    return {allRows:rows,byMonth:groupByMonth(rows,ship),byOriginalHeaderMonth:groupByOriginalHeaderMonth(rows,ship)};
+  });
+}
+// A renderTableCard spec drawn as a glass card: the title (with its section tip) and meta at the top, the table under.
+function momPlain(html){return String(html).replace(/<[^>]*>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&');}
+function momTableCard(spec,{meta,span=6,cls='',attrs=''}={}){
+  return dzCard({title:momPlain(spec.title),span,cls:`mom-card misc-flat dz-fade${cls?` ${cls}`:''}`,attrs,tip:sectionTipText(spec.info),
+    meta:meta===undefined?(spec.note?`<span class="mom-note">${spec.note}</span>`:''):meta,
+    body:renderTableCard({...spec,bare:true})});
 }
 
 // Renders the active tab. Tab ids must stay in sync with the buttons below.
@@ -12519,6 +12769,7 @@ function ohSetMoreOpen(key,open){
   tableMore=next;
 }
 function renderResults(){
+  if(activeTab==='monthly'&&stgPageHidden('monthly')){activeTab='weekly';setWeeklyView('lagging',false);} // 2v9: a stored Monthly opens Lagging
   if(stgPageHidden(activeTab))activeTab='weekly'; // 2v6.9: a stored or remembered hidden page opens Sales Order Health
   if(activeTab==='metrics'){activeTab='weekly';setWeeklyView('lagging',false);} // 2v6.9: Metrics is on Lagging now
   cmLoadIfStale();
@@ -13001,188 +13252,19 @@ function renderResults(){
   // Monthly: original line-delivery month, ship scenario, and YoY shipped value.
   if(activeTab==='monthly'){
     const today=reportToday();
-    const thisYear=today.getFullYear();
-    const lastYear=thisYear-1;
-    const thisMk=monthKey(today);
-    const thisYearMonths=m.byMonth.filter(g=>g.key&&g.key.startsWith(String(thisYear)));
-    // Period comparisons use the same days on both sides (month-to-date vs the same days of the other period),
-    // and only when the export's delivery history reaches back to the start of the comparison period.
-    const shipmentRows=cachedByFilter(m,'monthly|shipments',()=>m.allRows.filter(r=>isShipmentRow(r)&&parseDate(r.closeDate)));
-    const coverageStart=cachedByFilter(m,'monthly|coverage',()=>shipmentRows.reduce((min,r)=>{const d=parseDate(r.closeDate);return !min||d<min?d:min;},null));
-    const covers=start=>!!coverageStart&&coverageStart<=start;
-    const shippedBetween=(start,end)=>cachedByFilter(m,`monthly|shipped|${start.getTime()}|${end.getTime()}`,()=>{
-      const rows=shipmentRows.filter(r=>{const d=parseDate(r.closeDate);return d>=start&&d<=end;});
-      return {amount:rowShippedAmount(rows),rows:rows.length};
-    });
-    const sameDayIn=(year,month)=>new Date(year,month,Math.min(today.getDate(),new Date(year,month+1,0).getDate()));
-    const monthStart=new Date(thisYear,today.getMonth(),1);
-    const prevMonthStart=new Date(thisYear,today.getMonth()-1,1);
-    const prevMonthEnd=sameDayIn(prevMonthStart.getFullYear(),prevMonthStart.getMonth());
-    const lastYearMonthStart=new Date(lastYear,today.getMonth(),1);
-    const lastYearSameDay=sameDayIn(lastYear,today.getMonth());
-    const mtd=shippedBetween(monthStart,today);
-    const prevMtd=shippedBetween(prevMonthStart,prevMonthEnd);
-    const ytd=shippedBetween(new Date(thisYear,0,1),today);
-    const lastYtd=shippedBetween(new Date(lastYear,0,1),lastYearSameDay);
-    const lastYearMtd=shippedBetween(lastYearMonthStart,lastYearSameDay);
-    const momOk=covers(prevMonthStart);
-    const ytdOk=covers(new Date(lastYear,0,1));
-    const yoyOk=covers(lastYearMonthStart);
-    const signed=v=>`${v>=0?'+':''}${money(v)}`;
-    const pctChange=(cur,base)=>base>0?`${cur>=base?'+':''}${Math.round(((cur-base)/base)*100)}%`:'—';
-    const dayRange=(start,end)=>`${start.toLocaleDateString('en-CA',{month:'short',day:'numeric'})}–${end.getDate()}`;
-    const notCovered=`delivery history starts ${coverageStart?displayDate(coverageStart):'—'}`;
-    const allMonths=['01','02','03','04','05','06','07','08','09','10','11','12'];
-    // Last-year months that began before the export's delivery history have no data (not $0).
-    const lastYearMonthCovered=mo=>covers(new Date(lastYear,Number(mo)-1,1));
-    const closedUnknown=m.byMonth.find(g=>g.key==='Closed No Delivery Date')||{closedUnknownRows:0,closedUnknownAmount:0};
-    const originalHeaderMonths=m.byOriginalHeaderMonth.filter(g=>g.key&&(g.key.startsWith(String(thisYear))||g.openRows>0));
-    const originalHeaderBase=originalHeaderMonths.length?originalHeaderMonths:m.byOriginalHeaderMonth;
-    const originalMonthOptions=originalHeaderBase.filter(g=>g.key&&g.key!=='No Original Delivery Date');
-    if(originalDeliveryMonthFilter!=='ALL'&&!originalHeaderBase.some(g=>g.key===originalDeliveryMonthFilter))originalDeliveryMonthFilter='ALL';
-    const originalHeaderDisplay=originalDeliveryMonthFilter==='ALL'?originalHeaderBase:originalHeaderBase.filter(g=>g.key===originalDeliveryMonthFilter);
-    const scenario=shipScenarioFor(m,today);
-    const openOriginalRows=originalHeaderDisplay.flatMap(g=>g.rows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r))).sort((a,b)=>{
-      const am=monthKey(originalHeaderDate(a))||'9999-99';
-      const bm=monthKey(originalHeaderDate(b))||'9999-99';
-      if(am!==bm)return String(am).localeCompare(String(bm));
-      return String(a.documentNumber||'').localeCompare(String(b.documentNumber||''))||String(a.itemCode||'').localeCompare(String(b.itemCode||''));
-    });
-    const emptyMonth=key=>({key,label:monthLabel(key),openAmount:0,closedAmount:0,openRows:0,closedRows:0,lateRows:0,atRiskRows:0,rescheduledRows:0});
-    const monthGroup=key=>m.byMonth.find(g=>g.key===key)||emptyMonth(key);
-
-    // Spotlight: last month, this month, and the next two; a coming month with nothing open or shipped is left out.
-    const spotMonths=[-1,0,1,2].map(offset=>({offset,g:monthGroup(monthKey(addMonths(new Date(thisYear,today.getMonth(),1),offset)))}))
-      .filter(({offset,g})=>offset<=0||g.openAmount||g.closedAmount);
-    const spotlight=spotMonths.map(({offset,g})=>{
-      const isCurrent=offset===0,isPast=offset<0;
-      const totalRows=g.openRows+g.closedRows;
-      const closedPct=totalRows>0?Math.round((g.closedRows/totalRows)*100):0;
-      const atRisk=g.lateRows+g.atRiskRows;
-      const lateOpen=isPast&&g.openAmount>0;
-      return `<div class="card month-card${isCurrent?' current':''}"${tipAttr(ohlTip(g.label,[`${money(g.openAmount)} open${lateOpen?', now late':''}`,`${money(g.closedAmount)} shipped (${closedPct}% of ${fmtNum(totalRows)} lines)`,`${fmtNum(atRisk)} at risk or late, ${fmtNum(g.rescheduledRows)} rescheduled`]))}>
-        <div class="kpi-top"><span class="kpi-label">${esc(g.label)}</span>${isCurrent?'<span class="month-tag">This month</span>':''}</div>
-        <div class="kpi-row"><span class="kpi-value${lateOpen?' crit':''}" data-count="${Math.round(g.openAmount)}" data-fmt="money">${money(g.openAmount)}</span><span class="kpi-unit">${lateOpen?'open · Now late':'open'}</span></div>
-        <div class="stack" style="gap:6px"><div class="track"><i class="grow-w" style="width:${closedPct}%"></i></div><span class="kpi-sub">${closedPct}% closed · ${money(g.closedAmount)} shipped</span></div>
-        <div class="month-stats">
-          <div><span class="stat-label">${isPast?'Closed':'Open'}</span><span class="stat-val">${isPast?fmtNum(g.closedRows):fmtNum(g.openRows)} of ${fmtNum(totalRows)}</span></div>
-          <div><span class="stat-label">At risk</span><span class="stat-val${atRisk?' crit-text':''}">${fmtNum(atRisk)}</span></div>
-          <div><span class="stat-label">Rescheduled</span><span class="stat-val${g.rescheduledRows?' warn-text':''}">${fmtNum(g.rescheduledRows)}</span></div>
-        </div>
-      </div>`;
-    }).join('');
-
-    // Paired bars for the twelve months of this year: shipped (by delivery date) and open (by current due date).
-    const yearGroups=allMonths.map(mo=>monthGroup(`${thisYear}-${mo}`));
-    const pairMax=Math.max(1,...yearGroups.flatMap(g=>[g.openAmount,g.closedAmount]));
-    const barH=v=>`${Math.max(v?2:0,v/pairMax*170).toFixed(1)}px`;
-
-    // Monthly delivery summary (this year). The YoY columns only appear when the export holds last year's months.
-    const anyLastYear=thisYearMonths.some(g=>lastYearMonthCovered(g.key.split('-')[1]));
-    const shippedMax=Math.max(1,...thisYearMonths.map(g=>g.closedAmount));
-    const summaryRows=thisYearMonths.map(g=>{
-      const tr=g.openRows+g.closedRows;
-      const fr=tr>0?Math.round((g.closedRows/tr)*100):0;
-      const atRisk=g.lateRows+g.atRiskRows;
-      const lyMonth=g.key.split('-')[1];
-      const lyCovered=lastYearMonthCovered(lyMonth);
-      const lyG=m.byMonth.find(x=>x.key===`${lastYear}-${lyMonth}`)||{closedAmount:0};
-      // Months after the report date have not shipped yet; the current month compares the same days last year.
-      const isFuture=g.key>thisMk;
-      const isCurrent=g.key===thisMk;
-      const compareOk=lyCovered&&!isFuture;
-      const lastYearValue=isCurrent?lastYearMtd.amount:lyG.closedAmount;
-      const delta=(isCurrent?mtd.amount:g.closedAmount)-lastYearValue;
-      return `<tr${isCurrent?' class="current"':''}>
-        <td class="m">${esc(g.label)}${isCurrent?' <span class="sub">to date</span>':''}</td>
-        <td>${renderBarCell(g.closedAmount/shippedMax*100,money(g.closedAmount),'var(--accent)','money')}</td>
-        ${anyLastYear?`<td class="num ${lyCovered?'soft':'muted'}">${lyCovered?`${money(lastYearValue)}${isCurrent?' (same days)':''}`:'not in export'}</td>
-        <td class="num strong ${!compareOk?'muted':delta>=0?'good-soft':'crit-soft'}">${compareOk?`${delta>=0?'+':''}${money(delta)}`:'—'}</td>`:''}
-        <td class="num">${money(g.openAmount)}</td>
-        <td>${isFuture?'<span class="muted">—</span>':renderBarCell(fr,`${fr}%`,'var(--accent-border)','sm')}</td>
-        <td class="num">${fmtNum(g.openRows)}</td>
-        <td class="num soft">${fmtNum(g.closedRows)}</td>
-        <td class="num ${atRisk?'crit-strong':'muted'}">${fmtNum(atRisk)}</td>
-      </tr>`;
-    });
-
-    // Original line delivery summary
-    const originalRows=originalHeaderDisplay.map(g=>{
-      const bookedValue=g.openAmount+g.closedAmount;
-      const bookedRows=g.openRows+g.closedRows;
-      const shippedValuePct=bookedValue>0?Math.round((g.closedAmount/bookedValue)*100):0;
-      const shippedLinePct=bookedRows>0?Math.round((g.closedRows/bookedRows)*100):0;
-      return `<tr>
-        <td class="m">${esc(g.label)}</td>
-        <td>${renderBarCell(shippedValuePct,`${shippedValuePct}%`,rateColor(shippedValuePct,90,70),'sm')}</td>
-        <td class="num soft">${fmtNum(shippedLinePct)}%</td>
-        <td class="num ${g.openAmount?'':'muted'}">${money(g.openAmount)}</td>
-        <td class="num">${money(g.closedAmount)}</td>
-        <td class="num">${fmtNum(g.openRows)}</td>
-        <td class="num soft">${fmtNum(g.closedRows)}</td>
-        <td class="num good-soft">${fmtNum(g.shippedEarlyRows)}</td>
-        <td class="num ${g.shippedLateRows?'crit-soft':'muted'}">${fmtNum(g.shippedLateRows)}</td>
-        <td class="num soft">${fmtNum(g.openQty)}</td>
-      </tr>`;
-    });
-    const monthSelect=`<label class="inline-controls">Month <select id="original-month-select" class="select"${tipAttr('One original month, here and in Items not shipped yet.')} onchange="setOriginalDeliveryMonthFilter(this.value)">
-        <option value="ALL"${originalDeliveryMonthFilter==='ALL'?' selected':''}>All months</option>
-        ${originalMonthOptions.map(g=>`<option value="${esc(g.key)}"${originalDeliveryMonthFilter===g.key?' selected':''}>${esc(g.label)}</option>`).join('')}
-      </select></label>`;
-
-    // Items not shipped yet
-    const notShippedRow=r=>{
-      const originalDue=originalHeaderDate(r);
-      const status=r.statusBucket;
-      const chip=status==='Late'||status==='Past Due'||status==='No Commit'?'bad':status==='Rescheduled'?'warn':'neutral';
-      return `<tr>
-        <td class="soft date">${esc(monthLabel(monthKey(originalDue))||'No original date')}</td>
-        <td class="strong">${esc(r.documentNumber)}</td>
-        <td>${esc(r.name)}</td>
-        <td class="soft">${esc(r.warehouseName||r.warehouse||'')}</td>
-        <td><span class="m${r.itemCode?'':' muted'}">${esc(r.itemCode||'No item code')}</span><span class="item-desc">${esc(r.itemDescription||'')}</span></td>
-        <td class="soft date">${esc(displayDate(originalDue)||'')}</td>
-        <td class="num qty-cell">${fmtNum(r.openQuantity)}</td>
-        <td class="num strong">${money(openLineValue(r))}</td>
-        <td><span class="pill ${chip}">${esc(status)}</span></td>
-      </tr>`;
-    };
-
-    const notes=[];
-    const undated=m.byMonth.filter(g=>g.key==='No Commit'||g.key==='No Date').filter(g=>g.openRows);
-    if(undated.length)notes.push(`${undated.map(g=>`${fmtNum(g.openRows)} open lines (${money(g.openAmount)}) with ${g.key==='No Commit'?'no commit date':'no due date'}`).join(' and ')} are not in the monthly cards or chart.`);
-    if(closedUnknown.closedUnknownRows)notes.push(`${fmtNum(closedUnknown.closedUnknownRows)} closed lines have no delivery here, so are not in shipped totals.`);
-    notes.push(`Ship target uses ${scenario.scenarioDateLabel}.`);
-    if(coverageStart)notes.push(`Delivery history starts ${displayDate(coverageStart)}; earlier comparisons show n/a.`);
-
+    const p=moMonthlyParts(m,m,today);
+    const {scenario,notes}=p;
     // 2v6: the design's cards come first (mwmRenderMonthly); what the page showed before is its Show more detail.
     const legacy=`
-    ${pageGroupHtml('mo-months','Open and shipped, month by month',`<div class="month-spot n${spotMonths.length}">${spotlight}</div>`,{rise:'rise-1'})}
+    ${pageGroupHtml('mo-months','Open and shipped, month by month',p.spot(),{rise:'rise-1'})}
     ${pageGroupHtml('mo-shipped','By delivery month',`
-    <section class="mini-strip cols-3" aria-label="Shipped to date">
-      <div${tipAttr(ohlTip(`Month to date: ${money(mtd.amount)} shipped`,[`${ohN(mtd.rows,'delivery line')}, ${dayRange(monthStart,today)}`,momOk?`Same days last month: ${money(prevMtd.amount)}`:`No earlier month (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Month to date shipped</span><span class="ms-sub">${esc(dayRange(monthStart,today))} · ${momOk?`${signed(mtd.amount-prevMtd.amount)} (${pctChange(mtd.amount,prevMtd.amount)}) vs ${esc(dayRange(prevMonthStart,prevMonthEnd))}`:'No earlier month'}</span></div><div class="ms-num"><span class="ms-big lg">${money(mtd.amount)}</span><span class="ms-amt">${ohN(mtd.rows,'delivery line')}</span></div></div>
-      <div${tipAttr(ohlTip(`Year to date: ${money(ytd.amount)} shipped`,[ohN(ytd.rows,'delivery line'),ytdOk?`Same period ${lastYear}: ${money(lastYtd.amount)}`:`No ${lastYear} data (${notCovered})`]))}><div class="ms-text"><span class="ms-label">Year to date shipped</span><span class="ms-sub">${ytdOk?`${signed(ytd.amount-lastYtd.amount)} (${pctChange(ytd.amount,lastYtd.amount)}) vs same period ${lastYear}`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg">${money(ytd.amount)}</span><span class="ms-amt">${ohN(ytd.rows,'delivery line')}</span></div></div>
-      <div${tipAttr(yoyOk?`${dayRange(monthStart,today)}: ${money(mtd.amount)} vs ${money(lastYearMtd.amount)} in ${lastYear}.`:`Year over year: no ${lastYear} data (${notCovered}).`)}><div class="ms-text"><span class="ms-label">Year over year · ${esc(dayRange(monthStart,today))}</span><span class="ms-sub">${yoyOk?`${money(mtd.amount)} this year vs ${money(lastYearMtd.amount)} in ${lastYear} (${pctChange(mtd.amount,lastYearMtd.amount)})`:`no ${lastYear} data`}</span></div><div class="ms-num"><span class="ms-big lg ${!yoyOk?'':mtd.amount>=lastYearMtd.amount?'good-text':'crit-text'}">${yoyOk?signed(mtd.amount-lastYearMtd.amount):'—'}</span></div></div>
-    </section>
-    <section class="card chart-card">
-      <div class="chart-head"><div class="card-head-text"><h2${sectionTip('mo-chart')}>Shipped and open value by month · ${thisYear}</h2></div>
-        <div class="legend chart"><span><i class="sw lg" style="background:var(--accent)"></i>Shipped</span><span><i class="sw lg" style="background:var(--crit-soft)"></i>Open, past month</span><span><i class="sw lg" style="background:var(--accent-border)"></i>Open, current / upcoming</span></div></div>
-      <div class="pair-chart">${yearGroups.map((g,i)=>{const past=g.key<thisMk,current=g.key===thisMk;return `<div class="pair-col${current?' current':''}"><i class="grow-h" style="height:${barH(g.closedAmount)};background:var(--accent);animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.closedAmount)} shipped`)}></i><i class="grow-h" style="height:${barH(g.openAmount)};background:${past?'var(--crit-soft)':'var(--accent-border)'};animation-delay:${i*45}ms"${tipAttr(`${g.label}: ${money(g.openAmount)} open${past?' (late: this month has passed)':''}`)}></i></div>`;}).join('')}</div>
-      <div class="pair-labels">${yearGroups.map(g=>`<span class="${g.key===thisMk?'current':''}">${esc(shortMonth(parseDate(`${g.key}-01`)))} '${String(thisYear).slice(2)}</span>`).join('')}</div>
-    </section>
-    ${renderTableCard({key:'monthly-summary',info:'mo-summary',title:`Monthly delivery summary · ${thisYear}`,
-      note:anyLastYear?'':`No ${lastYear} months in the export for year over year`,
-      head:[['Month'],['Shipped','','24%'],...(anyLastYear?[[`${lastYear} same month`,'num'],['YoY','num']]:[]),['Open','num'],['% lines shipped','','14%'],['Open lines','num'],['Closed lines','num'],['At risk / late','num']],
-      rows:summaryRows,pageSize:DZ_MONTH_PAGE,minWidth:anyLastYear?980:820,noun:'months'})}
+    ${p.strip()}
+    ${p.chart()}
+    ${renderTableCard(p.summarySpec())}
     ${renderShippedByWarehouseCard(scenario,today)}`,{rise:'rise-2'})}
     ${pageGroupHtml('mo-open','By original delivery date',`
-    ${renderTableCard({key:'monthly-original',info:'mo-original',title:'Original line delivery summary',headExtra:`<div class="inline-controls">${monthSelect}</div>`,
-      head:[['Month'],['% booked $ shipped','','20%'],['% lines','num'],['Open','num'],['Shipped','num'],['Open lines','num'],['Closed lines','num'],['Early / on time','num'],['Late','num'],['Open qty','num']],
-      rows:originalRows,limit:14,minWidth:980,noun:'months',empty:'No original SO line delivery dates were found in this export.'})}
-    ${renderTableCard({key:'monthly-notshipped',info:'mo-notshipped',title:'Items not shipped yet',
-      note:`${originalDeliveryMonthFilter==='ALL'?'By original line delivery month':esc(monthLabel(originalDeliveryMonthFilter)||originalDeliveryMonthFilter)} · ${fmtNum(openOriginalRows.length)} open lines`,
-      head:[['Month'],['SO #'],['Customer','','16%'],['Warehouse','','14%'],['Item / description','','25%'],['Original date'],['Qty open','num'],['Open value','num'],['Status']],
-      items:openOriginalRows,renderRow:notShippedRow,limit:10,minWidth:1000,noun:'lines',sig:dzListSig(openOriginalRows.map(r=>rowKey(r))),empty:'Every line in these months has shipped.'})}
+    ${renderTableCard(p.originalSpec())}
+    ${renderTableCard(p.notShippedSpec())}
     `,{rise:'rise-3'})}
     ${renderShipTargetScenario(scenario,today,{controls:false})}
     <details class="about rise">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutSections(['mo-chart','mo-summary','mo-warehouse','mo-original','mo-notshipped','mo-scenario','mo-calendar'])}${aboutItems(notes.map(esc))}</ul></div></details>`;
@@ -14018,6 +14100,34 @@ function mwmMonthlyData(m){
     return {entries,prevSame,momOk:!!coverageStart&&coverageStart<=months[10],today};
   });
 }
+// 2v9 monthly-move: Monthly's "Orders shipped (booked) by month" and "Month by month" cards, also drawn on Sales Order
+// Health Lagging (Shipments). The same data (mwmMonthlyData); pagerId keeps each page's month table on its own page.
+function mwmMonthlyChartCard(d,booked,partial){
+  // Orders by month, twelve columns; the report month is the indigo one.
+  const verb=booked?'booked':'shipped';
+  const key=booked?'booked':'shipped';
+  const max=Math.max(1,...d.entries.map(x=>x[key].orders));
+  const monthText=(x,i)=>{const l=x.date.toLocaleDateString('en-US',{month:'short',year:'numeric'});return i===11&&partial?`${l} (to date)`:l;};
+  return dzCard({title:`Orders ${verb} by month`,span:6,
+    meta:`<span class="mwm-legend"><span><i class="mwm-sw" style="background:var(--dz-indigo)"></i>This month</span><span><i class="mwm-sw" style="background:var(--dz-ink-6)"></i>Earlier</span></span>`,
+    body:`<div class="mwm-cols" data-tip-notab style="--n:12">${d.entries.map((x,i)=>`<div class="mwm-col dz-fade${i===11?' now':''}" style="--i:${i}"${tipAttr(`${monthText(x,i)}: ${mwmOrders(x[key].orders)} ${verb}, ${money(x[key].value)} on ${ohN(x[key].lines,'line')}.`)}><span class="mwm-col-n">${fmtNum(x[key].orders)}</span><span class="mwm-col-bar" style="height:${(x[key].orders/max*80).toFixed(1)}%"></span></div>`).join('')}</div>
+      <div class="mwm-collabels" style="--n:12">${d.entries.map(x=>`<span>${esc(shortMonth(x.date))}</span>`).join('')}</div>`});
+}
+function mwmMonthlyTableCard(d,booked,partial,pagerId){
+  const key=booked?'booked':'shipped',verb=key;
+  // Month by month, newest first, 10 a page (a new view or filter starts at page 1).
+  const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
+  const moPg=dzPageOf(pagerId,[...d.entries].reverse().map((x,ri)=>({x,ri})),JSON.stringify([key,weeklyFilterKey()]),DZ_MONTH_PAGE);
+  return dzCard({title:'Month by month',span:6,
+    body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
+      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Shipped by the original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Ordered qty delivered, lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
+      ${moPg.rows.map(({x,ri})=>{
+        const i=11-ri,v=x[key],cur=i===11;
+        const label=x.date.toLocaleDateString('en-US',{month:'short'})+(x.date.getMonth()===0||i===0?` ${x.date.getFullYear()}`:'');
+        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(label)}${cur&&partial?' <span class="mwm-todate">to date</span>':''}</span><b role="cell" class="dz-num">${fmtNum(v.orders)}</b><span role="cell" class="dz-num mwm-soft">${moneyShort(v.value)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${fmtNum(v.lines)}</span><b role="cell" class="dz-num" style="color:${mwmRateColor(v.otd)}">${mwmPct(v.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(x.fill)}</span><span role="cell" class="dz-num ${v.late?'mwm-lateN':'mwm-soft'}">${fmtNum(v.late)}</span></div>`;
+      }).join('')}
+    </div></div>${dzPageFoot(pagerId,moPg,'Month by month','months')}`});
+}
 function mwmStatusChip(bucket){
   return /^(late|past due)$/i.test(bucket)?['Past due','red',3]:/no commit/i.test(bucket)?['No commit','red',2]:/resched/i.test(bucket)?['Rescheduled','amber',1]:['Open','teal',0];
 }
@@ -14058,27 +14168,8 @@ function mwmRenderMonthly(m,ctx){
         ${dzStat({label:'Shipped late',value:mwmOrders(s.late),tone:s.late?'red':'muted',tip:'Orders shipped 1+ days after the original date.'})}
       </div>`});
 
-  // Orders by month, twelve columns; the report month is the indigo one.
-  const key=booked?'booked':'shipped';
-  const max=Math.max(1,...d.entries.map(x=>x[key].orders));
-  const monthText=(x,i)=>{const l=x.date.toLocaleDateString('en-US',{month:'short',year:'numeric'});return i===11&&partial?`${l} (to date)`:l;};
-  const chart=dzCard({title:`Orders ${verb} by month`,span:6,
-    meta:`<span class="mwm-legend"><span><i class="mwm-sw" style="background:var(--dz-indigo)"></i>This month</span><span><i class="mwm-sw" style="background:var(--dz-ink-6)"></i>Earlier</span></span>`,
-    body:`<div class="mwm-cols" data-tip-notab style="--n:12">${d.entries.map((x,i)=>`<div class="mwm-col dz-fade${i===11?' now':''}" style="--i:${i}"${tipAttr(`${monthText(x,i)}: ${mwmOrders(x[key].orders)} ${verb}, ${money(x[key].value)} on ${ohN(x[key].lines,'line')}.`)}><span class="mwm-col-n">${fmtNum(x[key].orders)}</span><span class="mwm-col-bar" style="height:${(x[key].orders/max*80).toFixed(1)}%"></span></div>`).join('')}</div>
-      <div class="mwm-collabels" style="--n:12">${d.entries.map(x=>`<span>${esc(shortMonth(x.date))}</span>`).join('')}</div>`});
-
-  // Month by month, newest first, 10 a page (a new view or filter starts at page 1).
-  const cols='minmax(0,1.2fr) repeat(6,minmax(0,1fr))';
-  const moPg=dzPageOf('mwm-months',[...d.entries].reverse().map((x,ri)=>({x,ri})),JSON.stringify([key,weeklyFilterKey()]),DZ_MONTH_PAGE);
-  const table=dzCard({title:'Month by month',span:6,
-    body:`<div class="dz-table mwm-tablewrap"><div role="table" aria-label="Month by month" class="mwm-table" style="--cols:${cols};--cols-s:minmax(0,1.3fr) repeat(4,minmax(0,1fr));--gap:12px">
-      <div class="dz-th" role="row"><span role="columnheader">Month</span><span role="columnheader" class="dz-num"${tipAttr(`Orders ${verb} in the month.`)}>Orders</span><span role="columnheader" class="dz-num">Value</span><span role="columnheader" class="dz-num mwm-hs">Lines</span><span role="columnheader" class="dz-num"${tipAttr('Shipped by the original date.')}>On time</span><span role="columnheader" class="dz-num mwm-hs"${tipAttr('Ordered qty delivered, lines due that month.')}>Fill rate</span><span role="columnheader" class="dz-num"${tipAttr('Orders shipped 1+ days late.')}>Late orders</span></div>
-      ${moPg.rows.map(({x,ri})=>{
-        const i=11-ri,v=x[key],cur=i===11;
-        const label=x.date.toLocaleDateString('en-US',{month:'short'})+(x.date.getMonth()===0||i===0?` ${x.date.getFullYear()}`:'');
-        return `<div role="row" class="dz-tr dz-fade${cur?' mwm-cur':''}" style="--i:${ri}"><span role="cell" class="${cur?'strong':''}">${esc(label)}${cur&&partial?' <span class="mwm-todate">to date</span>':''}</span><b role="cell" class="dz-num">${fmtNum(v.orders)}</b><span role="cell" class="dz-num mwm-soft">${moneyShort(v.value)}</span><span role="cell" class="dz-num mwm-soft mwm-hs">${fmtNum(v.lines)}</span><b role="cell" class="dz-num" style="color:${mwmRateColor(v.otd)}">${mwmPct(v.otd)}</b><span role="cell" class="dz-num mwm-soft mwm-hs">${mwmPct(x.fill)}</span><span role="cell" class="dz-num ${v.late?'mwm-lateN':'mwm-soft'}">${fmtNum(v.late)}</span></div>`;
-      }).join('')}
-    </div></div>${dzPageFoot('mwm-months',moPg,'Month by month','months')}`});
+  const chart=mwmMonthlyChartCard(d,booked,partial);
+  const table=mwmMonthlyTableCard(d,booked,partial,'mwm-months');
 
   const more=mwmMore('mwm-monthly','year over year, original dates, items not shipped yet and the ship calendar',legacy,
     'Ship target parts follow the filters; the rest is the whole report.');
@@ -19316,13 +19407,34 @@ function ohgRender(m){
   const d=ohgData(m);
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
-  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgMetricsSection(m)}`;
+  if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>${ohgShipmentsSection(m)}${ohgMetricsSection(m)}`;
   const common=['An order counts once, however many shipments','Page filters apply'];
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:ohlTip(`Orders shipped in ${mo.label}, vs ${d.month.prev.label}`,common)});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
     tip:ohlTip(`Orders shipped in ${q.label}, vs ${d.quarter.prev.label}`,common)});
-  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgMetricsSection(m)}`;
+  return `<div class="dz-grid ohg-grid">${monthly}${quarterly}</div>${ohgShipmentsSection(m)}${ohgMetricsSection(m)}`;
+}
+// 2v9 monthly-move (owner): Monthly's backward-looking sections on Lagging, under the Monthly and Quarterly cards: orders
+// shipped (or booked) by month and month by month (its Shipped | Booked switch at the right of the title), open and
+// shipped month by month, shipped to date, shipped by warehouse / CM and the original line delivery summary. The same
+// helpers as the Monthly page (mwmMonthlyData, moMonthlyParts); the page filters apply.
+function ohgShipmentsSection(m){
+  if(!m.allRows.length)return '';
+  const today=reportToday();
+  const p=moMonthlyParts(m,momSource(m),today);
+  const d=mwmMonthlyData(m);
+  const booked=mwmMode==='booked';
+  const partial=today.getDate()<new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  const seg=dzSeg([['shipped','Shipped','Orders shipped, by delivery date.'],['booked','Booked','Orders due each month by original date, shipped or not.']]
+    .map(([id,label,tip])=>({label,on:mwmMode===id,onclick:`mwmSetMode('${id}')`,key:`ohg-ship-mode-${id}`,tip})),{label:'Shipments view',cls:'sup-seg-sm'});
+  const original=p.originalSpec('ohg-original-month','One original month, here and in Items not shipped yet on Leading.');
+  const notes=[p.notes.find(t=>/closed lines have no delivery/.test(t)),p.notes.find(t=>/^Delivery history starts/.test(t))].filter(Boolean);
+  return pageGroupHtml('ohg-shipments','Shipments',`<div class="dz-grid">${mwmMonthlyChartCard(d,booked,partial)}${mwmMonthlyTableCard(d,booked,partial,'ohg-ship-months')}</div>
+    ${p.spot()}
+    ${p.strip()}
+    <div class="dz-grid">${momTableCard(p.warehouseSpec())}${momTableCard(original,{meta:p.monthSelect('ohg-original-month','One original month, here and in Items not shipped yet on Leading.')})}</div>
+    ${notes.length?`<p class="mom-foot">${notes.map(esc).join(' ')}</p>`:''}`,{tools:seg,anchor:'ohg-shipments'});
 }
 // --- end 2v6 oh-lagging ---
 // A 12-month sparkline for a value where lower is better (days late): no target line, scale from 0 to the peak.
@@ -19693,6 +19805,8 @@ function ohlPlain(t){return String(t||'').replace(/\n• /g,'; ').replace(/\n/g,
 function ohlRenderLeading(m){
   const oh=orderHealthData(m);
   const c={m,oh,lead:ohLeadingData(m,oh),d:ohAtRiskData(m)};
+  // 2v9 monthly-move: Monthly's forward-looking sections (Open orders by delivery month, Items not shipped yet).
+  const p=m.allRows.length?moMonthlyParts(m,momSource(m),reportToday()):null;
   // 2v6.9: the ship target (it was on Monthly) sits above Status & top reasons, the two in one column beside At risk.
   return `<div class="dz-grid ohl-grid">
     ${ohlAtRiskCard(c)}
@@ -19702,6 +19816,8 @@ function ohlRenderLeading(m){
     ${ohlSupplyCard(c)}
     ${ohlPullCard(c)}
     ${ohlDateChangesCard(c)}
+    ${p?ohlOpenByMonthCard(p):''}
+    ${p?ohlNotShippedCard(p):''}
     ${OHL_LINES_MARK}
   </div>`;
 }
@@ -19928,6 +20044,7 @@ function ohlShipTargetCard(m){
   const shipPg=dzPageOf('ohl-ship',closersAll,JSON.stringify([weeklyFilterKey(),inputDateValue(sd.start),inputDateValue(sd.target),sd.useEffective]),5);
   const closers=shipPg.rows;
   const datesOpen=!!tableMore['mwm-dates'];
+  const calOpen=!!tableMore['ohl-ship-cal']||printMode;
   const scenarioKeys=`onkeydown="if(event.key==='Enter')commitShipScenarioDates();else this.dataset.typed='1'" onblur="setTimeout(commitShipScenarioDates)"`;
   const dates=datesOpen?`<div class="mwm-dates">
       <label>Start <input type="date" id="ship-scenario-start" class="dz-pillinput"${tipAttr('First day of the range.')} value="${esc(inputDateValue(sd.start))}" onchange="setShipScenarioStartDate(this.value,!!this.dataset.typed)" ${scenarioKeys}></label>
@@ -19936,9 +20053,39 @@ function ohlShipTargetCard(m){
     </div>`:'';
   return dzCard({title:sd.isDefaultRange?`${monthName} ship target`:'Ship target',sm:true,cls:'dz-fade ohl-ship',attrs:' style="--i:1"',
     tip:'Open lines due by the end date, and the largest past-due orders.',
-    meta:`<button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button>`,
+    meta:`<button type="button" class="dz-pillinput mwm-datebtn" data-focus-key="mwm-dates" aria-expanded="${datesOpen?'true':'false'}" onclick="toggleTableMore('mwm-dates')"${tipAttr('Change the range or date basis.')}>Dates</button><button type="button" class="dz-pillinput mwm-datebtn mom-calbtn print-hide" data-focus-key="ohl-ship-cal" aria-expanded="${calOpen?'true':'false'}"${calOpen?' aria-controls="ohl-ship-cal"':''} onclick="toggleTableMore('ohl-ship-cal')"${tipAttr('The range in numbers, the open ship calendar and its lines.')}>Calendar &amp; lines</button>`,
     body:`${dates}<div class="mwm-hero"${tipAttr(ohlTip(`Past due: ${mwmOrders(pdOrders)}`,[`${money(pdValue)} open`,`Dated before ${displayDate(sd.start)}`]))}><span class="dz-big sm${pdOrders?' mwm-red':''}">${mwmOrders(pdOrders)}</span><span class="dz-sub">past due · ${moneyShort(pdValue)} open</span></div>
-      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>${dzPageFoot('ohl-ship',shipPg,'Past-due orders','orders')}`});
+      <div class="mwm-closers">${closers.map((r,i)=>`<div class="mwm-closer dz-fade" style="--i:${i}"><b>${esc(r.so)}</b><span class="mwm-closer-c">${esc(r.name)}</span><b class="dz-num">${money(r.value)}</b><span class="dz-num">${dzChip(r.chip[0],r.chip[1])}</span></div>`).join('')}</div>${dzPageFoot('ohl-ship',shipPg,'Past-due orders','orders')}${calOpen?ohlShipCalendar(sd):''}`});
+}
+// 2v9 monthly-move (owner): Monthly's forward-looking sections on Leading. Open orders by delivery month: the shipped and
+// open value by month this year, then the monthly delivery summary (moMonthlyParts, the Monthly page's numbers).
+function ohlOpenByMonthCard(p){
+  const s=p.summarySpec();
+  const undated=p.notes.find(t=>/are not in the monthly cards or chart/.test(t));
+  return dzCard({title:'Open orders by delivery month',span:6,cls:'ohl-card mom-card misc-flat dz-fade',tip:sectionTipText('mo-chart'),
+    meta:p.chartLegend.replace(/^<div class="legend chart">([\s\S]*)<\/div>$/,'<span class="legend chart">$1</span>'),
+    body:`<div class="mom-pair" role="img" aria-label="${esc(`Shipped and open value by month, ${p.thisYear}`)}">${p.pairBars()}</div>
+      <div class="ohl-sec"><div class="ohl-sec-head"><div class="ohl-sec-title"${tipAttr(sectionTipText('mo-summary'))}>${esc(momPlain(s.title))}</div>${s.note?`<span class="mom-note">${s.note}</span>`:''}</div>
+      ${renderTableCard({...s,bare:true})}</div>${undated?`<p class="ohl-note ohl-foot-note">${esc(undated)}</p>`:''}`});
+}
+// Items not shipped yet: open lines by original delivery month, near the Lines card; its Month pick is the one the Original
+// line delivery summary on Lagging uses.
+function ohlNotShippedCard(p){
+  const s=p.notShippedSpec();
+  return momTableCard(s,{cls:'ohl-card',meta:`<span class="mom-note">${s.note}</span>${p.monthSelect('ohl-original-month','One original month, here and in Original line delivery summary on Lagging.')}`});
+}
+// The ship target card's Calendar & lines disclosure (it was Monthly's Ship target scenario): the scenario's five numbers,
+// the open ship calendar and the scenario lines, for the card's range and basis. Shut by default; print opens it.
+function ohlShipCalendar(sd){
+  const pc=shipScenarioPieces(sd);
+  const tone={'crit-text':'red','good-text':'teal'};
+  return `<div class="mom-cal misc-flat" id="ohl-ship-cal">
+    <div class="dz-stats mom-stats">${pc.stats.map(([label,value,sub,t,tip])=>dzStat({label,value,sub,tone:tone[t]||'',tip})).join('')}</div>
+    <div class="ohl-sec"><div class="ohl-sec-head"><div class="ohl-sec-title"${tipAttr(sectionTipText('mo-calendar'))}>Open ship calendar</div><span class="mom-note">${sd.forward?pc.calendarSub:''}</span></div>
+      ${sd.forward?pc.calendar():'<p class="empty-note">Pick an end date on or after the start date to show the calendar.</p>'}</div>
+    <div class="ohl-sec"><div class="ohl-sec-head"><div class="ohl-sec-title">Scenario lines</div><span class="mom-note">${pc.linesNote}</span></div>
+      ${renderTableCard({...pc.linesSpec(),bare:true})}</div>
+  </div>`;
 }
 // Customers at risk by supply source: every at-risk sales line in the look-ahead window is traced to where its item's
 // supply comes from and counted under the first source in trouble: an open PO for the item (late, no commit date, or

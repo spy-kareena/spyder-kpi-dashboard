@@ -103,7 +103,8 @@ const card = (h) => (h.match(/<section class="dz-card stg-card[^"]*" id="stg-car
 test('Hidden Pages: Warehouses is hidden by default, one switch per page (hidden first), and a hidden page leaves the menus', async () => {
   const page = await loaded([sapRow()]);
   // 2v6.9 (owner): the Supply menu's pages start hidden too, so the Supply menu is gone; any can be shown again.
-  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['warehouses', 'supplyweekly', 'supplydemand', 'buildrisk', 'forecast']);
+  // 2v9 (owner): Monthly starts hidden too (its sections are on Sales Order Health, Leading and Lagging).
+  assert.deepEqual(page.run("stgValue('hiddenPages')"), ['monthly', 'warehouses', 'supplyweekly', 'supplydemand', 'buildrisk', 'forecast']);
   assert.doesNotMatch(header(page), /id="hdr-supply-btn"/);
   // A browser that had chosen its hidden pages before gets them hidden once, too (the flag keeps a later choice).
   const old = loadPage({ storage: { spyderKpiSettings: JSON.stringify({ dataSource: 'import', hiddenPages: ['monthly'] }) } });
