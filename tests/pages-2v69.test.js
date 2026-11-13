@@ -127,11 +127,13 @@ test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirme
   h = html(page);
   assert.match(h, /class="dz-stat po-follow po-pair po-risk sel"/);
   assert.equal(page.run("poData(currentMetrics()).poTileRows.followup.map(r=>r.documentNumber).sort().join()"), '500,501,502');
-  assert.match(h, /Unconfirmed or missing price · 3 lines/);
+  // 2v6.9 (owner): the PO lines card has no summary line under its title.
+  assert.doesNotMatch(h, /Unconfirmed or missing price · 3 lines/);
   page.run("setPoTileFilter('missingprice')");
   h = html(page);
   assert.match(h, /class="po-own po-pair-row on amber" data-focus-key="potile-missingprice" aria-pressed="true"/);
-  assert.match(h, /Missing price · 2 lines/);
+  assert.equal(page.run("poData(currentMetrics()).poTileRows.missingprice.length"), 2);
+  assert.doesNotMatch(h, /Missing price · 2 lines/);
   page.run("setPoTileFilter('kitclean')");
   h = html(page);
   assert.match(h, /class="dz-stat kit-stat kit-card po-pair po-risk sel"/);
