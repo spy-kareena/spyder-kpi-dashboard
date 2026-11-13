@@ -141,7 +141,9 @@ test('The page filters apply to the moved sections (same grouping as the Monthly
     return g.filter(x=>x.key&&x.key!=='No Original Delivery Date').flatMap(x=>x.rows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r))).length})()`);
   const all = page.run('currentMetrics().allRows.filter(r=>isOrderLineRow(r)&&hasOpenWork(r)).length');
   assert.ok(want > 0 && want < all);
-  assert.match(html(page), new RegExp(`By original line delivery month · ${want} open lines`));
+  // 2v6.9 (owner): the card shows no note; the filtered count is still what its spec carries.
+  assert.match(page.run("(()=>{const m=currentMetrics();return moMonthlyParts(m,momSource(m),reportToday()).notShippedSpec().note})()"), new RegExp(`By original line delivery month · ${want} open lines`));
+  assert.doesNotMatch(html(page).slice(html(page).indexOf('ohl-notshipped')), /By original line delivery month ·/);
   page.run("setOriginalDeliveryMonthFilter('2026-09')");
   assert.match(html(page), /<option value="2026-09" selected>Sep 2026<\/option>/);
   page.run("setWeeklyView('lagging')");

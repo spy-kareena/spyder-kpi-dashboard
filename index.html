@@ -15932,7 +15932,11 @@ function dzDecorateIcons(root){
 // Every list of lines (Order Health Lines, PO lines, Build Risk orders, Supply / Demand items, Shipments, Search lines)
 // gets a chevron before its title that folds the card to its header. Lists start folded; the ones opened are kept per
 // page and table in this browser (spyderKpiOpenLines). Applied after each draw (renderResults), like the tile icons.
-const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head';
+const DZ_COLLAPSE_HEADS='.ohl-lines-head,.sup-tcard>.sup-thead,.shp-ships>.dz-card-head,.misc-search-lines>.dz-card-head,.ohl-notshipped>.dz-card-head';
+// Lists that start folded every time the board loads (owner, 2v6.9), whatever was chosen on an earlier visit; a fold or
+// unfold during this visit is kept until the page is loaded again.
+const DZ_FOLD_ON_LOAD=new Set(['weekly:items not shipped yet']);
+const dzFoldThisVisit=new Map();
 const DZ_COLLAPSE_KEY='spyderKpiOpenLines';
 // Lists (page:title, as in their collapse key) that start open on a first visit (owner, 2v7: Shipments is open; 2v6.9
 // leading: the Short or at-risk items card, the whole Sales Order Health Supply / Demand view).
@@ -16065,7 +16069,8 @@ function dzDecorateCollapse(root){
     // A list's own choice ('open' / 'closed'; true from 2v6.2 = open) wins over the Settings default; the lists in
     // DZ_OPEN_BY_DEFAULT start open whatever that default is (2v7: Shipments).
     const own=saved[key]===true?'open':saved[key];
-    const closed=own==='closed'||(own!=='open'&&folded&&!DZ_OPEN_BY_DEFAULT.has(key));
+    const closed=DZ_FOLD_ON_LOAD.has(key)?(dzFoldThisVisit.has(key)?dzFoldThisVisit.get(key):true)
+      :own==='closed'||(own!=='open'&&folded&&!DZ_OPEN_BY_DEFAULT.has(key));
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='dz-collapse-btn print-hide';
@@ -16096,6 +16101,7 @@ function dzToggleCollapse(btn,opts){
   btn.setAttribute('aria-label',`${closed?'Show':'Hide'} ${name}`);
   const map=dzCollapsedMap();
   map[btn.dataset.collapseKey]=closed?'closed':'open';
+  dzFoldThisVisit.set(btn.dataset.collapseKey,closed);
   try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
   if(anim&&!closed)moFoldOpen(card,from);
 }
@@ -20430,7 +20436,8 @@ function ohlOpenByMonthCard(p){
 // line delivery summary on Lagging uses.
 function ohlNotShippedCard(p){
   const s=p.notShippedSpec();
-  return momTableCard(s,{cls:'ohl-card',meta:`<span class="mom-note">${s.note}</span>${p.monthSelect('ohl-original-month','One original month, here and in Original line delivery summary on Lagging.')}`});
+  // 2v6.9 (owner): no "By original line delivery month · N open lines" note; the card folds and starts folded on each load.
+  return momTableCard(s,{cls:'ohl-card ohl-notshipped',meta:p.monthSelect('ohl-original-month','One original month, here and in Original line delivery summary on Lagging.')});
 }
 // The ship target card's Calendar & lines disclosure (it was Monthly's Ship target scenario): the scenario's five numbers,
 // the open ship calendar and the scenario lines, for the card's range and basis. Shut by default; print opens it.
