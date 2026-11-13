@@ -840,10 +840,11 @@ test('Purchase Order Health: Build Risk counts CM kits not ticked clean (no mone
   // "3 kits not clean", a split bar (late / due in 30 days / later, one kit each) under it, and no sub line.
   assert.match(card(h), /<span class="dz-stat-v"[^>]*>3<span class="po-unit">kits not clean<\/span><\/span><span class="po-split" aria-hidden="true"><i style="flex:1;[^"]*"><\/i><i style="flex:1;[^"]*"><\/i><i style="flex:1;[^"]*"><\/i><\/span><\/button>/);
   assert.doesNotMatch(card(h), /CM kits in all|dz-stat-s/);
-  assert.deepEqual([...card(h).matchAll(/data-focus-key="potile-(br\w+)"[\s\S]*?(?:<span class="po-own-n">(\d+)<\/span>|<\/button>)/g)].map((m) => [m[1], m[2] ? +m[2] : null]), [['brrisk', null], ['brlate', 1], ['brsoon', 1], ['brlater', 1]]);
+  assert.deepEqual([...card(h).matchAll(/data-focus-key="potile-(br\w+)"[\s\S]*?(?:<span class="po-own-n">(\d+)<\/span>|<\/button>)/g)].map((m) => [m[1], m[2] ? +m[2] : null]), [['brrisk', null], ['brlate', 1], ['brsoon', 1]]); // owner: no Later row in the kits card
+  assert.doesNotMatch(card(h), /potile-brlater/);
   assert.doesNotMatch(card(h).replace(/data-tip="[^"]*"/g, ''), /\$/, 'no money on the card');
   // The card sits in question 3's Kits card, beside Kit Status (0 clean, 4 not clean).
-  assert.match(h, /<h2 class="ohl-q-t" data-tc-skip>Are the Kits Ready\?<\/h2><\/div><section class="dz-card po-kitscard[^"]*" aria-label="Kits"><div class="po-kgrid"><div class="dz-stat kit-stat[^"]*" role="group" aria-label="Kit Status">[\s\S]*?<span class="kit2-n">0<\/span><span class="kit2-l">Clean<\/span>[\s\S]*?<span class="kit2-n">4<\/span><span class="kit2-l">Not clean<\/span>[\s\S]*?<\/div><\/div><div class="dz-stat br-stat br-card/);
+  assert.match(h, /<h2 class="ohl-q-t" data-tc-skip>Are the Kits Ready\?<\/h2><\/div><section class="dz-card po-kitscard[^"]*" aria-label="Kits"><div class="po-kgrid"><div class="dz-stat kit-stat[^"]*" role="group" aria-label="Kit Status">[\s\S]*?<span class="kit2-n">0<\/span><span class="kit2-l">Clean<\/span>[\s\S]*?<span class="kit2-n">4<\/span><span class="kit2-l">Not clean<\/span>[\s\S]*?<\/div><\/div><span class="po-kdiv" aria-hidden="true"><\/span><div class="dz-stat br-stat br-card po-stack/) // owner: a divider between the two;
   assert.deepEqual(page.run("[poBuildRiskData(poData(currentMetrics()).filteredPoOpen,reportToday())].map(b=>[b.late,b.soon,b.later].map(x=>x.map(r=>r.documentNumber).join()))[0]"), ['700', '701', '702']);
   // Kits by CM and month: one CM row (DSM), past due / this month / December cells, 0 of 3 clean.
   // It is a block inside the Kits card now, not a card of its own.

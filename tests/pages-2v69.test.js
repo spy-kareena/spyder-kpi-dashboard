@@ -507,7 +507,8 @@ test('Purchase Orders: no This week focus tile; one Kit Status card (in the kits
   assert.match(h, /<div class="po-step[^"]*" style="--i:2" role="group" aria-label="Unconfirmed · Missing price"><button type="button" class="po-step-main" data-focus-key="potile-followup" onclick="setPoTileFilter\('followup'\)" aria-pressed="false" data-tip="Unconfirmed or missing price: 3 POs not confirmed or with no price \(each PO once\)\n• 3 lines · 30 qty\n• \$3,000 open\nClick to list them\."><span class="po-step-l"><i class="sup-dot" style="background:var\(--dz-amber\)"><\/i>Unconfirmed · Missing price<\/span><span class="po-step-v amber">3<\/span><span class="po-step-bar" aria-hidden="true"><i style="width:75%;background:var\(--dz-amber\)"><\/i><\/span><span class="po-step-of">75% of open POs<\/span><span class="po-step-s">3 lines<\/span><\/button><div class="po-step-rows">/);
   assert.match(h, /data-focus-key="potile-unconfirmed" aria-pressed="false" onclick="setPoTileFilter\('unconfirmed'\)"[^>]*><span class="po-own-name">Unconfirmed<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
   assert.match(h, /data-focus-key="potile-missingprice" aria-pressed="false" onclick="setPoTileFilter\('missingprice'\)"[^>]*><span class="po-own-name">Missing price<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
-  assert.match(h, /<span class="dz-meta">each bar is a share of the <b>4<\/b> open POs<\/span>/);
+  assert.match(h, /data-tip="The open POs, step by step\. Each bar is that number as a share of the 4 open POs\./); // owner: no share note on the card
+  assert.doesNotMatch(h, /each bar is a share of the <b>/);
   // The card lists both kinds, each row its own; the lines title says which.
   page.run("setPoTileFilter('followup')");
   h = html(page);

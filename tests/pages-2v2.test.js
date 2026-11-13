@@ -55,7 +55,7 @@ async function loadedAll() {
 const PAGE_LAYOUT = {
   // Purchase Order Health, Version 1 (owner's pick): the strip and PO At Risk, then Received on time (the vendors list
   // inside it) and Kits (Kit Status, Build Risk and Kits by CM and month inside it), then PO lines.
-  purchaseorders: { cards: ['Where the open POs stand', 'PO At Risk', 'Received on time', 'Kits', 'PO lines'], groups: [] },
+  purchaseorders: { cards: ['Where open POs stand', 'PO At Risk', 'Received on time', 'Kits', 'PO lines'], groups: [] },
   buildrisk: { cards: ['Builds by month', 'Blocking builds', 'Orders at risk or late'], groups: [] },
   supplyweekly: { cards: ['Coverage', 'Short items by warehouse and month'], groups: [] },
   supplydemand: { cards: ['Demand by item group and month', 'Least covered', 'Demand by warehouse', 'Item groups'], groups: [] },
@@ -166,7 +166,9 @@ test('the numbers on the cards are the same numbers the pages computed before', 
   const tile = (key) => h.match(new RegExp(`data-focus-key="potile-${key}"[^>]*data-tip="([^"]*)">[\\s\\S]*?<span class="po-step-v[^"]*">(\\d+)</span>[\\s\\S]*?<span class="po-step-of">([^<]*)</span><span class="po-step-s">([^<]*)</span>`)).slice(1);
   assert.deepEqual(tile('late'), [`Late / missed commit: ${po.latePos} PO past their date\n• ${po.lateLines} line · 10 qty\n• ${po.late} open\nClick to list them.`, String(po.latePos), '33% of open POs', `${po.lateLines} line`]);
   assert.deepEqual(tile('allopen'), [`Open POs: ${po.openPos} POs open in view\n• ${po.open} lines · 30 qty\n• ${po.openValue} open\nClick to list them.`, String(po.openPos), 'every open PO', `${po.open} lines`]);
-  assert.match(h, new RegExp(`each bar is a share of the <b>${po.openPos}</b> open POs`));
+  // (owner: the share note left the card head; the title's tip says it.)
+  assert.match(h, new RegExp(`data-tip="The open POs, step by step\\. Each bar is that number as a share of the ${po.openPos} open POs\\.`));
+  assert.doesNotMatch(h, /each bar is a share of the <b>/);
   assert.match(h, new RegExp(`data-focus-key="potile-unconfirmed"[^>]*data-tip="Unconfirmed: ${po.unconf} PO not confirmed by the vendor`));
   // The PO lines card lists the late card's lines (the default pick), its chip the PO count.
   assert.match(h, new RegExp(`<h2 class="dz-title"[^>]*>PO lines</h2><span class="dz-chip red">${po.latePos} PO</span>`));
