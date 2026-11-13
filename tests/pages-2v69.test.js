@@ -53,10 +53,18 @@ test('Leading: the ship target sits over Status & top reasons in one column; Sta
   assert.deepEqual(page.errors, []);
 });
 
-test('Lagging has no Top offenders cards; Monthly has no ship target in either view', async () => {
-  const page = await loaded(ROWS);
+const delivery = (doc, closed) => so(doc, '08/10/2026', { OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', ClosedDate: closed, CloseDateSource: 'Delivery', DeliveryDocNumber: `D${doc}`, OpenQuantity: '0' });
+test('Lagging: Monthly and Quarterly only (no Top offenders), five tiles each (no Fill rate); Monthly has no ship target', async () => {
+  const page = await loaded([...ROWS, delivery('801', '08/08/2026'), delivery('802', '08/15/2026')]);
   page.run("setWeeklyView('lagging')");
-  assert.doesNotMatch(html(page), /Top offenders · (warehouses|vendors)|ohg-wh-/);
+  const h = html(page);
+  assert.doesNotMatch(h, /Top offenders · (warehouses|vendors)|ohg-wh-/);
+  const cards = [...h.matchAll(/<section class="dz-card dz-span-3 ohg-card dz-fade"[^>]*><div class="dz-card-head"><h2 class="dz-title"[^>]*>(\w+)<\/h2>[\s\S]*?<div class="dz-stats ohg-tiles">([\s\S]*?)<\/section>/g)]
+    .map((m) => [m[1], [...m[2].matchAll(/<div class="dz-stat-l">([^<]+)<\/div>/g)].map((t) => t[1])]);
+  const five = ['On time', 'Perfect order', 'Avg days late', 'Reschedule hit', 'Late orders'];
+  assert.deepEqual(cards, [['Monthly', five], ['Quarterly', five]]);
+  assert.doesNotMatch(h, /class="dz-stat ohg-tile" data-tip="Fill rate|data-tip="(Monthly|Quarterly): orders shipped[^"]*Fill rate/);
+  assert.match(HTML, /\.ohg-tiles>\.ohg-tile:nth-child\(n\+4\)\{grid-column:span 3\}/);
   page.run("setTab('monthly')");
   for (const mode of ['shipped', 'booked']) {
     page.run(`mwmSetMode('${mode}')`);
@@ -67,22 +75,52 @@ test('Lagging has no Top offenders cards; Monthly has no ship target in either v
   assert.deepEqual(page.errors, []);
 });
 
-test('Purchase Orders: no This week focus tile; one Kits card (Not clean count, Clean / Not clean rows) that fills two columns', async () => {
-  const page = await loaded(ROWS);
+test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirmed · Missing price card, each two columns wide', async () => {
+  // 500: unconfirmed; 501: missing price; 502: both (counts once on the card); 503: neither.
+  const page = await loaded([...ROWS.slice(0, 3), po('500', '08/01/2026', { Confirmed: 'N' }), po('501', '10/30/2026', { PriceFlag: 'Missing Price' }),
+    po('502', '10/30/2026', { Confirmed: 'N', PriceFlag: 'Missing Price' }), po('503', '10/30/2026')]);
   page.run("setTab('purchaseorders')");
   let h = html(page);
   assert.doesNotMatch(h, /data-focus-key="potile-duethisweek"|This week focus/);
+  // Kits: the Not clean count, Clean / Not clean rows.
   assert.equal((h.match(/class="dz-stat kit-stat kit-card/g) || []).length, 1);
-  assert.match(h, /<div class="dz-stat kit-stat kit-card po-risk" role="group" aria-label="Kits"><button type="button" class="po-risk-main" data-focus-key="potile-kits" onclick="setPoTileFilter\('kitnotclean'\)" aria-pressed="false"/);
-  assert.match(h, /Kits<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">2<span class="po-unit">lines<\/span>/);
+  assert.match(h, /<div class="dz-stat kit-stat kit-card po-pair po-risk" role="group" aria-label="Kits"><button type="button" class="po-risk-main" data-focus-key="potile-kits" onclick="setPoTileFilter\('kitnotclean'\)" aria-pressed="false"/);
+  assert.match(h, /Kits<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">4<span class="po-unit">lines<\/span>/);
   assert.match(h, /data-focus-key="potile-kitclean" aria-pressed="false" onclick="setPoTileFilter\('kitclean'\)"[^>]*><span class="po-own-name">Clean<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">0<\/span>/);
-  assert.match(h, /data-focus-key="potile-kitnotclean" aria-pressed="false" onclick="setPoTileFilter\('kitnotclean'\)"[^>]*><span class="po-own-name">Not clean<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
-  // The row's column count still counts the Kits card as two (Due this month, Unconfirmed, Missing price + Kits).
+  assert.match(h, /data-focus-key="potile-kitnotclean" aria-pressed="false" onclick="setPoTileFilter\('kitnotclean'\)"[^>]*><span class="po-own-name">Not clean<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">4<\/span>/);
+  // Unconfirmed · Missing price: three POs (502 once), rows Unconfirmed 2 and Missing price 2; the old cards are gone.
+  assert.doesNotMatch(h, /<button type="button" class="dz-stat"[^>]*data-focus-key="potile-(unconfirmed|missingprice)"/);
+  assert.match(h, /<div class="dz-stat po-follow po-pair po-risk" role="group" aria-label="Unconfirmed · Missing price"><button type="button" class="po-risk-main" data-focus-key="potile-followup" onclick="setPoTileFilter\('followup'\)" aria-pressed="false"[^>]*><span class="dz-stat-l dz-ico-l">[\s\S]*?Unconfirmed · Missing price<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">3<\/span><span class="dz-stat-s">\$3K · 3 lines<\/span>/);
+  assert.match(h, /data-focus-key="potile-unconfirmed" aria-pressed="false" onclick="setPoTileFilter\('unconfirmed'\)"[^>]*><span class="po-own-name">Unconfirmed<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
+  assert.match(h, /data-focus-key="potile-missingprice" aria-pressed="false" onclick="setPoTileFilter\('missingprice'\)"[^>]*><span class="po-own-name">Missing price<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
+  // The row's columns: Due this month (1) + the two cards (2 each).
   assert.match(h, /class="dz-stats sup-more-views po-fill" style="--po-cols:5"/);
+  // The card lists both kinds, each row its own; the lines title says which.
+  page.run("setPoTileFilter('followup')");
+  h = html(page);
+  assert.match(h, /class="dz-stat po-follow po-pair po-risk sel"/);
+  assert.equal(page.run("poData(currentMetrics()).poTileRows.followup.map(r=>r.documentNumber).sort().join()"), '500,501,502');
+  assert.match(h, /Unconfirmed or missing price · 3 lines/);
+  page.run("setPoTileFilter('missingprice')");
+  h = html(page);
+  assert.match(h, /class="po-own po-pair-row on amber" data-focus-key="potile-missingprice" aria-pressed="true"/);
+  assert.match(h, /Missing price · 2 lines/);
   page.run("setPoTileFilter('kitclean')");
   h = html(page);
-  assert.match(h, /class="dz-stat kit-stat kit-card po-risk sel"/);
-  assert.match(h, /class="po-own kit-row on" data-focus-key="potile-kitclean" aria-pressed="true"/);
+  assert.match(h, /class="dz-stat kit-stat kit-card po-pair po-risk sel"/);
+  assert.match(h, /class="po-own po-pair-row on" data-focus-key="potile-kitclean" aria-pressed="true"/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('the menu calls Order Health "Sales Order Health": link, page title, logo, Settings', async () => {
+  const page = await loaded(ROWS);
+  const hdr = page.els['app-header'].innerHTML;
+  assert.match(hdr, /aria-label="Spyder Controls Corp, Sales Order Health"/);
+  assert.match(hdr, /data-focus-key="nav-weekly" onclick="setTab\('weekly'\)" aria-current="page"[^>]*>Sales Order Health</);
+  assert.match(html(page), /<h1 class="dz-h1 dz-h1-hidden" tabindex="-1">Sales Order Health<\/h1>/);
+  page.run("setTab('settings')");
+  assert.match(html(page), /id="stg-h-oh" tabindex="-1">[\s\S]*?Sales Order Health<\/h2>/);
+  assert.equal(page.run('activeTab'), 'settings');
   assert.deepEqual(page.errors, []);
 });
 

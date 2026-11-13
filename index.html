@@ -3933,29 +3933,28 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
   .mwm-herocard>.mwm-stats{grid-column:2;grid-row:2/span 3;align-self:center;margin-top:0}
 }
 /* Purchase Orders (2v6.9): This week focus left the strip, so it is six columns with PO At Risk across two; under
-   1260px PO At Risk takes the first row and the other four share the second (two by two from 700px down). The Kits card
-   (Clean / Not clean in one) takes two columns of the second row and lays out like PO At Risk: the Not clean count at
-   the left, "Clean ··· N" and "Not clean ··· N" buttons at the right behind a hairline. */
+   1260px PO At Risk takes the first row and the other four share the second (two by two from 700px down). The Kits and
+   Unconfirmed · Missing price cards (.po-pair, two filters each) take two columns of the second row and lay out like PO
+   At Risk: the count at the left, two "Label ··· N" buttons at the right behind a hairline. */
 .sup-tiles.po-strip{grid-template-columns:repeat(6,minmax(0,1fr))}
 @media (max-width:1259px){.sup-tiles.po-strip{grid-template-columns:repeat(4,minmax(0,1fr))}.po-strip>.sup-tile:last-child{grid-column:auto}}
 @media (max-width:700px){.sup-tiles.po-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:359px){.sup-tiles.po-strip{grid-template-columns:minmax(0,1fr)}}
-.kit-card{position:relative;display:flex;align-items:stretch}
-.sup-more-views.po-fill>.kit-card{flex:2 1 calc((100% - (var(--po-cols,4) - 1)*10px)/var(--po-cols,4)*2 + 10px)}
-.kit-card:hover{background:var(--dz-glass-80)}
-.kit-card.sel{background:#fff;border-color:rgba(84,104,255,.45)}
-:where([data-theme=dark]) .kit-card.sel{background-color:var(--dz-surface)}
-.kit-card .po-risk-main{gap:0}
-.kit-card .po-risk-main .dz-stat-v{margin-top:auto;padding-top:4px}
-.kit-card .po-risk-main{flex:1 1 0;min-width:0}
-.kit-card .po-owners{display:flex;flex-direction:column;justify-content:center;flex:1 1 0;gap:2px;margin-left:14px;padding-left:14px}
-.kit-card .po-own+.po-own{margin-top:0}
-.kit-row .po-own-n{color:var(--dz-teal)}
-.kit-row.amber .po-own-n{color:var(--dz-amber-text)}
-.kit-row.on{background:var(--dz-indigo-bg)}
-.kit-card:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
-@media (max-width:980px){.sup-more-views.po-fill>.kit-card{flex-basis:calc((100% - 20px)/3*2 + 10px)}}
-@media (max-width:640px){.sup-more-views.po-fill>.kit-card{flex-basis:100%}}
+.po-pair{position:relative;display:flex;align-items:stretch}
+.sup-more-views.po-fill>.po-pair{flex:2 1 calc((100% - (var(--po-cols,4) - 1)*10px)/var(--po-cols,4)*2 + 10px)}
+.po-pair:hover{background:var(--dz-glass-80)}
+.po-pair.sel{background:#fff;border-color:rgba(84,104,255,.45)}
+:where([data-theme=dark]) .po-pair.sel{background-color:var(--dz-surface)}
+.po-pair .po-risk-main{flex:1 1 0;min-width:0;gap:0}
+.po-pair .po-risk-main .dz-stat-v{margin-top:auto;padding-top:4px}
+.po-pair .po-owners{display:flex;flex-direction:column;justify-content:center;flex:1 1 0;gap:2px;margin-left:14px;padding-left:14px}
+.po-pair .po-own+.po-own{margin-top:0}
+.po-pair-row .po-own-n{color:var(--dz-teal)}
+.po-pair-row.amber .po-own-n{color:var(--dz-amber-text)}
+.po-pair-row.on{background:var(--dz-indigo-bg)}
+.po-pair:has(.po-risk-main:focus-visible){outline:2px solid var(--dz-indigo);outline-offset:2px}
+@media (max-width:980px){.sup-more-views.po-fill>.po-pair{flex-basis:calc((100% - 20px)/3*2 + 10px)}}
+@media (max-width:640px){.sup-more-views.po-fill>.po-pair{flex-basis:100%}}
 /* Settings, Hidden Pages (2v6.9): across both columns of Dashboard, its rows in three columns (two, then one). */
 #stg-card-hiddenpages{grid-column:1/-1}
 .stg-hp-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:28px;margin-top:6px}
@@ -3963,6 +3962,16 @@ button.ohl-kv:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .stg-hp-list>.stg-row:first-child{border-top:1px solid var(--dz-line-6);padding-top:12px}
 @media (max-width:1180px){.stg-hp-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.stg-hp-list{grid-template-columns:minmax(0,1fr)}}
+/* Order Health, Lagging (2v6.9): five tiles a card (Fill rate left): three across, then two across the width; phones two
+   a row with the last across both. */
+.ohg-tiles{grid-template-columns:repeat(6,minmax(0,1fr))}
+.ohg-tiles>.ohg-tile{grid-column:span 2}
+.ohg-tiles>.ohg-tile:nth-child(n+4){grid-column:span 3}
+@media (max-width:640px){
+  .ohg-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ohg-tiles>.ohg-tile,.ohg-tiles>.ohg-tile:nth-child(n+4){grid-column:auto}
+  .ohg-tiles>.ohg-tile:last-child{grid-column:1/-1}
+}
 /* 2v9:end pages */
 /* 2v8:settings */
 /* Settings in five categories (.stg-cat: the shared .pg-group markup) under a category bar (.stg-nav): the dzSeg pill
@@ -5062,7 +5071,7 @@ async function exportShareSnapshot(){
     shipScenarioDateBasis,
     originalDeliveryMonthFilter,
     buildRiskSnapshot,
-    sankeyOpen:sankeyOpenState(sankeyOpen),sankeyFlow:sankeyFlowPick,buildRiskCmFilter, // Stream F: Big picture switches, the Order Health chart picked, the Build Risk CM
+    sankeyOpen:sankeyOpenState(sankeyOpen),sankeyFlow:sankeyFlowPick,buildRiskCmFilter, // Stream F: Big picture switches, the Sales Order Health chart picked, the Build Risk CM
     reportAsOfDate:displayDate(reportToday()),
     reportAsOfSaveDay:!reportAsOfDate,
     dataQualityIssues,
@@ -8739,8 +8748,8 @@ function poData(m){
   const poOpenValue=rowOpenAmount(filteredPoOpen);
   const poReschedulePerfAmt=poReschedulePerf.rescheduled.reduce((s,r)=>s+(r.isOpen?openLineValue(r):r.amountLocal),0);
   const poDueThisWeekRows=uniqueRows([...poLateRows,...poNoCommitRows,...poFutureRescheduleRows,...poDueThisWeekDateRows]);
-  const poTileRows={late:poLateRows,nocommit:poNoCommitRows,future:poFutureRescheduleRows,duethisweek:poDueThisWeekRows,duemonth:poDueThisMonthRows,unconfirmed:poUnconfirmedRows,missingprice:poMissingPriceRows,allopen:poAllOpenRows,...(poCmOn?{cmlate:poCmLateRows,cmshort:poCmShortRows,cmall:poCmRows}:{})};
-  const poTileTitles={late:'Late / Missed Commit',nocommit:'At Risk - No Commit Date',future:'Future Reschedules',duethisweek:'This Week Focus',duemonth:'Due This Month',unconfirmed:'Unconfirmed POs',missingprice:'Missing Price',allopen:'All Open POs',cmlate:'CM Commit Later Than PO Due',cmshort:'Short or On Hold at Logican',cmall:'On the Logican Sheet'};
+  const poTileRows={late:poLateRows,nocommit:poNoCommitRows,future:poFutureRescheduleRows,duethisweek:poDueThisWeekRows,duemonth:poDueThisMonthRows,unconfirmed:poUnconfirmedRows,missingprice:poMissingPriceRows,followup:uniqueRows([...poUnconfirmedRows,...poMissingPriceRows]),allopen:poAllOpenRows,...(poCmOn?{cmlate:poCmLateRows,cmshort:poCmShortRows,cmall:poCmRows}:{})};
+  const poTileTitles={late:'Late / Missed Commit',nocommit:'At Risk - No Commit Date',future:'Future Reschedules',duethisweek:'This Week Focus',duemonth:'Due This Month',unconfirmed:'Unconfirmed POs',missingprice:'Missing Price',followup:'Unconfirmed or Missing Price',allopen:'All Open POs',cmlate:'CM Commit Later Than PO Due',cmshort:'Short or On Hold at Logican',cmall:'On the Logican Sheet'};
   const data={today,startOfWeek,endOfWeek,thisWeekStart,thisWeekEnd,thisMonthKey,inRange,poOpenRows,poWarehouseOptions,poVendorOptionMap,poVendorOptions,filteredPoOpen,filteredPoAll,poClosedRows,poReceiptRows,realPoReschedule,poLateRows,poNoCommitRows,poFutureRescheduleRows,poDueThisWeekDateRows,poDueThisMonthRows,poAllOpenRows,poUnconfirmedRows,poMissingPriceRows,poReceivedThisWeekRows,poLast3MonthsStart,poOtd3MonthRows,poOtd3Mo,poReschedulePerf,poReceivedWeekAmt,poOtdAmt,poLineRows,poFillRate,poOpenValue,poReschedulePerfAmt,poDueThisWeekRows,poTileRows,poTileTitles,poCmOn,poCmRows,poCmLateRows,poCmShortRows};
   poDataCache={m,key:poFilterKey(),data};
   return data;
@@ -9054,7 +9063,7 @@ function aiOverview(a){
 const AI_TEXT_FILTERS={warehouse:{type:'string',description:'Only rows whose warehouse contains this text'},customer:{type:'string',description:'Only rows whose customer code or name contains this text'},vendor:{type:'string',description:'Only rows whose vendor code or name contains this text'}};
 const KPI_TOOLS=[
   {name:'get_overview',
-    description:'Headline numbers: every Order Health tile (at risk = every open line past due with no reschedule, with no commit date, rescheduled or marked Urgent, with its past due / no commit / rescheduled split and its Us / Them cause split; the page\'s At risk card is the next-month view in order_health.leading.next_month.at_risk: lines due by its due_by date expected more than on_track_tolerance_days late, with no commit date or marked Urgent; no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
+    description:'Headline numbers: every Sales Order Health tile (at risk = every open line past due with no reschedule, with no commit date, rescheduled or marked Urgent, with its past due / no commit / rescheduled split and its Us / Them cause split; the page\'s At risk card is the next-month view in order_health.leading.next_month.at_risk: lines due by its due_by date expected more than on_track_tolerance_days late, with no commit date or marked Urgent; no commit, rescheduled, this week focus, due next week, due this month, all open, OTD 3 mo, shipped this week, fill rate, reschedule hit 12 mo), order_health.leading (at-risk value by cause: us = Spyder, them = customer or carrier, neutral, not_set; open order states; top 6 at-risk reasons; when flagged = weeks since first at risk), order_health.lagging (each lagging rate with the cause of its misses, fill rate by month, perfect order 12 mo, average days late 3 mo), every Purchase Orders tile, the as-of date, loaded files and the data check. With no arguments the numbers match the pages with all filters at All. Optional filters: warehouse (sales and purchase orders), customer / owner / segment (sales orders), vendor (purchase orders).',
     parameters:{type:'object',properties:{warehouse:{type:'string',description:'Warehouse name, or part of it (every matching warehouse is included)'},customer:{type:'string',description:'Customer code or name, or part of it (every match is included)'},owner:{type:'string',description:'Sales document owner'},segment:{type:'string',description:'Customer segment: Marine, RV, Appliance, Shopify, Contract Mfg Cust or Other Customers'},vendor:{type:'string',description:'Vendor code or name, or part of it (every match is included)'}},required:[]},
     run:(a={})=>aiOverview(a)},
   {name:'search_lines',
@@ -9623,7 +9632,7 @@ function renderNeedsFile(kind){
       <h2 class="need-title">${esc(k.title)}</h2>
       <p class="need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>
       ${isSnapshotView?'':`<div class="steps">${k.steps.map(([text,code],i)=>`<div class="step"><span class="step-no">${i+1}</span><span class="step-text">${esc(text)}${code?`<code>${esc(code)}</code>`:''}</span></div>`).join('')}</div>`}
-      <div class="need-actions">${isSnapshotView?'':`<button type="button" class="btn btn-primary btn-lg" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}${kind==='weekly'?'':`<button type="button" class="btn btn-lg" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Order Health page.')}>Back to Order Health</button>`}</div>
+      <div class="need-actions">${isSnapshotView?'':`<button type="button" class="btn btn-primary btn-lg" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}${kind==='weekly'?'':`<button type="button" class="btn btn-lg" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button>`}</div>
     </div>
     <div class="need-preview" aria-hidden="true">
       <span>What this screen will show</span>
@@ -9677,7 +9686,7 @@ function supNeedsFile(kind){
   const k=NEEDS_FILE[kind];
   const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
   const steps=isSnapshotView?'':`<ol class="sup-steps">${k.steps.map(([text,code],i)=>`<li><span class="sup-step-n">${i+1}</span><span class="sup-step-t">${esc(text)}${code?`<code class="sup-code">${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
-  const actions=`<div class="sup-need-actions">${isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Order Health page.')}>Back to Order Health</button></div>`;
+  const actions=`<div class="sup-need-actions">${isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`}<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button></div>`;
   return `<div class="sup-page"><section class="dz-card sup-need dz-fade" aria-labelledby="sup-need-title">
     <div class="sup-need-main">${dzChip(k.tag,'amber')}<h2 class="dz-title sup-need-title" id="sup-need-title">${esc(k.title)}</h2><p class="sup-need-body">${esc(isSnapshotView?k.snapshot:k.body)}</p>${steps}${actions}</div>
     <div class="sup-need-preview" aria-hidden="true"><span class="sup-need-cap">What this screen will show</span>${k.preview.map(([title,desc,h])=>`<div class="sup-need-item"><strong>${esc(title)}</strong><span>${esc(desc)}</span><div class="sup-skel" style="height:${Math.round(h*.6)}px"></div></div>`).join('')}</div>
@@ -9733,7 +9742,7 @@ function supPurchaseOrders(m){
   if(poRiskOwner&&(sel!=='poatrisk'||!poAtRisk.byOwner.has(poRiskOwner)))poRiskOwner='';
   const riskOwnerName=poRiskOwner?((poAtRiskOwners(poAtRisk).find(o=>o.key===poRiskOwner)||{}).name||''):'';
   const linked=poRiskOwner?(tileRows.poatrisk||[]).filter(r=>(atRiskBy.get(r)||{}).owner===poRiskOwner):(tileRows[sel]||[]);
-  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
+  const titles={late:'Late / missed commit',nocommit:'No commit date',future:'Rescheduled',duethisweek:'This week focus',duemonth:'Due this month',unconfirmed:'Unconfirmed',missingprice:'Missing price',followup:'Unconfirmed or missing price',allopen:'All open POs',cmlate:'CM commit later than PO due',cmshort:'Short or on hold at Logican',cmall:'On the Logican sheet',poatrisk:'PO At Risk · expected after the sales order ships',kitclean:'Kit clean',kitnotclean:'Kit not clean'};
   const view=supGet('po-view','open')==='received'?'received':'open';
   const value=rows=>rowOpenAmount(rows),qty=rows=>rowOpenQty(rows);
   const vendorLabel=code=>{const label=poVendorOptionMap.get(code)||code;return label.replace(/^[^-]+ - /,'')||label;};
@@ -9808,11 +9817,12 @@ function supPurchaseOrders(m){
     if(byLine)return `<div class="sup-tile dz-fade po-risk${sel===id?' sel':''}" style="--i:${i}" role="group" aria-label="PO At Risk"><button type="button" class="po-risk-main" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id&&!poRiskOwner?'true':'false'}"${tipAttr(tipText)}>${main}</button>${n&&atRiskOwners.length?poAtRiskOwnersHtml(atRiskOwners):''}</div>`;
     return `<button type="button" class="sup-tile dz-fade${sel===id?' sel':''}" style="--i:${i}" data-focus-key="potile-${id}" onclick="setPoTileFilter('${id}')" aria-pressed="${sel===id?'true':'false'}"${tipAttr(tipText)}>${main}</button>`;
   };
-  const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],['unconfirmed','Unconfirmed',poUnconfirmedRows,'amber','the vendor has not confirmed'],['missingprice','Missing price',poMissingPriceRows,'amber','with no price in SAP'],
+  // 2v6.9: Unconfirmed and Missing price are one card (followUpCardHtml), next to Kits; both take two columns of the row.
+  const extra=[['duemonth','Due this month',poDueThisMonthRows,'',`due in ${today.toLocaleDateString('en-CA',{month:'long'})}`],
     ...(poCmOn?[['cmlate','CM commit later than PO due',poCmLateRows,'red','whose Logican commit date is after the PO due date'],['cmshort','Short or on hold at Logican',poCmShortRows,'amber','short, on hold or hot at Logican'],['cmall','On the Logican sheet',poCmRows,'','matched to its Open Orders']]:[])];
   const extraHtml=extra.map(([id,label,rows,tone,what])=>dzStat({label,value:fmtNum(supDocs(rows)),sub:subOf(rows),tone:rows.length?tone:'teal',onclick:`setPoTileFilter('${id}')`,attrs:` data-focus-key="potile-${id}" aria-pressed="${sel===id?'true':'false'}"`,tip:tipOf(label,rows,what)})).join('')
-    +kitCardHtml(kitCleanRows,kitNotCleanRows,sel);
-  const extraCount=extra.length+2; // the Kits card takes two columns of the row
+    +followUpCardHtml(poUnconfirmedRows,poMissingPriceRows,tileRows.followup,sel)+kitCardHtml(kitCleanRows,kitNotCleanRows,sel);
+  const extraCount=extra.length+4; // the Unconfirmed · Missing price and Kits cards take two columns each
 
   // Vendors with the most late POs, or open POs by warehouse (a click filters the page; again clears it).
   const by=supGet('po-by','vendor')==='wh'?'wh':'vendor';
@@ -9974,21 +9984,39 @@ function poSortRows(rows,{col,dir},{status,date,vendor},tie){
 // --- Kit Clean? (a tick per PO line) ---
 // Saved in the shared notes store like a note (rowOverrides[key].kitClean, stamped by / at, sent to
 // functions/api/notes.js; only true is kept). A tick changes no metric: the row and the Kits card change in place.
-// 2v6.9: one Kits card (it was a Kits Clean and a Kits Not Clean card), laid out like PO At Risk: the Not clean line count
-// at the left (amber while any), and at the right two rows, "Clean ··· N" and "Not clean ··· N", each a button that lists
-// its lines (setPoTileFilter('kitclean' | 'kitnotclean')). The card itself lists the Not clean lines.
+// 2v6.9: a card with two filters in it, laid out like PO At Risk: the label, the big number and its sub line at the left
+// (one button over the whole card, mainId), and at the right two rows "Label ··· N", each a button for its own filter
+// (setPoTileFilter). rows: [{id,label,n,tone,tip}]; tone 'amber' colours the row's count (teal otherwise).
+function poPairCardHtml({cls,label,icon,ico,mainKey,mainId,value,unit='',color='',sub,tip,rows,sel}){
+  const on=sel===mainId||rows.some(r=>r.id===sel);
+  const row=r=>`<button type="button" class="po-own po-pair-row${sel===r.id?' on':''}${r.tone?` ${r.tone}`:''}" data-focus-key="potile-${r.id}" aria-pressed="${sel===r.id}" onclick="setPoTileFilter('${r.id}')"${tipAttr(r.tip)}><span class="po-own-name">${esc(r.label)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(r.n)}</span></button>`;
+  const main=`<button type="button" class="po-risk-main" data-focus-key="potile-${mainKey}" onclick="setPoTileFilter('${mainId}')" aria-pressed="${sel===mainId}"${tipAttr(tip)}><span class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:${ico}">${dzIconSvg(icon)}</span>${esc(label)}</span><span class="dz-stat-v"${color?` style="color:${color}"`:''}>${fmtNum(value)}${unit?`<span class="po-unit">${unit}</span>`:''}</span><span class="dz-stat-s">${esc(sub)}</span></button>`;
+  return `<div class="dz-stat ${cls} po-pair po-risk${on?' sel':''}" role="group" aria-label="${esc(label)}">${main}<div class="po-owners po-pair-rows">${rows.map(row).join('')}</div></div>`;
+}
+// Kits (it was a Kits Clean and a Kits Not Clean card): the Not clean line count (amber while any); Clean / Not clean
+// rows. The card itself lists the Not clean lines.
 const KIT_TILES={kitclean:['Clean','ticked Kit Clean'],kitnotclean:['Not clean','not ticked Kit Clean yet']};
 function kitCardHtml(cleanRows,notRows,sel){
   const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
   const n=notRows.length,amt=rowOpenAmount(notRows);
-  const on=sel==='kitnotclean'||sel==='kitclean';
   const tipOf=(id,rows)=>{const [label,what]=KIT_TILES[id];return `Kits ${label.toLowerCase()}: ${supLines(rows.length)} on ${pos(rows)} (${money(rowOpenAmount(rows))} open) ${what} in PO lines; ${sel===id?'listed below.':'click to list them.'}`;};
-  const row=(id,rows)=>{
-    const [label]=KIT_TILES[id];
-    return `<button type="button" class="po-own kit-row${sel===id?' on':''}${id==='kitnotclean'&&rows.length?' amber':''}" data-focus-key="potile-${id}" aria-pressed="${sel===id}" onclick="setPoTileFilter('${id}')"${tipAttr(tipOf(id,rows))}><span class="po-own-name">${esc(label)}</span><span class="po-own-lead" aria-hidden="true"></span><span class="po-own-n">${fmtNum(rows.length)}</span></button>`;
-  };
-  const main=`<button type="button" class="po-risk-main" data-focus-key="potile-kits" onclick="setPoTileFilter('kitnotclean')" aria-pressed="${sel==='kitnotclean'}"${tipAttr(`Kits: ${supLines(n)} not ticked Kit Clean yet (${pos(notRows)}, ${money(amt)} open), ${fmtNum(cleanRows.length)} clean. Click to list the Not clean lines.`)}><span class="dz-stat-l dz-ico-l"><span class="dz-ico" aria-hidden="true" style="--ico:var(--dz-amber)">${dzIconSvg('box')}</span>Kits</span><span class="dz-stat-v"${n?' style="color:var(--dz-amber-text)"':''}>${fmtNum(n)}<span class="po-unit">${n===1?'line':'lines'}</span></span><span class="dz-stat-s">${esc(`${moneyShort(amt)} · ${pos(notRows)}`)}</span></button>`;
-  return `<div class="dz-stat kit-stat kit-card po-risk${on?' sel':''}" role="group" aria-label="Kits">${main}<div class="po-owners kit-rows">${row('kitclean',cleanRows)}${row('kitnotclean',notRows)}</div></div>`;
+  return poPairCardHtml({cls:'kit-stat kit-card',label:'Kits',icon:'box',ico:'var(--dz-amber)',mainKey:'kits',mainId:'kitnotclean',
+    value:n,unit:n===1?'line':'lines',color:n?'var(--dz-amber-text)':'',sub:`${moneyShort(amt)} · ${pos(notRows)}`,sel,
+    tip:`Kits: ${supLines(n)} not ticked Kit Clean yet (${pos(notRows)}, ${money(amt)} open), ${fmtNum(cleanRows.length)} clean. Click to list the Not clean lines.`,
+    rows:[{id:'kitclean',label:'Clean',n:cleanRows.length,tip:tipOf('kitclean',cleanRows)},{id:'kitnotclean',label:'Not clean',n,tone:n?'amber':'',tip:tipOf('kitnotclean',notRows)}]});
+}
+// Unconfirmed · Missing price (it was two cards): the POs with an unconfirmed or unpriced open line, each PO once
+// (amber while any, teal at none, as the two cards were); Unconfirmed / Missing price rows with their POs. The card
+// itself lists both (filter 'followup').
+function followUpCardHtml(unconfRows,priceRows,bothRows,sel){
+  const pos=rows=>{const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;};
+  const n=supDocs(bothRows);
+  const tipOf=(label,rows,what)=>`${label}: ${pos(rows)} on ${supLines(rows.length)}, ${money(rowOpenAmount(rows))} open (${fmtNum(rowOpenQty(rows))} qty) ${what}; click to list the lines.`;
+  return poPairCardHtml({cls:'po-follow',label:'Unconfirmed · Missing price',icon:'help',ico:'var(--dz-amber)',mainKey:'followup',mainId:'followup',
+    value:n,color:n?'var(--dz-amber-text)':'var(--dz-teal)',sub:`${moneyShort(rowOpenAmount(bothRows))} · ${supLines(bothRows.length)}`,sel,
+    tip:tipOf('Unconfirmed or missing price',bothRows,'the vendor has not confirmed or that have no price in SAP (a PO with both counts once)'),
+    rows:[{id:'unconfirmed',label:'Unconfirmed',n:supDocs(unconfRows),tone:unconfRows.length?'amber':'',tip:tipOf('Unconfirmed',unconfRows,'the vendor has not confirmed')},
+      {id:'missingprice',label:'Missing price',n:supDocs(priceRows),tone:priceRows.length?'amber':'',tip:tipOf('Missing price',priceRows,'with no price in SAP')}]});
 }
 function kitTipText(r){
   if(isSnapshotView)return `Kit ${r.kitClean?'clean':'not ticked clean'}. A shared snapshot cannot change the tick.`;
@@ -10746,9 +10774,9 @@ function stgOrderHealthCard(dis,i){
     stgRow('On-track tolerance',`Days late that still count as on track. Default 2.`,stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
     stgRow('Look-ahead window',`Lines due within it count in At risk and On track. Default 1 month.`,stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
     stgRow('Lines shown',`Lines on the Lines card before Show more. Default 20.`,seg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines shown')),
-    stgRow('Opening view',`Where Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
+    stgRow('Opening view',`Where Sales Order Health opens, also after a new export. Default Leading.`,seg('openingView',[['leading','Leading'],['lagging','Lagging']],'Opening view'))
   ].join('');
-  return stgCard({id:'oh',title:'Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
+  return stgCard({id:'oh',title:'Sales Order Health',icon:'target',color:'#ff3d68',i,changed:keys.some(k=>!stgIsDefault(k)),body});
 }
 function stgNotesCard(dis,i){
   const kind=stgNotesKind,key=stgListKey(kind),list=stgValue(key),what=kind==='po'?'purchase-order':'sales-order';
@@ -11291,7 +11319,7 @@ function searchTimingRepeats(timing,texts){
   return !!t&&texts.some(x=>{const n=norm(x);return !!n&&(n.includes(t)||t.includes(n));});
 }
 function renderGlobalSearchPage(m){
-  const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Order Health')}</button>`;
+  const back=`<button type="button" class="dz-btn print-hide"${tipAttr('Clear the search and go back (Esc does the same).')} data-focus-key="search-back" onclick="clearGlobalSearch()">Back to ${esc(PAGE_TITLES[searchPrevTab]||'Sales Order Health')}</button>`;
   const s=globalSearchResults(m);
   if(s.q.length<2)return miscEmpty('Type at least 2 characters','Search covers order lines, supply / demand and Clear To Build.',back);
   if(!s.total)return miscEmpty(`No matches for “${s.q}”`,'Try fewer words, an item code, an SO or PO number, a customer or a tracking number.',back);
@@ -11377,11 +11405,11 @@ function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
 }
 const NAV_GROUPS=[
-  ['Sales',[['weekly','Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
+  ['Sales',[['weekly','Sales Order Health'],['monthly','Monthly'],['warehouses','Warehouse Timeline'],['metrics','Metrics Timeline']]],
   ['Supply',[['purchaseorders','Purchase Orders'],['supplyweekly','Supply / Demand'],['supplydemand','Supply Mix'],['buildrisk','Build Risk']]],
   ['Help',[['settings','Settings','Data source, Data check, targets, display, comment lists and AI.']]]
 ];
-const PAGE_TITLES={weekly:'Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
+const PAGE_TITLES={weekly:'Sales Order Health',purchaseorders:'Purchase Orders',supplyweekly:'Supply / Demand',monthly:'Monthly',warehouses:'Warehouse Timeline',metrics:'Metrics Timeline',supplydemand:'Supply Mix',buildrisk:'Build Risk',search:'Search',settings:'Settings'};
 // ===== 2v6 foundation: shared UI helpers (dz*) and the page header =====
 // Every page builds its cards, chips, bar rows, filter pills and segmented switches with the helpers below and styles
 // them with the .dz-* classes ("2v6 foundation" in the style block). All of them return HTML strings; text arguments
@@ -11703,7 +11731,7 @@ function renderSidebar(){
   const focus=captureFocus(el);
   el.classList.toggle('searching',sOpen);
   hdrRendering=true;
-  el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
+  el.innerHTML=`<a class="hdr-logo" href="./" aria-label="Spyder Controls Corp, Sales Order Health" onclick="event.preventDefault();dzMenuClose();setTab('weekly')"><img src="${LOGO_SRC}" alt="Spyder Controls Corp" width="132" height="27"></a>
     <div class="hdr-center"><nav class="hdr-nav" aria-label="Pages">${group('Sales').map(link).join('')}</nav>${supply}</div>
     <div class="hdr-right">${file}${search}${askAi}${hdrThemeButton()}${hdrGearButton(onResults&&activeTab==='settings')}</div>`;
   hdrRendering=false;
@@ -11723,7 +11751,7 @@ function setTab(t){
   // The Connect an AI page moved into Settings: 'connect' opens Settings at its card. Settings opens before any export
   // is loaded.
   if(t==='connect'){stgShowCard('connect');return;}
-  if(stgPageHidden(t))t='weekly'; // 2v6.9: a hidden page (Settings > Hidden Pages) opens Order Health
+  if(stgPageHidden(t))t='weekly'; // 2v6.9: a hidden page (Settings > Hidden Pages) opens Sales Order Health
   if(!hasLoadedData()&&t!=='settings')return;
   dzOpenMenu=''; // a page change closes the open menu
   const changed=activeTab!==t;
@@ -11989,7 +12017,7 @@ function ohSetMoreOpen(key,open){
   tableMore=next;
 }
 function renderResults(){
-  if(stgPageHidden(activeTab))activeTab='weekly'; // 2v6.9: a stored or remembered hidden page opens Order Health
+  if(stgPageHidden(activeTab))activeTab='weekly'; // 2v6.9: a stored or remembered hidden page opens Sales Order Health
   cmLoadIfStale();
   const m=currentMetrics();
   const el=document.getElementById('results-screen');
@@ -12025,7 +12053,7 @@ function renderResults(){
   const headNotes=snapshotTag;
   const headRight=loaded?(showTitle&&headMeta?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
     :`<button type="button" class="dz-btn primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`;
-  const headTitle=`<h1 class="dz-h1${showTitle?'':' dz-h1-hidden'}" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Order Health')}</h1>`;
+  const headTitle=`<h1 class="dz-h1${showTitle?'':' dz-h1-hidden'}" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Sales Order Health')}</h1>`;
   let html=showTitle||headRight||headNotes.trim()
     ?`<div class="dz-pagehead rise">${headTitle}${headRight}${headNotes.trim()?`<div class="dz-pagenotes">${headNotes}</div>`:''}</div>`
     :headTitle;
@@ -13909,7 +13937,7 @@ const SECTION_INFO={
     click:'Rest the pointer on a day for its numbers.'},
   'mt-quality':{title:'Order quality',
     what:'On-track, perfect order, backorder and partial ship rates.',
-    click:'Order Health lists the lines behind them.'},
+    click:'Sales Order Health lists the lines behind them.'},
   'mt-open-month':{title:'Open value by due month',
     what:'Open sales-order value by the month each line is due now.',
     click:'Rest the pointer on a bar for its numbers.'},
@@ -13921,10 +13949,10 @@ const SECTION_INFO={
     click:'Show all lists every month.'},
   'mt-attention':{title:'Lines to act on',
     what:'Late, no-commit, rescheduled and missing-price open lines, most overdue first.',
-    click:'Add notes and overrides on Order Health.'},
+    click:'Add notes and overrides on Sales Order Health.'},
   'wh-scorecard':{title:'Warehouse scorecard',
     what:'Open, at-risk and past-due value and delivery rates per warehouse.',
-    click:'Click a row to focus this page and Order Health on it.'},
+    click:'Click a row to focus this page and Sales Order Health on it.'},
   'wh-late':{title:'Which warehouse is defaulting',
     what:'Delivery lines shipped more than 2 days late, per warehouse, most late lines first.',
     click:'Switch Monthly or Quarterly; click a row to focus on that warehouse.'},
@@ -15254,7 +15282,7 @@ addEventListener('focus',refreshSharedNotes);
 // (sankeyOpen) is remembered per browser (localStorage spyderKpiBigPicture), travels in share snapshots (a snapshot's
 // own choice wins while it is open) and goes back to the remembered choice when a new report is loaded; the Build Risk
 // CM pick and the Order Health chart picked travel in snapshots and reset with a new report.
-const SANKEY_TABS={weekly:'Order Health',buildrisk:'Build Risk',supplydemand:'Supply Mix'};
+const SANKEY_TABS={weekly:'Sales Order Health',buildrisk:'Build Risk',supplydemand:'Supply Mix'};
 const BIG_PICTURE_KEY='spyderKpiBigPicture';
 // 2v2: the switch's choice when this browser has made none: Order Health opens with its chart, the others without.
 const BIG_PICTURE_DEFAULT={weekly:true};
@@ -15817,7 +15845,7 @@ function sankeyAbout(tab){
   if(tab==='weekly')return aboutItems([
     '<strong>Open order value</strong> flows from warehouse to status to customer segment; band thickness is value.',
     '<strong>At-risk value</strong> flows from each line’s first reason to Us or Them to customer.',
-    'The 8 largest warehouses and customers show; the rest are grouped. Click a box to filter Order Health.'
+    'The 8 largest warehouses and customers show; the rest are grouped. Click a box to filter Sales Order Health.'
   ]);
   if(tab==='buildrisk')return aboutItems(['<strong>Big picture</strong>: each CM’s orders flow into clear to build, at risk and late, then by month.']);
   if(tab==='supplydemand')return aboutItems(['<strong>Big picture</strong>: red is demand short of supply, amber is covered only by risky supply, blue is covered.']);
@@ -17886,7 +17914,7 @@ function miscNeedsFile(kind){
   const action=k.newFile?'showUpload()':"document.getElementById('add-file-input').click()";
   const steps=isSnapshotView?'':`<ol class="misc-steps">${k.steps.map(([text,code],i)=>`<li class="misc-step"><span class="misc-step-no" aria-hidden="true">${i+1}</span><span class="misc-step-text">${esc(text)}${code?`<code>${esc(code)}</code>`:''}</span></li>`).join('')}</ol>`;
   const add=isSnapshotView?'':`<button type="button" class="dz-btn primary" data-focus-key="needs-add" onclick="${action}"${tipAttr(k.newFile?'Open the load screen to load the KPI export with purchase orders.':'Choose the file to load next to this report.')}>${esc(k.cta)}</button>`;
-  const back=kind==='weekly'?'':`<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Order Health page.')}>Back to Order Health</button>`;
+  const back=kind==='weekly'?'':`<button type="button" class="dz-btn" data-focus-key="needs-back" onclick="setTab('weekly')"${tipAttr('Go to the Sales Order Health page.')}>Back to Sales Order Health</button>`;
   return `<section class="dz-card misc-need dz-fade" aria-labelledby="misc-need-title">
     <div class="misc-need-main">
       ${dzChip(k.tag,'amber')}
@@ -18273,7 +18301,7 @@ function ohRenderTabs(){
   return dzSeg([
     tab('leading','Leading','What is at risk now and why; arrow keys switch views.'),
     tab('lagging','Lagging','How deliveries went last month and last quarter; arrow keys switch views.')
-  ],{tabs:true,label:'Order Health view'});
+  ],{tabs:true,label:'Sales Order Health view'});
 }
 // The reason / cause / when-flagged / override filters picked from the charts, as chips under the filter bar.
 function ohRenderDrillBar(){
@@ -18286,7 +18314,7 @@ function ohRenderDrillChips(){
   const age=OH_AGE_BUCKETS.find(a=>a[0]===weeklyAgeFilter);
   // A reason that is one of the reason tiles shows with the tile's name (2v4).
   const tile=!weeklyReasonMain&&OH_REASON_TILES.find(t=>t.reason===weeklyReasonFilter);
-  return `<div class="oh-drill" role="group" aria-label="Order Health chart filters">
+  return `<div class="oh-drill" role="group" aria-label="Sales Order Health chart filters">
     <span class="oh-drill-label">Filtered by</span>
     ${weeklyReasonFilter?(tile?chip('reason','Reason',tile.label):chip('reason',weeklyReasonMain?'Main reason':'Reason',overrideLabel(weeklyReasonFilter))):''}
     ${weeklyCauseFilter?chip('cause','Cause',OH_CAUSE_LABEL[weeklyCauseFilter]):''}
@@ -18605,7 +18633,8 @@ function ohgDelta(cur,prev,{vs,dp=0,suffix='',lowerBetter=false}){
   const mag=dp?Math.abs(d).toFixed(dp):fmtNum(Math.abs(d));
   return {t:`${d>0?'+':'−'}${mag}${suffix} vs ${vs}`,c:(lowerBetter?d<0:d>0)?'good':'bad'};
 }
-// One card: the order count shipped (headline), its value and lines, the change against the window before, six metric tiles.
+// One card: the order count shipped (headline), its value and lines, the change against the window before, five metric tiles
+// (2v6.9: Fill rate left the cards, the owner's ask; ohgData still works it out).
 function ohgPeriodCard(cur,prev,{title,span,tip,i}){
   const vs=prev.short;
   const od=ohgDelta(cur.orders,prev.orders?prev.orders:null,{vs,suffix:' orders'});
@@ -18619,8 +18648,6 @@ function ohgPeriodCard(cur,prev,{title,span,tip,i}){
   const tiles=[
     tile('On time',cur.otd===null?null:pct(cur.otd),ohgDelta(cur.otd,prev.otd,{vs,suffix:' pts'}),
       cur.otd===null?`On time: no scored deliveries in ${w}.`:`On time: ${fmtNum(cur.onTimeN)} of ${fmtNum(cur.scored)} deliveries shipped on or before the original date in ${w} (1 to 2 days late is not on time); ${pw}: ${prev.otd===null?'none scored':pct(prev.otd)}.`,{tone:cur.otd!==null&&cur.otd>=90?'teal':''}),
-    tile('Fill rate',cur.fill===null?null:pct(cur.fill),ohgDelta(cur.fill,prev.fill,{vs,suffix:' pts'}),
-      cur.fill===null?`Fill rate: no ordered quantity on lines due in ${w}.`:`Fill rate: ${pct(cur.fill)} of the ordered quantity delivered or closed, on the ${ohN(cur.fillN,'line')} whose original date fell in ${w}; ${pw}: ${prev.fill===null?'none':pct(prev.fill)}.`),
     tile('Perfect order',cur.perfect===null?null:pct(cur.perfect),ohgDelta(cur.perfect,prev.perfect,{vs,suffix:' pts'}),
       cur.perfect===null?`Perfect order: no completed lines delivered in ${w}.`:`Perfect order: ${fmtNum(cur.perfectOk)} of ${fmtNum(cur.perfectN)} completed lines were never rescheduled and shipped on time (counted in the month of the last delivery) in ${w}; ${pw}: ${prev.perfect===null?'none':pct(prev.perfect)}.`),
     tile('Avg days late',cur.avgDays===null?null:cur.avgDays.toFixed(1),ohgDelta(cur.avgDays,prev.avgDays,{vs,dp:1,suffix:' days',lowerBetter:true}),
@@ -18639,7 +18666,7 @@ function ohgRender(m){
   const q=d.quarter.cur,mo=d.month.cur;
   const hasShipments=cachedByFilter(m,'has-shipments',()=>parsedRows.some(isShipmentRow));
   if(!hasShipments)return `<div class="dz-grid ohg-grid">${dzCard({title:'Lagging',span:6,cls:'ohg-card',body:'<p class="dz-sub ohg-empty">Needs delivery close-date data: this export has no deliveries to score.</p>'})}</div>`;
-  const common='Counts are orders (an order that ships on several days counts once). On time, Fill rate, Perfect order, Avg days late, Reschedule hit and Late orders use the same rules as the rest of the dashboard, scored for deliveries in the period; the Order Health filters apply.';
+  const common='Counts are orders (an order that ships on several days counts once). On time, Perfect order, Avg days late, Reschedule hit and Late orders use the same rules as the rest of the dashboard, scored for deliveries in the period; the Sales Order Health filters apply.';
   const monthly=ohgPeriodCard(mo,d.month.prev,{title:'Monthly',span:3,i:0,
     tip:`Monthly: orders shipped in ${mo.label}, the last complete month at the report date, and the change against ${d.month.prev.label}. ${common}`});
   const quarterly=ohgPeriodCard(q,d.quarter.prev,{title:'Quarterly',span:3,i:1,
@@ -19167,7 +19194,7 @@ function ohlCustomersCard(c){
     </button>`;
   }).join('');
   return dzCard({title:'Customers at risk',sm:true,cls:'ohl-card dz-fade',span:3,attrs:' style="--i:3"',
-    tip:'The customers with the most at-risk orders; click one to filter Order Health to it.',
+    tip:'The customers with the most at-risk orders; click one to filter Sales Order Health to it.',
     body:rows?`<div class="ohl-list" role="group" aria-label="Customers at risk">${rows}</div>`:'<div class="empty-note">Nothing at risk in this view.</div>'});
 }
 
