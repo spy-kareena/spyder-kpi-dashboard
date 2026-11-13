@@ -10752,7 +10752,7 @@ function poKitCm(r){
 // Build Risk (owner, 2v6.9): every CM kit not ticked clean is a risk; the count only (no money), split by when it is
 // due: late (before today), within 30 days, or later. A tick takes it off at once.
 function poBuildRiskData(open,today){
-  const soonEnd=new Date(+today+30*864e5);
+  const soonEnd=new Date(today);soonEnd.setDate(soonEnd.getDate()+30); // 30 calendar days, safe across a clock change
   const cm=open.filter(poKitCm),late=[],soon=[],later=[],clean=[];
   cm.forEach(r=>{
     if(r.kitClean){clean.push(r);return;}
@@ -10777,7 +10777,7 @@ let poKitPick=null;
 function poKitMonth(r,today){
   const d=parseDate(cmPoDue(r));
   if(!d)return 'none';
-  if(d<new Date(today.getFullYear(),today.getMonth(),1))return 'past';
+  if(d<today)return 'past'; // due before today: past due, as Build Risk's Late counts it
   return monthKey(d);
 }
 function poKitCols(today){
@@ -15950,7 +15950,7 @@ function dzCollapsedMap(){
 // 30d, '27) is left as it is, so names and codes never change. Runs on the text only; aria-labels and tips keep theirs.
 const DZ_TC_SEL=['.dz-title','.ohl-sec-title','.ohl-sec-sub','.section-title','.need-title','.misc-need-title','.sup-need-title','.stg-subt',
   '#results-screen h1','#results-screen h2','#results-screen h3','#results-screen thead th','.dz-th>span','.ohl-sup-th>span','.ohs2-cols>span',
-  '.dz-stat-l','.sup-tile-l','.shp-tile-l','.ohl-tile-l','.ohl-stat-l','.misc-tile-l','.mwm-kpi-l','.kpi-label','.stat-label','.ohl-fig-l','.po-own-name'].join(',');
+  '.dz-stat-l','.sup-tile-l','.shp-tile-l','.ohl-tile-l','.ohl-stat-l','.misc-tile-l','.mwm-kpi-l','.kpi-label','.stat-label','.ohl-fig-l','.po-pair-row .po-own-name'].join(','); // metric rows, not PO At Risk's owner names (people's names stay as typed)
 const DZ_TC_MINOR=new Set(['a','an','the','and','but','or','nor','for','so','yet','as','at','by','in','of','off','on','per','to','up','via','vs','from','with','into']);
 function dzTitleCaseWords(words){
   // words: [{t, seg}] in order; seg = the part it belongs to. First and last word of each part always get a capital.
@@ -15971,7 +15971,7 @@ function dzTitleCaseEl(el){
   if(!doc||!doc.createTreeWalker)return;
   const walker=doc.createTreeWalker(el,4);
   // Hidden descriptions (screen-reader-only text, tip copies) keep their sentence case.
-  const hidden=n=>{const p=n.parentElement;return !!(p&&p.closest&&p.closest('.sr-only,[id^="tipd-"],[data-tip-copy],[hidden]'));};
+  const hidden=n=>{const p=n.parentElement;return !!(p&&p.closest&&p.closest('.sr-only,[id^="tipd-"],[data-tip-copy],[hidden],.dz-asis,[data-tc-skip]'));};
   const nodes=[];for(let n=walker.nextNode();n;n=walker.nextNode())if(!hidden(n))nodes.push(n);
   const words=[],refs=[];let seg=0;
   nodes.forEach((n,ni)=>{
@@ -15982,6 +15982,8 @@ function dzTitleCaseEl(el){
     });
   });
   if(!words.length)return;
+  // Text kept as typed (a search query) still counts as words after these, so "No Matches for “…”" keeps "for" small.
+  if(el.querySelector&&el.querySelector('.dz-asis,[data-tc-skip]'))words.push({t:'x',seg});
   const out=dzTitleCaseWords(words);
   const byNode=new Map();refs.forEach(([ni,ti],k)=>{if(!byNode.has(ni))byNode.set(ni,new Map());byNode.get(ni).set(ti,out[k]);});
   byNode.forEach((m,ni)=>{
@@ -16006,10 +16008,11 @@ function dzFitTables(root){
   root.querySelectorAll('table').forEach(t=>{
     try{
       const head=t.tHead;
-      if(!head||!head.rows.length||!t.getClientRects().length||getComputedStyle(head).display==='none')return;
-      // Start from the table's own widths (a redraw or a wider screen may need less).
+      // Start from the table's own widths (a redraw, a wider screen or a phone card layout may need less), before any
+      // early return, so a table that turned into phone cards drops its desktop min-width.
       t.querySelectorAll('[data-dzfit]').forEach(x=>{x.style.width='';x.style.minWidth='';x.removeAttribute('data-dzfit');});
       t.style.minWidth='';
+      if(!head||!head.rows.length||!t.getClientRects().length||getComputedStyle(head).display==='none')return;
       const ths=[...head.rows[head.rows.length-1].cells];
       if(ths.some(th=>th.getBoundingClientRect().width<2)||ths.some(th=>th.colSpan>1))return;
       const cols=[...t.querySelectorAll(':scope>colgroup>col')];
@@ -16104,6 +16107,8 @@ function dzToggleCollapse(btn,opts){
   dzFoldThisVisit.set(btn.dataset.collapseKey,closed);
   try{localStorage.setItem(DZ_COLLAPSE_KEY,JSON.stringify(map));}catch(err){}
   if(anim&&!closed)moFoldOpen(card,from);
+  // A list's tables are measured when it opens (a folded table has no size when the page draws).
+  if(!closed&&typeof dzFitTables==='function')dzFitTables(card);
 }
 
 // --- 2v7 motion (prefix mo- / dz-): folding line lists, the reveal after a metric click, page and theme cross-fades ---
@@ -20470,7 +20475,7 @@ function ohlToggleSupplyAll(){ohlSupplyAll=!ohlSupplyAll;renderResults();}
 function ohlPoByItem(){
   const by=new Map();
   allLoadedRows.forEach(r=>{
-    if(!/purchase order/i.test(String(r.sourceType||''))||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
+    if(r.isDeleted||!/purchase order/i.test(String(r.sourceType||''))||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
     const item=String(r.itemCode||'').trim().toUpperCase();
     if(!item)return;
     if(!by.has(item))by.set(item,[]);
@@ -20488,7 +20493,7 @@ function ohlSalesDue(r){return parseDate(r.effectiveDueDate||ohOriginalDue(r));}
 function ohlAllocate(poBy){
   const sales=new Map();
   allLoadedRows.forEach(r=>{
-    if(!ohIsSalesRow(r)||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
+    if(r.isDeleted||!ohIsSalesRow(r)||!isOrderLineRow(r)||r.statusBucket==='Closed'||!hasOpenWork(r))return;
     const item=String(r.itemCode||'').trim().toUpperCase();
     if(!item||!poBy.has(item))return;
     if(!sales.has(item))sales.set(item,[]);
