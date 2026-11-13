@@ -3575,7 +3575,10 @@ details.data-check>summary:hover,details.data-check[open]>summary{background:#f5
 .dz-collapsible>.dz-card-head,.dz-collapsible>.sup-thead,.dz-collapsible>.ohl-lines-head{align-items:center}
 .ohl-lines-title,.sup-ttitle,.misc-head-l{display:flex;align-items:center}
 @media screen{.dz-collapsed>:not(:first-child){display:none!important}.dz-collapsed{padding-bottom:22px}}
-/* About these numbers: a round info button at the bottom right of every page; it opens a small panel above itself */
+/* About these numbers: a round info button at the bottom right of every page; it opens a small panel above itself.
+   2v6.9 (owner): the floating button is removed from the board (display:none takes it out of view, focus and the
+   accessibility tree); each card's title tip still explains its numbers. */
+#results-screen details.about:not(.sk-about){display:none!important}
 #results-screen details.about:not(.sk-about){position:fixed;right:24px;bottom:24px;z-index:45;margin:0;padding:0;border:0;background:none;box-shadow:none;width:auto;max-width:none;animation:none}
 #results-screen details.about:not(.sk-about)>summary{list-style:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid rgba(15,23,42,.06);box-shadow:0 10px 30px rgba(15,23,42,.14);color:var(--dz-indigo);cursor:pointer}
 #results-screen details.about:not(.sk-about)>summary::-webkit-details-marker{display:none}
