@@ -1,7 +1,9 @@
-// 2v2 design fixes, Order Health and consistency: Us vs Them once, the At risk now grid, one group vocabulary on every
-// page ("By …" breakdowns, "Lines to act on" with an ⓘ and a count pill), Leading · / Lagging · on Purchase Orders and
-// no Hide links, one-line lagging labels with one target and a neutral "→ 0 pts", and "lines" (not rows) in the text.
-// Run with `node tests/consistency-2v2.test.js`. Fixtures are synthetic (harness.js); no SAP data.
+// Order Health and consistency across pages, first written for the 2v2 design fixes and brought up to date with the
+// 2v6 redesign (one bento grid of cards on Sales Order Health Leading, Monthly and Quarterly cards on Lagging, card
+// titles instead of the 2v2 group names): Us vs Them stays off the board, the At risk card's numbers, the Leading grid,
+// the line lists say lines and carry a count pill, Purchase Order Health has no tabs and Order Health no Hide links,
+// the change line on the Lagging cards ("no change vs Jul" in grey, "1 line" not "1 lines"), and "lines" (not rows) in
+// the text. Run with `node tests/consistency-2v2.test.js`. Fixtures are synthetic (harness.js); no SAP data.
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
@@ -39,121 +41,95 @@ function ctbWorkbook(page) {
   const sheets = [{ name: '0930 - Orders at Risk', aoa: [head, ['Alta', 'September', 10, 7, 2, 1, 0, '70%', '10%'], [null, 'TOTAL', 10, 7, 2, 1, 0, '70%', '10%']] }];
   return new Uint8Array(page.run(`(()=>{const wb=XLSX.utils.book_new();for(const s of ${JSON.stringify(sheets)})XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(s.aoa),s.name);return Array.from(new Uint8Array(XLSX.write(wb,{type:'array',bookType:'xlsx'})));})()`));
 }
+// Every page is checked, so the pages hidden by default (Monthly, Warehouses, the Supply menu; 2v6.9) are shown again
+// first (Settings > Hidden Pages); Metrics is a section of Sales Order Health > Lagging (2v6.9).
 async function loadedAll() {
   const page = loadPage();
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }, { name: 'supply.xls', bytes: utf16Tsv(SD_HEADERS, SD_ROWS) }, { name: 'ctb.xlsx', bytes: ctbWorkbook(page) }]);
+  page.run("stgSet('hiddenPages',[])");
   return page;
 }
 const open = (page, tab, view) => { page.run(`setTab(${JSON.stringify(tab)})${view ? `;setWeeklyView(${JSON.stringify(view)})` : ''}`); return results(page); };
-// Order Health draws both tab panels; only the shown one counts.
-const shown = (h) => h.replace(/<div class="oh-panel" role="tabpanel" id="oh-panel-\w+"[^>]*hidden>[\s\S]*?(?=<div class="oh-panel"|<section class="pg-group[^"]*" aria-labelledby="oh-g-where")/, '');
-const titles = (h) => [...h.matchAll(/<h2 class="pg-group-title" id="[^"]+"[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]);
+// Order Health draws its tab panels; only the shown one counts.
+const panel = (h, id) => { const i = h.indexOf(`id="oh-panel-${id}"`); const j = h.indexOf('<div class="oh-panel"', i + 1); return h.slice(i, j < 0 ? undefined : j); };
+const headings = (h) => [...h.matchAll(/<h[23]\b[^>]*>([\s\S]*?)<\/h[23]>/g)].map((m) => m[1].replace(/<[^>]+>/g, '').trim());
 const PAGES = [['weekly', 'leading'], ['weekly', 'lagging'], ['purchaseorders'], ['buildrisk'], ['supplyweekly'], ['supplydemand'], ['monthly'], ['warehouses'], ['metrics']];
 
-test('Us vs Them shows once: not inside the At Risk card; its card is one column with the numbers right-aligned', async () => {
+test('Us vs Them is off the board (owner, 2v6): no cause bar, card or tag on Leading or Lagging; the at-risk counts stay', async () => {
   const page = await loadedAll();
-  const h = open(page, 'weekly', 'leading');
-  const hero = h.match(/<button type="button" class="card kpi hero[^"]*"[\s\S]*?<\/button>/)[0];
-  assert.doesNotMatch(hero, /oh-cause|Us \$|Them \$|Not set \$/);
-  const lead = h.slice(h.indexOf('id="oh-panel-leading"'), h.indexOf('id="oh-panel-lagging"'));
-  assert.equal((lead.match(/class="split-bar oh-cause-bar/g) || []).length, 1, 'one Us / Them bar on the Leading tab');
-  const card = lead.match(/<section class="card list-card oh-card" aria-labelledby="oh-cause-title">[\s\S]*?<\/section>/)[0];
-  for (const b of card.match(/<button type="button" class="oh-cause-btn[\s\S]*?<\/button>/g)) {
-    assert.match(b, /<span class="oh-cause-name"><i class="sw lg cause-\w+"><\/i>[^<]+<\/span><strong>\$[\d,]+<\/strong><span class="muted">\d+ lines? · \d+ orders?<\/span><\/button>$/);
+  for (const view of ['leading', 'lagging']) {
+    const h = open(page, 'weekly', view);
+    assert.doesNotMatch(h, /oh-cause|cause-tag|cause-(?:us|them)\b|Us \$|Them \$|Us vs Them|Us \/ Them/, view);
   }
-  assert.match(CSS, /\.oh-cause-grid\{display:grid;grid-template-columns:minmax\(0,1fr\);/);
-  assert.match(CSS, /\.oh-cause-btn\{font:inherit;display:grid;grid-template-columns:minmax\(0,1fr\) auto;/);
-  assert.match(CSS, /\.oh-cause-name\{grid-row:1\/span 2;/);
-  assert.match(CSS, /\.oh-cause-btn strong\{grid-column:2;text-align:right;/);
-  assert.match(CSS, /\.oh-cause-btn \.muted\{grid-column:2;text-align:right;white-space:nowrap;/);
   assert.doesNotMatch(HTML, /function ohHeroCause|oh-cause-line/);
-  assert.deepEqual(page.errors, []);
-});
-
-test('the At Risk legend names only the parts with a card beside it; the tip keeps the past-due count', async () => {
-  const page = await loadedAll();
-  const h = open(page, 'weekly', 'leading');
-  const hero = h.match(/<button type="button" class="card kpi hero[^"]*"[\s\S]*?<\/button>/)[0];
+  // The lines the old card split still feed At risk: one past due, one with no commit date, one rescheduled.
   const oh = page.run('(()=>{const o=orderHealthData(currentMetrics());return [o.pastDueNoReschedule.length,o.noCommitRows.length,o.activeRescheduleRows.length];})()');
   assert.deepEqual(oh, [1, 1, 1]);
-  const legend = hero.match(/<div class="legend">([\s\S]*?)<\/div>/)[1];
-  assert.doesNotMatch(legend, /past due/);
-  assert.match(legend, /1 no commit<\/span>/);
-  assert.match(legend, /1 rescheduled<\/span>/);
-  // The bar still splits the whole card (three parts).
-  assert.equal((hero.match(/<div class="split-bar"[^>]*>([\s\S]*?)<\/div>/)[1].match(/<i /g) || []).length, 3);
-  assert.match(hero, /data-tip="At risk: \$[\d,]+ open on 3 orders \(3 lines\), 1 past due with no reschedule; click to list them below\."/);
-});
-
-test('At risk now is one grid: the At Risk card beside No commit date, the tiles beside Rescheduled; even gaps', async () => {
-  assert.match(CSS, /\.oh-risk\{display:grid;grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\);grid-template-areas:"hero nc" "tiles resch";gap:var\(--space-in\)\}/);
-  assert.match(CSS, /\.oh-risk-main,\.oh-risk-side\{display:contents\}/);
-  assert.match(CSS, /\.oh-risk-main>\.hero\{grid-area:hero;/);
-  assert.match(CSS, /\.oh-risk-main>\.ovr\{grid-area:tiles;/);
-  assert.match(CSS, /\.oh-risk-side>:first-child\{grid-area:nc\}/);
-  assert.match(CSS, /\.oh-risk-side>:last-child\{grid-area:resch\}/);
-  assert.match(CSS, /@media \(max-width:1180px\)\{\n  \.oh-risk\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\);grid-template-areas:"hero hero" "tiles tiles" "nc resch"\}/);
-  assert.match(CSS, /@media print\{[\s\S]*?\.oh-risk\{grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\);grid-template-areas:"hero nc" "tiles resch";gap:\.1in\}/);
-  // The By reason and cause cards: the page's 20px gap, each card as tall as its own content.
-  assert.match(CSS, /\.oh-grid\{display:grid;grid-template-columns:minmax\(0,1\.25fr\) minmax\(0,1fr\) minmax\(0,1fr\);gap:var\(--space-in\);/);
-  assert.match(CSS, /\.pg-group \.oh-grid\{align-items:start\}/);
-  assert.doesNotMatch(CSS, /\.pg-group \.oh-grid\{align-items:stretch\}/);
-  // The grid areas follow the markup: the hero then the tiles; No commit date first, Rescheduled last.
-  const page = await loadedAll();
-  const h = open(page, 'weekly', 'leading');
-  assert.match(h, /<div class="oh-risk-main">\s*<button type="button" class="card kpi hero[\s\S]*?<\/button>\s*<div class="ovr">/);
-  assert.match(h, /<div class="oh-risk-side">\s*<button type="button" class="card kpi[^"]*" data-focus-key="tile-nocommit"[\s\S]*?<\/button>\s*<button type="button" class="card kpi[^"]*" data-focus-key="tile-active"[\s\S]*?<\/button>\s*<\/div>/);
-});
-
-test('one group vocabulary: a summary first, breakdowns "By …", the list group "Lines to act on" with an ⓘ and a count pill', async () => {
-  const page = await loadedAll();
-  assert.equal(page.run('weeklyTileFilter'), 'late', 'At risk is the card picked by default');
-  const allowed = /^(By |Lines to act on( · |$)|Lagging · |All open lines$|Ship target scenario$)/;
-  const heads = {};
-  for (const [tab, view] of PAGES) {
-    const h = shown(open(page, tab, view));
-    const t = titles(h);
-    assert.ok(t.length >= 2, `${tab}: ${t}`);
-    t.slice(1).forEach((x) => assert.match(x, allowed, `${tab}${view ? ` ${view}` : ''}: "${x}"`));
-    for (const old of ['Linked PO lines', 'Orders to act on', 'Rows to check', 'Where the gaps are', 'Where the risk is', 'Why lines are at risk', 'Coming due', 'Performance by warehouse', 'Shortages by warehouse', 'Order lines', 'Supply at risk', 'All open demand']) {
-      assert.ok(!t.includes(old), `${tab}: old name "${old}"`);
-    }
-    // The list group's head: the title (its help as the tooltip, no ⓘ button), then the pill with a line count.
-    const head = h.match(/<div class="pg-group-head"><h2 class="pg-group-title" id="[^"]+" data-tip="([^"]+)">Lines to act on<\/h2><span class="count-badge[^"]*">([^<]+)<\/span>/);
-    // (Supply Mix leaves its shortage and risk lines to Supply / Demand, so its groups are all "By …".)
-    if (['weekly', 'purchaseorders', 'buildrisk', 'supplyweekly', 'metrics'].includes(tab)) {
-      assert.ok(head, `${tab}: Lines to act on with its help tip and a pill`);
-      assert.match(head[2], /\b\d+ (?:[\w-]+ )?lines?\b/, `${tab}: ${head[2]}`);
-      const key = page.run(`Object.keys(SECTION_INFO).find(k=>esc(sectionTipText(k))===${JSON.stringify(head[1])})`);
-      assert.equal(page.run(`SECTION_INFO[${JSON.stringify(key)}].title`), 'Lines to act on', `${tab}: the help is the group's own`);
-      heads[tab + (view || '')] = head[2];
-    }
-  }
-  // Order Health and Purchase Orders: the picked card's name, then lines and value, in the same pill.
-  assert.match(heads.weeklyleading, /^At risk · 3 lines · \$[\d,]+$/);
-  assert.match(heads.weeklylagging, /^OTD · 3 mo · \d+ delivered lines? · \$[\d,]+$/);
-  assert.match(heads.purchaseorders, /^Late \/ missed commit · 1 line · 10 open qty · \$[\d,]+$/);
-  // Supply / Demand: one list to act on (short or at-risk lines, warehouse sub-headings), All open lines folded in it.
-  const sd = open(page, 'supplyweekly');
-  assert.deepEqual(titles(sd), ['Coverage', 'Lines to act on']);
-  assert.equal(heads.supplyweekly, '2 lines');
-  assert.ok(sd.includes(`${page.run("sectionTip('sd-shortages')")}>Lines to act on</h2><span class="count-badge bad">2 lines</span>`));
-  assert.equal(page.run("SECTION_INFO['sd-shortages'].title"), 'Lines to act on');
-  assert.deepEqual(titles(open(page, 'supplydemand')), ['By month and warehouse', 'By item group']);
   assert.deepEqual(page.errors, []);
 });
 
-test('Leading · / Lagging · on Purchase Orders; no Hide links on Order Health; an older snapshot with hidden cards opens them', async () => {
+test('the At risk card: orders, value and lines in the head and its tip; Rescheduled and No commit beside it; the status bar keeps the past-due count', async () => {
+  const page = await loadedAll();
+  const lead = panel(open(page, 'weekly', 'leading'), 'leading');
+  const late = page.run('(()=>{const o=orderHealthData(currentMetrics());return {amt:o.lateAmt,lines:o.lateTileRows.length};})()');
+  assert.deepEqual(late, { amt: 23500, lines: 3 });
+  const hero = lead.match(/<button type="button" class="ohl-hero"[\s\S]*?<\/button>/)[0];
+  assert.match(hero, /data-focus-key="tile-late" onclick="setWeeklyTileFilter\('late'\)" aria-pressed="true"/, 'At risk is the card picked by default');
+  assert.match(hero, /<span class="dz-big sm ohl-crit">3 orders<\/span><span class="dz-sub">\$23,500 · 3 lines<\/span>/);
+  assert.match(hero, /data-tip="At risk, due by Oct 3\n• 3 orders, 3 lines\n• \$23,500 open\nClick to list them\."/);
+  const stat = (key) => lead.match(new RegExp(`<button type="button" class="dz-stat ohl-stat" data-focus-key="tile-${key}"[\\s\\S]*?<\\/button>`))[0];
+  assert.match(stat('st-rescheduled'), /Rescheduled<\/span><span class="ohl-stat-v">1 order<\/span><span class="ohl-stat-s">\$1,000 · 1 line<\/span>/);
+  assert.match(stat('st-nocommit'), /No commit<\/span><span class="ohl-stat-v">1 order<\/span><span class="ohl-stat-s">\$1,000 · 1 line<\/span>/);
+  // The past-due count (no card of its own beside At risk) is the status bar's red part, a button with its own name.
+  assert.match(lead, /data-focus-key="status-seg-st-pastdue" aria-label="Past due: 1 order, 20%" aria-pressed="false" onclick="setWeeklyTileFilter\('st-pastdue'\)" data-tip="Past due\n• 1 order · 20% of open\n• \$21,500 open\nClick to list them\."/);
+  assert.deepEqual(page.errors, []);
+});
+
+test('Leading is one bento grid: At risk first, the ship target beside it, even gaps; At risk lists Rescheduled, No commit, All open', async () => {
+  assert.match(CSS, /\.dz-grid\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\);gap:16px\}/);
+  const page = await loadedAll();
+  const lead = panel(open(page, 'weekly', 'leading'), 'leading');
+  assert.match(lead, /^id="oh-panel-leading" aria-labelledby="oh-tab-leading"><div class="dz-grid ohl-grid">\s*<section class="dz-card dz-span-3 ohl-card dz-fade" style="--i:0"><div class="dz-card-head"><h2 class="dz-title sm"[^>]*>At risk<\/h2>/);
+  const at = (s) => lead.indexOf(s);
+  assert.ok(at('>At risk</h2>') < at('ship target</h2>') && at('ship target</h2>') < at('aria-label="Status and top reasons"'), 'At risk, then the ship target, then Status and top reasons');
+  const keys = [...lead.matchAll(/class="dz-stat ohl-stat" data-focus-key="tile-([\w-]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(keys, ['st-rescheduled', 'st-nocommit', 'allopen']);
+});
+
+test('the line lists say lines and carry a count pill; the 2v2 group names are gone from every page', async () => {
+  const page = await loadedAll();
+  const OLD = ['Linked PO lines', 'Orders to act on', 'Rows to check', 'Where the gaps are', 'Where the risk is', 'Why lines are at risk', 'Coming due', 'Performance by warehouse', 'Shortages by warehouse', 'Order lines', 'Supply at risk', 'All open demand', 'At risk now'];
+  for (const [tab, view] of PAGES) {
+    const h = open(page, tab, view);
+    const t = headings(tab === 'weekly' || tab === 'metrics' ? panel(h, view || 'lagging') : h);
+    assert.ok(t.length >= 2, `${tab}: ${t}`);
+    for (const old of OLD) assert.ok(!t.includes(old), `${tab}${view ? ` ${view}` : ''}: old name "${old}"`);
+    assert.ok(!t.some((x) => /\brows\b/i.test(x)), `${tab}: a heading says rows`);
+  }
+  // Leading: the Lines card with its help as the title's tip and the picked card's lines and value in the pill.
+  const lead = panel(open(page, 'weekly', 'leading'), 'leading');
+  assert.match(lead, /<h2 class="dz-title" data-tip="[^"]+">Lines<\/h2><span class="dz-chip red">3 lines · \$23,500<\/span>/);
+  // Lagging: Lines to act on, with its help tip and a line count.
+  const lag = panel(open(page, 'weekly', 'lagging'), 'lagging');
+  const head = lag.match(/<h2 class="pg-group-title" id="[^"]+" data-tip="([^"]+)">Lines to act on<\/h2><span class="count-badge[^"]*">([^<]+)<\/span>/);
+  assert.ok(head, 'Lines to act on with its help tip and a pill');
+  assert.match(head[2], /^\d+ lines?$/);
+  // Purchase Order Health and Build Risk: the list card's pill counts what it lists.
+  assert.match(open(page, 'purchaseorders'), /<h2 class="dz-title" data-tip="[^"]+">PO lines<\/h2><span class="dz-chip[^"]*">1 PO<\/span>/);
+  assert.match(open(page, 'buildrisk'), /<h2 class="dz-title" data-tip="[^"]+">Orders at risk or late<\/h2><span class="dz-chip[^"]*">\d+ orders?<\/span>/);
+  assert.equal(page.run("SECTION_INFO['sd-shortages'].title"), 'Lines to act on');
+  assert.deepEqual(page.errors, []);
+});
+
+test('no tabs or Leading / Lagging groups on Purchase Order Health; no Hide links on Order Health; an older snapshot with hidden cards opens them', async () => {
   const page = await loadedAll();
   const po = open(page, 'purchaseorders');
-  assert.deepEqual(titles(po).slice(0, 2), ['Leading · Supply commitments', 'Lagging · Receiving performance']);
-  assert.equal(page.run("SECTION_INFO['po-commitments'].title"), 'Leading · Supply commitments');
-  assert.equal(page.run("SECTION_INFO['po-receiving'].title"), 'Lagging · Receiving performance');
-  assert.doesNotMatch(po, /role="tab"/, 'no tabs on Purchase Orders');
+  assert.doesNotMatch(po, /role="tab"/, 'no tabs on Purchase Order Health');
+  assert.ok(!headings(po).some((t) => /^(Leading|Lagging) · /.test(t)), 'no Leading · / Lagging · groups (2v6 redesign)');
   for (const view of ['leading', 'lagging']) {
     const h = open(page, 'weekly', view);
     assert.doesNotMatch(h, /toggle-leading|toggle-lagging|toggleLeadingIndicators|toggleLaggingIndicators/, view);
-    assert.doesNotMatch(h.match(/<div class="pg-group-head">[\s\S]*?<\/div>/)[0], />(Hide|Show)</, view);
+    assert.doesNotMatch(h, /<button[^>]*>(Hide|Show)<\/button>/, view);
   }
   // The flags still travel in a snapshot (always off); an older file that saved them on opens with the cards shown.
   let payload = '';
@@ -169,63 +145,71 @@ test('Leading · / Lagging · on Purchase Orders; no Hide links on Order Health;
   assert.deepEqual(viewer.run('[weeklyLeadingCollapsed,weeklyLaggingCollapsed]'), [false, false]);
   const v = results(viewer);
   assert.match(v, /data-focus-key="tile-late"/);
-  assert.match(v, /aria-labelledby="oh-g-due"/);
-  assert.match(v, /data-focus-key="tile-otd3mo"/);
+  assert.match(v, /ship target<\/h2>/);
+  assert.match(open(viewer, 'weekly', 'lagging'), />Monthly<\/h2>[\s\S]*>Quarterly<\/h2>/);
   assert.deepEqual(viewer.errors, []);
 });
 
-test('lagging cards: one-line labels, "target 90%" once, an even month is a grey "→ 0 pts", "1 line" not "1 lines"', async () => {
-  assert.match(CSS, /\.kpi-top \.kpi-label\{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;/);
-  assert.match(CSS, /\.kpi-top>:not\(\.kpi-label\)\{flex-shrink:0\}/);
+test('Lagging cards: the change line says "no change vs Jul" in grey when even, teal or red otherwise; "1 line" not "1 lines"', async () => {
   const page = loadPage();
-  const pill = (a, b) => page.run(`renderDeltaPill([{label:'Jul',otd:${a}},{label:'Aug',otd:${b}},{label:'Sep',otd:null}],'otd')`);
-  assert.match(pill(70, 80), /^<span class="delta up"[^>]*>↑ 10 pts vs Jul<\/span>$/);
-  assert.match(pill(80, 70), /^<span class="delta down"[^>]*>↓ 10 pts vs Jul<\/span>$/);
-  assert.match(pill(70, 70), /^<span class="delta flat"[^>]*>→ 0 pts vs Jul<\/span>$/);
-  assert.match(pill(70, 70), /data-tip="Aug 70% vs Jul 70%; target 90%\."/);
-  assert.match(CSS, /\.delta\.flat\{background:transparent;padding:2px 0;color:var\(--gray-500\)\}/);
+  const delta = (cur, prev, o = {}) => page.run(`ohgDelta(${cur},${prev},${JSON.stringify({ vs: 'Jul', suffix: ' pts', ...o })})`);
+  assert.deepEqual(delta(80, 70), { t: '+10 pts vs Jul', c: 'good' });
+  assert.deepEqual(delta(70, 80), { t: '−10 pts vs Jul', c: 'bad' });
+  assert.deepEqual(delta(70, 70), { t: 'no change vs Jul', c: 'flat' });
+  assert.deepEqual(delta(70, null), { t: 'no Jul data', c: 'flat' });
+  assert.deepEqual(delta(3.5, 2, { dp: 1, suffix: ' days', lowerBetter: true }), { t: '+1.5 days vs Jul', c: 'bad' }, 'fewer days late is better');
+  assert.match(CSS, /\.ohg-flat\{color:var\(--dz-ink-4\)\}/);
+  assert.match(CSS, /\.ohg-good\{color:var\(--dz-teal\)\}/);
+  assert.match(CSS, /\.ohg-bad\{color:var\(--dz-risk-text\)\}/);
 
   const loaded = await loadedAll();
-  const h = open(loaded, 'weekly', 'lagging');
-  const lag = h.slice(h.indexOf('id="oh-panel-lagging"'));
-  const cards = lag.match(/<button type="button" class="card kpi lag[\s\S]*?<\/button>/g);
-  assert.equal(cards.length, 6);
-  for (const c of cards) assert.ok((c.match(/target 90%/g) || []).length <= 1, c.slice(0, 160));
-  // No rescheduled deliveries: a dash, the target once (top right), and the full name in the card's tip.
-  const hit = cards.find((c) => /tile-reschedhit/.test(c));
-  assert.match(hit, /<span class="kpi-label">Reschedule hit · 12 mo<\/span><span class="delta flat"[^>]*>target 90%<\/span><\/div>\s*<div class="kpi-row"><span class="kpi-value neutral"[^>]*>—<\/span><\/div>/);
-  assert.match(hit, /data-tip="Reschedule hit rate/);
-  // One delivery this week, one last week.
-  const ship = cards.find((c) => /tile-shippedweek/.test(c));
-  assert.match(ship, /<span class="kpi-value" data-count="1">1<\/span><span class="kpi-unit">line · \$1K<\/span>/);
-  assert.match(ship, /Last week 1 line · \$1,000 \(this week is partial\)/);
-  assert.doesNotMatch(h, /\b1 lines\b/);
-  const po = open(loaded, 'purchaseorders');
-  assert.match(po, /<span class="kpi-label">Reschedule hit · 12 mo<\/span>/);
-  assert.match(po, /Last week 1 line · \$1,000/);
+  const lag = panel(open(loaded, 'weekly', 'lagging'), 'lagging');
+  const cards = lag.match(/<section class="dz-card dz-span-3 ohg-card[\s\S]*?<\/section>/g);
+  assert.equal(cards.length, 2, 'Monthly and Quarterly');
+  // August: one delivery (6 days late); July has none to compare with.
+  assert.match(cards[0], />Monthly<\/h2><span class="dz-meta">August 2026<\/span>/);
+  assert.match(cards[0], /<span class="dz-big sm ohg-orders">1 order shipped<\/span><span class="dz-sub">\$1K · 1 line<\/span><span class="ohg-delta ohg-flat">no Jul data<\/span>/);
+  assert.match(cards[0], /<div class="dz-stat-l">Avg days late<\/div><div class="dz-stat-v">6\.0<\/div>/);
+  assert.match(cards[0], /data-tip="Avg days late, August 2026: 6\.0\n• 1 late delivery line of 1 scored\n• July 2026: none scored"/);
+  // No rescheduled deliveries: a grey dash and the reason in the tip.
+  assert.match(cards[0], /data-tip="Reschedule hit: no rescheduled deliveries in August 2026\."><div class="dz-stat-l">Reschedule hit<\/div><div class="dz-stat-v" style="color:var\(--dz-ink-5\)">—<\/div>/);
+  for (const c of cards) assert.ok((c.match(/target 90%/gi) || []).length <= 1, c.slice(0, 160));
+  for (const c of cards) assert.doesNotMatch(c, /\b1 lines\b/);
+  assert.doesNotMatch(open(loaded, 'purchaseorders'), /\b1 lines\b/);
   assert.deepEqual(loaded.errors, []);
 });
 
-test('lines, not rows: page text and pills say lines; the page header counts what the page is about', async () => {
+// KNOWN BUG (left failing on purpose, see the 2v6.9 test round report): the month cards under Lagging > Shipments ("Open
+// and shipped, month by month", moMonthlyParts) build their tip with fmtNum(totalRows) + ' lines', so a month with one
+// line reads "$0 shipped (0% of 1 lines)". ohN(totalRows,'line') gives "1 line".
+test('BUG: the Open and shipped month cards say "1 line", not "1 lines", in their tips (moMonthlyParts)', async () => {
+  const loaded = await loadedAll();
+  const lag = panel(open(loaded, 'weekly', 'lagging'), 'lagging');
+  const tips = [...lag.matchAll(/<div class="card month-card[^"]*" data-tip="([^"]+)"/g)].map((m) => m[1]);
+  assert.ok(tips.length >= 2, 'the month cards are drawn');
+  for (const t of tips) assert.doesNotMatch(t, /\b1 lines\b/, t);
+});
+
+test('lines, not rows: page text and pills say lines; the page head counts what the page is about (none on the two Health pages)', async () => {
   const page = await loadedAll();
-  const meta = (h) => h.match(/<span class="page-meta"[^>]*>([^<]*)<\/span>/)[1];
-  const counts = page.run('(()=>{const m=currentMetrics();return {so:m.rows.filter(r=>r.isOpen).length,po:poData(m).poAllOpenRows.length,sd:supplyDemandRows.length};})()');
+  const meta = (h) => (h.match(/<span class="page-meta"[^>]*>([^<]*)<\/span>/) || [])[1];
+  const sd = page.run('supplyDemandRows.length');
   for (const [tab, view] of PAGES) {
     const h = open(page, tab, view);
     const m = meta(h);
-    if (tab === 'purchaseorders') assert.equal(m, `As of 2026-09-03 · ${counts.po} open PO lines`);
-    else if (tab === 'supplyweekly' || tab === 'supplydemand') assert.equal(m, `As of 2026-09-03 · ${counts.sd} supply / demand lines`, tab);
-    else if (tab === 'buildrisk') assert.equal(m, 'As of 2026-09-03', tab);
-    else assert.equal(m, `As of 2026-09-03 · ${counts.so} open SO lines`, tab);
-    const t = text(h);
+    // 2v6.9 (owner): no As of line beside the Sales Order Health or Purchase Order Health title (the date is in the header).
+    if (tab === 'weekly' || tab === 'metrics' || tab === 'purchaseorders') assert.equal(m, undefined, tab);
+    else if (tab === 'supplyweekly' || tab === 'supplydemand') assert.equal(m, `As of 2026-09-03 · ${sd} supply / demand lines`, tab);
+    else assert.equal(m, 'As of 2026-09-03', tab);
+    const t = text(tab === 'weekly' || tab === 'metrics' ? panel(h, view || 'lagging') : h);
     assert.doesNotMatch(t, /\b\d[\d,]* (?:[\w/-]+ ){0,2}rows?\b|% of rows|Sort rows|Open rows|Closed rows|rows shipped|Rows needing|SO rows|report rows/, `${tab}${view ? ` ${view}` : ''}: ${(t.match(/.{40}\brows?\b.{20}/) || [''])[0]}`);
   }
   // A few of the counts, by name.
-  assert.match(text(open(page, 'metrics')), /\d+% of lines/);
+  assert.match(text(panel(open(page, 'metrics'), 'lagging')), /\d+% of lines/);
   assert.match(text(open(page, 'monthly')), /\d+ delivery lines?/);
-  assert.match(open(page, 'supplyweekly'), /<span class="kpi-label"><span class="dot crit"><\/span>Shortage lines<\/span>/);
-  assert.match(open(page, 'weekly', 'leading'), /<label>Sort lines <select id="weekly-line-sort"/);
-  assert.match(open(page, 'purchaseorders'), /<label>Sort lines <select id="po-line-sort"/);
+  assert.match(text(open(page, 'supplyweekly')), /Open demand 22 qty \$2K · 2 lines/);
+  assert.match(open(page, 'weekly', 'leading'), /<select id="weekly-line-sort"[^>]*aria-label="Sort lines"/);
+  assert.match(open(page, 'purchaseorders'), /<select id="po-line-sort"[^>]*aria-label="Sort lines"/);
   assert.deepEqual(page.errors, []);
 });
 
