@@ -381,7 +381,7 @@ test('Lagging: perfect order and average days late on the Monthly card, late ord
   assert.equal(page.run('built'), 0, 'the default tab does not score perfect orders');
   assert.doesNotMatch(html(page), /data-focus-key="tile-perfect"/);
   page.run("setWeeklyView('lagging')");
-  // 2v6.9: the Monthly / Quarterly cards, the Shipments section and Metrics each score their own lines, once per metrics.
+  // 2v6.9: the Monthly / Quarterly cards and the Trend card each score their own lines, once per metrics.
   assert.ok(page.run('built') >= 1);
   page.run('built=0;renderResults()');
   assert.equal(page.run('built'), 0, 'a Lagging redraw reuses the scores');
@@ -396,15 +396,39 @@ test('Lagging: perfect order and average days late on the Monthly card, late ord
   assert.deepEqual(tile('Perfect order'), ['Perfect order, August 2026: 25%\n• 1 of 4 completed lines on time, never rescheduled\n• July 2026: none', '25%']);
   assert.deepEqual(tile('Avg days late'), ['Avg days late, August 2026: 7.3\n• 3 late delivery lines of 4 scored\n• July 2026: none scored', '7.3']);
   // 2v6.9 (owner): the Lagging tiles are figures, not buttons, so there is no Lines card and no Us / Them line on them;
-  // why orders were late is the Metrics section's Late orders by cause (each late order under its first reason).
+  // why orders were late is the Trend card's list (each late order under the first reason of its late delivery).
   assert.doesNotMatch(lag, /id="linked-lines"|cause-text-|<button[^>]*data-focus-key="tile-(perfect|dayslate|otd3mo|fillrate)"/);
-  // A tile beside the other Metrics tiles (owner): each reason and its number, no chart.
-  const causes = lag.match(/<div class="mwm-kpi mwm-kpi-cause[\s\S]*?<\/ul>\s*<\/div>/)[0];
-  assert.match(causes, /<div class="mwm-kpi-l">Late orders by cause<\/div>/);
-  assert.doesNotMatch(causes, /late orders in August/); // owner: no total line under the reasons
-  assert.deepEqual([...causes.matchAll(/<li data-tip="([^"]+)"><span class="mwm-cause-l">([^<]+)<\/span><b class="mwm-cause-v">(\d+)<\/b><\/li>/g)].map((x) => [x[1], x[2], x[3]]),
+  // Lagging, Version 1 (owner): the Metrics tiles are gone, "Late orders by cause" with them; the reasons are a list in
+  // the side panel of the Trend card, under the newest month with a shipment (August: nothing shipped in September yet).
+  assert.doesNotMatch(lag, /class="mwm-kpi[ "]|mwm-kpi-(l|v|cause)|Late orders by cause/);
+  const trend = lag.match(/<section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend">[\s\S]*?<\/section>/)[0];
+  const side = trend.slice(trend.indexOf('<div class="ohgt-side">'));
+  // The side panel leads with the picked metric (On Time) for that month: 1 of 4 deliveries on time, and no change
+  // beside it because nothing was scored in July.
+  assert.match(side, /^<div class="ohgt-side">\s*<h3 data-tip="Shipped by the original date\.">On-time delivery · August<\/h3>\s*<div class="ohgt-now"><span>25%<\/span><\/div>/);
+  const why = side.match(/<div class="ohgt-why">([\s\S]*?)<\/div>/)[1];
+  assert.match(why, /^<h3 data-tip="Each late order under the first reason on its late delivery\.">Why orders were late · August<\/h3><ul class="mwm-causes">/);
+  assert.equal(lag.split('<ul class="mwm-causes">').length - 1, 1, 'one list of reasons on Lagging');
+  // Each reason and its number, most orders first: 200 and 203 shipped late with no reschedule, 202 after its commit.
+  assert.deepEqual([...why.matchAll(/<li data-tip="([^"]+)"><span class="mwm-cause-l">([^<]+)<\/span><b class="mwm-cause-v">(\d+)<\/b><\/li>/g)].map((x) => [x[1], x[2], x[3]]),
     [['Past due · No reschedule: 2 orders of 3 late in August.', 'Past due · No reschedule', '2'], ['Missed commit: 1 order of 3 late in August.', 'Missed commit', '1']]);
-  assert.doesNotMatch(causes, /dz-barrow|<svg/);
+  assert.equal((why.match(/<li\b/g) || []).length, 2, 'nothing in the list but the two reasons');
+  // The list is the page's own count: the late orders of the month, each once, the same number the chart's dot gives.
+  assert.deepEqual(page.run('(()=>{const d=mwmMetricsData(currentMetrics());return {month:d.months[d.L].date.getMonth()+1,causes:d.causes,late:d.lateOrders,monthLate:d.months[d.L].lateOrders}})()'),
+    { month: 8, causes: [['Past due · No reschedule', 2], ['Missed commit', 1]], late: 3, monthLate: 3 });
+  assert.match(trend, /<span class="mwm-pt"[^>]*data-tip="August 2026: On-time delivery 25%\n• 4 orders shipped\n• 3 orders late"><\/span>/);
+  // Owner: no total line under the reasons, no chart in the list.
+  assert.doesNotMatch(why, /late orders in August|\b3 late orders\b|\bTotal\b/i);
+  assert.doesNotMatch(why, /dz-barrow|<svg/);
+  // The line under the list is the report month so far and the year to date (the four August deliveries: $3,000).
+  assert.match(side, /<p class="ohgt-sofar" data-tip="September so far\n• 0 orders shipped, \$0 on 0 delivery lines\n• Year to date: \$3,000 on 4 delivery lines"><b>September so far:<\/b> 0 orders · \$0 shipped · year to date \$3K<\/p>/);
+  // The page's Warehouse filter narrows the list with the rest of Lagging: CM - DSM has one open line and no delivery,
+  // so the card says so in words instead of drawing an empty list.
+  page.run("setWeeklyWarehouseFilter(['CM - DSM'])");
+  const dsm = html(page).slice(html(page).indexOf('id="oh-panel-lagging"'));
+  assert.match(dsm, /<h3[^>]*>Why orders were late · August<\/h3><p class="ohgt-none">No late orders\.<\/p>/);
+  assert.doesNotMatch(dsm, /<ul class="mwm-causes">/);
+  assert.match(dsm, /<div class="ohgt-now"><span>—<\/span><\/div>/);
   assert.deepEqual(page.errors, []);
 });
 
