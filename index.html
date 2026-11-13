@@ -12553,7 +12553,8 @@ function renderResults(){
   // Settings (the gear's dot).
   const showTitle=true;
   const headNotes=snapshotTag;
-  const headRight=loaded?(showTitle&&headMeta?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
+  // 2v6.9 (owner): no "As of …" line beside the Sales Order Health title (the header shows the date).
+  const headRight=loaded?(showTitle&&headMeta&&activeTab!=='weekly'?`<span class="page-meta"${tipAttr(asOfText)}>${esc(headMeta)}</span>`:'')
     :`<button type="button" class="dz-btn primary" data-focus-key="load-export"${tipAttr('Open the load screen to add a SAP export.')} onclick="showUpload()">Load an export</button>`;
   const headTitle=`<h1 class="dz-h1${showTitle?'':' dz-h1-hidden'}" tabindex="-1">${esc(PAGE_TITLES[activeTab]||'Sales Order Health')}</h1>`;
   let html=showTitle||headRight||headNotes.trim()
