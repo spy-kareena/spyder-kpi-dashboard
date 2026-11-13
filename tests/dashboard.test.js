@@ -243,7 +243,8 @@ test('"Not At Risk" clears a line from late counts on every tab, and clearing it
   page.run(`updateRowOverride(${JSON.stringify(poKey)},'status','Not At Risk')`);
   assert.equal(page.run('currentMetrics().pastDueRows.length'), 0);
   page.run('setTab("purchaseorders")');
-  assert.match(page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Late \/ missed commit 0 \$0 · 0 lines/);
+  // Where the open POs stand (lines only, no money): the overridden PO is still open but no longer late.
+  assert.match(page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Open POs 1 every open PO 1 line [\s\S]* Late \/ missed commit 0 0% of open POs 0 lines /);
   page.run(`updateRowOverride(${JSON.stringify(soKey)},'status','')`);
   assert.equal(page.run('currentMetrics().pastDueRows.length'), 1);
 });
@@ -254,9 +255,10 @@ test('PO tab shows unconfirmed and missing-price lines', async () => {
   await upload(page, [{ name: 'e.xls', bytes: sapExport([po({ DocumentNumber: '41', Confirmed: 'N' }), po({ DocumentNumber: '42', PriceFlag: 'Missing Price', AmountLocal: '0.00' }), po({ DocumentNumber: '43' })]) }]);
   page.run('setTab("purchaseorders")');
   const text = page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  // Purchase Order Health: one Unconfirmed · Missing price card (2 lines, $1K: the missing-price line has no value)
-  // that splits into its two counts; what each one counts is in its tooltip.
-  assert.match(text, /Unconfirmed · Missing price 2 \$1K · 2 lines Unconfirmed 1 Missing price 1 /);
+  // Purchase Order Health: the Unconfirmed · Missing price step of the open POs strip (2 of the 3 open POs, 2 lines;
+  // lines only, no money) splits into its two counts; what each one counts is in its tooltip.
+  assert.match(text, /Unconfirmed · Missing price 2 67% of open POs 2 lines Unconfirmed 1 Missing price 1 /);
+  assert.doesNotMatch(text, /Unconfirmed · Missing price 2 \$/);
 });
 
 test('fractional quantities are not rounded away', () => {

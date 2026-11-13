@@ -134,11 +134,16 @@ test('Trend (id ohg-metrics) leads Lagging\'s detail grid under Monthly and Quar
   assert.equal(page.run('weeklyView'), 'lagging');
   const h = html(page);
   const grid = h.indexOf('<div class="dz-grid ohg-grid">');
-  const det = h.indexOf('<div class="dz-grid ohg-detail"><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title" data-tip="One metric over the months shown. Pick a metric to redraw the chart.">Trend</h2>');
+  // Every page reads as questions: question 1 "How Did We Do?" heads Monthly and Quarterly; inside the detail grid
+  // question 2 comes before Trend, 3 before Month by month and 4 before By warehouse (each a full-width row).
+  assert.match(h, /<div class="ohl-q solo"><span class="ohl-q-n" aria-hidden="true">1<\/span><h2 class="ohl-q-t" data-tc-skip>How Did We Do\?<\/h2><\/div><div class="dz-grid ohg-grid">/);
+  const det = h.indexOf('<div class="dz-grid ohg-detail"><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">2</span><h2 class="ohl-q-t" data-tc-skip>Which Way Is It Heading, and Why?</h2></div><section class="dz-card dz-span-6 ohgt-trend" id="ohg-metrics" aria-label="Trend"><div class="ohgt-head"><h2 class="dz-title" data-tip="One metric over the months shown. Pick a metric to redraw the chart.">Trend</h2>');
   assert.ok(grid > 0 && det > grid, 'the detail grid follows the Monthly and Quarterly cards, Trend first');
   assert.equal(h.split('id="ohg-metrics"').length - 1, 1, 'one anchor');
   const d = detail(page);
   assert.deepEqual(cards(d).map((c) => [c.title, c.cls.match(/dz-span-\d/)[0]]), [['Trend', 'dz-span-6'], ['Month by month', 'dz-span-6'], ['By warehouse', 'dz-span-3'], ['Booked vs shipped', 'dz-span-3']]);
+  assert.match(d, /<\/section><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">3<\/span><h2 class="ohl-q-t" data-tc-skip>How Did Each Month Go\?<\/h2><\/div><section class="dz-card dz-span-6[^"]*"[^>]*><div class="dz-card-head"><h2 class="dz-title"[^>]*>Month by month<\/h2>/);
+  assert.match(d, /<\/section><div class="ohl-q dz-span-6"><span class="ohl-q-n" aria-hidden="true">4<\/span><h2 class="ohl-q-t" data-tc-skip>Who Shipped It, and What Is Still Open\?<\/h2><\/div><section class="dz-card dz-span-3[^"]*"[^>]*><div class="dz-card-head"><h2 class="dz-title"[^>]*>By warehouse<\/h2>/);
   // Gone from Lagging on purpose (owner): the Metrics and Shipments page groups with their KPI tiles and sparklines,
   // the Late orders by cause tile, the On-time delivery chart, the Monthly metrics table, the Orders shipped by month
   // chart, the month cards, the shipped-to-date strip, the Shipped | Booked switch, the original month select, any
@@ -479,7 +484,7 @@ test('BUG: ohgSetTrendMetric falls back to On Time for a name every object has (
   assert.deepEqual(page.errors, []);
 });
 
-test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirmed · Missing price card, each two columns wide', async () => {
+test('Purchase Orders: no This week focus tile; one Kit Status card (in the kits card) and one Unconfirmed · Missing price step (in the open POs strip)', async () => {
   // 500: unconfirmed; 501: missing price; 502: both (counts once on the card); 503: neither.
   const page = await loaded([...ROWS.slice(0, 3), po('500', '08/01/2026', { Confirmed: 'N' }), po('501', '10/30/2026', { PriceFlag: 'Missing Price' }),
     po('502', '10/30/2026', { Confirmed: 'N', PriceFlag: 'Missing Price' }), po('503', '10/30/2026')]);
@@ -489,20 +494,23 @@ test('Purchase Orders: no This week focus tile; one Kits card and one Unconfirme
   // Kits: the Not clean count, Clean / Not clean rows.
   assert.equal((h.match(/class="dz-stat kit-stat kit-card/g) || []).length, 1);
   // 2v6.9 (owner): "Kit Status" shows only two numbers, Clean and Not clean; each lists its lines.
-  assert.match(h, /<div class="dz-stat kit-stat kit-card kit2 po-pair po-risk" role="group" aria-label="Kit Status">[\s\S]*?Kit Status<\/span><div class="kit2-row">/);
+  // Version 1 (owner): Kit Status lives in question 3's kits card, with a Clean / Not clean split bar under its label
+  // (all four kits not clean here, so one amber part).
+  assert.match(h, /<section class="dz-card po-kitscard[^"]*"[^>]*>[\s\S]*?<div class="po-kgrid"><div class="dz-stat kit-stat kit-card kit2 po-pair po-risk" role="group" aria-label="Kit Status">[\s\S]*?Kit Status<\/span><span class="po-split" aria-hidden="true"><i style="flex:4;background:var\(--dz-amber\)"><\/i><\/span><div class="kit2-row">/);
   assert.match(h, /data-focus-key="potile-kitclean" aria-pressed="false" onclick="setPoTileFilter\('kitclean'\)"[^>]*><span class="kit2-n">0<\/span><span class="kit2-l">Clean<\/span>/);
   assert.match(h, /data-focus-key="potile-kitnotclean" aria-pressed="false" onclick="setPoTileFilter\('kitnotclean'\)"[^>]*><span class="kit2-n">4<\/span><span class="kit2-l">Not clean<\/span>/);
   // Unconfirmed · Missing price: three POs (502 once), rows Unconfirmed 2 and Missing price 2; the old cards are gone.
+  // Version 1 (owner): it is a step of "Where the open POs stand": 3 of the 4 open POs (75%), lines only, no money.
   assert.doesNotMatch(h, /<button type="button" class="dz-stat"[^>]*data-focus-key="potile-(unconfirmed|missingprice)"/);
-  assert.match(h, /<div class="dz-stat po-follow po-pair po-risk" role="group" aria-label="Unconfirmed · Missing price"><button type="button" class="po-risk-main" data-focus-key="potile-followup" onclick="setPoTileFilter\('followup'\)" aria-pressed="false"[^>]*><span class="dz-stat-l dz-ico-l">[\s\S]*?Unconfirmed · Missing price<\/span><span class="dz-stat-v" style="color:var\(--dz-amber-text\)">3<\/span><span class="dz-stat-s">\$3K · 3 lines<\/span>/);
+  assert.doesNotMatch(h, /class="dz-stat po-follow|class="dz-stats sup-more-views po-fill"|class="sup-tiles po-strip"/);
+  assert.match(h, /<div class="po-step[^"]*" style="--i:2" role="group" aria-label="Unconfirmed · Missing price"><button type="button" class="po-step-main" data-focus-key="potile-followup" onclick="setPoTileFilter\('followup'\)" aria-pressed="false" data-tip="Unconfirmed or missing price: 3 POs not confirmed or with no price \(each PO once\)\n• 3 lines · 30 qty\n• \$3,000 open\nClick to list them\."><span class="po-step-l"><i class="sup-dot" style="background:var\(--dz-amber\)"><\/i>Unconfirmed · Missing price<\/span><span class="po-step-v amber">3<\/span><span class="po-step-bar" aria-hidden="true"><i style="width:75%;background:var\(--dz-amber\)"><\/i><\/span><span class="po-step-of">75% of open POs<\/span><span class="po-step-s">3 lines<\/span><\/button><div class="po-step-rows">/);
   assert.match(h, /data-focus-key="potile-unconfirmed" aria-pressed="false" onclick="setPoTileFilter\('unconfirmed'\)"[^>]*><span class="po-own-name">Unconfirmed<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
   assert.match(h, /data-focus-key="potile-missingprice" aria-pressed="false" onclick="setPoTileFilter\('missingprice'\)"[^>]*><span class="po-own-name">Missing price<\/span><span class="po-own-lead" aria-hidden="true"><\/span><span class="po-own-n">2<\/span>/);
-  // The row's columns: Due this month (1) + the two cards (2 each).
-  assert.match(h, /class="dz-stats sup-more-views po-fill" style="--po-cols:7"/); // 2v6.9 (owner): Due this month, Unconfirmed · Missing price, Kits and Build Risk on one line (1 + 2 + 2 + 2 columns)
+  assert.match(h, /<span class="dz-meta">each bar is a share of the <b>4<\/b> open POs<\/span>/);
   // The card lists both kinds, each row its own; the lines title says which.
   page.run("setPoTileFilter('followup')");
   h = html(page);
-  assert.match(h, /class="dz-stat po-follow po-pair po-risk sel"/);
+  assert.match(h, /<div class="po-step[^"]* sel" style="--i:2" role="group" aria-label="Unconfirmed · Missing price">/);
   assert.equal(page.run("poData(currentMetrics()).poTileRows.followup.map(r=>r.documentNumber).sort().join()"), '500,501,502');
   // 2v6.9 (owner): the PO lines card has no summary line under its title.
   assert.doesNotMatch(h, /Unconfirmed or missing price · 3 lines/);
