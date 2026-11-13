@@ -63,8 +63,9 @@ const etaText = (page, number) => (rowOf(page, number).match(/<span class="shp-e
 const lastLoc = (page, number) => (rowOf(page, number).match(/<span class="shp-loc">Last: ([^<]*)</) || [])[1] || '';
 // The Priority tick, as its checkbox does it (the test page has no real DOM: a stand-in element).
 const tickPriority = (page, number, on) => page.run(`shpPriToggle({checked:${on},dataset:{n:'${number}'}})`);
-// 2v6.9b: the carrier chip before the number: 'logo:<mark>' (a Simple Icons mark) or 'text:<name>' (the name in the chip).
-const carrierChip = (page, number) => { const m = rowOf(page, number).match(/<span class="shp-trk"><span class="shp-cr (logo|text)[^"]*" role="img" aria-label="([^"]*)"[^>]*>(?:<svg class="shp-cr-([a-z]+)"|<span aria-hidden="true">([^<]*)<)/); return m ? `${m[1]}:${m[3] || m[4]}` : undefined; };
+// The carrier chip before the number: 'logo:<mark>' (2v6.9c: the full-colour FedEx / UPS / DHL logo images, Simple Icons
+// for USPS) or 'text:<name>' (the name in the chip).
+const carrierChip = (page, number) => { const m = rowOf(page, number).match(/<span class="shp-trk"><span class="shp-cr (logo|text)[^"]*" role="img" aria-label="([^"]*)"[^>]*>(?:<(?:svg|img) class="shp-cr-([a-z]+)"|<span aria-hidden="true">([^<]*)<)/); return m ? `${m[1]}:${m[3] || m[4]}` : undefined; };
 const factOf = (page, number, label) => (rowOf(page, number).match(new RegExp(`<span>${label}</span><strong>([^<]*)</strong>`)) || [])[1];
 const tick = () => new Promise((r) => setTimeout(r, 30));
 async function settle() { for (let i = 0; i < 4; i++) await tick(); }
@@ -132,9 +133,10 @@ test('every carrier is listed: sales deliveries shipped in the 30 days to the ex
   assert.equal(page.run("shipCarrier({number:'123456789',shipMethod:'Customer truck',as:{carrier:'Canpar'}})"), 'Canpar', 'AfterShip names the carrier the ship method does not');
   const m = html(page);
   assert.match(m, /<h1 class="dz-h1"[^>]*>Shipping<\/h1>/);
-  // The page meta is quiet: how many shipments (no AfterShip here), no as-of clutter.
+  // 2v6.9c: no page meta at all (the count is on the Shipments card, owner).
   assert.equal(page.run('shippingHeadMeta()'), '6 shipments');
-  assert.match(m, /<span class="page-meta"[^>]*>6 shipments<\/span>/);
+  assert.doesNotMatch(m, /<span class="page-meta"/);
+  assert.match(m, /6 shipments/);
 });
 
 test('each row has an external-link icon (not a Check button) that opens the AfterShip tracking page in a new tab', async () => {
@@ -212,7 +214,7 @@ test('hosted: reads /api/shipping on open, sends the list once, and AfterShip st
   // 2v6.9b: the carrier's logo before each number (no state icons): FedEx (FedEx Freight too) and UPS marks, a name
   // chip for Purolator; the carrier's name is the chip's label, and the old carrier line under the number is gone.
   assert.deepEqual([carrierChip(page, N.parcel), carrierChip(page, N.freight), carrierChip(page, N.ups), carrierChip(page, N.puro)], ['logo:fedex', 'logo:fedex', 'logo:ups', 'text:Purolator']);
-  assert.match(rowOf(page, N.freight), /<span class="shp-cr logo" role="img" aria-label="FedEx Freight"><svg class="shp-cr-fedex" viewBox="[\d. -]+" aria-hidden="true" focusable="false"><path fill="#4D148C" d="M/);
+  assert.match(rowOf(page, N.freight), /<span class="shp-cr logo img" role="img" aria-label="FedEx Freight"><img class="shp-cr-fedex" src="data:image\/png;base64,[A-Za-z0-9+\/=]+" alt="" aria-hidden="true"><\/span>/);
   assert.match(rowOf(page, N.ups), /<span class="shp-trk-t"><b>1Z999AA10123456784<\/b><\/span>/);
   assert.doesNotMatch(html(page), /shp-ico|SHP_ROW_ICONS/);
   assert.match(page.ctx.document.documentElement.outerHTML, /Simple Icons project \(simpleicons\.org, CC0\)/);
