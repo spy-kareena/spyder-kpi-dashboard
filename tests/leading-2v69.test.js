@@ -138,6 +138,7 @@ test('Supply source: no CM sheet; every at-risk line counted once under pull in,
   // The totals row replaces the pills: distinct orders, then one button per source with orders (none to pull in here).
   assert.deepEqual(whoRows(who, 'tfoot'), [['All Customers', '3', '0', '3', '—', '1', '1', '1', '']]);
   const foot = who.slice(who.indexOf('<tfoot>'));
+  assert.match(foot, /^<tfoot><tr class="ohc3-all"><th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th><td class="num ohc2-pd">3<\/td><td class="num ohc2-ar">0<\/td><td class="num">3<\/td>/);
   assert.deepEqual(whoButtons(foot).map((b) => [b.key, b.pressed, b.name, b.click, b.n]), [
     ['ohl-sup-src-po', false, 'All Customers, Late / no commit: 1 order', "ohlSupplyPick('','po')", 1],
     ['ohl-sup-src-stock', false, 'All Customers, Stock short: 1 order', "ohlSupplyPick('','stock')", 1],
@@ -293,13 +294,39 @@ test('Without a snapshot the view says how to load it; Settings offers Supply / 
   assert.deepEqual(page.errors, []);
 });
 
-test('the new CSS sits in the 2v9:pages marker pair, on colour tokens', () => {
+test('the CSS sits in its marker pairs, on colour tokens: Supply / Demand in 2v9:pages, the four-question layout in 2v9:leading-v1', () => {
   const css = HTML.slice(HTML.indexOf('/* 2v9:pages */'), HTML.indexOf('/* 2v9:end pages */'));
-  assert.match(css, /\.ohl-sup-row\{grid-template-columns:minmax\(0,2\.2fr\) repeat\(4,minmax\(64px,\.6fr\)\) minmax\(90px,1\.1fr\)/);
-  assert.match(css, /button\.ohl-sup-name\.sel,button\.ohl-sup-n\.sel\{background:var\(--dz-indigo-bg\);color:var\(--dz-indigo-deep\)\}/);
   assert.match(css, /\.ohl-sd \.dz-chip\.red\{color:var\(--dz-risk-text\)\}/);
-  assert.match(css, /prefers-reduced-motion:reduce\)\{button\.ohl-sup-pill,button\.ohl-sup-name,button\.ohl-sup-n\{transition:none\}\}/);
   assert.doesNotMatch(HTML, /\.ohl-hero-quiet|\.mwm-note/);
+  // Version 1 (the rules for the removed supply source card's rows and pills are no longer asserted here).
+  const from = HTML.indexOf('/* 2v9:leading-v1 */'), to = HTML.indexOf('/* 2v9:end leading-v1 */');
+  assert.ok(from > 0 && to > from, 'the leading-v1 marker pair');
+  const v1 = HTML.slice(from, to);
+  assert.match(v1, /\.ohl-q\{display:flex;align-items:center;gap:10px/);
+  assert.match(v1, /\.ohs3-row\{display:grid;grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(v1, /button\.ohs3-cell\.sel\{background:var\(--dz-indigo-bg\)\}/);
+  assert.match(v1, /button\.ohs3-cell\.crit \.ohs3-n\{color:var\(--dz-risk-text\)\}/);
+  assert.match(v1, /\.ohl-why-grid\{display:grid;grid-template-columns:minmax\(0,1\.15fr\) minmax\(0,1fr\)/);
+  assert.match(v1, /@media \(max-width:900px\)\{\.ohl-why-grid\{grid-template-columns:minmax\(0,1fr\)\}/);
+  assert.match(v1, /button\.ohc3-n\.sel\{background:var\(--dz-indigo-bg\);color:var\(--dz-indigo\)\}/);
+  // Keyboard: the new buttons and the fold headings show the board's focus ring.
+  for (const sel of ['button.ohs3-cell', 'button.ohc3-n', '.ohl-fold>summary']) assert.ok(v1.includes(`${sel}:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:`), sel);
+  assert.match(v1, /\.ohl-fold\[open\]>summary \.dz-chev\{transform:none\}/);
+  assert.match(v1, /@media \(prefers-reduced-motion:reduce\)\{\.ohl-fold>summary \.dz-chev\{transition:none\}\}/);
+  assert.match(v1, /@media print\{\.ohl-fold>summary \.dz-chev\{display:none\}\.ohl-q\{break-after:avoid\}\}/);
+  assert.doesNotMatch(v1, /#[0-9a-f]{3,8}\b/i, 'colour tokens only');
+});
+
+// Left failing on purpose (an app gap, index.html, the "Touch: controls at least 40px tall" rule in the 2v9:revise2
+// block, @media (pointer:coarse)). That rule gave the supply source numbers a 40px hit area by naming the old buttons
+// (button.ohl-sup-pill, button.ohl-sup-name, button.ohl-sup-n, button.ohs2-row). Version 1 replaced those with
+// button.ohc3-n (padding 3px 8px, about 24px tall) in the Customers at risk table and its All Customers row, and no
+// touch rule names the new class, so on a touch screen the numbers are small targets again.
+test('BUG: touch: the supply source numbers in Customers at risk (button.ohc3-n) get the 40px hit area the buttons they replaced had', () => {
+  const coarse = [...HTML.matchAll(/@media \(pointer:coarse\)\{([\s\S]*?)\n\}/g)].map((m) => m[1]).join('\n');
+  assert.ok(coarse.length > 500, 'the touch rules are found');
+  assert.match(coarse, /button\.ohl-sup-n\b/, 'the old numbers were named');
+  assert.match(coarse, /button\.ohc3-n\b/, 'the new numbers are named in a touch rule');
 });
 
 test('Pull in: POs are handed to orders by date; a covering PO due after the order is Pull in, listed per PO line', async () => {
@@ -494,8 +521,11 @@ test('Status: one row of five cells under the bar, each state\'s open orders and
   assert.match(t, /<span class="ohs2-meta"><b>3<\/b> open orders<\/span>/);
   assert.deepEqual(statusCells(t).map((c) => [c.id, c.orders, c.sub, c.cls]), [['ontrack', 0, 'orders · 0 lines', 'zero'], ['duethisweek', 0, 'orders · 0 lines', 'zero'], ['rescheduled', 0, 'orders · 0 lines', 'zero'], ['pastdue', 3, 'orders · 3 lines', 'crit'], ['nocommit', 0, 'orders · 0 lines', 'zero']]);
   assert.equal((t.match(/class="ohs2-seg/g) || []).length, 1);
-  three.run("setWeeklyCustomerFilter(['NOBODY'])");
-  const none = card(grid(three), 'ohl-status-card');
+  assert.deepEqual(three.errors, []);
+  // No sales orders at all (purchase orders only): no bar, five greyed cells.
+  const pos = await loadRows([po('500', '08/01/2026')]);
+  const none = card(grid(pos), 'ohl-status-card');
+  assert.deepEqual(pos.errors, []);
   assert.match(none, /<span class="ohs2-meta"><b>0<\/b> open orders<\/span>/);
   assert.doesNotMatch(none, /ohs2-bar/);
   assert.deepEqual(statusCells(none).map((c) => [c.orders, c.cls]), Array(5).fill([0, 'zero']));
@@ -594,7 +624,7 @@ test('What Can We Do?: Supply to pull in | Date changes behind one switch (ohlSe
   c = doCard();
   assert.deepEqual(moved(c), ['CUST02', 'CUST01']);
   assert.equal(count(c), '11–12 of 12 customers');
-  assert.match(c, /data-focus-key="dc-CUST01"[\s\S]*?<span class="ohl-dc-lines">2 lines<span class="dz-cell-sub">\$1\.5K<\/span><\/span>/);
+  assert.match(c, /data-focus-key="dc-CUST01"[^>]*data-tip="CUST01 - Customer 01\n• 2 lines, \$1,500 moved later\n[^"]+">\s*<span class="ohl-dc-cust">CUST01 - Customer 01<\/span>\s*<span class="ohl-dc-lines">2 lines<span class="dz-cell-sub">\$2K<\/span><\/span>/);
   // The switch keeps its side through a redraw; anything but 'dates' is Supply to pull in. Pull in kept its page 1.
   page.run('renderResults()');
   assert.match(doCard(), /aria-label="Date changes"/);
@@ -664,9 +694,14 @@ test('The two month lists are folds in one card: shut on load; opening one sets 
     .map((m) => ({ key: m[2], open: !!m[1], tip: m[3], title: m[4], meta: m[5] }));
   const open = () => folds().map((f) => f.open);
   const toggle = (key, to) => page.run(`ohlFoldToggle({dataset:{more:${JSON.stringify(key)}},open:${to}})`);
-  // One card, after question 3 (no question 4 here) and before Lines; two folds, both shut, each with a tip.
-  assert.match(months(), /^<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Delivery months">\s*<details class="ohl-fold" data-more="ohl-fold-months"/);
-  assert.equal((months().match(/<details\b/g) || []).length, 2);
+  // One card ("Lists"), after the questions (113's date change gives a fourth here): two folds, both shut, each with
+  // a tip, then the Lines card as its last child (no longer a card of the grid).
+  assert.match(months(), /^<section class="dz-card dz-span-6 ohl-card ohl-months mom-card misc-flat dz-fade" aria-label="Lists">\s*<details class="ohl-fold" data-more="ohl-fold-months"/);
+  assert.equal((months().match(/<details class="ohl-fold"/g) || []).length, 2);
+  assert.match(months(), /<\/details>\s*<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">/);
+  assert.match(grid(page), /<\/section>\s*<\/section>\s*<\/div>/, 'Lines closes the Lists card, which closes the grid');
+  assert.equal((grid(page).match(/id="linked-lines"/g) || []).length, 1);
+  assert.deepEqual(layout(grid(page)).slice(-4), ['What Can We Do?', 'ohl-do', 'ohl-months', 'ohl-lines-card']);
   assert.deepEqual(folds().map((f) => [f.key, f.open, f.title, f.meta]), [['ohl-fold-months', false, 'Open orders by delivery month', '2026'], ['ohl-fold-items', false, 'Items not shipped yet', '9 lines']]);
   assert.deepEqual(folds().map((f) => f.tip), ['Shipped and open value per month, against last year.', 'Open lines by original delivery month, oldest first.']);
   assert.deepEqual(page.run("Object.keys(tableMore).filter(k=>/ohl-fold/.test(k))"), []);
@@ -674,15 +709,18 @@ test('The two month lists are folds in one card: shut on load; opening one sets 
   const [, first, second] = months().split('<details class="ohl-fold"');
   assert.match(first, /<div class="ohl-fold-body"><div class="ohl-sec-head"><div class="ohl-sec-title">Monthly delivery summary · 2026<\/div>/);
   assert.match(first, /<div class="table-scroll" tabindex="0" role="region" aria-label="Monthly delivery summary · 2026"><table class="data-table"/);
-  assert.deepEqual([...first.matchAll(/<td class="m">([^<]+)<\/td>/g)].map((m) => m[1]), ['Aug 2026', 'Sep 2026', 'Oct 2026']);
-  assert.match(first, /<p class="ohl-note ohl-foot-note">1 open lines \(\$1,000\) with no commit date are not in these months\.<\/p>/);
+  // Open value by due month: August 100, 101, 102; September 110, 111's two lines and 113 on its new date; October 112.
+  assert.deepEqual([...first.matchAll(/<td class="m">([\s\S]*?)<\/td>[\s\S]*?<td class="num">(\$[\d,]+)<\/td>/g)].map((m) => [plain(m[1]), m[2]]), [['Aug 2026', '$3,000'], ['Sep 2026 to date', '$4,000'], ['Oct 2026', '$1,000']]);
+  assert.match(first, /<p class="ohl-note ohl-foot-note">1 open line \(\$1,000\) with no commit date is not in these months\.<\/p>/);
   assert.doesNotMatch(first, /monthly cards or chart|ohl-original-month/);
   // Fold 2: the Month pick and the open lines by original delivery month (10 a page).
   assert.match(second, /<div class="ohl-fold-body"><div class="ohl-fold-tools"><label class="inline-controls">Month <select id="ohl-original-month" class="select" data-focus-key="ohl-original-month" data-tip="[^"]+" onchange="setOriginalDeliveryMonthFilter\(this\.value\)">/);
   assert.match(second, /<div class="table-scroll" tabindex="0" role="region" aria-label="Items not shipped yet"><table class="data-table"/);
   assert.deepEqual([...second.matchAll(/<td class="strong">(\d+)<\/td>/g)].map((m) => m[1]), ['100', '101', '102', '113', '114', '110', '111', '111', '112']);
-  // Gone on purpose: the two separate cards with their h2 titles and the collapse chevron on the Items card's head.
-  assert.doesNotMatch(grid(page), /ohl-notshipped|<h2[^>]*>(Open orders by delivery month|Items not shipped yet)<\/h2>|dz-collapse-btn/);
+  // Gone on purpose: the two separate cards with their h2 titles and the collapse chevron on the Items card's head
+  // (the Lines card keeps its own).
+  assert.doesNotMatch(grid(page), /ohl-notshipped|<h2[^>]*>(Open orders by delivery month|Items not shipped yet)<\/h2>/);
+  assert.doesNotMatch(months().slice(0, months().indexOf('id="linked-lines"')), /dz-collapse-btn/);
   // The delivery-month bar chart left Leading (the summary table has the same shipped and open values) ...
   assert.doesNotMatch(grid(page), /mom-pair|pair-chart|pair-labels|pair-col|class="legend chart"/);
   // Opening a fold is remembered without a redraw (the browser has already opened it), and the next redraw keeps it.
