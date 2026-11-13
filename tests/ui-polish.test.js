@@ -8,7 +8,8 @@ const { test, run } = createSuite();
 
 const CSS = HTML.match(/<style>([\s\S]*?)<\/style>/)[1];
 const results = (page) => page.els['results-screen'].innerHTML;
-const sidebar = (page) => page.els['app-sidebar'].innerHTML;
+// The sidebar became the header (app-header): page links, the export date and the gear.
+const sidebar = (page) => page.els['app-header'].innerHTML;
 const due = (d) => ({ DueDate: d, HeaderDueDate: d, LineDueDate: d });
 const PO = (o) => sapRow({ SourceType: 'Purchase Order', OrderType: 'Purchase Order', KPIArea: 'Purchase Orders', CustomerVendorCode: 'ACME', CustomerVendorName: 'Acme Parts', ...o });
 const shipped = (o) => sapRow({ OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', CloseDateSource: 'Delivery', OpenQuantity: '0', FillStatus: 'Complete', ...o });
@@ -44,6 +45,9 @@ function ctbWorkbook(page) {
 async function loadedAll(storage = {}) {
   const page = loadPage({ storage });
   await upload(page, [{ name: 'kpi.xls', bytes: sapExport(MIX) }, { name: 'supply.xls', bytes: utf16Tsv(SD_HEADERS, SD_ROWS) }, { name: 'Orders At Risk - Clear to Build.xlsx', bytes: ctbWorkbook(page) }]);
+  // Monthly, Warehouse Timeline and the Supply pages are hidden by default (Settings > Hidden Pages); show them all so
+  // every page is checked.
+  page.run("stgSet('hiddenPages',[])");
   return page;
 }
 // Every opening tag whose class list holds one of `classes` (whole words).
@@ -56,15 +60,17 @@ const hasTip = (tag) => /\sdata-tip="[^"]+"/.test(tag) || /\stitle="[^"]+"/.test
 const VIEWS = [
   ['weekly', ''], ['weekly', "setWeeklyTileFilter('otd3mo')"], ['weekly', "setWeeklyTileFilter('reschedhit')"], ['weekly', "setWeeklyTileFilter('fillrate')"],
   ['weekly', "weeklyTileFilter='late';selectAllLinked(true)"],
-  ['purchaseorders', ''], ['supplyweekly', ''], ['monthly', ''], ['warehouses', ''], ['metrics', ''], ['supplydemand', ''], ['buildrisk', ''], ['connect', ''],
+  ['purchaseorders', ''], ['supplyweekly', ''], ['monthly', ''], ['warehouses', ''], ['metrics', ''], ['supplydemand', ''], ['buildrisk', ''], ['settings', ''],
   ['search', "searchQuery='SPY';applyGlobalSearch()"],
-  // The note editor (override, cause, note), the Lagging tab, the open Big picture and the Shipping page.
+  // The note editor (override, cause, note), the Lagging tab and the Shipping page. (The Big picture chart is hidden on
+  // Sales Order Health since 2v2.2: BIG_PICTURE_HIDDEN; tests/sankey.test.js covers it.)
   ['weekly', 'toggleRowNote(rowKey(parsedRows[0]))'],
-  ['weekly', "setWeeklyView('lagging')"], ['weekly', "setWeeklyView('leading');toggleSankey('weekly')"], ['shipping', ''],
+  ['weekly', "setWeeklyView('lagging')"], ['shipping', ''],
 ];
 function eachView(page, fn) {
   for (const [tab, setup] of VIEWS) {
-    page.run(`linkedSelection.clear();expandedNoteRows.clear();sankeyOpen.weekly=false;weeklyTileFilter='late';setTab(${JSON.stringify(tab)});${setup}`);
+    // Each view starts on Leading (Metrics opens Lagging, and the view is kept across pages).
+    page.run(`linkedSelection.clear();expandedNoteRows.clear();sankeyOpen.weekly=false;weeklyTileFilter='late';weeklyView='leading';setTab(${JSON.stringify(tab)});${setup}`);
     fn(results(page) + sidebar(page), `${tab} ${setup}`);
   }
 }
@@ -74,19 +80,30 @@ test('every KPI card, chip, sortable heading and button on every page has a tool
   let checked = 0;
   const drawn = new Set();
   eachView(page, (html, view) => {
-    for (const k of ['class="row-override"', 'class="row-note"', 'class="sk-svg', 'class="ship-', '<summary', '<a href']) if (html.includes(k)) drawn.add(k);
-    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'select', 'month-card', 'rate-card', 'hint-close', 'row-override', 'row-cause', 'row-note']);
+    for (const k of ['class="row-override"', 'class="row-note"', 'class="shp-', '<summary', '<a href']) if (html.includes(k)) drawn.add(k);
+    // (2v6: the dz-* buttons, filter pills, pill inputs and header links are checked too.)
+    const tags = tagsWithClass(html, ['kpi', 'chip', 'th-sort', 'btn', 'nav-item', 'drill', 'link-btn', 'filter-more', 'select', 'month-card', 'rate-card', 'row-override', 'row-cause', 'row-note', 'dz-btn', 'dz-filter', 'dz-pillinput', 'hdr-link', 'hdr-icon', 'ohl-hero', 'shp-tile']);
     // About toggles and links explain themselves too.
     tags.push(...[...html.matchAll(/<summary\b[^>]*>|<a\b[^>]*\shref="[^"]*"[^>]*>/g)].map((m) => m[0]));
     checked += tags.length;
-    const bare = tags.filter((t) => !hasTip(t));
+    // 2v6 controls whose own words are the whole story need no tip: the header logo (a home link named by its
+    // aria-label), the choices in a dz menu (Warehouse: All, CM, ...), the plain options of a segmented switch (10 / 20 /
+    // 50), a Settings switch named by its aria-label, a menu button that opens a labelled menu (the header's Supply) and
+    // a form's submit button; a text or search box says what it takes in its placeholder and aria-label (a tip over a
+    // text box is never shown on focus anyway); a Settings field named by its own <label for>.
+    const labelled = (t) => { const id = (t.match(/\sid="([^"]+)"/) || [])[1]; return !!id && new RegExp(`<label\\b[^>]*\\sfor="${id}"`).test(html); };
+    const selfNamed = (t) => /^<a class="hdr-logo" href="\.\/" aria-label="[^"]+"/.test(t) || /\srole="menuitem(radio)?"/.test(t)
+      || /^<input type="(search|text)"[^>]*\splaceholder="[^"]+"[^>]*\saria-label="[^"]+"/.test(t) || (/^<(select|input)\b/.test(t) && labelled(t))
+      || /^<button type="button" data-focus-key="[^"]+"(?: class="on")? aria-pressed="(true|false)"/.test(t)
+      || (/\srole="switch"/.test(t) && /\saria-label="[^"]+"/.test(t)) || /\saria-haspopup="menu"/.test(t) || /\stype="submit"/.test(t);
+    const bare = tags.filter((t) => !hasTip(t) && !selfNamed(t));
     assert.deepEqual(bare, [], `${view}: controls without a tooltip`);
-    // Every button in the page and the sidebar (tiles, presets, toggles, rows) explains itself too.
+    // Every button in the page and the header (tiles, presets, toggles, rows) explains itself too.
     const buttons = [...html.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]).filter((t) => !/class="(row-check|note-btn)/.test(t));
-    assert.deepEqual(buttons.filter((t) => !hasTip(t)), [], `${view}: buttons without a tooltip`);
+    assert.deepEqual(buttons.filter((t) => !hasTip(t) && !selfNamed(t)), [], `${view}: buttons without a tooltip`);
   });
   assert.ok(checked > 300, `checked ${checked} controls`);
-  assert.equal(drawn.size, 6, `the note editor, Big picture, Shipping, About toggles and links were all checked: ${[...drawn]}`);
+  assert.equal(drawn.size, 5, `the note editor, Shipping, About toggles and links were all checked: ${[...drawn]}`);
   assert.deepEqual(page.errors, []);
 });
 
@@ -94,17 +111,21 @@ test('tooltips say what a card counts with the numbers written in full ($1,721,8
   const page = await loadedAll();
   page.run("setTab('weekly')");
   const html = results(page);
+  // 2v6 tips are a heading and bullets: what the card is, then its counts and value in full, then the click.
   const atRisk = html.match(/data-focus-key="tile-late"[^>]*data-tip="([^"]+)"/)[1];
-  assert.match(atRisk, /^At risk: \$1,72\d,\d{3} open on \d+ orders \(\d+ lines\), \d+ past due with no reschedule; click to list them below\.$/);
-  assert.match(html, /data-focus-key="tile-nocommit"[^>]*data-tip="No commit date: \$[\d,]+ open on 1 order \(1 line\) with no valid commit date/);
-  assert.match(html, /data-focus-key="sc-Spyder - Lacombe"[^>]*data-tip="Spyder - Lacombe: open \$1,721,806, at risk \$1,721,806,/);
+  assert.match(atRisk, /^At risk, due by [A-Z][a-z]{2} \d{1,2}\n• \d+ orders?, \d+ lines?\n• \$1,72\d,\d{3} open\nClick to list them\.$/);
+  assert.match(html, /data-focus-key="tile-st-nocommit"[^>]*data-tip="No commit\n• 1 order, 1 line\n• \$[\d,]+ open\nClick to list them\."/);
   for (const [, t] of html.matchAll(/data-tip="([^"]+)"/g)) assert.doesNotMatch(t, /\$\d+(\.\d+)?[KM]\b/, `short money in a tip: ${t}`);
   // Sortable headings say what the column is and how sorting works.
-  assert.match(html, /class="th-sort" data-focus-key="linked-sort-value" data-col="value" data-tip="Open value for open lines, line value for closed ones\. Click to sort, again to reverse\."/);
+  assert.match(html, /class="th-sort" data-focus-key="linked-sort-value" data-col="value" data-tip="Open value; line value if closed\. Click to sort\."/);
+  // The warehouse rows (Warehouses to watch, Warehouse Timeline) give the full amounts too.
+  page.run("setTab('warehouses')");
+  assert.match(results(page), /data-focus-key="sc-Spyder - Lacombe"[^>]*data-tip="Spyder - Lacombe\n• Open \$1,721,806, at risk \$1,721,806\n/);
+  for (const [, t] of results(page).matchAll(/data-tip="([^"]+)"/g)) assert.doesNotMatch(t, /\$\d+(\.\d+)?[KM]\b/, `short money in a tip: ${t}`);
   // Column headings of data tables come from one list (COLUMN_TIPS); headings with no entry stay plain.
-  page.run("stgSet('hiddenPages',[]);setTab('supplyweekly')");
-  assert.match(results(page), /<th class="num" data-tip="Usable supply minus demand for that month; below zero is short\.">Monthly net<\/th>/);
-  page.run("stgSet('hiddenPages',[]);setTab('buildrisk')");
+  assert.equal(page.run("columnTip('sd','Monthly net')"), 'Usable supply minus demand for that month; below zero is short.');
+  assert.match(page.run("renderRowsTable(parsedRows.slice(0,1),{key:'t',title:'T'})"), /<th class="num" data-tip="Quantity still to ship\.">Qty open<\/th>/);
+  page.run("setTab('buildrisk')");
   assert.match(results(page), /<th class="num">Sep 24<\/th>/);
 });
 
@@ -115,8 +136,13 @@ test('tooltips stay short on every page: about 20 words, never a paragraph', asy
     for (const [, raw] of html.matchAll(/data-tip="([^"]+)"/g)) {
       const t = raw.replace(/&[a-z#0-9]+;/gi, ' ');
       checked++;
-      // Data tips list a few values with "·"; prose tips are one short sentence.
-      assert.ok(t.split(/\s+/).length <= 30, `${view}: long tip (${t.split(/\s+/).length} words): ${t}`);
+      // Prose tips are one short sentence. 2v6 tips may be a heading and a few bullets (one fact a line): then each
+      // line is short and there are at most 7 lines.
+      if (t.includes('\n')) {
+        const lines = t.split('\n');
+        assert.ok(lines.length <= 7, `${view}: tip with ${lines.length} lines: ${t}`);
+        for (const l of lines) assert.ok(l.trim().split(/\s+/).length <= 20, `${view}: long tip line (${l.trim().split(/\s+/).length} words): ${l}`);
+      } else assert.ok(t.split(/\s+/).length <= 30, `${view}: long tip (${t.split(/\s+/).length} words): ${t}`);
     }
   });
   assert.ok(checked > 1000, `checked ${checked} tips`);
@@ -127,7 +153,6 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
   const info = page.run('Object.fromEntries(Object.keys(SECTION_INFO).map(k=>[k,{...SECTION_INFO[k],tip:sectionTipText(k)}]))');
   const byTip = new Map(Object.entries(info).map(([k, i]) => [i.tip, k]));
   const unesc = (t) => t.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  const norm = (t) => t.replace(/[’']/g, "'");
   const sentences = (t) => t.split(/[.!?](?:\s|$)/).filter((x) => x.trim()).length;
   const keys = new Set();
   eachView(page, (html, view) => {
@@ -138,9 +163,11 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
       const key = m && byTip.get(unesc(m[1]));
       if (!key) continue;
       keys.add(key);
-      // The tip is on that section's own title (a dated title such as "Shipped and open value by month · 2026" too).
+      // The tip sits on a real, visible title. (2v6 renamed many cards, e.g. "Open orders by delivery month", while
+      // SECTION_INFO keeps the old names in its title field, which nothing shows; so the heading text is not compared
+      // with that field any more.)
       const text = unesc(inner.replace(/<[^>]+>/g, '')).trim();
-      assert.ok(norm(text).startsWith(norm(info[key].title)), `${view}: ${key} is on "${text}"`);
+      assert.ok(text.length > 0, `${view}: ${key} is on an empty heading`);
     }
     // Every page's About block is a short list: 3 to 5 bullets of at most 30 words.
     for (const [about] of html.matchAll(/<details class="about[^"]*"><summary[^>]*>About these numbers<\/summary>[\s\S]*?<\/details>/g)) {
@@ -157,14 +184,16 @@ test('section help sits on the section title (no ⓘ buttons): every text is two
     assert.equal(i.tip, [i.what, i.click].filter(Boolean).join(' '));
     assert.ok(i.tip.split(/\s+/).length <= 30, `${key} is short`);
   }
-  assert.ok(keys.size >= 35, `${keys.size} section titles carry their help`);
-  assert.deepEqual(Object.keys(info).filter((k) => !keys.has(k)), [], 'every section text is on a title');
+  // 2v6 pages give many cards a short tip of their own, and some sections left with the old designs (Order Health's
+  // At risk / On track groups, the scorecard, the Forecast page when no Logican file is loaded), so fewer titles carry a
+  // SECTION_INFO text than before.
+  assert.ok(keys.size >= 20, `${keys.size} section titles carry their help`);
   // The popover, its script and its styles are gone; the help pointer marks a titled heading with a tip.
   assert.doesNotMatch(HTML, /id="info-pop"|class="info-pop|\.info-btn|\.info-pop|\.title-row|function (infoButton|toggleInfo|openInfo|closeInfo|infoPopKey)\b|INFO_ICON|syncInfoPop|queuePlaceInfo/);
   assert.match(CSS, /\nh2\[data-tip\]\{cursor:help\}\n/);
   assert.equal(page.run("sectionTip('')"), '');
   assert.equal(page.run("sectionTip('no-such-section')"), '');
-  assert.equal(page.run("sectionTip('oh-scorecard')"), ' data-tip="Open, at-risk and past-due value and delivery rates per warehouse. Click a row to show only that warehouse; click it again for all."');
+  assert.equal(page.run("sectionTip('wh-scorecard')"), ' data-tip="Open, at-risk and past-due value and delivery rates per warehouse. Click a row to filter."');
   assert.deepEqual(page.errors, []);
 });
 
@@ -509,46 +538,53 @@ test('toasts confirm bulk Apply, Delete and Restore and note saves in the #toast
   assert.match(page.els.toast.innerHTML, /<span>&lt;b&gt;escaped&lt;\/b&gt;<\/span>/);
 });
 
-test('first-visit hints stay dismissed (localStorage spyderKpiHints) until Show hints again', async () => {
+// The first-visit hint banners (load screen, Order Health, Shipping) and Show hints again were removed on purpose
+// (9ce2078); nothing is drawn or stored for them any more.
+test('first-visit hints are gone: no hint card on the load screen or any page, no Show hints again, nothing stored', async () => {
   const page = loadPage();
-  assert.match(page.els['upload-hint'].innerHTML, /data-hint="upload"[\s\S]*Start here:/);
+  page.run('renderSidebar();renderUploadState()');
+  assert.equal(page.els['upload-hint'], undefined, 'the load screen never fills a hint box');
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
-  page.run("setTab('weekly')");
-  assert.match(results(page), /<div class="hint-card print-hide" role="note" aria-label="Hint" data-hint="weekly-cards">/);
-  assert.match(sidebar(page), /<button type="button" class="nav-item nav-plain" data-focus-key="hints-reset" onclick="resetHints\(\)"/);
-  page.run("dismissHint('weekly-cards');renderResults()");
-  assert.doesNotMatch(results(page), /data-hint="weekly-cards"/);
-  assert.deepEqual(Object.keys(JSON.parse(page.storage.spyderKpiHints)), ['weekly-cards']);
-  page.run('resetHints()');
+  for (const tab of ['weekly', 'shipping', 'purchaseorders']) {
+    page.run(`setTab(${JSON.stringify(tab)})`);
+    assert.doesNotMatch(results(page) + sidebar(page), /hint-card|data-hint=|hints-reset|Show hints again/, tab);
+  }
+  for (const fn of ['renderHint', 'dismissHint', 'resetHints']) assert.equal(page.run(`typeof ${fn}`), 'undefined', fn);
   assert.equal(page.storage.spyderKpiHints, undefined);
-  assert.match(results(page), /data-hint="weekly-cards"/);
-  // Blocked or broken storage never breaks a page: the hint just shows.
-  page.storage.spyderKpiHints = '{not json';
-  assert.match(page.run("renderHint('x','Hi')"), /data-hint="x"/);
-  page.ctx.localStorage.getItem = () => { throw new Error('blocked'); };
-  page.ctx.localStorage.setItem = () => { throw new Error('blocked'); };
-  assert.match(page.run("renderHint('x','Hi')"), /data-hint="x"/);
-  page.run("dismissHint('x')");
 });
 
-test('every column heading on every page explains itself (its own tip or a tipped sort button); report-week columns stay plain', async () => {
-  const page = await loadedAll();
+// 2v6 tables tip the headings that need it and leave a plain, self-explanatory name plain (Item, Customers, Lines, ...).
+// Build Risk's Clear To Build table is held to its old tips (COLUMN_TIPS has br-ctb texts for its Month, At risk, Late
+// and Notes): only CM is plain there.
+const PLAIN_HEADINGS = new Set(['Reason', 'At risk', 'Lines', 'Orders', 'Vendor / CM', 'Item', 'Customers', 'CM', 'Past due', 'Item group']);
+// Column headings without a tip (and not a plain name or a report week) on every page, as "page :: heading".
+function bareHeadings(page) {
   let checked = 0;
   const seen = new Set();
+  const bare = new Set();
   eachView(page, (html, view) => {
-    const bare = [];
     for (const [, tag, inner] of html.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)) {
-      const text = inner.replace(/<[^>]*>/g, '').replace(/&[a-z#0-9]+;/gi, ' ').trim();
+      // (A sort button's arrow glyph is not part of the heading's name.)
+      const text = inner.replace(/<[^>]*>/g, '').replace(/&[a-z#0-9]+;/gi, ' ').replace(/[↕↑↓]/g, '').trim();
       if (!text) continue;
       checked++;
       seen.add(text);
       if (hasTip(tag) || /\sdata-tip="[^"]+"/.test(inner)) continue;
       // Clear To Build report weeks ("Sep 24") are dates, not columns that need explaining.
       if (/^[A-Z][a-z]{2} \d{1,2}$/.test(text)) continue;
-      bare.push(text);
+      if (PLAIN_HEADINGS.has(text) && (!view.startsWith('buildrisk') || text === 'CM')) continue;
+      bare.add(`${view.split(' ')[0]} :: ${text}`);
     }
-    assert.deepEqual(bare, [], `${view}: column headings without a tooltip`);
   });
+  return { checked, seen, bare: [...bare] };
+}
+// The Build Risk Clear To Build table lost its column tips in the 2v6 redesign (see the KNOWN GAP test below).
+const brGap = (b) => b.startsWith('buildrisk :: ');
+
+test('every column heading on every page explains itself (its own tip or a tipped sort button); report-week columns stay plain', async () => {
+  const page = await loadedAll();
+  const { checked, seen, bare } = bareHeadings(page);
+  assert.deepEqual(bare.filter((b) => !brGap(b)), [], 'column headings without a tooltip');
   assert.ok(checked > 150, `checked ${checked} headings`);
   for (const h of ['Doc #', 'SO #', 'PO #', 'Customer / vendor', 'Warehouse', 'Item / description', 'Month', 'Type']) assert.ok(seen.has(h), `${h} was drawn and checked`);
   // Headings that mean something else in one table use that table's text.
@@ -558,41 +594,52 @@ test('every column heading on every page explains itself (its own tip or a tippe
   assert.deepEqual(page.errors, []);
 });
 
-test('first-visit hints say what the Order Health tabs are and where Shipping gets its tracking numbers', async () => {
+// KNOWN GAP (left failing on purpose): the 2v6 Build Risk "Clear To Build by CM / month" table draws its headings
+// plain (supTableCard), so Month, Total, Clear to build, At risk, Late, Matched SO lines, Matched open qty, Matched open
+// value and Notes have no tip, although COLUMN_TIPS still holds the br-ctb texts for them (columnTip('br-ctb', ...))
+// that nothing uses now.
+test('KNOWN GAP: Build Risk Clear To Build table headings explain themselves (they lost their tips in 2v6)', async () => {
+  const page = await loadedAll();
+  assert.deepEqual(bareHeadings(page).bare.filter(brGap), []);
+});
+
+// The hints that explained Leading / Lagging and where Shipping's tracking numbers come from are gone; the tabs say what
+// they are in their own tips, and Shipping says where its numbers come from on the page.
+test('the Order Health tabs say what they are, and Shipping says where its tracking numbers come from', async () => {
   const page = await loadedAll();
   page.run("setTab('weekly')");
-  const hint = (html, id) => (html.match(new RegExp(`data-hint="${id}">([\\s\\S]*?)</div>`)) || [])[1] || '';
-  assert.match(hint(results(page), 'weekly-cards'), /<strong>Leading<\/strong> shows what needs action now[\s\S]*<strong>Lagging<\/strong> shows how we performed/);
-  page.run("setTab('shipping')");
-  assert.match(hint(results(page), 'shipping'), /an SAP delivery with a tracking number: click <strong>Check<\/strong>/);
-  // Every first-visit hint is one short sentence.
-  for (const id of ['weekly-cards', 'shipping']) {
-    page.run(`setTab(${JSON.stringify(id === 'shipping' ? 'shipping' : 'weekly')})`);
-    const text = hint(results(page), id).replace(/<[^>]+>/g, '');
-    assert.ok(text.split(/\s+/).length <= 25 && !/[.!?]\s+\S/.test(text.trim()), `${id}: ${text}`);
+  const tabTip = (id) => (results(page).match(new RegExp(`<button type="button" role="tab" id="oh-tab-${id}"[^>]*data-tip="([^"]+)"`)) || [])[1];
+  assert.equal(tabTip('leading'), 'What is at risk now, and why.');
+  assert.equal(tabTip('lagging'), 'Last month and quarter, then metrics by month.');
+  for (const id of ['leading', 'lagging', 'supply']) {
+    const text = tabTip(id) || '';
+    assert.ok(text && text.split(/\s+/).length <= 12 && !/[.!?]\s+\S/.test(text.trim()), `${id}: one short sentence: ${text}`);
   }
+  page.run("setTab('shipping')");
+  assert.match(results(page), /<p class="shp-note">This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand with Add tracking #\.<\/p>/);
   assert.deepEqual(page.errors, []);
 });
 
-test('page descriptions: listed by page on the load screen, and the tooltip of each page in the sidebar', async () => {
+// 2v6: the sidebar became the header and the load screen no longer lists the pages (nor badges a link); each visible
+// page's header link (or Supply menu item) carries its one-line description, and a hidden page leaves the header.
+test('page descriptions: the tooltip of each page link in the header; hidden pages leave the header', async () => {
   const page = loadPage();
   page.run('renderSidebar();renderUploadState()');
   const descs = page.run('PAGE_TIPS');
-  // 2v2: the load screen lists every page under its sidebar group with its description; the sidebar stays a plain list.
-  const pages = page.els['upload-pages'].innerHTML;
-  for (const [id, text] of Object.entries(descs)) {
-    const label = page.run(`NAV_GROUPS.flatMap(g=>g[1]).find(i=>i[0]===${JSON.stringify(id)})[1]`);
-    assert.ok(pages.includes(`<li><strong>${label.replace(/&/g, '&amp;')}</strong><span class="page-desc">${page.run(`esc(PAGE_TIPS[${JSON.stringify(id)}])`)}</span></li>`), id);
-    assert.match(sidebar(page), new RegExp(`data-focus-key="nav-${id}"[^>]*data-tip="${page.run(`esc(PAGE_TIPS[${JSON.stringify(id)}])`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), id);
-    assert.ok(text.split(/\s+/).length <= 8, `${id}: a few words`);
-  }
-  assert.match(pages, /<div class="card"><h3>Sales<\/h3><ul><li><strong>Order Health<\/strong>/);
-  assert.doesNotMatch(sidebar(page), /nav-desc/);
+  for (const [id, text] of Object.entries(descs)) assert.ok(text.split(/\s+/).length <= 8, `${id}: a few words`);
   await upload(page, [{ name: 'e.xls', bytes: sapExport(MIX) }]);
-  assert.doesNotMatch(sidebar(page), /nav-desc/);
-  // The badge's meaning is in the button's own tip (keyboard focus shows that one) and hidden text for screen readers.
-  assert.match(sidebar(page), new RegExp(`data-focus-key="nav-weekly" onclick="setTab\\('weekly'\\)" aria-current="page" data-tip="${descs.weekly.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+ orders at risk\\."`));
-  assert.match(sidebar(page), /<span class="nav-badge" data-tip="\d+ orders at risk">\d+<span class="sr-only"> orders at risk<\/span><\/span>/);
+  page.run("stgSet('hiddenPages',[]);renderSidebar()");
+  const linked = page.run("NAV_GROUPS.flatMap(g=>g[1]).map(i=>i[0]).filter(id=>id in PAGE_TIPS)");
+  assert.ok(linked.length >= 6, linked.join());
+  for (const id of linked) {
+    assert.match(sidebar(page), new RegExp(`data-focus-key="nav-${id}"[^>]*data-tip="${page.run(`esc(PAGE_TIPS[${JSON.stringify(id)}])`).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), id);
+  }
+  assert.match(sidebar(page), /data-focus-key="nav-weekly" onclick="setTab\('weekly'\)" aria-current="page" data-tip="At-risk orders and on-time delivery\."/);
+  assert.doesNotMatch(sidebar(page), /nav-desc|nav-badge/);
+  // Monthly is hidden by default (its sections are on Lagging): no header link for it.
+  page.run("stgSet('hiddenPages',['monthly']);renderSidebar()");
+  assert.doesNotMatch(sidebar(page), /data-focus-key="nav-monthly"/);
+  assert.match(sidebar(page), /data-focus-key="nav-warehouses"/);
 });
 
 // Warehouse scorecard: two CM SFG and three other warehouses, with open, at-risk, past-due lines and deliveries.
@@ -607,25 +654,29 @@ const SC_ROWS = [
   sapRow({ DocumentNumber: '23', Warehouse: 'CM - Beta', AmountLocal: '32,000.00', ...due('08/25/2026'), LineRescheduleDate: '09/30/2026', RescheduleDate: '09/30/2026' }),
   shipped({ DocumentNumber: '24', Warehouse: 'CM - Beta', ...due('08/01/2026'), ClosedDate: '08/01/2026', DeliveryDocNumber: '803' }),
 ];
+// 2v6: the scorecard left Order Health and became "Warehouses to watch" on the Warehouse Timeline page (hidden by default,
+// so the test shows it). Its groups come from the same warehouseScorecardData / scorecardGroups as before.
 async function scorecardPage(rows = SC_ROWS) {
   const page = loadPage();
   await upload(page, [{ name: 'e.xls', bytes: sapExport(rows) }]);
-  page.run("setTab('weekly')");
+  page.run("stgSet('hiddenPages',[]);setTab('warehouses')");
   return page;
 }
-const scorecardData = (page) => page.run("filterCache.entries.get(`oh|${weeklyFilterKey()}|scorecard`)");
+const watchCard = (page) => { const h = results(page); const i = h.indexOf('>Warehouses to watch</h2>'); return i < 0 ? '' : h.slice(h.lastIndexOf('<section', i), h.indexOf('</section>', i)); };
+const watchGroups = (page) => page.run('scorecardGroups(warehouseScorecardData(currentMetrics(),mwmFiltered()))');
 
 test('warehouse scorecard: CM SFG and all other warehouses in one card, each with a header and a subtotal that adds up', async () => {
   const page = await scorecardPage();
-  const html = results(page);
-  const card = html.match(/<section class="table" aria-label="Warehouse scorecard">[\s\S]*?<\/section>/)[0];
-  assert.deepEqual([...card.matchAll(/<div class="sc-group-head" role="heading" aria-level="3" data-group="(\w+)">([^<]+)<span class="muted">([^<]+)<\/span>/g)].map((m) => m.slice(1)),
-    [['sfg', 'CM SFG', '2 warehouses'], ['other', 'All other warehouses', '3 warehouses']]);
+  const card = watchCard(page);
+  assert.ok(card, 'Warehouses to watch is drawn');
+  // The other warehouses first, then CM SFG (2v6 order), each under its heading.
+  assert.deepEqual([...card.matchAll(/<div class="mwm-ghead" role="heading" aria-level="3">([^<]+)<span>([^<]+)<\/span>/g)].map((m) => m.slice(1)),
+    [['Spyder and CM warehouses', '3 warehouses'], ['CM SFG', '2 warehouses']]);
   // Rows sit under their group header; clicking a row still focuses the page on it.
-  const sfgPart = card.split('data-group="other"')[0];
+  const sfgPart = card.split('>CM SFG<span>')[1];
   assert.deepEqual([...sfgPart.matchAll(/data-wh="([^"]+)"/g)].map((m) => m[1]).sort(), ['CM SFG - Delta', 'CM SFG - Gamma']);
   assert.equal((card.match(/onclick="setWeeklyScorecardWarehouse\(this\.dataset\.wh\)"/g) || []).length, 5);
-  const groups = page.run(`scorecardGroups(filterCache.entries.get(\`oh|\${weeklyFilterKey()}|scorecard\`))`);
+  const groups = watchGroups(page);
   for (const g of groups) {
     const sum = (k) => g.rows.reduce((s, r) => s + r[k], 0);
     assert.equal(g.subtotal.openAmt, sum('openAmt'));
@@ -633,7 +684,8 @@ test('warehouse scorecard: CM SFG and all other warehouses in one card, each wit
     assert.equal(g.subtotal.pastDue, sum('pastDue'));
   }
   // The subtotals match the open lines themselves, and OTD is scored over the group's deliveries (1 of 2 on time).
-  const [sfg, other] = groups;
+  const sfg = groups.find((g) => g.id === 'sfg');
+  const other = groups.find((g) => g.id === 'other');
   assert.equal(sfg.subtotal.openAmt, 7000);
   assert.equal(other.subtotal.openAmt, 56000);
   assert.equal(sfg.subtotal.openAmt + other.subtotal.openAmt, page.run('rowOpenAmount(orderHealthData(currentMetrics()).allOrderRows)'));
@@ -641,10 +693,11 @@ test('warehouse scorecard: CM SFG and all other warehouses in one card, each wit
   assert.equal(sfg.subtotal.pastDue, 2);
   assert.deepEqual([sfg.subtotal.otdN, sfg.subtotal.otdRate], [2, 50]);
   assert.deepEqual([other.subtotal.otdN, other.subtotal.otdRate], [1, 100]);
-  // The subtotal row shows and tells the same numbers (full amounts for screen readers and the tooltip).
-  assert.match(card, /<div class="trow sc-cols sc-subtotal" data-group="sfg" data-tip="CM SFG subtotal \(2 warehouses\): open \$7,000, at risk \$5,000, 2 lines past due, OTD 3 mo 50%">/);
-  assert.match(card, /<span class="sr-only">All other warehouses subtotal \(3 warehouses\): open \$56,000, at risk \$40,000, 1 line past due, OTD 3 mo 100%<\/span>/);
-  assert.ok(sfgPart.indexOf('sc-subtotal') > sfgPart.lastIndexOf('data-wh='), 'the subtotal closes its group');
+  // The subtotal row shows and tells the same numbers (full amounts in its tip and its name for screen readers).
+  assert.match(card, /<div class="dz-tr mwm-sub" role="group" aria-label="CM SFG subtotal \(2 warehouses\); Open \$7,000, at risk \$5,000; 2 lines past due; OTD 3 mo 50%" data-tip="CM SFG subtotal \(2 warehouses\)\n• Open \$7,000, at risk \$5,000\n• 2 lines past due\n• OTD 3 mo 50%">/);
+  assert.match(card, /aria-label="All other warehouses subtotal \(3 warehouses\); Open \$56,000, at risk \$40,000; 1 line past due; OTD 3 mo 100%"/);
+  assert.ok(sfgPart.indexOf('mwm-sub') > sfgPart.lastIndexOf('data-wh='), 'the subtotal closes its group');
+  assert.deepEqual(page.errors, []);
 });
 
 test('warehouse scorecard: 10 warehouses a page, the group heading repeats on the next page, a group with no warehouses is left out', async () => {
@@ -654,25 +707,25 @@ test('warehouse scorecard: 10 warehouses a page, the group heading repeats on th
     ...Array.from({ length: 11 }, (_, i) => sapRow({ DocumentNumber: String(100 + i), Warehouse: `CM - W${String(i).padStart(2, '0')}`, AmountLocal: String(1000 + i), ...due('08/10/2026') })),
   ];
   const page = await scorecardPage(rows);
-  const card = () => page.run('renderWarehouseScorecard(currentMetrics())');
-  const rowsShown = () => (card().match(/class="trow sc-cols(?: selected)?" data-focus-key="sc-/g) || []).length;
-  const heads = () => [...card().matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]);
+  const card = () => watchCard(page);
+  const rowsShown = () => (card().match(/class="dz-tr mwm-wrow(?: sel)?" data-focus-key="sc-/g) || []).length;
+  const heads = () => [...card().matchAll(/<div class="mwm-ghead"[^>]*>([^<]+)</g)].map((m) => m[1]);
   assert.equal(rowsShown(), 10);
-  assert.deepEqual(heads(), ['sfg', 'other']);
-  assert.match(card(), /<span class="dz-pagecount">1–10 of 13 warehouses<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="wh-scorecard"/);
+  assert.deepEqual(heads(), ['Spyder and CM warehouses']);
+  assert.match(card(), /<span class="dz-pagecount">1–10 of 13 warehouses<\/span><nav class="shp-pager dz-pager print-hide" data-dzpager="mwm-watch"/);
   assert.doesNotMatch(card(), /scorecard-all|Show top 9|Show all/);
-  // Page 2: the rest of the other group under its heading again, then its subtotal (the whole group, not the page).
-  page.run('dzGoPage("wh-scorecard",2)');
+  // Page 2: the rest of the other group under its heading again, its subtotal (the whole group, not the page), then CM SFG.
+  page.run('dzGoPage("mwm-watch",2)');
   assert.equal(rowsShown(), 3);
-  assert.deepEqual(heads(), ['other']);
+  assert.deepEqual(heads(), ['Spyder and CM warehouses', 'CM SFG']);
   assert.match(card(), /11–13 of 13 warehouses/);
-  assert.match(card(), /data-group="other" data-tip="All other warehouses subtotal \(11 warehouses\): open \$11,055,/);
+  assert.match(card(), /aria-label="All other warehouses subtotal \(11 warehouses\); Open \$11,055,/);
   // Print lists every warehouse.
-  page.run('printMode=true');
+  page.run('printMode=true;renderResults()');
   assert.equal(rowsShown(), 13);
-  page.run('printMode=false');
+  page.run('printMode=false;renderResults()');
   const noSfg = await scorecardPage(SC_ROWS.filter((r) => !/SFG/.test(r.Warehouse)));
-  assert.deepEqual([...noSfg.run('renderWarehouseScorecard(currentMetrics())').matchAll(/class="sc-group-head"[^>]*data-group="(\w+)"/g)].map((m) => m[1]), ['other']);
+  assert.deepEqual([...watchCard(noSfg).matchAll(/<div class="mwm-ghead"[^>]*>([^<]+)</g)].map((m) => m[1]), ['Spyder and CM warehouses']);
 });
 
 test('wide tables and the ship calendar scroll from the keyboard: every scroll box is a named region with tabindex 0', async () => {
@@ -683,22 +736,56 @@ test('wide tables and the ship calendar scroll from the keyboard: every scroll b
       boxes++;
       assert.match(tag, /^<div class="table-scroll" tabindex="0" role="region" aria-label="[^"<>]+">$/, `${view}: ${tag}`);
     }
+    // The 2v6 supply-style tables scroll the same way; a heat map whose cells with a value are Tab stops needs no stop
+    // of its own (focus scrolls it).
+    for (const [tag] of html.matchAll(/<div class="sup-scroll[^"]*"[^>]*>/g)) {
+      boxes++;
+      if (/class="sup-scroll sup-heat"/.test(tag)) continue;
+      assert.match(tag, /^<div class="sup-scroll" tabindex="0" role="region" aria-label="[^"<>]+">$/, `${view}: ${tag}`);
+    }
   });
   assert.ok(boxes >= 15, `${boxes} table scroll boxes`);
-  page.run("weeklyTileFilter='late';setTab('weekly');setWeeklyTileFilter('otd3mo')");
-  assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="3 mo OTD by warehouse"><table class="data-table compact">/);
-  page.run("setTab('monthly')");
+  assert.match(HTML, /class="sup-heat-c" style="background:\$\{bg\};color:\$\{fg\}" data-tip="\$\{esc\(tp\)\}"\$\{n\?' tabindex="0"':''\}/);
+  // The Monthly delivery summary sits in Open orders by delivery month on Sales Order Health > Leading now (2v9; Monthly
+  // is hidden by default).
+  page.run("weeklyTileFilter='late';setTab('weekly');setWeeklyView('leading')");
   assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="Monthly delivery summary · \d{4}"><table class="data-table"/);
+  page.run("setTab('monthly')");
+  assert.match(results(page), /<div class="table-scroll" tabindex="0" role="region" aria-label="Shipped by warehouse \/ CM · this month">/);
   // The ship calendar scrolls the same way; its day columns add no tab stops of their own (data-tip-notab).
   assert.match(HTML, /<div class="table-scroll" tabindex="0" role="region" aria-label="Open ship calendar, one column per day"><div class="day-chart" data-tip-notab /);
 });
 
+// KNOWN BUG (left failing on purpose): the Warehouse Timeline "Late orders by week" / "On-time delivery by week" heat
+// map scrolls sideways (min-width = name column + weeks x 40px; 26 weeks or a phone overflows the card), but its scroll
+// box (.mwm-scroll) is not a Tab stop and its week cells are data-tip-notab with no tabindex, so a keyboard user can
+// neither scroll to the later weeks nor read a cell's tip. The other heat maps make their cells with a value Tab stops.
+test('KNOWN BUG: the Warehouse Timeline week heat map cannot be scrolled or read from the keyboard', async () => {
+  const page = await loadedAll();
+  page.run("setTab('warehouses');mwmSetWeeks(26)");
+  const html = results(page);
+  const box = (html.match(/<div class="mwm-scroll"[^>]*>/) || [])[0];
+  assert.ok(box, 'the week heat map is drawn');
+  const cells = [...html.matchAll(/<span class="mwm-heat-cell"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(cells.length > 0);
+  const boxIsStop = /tabindex="0"/.test(box) && /role="region"/.test(box) && /aria-label="/.test(box);
+  const cellsAreStops = cells.some((c) => /tabindex="0"/.test(c));
+  assert.ok(boxIsStop || cellsAreStops, `keyboard users cannot scroll or read the heat map: ${box}`);
+});
+
 test('Windows high contrast: picked tabs and rows, the shipment strip and the waffle keep their meaning', () => {
-  const fc = CSS.slice(CSS.lastIndexOf('@media (forced-colors:active){'));
-  // Last in the sheet, so the system colours win over the page's own rules for the same elements.
-  assert.ok(CSS.indexOf('.ship-step.exception>i{') < CSS.lastIndexOf('@media (forced-colors:active){'));
-  assert.ok(CSS.indexOf('.oh-tab[aria-selected="true"]{') < CSS.lastIndexOf('@media (forced-colors:active){'));
-  assert.match(fc, /\.oh-tab\[aria-selected="true"\],\.segmented button\.active,\.segmented button\.pick,\.waffle-row\.selected,\.oh-bar-row\.selected\{border-color:Highlight\}/);
+  // The 2v6 foundation block: the picked segment (the Leading / Lagging tabs are a dz-seg now), the current header link,
+  // the picked menu item and a set filter pill keep a system-colour mark.
+  const dzAt = CSS.indexOf('@media (forced-colors:active){\n  .dz-seg button.on');
+  const dz = CSS.slice(dzAt);
+  assert.match(dz, /^@media \(forced-colors:active\)\{\n  \.dz-seg button\.on\{border:2px solid Highlight\}\n  \.dz-seg button\{border:2px solid Canvas\}\n  \.hdr-link\.active::after\{background:Highlight\}\n  \.dz-menu-item\.sel\{border:1px solid Highlight\}\n  \.dz-filter\.set\{border-color:Highlight\}\n  \.dz-barrow-fill,\.dz-prog-fill,\.dz-chip\{forced-color-adjust:none\}/);
+  // After the page's own rules for the same elements, so the system colours win.
+  assert.ok(CSS.indexOf('.dz-seg button.on{') < dzAt);
+  // The older block still marks picked segmented buttons, waffle and bar rows, the cause pick and the shipment strip.
+  const fcAt = CSS.indexOf('@media (forced-colors:active){\n  .segmented button');
+  const fc = CSS.slice(fcAt);
+  assert.ok(CSS.indexOf('.ship-step.exception>i{') < fcAt);
+  assert.match(fc, /\.segmented button\.active,\.segmented button\.pick,\.waffle-row\.selected,\.oh-bar-row\.selected\{border-color:Highlight\}/);
   assert.match(fc, /\.oh-cause-btn\.selected\{border:2px solid Highlight;/);
   assert.match(fc, /\.ship-step>i,\.ship-step::before\{forced-color-adjust:none\}/);
   assert.match(fc, /\.ship-step\.done>i\{background:Highlight;border-color:Highlight\}/);
@@ -722,22 +809,21 @@ test('Top offenders: four choices fit a phone card; the waffle blocks stand out 
   assert.ok(ratio(token('--cause-them-text'), token('--cause-unknown')) >= 3, 'Them against Not set');
 });
 
-test('shadcn look: zinc tokens, 12/8/8 radii, one focus ring, Inter with a fallback, motion guard, compact print', () => {
+// The 2v6 redesign kept the base tokens (12/8/8 radii, one focus ring, motion guard, compact print) and swapped Inter
+// for Outfit (the design language); the sidebar-era layout pins (.sidebar-brand, .main gap) went with the sidebar.
+test('base look: tokens, 12/8/8 radii, one focus ring, Outfit with a fallback, motion guard, compact print', () => {
   const root = CSS.match(/:root\{([\s\S]*?)\}/)[1];
-  for (const t of ['--gray-900:#0c1a2c', '--gray-200:#dde6ee', '--gray-100:#eef4fa', '--gray-50:#f6f9fc', '--r-card:12px', '--r-ctl:8px', '--r-btn:8px', '--ring:var(--accent)']) assert.ok(root.includes(t), t);
-  assert.match(root, /--font:'Inter',ui-sans-serif,system-ui,/);
-  assert.match(HTML, /<link href="https:\/\/fonts\.googleapis\.com\/css2\?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">/);
+  for (const t of ['--gray-900:#0c1a2c', '--gray-200:#dde6ee', '--gray-100:#eef4fa', '--gray-50:#f6f9fc', '--r-card:12px', '--r-ctl:8px', '--r-btn:8px', '--ring:var(--accent)', '--dz-r-card:24px', '--dz-r-pill:999px']) assert.ok(root.includes(t), t);
+  assert.match(root, /--font:'Outfit',system-ui,/);
+  assert.match(HTML, /<link href="https:\/\/fonts\.googleapis\.com\/css2\?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">/);
   assert.match(CSS, /:focus-visible\{outline:2px solid var\(--ring\);outline-offset:2px\}/);
-  assert.match(CSS, /\.sidebar-brand\{padding:20px 10px 0;display:grid;gap:14px;/);
-  assert.match(CSS, /\.sidebar-brand\{padding:0;display:flex;align-items:center;gap:20px\}/);
-  assert.match(CSS, /\.main\{[^}]*gap:32px/);
   assert.match(CSS, /\.grid-lead\{[^}]*gap:20px\}/);
   assert.match(CSS, /\.card\{[^}]*padding:24px 26px/);
   assert.ok(!/\.(btn|kpi|drill):hover\{[^}]*transform:(?!none)/.test(CSS), 'no movement on hover');
   assert.match(CSS, /@media \(prefers-reduced-motion:reduce\)\{\s*\*,\*::before,\*::after\{animation-duration:\.01ms!important;[^}]*transition-duration:\.01ms!important\}/);
-  // Stream A's print block (other blocks may follow it in the stylesheet)
+  // Stream A's print block: the tip bubble, toasts and tip descriptions never print (the hint cards are gone).
   const print = CSS.slice(CSS.lastIndexOf('@media print{', CSS.indexOf('#tip-layer,#toast')));
-  assert.match(print, /#tip-layer,#toast,#tip-descs,\.hint-card,\.nav-desc\{display:none!important\}/);
+  assert.match(print, /#tip-layer,#toast,#tip-descs\{display:none!important\}/);
   assert.match(print, /\.grid-lead,\.grid-4,\.grid-5,\.grid-2,\.grid-split,\.month-spot,\.drill-grid,\.grid-split>\.stack\{gap:\.1in\}/);
   assert.match(HTML, /<div id="tip-layer" class="tip-layer" aria-hidden="true" hidden><span class="tip-text"><\/span><span class="tip-arrow"><\/span><\/div>/);
   assert.match(HTML, /<div id="tip-descs" hidden><\/div>/);

@@ -32,24 +32,26 @@ test('Order Health lines: one status, its timing and one cause line; the other r
   edit(page, '100', 'status', 'Hold');
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   const row = lineRow(html(page), '100');
-  // The status cell: chip, timing, cause line; the extra reason ("Hold") stays in the markup for screen readers only.
-  assert.match(row, /<td class="c-st"><div class="c-status"><span class="status-chip bad">Late<\/span><span class="timing">\d+d overdue<\/span><span class="oh-why cause-text-them" data-tip="Cause: Them \(override Hold\)\. Reasons: Past due · No reschedule, Hold\.">Them · Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span><span class="print-ovr">Hold<\/span><\/div><\/td>/);
+  // The status cell: chip, timing, reason line; the extra reason ("Hold") stays in the markup for screen readers only.
+  // (2v4: Us vs Them is no longer shown on the line; the cause stays in the data and in the class.)
+  assert.match(row, /<td class="c-st"><div class="c-status"><span class="dz-chip red">Late<\/span><span class="dz-cell-sub timing">\d+d overdue<\/span><span class="oh-why cause-text-them" data-tip="Reasons: Past due · No reschedule, Hold\.">Past due · No reschedule<\/span><span class="timing oh-why-more">Hold<\/span><span class="print-ovr">Hold<\/span><\/div><\/td>/);
+  assert.doesNotMatch(row, /Them · |Us · /);
   assert.match(CSS, /\.lines-table \.oh-why-more\{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect\(0 0 0 0\);white-space:nowrap\}/);
   assert.doesNotMatch(CSS, /\.search-results \.oh-why-more\{display:none\}/);
   // Chip and timing share a line when they fit; the cause line is one line (its tip has the rest).
   assert.match(CSS, /\.lines-table \.c-status\{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px\}/);
   assert.match(CSS, /\.lines-table \.c-status \.oh-why\{flex-basis:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\}/);
   // Ten columns plus the checkbox: no Lead (its weeks are in the delivery date's tip).
-  const heads = [...html(page).match(/<table class="lines-table so">[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
-  assert.deepEqual(heads, ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original delivery', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
-  assert.match(row, /<td class="c-date" data-label="Original delivery"><span data-tip="Lead time 5\.7 wks \(order date to original delivery\)\.">2026-08-10<\/span><\/td>/);
+  const heads = [...html(page).match(/<table class="lines-table so[^"]*">[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
+  assert.deepEqual(heads, ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original due', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
+  assert.match(row, /<td class="c-date" data-label="Original due"><span data-tip="Lead time 5\.7 wks \(order to original delivery\)\.">2026-08-10<\/span><\/td>/);
   assert.match(row, /<td class="c-name" title="Firefly RV"><span class="clip">Firefly RV<\/span><\/td>/);
   // Row checkboxes, sort headers, notes and the bulk bar are all still there.
   assert.match(row, /<input type="checkbox" class="row-check"/);
   assert.match(html(page), /data-focus-key="linked-sort-status"/);
   assert.match(row, /class="note-btn has-note"/);
   page.run('selectAllLinked(true)');
-  assert.match(html(page), /<div class="bulk-actions" role="group" aria-label="Selected lines">/);
+  assert.match(html(page), /<div class="bulk-actions[^"]*" role="group" aria-label="Selected lines">/);
   assert.deepEqual(page.errors, []);
 });
 
@@ -61,7 +63,7 @@ test('Search: no "Line 0" or customer / warehouse code under every row; the timi
   assert.doesNotMatch(h, /<span class="sub">(FIREFLY|AQUHOT|ACME)<\/span>/);
   // No Commit: "No commit date" repeated the chip and the cause line, so it is left out.
   const noCommit = lineRow(h, '101');
-  assert.match(noCommit, /<span class="status-chip bad">No Commit<\/span><span class="oh-why cause-text-us"[^>]*>Us · No commit date<\/span>/);
+  assert.match(noCommit, /<span class="status-chip bad">No Commit<\/span><span class="oh-why cause-text-us"[^>]*>No commit date<\/span>/);
   assert.doesNotMatch(noCommit, /<span class="timing">No commit date<\/span>/);
   // Past due: "Late by …" says how late, which neither the chip nor the cause line says.
   assert.match(lineRow(h, '100'), /<span class="status-chip bad">Past Due<\/span><span class="timing">Late by [^<]+<\/span><span class="oh-why/);
@@ -92,10 +94,17 @@ test('phones: order lines, PO lines, Search rows, Build Risk rows and supply row
 
   const page = await loaded();
   page.run("setTab('purchaseorders');setPoTileFilter('allopen')");
-  const po = html(page).match(/<table class="lines-table po">[\s\S]*?<\/table>/)[0];
-  assert.match(po, /<td class="c-date" data-label="Due">/);
-  assert.match(po, /<td class="num c-qty" data-label="Qty open">/);
-  assert.match(po, /<td class="c-st"><div class="c-status">/);
+  // Purchase Order Health's PO lines are a supply table now (sup-tbl sup-po): each cell carries its column name, and
+  // under 640px the rows become two-column label / value cards with the item, status and actions full width.
+  const po = html(page).match(/<table class="sup-tbl sup-po">[\s\S]*?<\/table>/)[0];
+  assert.match(po, /<td class="sup-strong" data-label="PO #">700<\/td>/);
+  assert.match(po, /<td data-label="Promised">/);
+  assert.match(po, /<td class="num sup-strong" data-label="Open qty">10<\/td>/);
+  assert.match(po, /<td class="sup-status" data-label="Status"><span class="dz-chip red">Late<\/span>/);
+  const supPhone = CSS.slice(CSS.indexOf('@media (max-width:640px)', CSS.indexOf('.sup-tbl.sup-po,.sup-tbl.sup-sd') - 2000));
+  assert.match(supPhone, /\.sup-tbl\.sup-po tr\.sup-row,[^{]*\{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\);/);
+  assert.match(supPhone, /\.sup-tbl td\[data-label\]::before\{content:attr\(data-label\);display:block;/);
+  assert.match(supPhone, /\.sup-tbl td\.sup-item,\.sup-tbl td\.sup-status,[^{]*\{grid-column:1\/-1\}/);
   // Build Risk / Metrics rows: each cell carries its column name and its card place.
   const rows = page.run("renderRowsTable(parsedRows.filter(r=>r.documentNumber==='100'),{key:'t',title:'T',editable:true})");
   assert.match(rows, /<table class="data-table cards"/);
@@ -118,7 +127,10 @@ test('print: the override sits in the Status cell (no extra row per line); the W
   page.run("setTab('weekly');weeklyTileFilter='late';renderResults()");
   const h = html(page);
   assert.match(lineRow(h, '100'), /<span class="print-ovr">Hold<\/span><\/div><\/td>/);
-  assert.match(lineRow(h, '101'), /<span class="print-ovr">Cause: Them<\/span>/);
+  // 2v4: Us vs Them is no longer shown, so a picked cause alone prints nothing in the Status cell (no empty span).
+  const row101 = h.split('<tr ').find((t) => t.includes('<td class="c-doc">101<'));
+  assert.match(row101, /class="oh-why cause-text-them"/);
+  assert.doesNotMatch(row101, /print-ovr/);
   // Only a written note gets a row under its line, and that row shows just the note.
   assert.equal((h.match(/class="print-note-row/g) || []).length, 1);
   assert.match(h, /<tr class="print-note-row has-print-note"><td colspan="11">\s*<div class="print-note-card"><strong>Note:<\/strong> Waiting on boards<\/div>/);
@@ -129,10 +141,10 @@ test('print: the override sits in the Status cell (no extra row per line); the W
   assert.match(printCss, /\.table>\.thead,\.table>\.trow,\.table>button\.trow,\.table>\.sc-group-head\{min-width:0!important\}/);
   assert.match(printCss, /\.sc-cols\{grid-template-columns:minmax\(0,1\.7fr\) repeat\(5,minmax\(0,1fr\)\)\}/);
   assert.match(printCss, /\.sc-cols>div:nth-child\(7\)\{display:none\}/);
+  // 2v6: the scorecard grid left Order Health (2v4) and then became Warehouses to watch on the Warehouse Timeline
+  // page; the print rules above stay for it, but the lagging view no longer draws an sc-cols grid.
   page.run("setWeeklyView('lagging');renderResults()");
-  const sc = html(page).match(/<div class="thead sc-cols"[\s\S]*?<\/div><\/div>/)[0];
-  assert.equal([...sc.matchAll(/<div\b/g)].length - 1, 7, 'the screen scorecard keeps all seven columns');
-  assert.match(sc, />Resched<\/div><\/div>$/);
+  assert.doesNotMatch(html(page), /class="thead sc-cols"/);
   assert.deepEqual(page.errors, []);
 });
 

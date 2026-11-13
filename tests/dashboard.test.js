@@ -243,7 +243,7 @@ test('"Not At Risk" clears a line from late counts on every tab, and clearing it
   page.run(`updateRowOverride(${JSON.stringify(poKey)},'status','Not At Risk')`);
   assert.equal(page.run('currentMetrics().pastDueRows.length'), 0);
   page.run('setTab("purchaseorders")');
-  assert.match(page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Late \/ missed commit \$0 0 lines/);
+  assert.match(page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Late \/ missed commit 0 \$0 · 0 lines/);
   page.run(`updateRowOverride(${JSON.stringify(soKey)},'status','')`);
   assert.equal(page.run('currentMetrics().pastDueRows.length'), 1);
 });
@@ -254,9 +254,9 @@ test('PO tab shows unconfirmed and missing-price lines', async () => {
   await upload(page, [{ name: 'e.xls', bytes: sapExport([po({ DocumentNumber: '41', Confirmed: 'N' }), po({ DocumentNumber: '42', PriceFlag: 'Missing Price', AmountLocal: '0.00' }), po({ DocumentNumber: '43' })]) }]);
   page.run('setTab("purchaseorders")');
   const text = page.els['results-screen'].innerHTML.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
-  // 2v2: the strip shows the label and the numbers; what each one counts is in its tooltip.
-  assert.match(text, /Unconfirmed 1 \$1,000 /);
-  assert.match(text, /Missing price 1 \$0 /);
+  // Purchase Order Health: one Unconfirmed · Missing price card (2 lines, $1K: the missing-price line has no value)
+  // that splits into its two counts; what each one counts is in its tooltip.
+  assert.match(text, /Unconfirmed · Missing price 2 \$1K · 2 lines Unconfirmed 1 Missing price 1 /);
 });
 
 test('fractional quantities are not rounded away', () => {
@@ -334,14 +334,18 @@ test('a replacement report opens on the default view; Add file keeps the view', 
   const headers = [...SAP_HEADERS, 'InventoryItem'];
   const file = (doc) => utf16Tsv(headers, [{ ...sapRow({ DocumentNumber: doc }), InventoryItem: 'N' }, { ...sapRow({ DocumentNumber: doc + '1' }), InventoryItem: 'Y' }]);
   await upload(page, [{ name: 'a.xls', bytes: file('1') }]);
-  page.run("setIncludeNonInventory(true);weeklyTileFilter='allorders';shipScenarioStartDate='2026-08-01';activeTab='monthly'");
+  // (The All orders card is gone; No commit is one of today's At risk cards.)
+  page.run("setIncludeNonInventory(true);weeklyTileFilter='nocommit';shipScenarioStartDate='2026-08-01';activeTab='monthly'");
   await page.ctx.handleFiles([{ name: 'b.xls', bytes: file('2') }]);
   await new Promise((r) => setTimeout(r, 10));
-  assert.deepEqual(page.run('[weeklyTileFilter,includeNonInventory,shipScenarioStartDate,activeTab,parsedRows.length]'), ['late', false, '', 'weekly', 1]);
-  page.run("weeklyTileFilter='allorders'");
+  // The picked scenario start is dropped; drawing the new report fills in the default (this month's first day), as the
+  // Ship target card on Sales Order Health now reads it on every redraw.
+  assert.deepEqual(page.run('[weeklyTileFilter,includeNonInventory,shipScenarioStartDate,activeTab,parsedRows.length]'), ['late', false, page.run('inputDateValue(defaultShipScenarioStartDate(reportToday()))'), 'weekly', 1]);
+  assert.notEqual(page.run('shipScenarioStartDate'), '2026-08-01');
+  page.run("setWeeklyTileFilter('nocommit')");
   await page.ctx.handleFiles([{ name: 'b.xls', bytes: file('2') }, { name: 'c.xls', bytes: file('3') }], { adding: true });
   await new Promise((r) => setTimeout(r, 10));
-  assert.equal(page.run('weeklyTileFilter'), 'allorders');
+  assert.equal(page.run('weeklyTileFilter'), 'nocommit');
 });
 
 test('Export PDF prints the long linked-lines list; the screen shows it 10 a page', async () => {

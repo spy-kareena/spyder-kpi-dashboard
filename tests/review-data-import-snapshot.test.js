@@ -178,7 +178,11 @@ test('a snapshot of an export without ExportDate keeps the numbers of the day it
 
   const viewer = await openSnapshot(await saveSnapshot(saver), '2026-09-30');
   assert.deepEqual(kpis(viewer), saved);
-  assert.match(viewer.els['results-screen'].innerHTML, /As of 2026-09-10, the day the snapshot was saved \(no ExportDate column\)/);
+  // 2v6.9 (owner): no "As of" line beside the Sales Order Health title; the snapshot tag says when it was saved and
+  // the page line's tip on other pages (here Search) still says the date is the save day.
+  assert.match(viewer.els['results-screen'].innerHTML, /<span class="snapshot-note" data-tip="Numbers as of the day it was saved;[^"]*">Shared snapshot · Saved 2026-09-10<\/span>/);
+  viewer.run("setTab('search');renderResults()");
+  assert.match(viewer.els['results-screen'].innerHTML, /data-tip="As of 2026-09-10, the day the snapshot was saved \(no ExportDate column\)/);
   assert.equal(viewer.run('aiAsOf().as_of'), '2026-09-10');
 });
 
