@@ -148,8 +148,8 @@ function withSecurityHeaders(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
-// The sign-in page uses the dashboard's look: the soft blue page (#d7ebfc, dark #102232) with slow drifting colour
-// glows, a white card (24px corners, soft shadow), Outfit with a system-font fallback, the ink and indigo tokens, a
+// The sign-in page uses the dashboard's look on a quiet "Sky" page: faint blue at the top fading to soft white (dark:
+// deep blue to near-black), a white card (24px corners, light shadow), Outfit with a system-font fallback, the ink and indigo tokens, a
 // pill field and a black pill button, and the logo from assets/ (served without a session above). Dark mode follows
 // the system setting, or the theme saved in the dashboard's Settings (same origin, read by the small script in <head>).
 // Motion is CSS transform / opacity only and is switched off for prefers-reduced-motion. The page has no
@@ -172,36 +172,30 @@ function loginPage(failed, status) {
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>(function(){var d=document.documentElement;d.className='js';try{var t=(JSON.parse(localStorage.getItem('spyderKpiSettings')||'{}')||{}).theme;if(t==='dark'||t==='light')d.setAttribute('data-theme',t);}catch(e){}})();</script>
   <style>
-    :root{--page:#d7ebfc;--card:#fff;--card-line:rgba(255,255,255,.9);--ink-1:#0c1a2c;--ink-2:#2e4157;--ink-3:#41566c;--ink-4:#4d6379;
+    :root{--page:#eef3fb;--card:#fff;--card-line:rgba(15,30,50,.06);--ink-1:#0c1a2c;--ink-2:#2e4157;--ink-3:#41566c;--ink-4:#4d6379;
       --line:rgba(12,26,44,.08);--field:#f6f9fd;--field-line:#8293a5;--indigo:#4063f0;--indigo-rgb:64,99,240;
       --risk:#cb2348;--risk-bg:#fdeef1;--risk-line:rgba(203,35,72,.55);--btn:#0c1a2c;--btn-hover:#2e4157;--btn-fg:#fff;
-      --sh-card:0 1px 2px rgba(22,56,100,.05),0 28px 64px -18px rgba(22,56,100,.22);--sh-btn:0 10px 22px -8px rgba(12,26,44,.45);
-      --blob-a:.36;--blob-b:.30;--blob-c:.20;--logo-filter:none;
+      --sh-card:0 1px 2px rgba(15,30,50,.04),0 12px 32px -12px rgba(15,30,50,.10);--sh-btn:0 10px 22px -8px rgba(12,26,44,.45);
+      --sky:linear-gradient(180deg,#d9e8fa 0%,#e7f0fb 30%,#f3f6fb 58%,#f6f5fb 80%,#f8f8fc 100%);--glow:rgba(255,255,255,.7);--logo-filter:none;
       --ease:cubic-bezier(.2,.8,.2,1);--font:'Outfit',system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color-scheme:light}
     /* Dark tokens: the dashboard's dark page, card and inks; the primary button turns light, the logo is inverted */
-    @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#102232;--card:#182c3e;--card-line:rgba(226,232,240,.1);--ink-1:#eff4f9;--ink-2:#d8e1e9;--ink-3:#bfcad6;--ink-4:#a1b0bf;
+    @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--page:#111d2d;--card:#182c3e;--card-line:rgba(226,232,240,.08);--ink-1:#eff4f9;--ink-2:#d8e1e9;--ink-3:#bfcad6;--ink-4:#a1b0bf;
       --line:rgba(226,232,240,.13);--field:#14263a;--field-line:#6c8196;--indigo:#6993fa;--indigo-rgb:105,147,250;
       --risk:#ff8aa3;--risk-bg:#3b1824;--risk-line:rgba(255,138,163,.6);--btn:#eff4f9;--btn-hover:#d8e1e9;--btn-fg:#0c1a29;
-      --sh-card:0 1px 2px rgba(0,0,0,.3),0 28px 64px -18px rgba(0,0,0,.6);--sh-btn:0 10px 22px -8px rgba(0,0,0,.7);
-      --blob-a:.30;--blob-b:.22;--blob-c:.18;--logo-filter:invert(1);color-scheme:dark}}
-    :root[data-theme=dark]{--page:#102232;--card:#182c3e;--card-line:rgba(226,232,240,.1);--ink-1:#eff4f9;--ink-2:#d8e1e9;--ink-3:#bfcad6;--ink-4:#a1b0bf;
+      --sh-card:0 12px 32px -12px rgba(0,0,0,.5);--sh-btn:0 10px 22px -8px rgba(0,0,0,.7);
+      --sky:linear-gradient(180deg,#1a3250 0%,#162840 30%,#111d2d 60%,#0f1724 100%);--glow:rgba(120,160,220,.10);--logo-filter:invert(1);color-scheme:dark}}
+    :root[data-theme=dark]{--page:#111d2d;--card:#182c3e;--card-line:rgba(226,232,240,.08);--ink-1:#eff4f9;--ink-2:#d8e1e9;--ink-3:#bfcad6;--ink-4:#a1b0bf;
       --line:rgba(226,232,240,.13);--field:#14263a;--field-line:#6c8196;--indigo:#6993fa;--indigo-rgb:105,147,250;
       --risk:#ff8aa3;--risk-bg:#3b1824;--risk-line:rgba(255,138,163,.6);--btn:#eff4f9;--btn-hover:#d8e1e9;--btn-fg:#0c1a29;
-      --sh-card:0 1px 2px rgba(0,0,0,.3),0 28px 64px -18px rgba(0,0,0,.6);--sh-btn:0 10px 22px -8px rgba(0,0,0,.7);
-      --blob-a:.30;--blob-b:.22;--blob-c:.18;--logo-filter:invert(1);color-scheme:dark}
+      --sh-card:0 12px 32px -12px rgba(0,0,0,.5);--sh-btn:0 10px 22px -8px rgba(0,0,0,.7);
+      --sky:linear-gradient(180deg,#1a3250 0%,#162840 30%,#111d2d 60%,#0f1724 100%);--glow:rgba(120,160,220,.10);--logo-filter:invert(1);color-scheme:dark}
     *{box-sizing:border-box;margin:0;padding:0}
     html{background:var(--page)}
     body{position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 16px;
-      font-family:var(--font);color:var(--ink-1);background:var(--page);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
-    /* Background: three large soft glows in the dashboard's chart colours, drifting slowly (transform only) */
-    .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;animation:fade 1.6s ease-out backwards}
-    .blob{position:absolute;width:62vmax;height:62vmax;border-radius:50%;will-change:transform}
-    .b1{top:-24vmax;left:-18vmax;background:radial-gradient(closest-side,rgba(61,124,245,var(--blob-a)),rgba(61,124,245,calc(var(--blob-a) * .55)) 35%,rgba(61,124,245,calc(var(--blob-a) * .16)) 68%,rgba(61,124,245,0));animation:drift1 26s ease-in-out infinite alternate}
-    .b2{bottom:-28vmax;right:-20vmax;background:radial-gradient(closest-side,rgba(16,165,198,var(--blob-b)),rgba(16,165,198,calc(var(--blob-b) * .55)) 35%,rgba(43,179,163,calc(var(--blob-b) * .16)) 68%,rgba(43,179,163,0));animation:drift2 32s ease-in-out infinite alternate}
-    .b3{top:18vh;right:-26vmax;width:46vmax;height:46vmax;background:radial-gradient(closest-side,rgba(181,78,224,var(--blob-c)),rgba(181,78,224,calc(var(--blob-c) * .55)) 35%,rgba(181,78,224,calc(var(--blob-c) * .16)) 68%,rgba(181,78,224,0));animation:drift3 38s ease-in-out infinite alternate}
-    @keyframes drift1{to{transform:translate3d(14vw,10vh,0) scale(1.12)}}
-    @keyframes drift2{to{transform:translate3d(-12vw,-12vh,0) scale(1.08)}}
-    @keyframes drift3{to{transform:translate3d(-22vw,16vh,0) scale(.9)}}
+      font-family:var(--font);color:var(--ink-1);background:var(--sky) fixed;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+    /* Background ("Sky"): faint blue at the top fading to soft white, and one still white glow behind the card so it
+       seems to float. Nothing moves here; the card's entrance and the focus glow are the only motion. */
+    .bg{position:fixed;left:-10%;right:-10%;top:25%;height:70vh;z-index:0;pointer-events:none;background:radial-gradient(50% 50% at 50% 50%,var(--glow),transparent 100%);animation:fade 2s ease-out backwards}
     main,.foot{position:relative;z-index:1}
     .card{width:100%;max-width:404px;background:var(--card);border:1px solid var(--card-line);border-radius:24px;padding:36px 32px 32px;box-shadow:var(--sh-card);
       animation:rise .6s var(--ease) backwards}
@@ -275,7 +269,7 @@ function loginPage(failed, status) {
   </style>
 </head>
 <body>
-  <div class="bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+  <div class="bg" aria-hidden="true"></div>
   <main class="card${error ? ' failed' : ''}">
     <img class="logo st" style="--i:0" src="${LOGO_PATH}" alt="Spyder Controls" width="150" height="31">
     <h1 class="st" style="--i:1">Sign in to the KPI dashboard</h1>
