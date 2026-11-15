@@ -1226,7 +1226,7 @@ test('2v9 (owner): the Order Map legend shows one category: In transit, Delayed 
   const dotStates = () => [...mapOf(page).matchAll(/<button type="button" class="shp-dot (\w+)/g)].map((x) => x[1]);
   const all = dotStates();
   assert.ok(new Set(all).size >= 2, 'the sample has more than one category');
-  assert.match(html(page), /\bWhere Orders Are Headed\b/);
+  assert.match(html(page), /\bWhere Are Orders Headed\?/);
   assert.doesNotMatch(html(page), /Where Is Everything/);
   for (const st of ['moving', 'late', 'done']) {
     const n = all.filter((x) => x === st).length;

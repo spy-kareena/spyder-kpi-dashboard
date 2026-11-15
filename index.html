@@ -20544,7 +20544,7 @@ function renderShippingPage(m){
   // 981px); --pw is the cards' width the map was laid out for.
   const lay=shpMapLayout();
   // Owner: Shipping reads as questions too.
-  return head+dzQ(1,'Where Orders Are Headed','solo')+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+dzQ(2,'Where’s Each Shipment Now?','solo')+`<div class="shp-grid">${list}${side}</div>`+about;
+  return head+dzQ(1,'Where Are Orders Headed?','solo')+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+dzQ(2,'Where’s Each Shipment Now?','solo')+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
