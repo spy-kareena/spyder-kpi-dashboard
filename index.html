@@ -1810,7 +1810,7 @@ body{background:var(--dz-page-base)}
 /* The logo is a transparent PNG (black ink only) */
 .hdr-logo img{display:block;width:110px;height:auto}
 .hdr-center{display:flex;align-items:center;justify-content:center;gap:20px;min-width:0;max-width:100%}
-.hdr-nav{display:flex;align-items:center;gap:20px;font-size:14px;white-space:nowrap;min-width:0;overflow-x:auto;scrollbar-width:none;padding:6px 4px;margin:0 -4px}
+.hdr-nav{display:flex;align-items:center;gap:20px;font-size:14px;white-space:nowrap;min-width:0;overflow-x:auto;scrollbar-width:none;padding:6px 4px;margin:0 -4px;scroll-padding-inline:4px}
 .hdr-nav::-webkit-scrollbar{display:none}
 .hdr-link{position:relative;display:inline-flex;align-items:center;gap:4px;padding:4px 0;border:0;border-radius:2px;background:transparent;font:inherit;font-size:14px;line-height:1.4;color:var(--dz-ink-4);font-weight:400;cursor:pointer;white-space:nowrap;text-decoration:none;flex:none}
 .hdr-link:hover{color:var(--dz-ink-1)}
@@ -2176,7 +2176,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
   .ohl-card .lines-table>tbody>tr.line-row{padding:14px 0}
   .ohl-card .lines-table.so>thead th.c-check{padding:10px 0!important}
   /* 2v9 (owner): as a card, a line's tint keeps 12px round the checkbox, value and Add note (Select all lines up) */
-  .ohl-card .lines-table>tbody>tr.line-row{padding-left:12px;padding-right:12px}
+  .ohl-card .lines-table.so>tbody>tr.line-row{padding-left:12px;padding-right:12px}
   .ohl-card .lines-table.so>thead th.c-check{padding:10px 12px!important}
   .ohl-card .lines-table .note-editor,.ohl-card .lines-table.so .note-editor{padding:10px 0 14px}
   .ohl-card .lines-table.so.ohl-lines{min-width:0}
@@ -4608,6 +4608,10 @@ button.ohc2-name:focus-visible{outline-offset:-2px}
 /* The current month's row in the flat tables: its accent bar no longer sits on the month (the table is inset). */
 .misc-flat .data-table:has(tbody tr.current) tr>:first-child{padding-left:12px}
 .misc-flat .data-table:has(tbody tr.current) tr>:last-child{padding-right:12px}
+/* 2v9 (owner): the month folds' other tables (Items not shipped yet) too: a hovered row's tint ended flush on the
+   month and the focus ring of its scroll box crossed it */
+.ohl-months .data-table tr>:first-child{padding-left:12px}
+.ohl-months .data-table tr>:last-child{padding-right:12px}
 /* Lagging's Show more bar: side padding, and room for two lines on phones. */
 .mwm-more>summary{height:auto;min-height:44px;padding:8px 20px;text-align:center;line-height:1.35}
 /* Shipments: the delivery-history note keeps clear of the card above it. */
@@ -15386,6 +15390,12 @@ if(document.addEventListener){
     sparkMark(el,i,{say:true});
   });
   document.addEventListener('focusout',e=>{const el=sparkOf(e.target);if(el&&e.target===el)sparkClear(el);});
+  // 2v9 (owner): a page link the keyboard reaches in the header's sideways-scrolling strip (a phone) scrolls fully into
+  // view, so its focus ring and text are not cut at the strip's edge (the browser leaves a half-shown link as it is).
+  document.addEventListener('focusin',e=>{
+    const a=e.target&&e.target.closest?e.target.closest('.hdr-nav a,.hdr-nav button'):null;
+    if(a&&a.scrollIntoView)try{a.scrollIntoView({inline:'nearest',block:'nearest'});}catch(err){}
+  });
 }
 
 // Section help: each section's short text (SECTION_INFO below: what it shows, what clicking does) is the tooltip of

@@ -67,13 +67,17 @@ browser keeps that choice).
   5 minutes, and shows a short message only when the link drops and when it is back. The bridge's message (for example
   "SAP HANA could not be reached from the bridge PC… (bridge log ref ab12cd34)") is shown as it comes, in the popover
   and in Settings.
-- **The last live data is kept in this browser** (IndexedDB `spyderKpiLive`, apart from the import copy): on the next
-  visit it shows at once, with a red mark until the first read works, so the data from just before a disconnection stays
-  until the link is back.
+- **The last live data is kept in this browser** (IndexedDB `spyderKpiLive`, apart from the import copy) **and on the
+  server for every browser** (2v9: `GET`/`PUT /api/report?kind=live`, KV key `live`, saved when a read brings new data,
+  at most every 30 minutes from one browser). When the page opens it shows the newer of the two at once, with a red
+  mark until the first read works, so the last live data from David's SAP shows even when the bridge cannot be reached,
+  also on a computer that never read it before.
+- **Only live data is shown when the page opens** (2v9, owner): an uploaded report (the `report` key, or this browser's
+  import copy) is never reopened, and a Data Source left on Import files goes back to Live SAP.
 - **Add file** adds a Clear To Build workbook or the Logican sheet to the live data; it stays with it (also in the kept
   copy) when the live data updates. Dropping files on the page is off in live mode.
-- Live reads are **not** written to the shared report store (`/api/report`), so the at-risk history does not get new
-  weeks from live data (it still shows the weeks recorded from uploads). Notes and overrides work as before.
+- Live reads do not replace the uploaded report (`/api/report`, key `report`); the at-risk history gets its week from
+  live data through `/api/history`. Notes and overrides work as before.
 - If the supply / demand snapshot can't be read, the one already loaded stays.
 - The live file is named `SAP_live_KPI_<date>.txt`. The header date is the query's `ExportDate`.
 - `X-Refreshed-At` (the time the bridge read SAP) is ISO with a UTC offset on current bridges and is shown in local
@@ -82,8 +86,8 @@ browser keeps that choice).
 
 ## Import mode
 
-Settings → Data Source → **Import files**: exactly the upload flow of before. The last report reopens (the shared one,
-or this browser's copy), the load screen has the drop area (and **Load from SAP** when the site has a bridge), and the
+Settings → Data Source → **Import files**: the upload flow, for that visit only (the page opens on Live SAP again next
+time). No earlier upload reopens (2v9, owner): the load screen has the drop area (and **Load from SAP** when the site has a bridge), and the
 export-date popover has the file names and the icon buttons **Add file**, **New file** and **Share snapshot**. Settings → Data Source has **Upload files**,
 **Add file** and **New file**. Switching back to Live SAP shows the kept live data and reads SAP.
 
