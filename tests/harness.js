@@ -131,4 +131,80 @@ function createSuite() {
   return { test, run };
 }
 
-module.exports = { HTML, INDEX, loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite };
+// 2v9 (owner): phone sort menus. A table shown as cards on a phone has no heading row, so its card carries a Sort select
+// (psortHtml, or the PO / Sales Order Health lines' own select) and an arrow button (psortDir). This checks one table:
+// the select lists every sortable heading (a psort menu: the same columns in the same order, the same labels), and each
+// choice, then the arrow, leaves the page exactly as one click, then a second click, on that heading does.
+// marker: text inside the card (e.g. the select's data-focus-key); prefix: the headings' data-focus-key before the
+// column id; dirKey: the arrow's key (data-focus-key "psort-<dirKey>-dir"); colOf: a choice's value => its column id
+// (null: a choice that sorts no column); legacy(value): an older choice that keeps its own sort (only its arrow is checked);
+// rows(card html): the rows' order, to show the sort does something. Returns {heads, options}.
+function checkPhoneSort(page, { marker, prefix, dirKey, colOf = (v) => v, legacy = () => false, rows }) {
+  const assert = require('node:assert/strict');
+  const html = () => page.els['results-screen'].innerHTML;
+  const dec = (s) => String(s).replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`)); return m ? dec(m[1]) : undefined; };
+  const card = (h) => {
+    const i = h.indexOf(marker);
+    assert.ok(i >= 0, `${marker}: the phone sort control is drawn`);
+    const a = h.lastIndexOf('<section', i), b = h.indexOf('</section>', i);
+    return h.slice(a, b < 0 ? h.length : b);
+  };
+  const c0 = card(html());
+  const selHtml = c0.match(/<select\b[^>]*>[\s\S]*?<\/select>/g).find((s) => s.includes(marker) || /psort-sel|id="(po|weekly)-line-sort"/.test(s));
+  const selTag = selHtml.match(/^<select\b[^>]*>/)[0];
+  assert.match(selTag, /\saria-label="Sort [^"]+"/, `${marker}: the select is labelled`);
+  assert.match(selTag, /\sdata-tip="[^"]+"/, `${marker}: the select has a tip`);
+  const options = [...selHtml.matchAll(/<option\b[^>]*>([^<]*)<\/option>/g)].map((m) => ({ value: attr(m[0], 'value'), first: attr(m[0], 'data-first'), label: attr(m[0], 'data-name'), text: dec(m[1]) }));
+  const heads = [...c0.matchAll(/<button type="button" class="th-sort[^"]*"[^>]*>[\s\S]*?<span class="sort-arrow"/g)].map((m) => {
+    const tag = m[0].match(/^<button\b[^>]*>/)[0];
+    return { tag, key: attr(tag, 'data-focus-key'), label: dec(m[0].slice(tag.length).replace(/<span class="sort-arrow"$/, '').replace(/<[^>]*>/g, '')).trim() };
+  }).filter((x) => x.key && x.key.startsWith(prefix)).map((x) => ({ ...x, col: x.key.slice(prefix.length) }));
+  assert.ok(heads.length >= 2, `${marker}: sortable headings found`);
+  const choices = options.filter((o) => o.value !== '' && colOf(o.value) !== null && colOf(o.value) !== undefined);
+  // Every sortable column is a choice.
+  assert.deepEqual(heads.map((x) => x.col).filter((c) => !choices.some((o) => String(colOf(o.value)) === c)), [], `${marker}: columns missing from the phone Sort menu`);
+  if (/psort-sel/.test(selTag)) {
+    // A psort menu: the table's own order first, then the columns in heading order with the heading's words.
+    assert.equal(options[0].value, '');
+    assert.deepEqual(choices.map((o) => [String(o.value), o.label]), heads.map((x) => [x.col, x.label]), `${marker}: the menu lists the headings`);
+  }
+  const saved = page.run('JSON.stringify({t:tableMore,po:poLineSort,w:weeklyLineSort})');
+  const reset = () => page.run(`(s=>{tableMore=s.t;poLineSort=s.po;weeklyLineSort=s.w;renderResults();})(${saved})`);
+  const call = (js, self) => page.run(`(function(){${js}}).call(${JSON.stringify(self)})`);
+  const clickHead = (x) => call(attr(x.tag, 'onclick'), { dataset: { col: attr(x.tag, 'data-col'), sortLabel: attr(x.tag, 'data-sort-label') }, firstChild: { textContent: x.label } });
+  const base = rows ? rows(card(html())) : null;
+  let changed = 0;
+  for (const o of choices) {
+    const x = heads.find((h) => h.col === String(colOf(o.value)));
+    reset();
+    call(attr(selTag, 'onchange'), { value: o.value, selectedIndex: 0, options: [{ dataset: { first: o.first, name: o.label } }] });
+    const viaMenu = html();
+    const now = card(viaMenu);
+    assert.match(now.match(/<select\b[^>]*>[\s\S]*?<\/select>/g).find((s) => s.startsWith(selTag.slice(0, 40))) || '', /<option\b[^>]*\sselected>/, `${marker}: the select shows the pick`);
+    const dir = (now.match(new RegExp(`<button type="button" class="dz-pillinput psort-dir" data-focus-key="psort-${dirKey}-dir"[^>]*>`)) || [])[0];
+    assert.ok(dir, `${marker} ${o.value}: the arrow button is drawn`);
+    assert.doesNotMatch(dir, /aria-disabled/, `${marker} ${o.value}: the arrow works once a column is sorted`);
+    assert.match(dir, /aria-label="Sort ascending" aria-pressed="(true|false)"/);
+    assert.match(dir, /\sdata-tip="[^"]+"/);
+    if (rows && JSON.stringify(rows(now)) !== JSON.stringify(base)) changed++;
+    call(attr(dir, 'onclick'), { dataset: { name: attr(dir, 'data-name') } });
+    const viaArrow = html();
+    if (rows && JSON.stringify(rows(card(viaArrow))) !== JSON.stringify(base)) changed++;
+    reset();
+    clickHead(x);
+    if (!legacy(o.value)) assert.ok(viaMenu === html(), `${marker}: "${o.text}" sorts as a click on ${x.label}`);
+    clickHead(x);
+    assert.ok(viaArrow === html(), `${marker}: "${o.text}" then the arrow sorts as two clicks on ${x.label}`);
+  }
+  if (rows) assert.ok(changed > 0, `${marker}: a phone sort changes the order`);
+  // Back to the table's own order (a psort menu's first choice): no column is sorted and the arrow waits.
+  if (/psort-sel/.test(selTag)) {
+    call(attr(selTag, 'onchange'), { value: '', selectedIndex: 0, options: [{ dataset: {} }] });
+    assert.match(card(html()), new RegExp(`data-focus-key="psort-${dirKey}-dir" aria-label="Sort ascending" aria-pressed="false" aria-disabled="true"`));
+  }
+  reset();
+  return { heads, options };
+}
+
+module.exports = { HTML, INDEX, loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite, checkPhoneSort };

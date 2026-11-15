@@ -42,7 +42,9 @@ test('Order Health lines: one status, its timing and one cause line; the other r
   assert.match(CSS, /\.lines-table \.c-status\{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px\}/);
   assert.match(CSS, /\.lines-table \.c-status \.oh-why\{flex-basis:100%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis\}/);
   // Ten columns plus the checkbox: no Lead (its weeks are in the delivery date's tip).
-  const heads = [...html(page).match(/<table class="lines-table so[^"]*">[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
+  const heads = [...html(page).match(/<table class="lines-table so[^"]*">[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)].map((m) => m[1].replace(/<span class="sort-arrow"[^>]*>[^<]*<\/span>/g, '').replace(/<[^>]*>/g, ''));
+  // Every unsorted heading carries the board's faint ↕ (shown on hover / focus only).
+  assert.equal((html(page).match(/<table class="lines-table so[^"]*">[\s\S]*?<\/thead>/)[0].match(/<span class="sort-arrow" aria-hidden="true">↕<\/span>/g) || []).length, 10);
   assert.deepEqual(heads, ['', 'SO #', 'Customer', 'Warehouse', 'Item / Description', 'Original due', 'Open', 'Value', 'Status', 'Reschedule', 'Notes']);
   assert.match(row, /<td class="c-date" data-label="Original due"><span data-tip="Lead time 5\.7 wks \(order to original delivery\)\.">2026-08-10<\/span><\/td>/);
   assert.match(row, /<td class="c-name" title="Firefly RV"><span class="clip">Firefly RV<\/span><\/td>/);
@@ -250,6 +252,68 @@ test('2v9 (owner): renderTableCard sorts every titled column by what its cells s
   const first = [...page.run(card).matchAll(/<td class="m">([^<]+)/g)].map((m) => m[1]);
   assert.deepEqual(first, Array.from({ length: 10 }, (_, i) => `Item ${i + 1}`));
   assert.equal(page.run("dzPg['t-many'].page"), 1);
+  assert.deepEqual(page.errors, []);
+});
+
+// QA 2v9: on a phone a sort jumped a sideways-scrolling table back to its left edge (the sorted column off screen, the
+// next tap on another heading). The DOM stub has no layout, so the old and new table wrappers are made up here: the
+// redraw must find the new wrapper by its first heading's focus key and class, and give it the old scrollLeft.
+test('a sort redraw puts back how far a sideways table was scrolled (found by its first heading and class); a new page does not', async () => {
+  const page = await loaded();
+  page.run(`(()=>{
+    const el=document.getElementById('results-screen');
+    const ref={id:'',dataset:{focusKey:'ohsort-mwm-watch-0'}};
+    const oldBox={id:'',dataset:{},className:'mwm-scroll',scrollLeft:240,scrollTop:0,querySelector:s=>s==='[id],[data-focus-key]'?ref:null};
+    const still={id:'',dataset:{},className:'other',scrollLeft:0,scrollTop:0,querySelector:()=>null};
+    const own={id:'',dataset:{focusKey:'list-box'},className:'list',scrollLeft:0,scrollTop:90};
+    window.qaBox={id:'',dataset:{},className:'mwm-scroll',scrollLeft:0,scrollTop:0};
+    window.qaBox.parentElement={className:'dz-card',parentElement:el};
+    window.qaList={scrollLeft:0,scrollTop:0};
+    const newRef={parentElement:{className:'mwm-table',parentElement:window.qaBox}};
+    el.querySelectorAll=s=>s==='div,section'?[still,oldBox,own]:[];
+    el.querySelector=s=>s==='[data-focus-key="ohsort-mwm-watch-0"]'?newRef:s==='[data-focus-key="list-box"]'?window.qaList:null;
+    el.contains=()=>false;
+  })()`);
+  assert.equal(page.run("JSON.stringify(captureScrolls(document.getElementById('results-screen')))"),
+    JSON.stringify([{ sel: '[data-focus-key="ohsort-mwm-watch-0"]', cls: 'mwm-scroll', left: 240, top: 0 }, { sel: '[data-focus-key="list-box"]', cls: '', left: 0, top: 90 }]));
+  page.run("ohSortBy('mwm-watch','1','Open')");
+  assert.equal(page.run('qaBox.scrollLeft'), 240);
+  assert.equal(page.run('qaList.scrollTop'), 90);
+  // Opening another page starts that page at its own left edge.
+  page.run("qaBox.scrollLeft=0;qaList.scrollTop=0;setTab('purchaseorders')");
+  assert.equal(page.run('qaBox.scrollLeft'), 0);
+  assert.equal(page.run('qaList.scrollTop'), 0);
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 (owner): phone sort menus. Under 640px these tables are cards with no heading row, so each card has a Sort select
+// of every column and an arrow (↑ / ↓) that run the headings' own sort; hidden on wider screens and in print.
+test('2v9 phone sort menus: Item groups and Short or at-risk items list every column; a pick (and the arrow) sorts as the heading does', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const page = await withSupply();
+  page.run("stgSet('hiddenPages',[]);setTab('supplydemand')");
+  const g = checkPhoneSort(page, { marker: 'data-focus-key="psort-mix-groups"', prefix: 'srt-mix-groups-', dirKey: 'mix-groups', rows: groupNames });
+  assert.deepEqual(g.options.map((o) => o.text), ['Sort: Default order', 'Sort: Item group', 'Sort: Demand qty', 'Sort: Value', 'Sort: Coverage', 'Sort: Short qty', 'Sort: Biggest shortage']);
+  assert.deepEqual(g.options.slice(1).map((o) => o.first), ['asc', 'desc', 'desc', 'desc', 'desc', 'desc'], 'the board\'s one rule: text A to Z, numbers biggest first');
+  // The pick shows on the pill with its direction; the same sort shows on the headings (a wider screen).
+  page.run("psortSet('srt','mix-groups','value','desc','Value')");
+  assert.match(html(page), /<option value="value" data-first="desc" data-name="Value" selected>Sort: Value ↓<\/option>/);
+  assert.match(groupsTable(html(page)), /<th class="num" scope="col" aria-sort="descending"><button[^>]*srt-mix-groups-value/);
+  assert.match(html(page), /<button type="button" class="dz-pillinput psort-dir" data-focus-key="psort-mix-groups-dir" aria-label="Sort ascending" aria-pressed="false" data-name="Value" onclick="psortSet\('srt','mix-groups','value','desc',this\.dataset\.name\)" data-tip="Descending[^"]*"><span aria-hidden="true">↓<\/span><\/button>/);
+  page.run("psortSet('srt','mix-groups','value','desc','Value')");
+  assert.match(html(page), /aria-pressed="true"[^>]*><span aria-hidden="true">↑<\/span>/);
+  assert.match(groupsTable(html(page)), /aria-sort="ascending"><button[^>]*srt-mix-groups-value/);
+  page.run("psortSet('srt','mix-groups','','','')");
+  assert.equal(page.run("srtState('mix-groups')"), null);
+  page.run("setTab('weekly');setWeeklyView('supply')");
+  const sdItems = (c) => [...c.matchAll(/<td class="sup-strong sup-nolabel" data-label="Item">([^<]+)<\/td>/g)].map((m) => m[1]);
+  const s = checkPhoneSort(page, { marker: 'data-focus-key="psort-sd"', prefix: 'sd-sort-', dirKey: 'sd', rows: sdItems });
+  assert.equal(s.heads.length, 8);
+  // Phones only: the row is hidden on wider screens and in print; the card's heading row is what hides on a phone.
+  assert.match(CSS, /\n\.psort,\.psort-dir\{display:none\}\n@media \(max-width:640px\)\{\n {2}\.psort\{display:flex;/);
+  assert.match(CSS, /\n {2}\.psort-dir\{display:inline-flex;/);
+  assert.match(CSS, /@media print\{\.psort,\.psort-dir\{display:none!important\}\}/);
+  assert.match(CSS, /\.sup-tbl\.sup-sd thead,\.sup-tbl\.sup-br thead,\.sup-tbl\.sup-groups thead/);
   assert.deepEqual(page.errors, []);
 });
 

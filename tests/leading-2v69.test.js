@@ -628,7 +628,8 @@ test('What Can We Do?: Supply to pull in | Date changes behind one switch (ohlSe
   c = doCard();
   assert.match(c, /^<section class="dz-card dz-span-6 ohl-card ohl-do ohl-dcwrap dz-fade" style="--i:5" aria-label="Date changes"><div class="dz-card-head"><h2 class="dz-title" data-tip="Lines whose date moved over 2 days past due\n[^"]+">Date changes<\/h2><span class="dz-meta"><div class="dz-seg sup-seg-sm" role="group" aria-label="What we can do">/);
   assert.deepEqual(seg(c), SEG.map(([key, id, label]) => [key, id === 'dates', id === 'dates', id, label]));
-  assert.match(c, /<div class="ohl-dc" data-card="date-change"><div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">/);
+  // (2v9 owner: the phone Sort row, psortHtml, comes first; it shows only on a phone, where the headings hide.)
+  assert.match(c, /<div class="ohl-dc" data-card="date-change"><div class="psort print-hide" role="group" aria-label="Sort date changes">[\s\S]*?<\/div><div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">/);
   assert.doesNotMatch(c, /ohl-pull-tbl|ohl-pull-po/);
   assert.deepEqual(moved(c), ['CUST12', 'CUST11', 'CUST10', 'CUST09', 'CUST08']);
   assert.equal(count(c), '1–5 of 12 customers');
@@ -983,7 +984,8 @@ test('2v9 sort: Lines: every column but the tick box sorts, Notes too (by the no
   const h = html(page);
   assert.deepEqual([...h.matchAll(/data-focus-key="linked-sort-(\w+)"/g)].map((m) => m[1]), ['doc', 'customer', 'warehouse', 'item', 'date', 'qty', 'value', 'status', 'reschedule', 'notes']);
   assert.match(h, /<th class="print-hide"><button type="button" class="th-sort" data-focus-key="linked-sort-notes" data-col="notes"/);
-  assert.match(HTML, /\.ohl-card table\.ohl-lines th\.num \.th-sort\{flex-direction:row-reverse\}/);
+  // The board-wide arrow: before a right-aligned number heading's label (th.num), after a text one's.
+  assert.match(HTML, /:is\(\.num,\.dz-num,[^)]*\)>:is\(\.th-sort,\.shp-sort\)>:is\(\.sort-arrow,\.shp-sort-arrow\)\{left:auto;right:100%\}/);
   assert.deepEqual(lineDocs(page), ['100', '101', '102']);
   const key = page.run("rowKey(currentMetrics().allRows.find(r=>r.documentNumber==='102'))");
   page.run(`updateRowOverride(${JSON.stringify(key)},'notes','Asked the CM')`);
@@ -992,6 +994,54 @@ test('2v9 sort: Lines: every column but the tick box sorts, Notes too (by the no
   assert.match(html(page), /<th class="print-hide" aria-sort="ascending"><button type="button" class="th-sort" data-focus-key="linked-sort-notes"/);
   page.run("sortLinkedColumn('notes')");
   assert.deepEqual(lineDocs(page), ['102', '100', '101'], 'blanks stay last descending');
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 (owner): phone sort menus. On a phone the Lines are cards with no heading row: their Sort select lists every
+// sortable column (Notes too) and an arrow beside it (phones only) reverses the sort, as a second heading click does.
+// Date changes (a grid whose headings hide on a phone) gets the same Sort row as the other card tables.
+test('2v9 phone sort menus: the Lines Sort select lists every column, Notes too; the arrow reverses as a second heading click', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const page = await loaded();
+  const key = page.run("rowKey(currentMetrics().allRows.find(r=>r.documentNumber==='102'))");
+  page.run(`updateRowOverride(${JSON.stringify(key)},'notes','Asked the CM')`);
+  const docs = (c) => [...c.matchAll(/<td class="c-doc">(\d+)<\/td>/g)].map((m) => m[1]);
+  const alias = { warehouse: 'warehouse', customer: 'customer', date: 'date', status: 'status', value: 'value', owner: null, default: null };
+  const r = checkPhoneSort(page, { marker: 'id="weekly-line-sort"', prefix: 'linked-sort-', dirKey: 'oh-lines', rows: docs,
+    colOf: (v) => (v.startsWith('col:') ? v.split(':')[1] : alias[v]), legacy: (v) => !v.startsWith('col:') });
+  assert.deepEqual(r.options.map((o) => o.value), ['default', 'col:doc:asc', 'customer', 'warehouse', 'col:item:asc', 'date', 'col:qty:desc', 'value', 'status', 'col:reschedule:asc', 'col:notes:asc', 'owner']);
+  assert.deepEqual(r.options.map((o) => o.text).slice(0, 7), ['Sort: Default', 'Sort: SO #', 'Sort: Customer', 'Sort: Warehouse', 'Sort: Item / Description', 'Sort: Date', 'Sort: Open qty high to low']);
+  assert.ok(r.options.some((o) => o.text === 'Sort: Notes'));
+  // A column choice is the heading's sort, so the select shows it as a choice (no extra "Column:" choice).
+  page.run("setWeeklyLineSort('col:notes:asc')");
+  assert.deepEqual(docs(html(page)), ['102', '100', '101']);
+  assert.match(html(page), /<option value="col:notes:asc" selected>Sort: Notes<\/option><option value="owner">/);
+  assert.doesNotMatch(html(page), />Column: /);
+  assert.match(html(page), /<th class="print-hide" aria-sort="ascending"><button type="button" class="th-sort" data-focus-key="linked-sort-notes"/);
+  assert.match(html(page), /<\/select><button type="button" class="dz-pillinput psort-dir" data-focus-key="psort-oh-lines-dir" aria-label="Sort ascending" aria-pressed="true" onclick="psortOhlFlip\(\)" data-tip="Ascending[^"]*"><span aria-hidden="true">↑<\/span><\/button><\/div>/);
+  // An older choice that sorts one column (Value high to low): the arrow turns it into that column, low to high.
+  page.run("setWeeklyLineSort('value');psortOhlFlip()");
+  assert.equal(page.run('weeklyLineSort'), 'col:value:asc');
+  assert.match(html(page), />Column: Value ↑<\/option>/);
+  // Default and Document Owner sort no column: the arrow waits.
+  page.run("setWeeklyLineSort('owner');psortOhlFlip()");
+  assert.equal(page.run('weeklyLineSort'), 'owner');
+  assert.match(html(page), /data-focus-key="psort-oh-lines-dir" aria-label="Sort ascending" aria-pressed="false" aria-disabled="true"/);
+  page.run("setWeeklyLineSort('default')");
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 phone sort menus: Date changes lists every column; a pick (and the arrow) sorts as the heading does', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const page = await loadRows(doRows(12));
+  page.run("ohlSetDoView('dates')");
+  const moved = (c) => [...c.matchAll(/data-focus-key="dc-(CUST\d+)"/g)].map((m) => m[1]);
+  const r = checkPhoneSort(page, { marker: 'data-focus-key="psort-ohl-datechange"', prefix: 'ohsort-ohl-datechange-', dirKey: 'ohl-datechange', rows: moved });
+  assert.deepEqual(r.options.map((o) => o.text), ['Sort: Default order', 'Sort: Customer', 'Sort: Lines', 'Sort: Slip', 'Sort: Worst line', 'Sort: What we can deliver']);
+  page.run("psortSet('oh','ohl-datechange','cust','','Customer')");
+  assert.deepEqual(moved(html(page)).slice(0, 3), ['CUST01', 'CUST02', 'CUST03']);
+  assert.match(html(page), /<div class="ohl-dc" data-card="date-change"><div class="psort print-hide" role="group" aria-label="Sort date changes">/);
+  assert.match(html(page), /<option value="cust" data-name="Customer" selected>Sort: Customer ↑<\/option>/);
   assert.deepEqual(page.errors, []);
 });
 

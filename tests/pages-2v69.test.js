@@ -618,4 +618,31 @@ test('Purchase Orders: every Open POs by warehouse column sorts (again reverses)
   assert.deepEqual(page.errors, []);
 });
 
+// 2v9 (owner): phone sort menus. On a phone the PO lines are cards with no heading row: their Sort lines select lists
+// every column (a column choice sorts as its heading's first click) and an arrow beside it (phones only) reverses it.
+test('2v9 phone sort menus: PO lines Sort lists every column; a pick (and the arrow) sorts as the heading does', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const page = await loaded([...ROWS.slice(0, 3),
+    po('510', '08/01/2026', { CustomerVendorName: 'Zenith Metals', 'Item No.': 'B-2', OpenQuantity: '3.000', AmountLocal: '900.00', Warehouse: 'CM - Delta', DocumentOwner: 'Ana Lee' }),
+    po('502', '07/15/2026', { CustomerVendorName: 'Acme Parts', 'Item No.': 'C-1', OpenQuantity: '40.000', AmountLocal: '120.00', DocumentOwner: 'Zoe Park' }),
+    po('507', '08/20/2026', { CustomerVendorName: 'Maple Springs', 'Item No.': 'A-9', OpenQuantity: '12.000', AmountLocal: '5,000.00', Warehouse: 'CM - Alta' })]);
+  page.run("setTab('purchaseorders')");
+  const pos = (c) => [...c.matchAll(/<td class="sup-strong" data-label="PO #">(\d+)<\/td>/g)].map((m) => m[1]);
+  const alias = { warehouse: 'wh', vendor: 'vendor', owner: 'owner', status: 'status', value: 'value', default: null };
+  const r = checkPhoneSort(page, { marker: 'id="po-line-sort"', prefix: 'po-sort-', dirKey: 'po-lines', rows: pos, colOf: (v) => (v.startsWith('col:') ? v.split(':')[1] : alias[v]) });
+  assert.deepEqual(r.heads.map((x) => x.col), ['po', 'vendor', 'item', 'owner', 'wh', 'date', 'qty', 'value', 'status', 'kit']);
+  assert.deepEqual(r.options.map((o) => o.text), ['Sort: Due date', 'Sort: PO #', 'Sort: Vendor', 'Sort: Item', 'Sort: Document Owner', 'Sort: Warehouse', 'Sort: Promised', 'Sort: Open qty high to low', 'Sort: Value high to low', 'Sort: Status', 'Sort: Kit Clean? ticked first']);
+  // A pick: the PO # heading shows it; the arrow (phones only) reverses it, and the select then shows "Column: PO # ↓".
+  page.run("setPoLineSort('col:po:asc')");
+  assert.deepEqual(pos(html(page)).slice(0, 3), ['502', '507', '510']);
+  assert.match(html(page), /<th aria-sort="ascending"><button type="button" class="th-sort po-th" data-focus-key="po-sort-po"/);
+  assert.match(html(page), /<\/select><button type="button" class="dz-pillinput psort-dir" data-focus-key="psort-po-lines-dir" aria-label="Sort ascending" aria-pressed="true" onclick="poSortColumn\('po'\)" data-tip="[^"]+"><span aria-hidden="true">↑<\/span><\/button>/);
+  page.run("poSortColumn('po')");
+  assert.match(html(page), /<option value="col:po:desc" selected>Column: PO # ↓<\/option>/);
+  // The page's own order (Due date) sorts no column: the arrow waits.
+  page.run("setPoLineSort('default')");
+  assert.match(html(page), /data-focus-key="psort-po-lines-dir" aria-label="Sort ascending" aria-pressed="false" aria-disabled="true"/);
+  assert.deepEqual(page.errors, []);
+});
+
 run();

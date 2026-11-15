@@ -165,18 +165,32 @@ test('any other name under /assets/ needs a session: the static server is never 
   }
 });
 
-test('login page: logo, welcome message, footer, password autocomplete; no error before a try', async () => {
+test('login page: logo, title, footer, password autocomplete; no error before a try', async () => {
   const res = await call('/');
   const page = await res.text();
   assert.equal(res.status, 200);
-  assert.match(page, /<img class="logo" src="\/assets\/spyder-logo\.png" alt="Spyder Controls"/);
-  assert.match(page, /<h1>Welcome back<\/h1>/);
-  assert.ok(page.includes("Sign in to see this week's order health, purchase orders and build risk."));
+  assert.match(page, /<img class="logo[^"]*"[^>]* src="\/assets\/spyder-logo\.png" alt="Spyder Controls"/);
+  assert.match(page, /<h1[^>]*>Sign in to the KPI dashboard<\/h1>/);
+  assert.ok(page.includes("Enter the team password to see this week's order health, purchase orders and build risk."));
   assert.ok(page.includes('Internal use · Spyder Controls'));
   assert.match(page, /<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>/);
-  assert.match(page, /<button type="submit">Sign in<\/button>/);
-  assert.ok(!/role="alert"|autofocus aria-invalid/.test(page), 'no error state');
+  assert.match(page, /<button class="submit[^"]*"[^>]* type="submit"><span class="label">Sign in<svg[^>]*aria-hidden="true">/);
+  assert.ok(!/role="alert"|autofocus aria-invalid|class="card failed"/.test(page), 'no error state');
   assert.equal(res.headers.get('cache-control'), 'no-store');
+});
+
+test('login form: posts the password field to /login, labelled, with an accessible show-password toggle and busy status', async () => {
+  const page = await (await call('/')).text();
+  const form = page.match(/<form method="post" action="\/login">([\s\S]*?)<\/form>/);
+  assert.ok(form, 'one POST form to /login');
+  assert.equal((form[1].match(/ name="/g) || []).length, 1, 'the password is the only named field');
+  assert.match(form[1], /<label[^>]* for="password">Password<\/label>/);
+  assert.match(form[1], /<button class="reveal" type="button" aria-label="Show password" aria-pressed="false" aria-controls="password">/);
+  assert.match(form[1], /<p class="sr-only" id="signin-status" role="status"><\/p>/);
+  assert.match(form[1], /<span class="busy" aria-hidden="true">/);
+  assert.ok(!/<script[^>]+src=/i.test(page), 'no external scripts');
+  assert.match(page, /@media \(prefers-reduced-motion:reduce\)\{\*,\*::before,\*::after\{animation:none!important;transition:none!important\}\}/);
+  assert.match(page, /@media \(prefers-color-scheme:dark\)/);
 });
 
 test('a wrong password shows an inline error tied to the field (401); an unreadable form says so (400)', async () => {
@@ -184,10 +198,13 @@ test('a wrong password shows an inline error tied to the field (401); an unreada
   assert.equal(wrong.status, 401);
   const page = await wrong.text();
   assert.match(page, /autocomplete="current-password" required autofocus aria-invalid="true" aria-describedby="password-error">/);
-  assert.match(page, /<p class="error" id="password-error" role="alert"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg>That password is not correct\. Try again\.<\/p>/);
+  assert.match(page, /<p class="error" id="password-error" role="alert"><svg[^>]*aria-hidden="true">[\s\S]*?<\/svg>That password didn't work\. Try again\.<\/p>/);
+  assert.match(page, /<main class="card failed">/, 'the card plays its shake once');
+  assert.match(page, /<form method="post" action="\/login">/, 'the form is shown again');
   const bad = await call('/login', { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
   assert.equal(bad.status, 400);
-  assert.match(await bad.text(), /The sign-in form could not be read\. Try again\./);
+  const badPage = await bad.text();
+  assert.match(badPage, /role="alert"><svg[^>]*>[\s\S]*?<\/svg>The sign-in form could not be read\. Try again\.<\/p>/);
 });
 
 test('assets/spyder-logo.png holds exactly the logo embedded in index.html (LOGO_SRC)', () => {

@@ -456,6 +456,21 @@ tr.note-editor-row>td{padding:0!important;border-bottom:1px solid var(--gray-100
 .th-sort{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;display:inline-flex;align-items:baseline;gap:3px;text-align:inherit;cursor:pointer;border-radius:4px}
 .th-sort:hover{color:var(--gray-700)}
 .lines-table th[aria-sort] .th-sort{color:var(--accent-strong);font-weight:600}
+/* One sort arrow on every sortable heading: a small arrow in the heading's colour just outside the label, so it never
+   widens the heading (after a text label, before a right-aligned number's); the faint ↕ shows on hover or keyboard focus
+   only, the ↑ / ↓ stays while sorted. The arrow's own text is 0px and its box 0 by 0 (dzFitTables measures a heading's
+   words, not the arrow); ::after draws it from the heading's aria-sort (or a grid button's "sorted …" name). */
+.th-sort,.shp-sort{position:relative}
+:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow){position:absolute;top:50%;left:100%;right:auto;display:block;width:0;height:0;min-width:0;margin:0;font-size:0;line-height:0;color:inherit;opacity:0;transition:opacity .15s;pointer-events:none}
+:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow)::after{content:"\2195";position:absolute;top:0;left:3px;transform:translateY(-50%);font-size:11px;font-weight:400;line-height:1}
+[aria-sort=ascending]>:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow)::after,:is(.th-sort,.shp-sort)[aria-label$="sorted ascending"]>.sort-arrow::after{content:"\2191"}
+[aria-sort=descending]>:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow)::after,:is(.th-sort,.shp-sort)[aria-label$="sorted descending"]>.sort-arrow::after{content:"\2193"}
+:is(.num,.dz-num,.pow-hd>span:last-child)>:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow){left:auto;right:100%}
+:is(.num,.dz-num,.pow-hd>span:last-child)>:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow)::after{left:auto;right:3px}
+:is(.th-sort,.shp-sort):is(:hover,:focus-visible)>:is(.sort-arrow,.shp-sort-arrow){opacity:.5}
+[aria-sort]>:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow),:is(.th-sort,.shp-sort).on>:is(.sort-arrow,.shp-sort-arrow){opacity:1}
+@media (prefers-reduced-motion:reduce){:is(.th-sort,.shp-sort)>:is(.sort-arrow,.shp-sort-arrow){transition:none}}
+@media print{:not([aria-sort])>:is(.th-sort,.shp-sort):not(.on)>:is(.sort-arrow,.shp-sort-arrow){display:none}}
 .linked-tools{flex-wrap:wrap}
 .bulk-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-left:auto}
 .bulk-count{font-weight:600;color:var(--accent-strong)}
@@ -2329,22 +2344,23 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 }
 /* 2v6:end settings */
 /* 2v6:r5c */
-/* Shipping: the Shipments table's column titles are sort buttons (indigo with an arrow while sorted). On phones the
+/* Shipping: the Shipments table's column titles are sort buttons (indigo with an arrow while sorted, the faint ↕ on
+   hover / focus: the board-wide arrow, ".th-sort,.shp-sort"). On phones the
    header row stays as a small row of the four sort buttons above the stacked shipments. */
 .shp-sort{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;display:inline-flex;align-items:baseline;gap:3px;cursor:pointer;border-radius:4px;white-space:nowrap}
 .shp-sort:hover{color:var(--dz-ink-2)}
 .shp-sort.on{color:var(--dz-indigo-deep,var(--dz-indigo));font-weight:500}
 .shp-sort:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
-.shp-sort-arrow{display:inline-block;min-width:.6em;font-size:11px}
 /* The Destination pill is for wide screens; on phones a map dot picks the place and its chip sits by the search. */
 .shp-destchip{display:none}
 @media (max-width:640px){
   .shp-thwrap .shp-th{display:flex;flex-wrap:wrap;gap:6px 18px;padding:8px 0 9px}
   .shp-thwrap .shp-th>.dz-num{text-align:left}
+  .shp-thwrap .shp-th>.dz-num>.shp-sort>.shp-sort-arrow{left:100%;right:auto} /* left-aligned here: the arrow after */
+  .shp-thwrap .shp-th>.dz-num>.shp-sort>.shp-sort-arrow::after{left:3px;right:auto}
   .shp-frow [data-dzmenu="ship-dest"]{display:none}
   .shp-destchip{display:contents}
 }
-@media print{.shp-sort-arrow:empty{display:none}}
 /* 2v6:end r5c */
 /* 2v7:shell */
 /* Header: the Dark mode icon (a moon in light mode, a sun in dark mode; the new one turns in after a click) and the
@@ -2501,8 +2517,6 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .mwm-heat-head>span:not(.mwm-heat-wh)>.oh-th{width:100%;min-height:1.3em;justify-content:center}
 .mwm-heat-head>span:not(.mwm-heat-wh)>.oh-th .sort-arrow{top:100%;left:50%}
 .mwm-heat-head>span:not(.mwm-heat-wh)>.oh-th .sort-arrow::after{left:0;transform:translate(-50%,1px)}
-.thead>.num>.oh-th .sort-arrow{left:auto;right:100%}
-.thead>.num>.oh-th .sort-arrow::after{left:auto;right:2px}
 .mwm-heat-name{border:0;background:transparent;padding:0;font:inherit;font-size:13px;color:var(--dz-ink-2);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;min-width:0}
 .mwm-heat-name:hover,.mwm-heat-name.sel{text-decoration:underline;color:var(--dz-ink-1)}
 .mwm-heat-cell{height:34px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
@@ -2990,12 +3004,6 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .srt-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 .sup-tbl th:has(>.srt-th:focus-visible){overflow:visible}
 [aria-sort]>.srt-th{color:var(--dz-indigo-deep);font-weight:500}
-.srt-th .sort-arrow{position:absolute;left:100%;top:2px;margin-left:4px;font-size:11px;font-weight:400;opacity:0;transition:opacity .15s}
-.srt-th:hover .sort-arrow,.srt-th:focus-visible .sort-arrow{opacity:.5}
-[aria-sort]>.srt-th .sort-arrow{opacity:1}
-th.num>.srt-th .sort-arrow{left:auto;right:100%;margin:0 4px 0 0} /* right-aligned titles: the arrow before the title, as in Short or at-risk items */
-@media (prefers-reduced-motion:reduce){.srt-th .sort-arrow{transition:none}}
-@media print{.srt-th .sort-arrow{display:none}}
 .sup-grp td{padding:16px 0 6px;border-bottom:0}
 .sup-grp b{font-size:14px;font-weight:600}
 .sup-grp span{margin-left:10px;font-size:12px;color:var(--dz-ink-4)}
@@ -3201,10 +3209,7 @@ th.num>.srt-th .sort-arrow{left:auto;right:100%;margin:0 4px 0 0} /* right-align
 .sup-po th .po-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 /* 2v9 (owner): the heading cell clips its text; while its sort button has the ring it does not, so the ring shows whole */
 .sup-po th:has(.po-th:focus-visible),.por-tbl th:has(.por-th:focus-visible){overflow:visible}
-.sup-po th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
-.sup-po th .po-th:hover .sort-arrow,.sup-po th .po-th:focus-visible .sort-arrow{opacity:.5}
 .sup-po th[aria-sort] .po-th{color:var(--dz-indigo-deep);font-weight:500}
-.sup-po th[aria-sort] .sort-arrow{opacity:1}
 .sup-po th.po-kit,.sup-po td.po-kit{text-align:center}
 .sup-po tr.po-left>td{opacity:.45;transition:opacity .2s}
 .sup-po tr.po-flash>td{animation:poFlash 2.6s ease}
@@ -3233,11 +3238,10 @@ th.num>.srt-th .sort-arrow{left:auto;right:100%;margin:0 4px 0 0} /* right-align
   .sup-tbl.sup-po .kit-check{margin:-3px 0 0 -5px}
 }
 @media (prefers-reduced-motion:reduce){
-  .kit-box,.kit-box svg,.sup-po th .sort-arrow{transition:none}
+  .kit-box,.kit-box svg{transition:none}
   .sup-po tr.po-flash>td{animation:none}
 }
 @media print{
-  .sup-po th .sort-arrow{display:none}
   .kit-cb,.kit-box{display:none}
   .kit-check{width:auto;height:auto;margin:0}
   .kit-print{display:inline}
@@ -4334,8 +4338,6 @@ button.pow-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1
 .por-tbl th .por-th{max-width:100%;padding:2px 0;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);border-radius:6px;white-space:nowrap}
 .por-tbl th .por-th:hover{color:var(--dz-ink-2)}
 .por-tbl th[aria-sort] .por-th{color:var(--dz-indigo-deep);font-weight:500}
-.por-tbl th .sort-arrow{display:inline-block;min-width:9px;margin-left:3px;font-size:11px;opacity:.45}
-.por-tbl th[aria-sort] .sort-arrow{opacity:1}
 .por-tbl th.num .por-th{margin-left:auto}
 .por-tbl th.num{text-align:right}
 .por-tbl td small{display:block;margin-top:1px;font-size:11.5px;font-weight:400;color:var(--dz-ink-4)}
@@ -4379,7 +4381,6 @@ button.pow-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1
 }
 @media (pointer:coarse){.por-ven,.por-tbl .por-th,.por-chip{min-height:40px}.por-ven{display:flex;align-items:center}.por-tbl .por-th{display:inline-flex;align-items:center}}
 @media print{
-  .por-tbl th .sort-arrow{display:none}
   .por-bandcard,.por-trend{break-inside:avoid}
   .por-scroll{overflow:visible}
   .por-tbl{min-width:0}
@@ -4908,10 +4909,7 @@ button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offs
    into the 12px between headings) */
 .ohl-sd .sup-sd th{overflow:clip;overflow-clip-margin:8px}
 .ohl-sd th .ohs-th:focus-visible{outline-offset:4px}
-.ohl-sd th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
-.ohl-sd th .ohs-th:hover .sort-arrow,.ohl-sd th .ohs-th:focus-visible .sort-arrow{opacity:.5}
 .ohl-sd th[aria-sort] .ohs-th{color:var(--dz-indigo-deep);font-weight:500}
-.ohl-sd th[aria-sort] .sort-arrow{opacity:1}
 .ohl-sd .sup-sd .c-wh{width:150px}
 .ohl-sd td.ohs-wh{white-space:nowrap} /* the Description column's look (sup-soft) */
 .ohs-st{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--dz-ink-2);vertical-align:middle}
@@ -4919,7 +4917,6 @@ button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offs
 .ohs-st.red{color:var(--dz-risk-text)}.ohs-st.red i{background:var(--dz-risk)}
 .ohs-st.amber{color:var(--dz-amber-text)}.ohs-st.amber i{background:var(--dz-amber)}
 .ohs-st-sub{display:block;margin:2px 0 0 13px;font-size:11px;line-height:1.3;color:var(--dz-ink-5)} /* 13px = the dot (7px) + its gap (6px): under the word's first letter */
-@media (prefers-reduced-motion:reduce){.ohl-sd th .sort-arrow{transition:none}}
 /* 2v9 (owner): sortable column titles on Sales Order Health (ohSortTh): the heading keeps its look and width; the small
    arrow sits outside the label (after a text label, before a right-aligned number's), shows on hover / focus, stays
    while sorted. The Lines table's number headings put their arrow before the label too. */
@@ -4927,19 +4924,10 @@ button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offs
 .th-sort.oh-th:hover{color:var(--dz-ink-2)}
 .th-sort.oh-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 .th-sort.oh-th.on{color:var(--dz-indigo-deep)}
-/* The arrow's own text is 0px and its box 0 by 0 (dzFitTables measures a heading's words, not the arrow); ::after draws it */
-.oh-th .sort-arrow{position:absolute;top:50%;left:100%;width:0;height:0;font-size:0;line-height:0;opacity:0;transition:opacity .15s}
-.oh-th .sort-arrow::after{content:"\2195";position:absolute;top:0;left:2px;transform:translateY(-50%);font-size:10px;font-weight:400;line-height:1}
-[aria-sort=ascending]>.oh-th .sort-arrow::after,.oh-th[aria-label$="sorted ascending"] .sort-arrow::after{content:"\2191"}
-[aria-sort=descending]>.oh-th .sort-arrow::after,.oh-th[aria-label$="sorted descending"] .sort-arrow::after{content:"\2193"}
-:is(th.num,.dz-num)>.oh-th .sort-arrow{left:auto;right:100%}
-:is(th.num,.dz-num)>.oh-th .sort-arrow::after{left:auto;right:2px}
-.oh-th:hover .sort-arrow,.oh-th:focus-visible .sort-arrow{opacity:.5}
-.oh-th.on .sort-arrow{opacity:1}
+/* The arrow itself is the board-wide one (".th-sort,.shp-sort" near the top of the styles). In a grid of headings (no
+   cell padding) a label leaves its cell 10px for the arrow, so a wrapped title's arrow never reaches the next heading. */
+:is(.dz-th,.pow-hd)>*>.th-sort{max-width:calc(100% - 10px)}
 .ohl-pull-tbl th:has(>.oh-th:focus-visible){overflow:visible}
-.ohl-card table.ohl-lines th.num .th-sort{flex-direction:row-reverse}
-@media (prefers-reduced-motion:reduce){.oh-th .sort-arrow{transition:none}}
-@media print{.oh-th:not(.on) .sort-arrow{display:none}}
 .ohs-need-t{margin:0;font-size:14px;color:var(--dz-ink-3)}
 /* 2v6.9 Status & top reasons redesign: a thin segmented bar (2px gaps, 4px ends) over rows with a swatch, the name, the
    share, the open value and the orders; the reasons as ranked bars in one hue on a soft track. Rows filter the Lines card. */
@@ -5717,7 +5705,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 @media (max-width:640px){
 .stg-kv dt{font-size:13px}
 }
-.shp-sort-arrow{font-size:12px}
 .mwm-legend{font-size:13px}
 .mwm-more>summary{font-size:14px}
 .mwm-bar-l{font-size:13px}
@@ -5851,7 +5838,6 @@ button.ohl-cust,button.ohl-age{font-size:14px}
 .po-unit{font-size:13px}
 .sup-tile-v .po-unit{font-size:14px}
 .sup-po th .po-th{font-size:12.5px}
-.sup-po th .sort-arrow{font-size:12px}
 .poa-off{font-size:13.5px}
 .poa-line-t{font-size:14px}
 .poa-line-s,.poa-show,.poa-toast-btn{font-size:13px}
@@ -6033,6 +6019,21 @@ details.data-check>summary{font-size:13px}
 @media (prefers-reduced-motion:reduce){.stg-bg{transition:none}.stg-bg:hover:not(:disabled){transform:none}}
 @media (forced-colors:active){.stg-bg{border:1px solid ButtonText}.stg-bg.on{outline:3px solid Highlight;outline-offset:2px}}
 /* 2v7:end bg */
+/* 2v9 (owner): phone sort menus: under 640px a table shown as cards (no heading row) gets a row above its cards, a Sort
+   select of its columns and an arrow button that reverses the order (psortHtml); the PO and Sales Order Health lines
+   add the arrow to their own Sort select (psortDir). Wider screens sort by the headings; print shows neither. */
+.psort,.psort-dir{display:none}
+@media (max-width:640px){
+  .psort{display:flex;align-items:center;gap:8px;margin:12px 0 4px}
+  .psort>.psort-sel{flex:1 1 0;min-width:0;text-overflow:ellipsis}
+  .psort-dir{display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;padding:0;font-size:15px;color:var(--dz-ink-2)}
+  .sup-tools .dz-pillinput.psort-dir{flex:none}
+  .ohl-lines-tools .ohl-sort{flex:1 1 0}
+  .psort-dir[aria-disabled=true]{color:var(--dz-ink-5);cursor:default;opacity:.6}
+  .psort-dir:not([aria-disabled=true]):hover{border-color:rgba(var(--dz-indigo-rgb),.45);color:var(--dz-indigo-deep)}
+  .psort-dir:focus-visible,.psort-sel:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+}
+@media print{.psort,.psort-dir{display:none!important}}
 </style>
 </head>
 <body>
@@ -6739,6 +6740,19 @@ function sortLinkedColumn(col){
   const first=['qty','value','lead'].includes(col)?'desc':'asc';
   weeklyLineSort=`col:${col}:${kind==='col'&&current===col?(dir==='asc'?'desc':'asc'):first}`;
   renderResults();
+}
+// 2v9 (owner): phone sort menus: the Sort choices that sort one column ([column, direction]); the phone's arrow button
+// (psortOhlFlip) reverses the current one as a second click on that heading does. Default and Document Owner have none.
+const OHL_SORT_ALIAS_COLS={warehouse:['warehouse','asc'],customer:['customer','asc'],date:['date','asc'],status:['status','asc'],value:['value','desc']};
+function psortOhlFlip(){
+  const [kind,col,dir]=String(weeklyLineSort).split(':');
+  const alias=OHL_SORT_ALIAS_COLS[weeklyLineSort];
+  if(kind==='col')weeklyLineSort=`col:${col}:${dir==='asc'?'desc':'asc'}`;
+  else if(alias)weeklyLineSort=`col:${alias[0]}:${alias[1]==='asc'?'desc':'asc'}`;
+  else return;
+  renderResults();
+  const [,c,d]=weeklyLineSort.split(':');
+  if(typeof announce==='function')announce(`Lines sorted by ${c}, ${d==='asc'?'ascending':'descending'}.`);
 }
 function toggleRowNote(key){
   const cleanKey=String(key||'');
@@ -10389,6 +10403,7 @@ function renderTableCard({key,title,note='',head,rows,items,renderRow,limit=12,m
   if(cards)shown=shown.map(row=>labelTableCells(row,head));
   return `${bare?'':`<section class="table ${className}">
     <div class="card-head lg"><h2${sectionTip(info)}>${title}</h2>${headExtra||`<span class="section-sub">${note}</span>`}</div>`}
+    ${cards&&head.some((h,i)=>keys[i])?psortHtml('oh',key,plain.toLowerCase(),head.map(([label],i)=>keys[i]?[i,String(label).replace(/<[^>]*>/g,'')]:null).filter(Boolean),ohSortGet(key)):''}
     <div class="table-scroll" tabindex="0" role="region" aria-label="${title.replace(/<[^>]*>/g,'').replace(/"/g,'&quot;')}"><table class="data-table${cards?' cards':''}" style="min-width:${minWidth}px">
       <thead><tr>${head.map(([label,cls,width],i)=>keys[i]?ohSortTh(key,i,label,{cls,tip:columnTip(key,label),attrs:width?` style="width:${width}"`:''}):`<th${cls?` class="${cls}"`:''}${width?` style="width:${width}"`:''}${tipAttr(columnTip(key,label))}>${label}</th>`).join('')}</tr></thead>
       <tbody>${shown.join('')||`<tr><td colspan="${head.length}" class="soft">${empty}</td></tr>`}</tbody>
@@ -11576,11 +11591,13 @@ function supPurchaseOrders(m){
   // 10 lines a page; a new card, owner, filter, search or sort starts at page 1.
   const linesPg=dzPageOf('po-lines',sorted,JSON.stringify([sel,poRiskOwner,poWarehouseFilter,poVendorFilter,supGet('po-q',''),poLineSort,sortState]));
   const shownLines=linesPg.rows;
-  const sortOptions=[['default','Due date'],['warehouse','Warehouse'],['vendor','Vendor'],['owner','Document Owner'],['status','Status'],['value','Value high to low']];
+  // 2v9 (owner): phone sort menus: every column is a choice (a phone shows the lines as cards with no headings); a column
+  // choice sorts as its heading's first click, and the arrow beside the select (phones only, psortDir) reverses it.
+  const sortOptions=[['default','Due date'],['col:po:asc','PO #'],['vendor','Vendor'],['col:item:asc','Item'],['owner','Document Owner'],['warehouse','Warehouse'],['col:date:asc','Promised'],['col:qty:desc','Open qty high to low'],['value','Value high to low'],['status','Status'],['col:kit:desc','Kit Clean? ticked first']];
   const sortCol=sortState&&!sortOptions.some(([v])=>v===poLineSort)?PO_LINE_COLS.find(c=>c[0]===sortState.col):null;
   // A title sort with no matching choice shows as an extra choice, so the other choices still switch back.
   if(sortCol)sortOptions.push([poLineSort,`Column: ${sortCol[1]} ${sortState.dir==='asc'?'↑':'↓'}`]);
-  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${poLineSort===v?' selected':''}>${sortCol&&v===poLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
+  const sortSel=`<select id="po-line-sort" class="dz-pillinput" aria-label="Sort lines"${tipAttr('Sort the PO lines.')} onchange="setPoLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${poLineSort===v?' selected':''}>${sortCol&&v===poLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>${psortDir('po-lines',sortState,sortState?`poSortColumn('${sortState.col}')`:'')}`;
   const lineRow=(r,i)=>{
     const reschedule=realPoReschedule(r);
     const originalDue=hasRealDate(r.lineDueDate)?r.lineDueDate:r.dueDate;
@@ -12267,7 +12284,8 @@ function supSdItemsCard(m){
     const on=sort&&sort[0]===id;
     return `<th${num?' class="num"':''}${on?` aria-sort="${sort[1]==='desc'?'descending':'ascending'}"`:''}><button type="button" class="th-sort ohs-th" data-focus-key="sd-sort-${id}" onclick="supSdSort('${id}')"${tipAttr(`${t} Click to sort.`)}>${esc(l)}<span class="sort-arrow" aria-hidden="true">${on?(sort[1]==='desc'?'↓':'↑'):'↕'}</span></button></th>`;
   }).join('');
-  const table=list.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-wh"><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
+  const sdCols=SUP_SD_COLS.map(([id,label,,first])=>[id,id==='dem'?(hasOC?'Demand Orders':'Demand Qty'):label,first]);
+  const table=list.length?`${psortHtml('sd','sd','items',sdCols,sort?{col:sort[0],dir:sort[1]==='desc'?'desc':'asc'}:null)}<div class="sup-scroll" tabindex="0" role="region" aria-label="${view==='all'?'All open demand':'Short or at-risk items'}"><table class="sup-tbl sup-sd"><colgroup><col class="c-item"><col><col class="c-wh"><col class="c-mo"><col class="c-dem"><col class="c-sup"><col class="c-sh"><col class="c-st"></colgroup>
     <thead><tr>${colHead}</tr></thead><tbody>${rowsHtml}</tbody></table></div>
     ${dzPageFoot('sd-rows',pg,view==='all'?'All open demand':'Short or at-risk items')}`
     :`<p class="sup-empty">${view==='all'?'No open demand lines found for this selection.':'No shortages or supply risk found for this selection.'}</p>`;
@@ -12311,7 +12329,7 @@ function supSdSortRows(rows,col,sign,shortOf){
 }
 
 // ===== 2v9 (owner): sortable columns on the Purchase Order and Supply tables that had none (prefix srt) =====
-// The Vendor Scorecard's way (poRecvSort): every column title is a button (th-sort, its arrow ↕ until sorted, then
+// The Vendor Scorecard's way (poRecvSort): every column title is a button (th-sort, a faint ↕ on hover until sorted, then
 // ↑ / ↓; aria-sort on the sorted th only). The first click sorts the column its own way (text A to Z, numbers and money
 // high to low, rates too, months oldest first: the board's one rule), the next click reverses it. The sort is kept with the page's
 // other view state (tableMore "sup-<key>-sort" = "col:asc|desc"; none = the table's own order), so it stays while you
@@ -12353,6 +12371,37 @@ function srtTh(key,st,[id,label,cls,first,tip],span=false){
   const sorted=on?` aria-sort="${st.dir==='asc'?'ascending':'descending'}"`:'';
   const open=span?`<span role="columnheader"${cls?` class="${cls}"`:''}${sorted}>`:`<th${cls?` class="${cls}"`:''} scope="col"${sorted}>`;
   return `${open}<button type="button" class="th-sort srt-th" data-focus-key="srt-${key}-${id}" onclick="srtSort('${key}','${id}','${first}',this)"${tipAttr(`${tip?`${tip} `:''}Click to sort.`)}>${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?(st.dir==='asc'?'↑':'↓'):'↕'}</span></button>${span?'</span>':'</th>'}`;
+}
+
+// ===== 2v9 (owner): phone sort menus (prefix psort) =====
+// Under 640px some tables become cards with no heading row, so no heading can be clicked. Each gets a small row above
+// its cards (hidden on wider screens and in print): a select of every column ("Sort: Value ↓") and a direction button
+// (↑ / ↓, aria-pressed = ascending). Both run the table's own sort, with the same state and setter as its headings
+// (kind 'srt': srtSort; 'sd': supSdSort; 'oh': ohSortBy), so the sort persists as a heading sort does and a wider
+// screen shows it on the headings. A column picked here sorts as its heading's first click: text and dates ascending,
+// numbers biggest first. The PO and Sales Order Health lines keep their own Sort select and add only psortDir.
+// cols: [[id, label, first 'asc' | 'desc']]; st: {col, dir} or null (the table's own order: "Default order").
+function psortHtml(kind,key,label,cols,st){
+  const on=st?cols.find(c=>String(c[0])===String(st.col)):null;
+  const arrow=on?(st.dir==='asc'?' ↑':' ↓'):'';
+  const opt=(v,l,first,sel)=>`<option value="${esc(v)}"${first?` data-first="${first}"`:''} data-name="${esc(l)}"${sel?' selected':''}>Sort: ${esc(l)}${sel?arrow:''}</option>`;
+  const pick=`psortSet('${kind}','${key}',this.value,this.options[this.selectedIndex].dataset.first,this.options[this.selectedIndex].dataset.name)`;
+  const flip=on?`psortSet('${kind}','${key}','${on[0]}','${on[2]||''}',this.dataset.name)`:'';
+  return `<div class="psort print-hide" role="group" aria-label="Sort ${esc(label)}"><select class="dz-pillinput psort-sel" data-focus-key="psort-${key}" aria-label="Sort ${esc(label)} by"${tipAttr('Sort by a column; the arrow beside it reverses the order.')} onchange="${pick}">${opt('','Default order','',!on)}${cols.map(([c,l,first])=>opt(c,l,first,on&&on[0]===c)).join('')}</select>${psortDir(key,st&&on?st:null,flip,on?on[1]:'')}</div>`;
+}
+// The direction button: ↑ ascending (pressed), ↓ descending; with no column sort it waits for one (aria-disabled).
+function psortDir(key,st,flip,label=''){
+  const asc=!!st&&st.dir==='asc';
+  const tip=st?`${asc?'Ascending: A to Z, oldest or smallest first.':'Descending: Z to A, newest or biggest first.'} Click to reverse.`:'Pick a column to sort by first.';
+  return `<button type="button" class="dz-pillinput psort-dir" data-focus-key="psort-${key}-dir" aria-label="Sort ascending" aria-pressed="${asc}"${st?'':' aria-disabled="true"'}${label?` data-name="${esc(label)}"`:''}${flip?` onclick="${flip}"`:''}${tipAttr(tip)}><span aria-hidden="true">${st?(asc?'↑':'↓'):'↕'}</span></button>`;
+}
+// A pick from the phone menu ('' = the table's own order) or the direction button (the sorted column again, so the
+// heading's setter reverses it).
+function psortSet(kind,key,col,first,label){
+  const has=col!==''&&col!==null&&col!==undefined;
+  if(kind==='srt'){if(has)srtSort(key,String(col),first,{firstChild:{textContent:label||''}});else supSet(`${key}-sort`,'');}
+  else if(kind==='sd'){if(has)supSdSort(String(col));else supSet('sd-sort','');}
+  else if(kind==='oh'){if(has)ohSortBy(key,String(col),label);else{tableMore={...tableMore,[`ohsort-${key}`]:''};renderResults();}}
 }
 
 
@@ -12418,7 +12467,7 @@ function supSupplyMix(m){
   const gPg=dzPageOf('sup-mix-groups',gSorted,JSON.stringify([n,supplyWarehouseFilter,gSt]));
   const gShown=gPg.rows;
   const covColor=p=>p>=90?'var(--dz-teal)':p>=75?'var(--dz-amber)':'var(--dz-risk)';
-  const gTable=gdims.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Item groups"><table class="sup-tbl sup-groups"><colgroup><col><col class="c-n"><col class="c-n"><col class="c-cov"><col class="c-n"><col class="c-big"></colgroup>
+  const gTable=gdims.length?`${psortHtml('srt','mix-groups','item groups',gCols.map(c=>[c[0],c[1],c[3]]),gSt)}<div class="sup-scroll" tabindex="0" role="region" aria-label="Item groups"><table class="sup-tbl sup-groups"><colgroup><col><col class="c-n"><col class="c-n"><col class="c-cov"><col class="c-n"><col class="c-big"></colgroup>
     <thead><tr>${gCols.map(c=>srtTh('mix-groups',gSt,c)).join('')}</tr></thead>
     <tbody>${gShown.map(d=>{const p=Math.round(d.a.pct),s=Math.round(d.a.short);return `<tr class="sup-row"><td class="sup-strong" data-label="Item group">${esc(d.k)}</td><td class="num sup-strong" data-label="${hasOC?'Demand orders':'Demand qty'}">${fmtNum(Math.round(d.a.orders))}</td><td class="num sup-soft" data-label="Value">${moneyShort(d.a.value)}</td><td data-label="Coverage"><span class="sup-covcell"><span class="sup-meter thin"><i style="width:${p}%;background:${covColor(p)}"></i></span><span>${p}%</span></span></td><td class="num sup-strong${s?' red':' muted'}" data-label="Short">${fmtNum(s)}</td><td class="sup-clip sup-soft" data-label="Biggest shortage">${d.w&&d.w.short>0?`${esc(d.w.item)} · ${fmtNum(d.w.short)} short`:'—'}</td></tr>`;}).join('')}</tbody></table></div>
     ${dzPageFoot('sup-mix-groups',gPg,'Item groups','item groups')}`
@@ -12513,7 +12562,7 @@ function supBuildRisk(m){
       <td class="num sup-strong" data-label="Amount">${money(r.amountLocal)}</td>
     </tr>${renderNoteEditorRow(r,8)}`;
   };
-  const orders=all.length?`<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
+  const orders=all.length?`${psortHtml('srt','br-orders','orders at risk or late',brCols.map(c=>[c[0],c[1],c[3]]),brSt)}<div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br"><colgroup><col class="c-so"><col class="c-cust"><col class="c-cm"><col class="c-item"><col class="c-date"><col class="c-st"><col><col class="c-amt"></colgroup>
     <thead><tr>${brCols.map(c=>srtTh('br-orders',brSt,c)).join('')}</tr></thead><tbody>${vis.map(orderRow).join('')}</tbody></table></div>
     ${dzPageFoot('br-risk',riskPg,'Orders at risk or late','lines',all.length>cap.length?`First ${fmtNum(cap.length)} of ${fmtNum(all.length)} lines`:'')}`
     :`<p class="sup-empty">${riskRows.length?'No orders match the search or the customer.':'No open sales orders fall in CM / month buckets that the report marks at risk or late.'}</p>`;
@@ -13568,10 +13617,12 @@ function renderGlobalSearchPage(m){
     head:[['CM'],['Month'],['Total','num'],['Clear to build','num'],['At risk','num'],['Late','num'],['Notes','','30%']],
     rows:s.ctb.slice(0,20).map(r=>`<tr><td class="m">${esc(r.cm)}</td><td class="date soft">${esc(monthLabel(r.monthKey)||r.month)}</td><td class="num">${fmtNum(r.total)}</td><td class="num">${fmtNum(r.clearToBuild)}</td><td class="num">${fmtNum(r.atRisk)}</td><td class="num">${fmtNum(r.late)}</td><td class="soft">${esc(r.notes||'')}</td></tr>`)}):'';
   // Order lines first (how they are sorted is in the count's tip), then the supply / demand and Clear To Build matches.
+  const lineHead=[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']];
   const lines=`<div class="table">
+      ${psortHtml('oh','search-lines','order lines',lineHead.map(([label],i)=>[i,label]),ohSortGet('search-lines'))}
       <div class="table-scroll" tabindex="0" role="region" aria-label="Order lines found"><table class="lines-table search">
-        <colgroup><col style="width:86px"><col style="width:92px"><col style="width:116px"><col style="width:100px"><col><col style="width:86px"><col style="width:50px"><col style="width:84px"><col style="width:172px"><col class="col-notes" style="width:106px"></colgroup>
-        <thead><tr>${[['Type'],['Doc #'],['Customer / vendor'],['Warehouse'],['Item / description'],['Date'],['Qty','num'],['Value','num'],['Status'],['Notes','print-hide']].map(([label,cls],i)=>ohSortTh('search-lines',i,label,{cls,tip:columnTip('search',label)})).join('')}</tr></thead>
+        <colgroup><col style="width:86px"><col style="width:92px"><col style="width:140px"><col style="width:100px"><col><col style="width:86px"><col style="width:50px"><col style="width:84px"><col style="width:172px"><col class="col-notes" style="width:106px"></colgroup>
+        <thead><tr>${lineHead.map(([label,cls],i)=>ohSortTh('search-lines',i,label,{cls,tip:columnTip('search',label)})).join('')}</tr></thead>
         <tbody>${body||`<tr><td colspan="10"><span class="empty-note">No order lines match “${esc(s.q)}”.</span></td></tr>`}</tbody>
       </table></div>
       ${dzPageFoot('search-lines',pg,'Order lines found','lines',s.rows.length>capped.length?`First ${fmtNum(capped.length)} of ${fmtNum(s.rows.length)} · Add another word to narrow the results`:'')}
@@ -13609,6 +13660,52 @@ function restoreFocus(root,f){
   if(f.caret&&t.value!==f.caret[0])t.value=f.caret[0];
   t.focus({preventScroll:true});
   if(f.caret)try{t.setSelectionRange(f.caret[1],f.caret[2],f.caret[3]);}catch(e){}
+}
+// Redraws also put back how far each scrolled box (a table that scrolls sideways on a phone, a list with its own
+// scroll bar) was scrolled, so a sort keeps its column in view. A box is found again by its own id or data-focus-key,
+// else by the first id / data-focus-key inside it (a table's first heading button) and its class.
+function captureScrolls(root){
+  const out=[];
+  if(!root||!root.querySelectorAll)return out;
+  for(const n of root.querySelectorAll('div,section')){
+    const left=n.scrollLeft||0,top=n.scrollTop||0;
+    if(!left&&!top)continue;
+    let sel=focusSelector(n),cls='';
+    if(!sel){
+      const ref=n.querySelector&&n.querySelector('[id],[data-focus-key]');
+      sel=ref?focusSelector(ref):'';
+      cls=String(n.className||'');
+    }
+    if(sel)out.push({sel,cls,left,top});
+  }
+  return out;
+}
+function restoreScrolls(root,list){
+  if(!root||!root.querySelector)return;
+  (list||[]).forEach(({sel,cls,left,top})=>{
+    let n=root.querySelector(sel);
+    if(n&&cls){
+      n=n.parentElement;
+      while(n&&n!==root&&String(n.className||'')!==cls)n=n.parentElement;
+      if(n===root)n=null;
+    }
+    if(!n)return;
+    if(n.scrollLeft!==left)n.scrollLeft=left;
+    if(n.scrollTop!==top)n.scrollTop=top;
+  });
+}
+// After a redraw, a focused control inside a box that scrolls sideways (a sort heading on a phone) is scrolled into
+// that box just enough to show it whole, with room for its sort arrow; the page itself does not move.
+function revealFocusInScroller(root){
+  const a=document.activeElement;
+  if(!a||a===root||!root||!root.contains||!root.contains(a)||!a.getBoundingClientRect||typeof getComputedStyle!=='function')return;
+  for(let p=a.parentElement;p&&p!==root;p=p.parentElement){
+    if(p.scrollWidth<=p.clientWidth+1||!/auto|scroll/.test(getComputedStyle(p).overflowX))continue;
+    const r=a.getBoundingClientRect(),w=p.getBoundingClientRect(),room=14;
+    if(r.left-room<w.left)p.scrollLeft-=w.left-(r.left-room);
+    else if(r.right+room>w.right)p.scrollLeft+=Math.min(r.right+room-w.right,r.left-room-w.left);
+    return;
+  }
 }
 function hasLoadedData(){
   return !!(allLoadedRows.length||buildRiskRows.length||supplyDemandRows.length);
@@ -15007,10 +15104,15 @@ function renderResults(){
       const linesSig=JSON.stringify([weeklyView,weeklyTileFilter,weeklyOtdFilter,weeklyRescheduleFilter,weeklyWarehouseFilter,weeklyCustomerFilter,weeklySegmentFilter,weeklyOwnerFilter,weeklyOrderTypeFilter,weeklyDepartmentFilter,weeklyProjectFilter,weeklyReasonFilter,weeklyReasonMain,weeklyCauseFilter,weeklyAgeFilter,ohlLineQuery,ohlSupPick,weeklyLineSort,sorted.length]);
       const linesPg=dzPageOf('oh-lines',sorted,linesSig,stgValue('linesShown'));
       const shown=linesPg.rows;
-      const sortOptions=[['default','Default'],['warehouse','Warehouse'],['customer','Customer'],['owner','Document Owner'],['date','Date'],['status','Status'],['value','Value high to low']];
+      // 2v9 (owner): phone sort menus: every sortable column is a choice (a phone shows the lines as cards with no
+      // headings); a column choice sorts as its heading's first click; the arrow beside it (phones only) reverses it.
+      const colName=id=>sortCols.find(c=>c[0]===id)[1];
+      const sortOptions=[['default','Default'],['col:doc:asc',colName('doc')],['customer','Customer'],['warehouse','Warehouse'],['col:item:asc',colName('item')],['date','Date'],['col:qty:desc',`${qtyHeader==='Open'?'Open qty':qtyHeader} high to low`],['value','Value high to low'],['status','Status'],['col:reschedule:asc',colName('reschedule')],['col:notes:asc',colName('notes')],['owner','Document Owner']];
       const arrow=sortDir>0?'↑':'↓';
       // While a header sort is on, the select shows it as an extra choice so the other choices still switch back.
-      if(sortCol)sortOptions.push([weeklyLineSort,`Column: ${sortCol[1]} ${arrow}`]);
+      const sortExtra=!!sortCol&&!sortOptions.some(([v])=>v===weeklyLineSort);
+      if(sortExtra)sortOptions.push([weeklyLineSort,`Column: ${sortCol[1]} ${arrow}`]);
+      const sortNow=sortCol?{col:sortCol[0],dir:sortDir>0?'asc':'desc'}:OHL_SORT_ALIAS_COLS[weeklyLineSort]?{col:OHL_SORT_ALIAS_COLS[weeklyLineSort][0],dir:OHL_SORT_ALIAS_COLS[weeklyLineSort][1]}:null;
       const selectedCount=linkedSelection.size;
       const allSelected=selectedCount>0&&selectedCount===listKeys.size;
       // indeterminate has no HTML attribute; set it once this redraw is in the page.
@@ -15032,9 +15134,9 @@ function renderResults(){
         notes:columnTip('linked','Notes')||'The line\'s note or override.'};
       const sortHeader=([id,label,,num])=>{
         const on=sortCol&&sortCol[0]===id;
-        return `<th${num?` class="${num}"`:''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:''}</span></button></th>`;
+        return `<th${num?` class="${num}"`:''}${on?` aria-sort="${sortDir>0?'ascending':'descending'}"`:''}><button type="button" class="th-sort" data-focus-key="linked-sort-${id}" data-col="${id}"${tipAttr(`${sortTips[id]} Click to sort.`)} onclick="sortLinkedColumn(this.dataset.col)">${esc(label)}<span class="sort-arrow" aria-hidden="true">${on?arrow:'↕'}</span></button></th>`;
       };
-      const sortHtml=`<select id="weekly-line-sort" class="dz-pillinput ohl-sort" aria-label="Sort lines"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${sortCol&&v===weeklyLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>`;
+      const sortHtml=`<select id="weekly-line-sort" class="dz-pillinput ohl-sort" aria-label="Sort lines"${tipAttr('Sort or group the lines.')} onchange="setWeeklyLineSort(this.value)">${sortOptions.map(([v,l])=>`<option value="${esc(v)}"${weeklyLineSort===v?' selected':''}>${sortExtra&&v===weeklyLineSort?'':'Sort: '}${esc(l)}</option>`).join('')}</select>${psortDir('oh-lines',sortNow,sortNow?'psortOhlFlip()':'')}`;
       return `<section class="dz-card dz-span-6 ohl-card ohl-lines-card" id="linked-lines" aria-label="Lines">
         ${ohlHead(sortHtml)}
         ${bulkBar}
@@ -15270,6 +15372,7 @@ function renderResults(){
   // Redraws replace the whole results DOM; put focus and listbox scroll back so keyboard use keeps working.
   const focus=captureFocus(el);
   const scrolls=[...el.querySelectorAll('select[id]')].map(sel=>[sel.id,sel.scrollTop]);
+  const boxScrolls=activeTab===lastRenderedTab?captureScrolls(el):[];
   const entering=activeTab!==lastRenderedTab||allLoadedRows!==lastRenderedRows;
   lastRenderedTab=activeTab;lastRenderedRows=allLoadedRows;
   if(el.classList)el.classList.toggle('entering',entering);
@@ -15280,7 +15383,9 @@ function renderResults(){
   dzFitTables(el);
   stgNavWatch(); // 2v9 (owner): Settings marks the section on screen in its section list (a no-op on other pages)
   scrolls.forEach(([id,top])=>{const sel=document.getElementById(id);if(sel)sel.scrollTop=top;});
+  restoreScrolls(el,boxScrolls);
   restoreFocus(el,focus);
+  revealFocusInScroller(el);
   runCountUps(el,entering);
 }
 // Hero numbers count up from their previous value (from zero when a page opens). The markup already holds the
@@ -17730,7 +17835,7 @@ function dzTitleCase(root){
 // than the column gets the room it needs (its <col> or title cell), plus a small gap; the table then grows past its
 // card and its scroll box (added when there is none) scrolls sideways. Phone card layouts (no visible titles) and
 // print are left alone. Again on resize and once the web font has loaded.
-const DZ_TH_GAP=14,DZ_FREE_COL=170;
+const DZ_TH_GAP=14,DZ_FREE_COL=170,DZ_TH_ARROW=10;
 function dzFitTables(root){
   if(!root||!root.querySelectorAll||printMode||typeof getComputedStyle!=='function'||typeof document==='undefined'||!document.createRange)return;
   root.querySelectorAll('table').forEach(t=>{
@@ -17754,7 +17859,9 @@ function dzFitTables(root){
         // A column with no set width (the item / description one) keeps room to read once the table scrolls.
         const free=fixed&&cols.length===ths.length&&!cols[i].className&&!cols[i].getAttribute('width')&&!cols[i].getAttribute('data-dzfit')&&!cols[i].style.width;
         if(free)need=Math.max(need,DZ_FREE_COL);
-        if(textW>w-pad+.5){
+        // A sort heading keeps room for its arrow beside the label (the arrow is not measured), so it is never cut off.
+        const room=th.querySelector('.th-sort,.shp-sort')?DZ_TH_ARROW:0;
+        if(textW+room>w-pad+.5){
           need=Math.max(free?DZ_FREE_COL:0,Math.ceil(textW+pad+DZ_TH_GAP));
           const target=fixed&&cols.length===ths.length?cols[i]:th;
           target.style.width=`${need}px`;
@@ -20394,7 +20501,7 @@ function renderShippingPage(m){
   const etaTip='Expected or delivered date, with the due date.';
   const sortHead=[['track','Tracking','Tracking number and carrier.'],['order','Order','Sales order and customer.'],['progress','Progress','No status, Shipped, In transit, Delayed, Delivered.'],['eta','ETA',etaTip],['priority','Priority','Ticked as priority.']].map(([id,label,tip])=>{
     const on=shipSortCol===id;
-    return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''}${on?` aria-sort="${shipSortDir>0?'ascending':'descending'}"`:''}><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):''}</span></button></span>`;
+    return `<span role="columnheader"${id==='eta'?' class="dz-num"':id==='priority'?' class="shp-th-pri"':''}${on?` aria-sort="${shipSortDir>0?'ascending':'descending'}"`:''}><button type="button" class="shp-sort${on?' on':''}" data-focus-key="ship-sort-${id}" onclick="shpSort('${id}')"${tipAttr(`${tip} Click to sort.`)}>${esc(label)}<span class="shp-sort-arrow" aria-hidden="true">${on?(shipSortDir>0?'↑':'↓'):'↕'}</span></button></span>`;
   }).join('');
   const search=`<input id="ship-search" type="text" class="dz-pillinput shp-search" placeholder="Search tracking, order, customer" value="${esc(shipQuery)}" autocomplete="off" aria-label="Search shipments" oninput="shipSearch(this.value)">`;
   const listSub=`deliveries shipped in the ${SHIP_WINDOW_DAYS} days to ${asOf}${model.manualCount?` and ${shipPlural(model.manualCount,'number','numbers')} added by hand`:''}`;
@@ -22907,13 +23014,14 @@ function ohlDateBlock(c){
   };
   // 10 customers a page; a new Order Health filter (a click on a customer is one) starts at page 1.
   // 2v9 (owner): every column sorts, before the pages (What we can deliver by its share ready to build).
+  const dcHead=[['cust','Customer','The customer.'],['lines','Lines','Lines whose date moved later, and their open value.'],['slip','Slip','The most days a line moved.','dz-num'],['worst','Worst line','The line that moved the most.'],['can','What we can deliver','Ready to build or blocked; sorts by the share ready.']];
   const dcKeys={cust:cu=>cu.customer,lines:cu=>cu.lines.length,slip:cu=>cu.worstSlip,worst:cu=>String(cu.lines[0].order||''),can:cu=>{const t=cu.ready+cu.blocked;return t?cu.ready/t:null;}};
   const dcPg=dzPageOf('ohl-datechange',ohSortRows('ohl-datechange',dc.customers,dcKeys),JSON.stringify([weeklyFilterKey(),ohSortSig('ohl-datechange')]),printMode?DZ_PAGE_SIZE:5);
   // 2v6.9 (owner): no totals line (lines · customers · value, ready / blocked / unknown) in the head.
   return {id:'dates',title:'Date changes',label:`Date changes · ${ohN(t.lines,'line')}`,
     tip:ohlTip(`Lines whose date moved over ${ON_TRACK_TOLERANCE_DAYS} ${ON_TRACK_TOLERANCE_DAYS===1?'day':'days'} past due`,['Ready: clear to build','Blocked: short or on hold']),
-    body:`<div class="ohl-dc" data-card="date-change"><div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
-        <div class="dz-th ohl-dc-th">${[['cust','Customer','The customer.'],['lines','Lines','Lines whose date moved later, and their open value.'],['slip','Slip','The most days a line moved.','dz-num'],['worst','Worst line','The line that moved the most.'],['can','What we can deliver','Ready to build or blocked; sorts by the share ready.']].map(([id,l,tp,cls])=>ohSortTh('ohl-datechange',id,esc(l),{cls,tip:tp,plain:l,tag:'span',role:''})).join('')}</div>
+    body:`<div class="ohl-dc" data-card="date-change">${psortHtml('oh','ohl-datechange','date changes',dcHead.map(([id,l])=>[id,l]),ohSortGet('ohl-datechange'))}<div class="dz-table ohl-dc-table" role="group" aria-label="Customers with later dates">
+        <div class="dz-th ohl-dc-th">${dcHead.map(([id,l,tp,cls])=>ohSortTh('ohl-datechange',id,esc(l),{cls,tip:tp,plain:l,tag:'span',role:''})).join('')}</div>
         ${dcPg.rows.map(row).join('')}
       </div>${dzPageFoot('ohl-datechange',dcPg,'Date changes','customers')}</div>`};
 }

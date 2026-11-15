@@ -405,4 +405,22 @@ test('Build Risk: every column of Orders at risk or late, Clear To Build by CM /
   assert.deepEqual(page.errors, []);
 });
 
+// 2v9 (owner): phone sort menus. On a phone Orders at risk or late is cards with no heading row: a Sort select of every
+// column and an arrow run the headings' sort (srtSort), so the sort is the same either way and shows on the headings.
+test('2v9 phone sort menus: Orders at risk or late lists every column; a pick (and the arrow) sorts as the heading does', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const page = await loaded();
+  html(page);
+  const sos = (c) => [...c.matchAll(/<td class="sup-strong" data-label="SO #">([^<]+)<\/td>/g)].map((m) => m[1]);
+  const r = checkPhoneSort(page, { marker: 'data-focus-key="psort-br-orders"', prefix: 'srt-br-orders-', dirKey: 'br-orders', rows: sos });
+  assert.deepEqual(r.options.map((o) => [o.value, o.first || '']), [['', ''], ['so', 'asc'], ['cust', 'asc'], ['cm', 'asc'], ['item', 'asc'], ['date', 'asc'], ['status', 'asc'], ['ovr', 'asc'], ['amt', 'desc']]);
+  // The menu sits in the card above the table, labelled; a pick shows with its arrow, and on the Amount heading.
+  page.run("psortSet('srt','br-orders','amt','desc','Amount')");
+  const h = page.els['results-screen'].innerHTML;
+  assert.match(h, /<div class="psort print-hide" role="group" aria-label="Sort orders at risk or late"><select class="dz-pillinput psort-sel" data-focus-key="psort-br-orders" aria-label="Sort orders at risk or late by" data-tip="[^"]+" onchange="[^"]+">[\s\S]*?<option value="amt" data-first="desc" data-name="Amount" selected>Sort: Amount ↓<\/option><\/select><button type="button" class="dz-pillinput psort-dir"[^>]*><span aria-hidden="true">↓<\/span><\/button><\/div><div class="sup-scroll" tabindex="0" role="region" aria-label="Sales orders in risk buckets">/);
+  assert.match(h, /aria-sort="descending"><button[^>]*srt-br-orders-amt"/);
+  assert.equal(page.run("tableMore['sup-br-orders-sort']"), 'amt:desc');
+  assert.deepEqual(page.errors, []);
+});
+
 run();

@@ -320,4 +320,30 @@ test('2v9 (owner): every Order lines heading sorts the matches before the pages 
   assert.deepEqual(page.errors, []);
 });
 
+// 2v9 (owner): phone sort menus. On a phone the order lines and the supply / demand matches are cards with no heading
+// row: each card has a Sort select of every column and an arrow that run the headings' sort (ohSortBy).
+test('2v9 phone sort menus: Order lines and Supply / demand matches list every column; a pick (and the arrow) sorts as the heading does', async () => {
+  const { checkPhoneSort } = require('./harness');
+  const sdHeaders = ['ExportDate', 'Item No.', 'ItemDescription', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'SupplyRiskFlag'];
+  const sdRow = (item, wh, ym, dem, sup) => ({ ExportDate: '09/03/2026', 'Item No.': item, WarehouseCode: wh, WarehouseName: wh === '11' ? 'Spyder - Lacombe' : 'CM - Delta', YearMonth: ym, DemandOpenQty: String(dem), UsableSupplyQty: String(sup), MonthlyNetQty: String(sup - dem), CumulativeNetQty: String(sup - dem), SupplyRiskFlag: 'OK' });
+  const sd = [sdRow('SPY-200', '11', '2026-10', 8, 0), sdRow('SPY-300', '11', '2026-09', 1, 1), sdRow('SPY-100', '12', '2026-11', 4, 9)];
+  const page = await loaded(ROWS, [{ name: 'supply.xls', bytes: utf16Tsv(sdHeaders, sd) }]);
+  search(page, 'spy');
+  const docs = (c) => [...c.matchAll(/<td class="c-doc">([^<]+)/g)].map((m) => m[1]);
+  const lines = checkPhoneSort(page, { marker: 'data-focus-key="psort-search-lines"', prefix: 'ohsort-search-lines-', dirKey: 'search-lines', rows: docs });
+  assert.deepEqual(lines.options.map((o) => o.text), ['Sort: Default order', 'Sort: Type', 'Sort: Doc #', 'Sort: Customer / vendor', 'Sort: Warehouse', 'Sort: Item / description', 'Sort: Date', 'Sort: Qty', 'Sort: Value', 'Sort: Status', 'Sort: Notes']);
+  const items = (c) => [...c.matchAll(/<span class="m">([^<]+)<\/span>/g)].map((m) => m[1]);
+  const supply = checkPhoneSort(page, { marker: 'data-focus-key="psort-search-sd"', prefix: 'ohsort-search-sd-', dirKey: 'search-sd', rows: items });
+  assert.deepEqual(supply.heads.map((x) => x.label), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
+  // The menu sits above the cards; the pick shows with its arrow and on the heading (a wider screen).
+  page.run("psortSet('oh','search-sd','3','','Demand qty')");
+  const h = html(page);
+  assert.match(h, /<div class="psort print-hide" role="group" aria-label="Sort supply \/ demand"><select class="dz-pillinput psort-sel" data-focus-key="psort-search-sd"[\s\S]*?<option value="3" data-name="Demand qty" selected>Sort: Demand qty ↓<\/option>[\s\S]*?<\/div>\s*<div class="table-scroll" tabindex="0" role="region" aria-label="Supply \/ demand"><table class="data-table cards"/);
+  assert.match(h, /<th scope="col" class="num" aria-sort="descending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-search-sd-3"/);
+  assert.deepEqual(items(h.slice(h.indexOf('psort-search-sd'))), ['SPY-200', 'SPY-100', 'SPY-300']);
+  // A table that keeps its headings on a phone has no menu (renderTableCard without cards).
+  assert.doesNotMatch(page.run("renderTableCard({key:'t',title:'T',head:[['A'],['B']],rows:['<tr><td>1</td><td>2</td></tr>']})"), /psort/);
+  assert.deepEqual(page.errors, []);
+});
+
 run();
