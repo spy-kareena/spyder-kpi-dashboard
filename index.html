@@ -853,7 +853,7 @@ button.trow.po-wh-cols{font-size:13px}
 .tip-layer{position:fixed;left:0;top:0;z-index:70;max-width:min(300px,calc(100vw - 16px));padding:6px 10px;border-radius:6px;background:var(--tip-bg);color:var(--tip-fg);font-size:12px;font-weight:500;line-height:1.45;text-align:left;white-space:pre-line;overflow-wrap:anywhere;box-shadow:var(--sh-pop);opacity:0;transform:translateY(2px);pointer-events:none;transition:opacity .15s,transform .15s}
 .tip-layer[data-side="bottom"]{transform:translateY(-2px)}
 .tip-layer.open{opacity:1;transform:none;pointer-events:auto}
-.tip-layer.open.spark{pointer-events:none}
+.tip-layer.open.spark-tip{pointer-events:none}
 .tip-layer[hidden]{display:none}
 .tip-arrow{position:absolute;width:8px;height:8px;background:var(--tip-bg);transform:rotate(45deg)}
 .tip-layer[data-side="top"] .tip-arrow{bottom:-4px;left:calc(var(--arrow-x) - 4px)}
@@ -2924,7 +2924,9 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-tbl{width:100%;min-width:var(--min,1000px);border-collapse:collapse;table-layout:fixed;font-size:13px;color:var(--dz-ink-1)}
 .sup-tbl th{padding:10px 12px 10px 0;font-size:11.5px;font-weight:400;text-align:left;color:var(--dz-ink-4);border-bottom:1px solid var(--dz-line-8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sup-tbl td{padding:12px 12px 12px 0;border-bottom:1px solid var(--dz-line-5);vertical-align:middle;min-width:0;background:transparent}
-.sup-tbl th:last-child,.sup-tbl td:last-child{padding-right:0}
+/* 2v9 (owner): the first and last cells keep 12px inside, so a highlighted row's tint never ends at its text */
+.sup-tbl th:first-child,.sup-tbl td:first-child{padding-left:12px}
+.sup-tbl th:last-child,.sup-tbl td:last-child{padding-right:12px}
 .sup-tbl th.num,.sup-tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .sup-tbl .sup-strong{font-weight:600}
 .sup-tbl .sup-soft{color:var(--dz-ink-3)}
@@ -4265,7 +4267,8 @@ button.pow-row:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1
 .por-tbl tbody tr.sel>td:last-child{border-radius:0 10px 10px 0}
 .por-tbl tfoot th,.por-tbl tfoot td{padding:12px 12px 12px 0;border-top:1.5px solid var(--dz-line-8);font-weight:600;color:var(--dz-ink-1);text-align:left;font-size:13px}
 .por-tbl tfoot td.num{text-align:right}
-.por-tbl tfoot td:last-child{padding-right:0}
+.por-tbl tfoot td:last-child{padding-right:12px}
+.por-tbl tfoot th:first-child{padding-left:12px}
 .por-tbl tfoot small{font-weight:400}
 .por-oncell{display:grid;grid-template-columns:minmax(40px,72px) auto;justify-content:start;gap:10px;align-items:center}
 .por-ven{display:block;max-width:calc(100% + 16px);margin:-4px -8px;padding:4px 8px;border:0;border-radius:8px;background:none;font:inherit;font-weight:600;color:var(--dz-ink-1);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
@@ -14999,7 +15002,7 @@ function hideTip(){
   tipState.el=null;tipState.pending=null;
   if(was&&was.classList&&was.classList.contains('dz-spark'))sparkClear(was);
   const layer=tipLayer();
-  if(layer&&layer.classList)layer.classList.remove('spark');
+  if(layer&&layer.classList)layer.classList.remove('spark-tip');
   if(layer&&!layer.hidden){layer.hidden=true;if(layer.classList)layer.classList.remove('open');}
   tipGoHome(layer);
 }
@@ -15011,7 +15014,7 @@ function showTip(el){
   if(!layer||!text||!el.isConnected||!el.getBoundingClientRect)return;
   tipState.el=el;
   tipFill(layer.querySelector('.tip-text'),text);
-  layer.classList.remove('open','spark');
+  layer.classList.remove('open','spark-tip');
   const dialog=tipHost(el);
   if(dialog){if(layer.parentNode!==dialog)dialog.appendChild(layer);}
   else tipGoHome(layer);
@@ -15211,8 +15214,8 @@ function sparkMark(el,i,{say=false}={}){
   rows.forEach(([text,cls],k)=>{const s=document.createElement('span');s.className=cls;s.textContent=text+(k<rows.length-1?'\n':'');node.appendChild(s);});
   tipGoHome(layer);
   if(layer.style){layer.style.left='0px';layer.style.top='0px';}
-  // Above the whole figure at the period's x, so it never covers the line; it lets the pointer through (.spark).
-  if(layer.classList)layer.classList.add('spark');
+  // Above the whole figure at the period's x, so it never covers the line; it lets the pointer through (.spark-tip; not .spark, the old sparkline's class, which fixes a height).
+  if(layer.classList)layer.classList.add('spark-tip');
   layer.hidden=false;
   const r=svg.getBoundingClientRect(),px=r.left+x*(r.width/d.w);
   placeFloating(layer,{getBoundingClientRect:()=>({left:px-4,right:px+4,top:r.top,bottom:r.bottom,width:8,height:r.height})},'top',6);
