@@ -4,7 +4,7 @@
 // Fixtures are synthetic: two vendors, report day Thursday 09/24/2026 (week Sun 09/20 to Sat 09/26, 3 months from 06/24).
 'use strict';
 const assert = require('node:assert/strict');
-const { loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
+const { HTML, loadPage, upload, sapRow, sapExport, createSuite } = require('./harness');
 const { test, run } = createSuite();
 
 const V = { ACME: 'Acme Metals', BOLT: 'Bolt Electronics' };
@@ -106,14 +106,14 @@ test('Question 2: the scorecard has one row per vendor (lines, share, on time, l
   assert.deepEqual(page.errors, []);
 });
 
-test('Sorting by a column title: first click per the column (on time lowest first), the next reverses it', async () => {
+test('Sorting by a column title: first click per the column (on time highest first: the board\'s one rule), the next reverses it', async () => {
   const page = await received();
-  page.run("poRecvSort('rate')");
-  assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), ['Acme Metals', 'Bolt Electronics']);
-  assert.match(card(html(page)), /<th class="c-on" scope="col" aria-sort="ascending"/);
   page.run("poRecvSort('rate')");
   assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), ['Bolt Electronics', 'Acme Metals']);
   assert.match(card(html(page)), /<th class="c-on" scope="col" aria-sort="descending"/);
+  page.run("poRecvSort('rate')");
+  assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), ['Acme Metals', 'Bolt Electronics']);
+  assert.match(card(html(page)), /<th class="c-on" scope="col" aria-sort="ascending"/);
   page.run("poRecvSort('name')");
   assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), ['Acme Metals', 'Bolt Electronics']);
   assert.equal((card(html(page)).match(/aria-sort=/g) || []).length, 1);
@@ -123,7 +123,7 @@ test('Sorting by a column title: first click per the column (on time lowest firs
 test('Picking a vendor switches the trends to it; the band and the All Vendors row stay; again (or the chip) shows all', async () => {
   const page = await received();
   const before = band(html(page));
-  const trendsAll = text((card(html(page)).match(/<div class="por-sec">[\s\S]*$/) || [''])[0]);
+  const trendsAll = text((card(html(page)).match(/<div class="por-sec por-sec-top">[\s\S]*?(?=<div class="por-sec por-sec-tbl">)/) || [''])[0]);
   assert.match(trendsAll, /^Trends all vendors in view Received on time target 90% 40% of 10 PO lines received in the last 3 months/);
   assert.match(trendsAll, /Received by week 3 POs this week 3 3 lines received this week · 12-week average 0\.9 POs/);
   page.run("poRecvVendor('BOLT')");
@@ -131,7 +131,7 @@ test('Picking a vendor switches the trends to it; the band and the All Vendors r
   assert.equal(band(h), before);
   assert.deepEqual(footRow(h)[0], 'All Vendors');
   assert.match(card(h), /<tr class="sup-row sel"><td><button type="button" class="por-ven" data-focus-key="porecv-ven-BOLT" aria-pressed="true"/);
-  const trends = text((card(h).match(/<div class="por-sec">[\s\S]*$/) || [''])[0]);
+  const trends = text((card(h).match(/<div class="por-sec por-sec-top">[\s\S]*?(?=<div class="por-sec por-sec-tbl">)/) || [''])[0]);
   // BOLT: 2 of 3 scored on time (67%); this week 2 POs; its 12 weeks 0,...,0,1,0,0,0,2 (204 in the week of Aug 30) = 0.3.
   assert.match(trends, /^Trends Bolt Electronics × Received on time target 90% 67% of 3 PO lines received in the last 3 months/);
   assert.match(trends, /Received by week 2 POs this week 2 2 lines received this week · 12-week average 0\.3 POs/);
@@ -174,6 +174,38 @@ test('Print shows every vendor row, no pager; the table pages at 10 vendors on s
   assert.equal(bodyRows(html(page)).length, 13);
   assert.doesNotMatch(html(page), /dz-pagefoot/);
   page.run('printMode=false;renderResults()');
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 (owner): in the Vendor Scorecard the trends come first and the scorecard table follows, full width.
+test('Vendor Scorecard: the trends lead the card, the scorecard table under them (full width), its caption under the table', async () => {
+  const page = await received();
+  const c = card(html(page));
+  const iTrends = c.indexOf('<div class="por-sec por-sec-top">'), iTable = c.indexOf('<table class="sup-tbl por-tbl">');
+  assert.ok(iTrends > 0 && iTable > iTrends, 'trends before the table');
+  assert.match(c, /<div class="por-sec por-sec-tbl"><div class="sup-scroll por-scroll"[\s\S]*?<\/table><\/div>[\s\S]*?<p class="po-cap">[^<]*own trends above; click a column title to sort\.<\/p><\/div>$/);
+  assert.match(HTML, /\.por-sec\.por-sec-top\{margin-top:10px;padding-top:0;border-top:0\}/);
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 (owner): every scorecard column sorts: a click sorts it, again reverses it, aria-sort on that column only.
+test('Vendor Scorecard: every column title sorts and reverses; aria-sort on the sorted column only', async () => {
+  const page = await received();
+  for (const id of ['name', 'n', 'rate', 'late', 'avg', 'worst', 'hit']) {
+    page.run(`supSet('po-recv-sort','');poRecvSort('${id}')`);
+    const first = card(html(page));
+    const d1 = (first.match(new RegExp(`aria-sort="(ascending|descending)"[^>]*><button[^>]*porecv-sort-${id}"`)) || [])[1];
+    assert.ok(d1, `${id} sorted`);
+    assert.equal((first.match(/aria-sort=/g) || []).length, 1, id);
+    const order1 = bodyRows(html(page)).map((r) => r[0]);
+    page.run(`poRecvSort('${id}')`);
+    const d2 = (card(html(page)).match(new RegExp(`aria-sort="(ascending|descending)"[^>]*><button[^>]*porecv-sort-${id}"`)) || [])[1];
+    assert.notEqual(d2, d1, `${id} reversed`);
+    // Hit: BOLT has no reschedules ("—"), so it stays last both ways; the others flip.
+    if (id === 'hit') assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), order1);
+    else assert.deepEqual(bodyRows(html(page)).map((r) => r[0]), [...order1].reverse(), id);
+  }
+  assert.deepEqual(footRow(html(page))[0], 'All Vendors');
   assert.deepEqual(page.errors, []);
 });
 

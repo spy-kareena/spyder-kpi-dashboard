@@ -127,9 +127,9 @@ const saved = (page) => JSON.parse(page.storage.spyderKpiRowOverridesV1 || '{}')
 // that failed, retrying, not reachable): the owner dropped the where-it-is-kept lines ("Notes shared · Last edit ...",
 // "Notes saved in this browser only"). Who saved a note and when is on the line itself (noteByline, under Add note), and
 // the name is picked in Settings > Profile.
-const sidebar = (page) => page.run('stgDataCard(0,null)');
+const sidebar = (page) => page.run('stgDataBlock(null)'); // 2v9 (owner): the Data block of Settings > Data
 // (stgPeopleAsked: drawing the card here must not fetch the names list, which some tests count.)
-const profile = (page) => page.run("(stgPeopleAsked=true,stgProfileCard('',0))");
+const profile = (page) => page.run("(stgPeopleAsked=true,stgGeneralSection(''))"); // 2v9 (owner): Settings > General
 const byline = (page, doc) => page.run(`noteByline(allLoadedRows.find(r=>r.documentNumber===${JSON.stringify(doc)}))`);
 const NO_NOTES_LINE = /Notes shared|Notes not shared|in this browser only|not reachable/;
 const html = (page) => page.els['results-screen'].innerHTML;

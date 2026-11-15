@@ -148,7 +148,7 @@ test('risk-bucket orders: the override and note as text, one Edit button opens t
   const table = () => { const h = html(page); return h.slice(h.indexOf('aria-label="Sales orders in risk buckets"')); };
   let t = table();
   assert.match(t, /^aria-label="Sales orders in risk buckets"><table class="sup-tbl sup-br">/);
-  const heads = [...t.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*>([^<]*)<\/th>/g)].map((m) => m[1]);
+  const heads = [...t.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th\b[^>]*><button type="button" class="th-sort srt-th"[^>]*>([^<]*)<span class="sort-arrow"/g)].map((m) => m[1]);
   assert.deepEqual(heads, ['SO #', 'Customer', 'CM', 'Item', 'Build date', 'Status', 'Override', 'Amount']);
   // No dropdowns or note boxes in the rows: the override reads as text and the editor opens on Edit.
   assert.doesNotMatch(t.split('</table>')[0], /<select|<textarea/);
@@ -200,7 +200,7 @@ test('CTB % by CM trend: one row per CM, weeks oldest to newest, tone and toolti
   // 2v6: under Show more (Clear To Build by CM and month); tone as a chip colour (90%+ teal, 70%+ amber, else red).
   const card = h.slice(h.indexOf('>CTB % by CM'));
   assert.match(card, /<span class="dz-meta">last 2 report weeks, oldest first<\/span>/);
-  assert.match(card, /<th class="num">Sep 24<\/th><th class="num">Sep 30<\/th>/);
+  assert.match(card, /<th class="num" scope="col"><button[^>]*>Sep 24<span class="sort-arrow" aria-hidden="true">↕<\/span><\/button><\/th><th class="num" scope="col"><button[^>]*>Sep 30</);
   assert.match(card, /<td class="sup-strong">DSM<\/td><td class="num"><span class="dz-chip red">50%<\/span><\/td><td class="num"><span class="dz-chip amber">88%<\/span>/);
   assert.match(card, /<td class="sup-strong">Price<\/td><td class="num muted">—<\/td><td class="num"><span class="dz-chip teal">93%</);
 });
@@ -346,6 +346,63 @@ test('CM names in the report map to their warehouses', () => {
   const page = loadPage();
   const map = page.run(`["DSM","August","Price","IMS","Logican","Dorigo","Lacombe","Spyder - Lacombe","Lacombe - Engineering","Intransit - Lacombe/McBride","CM SFG - August Electronics","CM - Logican"].map(cmKey)`);
   assert.deepEqual(map, ['DSM', 'August Electronics', 'Price', 'IMS', 'Logican', 'Dorigo', 'Lacombe', '', '', '', 'August Electronics', 'Logican']);
+});
+
+// 2v9 (owner): every column of the three Build Risk tables sorts: a click sorts it, again reverses it, aria-sort on that
+// column only, blanks ("—") last either way.
+test('Build Risk: every column of Orders at risk or late, Clear To Build by CM / month and CTB % by CM sorts and reverses', async () => {
+  const page = await loaded();
+  const tbl = (h, label) => { const i = h.indexOf(`aria-label="${label}"><table`); return h.slice(i, h.indexOf('</table>', i)); };
+  const heads = (t, key) => [...t.matchAll(new RegExp(`onclick="srtSort\\('${key}','(\\w+)','(?:asc|desc)',this\\)"`, 'g'))].map((m) => m[1]);
+  const col = (t, i) => [...t.split('<tbody>')[1].matchAll(/<tr class="sup-row[^"]*"[^>]*>([\s\S]*?)<\/tr>/g)].map((m) => [...m[1].matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/g)][i][1].replace(/<[^>]+>/g, '').trim());
+  let h = html(page, "tableMore['more-br-ctb']=true");
+  // Orders at risk or late: 8 sort buttons.
+  const orders = 'Sales orders in risk buckets';
+  assert.deepEqual(heads(tbl(h, orders), 'br-orders'), ['so', 'cust', 'cm', 'item', 'date', 'status', 'ovr', 'amt']);
+  for (const id of heads(tbl(h, orders), 'br-orders')) {
+    page.run(`supSet('br-orders-sort','');srtSort('br-orders','${id}',${JSON.stringify(id === 'amt' ? 'desc' : 'asc')})`);
+    let t = tbl(html(page), orders);
+    assert.equal((t.match(/aria-sort=/g) || []).length, 1, id);
+    assert.match(t, new RegExp(`aria-sort="${id === 'amt' ? 'descending' : 'ascending'}"><button[^>]*srt-br-orders-${id}"`));
+    page.run(`srtSort('br-orders','${id}','asc')`);
+    assert.match(tbl(html(page), orders), new RegExp(`aria-sort="${id === 'amt' ? 'ascending' : 'descending'}"><button[^>]*srt-br-orders-${id}"`));
+  }
+  page.run("srtSort('br-orders','so','asc')");
+  const so1 = col(tbl(html(page), orders), 0);
+  assert.deepEqual(so1, [...so1].sort());
+  page.run("srtSort('br-orders','so','asc')");
+  assert.deepEqual(col(tbl(html(page), orders), 0), [...so1].reverse());
+  // Clear To Build by CM / month: Total high to low, then low to high; the tips stay on the titles.
+  const ctb = 'Clear To Build by CM / month';
+  h = html(page);
+  assert.deepEqual(heads(tbl(h, ctb), 'br-ctb'), ['cm', 'month', 'total', 'clear', 'risk', 'late', 'lines', 'qty', 'value', 'notes']);
+  page.run("srtSort('br-ctb','total','desc')");
+  const tot = col(tbl(html(page), ctb), 2).map(Number);
+  assert.deepEqual(tot, [...tot].sort((a, b) => b - a));
+  assert.match(tbl(html(page), ctb), /<th class="num" scope="col" aria-sort="descending"><button[^>]*srt-br-ctb-total"[^>]*data-tip="[^"]+"/);
+  page.run("srtSort('br-ctb','total','desc')");
+  assert.deepEqual(col(tbl(html(page), ctb), 2).map(Number), [...tot].reverse());
+  // Clear to build shows "—" where Total is 0: last both ways.
+  page.run("srtSort('br-ctb','clear','desc')");
+  assert.equal(col(tbl(html(page), ctb), 3).at(-1), '—');
+  page.run("srtSort('br-ctb','clear','desc')");
+  assert.equal(col(tbl(html(page), ctb), 3).at(-1), '—');
+  // CTB % by CM: a report week column, lowest first, again highest first; Price and Lacombe have no Sep 24 figure ("—"),
+  // so they stay last, in the table's order.
+  const tr = 'CTB % by CM';
+  page.run("srtSort('br-trend','w0','asc')");
+  assert.deepEqual(col(tbl(html(page), tr), 0), ['DSM', 'Price', 'Lacombe']);
+  assert.match(tbl(html(page), tr), /aria-sort="ascending"><button[^>]*srt-br-trend-w0"[^>]*>Sep 24/);
+  page.run("srtSort('br-trend','w0','asc')");
+  assert.deepEqual(col(tbl(html(page), tr), 0), ['DSM', 'Price', 'Lacombe']);
+  assert.match(tbl(html(page), tr), /aria-sort="descending"><button[^>]*srt-br-trend-w0"/);
+  page.run("srtSort('br-trend','w1','asc')");
+  assert.deepEqual(col(tbl(html(page), tr), 0), ['Lacombe', 'DSM', 'Price'], '69%, 88%, 93%');
+  page.run("srtSort('br-trend','w1','asc')");
+  assert.deepEqual(col(tbl(html(page), tr), 0), ['Price', 'DSM', 'Lacombe']);
+  page.run("srtSort('br-trend','cm','asc')");
+  assert.equal((tbl(html(page), tr).match(/aria-sort=/g) || []).length, 1);
+  assert.deepEqual(page.errors, []);
 });
 
 run();

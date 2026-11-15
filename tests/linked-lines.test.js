@@ -116,7 +116,7 @@ test('delete hides lines from every KPI, persists, travels in snapshots, and res
   assert.doesNotMatch(html(page), /class="data-check/);
   assert.equal(page.run('stgDataCheckLevel()'), 'yellow');
   page.run("setTab('settings')");
-  assert.match(html(page), /id="stg-card-dc"[\s\S]*?2 lines you deleted are hidden/);
+  assert.match(html(page), /id="stg-dc"[\s\S]*?2 lines you deleted are hidden/);
   assert.match(html(page), /onclick="restoreDeletedLines\(\)">Restore all/);
   assert.equal([...html(page).matchAll(/class="dc-restore link-btn"/g)].length, 2);
   assert.match(html(page), /<li><span class="stg-dc-line">1000 · Firefly RV · SPY-100<\/span>/);

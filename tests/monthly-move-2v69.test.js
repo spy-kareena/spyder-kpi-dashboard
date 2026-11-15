@@ -54,7 +54,8 @@ const cardNames = (h) => [...h.matchAll(/<section class="dz-card[^"]*"([^>]*)>(?
 const ohgTable = (h, label) => {
   const m = h.match(new RegExp(`<h2 class="dz-title" data-tip="([^"]+)">${label}</h2>(?:<span class="dz-meta">([^<]*)</span>)?</div><div class="sup-scroll" tabindex="0" role="region" aria-label="${label}"><table class="ohgt-tbl"><thead><tr>([\\s\\S]*?)</tr></thead><tbody>([\\s\\S]*?)</tbody></table></div>(?:<div class="dz-pagefoot"><span class="dz-pagecount">([^<]*)</span><nav class="shp-pager dz-pager print-hide" data-dzpager="([\\w-]+)")?`));
   if (!m) return null;
-  const ths = [...m[3].matchAll(/<th scope="col"( class="[\w -]+")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)];
+  // 2v9: each heading is a sort button (ohSortTh) carrying the tip, " Click to sort." after it.
+  const ths = [...m[3].matchAll(/<th scope="col"( class="[\w -]+")?(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]*?(?: data-tip="([^"]*?)(?: ?Click to sort\.)")?>([^<]*)<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g)];
   assert.equal(ths.length, (m[3].match(/<th\b/g) || []).length, `${label}: every heading is read`);
   const trs = [...m[4].matchAll(/<tr(?: data-tip="([^"]*)")?>([\s\S]*?)<\/tr>/g)];
   return { tip: m[1], meta: m[2] || '', head: ths.map((x) => x[3]), tips: ths.map((x) => x[2] || ''), rows: trs.map((r) => [...r[2].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((c) => text(c[1]))),
@@ -168,7 +169,7 @@ test('Lagging: the Monthly and Quarterly cards, then one grid of Trend, Month by
     t.tips.forEach((tip, i) => assert.ok(tip.length > 8 && /\.$/.test(tip), `${label} > ${t.head[i]}: a tip`));
   }
   assert.equal((l.match(/<th\b/g) || []).length, 16);
-  assert.equal((l.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")? data-tip="[^"]+">/g) || []).length, 16, 'every th has a tip');
+  assert.equal((l.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")?(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]* data-tip="[^"]+">/g) || []).length, 16, 'every th has a tip (on its sort button, 2v9)');
   // The on-time and perfect-order headings explain themselves in the chips' words.
   assert.deepEqual(ohgTable(l, 'Month by month').tips.slice(3), ['Shipped by the original date.', 'Shipped complete, on time, never rescheduled.', 'Average days late, late deliveries only.', 'Orders shipped 1+ days late.']);
   assert.doesNotMatch(l, /NaN|undefined|\[object Object\]/);
@@ -683,6 +684,89 @@ test('the Lagging Version 1 CSS sits in its own marker pair, on colour tokens: c
   assert.match(css, /\ntable\.ohgt-tbl\{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums\}/);
   assert.match(css, /\n\.ohgt-tbl \.num\{text-align:right\}/);
   assert.match(css, /\n\.ohgt-tbl td\.late\{font-weight:600;color:var\(--dz-risk-text\)\}/);
+});
+
+// --- 2v9 (owner): every column of every table sorts -------------------------------------------------------------------
+// A heading click (its button's own onclick, run as the page would); the sorted headings of a table as [col, aria-sort].
+const sortClick = (page, key, col) => {
+  const m = new RegExp(`<button type="button" class="th-sort oh-th[^"]*" data-focus-key="ohsort-${key}-${col}" data-sort-label="([^"]*)"[^>]* onclick="([^"]+)"`).exec(html(page));
+  assert.ok(m, `${key} > ${col}: a sort button`);
+  page.run(m[2].replace('this.dataset.sortLabel', JSON.stringify(m[1])));
+};
+const sortedHeads = (h, key) => [...h.matchAll(new RegExp(`aria-sort="(ascending|descending)"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-${key}-([\\w-]+)"`, 'g'))].map((m) => [m[2], m[1]]);
+const sortCols = (h, key) => [...h.matchAll(new RegExp(`data-focus-key="ohsort-${key}-([\\w-]+)"`, 'g'))].map((m) => m[1]);
+
+test('2v9 sort: Lagging: Month by month, By warehouse and Booked vs shipped sort on every column (months by date, dashes last), before the pages', async () => {
+  const page = await loaded();
+  let l = lag(page);
+  assert.deepEqual(sortCols(l, 'ohg-months'), ['month', 'orders', 'value', 'otd', 'perfect', 'days', 'late']);
+  assert.deepEqual(sortCols(l, 'ohg-wh'), ['wh', 'orders', 'value', 'otd', 'spark']);
+  assert.deepEqual(sortCols(l, 'ohg-orig'), ['month', 'pct', 'open', 'late']);
+  assert.deepEqual(sortedHeads(l, 'ohg-months'), []);
+  const first = () => ohgTable(lagging(html(page)), 'Month by month').rows.map((r) => r[0]);
+  page.run('dzGoPage("ohg-months",2)');
+  sortClick(page, 'ohg-months', 'month');
+  assert.deepEqual(first(), ['Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026'], 'oldest first, back on page 1');
+  assert.deepEqual(sortedHeads(lagging(html(page)), 'ohg-months'), [['month', 'ascending']]);
+  sortClick(page, 'ohg-months', 'month');
+  assert.equal(first()[0], 'Sep 2026 to date');
+  assert.deepEqual(sortedHeads(lagging(html(page)), 'ohg-months'), [['month', 'descending']]);
+  // On time: Sep 0%, Aug 50%; highest first on the first click (a rate); the ten months with none show a dash and go
+  // last either way, newest first as before.
+  sortClick(page, 'ohg-months', 'otd');
+  assert.deepEqual(first().slice(0, 3), ['Aug 2026', 'Sep 2026 to date', 'Jul 2026']);
+  assert.deepEqual(sortedHeads(lagging(html(page)), 'ohg-months'), [['otd', 'descending']], 'one aria-sort');
+  sortClick(page, 'ohg-months', 'otd');
+  assert.deepEqual(first().slice(0, 3), ['Sep 2026 to date', 'Aug 2026', 'Jul 2026']);
+  // Booked vs shipped: original months Aug to Nov; latest first on the second click; Open by value.
+  const orig = () => ohgTable(lagging(html(page)), 'Booked vs shipped').rows.map((r) => r[0]);
+  const before = orig();
+  sortClick(page, 'ohg-orig', 'month');
+  sortClick(page, 'ohg-orig', 'month');
+  assert.deepEqual(orig(), [...before].reverse());
+  sortClick(page, 'ohg-orig', 'open');
+  const open = ohgTable(lagging(html(page)), 'Booked vs shipped').rows.map((r) => +r[2].replace(/[$,]/g, ''));
+  assert.deepEqual(open, [...open].sort((a, b) => b - a), 'money high to low first');
+  // By warehouse: the sparkline column sorts by its latest month, and redraws clean.
+  sortClick(page, 'ohg-wh', 'spark');
+  assert.deepEqual(sortedHeads(lagging(html(page)), 'ohg-wh'), [['spark', 'descending']]);
+  assert.equal(page.run("tableMore['ohsort-ohg-wh']"), 'spark:desc');
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 sort: Leading\'s month folds (Monthly delivery summary, Items not shipped yet) and the Monthly page\'s Month by month sort on every column', async () => {
+  const page = await loaded();
+  const h = () => html(page);
+  const sum = () => tbody(h(), 'Monthly delivery summary · 2026').map((r) => r.split(' ').slice(0, 2).join(' '));
+  assert.deepEqual(sortCols(h(), 'monthly-summary'), ['0', '1', '2', '3', '4', '5', '6']);
+  assert.deepEqual(sortCols(h(), 'monthly-notshipped'), ['0', '1', '2', '3', '4', '5', '6', '7', '8']);
+  const months = sum();
+  sortClick(page, 'monthly-summary', '0');
+  assert.deepEqual(sum(), months, 'Month ascending is the calendar order');
+  sortClick(page, 'monthly-summary', '0');
+  assert.deepEqual(sum(), [...months].reverse());
+  assert.deepEqual(sortedHeads(h(), 'monthly-summary'), [['0', 'descending']]);
+  // % lines shipped: Aug 50%, Sep 7%, highest first; months to come show a dash and go last either way.
+  sortClick(page, 'monthly-summary', '3');
+  assert.deepEqual(sum().slice(0, 3), ['Aug 2026', 'Sep 2026', 'Oct 2026']);
+  sortClick(page, 'monthly-summary', '3');
+  assert.deepEqual(sum().slice(0, 3), ['Sep 2026', 'Aug 2026', 'Oct 2026']);
+  // Items not shipped yet: SO # in natural number order.
+  const docs = () => tbody(h(), 'Items not shipped yet').map((r) => r.split(' ')[2]);
+  sortClick(page, 'monthly-notshipped', '1');
+  sortClick(page, 'monthly-notshipped', '1');
+  assert.deepEqual(docs().slice(0, 3), ['211', '210', '209']);
+  assert.deepEqual(sortedHeads(h(), 'monthly-notshipped'), [['1', 'descending']]);
+  // The Monthly page (shown again): its role="table" Month by month heads with role="columnheader" sort buttons.
+  page.run("stgTogglePage('monthly');setTab('monthly')");
+  assert.deepEqual(sortCols(h(), 'mwm-months'), ['month', 'orders', 'value', 'lines', 'otd', 'fill', 'late']);
+  assert.match(h(), /<span role="columnheader"><button type="button" class="th-sort oh-th" data-focus-key="ohsort-mwm-months-month"/);
+  const mo = () => dzCells(h(), 'Month by month').map((r) => r[0]);
+  assert.match(mo()[0], /^Sep/);
+  sortClick(page, 'mwm-months', 'month');
+  assert.match(mo()[0], /^Oct/);
+  assert.match(h(), /<span role="columnheader" aria-sort="ascending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-mwm-months-month"/);
+  assert.deepEqual(page.errors, []);
 });
 
 run();

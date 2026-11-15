@@ -10,6 +10,9 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+// 2v9: Sales Order Health headings are sort buttons (ohSortTh, the tip on the button with " Click to sort."); unsort
+// reads them back as the plain <th data-tip>label</th> these heading checks were written for.
+const unsort = (h) => String(h).replace(/<th([^>]*?)(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]*?(?: data-tip="([^"]*?) ?Click to sort\.")?>([\s\S]*?)<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g, (m, a, tip, label) => `<th${a}${tip ? ` data-tip="${tip}"` : ''}>${label}</th>`);
 const { test, run } = createSuite();
 
 const IMPORT = { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) };
@@ -125,7 +128,7 @@ test('Leading: no quiet share / target line under At risk, no note in the ship t
 test('Supply source: no CM sheet; every at-risk line counted once under pull in, open PO, stock or none; the source totals are the All Customers row (no separate card, no pills)', async () => {
   const page = await loaded();
   const h = html(page);
-  const who = card(grid(page), 'ohl-who');
+  const who = unsort(card(grid(page), 'ohl-who'));
   assert.ok(who.length > 500, 'Customers at risk is drawn');
   assert.doesNotMatch(who, /CM sheet|Logican/);
   assert.deepEqual(page.run('OHL_SUPPLY_SOURCES.map(x=>x[0])'), ['pull', 'po', 'stock', 'none']);
@@ -351,7 +354,7 @@ test('Pull in: POs are handed to orders by date; a covering PO due after the ord
   let h = html(page);
   // The customer card: Pull in first; the Supply to pull in card: one row per PO line, its number a button.
   assert.match(h, /data-focus-key="ohl-sup-src-pull" aria-pressed="false"/);
-  assert.match(h, /<section[^>]*class="[^"]*ohl-pull[^"]*"[\s\S]*?Supply to pull in[\s\S]*?<th[^>]*>PO \/ WO<\/th><th>Vendor \/ CM<\/th><th>Item<\/th><th[^>]*>Supply due<\/th><th[^>]*>Needed by<\/th><th class="num"[^>]*>Gap<\/th><th>Customers<\/th><th class="num"[^>]*>At risk<\/th>/);
+  assert.match(unsort(h), /<section[^>]*class="[^"]*ohl-pull[^"]*"[\s\S]*?Supply to pull in[\s\S]*?<th[^>]*>PO \/ WO<\/th><th[^>]*>Vendor \/ CM<\/th><th[^>]*>Item<\/th><th[^>]*>Supply due<\/th><th[^>]*>Needed by<\/th><th[^>]*class="num"[^>]*>Gap<\/th><th[^>]*>Customers<\/th><th[^>]*class="num"[^>]*>At risk<\/th>/);
   assert.match(h, /<button type="button" class="ohl-pull-po" data-focus-key="ohl-pull-[^"]+" data-off="[^"]+" aria-pressed="false" onclick="ohlPullPick\(this\.dataset\.off\)"[^>]*>PO 600<\/button>/);
   // A PO: its lines in the Lines card, each with the action under its status; again: back to the at-risk lines.
   const key = page.run('ohlSupplyData(currentMetrics()).pulls[0].key');
@@ -368,7 +371,7 @@ test('Pull in: POs are handed to orders by date; a covering PO due after the ord
 
 test('Customers at risk is one ranked table against each customer\'s own open orders, 5 customers a page; Top reasons show which reasons come together', async () => {
   const page = await loaded();
-  const who = card(grid(page), 'ohl-who');
+  const who = unsort(card(grid(page), 'ohl-who'));
   // Customers at risk (owner, option F, then Version 1): one ranked table, the full width of the grid: past due, at
   // risk otherwise, open; a thin split under each name; then the supply sources; no money.
   // Firefly: SO 100 and 101, both open and past due.
@@ -379,7 +382,7 @@ test('Customers at risk is one ranked table against each customer\'s own open or
   assert.doesNotMatch(who, /dz-pagefoot/, 'two customers, one page');
   // Without purchase-order lines or a supply / demand snapshot: the first four columns only, and a note saying why.
   const bare = await loadRows(ROWS.slice(0, 3));
-  const plainWho = card(grid(bare), 'ohl-who');
+  const plainWho = unsort(card(grid(bare), 'ohl-who'));
   assert.match(plainWho, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th scope="col" data-tip="[^"]+">Customer<\/th><th scope="col" class="num" data-tip="[^"]+">Past due<\/th><th scope="col" class="num" data-tip="[^"]+">At risk<\/th><th scope="col" class="num" data-tip="[^"]+">Open<\/th><\/tr><\/thead>/);
   assert.deepEqual(whoRows(plainWho, 'tbody'), [['FIREFLY - Firefly RV', '2', '0', '2'], ['BARLETTA - Barletta Boats', '1', '0', '1']]);
   assert.deepEqual(whoRows(plainWho, 'tfoot'), [['All Customers', '3', '0', '3']]);
@@ -895,6 +898,100 @@ test('Pull in matches POs to orders in the same warehouse first; leftover supply
   const pulls = page.run(`ohlSupplyData(currentMetrics()).pulls.map(x=>[x.p.documentNumber,[...x.transferTo].join()])`);
   assert.deepEqual(pulls.find((x) => x[0] === '702'), ['702', 'Spyder - Lacombe']);
   assert.match(html(page), /<span class="dz-cell-sub ohl-pull-xfer"[^>]*>Transfer to Spyder · Lacombe<\/span>/);
+  assert.deepEqual(page.errors, []);
+});
+
+// --- 2v9 (owner): every column of every table sorts -------------------------------------------------------------------
+// A heading click (its button's own onclick, run as the page would), the sorted headings ([col, aria-sort], one only),
+// and the focus keys of a table's sort buttons.
+const sortClick = (page, key, col) => {
+  const m = new RegExp(`<button type="button" class="th-sort oh-th[^"]*" data-focus-key="ohsort-${key}-${col}" data-sort-label="([^"]*)"[^>]* onclick="([^"]+)"`).exec(html(page));
+  assert.ok(m, `${key} > ${col}: a sort button`);
+  page.run(m[2].replace('this.dataset.sortLabel', JSON.stringify(m[1])));
+};
+const sortedHeads = (h, key) => [...h.matchAll(new RegExp(`aria-sort="(ascending|descending)"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-${key}-([\\w-]+)"`, 'g'))].map((m) => [m[2], m[1]]);
+const sortKeys = (h, key) => [...h.matchAll(new RegExp(`data-focus-key="ohsort-${key}-([\\w-]+)"`, 'g'))].map((m) => m[1]);
+
+test('2v9 sort: Customers at risk: every heading is a sort button; text A to Z and numbers high to low first, again reverses; dashes last; All Customers stays put', async () => {
+  const page = await loadRows(MIX);
+  const who = () => card(grid(page), 'ohl-who');
+  const names = () => whoRows(who(), 'tbody').map((r) => r[0]);
+  assert.deepEqual(sortKeys(who(), 'ohl-customers'), ['name', 'pd', 'ar', 'open', 'src-pull', 'src-po', 'src-stock', 'src-none', 'split']);
+  assert.deepEqual(names(), ['FIREFLY - Firefly RV', 'BARLETTA - Barletta Boats']);
+  assert.deepEqual(sortedHeads(who(), 'ohl-customers'), [], 'no aria-sort while unsorted');
+  assert.match(who(), /<span class="dz-meta">Most at-risk orders first<\/span>/);
+  sortClick(page, 'ohl-customers', 'name');
+  assert.deepEqual(names(), ['BARLETTA - Barletta Boats', 'FIREFLY - Firefly RV']);
+  assert.deepEqual(sortedHeads(who(), 'ohl-customers'), [['name', 'ascending']]);
+  assert.match(who(), /data-focus-key="ohsort-ohl-customers-name"[^>]*>Customer<span class="sort-arrow" aria-hidden="true">↑<\/span>/);
+  assert.doesNotMatch(who(), /Most at-risk orders first/, 'the default order line goes while sorted');
+  sortClick(page, 'ohl-customers', 'name');
+  assert.deepEqual(names(), ['FIREFLY - Firefly RV', 'BARLETTA - Barletta Boats']);
+  assert.deepEqual(sortedHeads(who(), 'ohl-customers'), [['name', 'descending']]);
+  // Numbers high to low on the first click (the board's one rule).
+  sortClick(page, 'ohl-customers', 'open');
+  assert.deepEqual(names(), ['FIREFLY - Firefly RV', 'BARLETTA - Barletta Boats'], 'Open: 5 before 3');
+  assert.deepEqual(sortedHeads(who(), 'ohl-customers'), [['open', 'descending']], 'aria-sort moves to the sorted column only');
+  sortClick(page, 'ohl-customers', 'open');
+  assert.deepEqual(names(), ['BARLETTA - Barletta Boats', 'FIREFLY - Firefly RV'], 'again: 3 before 5');
+  // Late / no commit: Firefly 1, Barletta a dash; the dash is last both ways.
+  sortClick(page, 'ohl-customers', 'src-po');
+  assert.deepEqual(names(), ['FIREFLY - Firefly RV', 'BARLETTA - Barletta Boats']);
+  sortClick(page, 'ohl-customers', 'src-po');
+  assert.deepEqual(names(), ['FIREFLY - Firefly RV', 'BARLETTA - Barletta Boats']);
+  assert.deepEqual(whoRows(who(), 'tfoot'), [['All Customers', '3', '2', '8', '—', '1', '—', '4', '']], 'the totals row never moves');
+  assert.equal(page.run("tableMore['ohsort-ohl-customers']"), 'src-po:asc', 'kept with the page view state');
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 sort: Supply to pull in and Date changes: every column sorts before the pages (a new sort starts at page 1); ties keep their order', async () => {
+  const page = await loadRows(doRows(12));
+  const doCard = () => card(grid(page), 'ohl-do');
+  const pos = (c) => [...c.matchAll(/data-focus-key="ohl-pull-[^"]+"[^>]*>PO (\d+)<\/button>/g)].map((m) => +m[1]);
+  assert.deepEqual(sortKeys(doCard(), 'ohl-pull'), ['po', 'ven', 'item', 'due', 'need', 'gap', 'cust', 'val']);
+  page.run("dzGoPage('ohl-pull',3)");
+  assert.deepEqual(pos(doCard()), [611, 612]);
+  sortClick(page, 'ohl-pull', 'po');
+  assert.deepEqual(pos(doCard()), [601, 602, 603, 604, 605], 'page 1 again');
+  sortClick(page, 'ohl-pull', 'po');
+  assert.deepEqual(pos(doCard()), [612, 611, 610, 609, 608]);
+  assert.deepEqual(sortedHeads(doCard(), 'ohl-pull'), [['po', 'descending']]);
+  // Every gap is the same: the default order (earliest need first) stays, either way.
+  sortClick(page, 'ohl-pull', 'gap');
+  assert.deepEqual(pos(doCard()), [601, 602, 603, 604, 605]);
+  sortClick(page, 'ohl-pull', 'gap');
+  assert.deepEqual(pos(doCard()), [601, 602, 603, 604, 605]);
+  sortClick(page, 'ohl-pull', 'need');
+  sortClick(page, 'ohl-pull', 'need');
+  assert.deepEqual(pos(doCard()), [612, 611, 610, 609, 608], 'Needed by: latest first on the second click (by date)');
+  assert.deepEqual(sortedHeads(doCard(), 'ohl-pull'), [['need', 'descending']]);
+  // Date changes: a grid of buttons (role="group"), so the heading button's name says the sort.
+  page.run("ohlSetDoView('dates')");
+  const moved = (c) => [...c.matchAll(/data-focus-key="dc-(CUST\d+)"/g)].map((m) => m[1]);
+  assert.deepEqual(sortKeys(doCard(), 'ohl-datechange'), ['cust', 'lines', 'slip', 'worst', 'can']);
+  assert.deepEqual(moved(doCard()), ['CUST12', 'CUST11', 'CUST10', 'CUST09', 'CUST08']);
+  sortClick(page, 'ohl-datechange', 'cust');
+  assert.deepEqual(moved(doCard()), ['CUST01', 'CUST02', 'CUST03', 'CUST04', 'CUST05']);
+  assert.match(doCard(), /<button type="button" class="th-sort oh-th on" data-focus-key="ohsort-ohl-datechange-cust" data-sort-label="Customer" aria-label="Customer, sorted ascending"/);
+  sortClick(page, 'ohl-datechange', 'lines');
+  assert.equal(moved(doCard())[0], 'CUST01', 'Lines, most first on the first click: customer 1 has two');
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 sort: Lines: every column but the tick box sorts, Notes too (by the note, none last); number headings keep the arrow before the label', async () => {
+  const page = await loaded();
+  const h = html(page);
+  assert.deepEqual([...h.matchAll(/data-focus-key="linked-sort-(\w+)"/g)].map((m) => m[1]), ['doc', 'customer', 'warehouse', 'item', 'date', 'qty', 'value', 'status', 'reschedule', 'notes']);
+  assert.match(h, /<th class="print-hide"><button type="button" class="th-sort" data-focus-key="linked-sort-notes" data-col="notes"/);
+  assert.match(HTML, /\.ohl-card table\.ohl-lines th\.num \.th-sort\{flex-direction:row-reverse\}/);
+  assert.deepEqual(lineDocs(page), ['100', '101', '102']);
+  const key = page.run("rowKey(currentMetrics().allRows.find(r=>r.documentNumber==='102'))");
+  page.run(`updateRowOverride(${JSON.stringify(key)},'notes','Asked the CM')`);
+  page.run("sortLinkedColumn('notes')");
+  assert.deepEqual(lineDocs(page), ['102', '100', '101'], 'the one note first, then the rest in their order');
+  assert.match(html(page), /<th class="print-hide" aria-sort="ascending"><button type="button" class="th-sort" data-focus-key="linked-sort-notes"/);
+  page.run("sortLinkedColumn('notes')");
+  assert.deepEqual(lineDocs(page), ['102', '100', '101'], 'blanks stay last descending');
   assert.deepEqual(page.errors, []);
 });
 

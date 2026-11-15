@@ -210,9 +210,9 @@ test('hosted: reads /api/shipping on open, sends the list once, and AfterShip st
   assert.deepEqual(etaText(page, N.freight), ['Oct 9', 'Due']);
   assert.doesNotMatch(html(page), /romised/);
   assert.doesNotMatch(html(page), /class="shp-eta">[\s\S]{0,120}(Updated|No update yet)/);
-  // Under the progress bar, quietly: "Last:" and the carrier's last scan place (country code left off); nothing when
+  // Under the progress bar, quietly: "Last:" and the carrier's last scan place as "City, CC" (owner, 2v9); nothing when
   // unknown.
-  assert.deepEqual([lastLoc(page, N.parcel), lastLoc(page, N.ups), lastLoc(page, N.delivered), lastLoc(page, N.puro), lastLoc(page, N.freight)], ['Regina, SK', 'Blaine, WA', 'Columbus, OH', '', '']);
+  assert.deepEqual([lastLoc(page, N.parcel), lastLoc(page, N.ups), lastLoc(page, N.delivered), lastLoc(page, N.puro), lastLoc(page, N.freight)], ['Regina, CA', 'Blaine, US', 'Columbus, US', '', '']);
   // 2v6.9b: the carrier's logo before each number (no state icons): FedEx (FedEx Freight too) and UPS marks, a name
   // chip for Purolator; the carrier's name is the chip's label, and the old carrier line under the number is gone.
   assert.deepEqual([carrierChip(page, N.parcel), carrierChip(page, N.freight), carrierChip(page, N.ups), carrierChip(page, N.puro)], ['logo:fedex', 'logo:fedex', 'logo:ups', 'text:Purolator']);
@@ -566,7 +566,7 @@ test('SAP text, notes and AfterShip text cannot inject markup into the Shipping 
 test('Priority (2v6.9): a round tick per row, saved in this browser without a server; its card, Delivered / Undelivered and the column sort', async () => {
   const page = await shipPage();
   // The column and an unticked box on every row (outside the row's button), with a name and a tip.
-  assert.match(html(page), /<span role="columnheader" class="shp-th-pri" aria-sort="none"><button type="button" class="shp-sort" data-focus-key="ship-sort-priority" onclick="shpSort\('priority'\)"[^>]*>Priority</);
+  assert.match(html(page), /<span role="columnheader" class="shp-th-pri"><button type="button" class="shp-sort" data-focus-key="ship-sort-priority" onclick="shpSort\('priority'\)"[^>]*>Priority</);
   assert.match(rowOf(page, N.ups), new RegExp(`<\\/button>\\s*<span class="shp-pri-cell"><label class="kit-check shp-pri-check" data-tip="Tick to mark as priority \\(this browser only\\)\\."><input type="checkbox" class="kit-cb shp-pri-cb" data-n="${N.ups}" data-focus-key="ship-pri-${N.ups}" aria-label="Priority: ${N.ups}" onchange="shpPriToggle\\(this\\)">`));
   assert.match(html(page), /data-focus-key="ship-kpi-priority"[\s\S]*?<span class="shp-tile-s">Tick one in the table<\/span>/);
   setStatus(page, N.delivered, 'delivered', '2026-10-08');
@@ -1185,5 +1185,39 @@ async function hostedBrowser(site, name, today = TODAY, files = [exportFile()]) 
   await settle();
   return page;
 }
+
+test('2v9 (owner): the last scan place reads "City, CC": the city capitalised, the country as two capitals', async () => {
+  const page = loadPage();
+  const last = (c) => page.run(`shpLastLocation({as:{lastEvent:{city:${JSON.stringify(c)}}}})`);
+  const cases = [['BELDEN, MI, USA', 'Belden, US'], ['Belden, MI', 'Belden, US'], ['belden mi 48808 us', 'Belden, US'],
+    ['WINNIPEG, MB, CAN', 'Winnipeg, CA'], ['Toronto, ON', 'Toronto, CA'], ['Los Angeles, CA', 'Los Angeles, US'],
+    ['ST. LOUIS, MO 63101, US', 'St. Louis, US'], ['Mississauga ON L5T 2N7 CA', 'Mississauga, CA'], ['Paris, France', 'Paris, FR'],
+    ['FORT WAYNE', 'Fort Wayne'], ['', '']];
+  assert.deepEqual(cases.map(([c]) => last(c)), cases.map(([, w]) => w));
+});
+
+test('2v9 (owner): the open row\'s order lines sort by every heading (Value by amount, again to reverse); the Shipments headings carry aria-sort only when sorted', async () => {
+  const page = await shipPage();
+  const heads = html(page).match(/<div class="dz-th shp-th"[\s\S]*?<\/div>/)[0];
+  assert.equal((heads.match(/<button type="button" class="shp-sort/g) || []).length, 5);
+  assert.doesNotMatch(heads, /aria-sort/);
+  page.run("shpSort('eta')");
+  assert.equal((html(page).match(/<div class="dz-th shp-th"[\s\S]*?<\/div>/)[0].match(/aria-sort="ascending"/g) || []).length, 1);
+  page.run(`toggleShipment('${N.parcel}')`);
+  const lines = () => html(page).match(/aria-label="Order lines for [^"]*"[\s\S]*?<\/table>/)[0];
+  const items = () => [...lines().matchAll(/<span class="m">([^<]+)<\/span>/g)].map((m) => m[1]);
+  assert.equal((lines().match(/<th scope="col"[^>]*><button type="button" class="th-sort oh-th[^"]*" data-focus-key="ohsort-ship-lines-\d"/g) || []).length, 7);
+  assert.doesNotMatch(lines(), /aria-sort/);
+  // The board's one rule (2v9): money high to low on the first click, again to reverse.
+  page.run("ohSortBy('ship-lines','4','Value')");
+  assert.deepEqual(items(), ['SPY-100', 'SPY-101']);
+  assert.match(lines(), /<th scope="col" class="num" aria-sort="descending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-ship-lines-4"[^>]*>Value<span class="sort-arrow" aria-hidden="true">↓<\/span>/);
+  page.run("ohSortBy('ship-lines','4','Value')");
+  assert.deepEqual(items(), ['SPY-101', 'SPY-100']);
+  page.run("ohSortBy('ship-lines','2','Item / description')");
+  assert.deepEqual(items(), ['SPY-100', 'SPY-101']);
+  assert.equal((lines().match(/aria-sort=/g) || []).length, 1);
+  assert.deepEqual(page.errors, []);
+});
 
 run();

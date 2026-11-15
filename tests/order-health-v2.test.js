@@ -8,6 +8,9 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { loadPage, upload, sapRow, sapExport, utf16Tsv, createSuite } = require('./harness');
+// 2v9: Sales Order Health headings are sort buttons (ohSortTh, the tip on the button with " Click to sort."); unsort
+// reads them back as the plain <th data-tip>label</th> these heading checks were written for.
+const unsort = (h) => String(h).replace(/<th([^>]*?)(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]*?(?: data-tip="([^"]*?) ?Click to sort\.")?>([\s\S]*?)<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g, (m, a, tip, label) => `<th${a}${tip ? ` data-tip="${tip}"` : ''}>${label}</th>`);
 const { test, run } = createSuite();
 
 // Export date 09/03/2026 (a Thursday): this week is Sun Aug 30 - Sat Sep 5.
@@ -467,7 +470,7 @@ test('Customers at risk is one ranked table: each customer\'s open orders and th
   assert.doesNotMatch(m, /Customers at risk by supply source|class="(?:[^"]* )?(?:ohl-sup|ohl-sup-sum|ohl-sup-pill|ohl-sup-row|ohl-sup-name|ohl-sup-n)[ "]|ohlToggleSupplyAll|data-dzpager="ohl-supply"/);
   assert.equal(who().split('<table').length - 1, 1);
   const tbl = () => who().match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
-  const card = tbl();
+  const card = unsort(tbl());
   assert.doesNotMatch(card, /\$/);
   // Headings: a group row over the columns (this export has purchase-order lines), then the nine columns; every one
   // has a tip, the four sources a coloured dot.
@@ -538,7 +541,7 @@ test('Customers at risk is one ranked table: each customer\'s open orders and th
   assert.deepEqual(page.run('weeklyCustomerFilter'), ['ALL']);
   // Without purchase-order lines or a supply / demand snapshot: the first four columns only, and a note says what to load.
   const plain = await loaded(rows.slice(0, -1));
-  const bare = html(plain).match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  const bare = unsort(html(plain).match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0]);
   assert.match(bare, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th scope="col" data-tip="[^"]{20,}">Customer<\/th>/);
   assert.deepEqual([...bare.matchAll(/<th scope="col"[^>]*>([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
   assert.doesNotMatch(bare, /ohc3-grp|ohc3-n|ohc3-zero|ohc3-split|ohl-sup-bar/);
@@ -596,7 +599,7 @@ test('every new control and chart carries a plain-English tip with full numbers;
       // Nothing left of the controls this layout replaced.
       assert.doesNotMatch(m, /class="ohs2-row|class="ohl-sup-(pill|name|n)[ "]|class="(?:[^"]* )?ohl-notshipped[ "]/);
       // Every heading of the customer table explains itself too (no supply data here: four columns).
-      const who = m.match(/<table class="ohc2-tbl ohc3-tbl">[\s\S]*?<\/table>/)[0];
+      const who = unsort(m.match(/<table class="ohc2-tbl ohc3-tbl">[\s\S]*?<\/table>/)[0]);
       assert.deepEqual([...who.matchAll(/<th scope="col"(?: class="num")? data-tip="[^"]{20,}">([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);
       assert.equal((who.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 4);
     }
@@ -635,7 +638,7 @@ test('every new control and chart carries a plain-English tip with full numbers;
   assert.equal(srcButtons[0][2], 'Pull in: 1 order, 1 line\n• SO 106 SPY-100: PO 700 ACME - Acme Parts: due Sep 30, needed by Aug 10 (51d)\nClick to list them.');
   assert.equal(srcButtons[4][2], 'Pull in: 1 order\n• The PO that covers it is due after the order: ask for an earlier date.\n• Click to list the lines.');
   // The eleven headings of the table with its supply columns, each with a tip; a dash cell says which source has none.
-  const who = m.match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
+  const who = unsort(m.match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0]);
   assert.deepEqual([...who.match(/<thead>[\s\S]*?<\/thead>/)[0].matchAll(/<th scope="col(?:group)?"(?: colspan="\d")?(?: class="num")? data-tip="[^"]{20,}">(?:<i[^>]*><\/i>)?([^<]+)<\/th>/g)].map((x) => x[1]),
     ['Open orders', 'At-risk orders by supply source', 'Customer', 'Past due', 'At risk', 'Open', 'Pull in', 'Late / no commit', 'Stock short', 'Not supply', 'Split']);
   assert.equal((who.match(/<thead>[\s\S]*?<\/thead>/)[0].match(/<th\b/g) || []).length, 11);
@@ -724,6 +727,26 @@ test('the MCP server (index.html in a Node vm) returns the new fields', () => {
   assert.deepEqual(Object.keys(oh.lagging), ['otd_3mo', 'shipped_this_week', 'fill_rate', 'reschedule_hit_12mo', 'perfect_order_12mo', 'avg_days_late_3mo']);
   assert.equal(oh.at_risk.cause.not_set.lines, 2);
   assert.equal(oh.lagging.perfect_order_12mo.rate_pct, 25);
+});
+
+test('2v9 sort: Customers at risk keeps its sort across the views and a filter change, and print lists it in that order', async () => {
+  const page = await loaded();
+  const who = () => (html(page).match(/<table class="ohc2-tbl ohc3-tbl[^"]*">([\s\S]*?)<\/table>/) || [])[1] || '';
+  const names = () => [...((/<tbody>([\s\S]*?)<\/tbody>/.exec(who()) || ['', ''])[1]).matchAll(/<span class="ohc2-label">([^<]+)<\/span>/g)].map((m) => m[1]);
+  const before = names();
+  assert.ok(before.length >= 3, 'three customers or more');
+  const m = /data-focus-key="ohsort-ohl-customers-name" data-sort-label="([^"]*)"[^>]* onclick="([^"]+)"/.exec(who());
+  page.run(m[2].replace('this.dataset.sortLabel', JSON.stringify(m[1])));
+  const asc = [...before].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  assert.deepEqual(names(), asc);
+  assert.match(who(), /<th scope="col" aria-sort="ascending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-ohl-customers-name"/);
+  page.run("setWeeklyView('lagging');setWeeklyView('leading')");
+  assert.deepEqual(names(), asc, 'kept across Lagging and back');
+  page.run("printMode=true;renderResults()");
+  assert.deepEqual(names(), asc, 'print: the sorted order');
+  page.run("printMode=false;renderResults()");
+  assert.equal(page.run("tableMore['ohsort-ohl-customers']"), 'name:asc');
+  assert.deepEqual(page.errors, []);
 });
 
 run();

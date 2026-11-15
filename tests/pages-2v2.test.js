@@ -364,7 +364,7 @@ test('supply rows: Supply / Demand and Search give a row the same status (shorta
   assert.match(results(page), /<td class="sup-status" data-label="Supply"><span class="ohs-st red"><i aria-hidden="true"><\/i>Short<\/span><\/td>/, 'SPY-100 is short');
   page.run("searchQuery='SPY-200';applyGlobalSearch()");
   const search = results(page).match(/<h2>Supply \/ demand<\/h2>[\s\S]*?<\/table>/)[0];
-  assert.deepEqual([...search.matchAll(/<th\b[^>]*>([^<]+)<\/th>/g)].map((m) => m[1]), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
+  assert.deepEqual([...search.matchAll(/<th\b[^>]*>(?:<button[^>]*>)?([^<]+)<(?:\/th|span)/g)].map((m) => m[1]), ['Month', 'Warehouse', 'Item', 'Demand qty', 'Usable supply', 'Monthly net', 'Cumulative net', 'Risk']);
   // The Search table stacks as cards on a phone, so the cell also names its column and its card place.
   assert.match(search, /<td data-tip="SAP flag: PO Not Confirmed\." data-label="Risk" data-card="st"><span class="pill warn">Supply risk<\/span><span class="sub">Unconfirmed 5 · Late 2<\/span><\/td>/);
   const base = { isCumulativeShortage: false, isMonthlyShortage: false, hasSupplyRisk: false, hasDemandRisk: false, unconfirmedSupplyQty: 0, noCommitSupplyQty: 0, rescheduledSupplyQty: 0, lateSupplyQty: 0, demandNoCommitQty: 0, supplyRiskFlag: '' };

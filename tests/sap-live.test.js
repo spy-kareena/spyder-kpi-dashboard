@@ -454,11 +454,12 @@ test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (
   const page = await openLive(site, { importFiles: [{ name: 'export.xls', bytes: sapExport([sapRow()]) }] });
   page.run("setTab('settings')");
   let html = page.els['results-screen'].innerHTML;
-  const card = () => { const h = page.els['results-screen'].innerHTML; const at = h.indexOf('id="stg-card-source"'); return h.slice(at, h.indexOf('id="stg-card-', at + 1)); };
-  // 2v9: the first tile of the bento grid (no Data Check card here).
-  assert.match(html, /<div class="stg-bento"><section class="dz-card stg-card dz-fade" id="stg-card-source"/);
+  const card = () => { const h = page.els['results-screen'].innerHTML; const at = h.indexOf('id="stg-sec-data"'); return h.slice(at, h.indexOf('id="stg-sec-', at + 1)); };
+  // 2v9 (owner): the Data section, second after General.
+  assert.match(html, /<div class="stg-main"><section class="stg-sec" id="stg-sec-general"[\s\S]*?<\/section><section class="stg-sec" id="stg-sec-data"/);
   assert.match(card(), /aria-label="Data source"><button type="button" data-focus-key="stg-ds-live" class="on" aria-pressed="true"[^>]*>Live SAP<\/button><button type="button" data-focus-key="stg-ds-import" aria-pressed="false"[^>]*>Import files<\/button>/);
-  assert.match(card(), /<svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span>Connected · Updated [^<]+<\/span>/);
+  assert.match(card(), /<svg class="live-pulse ok"[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/svg><span>Live<\/span>/);
+  assert.match(card(), /<dt>Last pull<\/dt><dd>just now <span class="stg-when">[^<]+<\/span><\/dd>/);
   assert.match(card(), />Refresh now<\/button>/);
   page.ctx.loadFromSap();
   await until(() => site.bridgeCalls.some((c) => c.path === '/api/reports/kpi?refresh=1') && !page.run('liveState.busy'), 'refresh now');

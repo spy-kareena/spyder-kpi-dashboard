@@ -54,7 +54,7 @@ const summary = (page) => page.run('({rows:allLoadedRows.length,value:allLoadedR
 // The sidebar is gone: the report state shows on the Data card in Settings (2v9). That card has no where-it-is-kept
 // line any more (owner: "Saved for everyone who signs in" / "Saved in this browser only" were dropped); only a save
 // that failed still says so.
-const dataCard = (page) => page.run('stgDataCard(0,null)');
+const dataCard = (page) => page.run('stgDataBlock(null)'); // 2v9 (owner): the Data block of Settings > Data
 
 test('an upload is saved on the server and opens in another browser with the same numbers', async () => {
   const site = fakeSite();

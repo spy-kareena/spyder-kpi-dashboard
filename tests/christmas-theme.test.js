@@ -57,19 +57,19 @@ test('the setting: Off by default, only off / on are taken, saved like every set
   assert.deepEqual(page.errors, []);
 });
 
-test('Settings > Pages & Display: a Christmas Theme row (Off | On) after Background; the Changed mark and the tip', async () => {
+test('Settings > Display: a Christmas Theme row (Off | On) after Background; the Changed mark and the tip', async () => {
   const page = await loaded();
   page.run("setTab('settings')");
   let h = html(page);
-  const card = h.slice(h.indexOf('id="stg-card-pages"'), h.indexOf('id="stg-card-hiddenpages"'));
-  assert.match(card, /<span class="stg-label">Background<\/span>[\s\S]*?<\/div><\/div><div class="stg-row"><div class="stg-l"><span class="stg-label">Christmas Theme<\/span><\/div><div class="stg-ctl"><div class="dz-seg stg-seg" role="group" aria-label="Christmas Theme"><button type="button" data-focus-key="stg-christmas-off" class="on" aria-pressed="true" onclick="stgSet\(&#39;christmas&#39;,&#39;off&#39;\)">Off<\/button><button type="button" data-focus-key="stg-christmas-on" aria-pressed="false" onclick="stgSet\(&#39;christmas&#39;,&#39;on&#39;\)">On<\/button><\/div><\/div><\/div><div class="stg-row"><div class="stg-l"><span class="stg-label">Line lists start/);
-  assert.match(card, /data-tip="Pages &amp; Display\n• Match system follows this device\n• Christmas Theme: snowy hills under the header, Santa on the Live SAP mark\n• Each line list/);
+  const card = h.slice(h.indexOf('id="stg-sec-display"'), h.indexOf('id="stg-sec-pages"')); // 2v9 (owner): Display, beside Theme and Background
+  assert.match(card, /<span class="stg-label">Background<\/span>[\s\S]*?<\/div><\/div><div class="stg-row"><div class="stg-l"><span class="stg-label">Christmas Theme<\/span><span class="stg-help">Snowy hills under the header\.<\/span><\/div><div class="stg-ctl"><div class="dz-seg stg-seg" role="group" aria-label="Christmas Theme"><button type="button" data-focus-key="stg-christmas-off" class="on" aria-pressed="true" onclick="stgSet\(&#39;christmas&#39;,&#39;off&#39;\)">Off<\/button><button type="button" data-focus-key="stg-christmas-on" aria-pressed="false" onclick="stgSet\(&#39;christmas&#39;,&#39;on&#39;\)">On<\/button><\/div><\/div><\/div><div class="stg-row"><div class="stg-l"><span class="stg-label">Line lists start/);
+  assert.match(card, /data-tip="Display\n• Match system follows this device\n• Christmas Theme: snowy hills under the header, Santa on the Live SAP mark\n• Each line list/);
   assert.doesNotMatch(card, />Changed</);
   // Choosing On saves it, sets data-xmas at once and marks the card changed.
   page.run("stgSet('christmas','on')");
   assert.equal(page.ctx.document.documentElement.dataset.xmas, 'on');
   h = html(page);
-  const card2 = h.slice(h.indexOf('id="stg-card-pages"'), h.indexOf('id="stg-card-hiddenpages"'));
+  const card2 = h.slice(h.indexOf('id="stg-sec-display"'), h.indexOf('id="stg-sec-pages"'));
   assert.match(card2, /data-focus-key="stg-christmas-on" class="on" aria-pressed="true"/);
   assert.match(card2, />Changed</);
   assert.deepEqual(page.errors, []);

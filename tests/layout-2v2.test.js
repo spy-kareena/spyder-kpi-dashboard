@@ -5,6 +5,9 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { HTML, loadPage, upload, sapRow, sapExport, utf16Tsv, SAP_HEADERS, createSuite } = require('./harness');
+// 2v9: Sales Order Health headings are sort buttons (ohSortTh, the tip on the button with " Click to sort."); unsort
+// reads them back as the plain <th data-tip>label</th> these heading checks were written for.
+const unsort = (h) => String(h).replace(/<th([^>]*?)(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]*?(?: data-tip="([^"]*?) ?Click to sort\.")?>([\s\S]*?)<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g, (m, a, tip, label) => `<th${a}${tip ? ` data-tip="${tip}"` : ''}>${label}</th>`);
 const { test, run } = createSuite();
 
 // Export date 09/03/2026 (a Thursday).
@@ -496,7 +499,7 @@ test('Sales Order Health reads as cards in a set order: Leading is four question
   assert.doesNotMatch(lead, /aria-label="Status and top reasons"|Customers at risk by supply source|class="(?:[^"]* )?(?:ohl-sup|ohl-sup-sum|ohl-sup-pill|ohl-sup-row|ohl-sup-name|ohl-sup-n|ohl-notshipped|mom-pair|pair-chart)[ "]|ohlToggleSupplyAll/);
   // 3 Who: one table. This export has no purchase-order lines and no supply / demand snapshot, so it has its first four
   // columns only and a note says what to load. Firefly has all 8 open orders: 5 past due, 2 at risk otherwise.
-  const who = lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0];
+  const who = unsort(lead.match(/<section class="dz-card dz-span-6 ohl-card ohl-who[^"]*"[^>]*>[\s\S]*?<\/section>/)[0]);
   assert.match(who, /<h2 class="dz-title"[^>]*>Customers at risk<\/h2><span class="dz-meta">Most at-risk orders first<\/span>/);
   assert.match(who, /<table class="ohc2-tbl ohc3-tbl"><thead><tr><th/, 'no src class, no group row');
   assert.deepEqual([...who.matchAll(/<th scope="col"[^>]*>(?:<i[^>]*><\/i>)?([^<]+)<\/th>/g)].map((x) => x[1]), ['Customer', 'Past due', 'At risk', 'Open']);

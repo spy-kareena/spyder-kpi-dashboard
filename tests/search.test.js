@@ -298,4 +298,26 @@ test('Clear To Build matches come from one report week: the newest, or the one p
   assert.deepEqual(page.errors, []);
 });
 
+test('2v9 (owner): every Order lines heading sorts the matches before the pages (again to reverse); aria-sort on the sorted one only', async () => {
+  const page = await loaded();
+  search(page, 'spy');
+  const docs = () => [...html(page).match(/aria-label="Order lines found"[\s\S]*?<\/table>/)[0].matchAll(/<td class="c-doc">([^<]+)/g)].map((m) => m[1].replace(/<[^>]*>/g, ''));
+  const heads = html(page).match(/aria-label="Order lines found"[\s\S]*?<\/thead>/)[0];
+  assert.equal((heads.match(/<button type="button" class="th-sort oh-th[^"]*" data-focus-key="ohsort-search-lines-\d+"/g) || []).length, 10);
+  assert.doesNotMatch(heads, /aria-sort/);
+  const before = docs();
+  page.run("ohSortBy('search-lines','1','Doc #')");
+  assert.deepEqual(docs(), [...before].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
+  assert.match(html(page), /<th scope="col" aria-sort="ascending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-search-lines-1"[^>]*>Doc #<span class="sort-arrow" aria-hidden="true">↑<\/span>/);
+  page.run("ohSortBy('search-lines','1','Doc #')");
+  assert.deepEqual(docs(), [...before].sort((a, b) => b.localeCompare(a, undefined, { numeric: true })));
+  assert.equal((html(page).match(/aria-sort="descending"/g) || []).length, 1);
+  // Value: by amount, not by text; the default order comes back on a new list only through the page sig (page 1).
+  page.run("ohSortBy('search-lines','7','Value')");
+  const vals = [...html(page).matchAll(/<td class="num c-val">\$([\d,]+)/g)].map((m) => +m[1].replace(/,/g, ''));
+  assert.deepEqual(vals, [...vals].sort((a, b) => a - b));
+  assert.equal(page.run("dzPg['search-lines'].page"), 1);
+  assert.deepEqual(page.errors, []);
+});
+
 run();

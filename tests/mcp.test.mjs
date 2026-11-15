@@ -209,10 +209,10 @@ test('Connect an AI opens in Settings before any export is loaded: a short card 
   assert.equal(page.run('activeTab'), 'settings');
   assert.equal(page.run('stgConnectOpen'), true, 'asked for, its setup steps are open');
   const html = page.els['results-screen'].innerHTML;
-  const at = html.indexOf('id="stg-card-ai"');
+  const at = html.indexOf('id="stg-sec-ai"'); // 2v9 (owner): the AI section of Settings
   assert.ok(at > 0, 'the AI card is drawn');
   const whole = html.slice(at, html.indexOf('</section>', at));
-  assert.match(whole, /<h2 class="dz-title sm stg-title" id="stg-h-ai" tabindex="-1"[^>]*>[\s\S]*AI<\/h2>/);
+  assert.match(whole, /<h2 class="stg-sec-h" id="stg-h-ai" tabindex="-1"[^>]*>AI<\/h2>/);
   const card = whole.slice(whole.indexOf('<h3 class="stg-subt">Connect an AI app</h3>'));
   assert.ok(card.length > 100, 'the Connect an AI app part is in the AI card');
   assert.match(card, /<details class="stg-setup" open/);
@@ -247,7 +247,7 @@ test('Connect an AI with an export loaded opens the Settings card; no Data check
   page.run("setTab('connect')");
   assert.equal(page.run('activeTab'), 'settings');
   const html = page.els['results-screen'].innerHTML;
-  assert.match(html, /id="stg-card-ai"[\s\S]*?<h3 class="stg-subt">Connect an AI app<\/h3>/);
+  assert.match(html, /id="stg-sec-ai"[\s\S]*?<h3 class="stg-subt">Connect an AI app<\/h3>/);
   assert.match(html, /<pre id="connect-desktop" tabindex="0"/);
   // Share snapshot stays in the export-date popover; the Export PDF icon is gone (2v6.8: print from the browser); the
   // Data check is a Settings card.
@@ -257,7 +257,7 @@ test('Connect an AI with an export loaded opens the Settings card; no Data check
   assert.doesNotMatch(page.els['results-screen'].innerHTML, /class="data-check/);
   assert.match(page.els['app-header'].innerHTML, /<span class="hdr-dot red"/);
   page.run("setTab('connect')");
-  assert.match(page.els['results-screen'].innerHTML, /id="stg-card-dc"[\s\S]*?<li>test<\/li>/);
+  assert.match(page.els['results-screen'].innerHTML, /id="stg-dc"[\s\S]*?<li>test<\/li>/);
   page.run("dataQualityIssues=[];setTab('connect')");
 
   let copied = '';

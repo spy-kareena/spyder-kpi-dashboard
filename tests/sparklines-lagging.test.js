@@ -137,7 +137,8 @@ test('One month of figures draws no line; a tile with a dash draws none either',
 test('By warehouse: a Last 6 months column (with a tip) after On time; each warehouse\'s on-time rate by month, this month\'s point the chip; the dashed 90% target; one month draws nothing', async () => {
   const page = await loaded(ROWS);
   const card = whCard(html(page));
-  assert.match(card, /<th scope="col" class="num" data-tip="Deliveries early or on time\.">On time<\/th><th scope="col" class="ohgt-spk" data-tip="On time each month, Apr 2026 to Sep 2026, by delivery date\. Dashed line: the 90% target\.">Last 6 months<\/th><\/tr>/);
+  // 2v9: the headings are sort buttons (ohSortTh) carrying the tips; the sparkline column sorts by its latest month.
+  assert.match(card, /<th scope="col" class="num"><button type="button" class="th-sort oh-th"[^>]* data-tip="Deliveries early or on time\. Click to sort\.">On time<span class="sort-arrow" aria-hidden="true">↕<\/span><\/button><\/th><th scope="col" class="ohgt-spk"><button type="button" class="th-sort oh-th"[^>]* data-tip="On time each month, Apr 2026 to Sep 2026, by delivery date\. Dashed line: the 90% target\. Sorts by the latest month\. Click to sort\.">Last 6 months<span class="sort-arrow" aria-hidden="true">↕<\/span><\/button><\/th><\/tr>/);
   const rows = whRows(card);
   // September: one order each (same value), so by name.
   assert.deepEqual(rows.map((r) => [r[0], r[1]]), [['CM · Alta', '0%'], ['CM · DSM', '100%'], ['Spyder · Lacombe', '100%']]);

@@ -183,9 +183,9 @@ test('tooltips say what a card counts with the numbers written in full ($1,721,8
   for (const [, t] of results(page).matchAll(/data-tip="([^"]+)"/g)) assert.doesNotMatch(t, /\$\d+(\.\d+)?[KM]\b/, `short money in a tip: ${t}`);
   // Column headings of data tables come from one list (COLUMN_TIPS); headings with no entry stay plain.
   assert.equal(page.run("columnTip('sd','Monthly net')"), 'Usable supply minus demand for that month; below zero is short.');
-  assert.match(page.run("renderRowsTable(parsedRows.slice(0,1),{key:'t',title:'T'})"), /<th class="num" data-tip="Quantity still to ship\.">Qty open<\/th>/);
+  assert.match(page.run("renderRowsTable(parsedRows.slice(0,1),{key:'t',title:'T'})"), /<th scope="col" class="num"><button type="button" class="th-sort oh-th"[^>]* data-tip="Quantity still to ship\. Click to sort\.">Qty open</);
   page.run("setTab('buildrisk')");
-  assert.match(results(page), /<th class="num">Sep 24<\/th>/);
+  assert.match(results(page), /<th class="num" scope="col"><button type="button" class="th-sort srt-th"[^>]*>Sep 24<span class="sort-arrow"/);
 });
 
 test('tooltips stay short on every page: about 20 words, never a paragraph', async () => {
@@ -626,7 +626,8 @@ test('Leading\'s new controls each carry a tip: the Status cells, the customer t
   // Customers at risk, with supply data loaded: every heading cell has a tip (the group row, the nine columns, the All
   // Customers row) or holds the customer's tipped button.
   const who = m.match(/<table class="ohc2-tbl ohc3-tbl src">[\s\S]*?<\/table>/)[0];
-  const ths = [...who.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)].map((x) => [x[2].replace(/<[^>]*>/g, '').trim(), hasTip(x[1]) || /^<button [^>]*\sdata-tip="[^"]{20,}"/.test(x[2])]);
+  // (2v9: a sort button's arrow glyph is not part of the heading's name.)
+  const ths = [...who.matchAll(/(<th\b[^>]*>)([\s\S]*?)<\/th>/g)].map((x) => [x[2].replace(/<[^>]*>/g, '').replace(/[↕↑↓]/g, '').trim(), hasTip(x[1]) || /^<button [^>]*\sdata-tip="[^"]{20,}"/.test(x[2])]);
   assert.deepEqual(ths.map((x) => x[0]), ['Open orders', 'At-risk orders by supply source', 'Customer', 'Past due', 'At risk', 'Open', 'Pull in', 'Late / no commit', 'Stock short', 'Not supply', 'Split', 'FIREFLY - Firefly RV', 'All Customers']);
   assert.deepEqual(ths.filter((x) => !x[1]), []);
   assert.match(who, /<th scope="row" data-tip="Every customer together\. An order counts once, so these can be less than the rows added up\.">All Customers<\/th>/);

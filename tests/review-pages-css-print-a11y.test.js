@@ -80,7 +80,7 @@ test('heat map is an ARIA table; cells are focusable with their breakdown as tex
   page.run('setTab("warehouses")');
   const m = html(page);
   assert.match(m, /class="heat-scroll" role="table" aria-label="Open value by warehouse and due month"/);
-  assert.match(m, /class="heat-grid head" role="row"[^>]*><div role="columnheader">Warehouse<\/div><div role="columnheader">/);
+  assert.match(m, /class="heat-grid head" role="row"[^>]*><div role="columnheader"><button type="button" class="th-sort oh-th"[^>]*>Warehouse<[\s\S]*?<\/div><div role="columnheader">/);
   assert.match(m, /class="heat-grid row" role="row"[^>]*><div class="heat-name" role="rowheader"/);
   const cells = m.match(/<div class="heat-slot"[^>]*>/g);
   for (const c of cells) assert.match(c, /role="cell"( tabindex="0")? data-tip="[^"]+">/);
@@ -160,7 +160,7 @@ test('Data check lives in Settings: no pill in any page head; the gear dot and i
   assert.match(gear, /onclick="dzMenuClose\(\);setTab\('settings'\)"/);
   assert.match(gear, /<span class="hdr-dot red" aria-hidden="true"><\/span>/);
   page.run('setTab("settings")');
-  assert.match(html(page), /<h2 class="dz-title sm stg-title" id="stg-h-dc" tabindex="-1"><span class="dz-ico stg-ico-dot"[^>]*>[\s\S]*?<span class="hdr-dot red"><\/span><\/span>Data Check<\/h2>/);
+  assert.match(html(page), /<h3 class="stg-subt stg-dc-h" id="stg-h-dc" tabindex="-1"><span class="stg-dc-dot red" aria-hidden="true"><\/span>Data Check<\/h3>/);
   assert.match(page.els['app-header'].innerHTML, /id="hdr-gear"[^>]*aria-current="page"/);
 });
 
@@ -368,6 +368,68 @@ test('Export PDF prints every linked line, not just the page on screen (Order He
   assert.equal(poLines(), 105);
   page.run('endPrintMode()');
   assert.equal(poLines(), 10);
+});
+
+// 2v9 (owner): every column of every table sorts. Warehouse Timeline: the heat map, Warehouses to watch, and its Show
+// more grids (Which warehouse is defaulting, the due-month heat map); Forecast by item.
+test('2v9 (owner): Warehouse Timeline and Forecast tables sort by any heading (again to reverse), aria-sort or the button name on the sorted one only', async () => {
+  const due = (d) => ({ DueDate: d, HeaderDueDate: d, LineDueDate: d });
+  const shipped = (o) => sapRow({ OrderType: 'Sales Delivery', Status: 'Closed', KPIStatus: 'Closed', CloseDateSource: 'Delivery', OpenQuantity: '0', FillStatus: 'Complete', ...o });
+  const page = await loaded([
+    sapRow({ DocumentNumber: '501', Warehouse: 'Spyder - Lacombe', AmountLocal: '3,000.00', ...due('08/10/2026') }),
+    sapRow({ DocumentNumber: '502', Warehouse: 'CM - Alta', AmountLocal: '500.00', ...due('10/15/2026') }),
+    sapRow({ DocumentNumber: '503', Warehouse: 'CM - Delta', AmountLocal: '9,000.00', ...due('09/15/2026') }),
+    shipped({ DocumentNumber: '510', Warehouse: 'CM - Alta', ClosedDate: '08/26/2026', ...due('08/10/2026') }),
+    shipped({ DocumentNumber: '511', Warehouse: 'CM - Alta', ClosedDate: '08/27/2026', ...due('08/10/2026') }),
+    shipped({ DocumentNumber: '512', Warehouse: 'CM - Delta', ClosedDate: '08/26/2026', ...due('08/10/2026') }),
+    shipped({ DocumentNumber: '513', Warehouse: 'Spyder - Lacombe', ClosedDate: '08/26/2026', ...due('08/30/2026') }),
+  ]);
+  page.run("stgSet('hiddenPages',[]);setTab('warehouses')");
+  const names = (re) => [...html(page).matchAll(re)].map((m) => m[1]);
+  const heat = () => names(/class="mwm-heat-name[^"]*"[^>]*data-wh="([^"]+)"/g);
+  const watch = () => names(/class="dz-tr mwm-wrow[^"]*"[^>]*data-wh="([^"]+)"/g);
+  const late = () => names(/data-focus-key="wh-late-([^"]+)" data-wh/g);
+  const dueHeat = () => names(/class="heat-name" role="rowheader" title="([^"]+)"/g);
+  assert.doesNotMatch(html(page), /aria-sort/);
+  // The heat map: Warehouse (now a visible title) and every week are column headers with a sort button.
+  assert.match(html(page), /<span role="columnheader" class="mwm-heat-wh"><button type="button" class="th-sort oh-th" data-focus-key="ohsort-mwm-heat-0"/);
+  assert.deepEqual(heat(), ['CM - Alta', 'CM - Delta']);
+  page.run("ohSortBy('mwm-heat','0','Warehouse')");
+  page.run("ohSortBy('mwm-heat','0','Warehouse')");
+  assert.deepEqual(heat(), ['CM - Delta', 'CM - Alta']);
+  assert.match(html(page), /<span role="columnheader" class="mwm-heat-wh" aria-sort="descending">/);
+  // Warehouses to watch: by Open value inside the group; the button names the sort (its rows are buttons, not a table).
+  assert.deepEqual(watch(), ['Spyder - Lacombe', 'CM - Delta', 'CM - Alta']);
+  // The board's one rule (2v9): money high to low on the first click, again to reverse.
+  page.run("ohSortBy('mwm-watch','1','Open')");
+  assert.deepEqual(watch(), ['CM - Delta', 'Spyder - Lacombe', 'CM - Alta']);
+  assert.match(html(page), /data-focus-key="ohsort-mwm-watch-1"[^>]*aria-label="Open, sorted descending"/);
+  assert.doesNotMatch(html(page), /Warehouses to watch[^<]*<\/h2>\s*<span[^>]*>sorted by at-risk value/);
+  page.run("ohSortBy('mwm-watch','1','Open')");
+  assert.deepEqual(watch(), ['CM - Alta', 'Spyder - Lacombe', 'CM - Delta']);
+  // Which warehouse is defaulting: the All warehouses row stays last.
+  page.run("ohSortBy('wh-late','0','Warehouse');ohSortBy('wh-late','0','Warehouse')");
+  assert.deepEqual(late(), ['CM - Delta', 'CM - Alta']);
+  assert.match(html(page), /data-focus-key="wh-late-CM - Alta"[\s\S]*?<\/button>\s*<div class="trow wl-cols sc-subtotal"/);
+  // The due-month heat map.
+  assert.deepEqual(dueHeat(), ['CM - Delta', 'Spyder - Lacombe', 'CM - Alta']);
+  page.run("ohSortBy('wh-heat','0','Warehouse')");
+  assert.deepEqual(dueHeat(), ['CM - Alta', 'CM - Delta', 'Spyder - Lacombe']);
+  // Forecast by item (a made-up forecast): Gap by value, then reversed; Months by the peak month the chart shows.
+  const months = Array.from({ length: 12 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}`);
+  const item = (code, peak, gap) => ({ code, desc: code, labels: [], fc: months.map((_, i) => (i === peak ? 9 : 1)), so: months.map(() => 0), po: months.map(() => 0), fcTotal: 20, soTotal: 5, poTotal: 0, gap, over: 0 });
+  const zeros = months.map(() => 0);
+  page.run(`forecastData=()=>(${JSON.stringify({ months, items: [item('F-1', 5, 3), item('F-2', 1, -4), item('F-3', 9, 10)], unmatched: [], totals: { fc: zeros, so: zeros, po: zeros } })});setTab('forecast')`);
+  const codes = () => names(/<span class="misc-fc-item"><strong>([^<]+)/g);
+  assert.deepEqual(codes(), ['F-1', 'F-2', 'F-3']);
+  page.run("ohSortBy('fc-items','5','Gap')");
+  assert.deepEqual(codes(), ['F-3', 'F-1', 'F-2'], 'Gap: highest first (the one rule)');
+  page.run("ohSortBy('fc-items','5','Gap')");
+  assert.deepEqual(codes(), ['F-2', 'F-1', 'F-3']);
+  page.run("ohSortBy('fc-items','1','Months')");
+  assert.deepEqual(codes(), ['F-2', 'F-1', 'F-3']);
+  assert.match(html(page), /data-focus-key="ohsort-fc-items-1"[^>]*aria-label="Months, sorted ascending"/);
+  assert.deepEqual(page.errors, []);
 });
 
 run();

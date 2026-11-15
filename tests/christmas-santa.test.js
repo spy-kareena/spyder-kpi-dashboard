@@ -145,7 +145,7 @@ test('the date button and the live popover line hold both marks: the standard on
   assert.match(HTML, /<div class="live-pop-line"\$\{[^}]+\}>\$\{liveMark\(st\.tone\)\}\$\{santaMark\(st\.tone,fileOpen\)\}<span>/, 'the popover line lands only while open');
   page.run("setTab('settings')");
   const res = page.els['results-screen'].innerHTML;
-  assert.match(res, /id="stg-card-source"[\s\S]*<svg class="live-pulse ok"/);
+  assert.match(res, /id="stg-sec-data"[\s\S]*<svg class="live-pulse ok"/);
   assert.ok(!res.includes('santa-mark'), 'no Santa in Settings');
   // Down: the standard red mark first, Santa (landing) and the crossed circle; the button's label says so in words.
   site.down = true;

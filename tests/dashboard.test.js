@@ -93,7 +93,7 @@ test('implausible dates are listed in the data check instead of producing huge l
   assert.equal(page.run('stgDataCheckLevel()'), 'red');
   assert.match(page.els['app-header'].innerHTML, /id="hdr-gear"[^>]*aria-label="Settings, data check: 1 row or file needs attention"[\s\S]*?<span class="hdr-dot red"/);
   page.run('setTab("settings")');
-  assert.match(page.els['results-screen'].innerHTML, /id="stg-card-dc"[\s\S]*?1 row or file needs attention in SAP/);
+  assert.match(page.els['results-screen'].innerHTML, /id="stg-dc"[\s\S]*?1 row or file needs attention in SAP/);
 });
 
 // --- Notes / overrides -------------------------------------------------------------------------------

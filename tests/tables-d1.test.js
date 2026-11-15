@@ -148,4 +148,109 @@ test('print: the override sits in the Status cell (no extra row per line); the W
   assert.deepEqual(page.errors, []);
 });
 
+// 2v9 (owner): every column of every table sorts. Supply Mix's Item groups: a title click sorts the column (text A to Z,
+// numbers high to low first), again reverses it; aria-sort on that column only; blanks ("—") last either way; ties keep
+// the table's own order (most demand first).
+const SD_HEAD = ['ExportDate', 'ItemCode', 'ItemGroupName', 'WarehouseCode', 'WarehouseName', 'YearMonth', 'DemandOpenQty', 'DemandOpenValue', 'UsableSupplyQty', 'MonthlyNetQty', 'CumulativeNetQty', 'UnconfirmedSupplyQty', 'RiskSupplyQty'];
+const sd = (item, group, ym, dem, val, sup) => ({ ExportDate: '09/03/2026', ItemCode: item, ItemGroupName: group, WarehouseCode: '01', WarehouseName: 'Spyder - Lacombe', YearMonth: ym, DemandOpenQty: String(dem), DemandOpenValue: String(val),
+  UsableSupplyQty: String(sup), MonthlyNetQty: String(sup - dem), CumulativeNetQty: String(sup - dem), UnconfirmedSupplyQty: '0', RiskSupplyQty: '0' });
+const SD_ROWS = [sd('B', 'Cables', '2026-09', 10, 1000, 4), sd('D', 'Electronics', '2026-09', 2, 250, 9), sd('M', 'Motors', '2026-10', 30, 5000, 30), sd('A10', 'Adapters', '2026-09', 5, 100, 0)];
+async function withSupply() {
+  const { utf16Tsv } = require('./harness');
+  const page = loadPage();
+  await new Promise((r) => setTimeout(r, 0));
+  page.run('isSnapshotView=false');
+  await upload(page, [{ name: 'kpi.xls', bytes: sapExport(ROWS) }, { name: 'sd.xls', bytes: utf16Tsv(SD_HEAD, SD_ROWS) }]);
+  return page;
+}
+const groupsTable = (h) => (h.match(/<table class="sup-tbl sup-groups">[\s\S]*?<\/table>/) || [''])[0];
+const groupNames = (h) => [...groupsTable(h).matchAll(/<td class="sup-strong" data-label="Item group">([^<]+)<\/td>/g)].map((m) => m[1]);
+test('Supply Mix: every Item groups column sorts (again reverses), aria-sort on that column only, blanks last', async () => {
+  const page = await withSupply();
+  page.run("stgSet('hiddenPages',[]);setTab('supplydemand')");
+  let t = groupsTable(html(page));
+  assert.deepEqual(groupNames(html(page)), ['Motors', 'Cables', 'Adapters', 'Electronics'], 'most demand first by default');
+  const ids = [...t.matchAll(/onclick="srtSort\('mix-groups','(\w+)','(asc|desc)',this\)"/g)].map((m) => `${m[1]}:${m[2]}`);
+  assert.deepEqual(ids, ['k:asc', 'orders:desc', 'value:desc', 'pct:desc', 'short:desc', 'big:desc'], 'the board\'s one rule: text A to Z, numbers and rates high to low');
+  assert.equal((t.match(/aria-sort=/g) || []).length, 0);
+  assert.equal((t.match(/<span class="sort-arrow" aria-hidden="true">↕<\/span>/g) || []).length, 6);
+  page.run("srtSort('mix-groups','k','asc')");
+  t = groupsTable(html(page));
+  assert.deepEqual(groupNames(html(page)), ['Adapters', 'Cables', 'Electronics', 'Motors']);
+  assert.match(t, /<th scope="col" aria-sort="ascending"><button type="button" class="th-sort srt-th" data-focus-key="srt-mix-groups-k"[^>]*>Item group<span class="sort-arrow" aria-hidden="true">↑<\/span>/);
+  assert.equal((t.match(/aria-sort=/g) || []).length, 1);
+  page.run("srtSort('mix-groups','k','asc')");
+  assert.deepEqual(groupNames(html(page)), ['Motors', 'Electronics', 'Cables', 'Adapters']);
+  assert.match(groupsTable(html(page)), /aria-sort="descending"><button[^>]*srt-mix-groups-k/);
+  page.run("srtSort('mix-groups','value','desc')");
+  assert.deepEqual(groupNames(html(page)), ['Motors', 'Cables', 'Electronics', 'Adapters']);
+  assert.match(groupsTable(html(page)), /<th class="num" scope="col" aria-sort="descending"><button[^>]*srt-mix-groups-value/);
+  // Biggest shortage: Cables 6 short, Adapters 5; Motors and Electronics show "—" and stay last, in the table's order.
+  page.run("srtSort('mix-groups','big','desc')");
+  assert.deepEqual(groupNames(html(page)), ['Cables', 'Adapters', 'Motors', 'Electronics']);
+  page.run("srtSort('mix-groups','big','desc')");
+  assert.deepEqual(groupNames(html(page)), ['Adapters', 'Cables', 'Motors', 'Electronics']);
+  // Coverage: highest first on the first click (2v9 one rule), lowest first on the next.
+  page.run("srtSort('mix-groups','pct','desc')");
+  page.run("srtSort('mix-groups','pct','desc')");
+  assert.deepEqual(groupNames(html(page)).slice(0, 2), ['Adapters', 'Cables']);
+  // A new report clears the sort.
+  page.run('resetViewState()');
+  assert.equal(page.run("srtState('mix-groups')"), null);
+  assert.deepEqual(page.errors, []);
+});
+
+test('Short or at-risk items: unsorted titles show ↕ like the other tables; a sorted one ↑ / ↓; empty text sorts last', async () => {
+  const page = await withSupply();
+  page.run("setTab('weekly');setWeeklyView('supply')");
+  let h = html(page);
+  const sdHead = (x) => (x.match(/<table class="sup-tbl sup-sd">[\s\S]*?<\/thead>/) || [''])[0];
+  assert.equal((sdHead(h).match(/<span class="sort-arrow" aria-hidden="true">↕<\/span>/g) || []).length, 8);
+  page.run("supSdSort('item')");
+  h = html(page);
+  assert.match(sdHead(h), /aria-sort="ascending"><button[^>]*sd-sort-item[^>]*>Item<span class="sort-arrow" aria-hidden="true">↑<\/span>/);
+  assert.equal((sdHead(h).match(/↕/g) || []).length, 7);
+  // Natural number order and blanks last, either way.
+  const sorted = (dir) => page.run(`supSdSortRows([{itemCode:'A10'},{itemCode:''},{itemCode:'A9'},{itemCode:'—'}],'item',${dir},()=>0).map(r=>r.itemCode)`);
+  assert.deepEqual(sorted(1), ['A9', 'A10', '', '—']);
+  assert.deepEqual(sorted(-1), ['A10', 'A9', '', '—']);
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): renderTableCard sorts every titled column by what its cells show: money and dates by value, text naturally, dashes and words in a number column last; ties keep the order', async () => {
+  const page = await loaded();
+  const rows = [['B9', '$1,200', '2026-03-01', '12%'], ['b10', '$95', '—', '7%'], ['A2', '$1.2M', '2026-01-15', 'not in export'], ['a2', '$45K', '2025-12-31', '40%']]
+    .map((c) => `<tr><td class="m">${c[0]}</td><td class="num">${c[1]}</td><td class="date">${c[2]}</td><td class="num">${c[3]}</td></tr>`);
+  const spec = `{key:'t-sort',title:'T',head:[['Name'],['Value','num'],['Date'],['Rate','num'],['','print-hide']],rows:${JSON.stringify(rows)},minWidth:600}`;
+  const draw = () => page.run(`renderTableCard(${spec})`);
+  const names = () => [...draw().matchAll(/<td class="m">([^<]+)/g)].map((m) => m[1]);
+  // Titled columns are sort buttons with their tip; an untitled one stays a plain th.
+  assert.equal((draw().match(/<th scope="col"[^>]*><button type="button" class="th-sort oh-th" data-focus-key="ohsort-t-sort-\d"/g) || []).length, 4);
+  assert.match(draw(), /<th class="print-hide"><\/th>/);
+  assert.doesNotMatch(draw(), /aria-sort/);
+  page.run("ohSortBy('t-sort','0','Name')");
+  assert.deepEqual(names(), ['A2', 'a2', 'B9', 'b10']);
+  assert.match(draw(), /<th scope="col" aria-sort="ascending"><button type="button" class="th-sort oh-th on" data-focus-key="ohsort-t-sort-0"/);
+  page.run("ohSortBy('t-sort','0','Name')");
+  assert.deepEqual(names(), ['b10', 'B9', 'A2', 'a2']);
+  // The board's one rule (2v9): money and rates high to low on the first click, dates earliest first.
+  page.run("ohSortBy('t-sort','1','Value')");
+  assert.deepEqual(names(), ['A2', 'a2', 'B9', 'b10']);
+  page.run("ohSortBy('t-sort','2','Date')");
+  assert.deepEqual(names(), ['a2', 'A2', 'B9', 'b10']);
+  page.run("ohSortBy('t-sort','2','Date')");
+  assert.deepEqual(names(), ['B9', 'A2', 'a2', 'b10']);
+  page.run("ohSortBy('t-sort','3','Rate')");
+  assert.deepEqual(names(), ['a2', 'B9', 'b10', 'A2']);
+  assert.equal((draw().match(/aria-sort=/g) || []).length, 1);
+  // Items with renderRow sort the same way, before the pages; a new sort starts at page 1.
+  const many = Array.from({ length: 25 }, (_, i) => ({ n: `Item ${25 - i}`, v: i % 5 }));
+  const card = `renderTableCard({key:'t-many',title:'M',head:[['Item'],['Qty','num']],items:${JSON.stringify(many)},renderRow:r=>'<tr><td class="m">'+r.n+'</td><td class="num">'+r.v+'</td></tr>'})`;
+  page.run(`${card};dzPg['t-many'].page=3;ohSortBy('t-many','0','Item')`);
+  const first = [...page.run(card).matchAll(/<td class="m">([^<]+)/g)].map((m) => m[1]);
+  assert.deepEqual(first, Array.from({ length: 10 }, (_, i) => `Item ${i + 1}`));
+  assert.equal(page.run("dzPg['t-many'].page"), 1);
+  assert.deepEqual(page.errors, []);
+});
+
 run();

@@ -113,7 +113,8 @@ const cards = (d) => [...d.matchAll(/<section class="dz-card ([^"]*)"[^>]*>[\s\S
   .map((m) => ({ cls: m[1], html: m[0], title: plain((/<h2 class="dz-title"[^>]*>([\s\S]*?)<\/h2>/.exec(m[0]) || [])[1]) }));
 const card = (d, title) => (cards(d).find((c) => c.title === title) || { html: '' }).html;
 const table = (c) => ({
-  head: [...c.matchAll(/<th scope="col"(?: class="(?:num|ohgt-spk)")?(?: data-tip="([^"]*)")?>([^<]*)<\/th>/g)].map((m) => [m[2], m[1] || '']),
+  // 2v9: each heading is a sort button (ohSortTh) carrying the tip, " Click to sort." after it.
+  head: [...c.matchAll(/<th scope="col"(?: class="(?:num|ohgt-spk)")?(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]*?(?: data-tip="([^"]*?) ?Click to sort\.")?>([^<]*)<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g)].map((m) => [m[2], m[1] || '']),
   rows: [...c.matchAll(/<tr(?: data-tip="[^"]*")?>(<td[\s\S]*?)<\/tr>/g)].map((m) => [...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map((x) => plain(x[1]))),
   tips: [...c.matchAll(/<tr data-tip="([^"]*)"><td/g)].map((m) => m[1]),
 });
@@ -347,7 +348,8 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   assert.equal((d.match(/<table class="ohgt-tbl">/g) || []).length, 3);
   assert.equal((d.match(/<table\b/g) || []).length, 3);
   assert.equal((d.match(/<th\b/g) || []).length, 16);
-  assert.equal((d.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")? data-tip="[^"]+">[^<]+<\/th>/g) || []).length, 16, 'every th has a tip');
+  // 2v9: each heading is a sort button (ohSortTh) that carries the tip.
+  assert.equal((d.match(/<th scope="col"(?: class="(?:num|ohgt-spk)")?(?: aria-sort="\w+")?><button type="button" class="th-sort oh-th[^"]*"[^>]* data-tip="[^"]+">[^<]+<span class="sort-arrow" aria-hidden="true">[^<]*<\/span><\/button><\/th>/g) || []).length, 16, 'every th has a tip');
   assert.deepEqual([...d.matchAll(/<div class="sup-scroll" tabindex="0" role="region" aria-label="([^"]+)"><table class="ohgt-tbl">/g)].map((m) => m[1]), ['Month by month', 'By warehouse', 'Booked vs shipped']);
   // --- Month by month: the twelve months, newest first, six a page.
   let months = card(d, 'Month by month');
@@ -393,7 +395,7 @@ test('Lagging tables: Month by month pages 6 + 6 and is the months\' data; By wa
   let wh = card(d, 'By warehouse');
   assert.match(wh, /<h2 class="dz-title" data-tip="Deliveries by the warehouse or CM that shipped them\.">By warehouse<\/h2><span class="dz-meta">September · 8 orders<\/span>/);
   assert.deepEqual(table(wh).head, [['Warehouse / CM', 'The warehouse or CM that shipped.'], ['Orders', 'Sales orders with a delivery in the range.'], ['Shipped', 'Shipped value.'], ['On time', 'Deliveries early or on time.'],
-    ['Last 6 months', 'On time each month, Apr 2026 to Sep 2026, by delivery date. Dashed line: the 90% target.']]);
+    ['Last 6 months', 'On time each month, Apr 2026 to Sep 2026, by delivery date. Dashed line: the 90% target. Sorts by the latest month.']]);
   const WH1 = [['Spyder · Lacombe', '1', '$7,000', '100%', ''], ['CM · Alta', '2', '$6,500', '100%', ''], ['CM · Beta', '1', '$5,000', '0%', ''], ['CM · DSM', '1', '$4,000', '0%', ''], ['CM SFG · Gamma', '1', '$3,000', '100%', ''], ['CM SFG · Delta', '1', '$2,000', '0%', '']];
   const WH2 = [['CM · Echo', '1', '$1,000', '0%', '']];
   assert.deepEqual(table(wh).rows, WH1);
@@ -536,7 +538,9 @@ test('the menu calls Order Health "Sales Order Health": link, page title, logo, 
   // 2v6.9 (owner): the Sales Order Health title shows, like every other page.
   assert.match(html(page), /<div class="dz-pagehead rise"><h1 class="dz-h1" tabindex="-1">Sales Order Health<\/h1>/);
   page.run("setTab('settings')");
-  assert.match(html(page), /id="stg-h-oh" tabindex="-1"[^>]*>[\s\S]*?Sales Order Health<\/h2>/);
+  // 2v9 (owner): the Settings section is Sales Orders; the start page picker names Sales Order Health.
+  assert.match(html(page), /id="stg-h-sales" tabindex="-1"[^>]*>Sales Orders<\/h2>/);
+  assert.match(html(page), /<option value="orderhealth" selected>Sales Order Health<\/option>/);
   assert.equal(page.run('activeTab'), 'settings');
   assert.deepEqual(page.errors, []);
 });
@@ -569,7 +573,7 @@ test('Purchase Orders: Open POs by warehouse is a heat table with # of POs, late
   page.run("supSet('po-by','wh')");
   const h = html(page);
   assert.doesNotMatch(h, /dz-bars sup-bars/, 'no bars');
-  assert.match(h, /<div class="pow-g pow-hd" aria-hidden="true"><span>Warehouse<\/span><span># of POs<\/span><span>Late<\/span><span>No commit date<\/span><span>% late<\/span><span>Open \$<\/span><\/div>/);
+  assert.deepEqual([...(h.match(/<div class="pow-g pow-hd" role="row">[\s\S]*?<\/div>/) || [''])[0].matchAll(/<span role="columnheader"><button[^>]*>([^<]+)<span class="sort-arrow"/g)].map((m) => m[1]), ['Warehouse', '# of POs', 'Late', 'No commit date', '% late', 'Open $']);
   const rows = [...h.matchAll(/<button type="button" class="pow-g pow-row[^"]*" data-focus-key="powh-([^"]+)"[\s\S]*?<span class="pow-n">(\d+)<\/span><span class="pow-c ([a-z0-9]+)">(\d+)<\/span><span class="pow-c ([a-z0-9]+)">(\d+)<\/span><span class="pow-pct[^"]*">(\d+)%<\/span>/g)]
     .map((m) => m.slice(1, 8).join(' '));
   assert.deepEqual(rows.filter((r) => /Lacombe|Alta|DSM/.test(r)), [
@@ -580,6 +584,37 @@ test('Purchase Orders: Open POs by warehouse is a heat table with # of POs, late
   assert.match(h, /<div class="pow-g pow-tot"><span class="pow-name">All warehouses<\/span><span class="pow-n">\d+<\/span>/);
   assert.match(h, /onclick="setPoWarehouseRow\(&quot;Spyder - Lacombe&quot;\)"/);
   assert.match(h, /<div class="pow-legend" aria-hidden="true">/);
+  assert.deepEqual(page.errors, []);
+});
+
+// 2v9 (owner): every column of Open POs by warehouse sorts: a title click sorts (names A to Z, numbers high to low
+// first), again reverses it; aria-sort on that column header only; the All warehouses row stays last; page 1 again.
+test('Purchase Orders: every Open POs by warehouse column sorts (again reverses); aria-sort on that column; the totals row stays last', async () => {
+  let n = 700;
+  const wh = (w, late, rest) => [...Array.from({ length: late }, () => po(String(n++), '08/01/2026', { Warehouse: w })), ...Array.from({ length: rest }, () => po(String(n++), '12/15/2026', { Warehouse: w }))];
+  const page = await loaded([...ROWS.slice(0, 3), ...wh('CM - Shop 10', 0, 6), ...wh('Spyder - Lacombe', 3, 1), ...wh('CM - Shop 9', 1, 1)]);
+  page.run("setTab('purchaseorders');supSet('po-by','wh')");
+  const names = () => [...html(page).matchAll(/<button type="button" class="pow-g pow-row[^"]*" data-focus-key="powh-([^"]+)"/g)].map((m) => m[1]);
+  const head = () => (html(page).match(/<div role="table" aria-label="Sort open POs by warehouse"><div class="pow-g pow-hd" role="row">[\s\S]*?<\/div><\/div>/) || [''])[0];
+  const before = names();
+  assert.equal((head().match(/<span role="columnheader"><button type="button" class="th-sort srt-th" data-focus-key="srt-po-wh-\w+" onclick="srtSort\('po-wh','\w+','(asc|desc)',this\)" data-tip="[^"]+">/g) || []).length, 6);
+  assert.doesNotMatch(head(), /aria-sort/);
+  page.run("srtSort('po-wh','name','asc')");
+  assert.deepEqual(names(), ['CM - Shop 9', 'CM - Shop 10', 'Spyder - Lacombe'], 'natural number order');
+  assert.match(head(), /<span role="columnheader" aria-sort="ascending"><button[^>]*srt-po-wh-name[^>]*>Warehouse<span class="sort-arrow" aria-hidden="true">↑<\/span>/);
+  assert.equal((head().match(/aria-sort=/g) || []).length, 1);
+  page.run("srtSort('po-wh','name','asc')");
+  assert.deepEqual(names(), ['Spyder - Lacombe', 'CM - Shop 10', 'CM - Shop 9']);
+  assert.match(head(), /aria-sort="descending"><button[^>]*srt-po-wh-name/);
+  page.run("srtSort('po-wh','n','desc')");
+  assert.deepEqual(names(), ['CM - Shop 10', 'Spyder - Lacombe', 'CM - Shop 9']);
+  page.run("srtSort('po-wh','pct','desc')");
+  assert.deepEqual(names(), ['Spyder - Lacombe', 'CM - Shop 9', 'CM - Shop 10']);
+  page.run("srtSort('po-wh','pct','desc')");
+  assert.deepEqual(names(), ['CM - Shop 10', 'CM - Shop 9', 'Spyder - Lacombe']);
+  assert.match(html(page), /<\/button><div class="pow-g pow-tot"><span class="pow-name">All warehouses<\/span>/, 'the totals row is last');
+  page.run("supSet('po-wh-sort','')");
+  assert.deepEqual(names(), before, 'no sort: the table\'s own order (most late first)');
   assert.deepEqual(page.errors, []);
 });
 
