@@ -4055,10 +4055,10 @@ button.ohu-col:hover,button.ohu-col.sel{background:var(--dz-indigo-bg)}
 .ohu-barbox{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;padding-top:2px}
 .ohu-n{font-size:11.5px;font-weight:650;color:var(--dz-ink-1);font-variant-numeric:tabular-nums;line-height:1}
 .ohu-bar{width:min(18px,70%);height:calc((var(--bar) - 20px) * var(--h));min-height:3px;border-radius:4px 4px 2px 2px;background:var(--dz-indigo);opacity:.85}
-/* 2v9 (owner, option 1): the bars one solid slate grey (not blue like Supply shortage's dots, not teal like Past due's green); the dots in their
+/* 2v9 (owner, option 1): the bars one solid dark teal (owner; not blue like Supply shortage's dots); the dots in their
    reason's colour, joined by a light grey line; a colour key beside each reason's name */
-.ohu-bar{opacity:1;background:#7d8ba1}
-:where([data-theme=dark]) .ohu-bar{background:#8d9db1}
+.ohu-bar{opacity:1;background:#0f766e}
+:where([data-theme=dark]) .ohu-bar{background:#2bb3a3}
 .ohu-key{flex:none;width:9px;height:9px;border-radius:50%}
 .ohu-dots .ohu-link{background:var(--dz-ink-6)}
 .ohu-dots{position:relative;display:grid;grid-template-rows:repeat(var(--rows),var(--rh));justify-items:center;align-items:center}
@@ -4789,7 +4789,13 @@ button.ohl-sup-pill:focus-visible,button.ohl-sup-name:focus-visible,button.ohl-s
 @media (max-width:760px){.ohl-sup-row{grid-template-columns:minmax(0,1fr) repeat(4,44px)}}
 /* 2v6.9: Supply to pull in (one row per PO line; the PO number is the button that lists its lines) and the action line
    under a Lines row's status. */
-.ohl-pull-tbl .c-po{width:120px}.ohl-pull-tbl .c-item{width:110px}.ohl-pull-tbl .c-date{width:92px}.ohl-pull-tbl .c-gap{width:64px}.ohl-pull-tbl .c-val{width:84px}
+/* 2v9 (owner): the columns share the width more evenly: Item gets room for long item codes (it was squeezed between
+   the two wide name columns), Vendor / CM and Customers no longer take most of the row, and Gap keeps space before
+   Customers. The two name columns share what is left. */
+.ohl-pull-tbl .c-po{width:11%}.ohl-pull-tbl .c-item{width:17%}.ohl-pull-tbl .c-date{width:9.5%}.ohl-pull-tbl .c-gap{width:7%}.ohl-pull-tbl .c-val{width:9%}
+.ohl-pull-tbl td,.ohl-pull-tbl th{overflow:hidden;text-overflow:ellipsis}
+.ohl-pull-tbl col:nth-child(2){width:15%}
+.ohl-pull-tbl tr>:nth-child(6){padding-right:22px}
 .ohl-pull-tbl tr.sel td{background:var(--dz-indigo-bg)}
 button.ohl-pull-po{margin:-4px -6px;padding:4px 6px;border:0;border-radius:8px;background:transparent;font:inherit;font-weight:600;color:var(--dz-indigo-deep);cursor:pointer;white-space:nowrap;transition:background-color .16s ease}
 button.ohl-pull-po:hover{background:var(--dz-hover)}
