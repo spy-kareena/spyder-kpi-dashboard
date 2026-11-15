@@ -852,7 +852,13 @@ test('Purchase Order Health: Build Risk counts CM kits not ticked clean (no mone
   assert.doesNotMatch(h, /<h2 class="dz-title sm"[^>]*>Kits by CM and month<\/h2>/);
   assert.match(h, /data-focus-key="kitcm-DSM"/);
   assert.deepEqual([...h.matchAll(/data-focus-key="kitcm-DSM-([\w-]+)"[^>]*aria-label="([^"]+)"/g)].map((m) => [m[1], m[2]]),
-    [['past', 'DSM, Past due: 1 not clean, 0 clean'], ['2026-09', 'DSM, Sep: 1 not clean, 0 clean'], ['2026-12', 'DSM, Dec: 1 not clean, 0 clean']]);
+    [['past', 'DSM, Past due: 1 not clean, 0 clean'], ['2026-09', 'DSM, Sep 2026: 1 not clean, 0 clean'], ['2026-12', 'DSM, Dec 2026: 1 not clean, 0 clean']]);
+  // 2v9 (owner): short labels that fit their columns (Late, Sep, Oct …); the full names stay in the tips and labels.
+  assert.deepEqual([...h.matchAll(/<span class="kc4-x( past)?" aria-hidden="true">([^<]*)(?:<small>(\d+)<\/small>)?<\/span>/g)].slice(0, 7).map((m) => m[2] + (m[3] ? ` ${m[3]}` : '')),
+    ['Late', 'Sep', 'Dec']);
+  // The columns: the year once, under January, when they cross into a new year.
+  assert.deepEqual(page.run("poKitCols(new Date(2026,10,13)).map(c=>c.slice(1))"),
+    [['Past due', 'Late', ''], ['Nov 2026', 'Nov', ''], ['Dec 2026', 'Dec', ''], ['Jan 2027', 'Jan', '2027'], ['Feb 2027', 'Feb', ''], ['Mar 2027', 'Mar', ''], ['Later', 'Later', '']]);
   // Tick PO 700's kit clean: Build Risk drops to 2 and the past-due cell turns clean.
   page.run("(()=>{const r=allLoadedRows.find(x=>x.documentNumber==='700');writeRowOverride(rowKey(r),[r],'kitClean',true);renderResults();})()");
   h = html(page);

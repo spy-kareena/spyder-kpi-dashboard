@@ -4000,7 +4000,10 @@ button.kc3-n:focus-visible,button.kc3-cm:focus-visible{outline:2px solid var(--d
 .kc4-stack i{display:block;min-height:3px;background:var(--dz-teal)}
 .kc4-stack i:first-child{border-radius:4px 4px 0 0}
 .kc4-stack i.nc.warn{background:var(--dz-amber)}.kc4-stack i.nc.bad{background:var(--dz-risk)}
-.kc4-x{position:absolute;bottom:-20px;left:0;right:0;font-size:11.5px;color:var(--dz-ink-4);text-align:center;white-space:nowrap}
+.kc4-x{position:absolute;top:calc(100% + 4px);left:0;right:0;font-size:11.5px;line-height:14px;color:var(--dz-ink-4);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip}
+/* 2v9 (owner): the year under January, once; a label never runs into its neighbour (it is cut inside its column) */
+.kc4-x small{display:block;font-size:10px;line-height:12px;color:var(--dz-ink-5)}
+.kc4-chart.yr{margin-bottom:36px}
 .kc4-x.past{color:var(--dz-risk-text)}
 .kc4-chart{margin-bottom:24px}
 .kc4-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:4px;font-size:11.5px;color:var(--dz-ink-4)}
@@ -11696,10 +11699,16 @@ function poKitMonth(r,today){
   if(d<today)return 'past'; // due before today: past due, as Build Risk's Late counts it
   return monthKey(d);
 }
+// [key, full name (tips, screen readers), short label under the column, year shown under it]. 2v9 (owner): the short
+// labels fit the column (Late, Nov, Dec, Jan …); the year shows once, under January, when the columns cross into a new
+// year; the full name keeps "Past due" and the year (Jan 2027).
 function poKitCols(today){
-  const out=[['past','Past due']];
-  for(let i=0;i<5;i++){const d=new Date(today.getFullYear(),today.getMonth()+i,1);out.push([monthKey(d),d.toLocaleDateString('en-US',{month:'short'})+(d.getFullYear()!==today.getFullYear()?` '${String(d.getFullYear()).slice(2)}`:'')]);}
-  out.push(['later','Later']);
+  const out=[['past','Past due','Late','']];
+  for(let i=0;i<5;i++){
+    const d=new Date(today.getFullYear(),today.getMonth()+i,1),mon=d.toLocaleDateString('en-US',{month:'short'}),y=d.getFullYear();
+    out.push([monthKey(d),`${mon} ${y}`,mon,y!==today.getFullYear()&&d.getMonth()===0?String(y):'']);
+  }
+  out.push(['later','Later','Later','']);
   return out;
 }
 function poKitColOf(r,today,cols){
@@ -11736,18 +11745,19 @@ function poKitCmCardHtml(open,today,inner=false){
   // lists its lines in PO lines (again: every line).
   const maxT=Math.max(1,...pg.rows.flatMap(x=>shown.map(([k])=>x.rows.filter(r=>poKitColOf(r,today,cols)===k).length)));
   const rows=pg.rows.map(x=>{
-    const colsHtml=shown.map(([k,label])=>{
+    const colsHtml=shown.map(([k,label,short,yr])=>{
+      const xl=`<span class="kc4-x${k==='past'?' past':''}" aria-hidden="true">${esc(short)}${yr?`<small>${esc(yr)}</small>`:''}</span>`;
       const rs=x.rows.filter(r=>poKitColOf(r,today,cols)===k);
       const nc=rs.filter(r=>!r.kitClean).length,c=rs.length-nc,on=picked(x.cm,k);
       const tone=k==='past'?'bad':'warn';
-      if(!rs.length)return `<div class="kc4-col empty"><span class="kc4-top">–</span><span class="kc4-stack" aria-hidden="true"></span><span class="kc4-x${k==='past'?' past':''}">${esc(label)}</span></div>`;
+      if(!rs.length)return `<div class="kc4-col empty"><span class="kc4-top">–</span><span class="kc4-stack" aria-hidden="true"></span>${xl}</div>`;
       return `<button type="button" class="kc4-col${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}-${k}" aria-pressed="${on}" aria-label="${esc(`${x.cm}, ${label}: ${nc} not clean, ${c} clean`)}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'${k}')"${tipAttr(ohlTip(`${x.cm} · ${label}`,[`${fmtNum(nc)} not clean · ${fmtNum(c)} clean`,`${pos(rs)} · ${money(rowOpenAmount(rs))} open`],on?'Click to show every line again.':'Click to list them.'))}>
         <span class="kc4-top ${nc?tone:'ok'}">${nc?fmtNum(nc):'✓'}</span>
         <span class="kc4-stack" aria-hidden="true" style="--h:${(rs.length/maxT*100).toFixed(1)}%">${nc?`<i class="nc ${tone}" style="flex:${nc}"></i>`:''}${c?`<i class="ok" style="flex:${c}"></i>`:''}</span>
-        <span class="kc4-x${k==='past'?' past':''}">${esc(label)}</span></button>`;
+        ${xl}</button>`;
     }).join('');
     const on=picked(x.cm,'');
-    return `<div class="kc4-cm"><div class="kc4-head"><button type="button" class="kc3-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.not)} of ${ohN(x.rows.length,'kit')} not clean`],'Click to list its lines.'))}>${esc(x.cm)}</button><span class="kc4-sum"><b class="${x.not?'warn':'ok'}">${fmtNum(x.not)}</b> of ${fmtNum(x.rows.length)} not clean</span></div><div class="kc4-chart" role="group" aria-label="${esc(`${x.cm} kits by month`)}">${colsHtml}</div></div>`;
+    return `<div class="kc4-cm"><div class="kc4-head"><button type="button" class="kc3-cm${on?' sel':''}" data-focus-key="kitcm-${esc(x.cm)}" aria-pressed="${on}" onclick="setPoKitPick(${esc(dzJs(x.cm))},'')"${tipAttr(ohlTip(x.cm,[`${fmtNum(x.not)} of ${ohN(x.rows.length,'kit')} not clean`],'Click to list its lines.'))}>${esc(x.cm)}</button><span class="kc4-sum"><b class="${x.not?'warn':'ok'}">${fmtNum(x.not)}</b> of ${fmtNum(x.rows.length)} not clean</span></div><div class="kc4-chart${shown.some(c=>c[3])?' yr':''}" role="group" aria-label="${esc(`${x.cm} kits by month`)}">${colsHtml}</div></div>`;
   }).join('');
   function pos(rows){const d=supDocs(rows);return `${fmtNum(d)} ${d===1?'PO':'POs'}`;}
   const tNot=list.reduce((t,x)=>t+x.not,0),tAll=list.reduce((t,x)=>t+x.rows.length,0);
