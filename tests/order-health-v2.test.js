@@ -749,4 +749,16 @@ test('2v9 sort: Customers at risk keeps its sort across the views and a filter c
   assert.deepEqual(page.errors, []);
 });
 
+test('2v9 (owner): Sales Order Health has no Department or Project filter, even when the export has several of each', async () => {
+  const rows = ROWS.map((r, i) => ({ ...r, Department: i % 2 ? 'Production' : 'Service', 'Project Code': i % 2 ? 'P-1' : 'P-2' }));
+  const page = await loaded(rows);
+  for (const v of ['leading', 'lagging']) {
+    page.run(`setWeeklyView('${v}')`);
+    assert.doesNotMatch(html(page), /dzf-oh-(department|project)|>Department<|>Project</, v);
+    assert.match(html(page), /dzf-oh-segment/, 'the other filters stay');
+  }
+  // A Department or Project pick saved from before does not come back to hide lines unseen.
+  assert.deepEqual(page.run('[weeklyDepartmentFilter,weeklyProjectFilter]'), [['ALL'], ['ALL']]);
+});
+
 run();

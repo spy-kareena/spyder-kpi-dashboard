@@ -757,7 +757,7 @@ test('2v6.9 layout: on a wide screen the map card spans the page, the cards lie 
   // pill; the Priority card keeps its two rows compact on its right at 641-980px; a narrow card picks the short fact
   // lines; the small cards over the map are at least 364px wide together (one-line labels at 1180px).
   const mm = html(page);
-  assert.match(mm, /<div class="shp-map-foot"><div class="shp-legend" aria-hidden="true"><span><i style="background:var\(--dz-indigo\)"><\/i>In transit<\/span>/);
+  assert.match(mm, /<div class="shp-map-foot"><div class="shp-legend lg-pick" role="group" aria-label="Show on the map"><button type="button" class="shp-lg" data-focus-key="ship-lg-moving" aria-pressed="false"[^>]*><i style="background:var\(--dz-indigo\)"><\/i>In transit<\/button>/);
   assert.doesNotMatch(mm.slice(mm.indexOf('<div class="shp-map-head">'), mm.indexOf('<div class="shp-map-stage')), /shp-legend/);
   assert.match(block, /\.shp-top \.shp-map-foot\{position:absolute;left:22px;right:auto;bottom:14px;/);
   assert.match(block, /\.shp-pg\.on,\.shp-pg\.on:hover\{background:var\(--dz-surface-2\);box-shadow:inset 0 0 0 1px var\(--dz-line-8\);color:var\(--dz-ink-1\);font-weight:600\}/);
@@ -1218,6 +1218,31 @@ test('2v9 (owner): the open row\'s order lines sort by every heading (Value by a
   assert.deepEqual(items(), ['SPY-100', 'SPY-101']);
   assert.equal((lines().match(/aria-sort=/g) || []).length, 1);
   assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): the Order Map legend shows one category: In transit, Delayed or Delivered; a second click shows all', async () => {
+  const mixed = Object.fromEntries(FAR.flatMap(([destCity, destState, destCountry, n], i) => Array.from({ length: n }, (_, k) => [farNum(i, k), asStatus(farNum(i, k), ['delayed', 'delivered', 'transit'][i % 3], { destCity, destState, destCountry, ...(i % 3 === 1 ? { deliveredAt: '2026-10-08T10:00:00-04:00' } : {}) })])));
+  const page = await asPage(FAR_ROWS, mixed);
+  const dotStates = () => [...mapOf(page).matchAll(/<button type="button" class="shp-dot (\w+)/g)].map((x) => x[1]);
+  const all = dotStates();
+  assert.ok(new Set(all).size >= 2, 'the sample has more than one category');
+  assert.match(html(page), /\bWhere Orders Are Headed\b/);
+  assert.doesNotMatch(html(page), /Where Is Everything/);
+  for (const st of ['moving', 'late', 'done']) {
+    const n = all.filter((x) => x === st).length;
+    const btn = (mapOf(page).match(new RegExp(`<button type="button" class="shp-lg[^"]*" data-focus-key="ship-lg-${st}"[^>]*>`)) || [])[0];
+    assert.ok(btn, `legend button ${st}`);
+    assert.doesNotMatch(btn, /data-tip=/, 'no tooltip on the legend (owner)');
+    assert.match(btn, /aria-label="[^"]+"/);
+    if (!n) { assert.match(btn, / disabled/); continue; }
+    page.run(`shpMapPickState('${st}')`);
+    const shown = dotStates();
+    assert.ok(shown.length > 0 && shown.every((x) => x === st), `only ${st} dots: ${shown}`);
+    assert.match(mapOf(page), new RegExp(`class="shp-lg on" data-focus-key="ship-lg-${st}" aria-pressed="true"`));
+    assert.ok(![...mapOf(page).matchAll(/<path class="shp-route (\w+)/g)].some((x) => x[1] !== st), 'arcs follow the pick');
+    page.run(`shpMapPickState('${st}')`);
+    assert.deepEqual(dotStates(), all, 'a second click shows every dot again');
+  }
 });
 
 run();

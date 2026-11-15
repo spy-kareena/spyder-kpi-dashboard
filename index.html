@@ -1821,10 +1821,10 @@ body{background:var(--dz-page-base)}
    space under the menu, so the top of every page feels less cramped. Screen only; print keeps its own spacing. */
 @media screen{
   .app-shell{padding-top:34px}
-  .dz-pagehead{margin-top:18px}
+  .dz-pagehead{margin-top:40px}
 }
-@media screen and (max-width:900px){.app-shell{padding-top:26px}.dz-pagehead{margin-top:14px}}
-@media screen and (max-width:640px){.app-shell{padding-top:20px}.dz-pagehead{margin-top:10px}}
+@media screen and (max-width:900px){.app-shell{padding-top:26px}.dz-pagehead{margin-top:28px}}
+@media screen and (max-width:640px){.app-shell{padding-top:20px}.dz-pagehead{margin-top:18px}}
 
 /* Header: 56px, logo | centred page links | export date, search, Ask AI, Export PDF, Upload, Dark mode, Settings gear */
 /* Columns: logo | page links (shrink, scroll sideways, when the screen is narrow) | tools. The side columns are equal (so the links are centred on the page) until the tools need more room. */
@@ -2646,6 +2646,16 @@ button.mwm-wrow.sel{background:var(--dz-indigo-bg)}
 .shp-legend{margin-left:auto;pointer-events:none}
 .shp-legend span{display:flex;align-items:center;gap:6px}
 .shp-legend i{width:9px;height:9px;border-radius:50%}
+/* 2v9 (owner): the map legend filters the map: pill buttons; the picked one is filled, the others dim while one is picked */
+.shp-legend.lg-pick{pointer-events:auto}
+.shp-lg{display:inline-flex;align-items:center;gap:6px;margin:-3px -6px;padding:3px 8px;border:0;border-radius:999px;background:none;font:inherit;color:inherit;cursor:pointer;transition:background-color .15s,opacity .15s,color .15s}
+.shp-lg i{flex:none;width:9px;height:9px;border-radius:50%}
+.shp-lg:hover{background:var(--dz-ink-7,rgba(20,30,50,.06));color:var(--dz-ink-1)}
+.shp-lg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+.shp-legend.on .shp-lg:not(.on){opacity:.5}
+.shp-lg.on{background:var(--dz-card,#fff);color:var(--dz-ink-1);font-weight:600;box-shadow:0 1px 3px rgba(20,30,50,.12)}
+.shp-lg:disabled{cursor:default;opacity:.4}
+@media print{.shp-lg{padding:0;margin:0;box-shadow:none;background:none}}
 /* Fade in on load (land, routes one after another, dots, labels); only when the page opens, never on a redraw */
 @media (prefers-reduced-motion:no-preference){
   .shp-land{animation:shpMapIn .6s ease both}
@@ -4092,8 +4102,9 @@ button.ohu-col:hover,button.ohu-col.sel{background:var(--dz-indigo-bg)}
 .ohu-bar{width:min(18px,70%);height:calc((var(--bar) - 20px) * var(--h));min-height:3px;border-radius:4px 4px 2px 2px;background:var(--dz-indigo);opacity:.85}
 /* 2v9 (owner, option 1): the bars one solid dark teal (owner; not blue like Supply shortage's dots); the dots in their
    reason's colour, joined by a light grey line; a colour key beside each reason's name */
-.ohu-bar{opacity:1;background:#0f766e}
-:where([data-theme=dark]) .ohu-bar{background:#2bb3a3}
+/* 2v9 (owner, Sunflower): the bars are blue, as in Open Lines by Due Week beside them */
+.ohu-bar{opacity:1;background:#3d7cf5}
+:where([data-theme=dark]) .ohu-bar{background:#5b8ff7}
 .ohu-key{flex:none;width:9px;height:9px;border-radius:50%}
 .ohu-dots .ohu-link{background:var(--dz-ink-6)}
 .ohu-dots{position:relative;display:grid;grid-template-rows:repeat(var(--rows),var(--rh));justify-items:center;align-items:center}
@@ -5029,13 +5040,13 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
    Data Source card and the live load screen. The mark (2v6.9) is an activity line: while live reads work it is green
    and draws itself on a loop over a faint track; disconnected it is red and still (fully drawn); connecting, grey and
    still; with reduced motion the green line stands still. */
-:root{--live-ok:#007565}
+:root{--live-ok:#14a35a;--live-down:#e5484d} /* 2v9 (owner): Fresh green when live, coral red when not */
 .live-pulse{flex:none;display:inline-block;width:15px;height:15px;color:var(--dz-ink-5);vertical-align:middle;overflow:visible}
 .live-pulse .live-track{opacity:.22}
 .live-pulse .live-trace{stroke-dasharray:1 2}
 .live-pulse.ok{color:var(--live-ok)}
 .live-pulse.ok .live-trace{animation:live-draw 2.2s cubic-bezier(.45,.05,.55,.95) infinite}
-.live-pulse.down{color:var(--dz-risk)}
+.live-pulse.down{color:var(--live-down)}
 .live-pulse.down .live-track{opacity:0}
 @keyframes live-draw{0%{stroke-dashoffset:1;opacity:0}8%{opacity:1}45%{stroke-dashoffset:0}62%{stroke-dashoffset:0;opacity:1}92%{opacity:1}100%{stroke-dashoffset:-1;opacity:0}}
 .hdr-date.has-live{gap:6px}
@@ -5207,7 +5218,7 @@ button.kc-cm:hover{background:var(--dz-hover)}button.kc-cm.sel{background:var(--
 @media print{.santa-mark,.santa-x{display:none!important}}
 /* end 2v9:santa */
 @media screen{
-  [data-theme=dark]{--live-ok:#2cc8b2}
+  [data-theme=dark]{--live-ok:#3ccf7f;--live-down:#ff6b6e}
   [data-theme=dark] .hdr-pop .live-act{background:var(--dz-line-8)}
   [data-theme=dark] .live-load-box{background:var(--dz-surface);border-color:var(--dz-line-8)}
 }
@@ -6429,8 +6440,9 @@ async function loadEmbeddedSnapshot(){
     weeklySegmentFilter=data.weeklySegmentFilter||['ALL'];
     weeklyOwnerFilter=['ALL']; // 2v2: the owner filter is gone; an older snapshot's owner pick is ignored
     weeklyOrderTypeFilter=data.weeklyOrderTypeFilter||['ALL'];
-    weeklyDepartmentFilter=data.weeklyDepartmentFilter||['ALL'];
-    weeklyProjectFilter=data.weeklyProjectFilter||['ALL'];
+    // 2v9 (owner): the Department and Project filters are gone, so a saved pick from before can't hide lines unseen.
+    weeklyDepartmentFilter=['ALL'];
+    weeklyProjectFilter=['ALL'];
     weeklyTileFilter=data.weeklyTileFilter||'';
     weeklyOtdFilter=data.weeklyOtdFilter||'total';
     weeklyRescheduleFilter=data.weeklyRescheduleFilter||'total';
@@ -14894,8 +14906,7 @@ function renderResults(){
       warehousePill
       +filterPill('oh-segment','Segment','All segments',weeklySegmentFilter,weeklySegmentOptions,'setWeeklySegmentFilter')
       +filterPill('oh-customer','Customer','All customers',weeklyCustomerFilter,weeklyCustomerOptions,'setWeeklyCustomerFilter',v=>weeklyCustomerOptionMap.get(v)||v)
-      +optionalPill('oh-department','Department','All departments',weeklyDepartmentFilter,weeklyDepartmentOptions,'setWeeklyDepartmentFilter')
-      +optionalPill('oh-project','Project','All projects',weeklyProjectFilter,weeklyProjectOptions,'setWeeklyProjectFilter')
+      // 2v9 (owner): no Department or Project filter on Sales Order Health.
       +optionalPill('oh-order-type','Order type','All order types',weeklyOrderTypeFilter,weeklyOrderTypeOptions,'setWeeklyOrderTypeFilter'),
       anyFilter?dzClear('resetWeeklyFilters()','Clear every filter on this page.'):'')}
     <div class="print-only">Filters: ${esc(filterNote)}</div>`;
@@ -19629,6 +19640,11 @@ function shipPlaceLabel(p){
   const ms=p&&p.members;
   return ms&&ms.length>1?`${shipPlaceShort(ms[0].key)} +${ms.length-1}`:shipPlaceShort(p&&p.key);
 }
+// 2v9 (owner): the Order Map's legend filters the map: a click on In transit, Delayed or Delivered shows only those dots
+// and arcs (the view stays put so the map does not jump); a second click on the same one shows them all again.
+let shpMapStatePick=null;
+const SHP_MAP_STATES=[['moving','In transit','var(--dz-indigo)'],['late','Delayed','var(--dz-risk)'],['done','Delivered','var(--dz-teal)']];
+function shpMapPickState(st){shpMapStatePick=shpMapStatePick===st?null:st;renderResults();}
 // The dot is picked: it holds the (first) place the Destination filter names. Dots are shared by scale, so after a resize
 // the picked places may sit in two dots; the one with the first place shows the pick and clears it on a click.
 function shpDotSel(p){
@@ -19718,14 +19734,16 @@ if(typeof addEventListener==='function')addEventListener('resize',shpMapRefit);
 function renderShipMap(list){
   const {places,unplaced,untracked,placed}=shipMapPlaces(list);
   const hub=shipNE(SHIP_HUB.lon,SHIP_HUB.lat);
-  let dots=places.map(p=>{const c=shipPlaceCoord(p.key);return {p,c,xy:shipNE(c.lon,c.lat),d:shpDotSize(p.n)};});
+  const allDots=places.map(p=>{const c=shipPlaceCoord(p.key);return {p,c,xy:shipNE(c.lon,c.lat),d:shpDotSize(p.n)};});
+  if(shpMapStatePick&&!places.some(p=>p.state===shpMapStatePick))shpMapStatePick=null;
+  let dots=shpMapStatePick?allDots.filter(({p})=>p.state===shpMapStatePick):allDots;
   // The design's view (SHIP_MAP.W x SHIP_MAP.H map units: North America and the Atlantic), centred on Lacombe and the
   // dots so they sit in the middle of the card (owner, 2v7), grown to hold a dot that falls outside it.
-  const pts=[hub,...dots.map(d=>d.xy)];
+  const pts=[hub,...allDots.map(d=>d.xy)];
   const cx=(Math.min(...pts.map(q=>q[0]))+Math.max(...pts.map(q=>q[0])))/2;
   const cy=(Math.min(...pts.map(q=>q[1]))+Math.max(...pts.map(q=>q[1])))/2;
   let x0=cx-SHIP_MAP.W/2,x1=cx+SHIP_MAP.W/2,y0=cy-SHIP_MAP.H/2,y1=cy+SHIP_MAP.H/2;
-  for(const {xy} of dots){x0=Math.min(x0,xy[0]-40);x1=Math.max(x1,xy[0]+40);y0=Math.min(y0,xy[1]-40);y1=Math.max(y1,xy[1]+40);}
+  for(const {xy} of allDots){x0=Math.min(x0,xy[0]-40);x1=Math.max(x1,xy[0]+40);y0=Math.min(y0,xy[1]-40);y1=Math.max(y1,xy[1]+40);}
   // 2v6.9 wide layout: the same view, fitted into the left part of a stage as wide as the card (centred there), the
   // stage running on to the right under the status cards, where the map fades out (--fa to --fb).
   const lay=shpMapLayout();
@@ -19738,7 +19756,7 @@ function renderShipMap(list){
   }
   // On a phone the stage is wider than the card (zoomed up to 2.2x, centred on the hub and the dots) so the dots
   // are not squeezed together; the card clips the rest.
-  const xs=[hub[0],...dots.map(d=>d.xy[0])];
+  const xs=[hub[0],...allDots.map(d=>d.xy[0])];
   const bx0=Math.min(...xs)-90,bx1=Math.max(...xs)+90;
   const phone=shpMapPhone();
   // Labels: above the dot, else below, right or left, whichever is free; a label that fits nowhere is left out (the
@@ -19820,7 +19838,12 @@ function renderShipMap(list){
   const meta=`${shipPlural(placed,'shipment','shipments')} from Lacombe · ${shipPlural(places.length,'destination','destinations')}`;
   const noPlace=unplaced?`<span class="shp-pillnote"${tipAttr('In the table, not on the map.\n• Waiting: AfterShip has not checked these yet, or the carrier has not given a destination yet.\n• Not tracked: AfterShip does not recognise the number.')}>${esc(noPlaceText)}</span>`:'';
   // 2v6.9b: the legend sits at the bottom left of the map (it was in the title row), with the no-ship-to-country note.
-  const legend=`<div class="shp-legend" aria-hidden="true"><span><i style="background:var(--dz-indigo)"></i>In transit</span><span><i style="background:var(--dz-risk)"></i>Delayed</span><span><i style="background:var(--dz-teal)"></i>Delivered</span></div>`;
+  // 2v9 (owner): each legend item is a button that shows only its dots (states with no dots are left disabled); no
+  // tooltip on hover (owner), the button's label says what a click does.
+  const legend=`<div class="shp-legend lg-pick${shpMapStatePick?' on':''}" role="group" aria-label="Show on the map">${SHP_MAP_STATES.map(([st,name,col])=>{
+    const n=places.filter(p=>p.state===st).length,on=shpMapStatePick===st;
+    return `<button type="button" class="shp-lg${on?' on':''}" data-focus-key="ship-lg-${st}" aria-pressed="${on?'true':'false'}"${n?'':' disabled'} onclick="shpMapPickState('${st}')" aria-label="${esc(on?`${name}: showing only these. Show every destination`:n?`Show only ${name.toLowerCase()} (${fmtNum(n)})`:`No ${name.toLowerCase()} destinations`)}"><i style="background:${col}"></i>${name}</button>`;
+  }).join('')}</div>`;
   const foot=`<div class="shp-map-foot">${legend}${noPlace}</div>`;
   return `<section class="dz-card shp-map" aria-label="Order map">
     <div class="shp-map-head"><div class="shp-map-ttl"><h2 class="dz-title"${tipAttr(`Destination cities from AfterShip, sized by shipments; nearby ones share a dot and the busiest are named; arcs from Lacombe\n• Indigo: on the way\n• Red: a shipment delayed\n• Teal: all delivered`)}>Order Map</h2><div class="dz-meta">${esc(meta)}</div></div></div>
@@ -20521,7 +20544,7 @@ function renderShippingPage(m){
   // 981px); --pw is the cards' width the map was laid out for.
   const lay=shpMapLayout();
   // Owner: Shipping reads as questions too.
-  return head+dzQ(1,'Where Is Everything?','solo')+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+dzQ(2,'Which Shipments Need Attention?','solo')+`<div class="shp-grid">${list}${side}</div>`+about;
+  return head+dzQ(1,'Where Orders Are Headed','solo')+`<div class="shp-top"${lay?` style="--pw:${lay.pw}px"`:''}>${tiles}${renderShipMap(fl)}</div>`+dzQ(2,'Where’s Each Shipment Now?','solo')+`<div class="shp-grid">${list}${side}</div>`+about;
 }
 // The Add tracking # form (real shipments only): sales order (optional) and the number.
 function renderShipAddForm(shared){
@@ -22476,7 +22499,7 @@ function ohlStatusCard(c){
 // 2v9 (owner's pick, option 1): a colour per reason, fixed so a reason keeps its colour whatever the filters (the six
 // most common from the board's validated chart colours, the rarer ones after them; any other reason a steady colour of
 // its own). The dots and the key beside each name use it; the bars stay one solid colour (owner).
-const OHU_REASON_COLOR={'Supply shortage':'#3d7cf5','Unconfirmed':'#f06a24','Past due · No reschedule':'#17a467','Rescheduled later':'#b54ee0','Missed commit':'#e43e5a','No commit date':'#e5a100','Customer reschedule':'#10a5c6','Rescheduled':'#7a8ca8','CM commit late':'#a0703c'};
+const OHU_REASON_COLOR={'Supply shortage':'#f5b800','Unconfirmed':'#f06a24','Past due · No reschedule':'#17a467','Rescheduled later':'#b54ee0','Missed commit':'#e43e5a','No commit date':'#64748b','Customer reschedule':'#10a5c6','Rescheduled':'#7a8ca8','CM commit late':'#a0703c'};
 const OHU_MORE_COLORS=['#6d7fe0','#c9568a','#4f9a8a','#9a7b4f'];
 function ohuColor(label){
   const l=String(label||'');
