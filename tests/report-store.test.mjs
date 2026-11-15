@@ -23,10 +23,10 @@ function bundle(files, { lengthFix = 0 } = {}) {
   size.writeUInt32BE(head.length);
   return new Uint8Array(Buffer.concat([size, head, ...parts]));
 }
-function call({ method = 'GET', body, env, origin = ORIGIN, headers = {} }) {
+function call({ method = 'GET', body, env, origin = ORIGIN, headers = {}, query = '' }) {
   const h = { ...headers };
   if (origin) h.Origin = origin;
-  return onRequest({ request: new Request(ORIGIN + '/api/report', { method, body, headers: h }), env, params: {} });
+  return onRequest({ request: new Request(ORIGIN + '/api/report' + query, { method, body, headers: h }), env, params: {} });
 }
 function readBack(buf) {
   const bytes = new Uint8Array(buf);
@@ -36,6 +36,27 @@ function readBack(buf) {
 
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
+
+// 2v9 (owner): ?kind=live keeps the last live SAP data in its own key ('live'); the uploaded report ('report') is
+// untouched and a live bundle never adds to the at-risk history.
+test('?kind=live: the last live data in its own key, read back the same way; the uploaded report is left alone', async () => {
+  const store = kv();
+  const env = { REPORT_STORE: store };
+  assert.equal((await call({ env, query: '?kind=live' })).status, 204, 'nothing live yet');
+  await call({ method: 'PUT', env, body: bundle([{ name: 'old-upload.xls', data: 'old' }]) });
+  const put = await call({ method: 'PUT', env, query: '?kind=live', body: bundle([{ name: 'SAP_live_KPI_2026-11-15.txt', data: 'live' }]) });
+  assert.equal(put.status, 200);
+  const saved = await put.json();
+  assert.deepEqual(saved.files, ['SAP_live_KPI_2026-11-15.txt']);
+  assert.equal(saved.history, undefined);
+  assert.deepEqual([...store.map.keys()].sort(), ['live', 'report']);
+  const live = readBack(await (await call({ env, query: '?kind=live' })).arrayBuffer());
+  assert.deepEqual([live.head.files.map((f) => f.name), live.data], [['SAP_live_KPI_2026-11-15.txt'], 'live']);
+  const upload = readBack(await (await call({ env })).arrayBuffer());
+  assert.deepEqual([upload.head.files.map((f) => f.name), upload.data], [['old-upload.xls'], 'old']);
+  const cross = await call({ method: 'PUT', env, query: '?kind=live', origin: 'https://evil.example', body: bundle([{ name: 'x.txt', data: 'x' }]) });
+  assert.equal(cross.status, 403);
+});
 
 test('nothing saved yet gives 204; no KV binding gives 503 configured:false', async () => {
   const empty = await call({ env: { REPORT_STORE: kv() } });

@@ -45,6 +45,11 @@ function fakeSite({ env = ENV, bridge = { kpi: { status: 200, body: BRIDGE_KPI }
   site.fetch = async (url, init = {}) => {
     const u = String(url);
     site.calls.push(`${init.method || 'GET'} ${u}`);
+    // 2v9: the server's last live copy (GET /api/report?kind=live) when the test gives one; a PUT is kept.
+    if (u === '/api/report?kind=live') {
+      if ((init.method || 'GET') === 'PUT') { site.livePut = init.body; return new Response('{"savedAt":"2026-09-24T16:00:00Z"}', { status: 200, headers: { 'content-type': 'application/json' } }); }
+      return site.liveBundle ? new Response(site.liveBundle, { status: 200, headers: { 'content-type': 'application/octet-stream' } }) : new Response(null, { status: 204 });
+    }
     if (!u.startsWith('/api/sap/')) return new Response('', { status: 404 });
     const handler = await api();
     const p = u.replace('/api/sap/', '').split('?')[0];
@@ -405,7 +410,7 @@ test('the last live data shows at once on the next visit, red until the first re
   assert.equal(empty.els['upload-shell'].hidden, true, 'no drop area in live mode');
 });
 
-test('a site without a bridge, in live mode: "Live SAP isn\'t set up on this site." and Use import files switches to import', async () => {
+test('a site without a bridge, in live mode: "Live SAP isn\'t set up on this site." and Use import files switches to import (2v9: the old import is not reopened)', async () => {
   const site = fakeSite({ env: {} });
   const page = await openLive(site, { importFiles: [{ name: 'export.xls', bytes: sapExport([sapRow()]) }] });
   assert.equal(page.run('liveState.status'), 'off');
@@ -414,8 +419,10 @@ test('a site without a bridge, in live mode: "Live SAP isn\'t set up on this sit
   assert.match(page.els['live-load'].innerHTML, /data-focus-key="live-use-import"[^>]*>Use import files<\/button>/);
   assert.equal(page.run('allLoadedRows.length'), 0, 'the import does not reopen in live mode');
   page.run("stgSet('dataSource','import')");
-  await until(() => page.run('allLoadedRows.length') === 1, 'import restored');
-  assert.deepEqual(summary(page).files, ['export.xls']);
+  await settle();
+  // 2v9 (owner): no uploaded report is reopened; Import files starts from the load screen.
+  assert.equal(page.run('allLoadedRows.length'), 0, 'the old import is not reopened');
+  assert.equal(page.els['upload-screen'].style.display, 'block');
   assert.equal(page.els['live-load'].hidden, true);
   // A file:// copy is never live.
   const file = await openLive(liveSite(), { start: false });
@@ -426,19 +433,20 @@ test('a site without a bridge, in live mode: "Live SAP isn\'t set up on this sit
   assert.equal(file.run('liveState.on'), false);
 });
 
-test('import mode keeps the old start-up: the saved import reopens, SAP is not read, no dot', async () => {
+// 2v9 (owner): everything is live SAP data: a Data Source left on Import files opens on Live SAP, and the saved
+// upload (on the server or in this browser) is never reopened.
+test('a Data Source left on Import files opens on Live SAP; the saved import is not reopened', async () => {
   const site = liveSite();
   const page = await openLive(site, { storage: IMPORT, importFiles: [{ name: 'export.xls', bytes: sapExport([sapRow(), sapRow({ DocumentNumber: '501' })]) }], start: false });
   Object.assign(page.ctx, { CompressionStream, DecompressionStream });
   page.ctx.startApp();
-  await until(() => page.run('allLoadedRows.length') === 2, 'restore');
+  await until(() => page.run('liveState.status') === 'ok' && !page.run('liveState.busy'), 'live');
   await settle();
-  assert.ok(site.calls.includes('GET /api/report'), 'the shared report is asked for first');
-  assert.ok(!site.calls.some((c) => /\/api\/sap\/(kpi|supply)/.test(c)), 'SAP is not read');
-  assert.ok(site.calls.includes('GET /api/sap/status'), 'Load from SAP can still show on the load screen');
-  assert.ok(!header(page).includes('live-pulse'));
-  assert.equal(page.run('liveState.on'), false);
-  assert.deepEqual(page.timers.live(), []);
+  assert.equal(page.run("stgValue('dataSource')"), 'live');
+  assert.ok(!site.calls.includes('GET /api/report'), 'the uploaded report is not asked for');
+  assert.ok(site.calls.some((c) => /\/api\/sap\/kpi/.test(c)), 'SAP is read');
+  assert.ok(summary(page).files[0].startsWith('SAP_live'), 'live data, not the old export');
+  assert.match(header(page), /live-pulse ok/);
 });
 
 test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (refresh=1), and switching both ways', async () => {
@@ -455,15 +463,15 @@ test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (
   page.ctx.loadFromSap();
   await until(() => site.bridgeCalls.some((c) => c.path === '/api/reports/kpi?refresh=1') && !page.run('liveState.busy'), 'refresh now');
   assert.match(page.els['toast'].innerHTML, /Up to date: no changes in SAP\./);
-  // To import: live reading stops, the last import reopens, Settings stays open.
+  // To import: live reading stops, Settings stays open; 2v9 (owner): the last import is not reopened.
   page.run("stgSet('dataSource','import')");
-  await until(() => summary(page).files[0] === 'export.xls', 'import');
+  await settle();
   assert.equal(page.run('liveState.on'), false);
+  assert.equal(page.run('allLoadedRows.length'), 0, 'the old import is not reopened');
   assert.deepEqual(page.timers.live(), []);
   assert.equal(page.run('activeTab'), 'settings');
   assert.ok(!header(page).includes('live-pulse'));
-  assert.match(card(), />Upload files<\/button><button[^>]*>Add file<\/button><button[^>]*>New file<\/button>/);
-  assert.match(card(), /Loaded: export\.xls/);
+  assert.doesNotMatch(card(), /Loaded: export\.xls/);
   // And back: the kept live data shows and SAP is read again.
   page.run("stgSet('dataSource','live')");
   await until(() => page.run('liveState.status') === 'ok' && summary(page).files[0].startsWith('SAP_live'), 'live again');
@@ -500,5 +508,36 @@ test('X-Refreshed-At with a UTC offset or without one (older bridges: local time
   assert.equal(page.run("liveSig('a\\tb')"), page.run("liveSig('a\\tb')"));
   assert.notEqual(page.run("liveSig('a\\tb')"), page.run("liveSig('a\\tc')"));
 });
+
+// 2v9 (owner): a live read saves the data on screen for every browser (PUT /api/report?kind=live, at most every 30
+// minutes from one browser); a browser that has none of its own shows it when the bridge cannot be reached.
+test('the last live data is shared: saved after a live read, and shown by a new browser while the bridge is down', async () => {
+  const a = await openLive(liveSite(), { start: false });
+  Object.assign(a.ctx, { CompressionStream, DecompressionStream });
+  const siteA = liveSite();
+  Object.assign(a.ctx, { fetch: siteA.fetch });
+  a.ctx.startApp();
+  await until(() => page0Ok(a) && siteA.livePut, 'saved for every browser');
+  assert.ok(siteA.calls.includes('PUT /api/report?kind=live'));
+  // Within 30 minutes this browser does not send it again.
+  a.run('liveState.sig.kpi="changed";liveSave()');
+  await settle();
+  assert.equal(siteA.calls.filter((c) => c === 'PUT /api/report?kind=live').length, 1);
+  // A new browser, nothing kept, the bridge down: the server's copy shows, marked as the last live data.
+  const siteB = liveSite();
+  siteB.down = true;
+  siteB.liveBundle = siteA.livePut;
+  const b = await openLive(siteB, { start: false });
+  Object.assign(b.ctx, { CompressionStream, DecompressionStream });
+  b.ctx.startApp();
+  await until(() => !b.run('liveState.busy') && b.run('liveState.status') === 'down', 'down');
+  await settle();
+  assert.ok(summary(b).files[0].startsWith('SAP_live'), 'the last live data, from the server');
+  assert.ok(summary(b).rows > 0);
+  assert.ok(!siteB.calls.includes('GET /api/report'), 'never the uploaded report');
+  assert.match(b.run('liveStatusText().short'), /Showing data from/);
+  assert.deepEqual(b.errors, []);
+});
+const page0Ok = (p) => !p.run('liveState.busy') && p.run('liveState.status') === 'ok';
 
 run();

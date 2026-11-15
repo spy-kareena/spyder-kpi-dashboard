@@ -4,6 +4,9 @@
  * docs/IT_HOSTING_README.md). The password gate in functions/_middleware.js runs first.
  *   GET /api/report -> 200 report bundle (application/octet-stream), 204 when nothing is saved yet
  *   PUT /api/report -> saves a bundle and returns {savedAt, files, history}
+ *   ?kind=live (2v9, owner): the last LIVE SAP data instead (KV key 'live'), which the page reads when it opens and
+ *   SAP cannot be reached; a live bundle carries no at-risk history (live reads send theirs to /api/history). The
+ *   'report' key (uploaded exports) is no longer read when the page opens.
  * Bundle: 4-byte big-endian header length, a UTF-8 JSON header {v:1, savedAt, files:[{name, type,
  * lastModified, length}], atRisk?}, then each file's gzip bytes in header order. The server never reads the files.
  * Optional atRisk {asOf:'YYYY-MM-DD', keys:[rowKey, ...], counts?} lists the lines on the report's At Risk card
@@ -17,6 +20,7 @@
 import { readAtRisk, addHistoryWeek } from '../../shared/history.mjs';
 
 const KEY = 'report';
+const LIVE_KEY = 'live';
 // One Workers KV value holds at most 25 MiB; the gzip copy of a year of SO/PO lines is about 1.3 MB.
 const MAX_BYTES = 24 * 1024 * 1024;
 const MAX_FILES = 12;
@@ -29,9 +33,11 @@ export async function onRequest(context) {
   const store = env.REPORT_STORE;
   if (request.method !== 'GET' && request.method !== 'PUT') return json(405, { error: 'Use GET or PUT.' }, { Allow: 'GET, PUT' });
   if (!store) return json(503, { configured: false, error: 'Shared report storage is not set up on this site (REPORT_STORE).' });
+  const live = new URL(request.url).searchParams.get('kind') === 'live';
+  const key = live ? LIVE_KEY : KEY;
 
   if (request.method === 'GET') {
-    const saved = await store.get(KEY, { type: 'arrayBuffer' });
+    const saved = await store.get(key, { type: 'arrayBuffer' });
     if (!saved) return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
     return new Response(saved, {
       headers: {
@@ -57,9 +63,9 @@ export async function onRequest(context) {
   new DataView(out.buffer).setUint32(0, header.length);
   out.set(header, 4);
   out.set(parsed.data, 4 + header.length);
-  await store.put(KEY, out);
+  await store.put(key, out);
   const saved = { savedAt, files: parsed.files.map((f) => f.name) };
-  if (parsed.atRisk === undefined) return json(200, saved);
+  if (live || parsed.atRisk === undefined) return json(200, saved);
   if (parsed.atRisk.error) return json(200, { ...saved, history: { error: parsed.atRisk.error } });
   try {
     return json(200, { ...saved, history: { weeks: await addHistoryWeek(store, parsed.atRisk, savedAt) } });

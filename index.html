@@ -196,6 +196,10 @@ button{font-family:inherit}
 :focus-visible{outline:2px solid var(--ring);outline-offset:2px}
 /* Column headings and chart bars that take focus only to show their tip (wireTip): ring inside the scrolling table */
 th[data-tip-tab]:focus-visible,.col-bar[data-tip-tab]:focus-visible{outline-offset:-2px}
+/* 2v9 (owner): a .sup-tbl heading's text starts at its cell edge (the 12px between columns is the previous cell's
+   right padding), so its ring sits 6px into that gap instead of across the text */
+.sup-tbl th[data-tip-tab]:not(:first-child):focus-visible{outline:none;position:relative;overflow:visible}
+.sup-tbl th[data-tip-tab]:not(:first-child):focus-visible::after{content:"";position:absolute;inset:2px 6px 2px -6px;border:2px solid var(--ring);border-radius:6px;pointer-events:none}
 .muted{color:var(--gray-500)}
 /* Small status text uses the darker tone tokens (4.5:1); the bright tones stay for fills and large KPI values */
 .crit-text{color:var(--crit-text)}.warn-text{color:var(--warn-text)}.good-text{color:var(--good-text)}
@@ -1916,6 +1920,7 @@ body{background:var(--dz-page-base)}
 .dz-seg button{padding:7px 18px;border-radius:999px;border:0;font:inherit;background:transparent;color:var(--dz-seg-off-fg);white-space:nowrap;cursor:pointer;flex:none}
 .dz-seg button:hover{color:var(--dz-ink-1)}
 .dz-seg button.on{background:var(--dz-seg-on-bg);color:var(--dz-seg-on-fg)}
+.dz-seg button:focus-visible{outline-offset:0} /* 2v9 (owner): the ring stays inside the switch's 3-4px padding (it scrolls, so it clips) */
 
 /* Page head: 28px title with a muted line at the right (Order Health has a visually hidden title) */
 .dz-pagehead{position:relative;z-index:45;display:flex;justify-content:space-between;align-items:baseline;gap:6px 12px;flex-wrap:wrap}
@@ -2140,6 +2145,10 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .ohl-card table.ohl-lines td{padding:13px 8px;border-bottom:1px solid var(--dz-line-5);font-size:13px;color:var(--dz-ink-1)}
 .ohl-card table.lines-table.so.ohl-lines tr>:first-child{padding-left:0}
 .ohl-card table.lines-table.so.ohl-lines tr>:last-child{padding-right:0}
+/* 2v9 (owner): a hovered or picked line's tint (and the checkbox's focus ring) clear the checkbox and the Notes button:
+   the first and last cells keep 12px inside, headings too, so the columns stay lined up */
+.ohl-card table.lines-table.so.ohl-lines tr>:first-child{padding-left:12px}
+.ohl-card table.lines-table.so.ohl-lines tr>:last-child{padding-right:12px}
 .ohl-card table.ohl-lines tbody tr.line-row:last-child td{border-bottom:0}
 .ohl-card table.ohl-lines tbody tr.line-row:hover,.ohl-card table.ohl-lines tbody tr.line-row.editing{background:rgba(255,255,255,.55)}
 .ohl-card table.ohl-lines tbody tr.line-row.selected{background:var(--dz-indigo-bg)}
@@ -2166,6 +2175,9 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
   .ohl-lines-tools{width:100%}
   .ohl-card .lines-table>tbody>tr.line-row{padding:14px 0}
   .ohl-card .lines-table.so>thead th.c-check{padding:10px 0!important}
+  /* 2v9 (owner): as a card, a line's tint keeps 12px round the checkbox, value and Add note (Select all lines up) */
+  .ohl-card .lines-table>tbody>tr.line-row{padding-left:12px;padding-right:12px}
+  .ohl-card .lines-table.so>thead th.c-check{padding:10px 12px!important}
   .ohl-card .lines-table .note-editor,.ohl-card .lines-table.so .note-editor{padding:10px 0 14px}
   .ohl-card .lines-table.so.ohl-lines{min-width:0}
   .ohl-card table.ohl-lines td{padding:0}
@@ -2272,6 +2284,8 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 .stg-x{flex:none;width:28px;height:28px;border-radius:999px;border:0;background:transparent;color:var(--dz-ink-4);font-size:17px;line-height:1;cursor:pointer}
 .stg-x:hover{background:var(--dz-risk-bg,#fee2e2);color:var(--dz-risk-text,#b91c1c)}
 .stg-x:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+/* 2v9 (owner): the ring sat on the comment's own edge (and under the list's scroll edge); it rings the × inside its button */
+.stg-x:focus-visible{outline-offset:-2px}
 .stg-empty{font-size:12.5px;color:var(--dz-ink-4);padding:8px 0}
 .stg-add{display:flex;gap:8px;margin-top:12px}
 .stg-add .dz-pillinput{flex:1;min-width:0}
@@ -2921,6 +2935,10 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-tsub{margin-top:8px}
 .sup-scroll{overflow-x:auto;margin-top:12px;scrollbar-width:thin}
 .sup-scroll:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px;border-radius:6px}
+/* 2v9 (owner): Purchase Order Health and Supply: the scroll box reaches 4px past the table on each side (the table
+   does not move), so a ring at the table's edge (a Note button, a first heading) is not cut off */
+.sup-page .sup-scroll{padding-left:4px;padding-right:4px;margin-left:-4px;margin-right:-4px}
+.sup-page .sup-scroll.sup-heat{padding-top:4px;padding-bottom:4px;margin-top:12px;margin-bottom:-4px}
 .sup-tbl{width:100%;min-width:var(--min,1000px);border-collapse:collapse;table-layout:fixed;font-size:13px;color:var(--dz-ink-1)}
 .sup-tbl th{padding:10px 12px 10px 0;font-size:11.5px;font-weight:400;text-align:left;color:var(--dz-ink-4);border-bottom:1px solid var(--dz-line-8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sup-tbl td{padding:12px 12px 12px 0;border-bottom:1px solid var(--dz-line-5);vertical-align:middle;min-width:0;background:transparent}
@@ -3150,6 +3168,8 @@ button.sup-tile:hover{background:var(--dz-glass-80)}
 .sup-po th .po-th{max-width:100%;padding:2px 0;font-size:11.5px;font-weight:400;color:var(--dz-ink-4);border-radius:6px;white-space:nowrap}
 .sup-po th .po-th:hover{color:var(--dz-ink-2)}
 .sup-po th .po-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* 2v9 (owner): the heading cell clips its text; while its sort button has the ring it does not, so the ring shows whole */
+.sup-po th:has(.po-th:focus-visible),.por-tbl th:has(.por-th:focus-visible){overflow:visible}
 .sup-po th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
 .sup-po th .po-th:hover .sort-arrow,.sup-po th .po-th:focus-visible .sort-arrow{opacity:.5}
 .sup-po th[aria-sort] .po-th{color:var(--dz-indigo-deep);font-weight:500}
@@ -3430,6 +3450,12 @@ a.dz-btn.primary,a.dz-btn.primary:hover{color:#fff}
   .misc-flat .lines-table>tbody>tr.line-row{padding-left:0;padding-right:0}
   .misc-flat>.dz-card-head{gap:10px}
 }
+/* 2v9 (owner): search results: a hovered row's tint keeps 12px around its text (phones: around each line's card) */
+@media (min-width:641px){
+  .search-results .misc-flat .lines-table tr>:first-child,.search-results .misc-flat .data-table tr>:first-child{padding-left:12px}
+  .search-results .misc-flat .lines-table tr>:last-child,.search-results .misc-flat .data-table tr>:last-child{padding-right:12px}
+}
+@media (max-width:640px){.search-results .misc-flat .lines-table>tbody>tr.line-row{padding-left:12px;padding-right:12px}}
 .search-results mark{padding:0 2px;border-radius:4px;background:var(--dz-indigo-bg);color:var(--dz-indigo-deep);box-shadow:inset 0 0 0 1px rgba(var(--dz-indigo-rgb),.22)}
 
 /* ---------- Notes next to the page title: Data check and the shared-snapshot note ---------- */
@@ -4050,6 +4076,8 @@ button.ohgt-chip{margin:0;padding:6px 12px;border:1px solid var(--dz-line-8);bor
 button.ohgt-chip:hover{border-color:var(--dz-indigo)}
 button.ohgt-chip.on{background:var(--dz-indigo-bg);border-color:var(--dz-indigo);color:var(--dz-indigo);font-weight:600}
 button.ohgt-chip:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* 2v9 (owner): the ring sits inside the chip, so it does not run into the chart's top point label under it */
+button.ohgt-chip:focus-visible{outline-offset:-4px}
 .ohgt-tools{margin-left:auto}
 .ohgt-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:20px 28px}
 .ohgt-chart{min-width:0}
@@ -4065,6 +4093,8 @@ table.ohgt-tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-n
 .ohgt-tbl th{padding:8px 10px;text-align:left;font-size:12.5px;font-weight:500;color:var(--dz-ink-4);white-space:nowrap;border-bottom:1px solid var(--dz-line-8)}
 .ohgt-tbl td{padding:10px;border-bottom:1px solid var(--dz-line-6);white-space:nowrap;color:var(--dz-ink-2)}
 .ohgt-tbl tbody tr:last-child td{border-bottom:0}
+/* 2v9 (owner): a focused month's ring sits inside the row; outside it was cut at both ends by the scroll box */
+.ohgt-tbl tr[data-tip-tab]:focus-visible{outline-offset:-2px}
 .ohgt-tbl .num{text-align:right}
 .ohgt-tbl td.k{font-weight:600;color:var(--dz-ink-1)}
 .ohgt-tbl td.late{font-weight:600;color:var(--dz-risk-text)}
@@ -4120,6 +4150,11 @@ button.ohc3-n:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1p
 .ohl-fold>summary{display:flex;align-items:center;gap:10px;padding:14px 0;list-style:none;cursor:pointer;border-radius:8px}
 .ohl-fold>summary::-webkit-details-marker{display:none}
 .ohl-fold>summary:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* 2v9 (owner): the fold's ring sits inside its row, 8px clear of the chevron and the meta, so it does not run into the
+   heading under it; the focusable table inside rings itself inside too */
+.ohl-fold>summary{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
+.ohl-fold>summary:focus-visible{outline-offset:-2px}
+.ohl-fold .table-scroll:focus-visible{outline-offset:-2px}
 .ohl-fold>summary .dz-chev{flex:none;width:16px;height:16px;color:var(--dz-ink-4);transform:rotate(-90deg);transition:transform .2s ease}
 .ohl-fold[open]>summary .dz-chev{transform:none}
 .ohl-fold-t{margin:0}
@@ -4163,7 +4198,7 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 .po-step-of{font-size:11.5px;color:var(--dz-ink-4)}
 .po-step-s{font-size:12px;color:var(--dz-ink-4);font-variant-numeric:tabular-nums}
 .po-step-rows{display:flex;flex-direction:column;margin-top:2px;font-size:12.5px}
-.po-step-rows .po-own{width:100%;margin:0;padding:1px 0}
+.po-step-rows .po-own{width:calc(100% + 12px);margin:0 -6px;padding:1px 6px} /* 2v9 (owner): the tint keeps 6px around "Unconfirmed ··· 0" */
 .po-riskcard{display:flex;flex-direction:column}
 .po-riskcard.sel{box-shadow:inset 0 0 0 2px var(--dz-indigo)}
 .po-riskcard .po-risk-main{display:flex;flex-direction:column;align-items:flex-start;gap:4px;position:relative}
@@ -4184,7 +4219,7 @@ button.po-step-main:focus-visible,.po-riskcard .po-risk-main:focus-visible{outli
 .po-split i{display:block;height:100%}
 .po-kitscard .po-kitcm{margin-top:18px}
 @media (max-width:1180px){.po-v1top>.dz-span-4,.po-v1top>.dz-span-2{grid-column:span 6}}
-@media (max-width:900px){.po-qcol{grid-column:auto}.po-kgrid{grid-template-columns:minmax(0,1fr)}.po-kdiv{width:auto;height:1px}.po-strip2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}.po-step:nth-child(odd){padding-left:0}.po-step:nth-child(odd)::before{content:none}}
+@media (max-width:900px){.po-qcol{grid-column:auto}.po-kgrid{grid-template-columns:minmax(0,1fr)}.po-kdiv{width:auto;height:1px}.po-strip2{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}.po-step:nth-child(odd){padding-left:0}.po-step:nth-child(odd)::before{content:none}.po-step.sel:nth-child(odd){padding-left:10px}} /* 2v9 (owner): a picked step in the left column keeps 10px inside its tint, as the first does */
 @media (pointer:coarse){button.po-step-main,.po-step-rows .po-own{min-height:40px}}
 @media print{.po-v1top,.po-v1mid{break-inside:avoid}}
 /* 2v9:end po-v1 */
@@ -4387,6 +4422,17 @@ button.ohc2-name{display:flex;flex-direction:column;gap:5px;width:calc(100% + 12
 button.ohc2-name:hover{background:var(--dz-hover)}
 .ohc2-tr.sel button.ohc2-name{background:var(--dz-indigo-bg)}
 button.ohc2-name:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:1px}
+/* 2v9 (owner): highlights clear their contents. Every cell keeps 6px inside on the right (8px on the last), the first
+   column 6px on the left and the headings 4px over their words, so the name's hover / picked tint is not cut by the
+   scroll box, focus rings sit inside their cell clear of the text, and the All Customers band ends past its numbers and
+   bar; headings, rows and the total keep one column edge. */
+table.ohc2-tbl thead th,table.ohc2-tbl tbody th,table.ohc2-tbl td,table.ohc2-tbl tfoot th{padding-right:6px}
+table.ohc2-tbl tr>:last-child{padding-right:8px}
+table.ohc2-tbl :is(thead,tbody) tr>:first-child{padding-left:6px}
+table.ohc2-tbl thead th{padding-top:4px}
+.ohc3-tbl .ohc3-grp th{padding-top:4px;padding-bottom:4px}
+button.ohc2-name:focus-visible{outline-offset:-2px}
+.ohc2-tbl :is(th,td)[data-tip-tab]:focus-visible{outline-offset:-2px}
 .ohc2-label{font-size:14px;font-weight:500;color:var(--dz-ink-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ohc2-split{display:flex;height:3px;max-width:180px;border-radius:2px;background:var(--dz-fill-1);overflow:hidden}
 .ohc2-split i{display:block;height:100%}
@@ -4769,6 +4815,10 @@ button.ohl-pull-po:focus-visible{outline:2px solid var(--dz-indigo);outline-offs
 .ohl-sd th.num .ohs-th{flex-direction:row-reverse}
 .ohl-sd th .ohs-th:hover{color:var(--dz-ink-2)}
 .ohl-sd th .ohs-th:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
+/* 2v9 (owner): a heading's ring keeps 4px off its words and is no longer cut by the cell (it may paint 8px past it,
+   into the 12px between headings) */
+.ohl-sd .sup-sd th{overflow:clip;overflow-clip-margin:8px}
+.ohl-sd th .ohs-th:focus-visible{outline-offset:4px}
 .ohl-sd th .sort-arrow{display:inline-block;min-width:9px;font-size:11px;opacity:0;transition:opacity .15s}
 .ohl-sd th .ohs-th:hover .sort-arrow,.ohl-sd th .ohs-th:focus-visible .sort-arrow{opacity:.5}
 .ohl-sd th[aria-sort] .ohs-th{color:var(--dz-indigo-deep);font-weight:500}
@@ -5190,6 +5240,30 @@ a.dz-btn.shp-open:focus-visible,a.dz-btn.shp-open-t:focus-visible{outline:2px so
 .shp-pg[aria-disabled="true"],.shp-pg[aria-disabled="true"]:hover{opacity:.35;background:transparent;cursor:default}
 .shp-pg:focus-visible{outline:2px solid var(--dz-indigo);outline-offset:2px}
 .shp-pg-gap{min-width:16px;text-align:center;font-size:12.5px;color:var(--dz-ink-5)}
+/* 2v9 (owner): highlights clear their contents. The Shipments table scrolls sideways, so it keeps 14px (10px on a phone)
+   of room inside itself: the open row's tint and the focus rings were cut flush on the carrier logo and the open button.
+   A hovered or focused shipment tints / rings its whole line (Priority and the open button too), out to the open row's edge. */
+.shp-table{margin-left:-14px;margin-right:-14px;padding-left:14px;padding-right:14px}
+.shp-line{isolation:isolate}
+.shp-row>.shp-line:has(>.shp-head:hover)>.shp-head,.shp-row>.shp-line:has(>.shp-head:hover)>.shp-head:hover{background:transparent}
+.shp-row>.shp-line:has(>.shp-head:hover)::before{content:"";position:absolute;z-index:-1;inset:0 -14px;border-radius:12px;background:var(--dz-hover);pointer-events:none}
+.shp-line:has(>.shp-head:focus-visible)>.shp-head:focus-visible{outline:none}
+.shp-line:has(>.shp-head:focus-visible)::after{content:"";position:absolute;inset:2px -14px;border:2px solid var(--dz-indigo);border-radius:12px;pointer-events:none}
+/* Cross-Border and Delayed: the tint and the ring reach 12px past the text, between the hairlines */
+.shp-li{position:relative;isolation:isolate}
+.shp-list>.shp-li:hover{background:transparent}
+.shp-li:hover::before{content:"";position:absolute;z-index:-1;inset:0 -12px;border-radius:10px;background:var(--dz-hover);pointer-events:none}
+.shp-list>.shp-li:focus-visible{outline:none}
+.shp-li:focus-visible::after{content:"";position:absolute;inset:2px -12px;border:2px solid var(--dz-indigo);border-radius:10px;pointer-events:none}
+/* "· Updated …": the ring went round the dot and sat on "N shipments"; it now rings the time only */
+.shp-upd{position:relative}
+.shp-upd:focus-visible{outline:none}
+.shp-upd:focus-visible::after{content:"";position:absolute;inset:-3px -5px -3px 13px;border:2px solid var(--dz-indigo);border-radius:6px;pointer-events:none}
+@media (max-width:640px){
+  .shp-table{margin-left:-10px;margin-right:-10px;padding-left:10px;padding-right:10px}
+  .shp-row>.shp-line:has(>.shp-head:hover)::before{inset:0 -10px}
+  .shp-line:has(>.shp-head:focus-visible)::after{inset:2px -10px}
+}
 @media (max-width:980px){
   .shp-top>.shp-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -7592,6 +7666,28 @@ async function restoreSavedReport({keepView=false}={}){
   else sharedReport={state:shared===null?'local':'',savedAt:'',message:''};
   renderSidebar();
 }
+// 2v9 (owner): everything on screen is live SAP data. The page no longer reopens an uploaded report when it opens
+// (restoreSavedReport is not called at start or when switching to Import files); the last LIVE data is kept instead,
+// in this browser (liveSave) and on the server for every browser (GET / PUT /api/report?kind=live, KV key 'live'),
+// saved when a live read brings new data, at most every 30 minutes from one browser.
+const LIVE_SHARE_MS=30*60*1000,LIVE_SHARE_KEY='spyderKpiLiveShared';
+function shareLiveFiles(files){
+  if(isSnapshotView||!canShareReports()||!files.length)return Promise.resolve();
+  let last=0;try{last=Number(localStorage.getItem(LIVE_SHARE_KEY))||0;}catch(err){}
+  if(Date.now()-last<LIVE_SHARE_MS)return Promise.resolve();
+  try{localStorage.setItem(LIVE_SHARE_KEY,String(Date.now()));}catch(err){}
+  return packReport(files).then(body=>fetch('/api/report?kind=live',{method:'PUT',headers:{'content-type':'application/octet-stream'},body})).catch(()=>{});
+}
+// The last live data on the server: {savedAt, files}, or null (none, or no server storage here).
+async function fetchSharedLive(){
+  if(isSnapshotView||!canShareReports())return null;
+  try{
+    const res=await fetch('/api/report?kind=live',{cache:'no-store'});
+    if(res.status!==200||!/octet-stream/.test(res.headers.get('content-type')||''))return null;
+    const r=await unpackReport(await res.arrayBuffer());
+    return r&&Array.isArray(r.files)&&r.files.length?r:null;
+  }catch(err){console.warn('Shared live data not read:',err);return null;}
+}
 // --- Live SAP (2v6.7) ---
 // When the site has a SAP bridge (functions/api/sap, github.com/DavidP-M/SAP-app), Load from SAP reads the KPI query and
 // the supply / demand snapshot straight from SAP B1 and loads them exactly like uploaded exports: the same parsing,
@@ -7670,7 +7766,7 @@ async function loadFromSap(){
 }
 // --- Live SAP by default (2v6.8) ---
 // Settings > Data Source: 'live' (the default) reads SAP through the bridge when the page opens and every 5 minutes
-// while it is visible; 'import' is the file upload of before (the last import reopens). The last good live read (its
+// while it is visible; 'import' is the file upload of before (2v9: for that visit only; no upload is reopened). The last good live read (its
 // files, a Clear To Build workbook or Logican sheet added to it, and its refresh time) is kept in this browser
 // (IndexedDB 'spyderKpiLive', apart from the import copy): it shows at once on the next visit, and stays on screen
 // whenever SAP cannot be read, until a live read works again. Live reads are never saved to the shared report store.
@@ -7747,14 +7843,25 @@ function liveStore(mode,use){
 function liveSave(){
   if(!liveMode()||!liveState.sig.kpi||!loadedFiles.length)return Promise.resolve();
   const rec={v:1,files:loadedFiles.slice(),dataAt:liveState.dataAt,sig:{...liveState.sig}};
+  shareLiveFiles(rec.files);
   return liveStore('readwrite',store=>store.put(rec,'last')).catch(err=>console.warn('Live data not kept for the next visit:',err));
 }
 // The last live data kept in this browser, shown while SAP is read. true when it was loaded.
+// 2v9 (owner): the newer of this browser's copy and the server's (another browser's last live read), so a browser that
+// never read SAP, or read it long ago, still shows the last live data when SAP cannot be reached.
+// Settings is open on screen (switching Data Source there): data that arrives keeps Settings open.
+function liveOnSettings(){
+  try{return activeTab==='settings'&&document.getElementById('results-screen').style.display==='block';}catch(err){return false;}
+}
 async function liveShowStored(){
   let rec=null;
-  try{rec=await liveStore('readonly',store=>store.get('last'));}catch(err){console.warn('Last live data not read:',err);}
+  const [local,shared]=await Promise.all([liveStore('readonly',store=>store.get('last')).catch(err=>{console.warn('Last live data not read:',err);return null;}),fetchSharedLive()]);
+  rec=local&&Array.isArray(local.files)&&local.files.length?local:null;
+  // When it was saved (else the newest of its files' own times).
+  const sharedAt=shared?Date.parse(shared.savedAt)||Math.max(0,...shared.files.map(f=>Number(f.lastModified)||0)):0;
+  if(shared&&(!rec||sharedAt>(Number(rec.dataAt)||0)+60000))rec={v:1,files:shared.files,dataAt:sharedAt,sig:{kpi:`shared:${shared.savedAt}`,sd:''}};
   if(!rec||!Array.isArray(rec.files)||!rec.files.length||!liveState.on)return false;
-  const ok=await handleFiles(rec.files,{restoring:true,live:true,keepView:hasLoadedData()});
+  const ok=await handleFiles(rec.files,{restoring:true,live:true,keepView:hasLoadedData()||liveOnSettings()});
   if(!ok)return false;
   liveState.sig={kpi:String(rec.sig&&rec.sig.kpi||''),sd:String(rec.sig&&rec.sig.sd||'')};
   liveState.dataAt=Number(rec.dataAt)||0;
@@ -7809,7 +7916,7 @@ async function liveRead({manual=false}={}){
     if(!same){
       // Clear To Build and the Logican sheet stay; the SAP data is replaced (supply / demand only when it came).
       const keep=loadedFiles.filter(f=>{const k=sapFileKind(f);return k==='cm'||k==='ctb'||(k==='sd'&&!sd);});
-      const ok=await handleFiles([liveFileOf(kpi),...(sd?[liveFileOf(sd)]:[]),...keep],{restoring:true,live:true,keepView:!first});
+      const ok=await handleFiles([liveFileOf(kpi),...(sd?[liveFileOf(sd)]:[]),...keep],{restoring:true,live:true,keepView:!first||liveOnSettings()});
       if(!ok)throw new Error('the live data could not be read');
       liveState.sig={kpi:sig.kpi,sd:sd?sig.sd:keep.some(f=>sapFileKind(f)==='sd')?liveState.sig.sd:''};
       if(!sd&&(first||manual))showToast(keep.some(f=>sapFileKind(f)==='sd')?'The supply / demand snapshot could not be read; the one loaded before stays.':'The supply / demand snapshot could not be read, so the supply pages have no data for now.');
@@ -7991,7 +8098,7 @@ function liveRender(){
   const said=`${liveStatusText().line}|${liveState.busy}|${liveState.message}|${liveState.on}`;
   if(activeTab==='settings'&&results&&results.style.display==='block'&&said!==liveSettingsShown){liveSettingsShown=said;renderResults();}
 }
-// Settings > Data Source changed. To import: live reading stops and the last import reopens (or the load screen).
+// Settings > Data Source changed. To import: live reading stops and the load screen shows (2v9: no upload reopens).
 // To live: the last live data shows and SAP is read.
 function liveSwitch(){
   if(liveMode()){
@@ -8010,7 +8117,9 @@ function liveSwitch(){
   sapLiveCheck();
   liveRender();
   const onSettings=activeTab==='settings'&&document.getElementById('results-screen').style.display==='block';
-  restoreSavedReport({keepView:onSettings}).then(()=>{if(!hasLoadedData()&&!onSettings)showUpload();liveRender();});
+  // 2v9 (owner): an uploaded report is never reopened: Import files starts from the load screen.
+  if(!hasLoadedData()&&!onSettings)showUpload();
+  liveRender();
 }
 // live: a read from Live SAP (never saved to the shared report or the import copy; failures stay quiet).
 // keepView: a report replaced in place (a live update): the page, filters and scroll stay, no loading screen.
@@ -22403,7 +22512,14 @@ renderUploadPages();
 // A shared snapshot opens its own data; otherwise the last report saved in this browser reopens.
 // Shared notes and the at-risk history load next to the report (see Stream B: shared notes).
 // Live mode (Settings > Data Source, the default) reads SAP instead of reopening the last import (liveStart).
-function startApp(){loadEmbeddedSnapshot();if(liveMode())liveStart();else restoreSavedReport();syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}}
+// 2v9 (owner): the page always opens on Live SAP: a Data Source left on Import files goes back to Live SAP, and no
+// uploaded report is reopened (Import files stays for uploading by hand, for that visit).
+function startApp(){
+  loadEmbeddedSnapshot();
+  if(!isSnapshotView&&stgValue('dataSource')==='import'){const next={...stgStore()};delete next.dataSource;stgWrite(next);}
+  if(liveMode())liveStart();
+  syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startApp);
 else startApp();
 </script>
