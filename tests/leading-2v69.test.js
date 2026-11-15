@@ -429,7 +429,7 @@ test('Customers at risk is one ranked table against each customer\'s own open or
   const n = cols.map((c) => +c[2]);
   assert.deepEqual(n, [2, 1], 'biggest set first');
   assert.ok(/<i class="ohu-dot on" style="--rc:#[0-9a-f]{6}"><\/i>/.test(ups), 'dots mark the reasons in each set, in their reason\'s colour (2v9, option 1)');
-  assert.match(ups, /<span class="ohu-bar">(<i style="background:#[0-9a-f]{6}"><\/i>)+<\/span>/, 'each bar in its reasons\' colours');
+  assert.ok(ups.includes('<span class="ohu-bar"></span>'), 'the bars are one solid colour (owner)');
   assert.match(ups, /<i class="ohu-key" style="background:#[0-9a-f]{6}" aria-hidden="true"><\/i><span class="ohu-nm">/, 'a colour key beside each name');
   // A column lists exactly its lines, and the filter chip names the set.
   const key = cols[0][1].replace(/&quot;/g, '"').replace(/&amp;/g, '&');

@@ -4055,10 +4055,9 @@ button.ohu-col:hover,button.ohu-col.sel{background:var(--dz-indigo-bg)}
 .ohu-barbox{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;padding-top:2px}
 .ohu-n{font-size:11.5px;font-weight:650;color:var(--dz-ink-1);font-variant-numeric:tabular-nums;line-height:1}
 .ohu-bar{width:min(18px,70%);height:calc((var(--bar) - 20px) * var(--h));min-height:3px;border-radius:4px 4px 2px 2px;background:var(--dz-indigo);opacity:.85}
-/* 2v9 (owner, option 1): the bar in its reasons' colours, one segment each; the dots in their reason's colour, joined
-   by a light grey line; a colour key beside each reason's name */
-.ohu-bar{display:flex;flex-direction:column;gap:1.5px;overflow:hidden;background:none;opacity:1}
-.ohu-bar>i{flex:1 1 0;min-height:1px;display:block}
+/* 2v9 (owner, option 1): the bars one solid colour, the board's indigo as in its other charts; the dots in their
+   reason's colour, joined by a light grey line; a colour key beside each reason's name */
+.ohu-bar{opacity:1}
 .ohu-key{flex:none;width:9px;height:9px;border-radius:50%}
 .ohu-dots .ohu-link{background:var(--dz-ink-6)}
 .ohu-dots{position:relative;display:grid;grid-template-rows:repeat(var(--rows),var(--rh));justify-items:center;align-items:center}
@@ -21966,7 +21965,7 @@ function ohlStatusCard(c){
 // Top reasons (one half of the "Why, and when?" card): which reasons come together on the at-risk lines.
 // 2v9 (owner's pick, option 1): a colour per reason, fixed so a reason keeps its colour whatever the filters (the six
 // most common from the board's validated chart colours, the rarer ones after them; any other reason a steady colour of
-// its own). The dots, the bar segments and the key beside each name use it.
+// its own). The dots and the key beside each name use it; the bars stay one solid colour (owner).
 const OHU_REASON_COLOR={'Supply shortage':'#3d7cf5','Unconfirmed':'#f06a24','Past due · No reschedule':'#17a467','Rescheduled later':'#b54ee0','Missed commit':'#e43e5a','No commit date':'#e5a100','Customer reschedule':'#10a5c6','Rescheduled':'#7a8ca8','CM commit late':'#a0703c'};
 const OHU_MORE_COLORS=['#6d7fe0','#c9568a','#4f9a8a','#9a7b4f'];
 function ohuColor(label){
@@ -21989,11 +21988,9 @@ function ohlReasonsBlock(c){
   const cols=setsShown.map(x=>{
     const on=weeklyReasonFilter===x.key,h=Math.max(.04,x.lines/maxN).toFixed(3);
     const dots=rowsUsed.map(l=>x.labels.includes(l)?`<i class="ohu-dot on" style="--rc:${ohuColor(l)}"></i>`:'<i class="ohu-dot"></i>').join('');
-    // The bar: one segment per reason in the set, top to bottom in the rows' order.
-    const segs=rowsUsed.filter(l=>x.labels.includes(l)).map(l=>`<i style="background:${ohuColor(l)}"></i>`).join('');
     const first=rowsUsed.findIndex(l=>x.labels.includes(l)),last=rowsUsed.length-1-[...rowsUsed].reverse().findIndex(l=>x.labels.includes(l));
     return `<button type="button" class="ohu-col${on?' sel':''}" style="--h:${h};--a:${first};--b:${last}" data-focus-key="oh-rset-${esc(x.key)}" aria-pressed="${on}" onclick="${esc(`setWeeklyReasonFilter(${dzJs(x.key)})`)}"${tipAttr(ohlTip(setName(x),[`${ohN(x.lines,'line')}, ${ohN(x.orders,'order')}`,`${money(x.value)} at risk`],on?'Click to show every at-risk line again.':'Click to list them.'))}>
-      <span class="ohu-barbox"><span class="ohu-n">${fmtNum(x.lines)}</span><span class="ohu-bar">${segs}</span></span>
+      <span class="ohu-barbox"><span class="ohu-n">${fmtNum(x.lines)}</span><span class="ohu-bar"></span></span>
       <span class="ohu-dots">${x.labels.length>1?'<span class="ohu-link"></span>':''}${dots}</span></button>`;
   }).join('');
   const names=rowsUsed.map(l=>{const r=byLabel.get(l),on=!!(r&&r.on);
