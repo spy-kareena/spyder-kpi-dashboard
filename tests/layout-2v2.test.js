@@ -427,7 +427,7 @@ test('override names show in the owner\'s words everywhere; stored values, saved
   // the row and its tip; the filter value is the stored one.
   page.run("setWeeklyWarehouseFilter(['CM - DSM'])");
   const bar = html(page).match(/<button type="button" class="ohu-name[^"]*" data-focus-key="oh-reason-Supply Chain"[\s\S]*?<\/button>/)[0];
-  assert.match(bar, /onclick="setWeeklyReasonFilter\(&quot;Supply Chain&quot;\)" data-tip="Supply Chain Delay\n• 1 line, 1 order with this reason\n• \$4,000 at risk\nClick to list every line with this reason\.\"><span class="ohu-nm">Supply Chain Delay<\/span>/);
+  assert.match(bar, /onclick="setWeeklyReasonFilter\(&quot;Supply Chain&quot;\)" data-tip="Supply Chain Delay\n• 1 line, 1 order with this reason\n• \$4,000 at risk\nClick to list every line with this reason\.\"><i class="ohu-key"[^>]*><\/i><span class="ohu-nm">Supply Chain Delay<\/span>/);
   assert.doesNotMatch(bar, />Supply Chain</);
   page.run("setWeeklyWarehouseFilter(['ALL'])");
   // The chip, the line's status cell (first reason, other reasons) and the note button tip.
