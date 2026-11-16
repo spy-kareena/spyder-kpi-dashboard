@@ -2727,6 +2727,8 @@ a.dz-btn{text-decoration:none}
 .shp-note-f .dz-pillinput{width:100%}
 .shp-msg{flex-basis:100%;font-size:12.5px;color:var(--dz-ink-3)}
 .shp-msg:empty{display:none}
+/* 2v9 (owner): AfterShip's status is in use, so the hand-set fields rest, dimmed, under its note. */
+.shp-update.off .dz-pillinput{opacity:.55;cursor:default}
 .shp-lines{overflow-x:auto;border:1px solid var(--dz-line-6);border-radius:14px;background:rgba(255,255,255,.7)}
 .shp-lines table{width:100%;min-width:620px;border-collapse:collapse;font-size:12.5px}
 .shp-lines th{padding:9px 12px;border-bottom:1px solid var(--dz-line-8);font-size:11.5px;font-weight:400;text-align:left;color:var(--dz-ink-4)}
@@ -18852,12 +18854,14 @@ function bigPictureMemory(){
 function rememberBigPicture(tab,on){
   try{localStorage.setItem(BIG_PICTURE_KEY,JSON.stringify({...bigPictureStored(),[tab]:!!on}));}catch(err){}
 }
-// --- 2v4 ship: Shipping (AfterShip every 2 hours, hand-set statuses as an override) ---
+// --- 2v4 ship: Shipping (AfterShip every 2 hours; a hand-set status only where AfterShip has none) ---
 // The Shipping page lists the sales deliveries in the export that carry a tracking number (TrackingNumber = SAP
-// ODLN.TrackNo, ShipMethod = the delivery's shipping type), for any carrier, plus numbers added by hand. On the hosted
-// site the scheduled Worker (workers/shipping-poller, shared/aftership.mjs) asks AfterShip every 2 hours and the page
-// reads the results from /api/shipping (2v8 ship below). A status can also be set by hand (Shipped / In transit /
-// Delayed / Delivered, a date and a short note) for numbers AfterShip cannot track; a newer AfterShip status wins.
+// ODLN.TrackNo, ShipMethod = the delivery's shipping type), for any carrier, plus numbers added by hand. Their tracking
+// comes from AfterShip (owner, 2v9): on the hosted site the scheduled Worker (workers/shipping-poller,
+// shared/aftership.mjs) asks AfterShip every 2 hours and the page reads the results from /api/shipping (2v8 ship below).
+// AfterShip comes first: whenever it has a status for a number, that status is used, however new a hand-set one is. A
+// status can be set by hand (Shipped / In transit / Delayed / Delivered, a date and a short note) for numbers AfterShip
+// has no status for (not checked yet, not recognised, or still Pending with no carrier scan: freight it cannot follow).
 // Hand-set statuses are saved in the shared notes store (sharedNotesPatchShipments, id 'st:<number>'), so everyone who
 // signs in sees them; on a static host or a file they stay in this browser (localStorage spyderKpiShipmentsV1). The
 // page cards (in transit, delayed, delivered this week, not delivered; 2v6.9 priority) and the progress strip come from those
@@ -18872,7 +18876,7 @@ const SHIP_STATUS_PREFIX='st:';    // shared-store id of a shipment's manual sta
 const SHIP_PRIORITY_PREFIX='pr:';  // 2v6.9: shared-store id of a shipment's Priority tick: 'pr:<tracking number>'
 const SHIP_WINDOW_DAYS=30;         // deliveries shipped this many days before the export date are listed
 const SHIP_MANUAL_DAYS=45;         // numbers added by hand are listed this long
-const SHIP_STALE_DAYS=2;           // not delivered and no AfterShip or hand update for this many days -> "No update in 2+ days"
+const SHIP_STALE_DAYS=2;           // not delivered and no update to the status in use for this many days -> "No update in 2+ days"
 const SHIP_HOME_COUNTRY='CA';      // shipments leave Canada
 // 2v6.9: rows per page (Shipments table, Cross-border and Delayed lists); print shows every row.
 const SHP_PAGE_SIZE={list:10,cross:5,delayed:5};
@@ -19057,7 +19061,7 @@ function shippingRemoveManual(number){
   shpAsQueueSend();
   if(typeof showToast==='function')showToast(`Removed ${n}.`);
 }
-// Saves a hand-set status (it counts until AfterShip has a newer one).
+// Saves a hand-set status (it counts only while AfterShip has no status for the number).
 function shippingSetStatus(number,{status,statusDate='',note=''}={}){
   const n=shipClean(number);
   if(!n||!SHIP_STATUS_OPTIONS.includes(status)||isSnapshotView)return false;
@@ -19073,6 +19077,9 @@ function shippingStatusSubmit(ev,number){
   const status=String(get('ship-st')&&get('ship-st').value||'');
   const statusDate=String(get('ship-sd')&&get('ship-sd').value||'').trim();
   const note=String(get('ship-sn')&&get('ship-sn').value||'');
+  // AfterShip has a status for it: that one is used, so a hand-set one would change nothing.
+  const s=shippingRealList().find(x=>x.number===n);
+  if(s&&s.asFirm){say(SHP_AS_IN_USE);return false;}
   if(!SHIP_STATUS_OPTIONS.includes(status)){say('Pick a status: Shipped, In transit, Delayed or Delivered.');return false;}
   if(statusDate&&!SHIP_DATE_RE.test(statusDate)){say('Type the date as YYYY-MM-DD, or leave it blank.');return false;}
   if(!shippingSetStatus(n,{status,statusDate,note}))return false;
@@ -19128,38 +19135,42 @@ function shippingExportData(){
 function shippingHasTrackingColumn(){
   return ['trackingnumber','trackno','tracknumber','trackingno'].some(h=>exportHeaders.has(h))||allLoadedRows.some(r=>r&&r.trackingNumber);
 }
-// Adds the status and what the page shows: strip position, delayed mark, stale flag, cross-border, promised. hand is
-// the status set by hand, as the AfterShip one (shared/aftership.mjs); the newer of the two wins (an AfterShip status
-// with no carrier event yet only counts when nobody set one by hand). mark is the one shown, with its source.
+// Adds the status and what the page shows: strip position, delayed mark, stale flag, cross-border, promised. as is the
+// AfterShip status (shared/aftership.mjs), hand the status set by hand. AfterShip comes first (owner, 2v9): whenever
+// it has a status for the number, that one is used, however new a hand-set one is. A hand-set status counts only while
+// AfterShip has none: not checked yet, not recognised (notFound / error), no state, or Pending with no carrier scan
+// (AfterShip still waiting for the carrier, as with freight it cannot follow). mark is the one used, with its source;
+// asFirm: AfterShip's status is in use and a hand-set one cannot replace it.
 function shippingDecorate(s,hand,now,as){
-  const asState=as&&SHIP_STATUS_OPTIONS.includes(as.state)?as.state:'';
-  const asAt=as?Date.parse(as.changedAt||''):NaN;
-  const handAt=hand?Date.parse(hand.at||''):NaN;
-  const useAs=!!asState&&(!hand||(isFinite(asAt)&&(!isFinite(handAt)||asAt>=handAt)));
+  const asState=as&&!as.notFound&&!as.error&&SHIP_STATUS_OPTIONS.includes(as.state)?as.state:'';
+  const asFirm=!!asState&&!(as.tag==='Pending'&&!as.lastEvent&&!as.changedAt);
+  const useAs=!!asState&&(asFirm||!hand);
+  const asAt=useAs?Date.parse(as.changedAt||''):NaN;
   const day=v=>{const m=/^\d{4}-\d{2}-\d{2}/.exec(String(v||''));return m?m[0]:'';};
   const mark=useAs?{status:asState,statusDate:day(asState==='delivered'?as.deliveredAt:as.lastEvent&&as.lastEvent.at),note:shpAsNote(as),by:'AfterShip',at:isFinite(asAt)?String(as.changedAt):'',source:'aftership'}
     :hand?{...hand,source:'hand'}:null;
   const status=mark?mark.status:'';
   const pos=status==='delivered'?2:status==='transit'||status==='delayed'?1:0;
-  // Last update: the newest hand-set or AfterShip change. "No update in 2+ days" also counts from the ship date (or
-  // when the number was added by hand), so a shipment that left yesterday is not flagged yet.
-  const updates=[handAt,asAt].filter(t=>isFinite(t));
-  const updatedAt=updates.length?Math.max(...updates):null;
+  // Last update: when the status in use last changed (AfterShip's newest carrier scan, or when it was set by hand).
+  // "No update in 2+ days" also counts from the SAP ship date (or when the number was added by hand), so a shipment
+  // that left yesterday is not flagged yet.
+  const markAt=mark?Date.parse(mark.at||''):NaN;
+  const updatedAt=isFinite(markAt)?markAt:null;
   const manualAt=s.manual?Date.parse(s.manual.at||''):NaN;
   const since=Math.max(updatedAt??-Infinity,s.shipDate?+s.shipDate:-Infinity,isFinite(manualAt)?manualAt:-Infinity);
   const stale=status!=='delivered'&&(!isFinite(since)||now-since>=SHIP_STALE_DAYS*SHIP_DAY);
-  const dest=String(s.country||'').toUpperCase();
+  const to=shipToPlace(s,as);
+  // Cross-border: AfterShip's destination country when it has one, else the SAP ship-to country.
+  const dest=to.country||String(s.country||'').toUpperCase();
   const crossBorder=!!dest&&dest!==SHIP_HOME_COUNTRY;
   // Promised: the earliest working date of the lines on the delivery (reschedule date, else line delivery date).
   const promisedTimes=(s.rows||[]).map(r=>parseDate(r.effectiveDueDate)||parseDate(r.lineDueDate)||parseDate(r.dueDate)).filter(Boolean).map(d=>d.getTime());
   const promised=s.promised||(promisedTimes.length?new Date(Math.min(...promisedTimes)):null);
   const statusDay=mark&&mark.statusDate?parseDate(mark.statusDate):null;
-  const markAt=mark?Date.parse(mark.at||''):NaN;
   const deliveredDate=status==='delivered'?(statusDay||(isFinite(markAt)?new Date(markAt):null)):null;
   const lateDays=promised&&deliveredDate?daysBetweenDates(promised,deliveredDate):null;
-  const eta=as&&as.eta&&status!=='delivered'?parseDate(day(as.eta)):null;
-  const to=shipToPlace(s,as);
-  return {...s,mark,hand:hand||null,as:as||null,status,pos,marker:status==='delayed',stale,checkedAt:updatedAt,crossBorder,dest,promised,deliveredDate,lateDays,eta,customer:s.customer||[...(s.names||[])][0]||'',toCity:to.city,toRegion:to.region,toCountry:to.country,toFrom:to.from};
+  const eta=useAs&&as.eta&&status!=='delivered'?parseDate(day(as.eta)):null;
+  return {...s,mark,hand:hand||null,as:as||null,asFirm,status,pos,marker:status==='delayed',stale,checkedAt:updatedAt,crossBorder,dest,destFrom:to.country?'AfterShip':dest?'SAP':'',promised,deliveredDate,lateDays,eta,customer:s.customer||[...(s.names||[])][0]||'',toCity:to.city,toRegion:to.region,toCountry:to.country,toFrom:to.from};
 }
 function shippingWeek(now){
   const weekStart=new Date(now);weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
@@ -19377,7 +19388,7 @@ function shpAsSendWanted(){
 // --- Rendering ---
 // 2v6 layout: filter row (carrier, customer, Add tracking #), status tiles, delivery map, Shipments table with the
 // three-segment progress bar, and the Cross-border / Delayed lists. Statuses come from AfterShip (read from
-// /api/shipping) or are set by hand; nothing here asks a carrier.
+// /api/shipping), or are set by hand where AfterShip has none; nothing here asks a carrier.
 
 // --- Delivery map ---
 // SHIP_MAP.land and .borders are the 110m Natural Earth land and interior country borders of the world-atlas package
@@ -19513,28 +19524,34 @@ function shipLocParts(v){
   const region=String(parts[1]||'').replace(/\s+(\d{5}(-\d{4})?|[A-Z]\d[A-Z]\s?\d[A-Z]\d)$/i,'').trim();
   return {city:parts[0]||'',region,country};
 }
+// The country a US state or Canadian province (code or name) is in ('' when it names neither).
+function shipRegionCountry(v){
+  const t=String(v||'').trim();
+  return !t?'':shipRegionKey('US',t)?'US':shipRegionKey('CA',t)?'CA':'';
+}
 // Where a shipment goes on the map (owner, 2v6.9 cities): AfterShip's destination only, not SAP's address. The carrier's
 // destination city and state, else its destination as written (destRaw), else once delivered the place of the delivery
-// scan, else AfterShip's destination state or country. The country is AfterShip's; the SAP ship-to country only helps find a city AfterShip names without one.
+// scan, else AfterShip's destination state or country. The country is AfterShip's, else the one its US state or
+// Canadian province names; never the SAP ship-to country (owner, 2v9: the map is AfterShip's alone).
 // {city, region, country (two letters), from: 'AfterShip' | ''}; nothing until AfterShip has checked the number.
 function shipToPlace(s,as){
   const none={city:'',region:'',country:'',from:''};
   if(!as||as.notFound)return none;
   // A country AfterShip names that the page does not know: no place (never SAP's country instead).
   if(String(as.destCountry||'').trim()&&!shipCountryCode(as.destCountry))return none;
-  const asCc=shipCountryCode(as.destCountry),cc=asCc||shipCountryCode(s&&s.country);
+  const asCc=shipCountryCode(as.destCountry),cc=asCc||shipRegionCountry(as.destState);
   const from='AfterShip';
   if(as.destCity)return {city:String(as.destCity),region:String(as.destState||''),country:cc,from};
   // The destination as the carrier writes it ("ELKHART, IN, US"), when AfterShip has no city of its own.
   if(as.destRaw){
-    const p=shipLocParts(as.destRaw),pc=p.country?shipCountryCode(p.country):cc;
+    const p=shipLocParts(as.destRaw),pc=p.country?shipCountryCode(p.country):cc||shipRegionCountry(p.region);
     if(p.city&&pc)return {city:p.city,region:p.region||String(as.destState||''),country:pc,from};
   }
   if(as.state==='delivered'&&as.lastEvent&&as.lastEvent.city){
-    const p=shipLocParts(as.lastEvent.city),pc=p.country?shipCountryCode(p.country):cc;
+    const p=shipLocParts(as.lastEvent.city),pc=p.country?shipCountryCode(p.country):cc||shipRegionCountry(p.region);
     if(p.city&&pc)return {city:p.city,region:p.region,country:pc,from};
   }
-  if(asCc)return {city:'',region:String(as.destState||''),country:asCc,from};
+  if(cc)return {city:'',region:String(as.destState||''),country:cc,from};
   return none;
 }
 // The place key of a shipment: its AfterShip destination city ('US-IN:elkhart') when the table has it, else that
@@ -19908,7 +19925,11 @@ function shpAsRefreshAll(){
       if(typeof showToast==='function')showToast(text);else if(typeof announce==='function')announce(text);
     });
 }
-function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:'No status';}
+// No status: 'Not tracked' when AfterShip does not recognise the number (and nobody set one by hand), else 'No status'.
+function shipStatusLabel(s){return s.status?SHIP_STATUS_TEXT[s.status]:shpAsUntracked(s)?'Not tracked':'No status';}
+const shpAsUntracked=s=>!!(s&&s.as&&(s.as.notFound||s.as.error));
+// The note the Update status form shows while AfterShip's status is in use.
+const SHP_AS_IN_USE='AfterShip’s status is in use.';
 function shipLateText(days){
   if(days===null||days===undefined)return '';
   return days>0?`${shipPlural(days,'day','days')} late`:days<0?`${shipPlural(-days,'day','days')} early`:'on time';
@@ -20299,8 +20320,8 @@ function renderShipRow(s,idx=0){
   const stage=s.status?s.pos+1:1;
   const tone=s.status==='delayed'?'red':s.status==='delivered'?'teal':'';
   const stTone=s.status==='delayed'?' late':s.status==='delivered'?' done':!s.status?' warn':'';
-  const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:'No status yet.';
-  const tipText=`${n} (${shipCarrier(s)}): ${shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}. Click to ${open?'hide':'show'} details.`;
+  const stepText=s.status?`Step ${s.pos+1} of ${SHIP_STAGES.length}: ${SHIP_STATUS_TEXT[s.status]}.`:shpAsUntracked(s)?'Not tracked by AfterShip.':'No status yet.';
+  const tipText=`${n} (${shipCarrier(s)}): ${!s.status&&shpAsUntracked(s)?'Not tracked by AfterShip':shipStateLabel(s)}${s.mark&&s.mark.note?`, ${s.mark.note}`:''}. Click to ${open?'hide':'show'} details.`;
   const i=Math.min(idx,14);
   const progTip=s.status==='delivered'&&shipLateText(s.lateDays)?`Delivered ${shipLateText(s.lateDays)}.`:'';
   const loc=shpLastLocation(s);
@@ -20327,18 +20348,20 @@ function shippingLinkedRows(s){
   const docs=s.deliveries;
   return allLoadedRows.filter(r=>r&&!r.isDeleted&&shipIsSales(r)&&isShipmentRow(r)&&docs.has(String(r.deliveryDocNumber||'').trim()));
 }
+// Update status (owner, 2v9: for shipments AfterShip cannot track). While AfterShip has a status for the number the
+// form stays, its fields off, with a note that AfterShip's status is in use.
 function renderShipUpdateForm(s){
   if(isSnapshotView)return '';
-  const n=s.number,m=s.hand||{};
+  const n=s.number,m=s.hand||{},off=s.asFirm?' disabled':'';
   const opts=SHIP_STATUS_OPTIONS.map(k=>`<option value="${k}"${(m.status||'')===k?' selected':''}>${esc(SHIP_STATUS_TEXT[k])}</option>`).join('');
   const where=shippingSharedStore()?'shared with everyone':'kept in this browser';
-  return `<form class="shp-update print-hide" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
-      <span class="shp-update-t"${tipAttr(`Set a status by hand (${where}); a newer AfterShip update replaces it.`)}>Update status</span>
-      <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${tipAttr('Shipped, In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
-      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${tipAttr('Delivery date for Delivered, else today.')}></label>
-      <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${tipAttr('Short note anyone can read (200 characters max).')}></label>
-      <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${tipAttr(`Save this status (${where}).`)}>Save</button>
-      <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status"></span>
+  return `<form class="shp-update print-hide${s.asFirm?' off':''}" onsubmit="return shippingStatusSubmit(event,'${esc(n)}')">
+      <span class="shp-update-t"${tipAttr(`For shipments AfterShip can’t track (${where}). When AfterShip has a status, it’s used instead.`)}>Update status</span>
+      <label>Status <select class="dz-pillinput" id="ship-st-${esc(n)}"${off}${tipAttr('Shipped, In transit, Delayed or Delivered.')}>${m.status?'':'<option value="" selected>Pick…</option>'}${opts}</select></label>
+      <label>Date <input class="dz-pillinput" id="ship-sd-${esc(n)}" type="date" value="${esc(m.statusDate||shipYmd(Date.now()))}"${off}${tipAttr('Delivery date for Delivered, else today.')}></label>
+      <label class="shp-note-f">Note <input class="dz-pillinput" id="ship-sn-${esc(n)}" type="text" maxlength="200" autocomplete="off" value="${esc(m.note||'')}" placeholder="e.g. Held at customs, invoice missing"${off}${tipAttr('Short note anyone can read (200 characters max).')}></label>
+      <button type="submit" class="dz-btn primary" data-focus-key="ship-save-${esc(n)}"${off}${tipAttr(s.asFirm?SHP_AS_IN_USE:`Save this status (${where}).`)}>Save</button>
+      <span id="ship-st-msg-${esc(n)}" class="shp-msg" role="status">${s.asFirm?esc(SHP_AS_IN_USE):''}</span>
     </form>`;
 }
 // 2v6.9b (owner): no Source or AfterShip rows; Status is AfterShip's own status (its tag in words, then its detail,
@@ -20357,9 +20380,16 @@ function renderShipDetail(s){
   const scan=ev?[ev.desc,ev.city,shpAsLocalTime(ev.at)].filter(Boolean).join(' · '):'';
   const asStatus=shpAsStatusText(a);
   const late=s.status==='delivered'?shipLateText(s.lateDays):'';
-  const handStatus=m?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${late?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:'';
+  const Late=late?`${late.charAt(0).toUpperCase()}${late.slice(1)}`:'';
+  // Where the status came from: AfterShip, else set by hand (only while AfterShip has none), else why there is none.
+  const src=m?m.source:'';
+  const statusText=src==='aftership'?`${asStatus||SHIP_STATUS_TEXT[m.status]}${Late&&a.tag==='Delivered'?` · ${Late}`:''}`
+    :src==='hand'?`${SHIP_STATUS_TEXT[m.status]}${m.statusDate?` · ${shipDateLabel(m.statusDate)}`:''}${Late?` · ${Late}`:''}`
+    :(a&&a.error)||'No status yet';
+  const statusTip=src==='aftership'?'From AfterShip, every 2 hours.':src==='hand'?'Set by hand, with its date (AfterShip has no status for it).'
+    :shpAsUntracked(s)?'Not tracked by AfterShip.':'AfterShip has not checked it yet.';
   const facts=[
-    fact('Status',asStatus?`${asStatus}${late&&a.tag==='Delivered'?` · ${late.charAt(0).toUpperCase()}${late.slice(1)}`:''}`:handStatus||(a&&a.error)||'No status yet',asStatus?'From AfterShip, every 2 hours.':'Set by hand, with its date.'),
+    fact('Status',statusText,statusTip),
     fact('Last scan',scan,'Carrier’s latest scan (AfterShip).'),
     fact('Expected',s.eta?shipDateLabel(s.eta):'','Expected delivery (AfterShip).'),
     fact('Due',s.promised?shipDateLabel(s.promised):'','Earliest due date of its order lines.'),
@@ -20414,7 +20444,7 @@ function renderShipCross(list,today){
       return shipSideRow(s,s.customer||so,`${so} · ${shipPlaceName(shipPlaceKey(s))||shipCountryName(s.dest)||'Unknown'}`,right,'','ship-x');
     }).join('')}</div>${shpPager('cross',page,pages,'Cross-border')}`
     :`<p class="shp-none">None right now.</p>`;
-  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Undelivered shipments outside Canada, delayed first.'});
+  return dzCard({title:'Cross-border',sm:true,meta:all?esc(shipPlural(all,'on the way','on the way')):'',cls:'shp-side-card shp-cross',body,tip:'Undelivered shipments going outside Canada (AfterShip’s destination country, else the SAP ship-to country), delayed first.'});
 }
 function renderShipDelayed(list){
   const sorted=list.filter(s=>s.status==='delayed').sort((a,b)=>((b.mark&&b.mark.statusDate)||'').localeCompare((a.mark&&a.mark.statusDate)||'')||(b.checkedAt||0)-(a.checkedAt||0));
@@ -20478,10 +20508,10 @@ function renderShippingPage(m){
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
       `<strong>Tracking numbers</strong>: SAP deliveries in the ${SHIP_WINDOW_DAYS} days to ${esc(asOf)}, or <strong>Add tracking #</strong>.`,
-      '<strong>Status</strong>: from AfterShip every 2 hours; one set by hand counts until AfterShip has a newer one.',
+      '<strong>Status</strong>: from AfterShip every 2 hours (cards, map and lists too); one set by hand counts only where AfterShip has none.',
       `<strong>Not delivered</strong>: no Delivered status yet; its card flags those with no update for ${SHIP_STALE_DAYS}+ days.`,
       `<strong>Priority</strong>: ticked in the Priority column (${shared?'shared with everyone':'this browser only'}).`,
-      '<strong>Map</strong>: AfterShip’s destination city (else its state or country); shipments AfterShip has no destination for yet are not on it. Nearby cities share a dot and the busiest are named. City positions: GeoNames (CC BY 4.0). <strong>Cross-border</strong> means outside Canada (SAP ship-to country).'
+      '<strong>Map</strong>: AfterShip’s destination city (else its state or country); shipments AfterShip has no destination for yet are not on it. Nearby cities share a dot and the busiest are named. City positions: GeoNames (CC BY 4.0). <strong>Cross-border</strong>: outside Canada (AfterShip’s destination country, else SAP’s ship-to).'
     ])}</ul></div></details>`;
   const head=`${filterRow}${notesHtml}`;
 

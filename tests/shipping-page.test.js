@@ -1,7 +1,9 @@
 // The Shipping page (index.html), 2v6.9: shipments from SAP deliveries (any carrier) and numbers added by hand;
-// statuses from AfterShip (read from /api/shipping, which the scheduled Worker fills every 2 hours) with a hand-set
-// status (Shipped / In transit / Delayed / Delivered + date + note, saved through the shared notes store) as an
-// override when it is newer; cards and the progress strip from those statuses; an external-link icon per row to
+// statuses from AfterShip (read from /api/shipping, which the scheduled Worker fills every 2 hours); 2v9 (owner):
+// AfterShip comes first, and a hand-set status (Shipped / In transit / Delayed / Delivered + date + note, saved through
+// the shared notes store) counts only for a number AfterShip has no status for, however new it is; cards, the map,
+// the lists and the progress strip from those statuses; Cross-border by AfterShip's destination country, else SAP's
+// ship-to country; an external-link icon per row to
 // AfterShip's public tracking page; search; snapshots; no demo data. 2v6.9: Not delivered and Priority cards, the
 // Priority tick (shared), a state icon and the last location on each row, Update all, and pages of 10 / 5 / 5.
 // 2v6.9 cities: the Order Map puts dots at AfterShip's destination cities (none until AfterShip has one), nearby ones
@@ -249,36 +251,218 @@ test('hosted: reads /api/shipping on open, sends the list once, and AfterShip st
   assert.deepEqual(page.errors, []);
 });
 
-test('a hand-set status newer than AfterShip\'s wins; an AfterShip update newer than the hand-set one wins; details say which', async () => {
-  const site = await hostedSite({ index: INDEX });
-  // An older hand-set Delayed on the parcel (Oct 7) is replaced by AfterShip's In transit (Oct 8).
-  await site.kv.put('overrides', JSON.stringify({ v: 1, rows: {}, shipments: { [`st:${N.parcel}`]: { order: '600', number: N.parcel, status: 'delayed', statusDate: '2026-10-07', note: 'Old note', by: 'Sam', at: '2026-10-07T10:00:00.000Z' } }, savedAt: '' }));
+// 2v9 (owner): AfterShip comes first. A status set by hand counts only for a number AfterShip has no status for (not
+// checked yet, not recognised, or Pending with no carrier scan, as with freight it cannot follow); whenever AfterShip
+// has one, the hand-set one changes nothing, however new.
+test('AfterShip comes first: a hand-set status is ignored while AfterShip has one, even a newer one; it counts where AfterShip has none', async () => {
+  const site = await hostedSite({ index: { ...INDEX, statuses: { ...AS, [N.ups]: { ...AS[N.ups], destCity: 'Toronto', destState: 'ON', destCountry: 'CAN' } } } });
+  const hand = (n, order, st, d, note, at) => ({ [`st:${n}`]: { order, number: n, status: st, statusDate: d, note, by: 'Sam', at } });
+  // Stored by hand: an older Delayed on the parcel (Oct 7), and Delivered on the UPS and USA ones, newer (Oct 9) than
+  // AfterShip's latest scans (Oct 8 and Oct 5).
+  await site.kv.put('overrides', JSON.stringify({ v: 1, rows: {}, shipments: {
+    ...hand(N.parcel, '600', 'delayed', '2026-10-07', 'Old note', '2026-10-07T10:00:00.000Z'),
+    ...hand(N.ups, '603', 'delivered', '2026-10-09', 'Broker says delivered', '2026-10-09T12:00:00.000Z'),
+    ...hand(N.usa, '601', 'delivered', '2026-10-09', '', '2026-10-09T13:00:00.000Z'),
+  }, savedAt: '' }));
   const page = await hostedBrowser(site, 'Pat');
-  assert.deepEqual(status(page, N.parcel), ['transit', 'aftership']);
-  // Pat checks the UPS one with the customs broker and sets In transit now (Oct 9): newer than AfterShip's Oct 8.
-  setStatus(page, N.ups, 'transit', '2026-10-09', 'Broker cleared it');
-  assert.deepEqual(status(page, N.ups), ['transit', 'hand']);
-  assert.match(page.els.toast.innerHTML, /1Z999AA10123456784: In transit Oct 9 saved for everyone\./);
-  // 2v6.9b: the Status row keeps AfterShip's own status; the note set by hand shows under the facts.
-  assert.equal(factOf(page, N.ups, 'Status'), 'Exception · Customs clearance delay', 'AfterShip\'s words stay visible');
-  assert.equal(factOf(page, N.ups, 'Source'), undefined);
-  assert.match(rowOf(page, N.ups), /<p class="shp-alert calm">Broker cleared it<\/p>/);
-  assert.deepEqual(cards(page), ['4', '0', '1', '5', '0']);
-  // The form keeps the hand-set values.
-  assert.match(rowOf(page, N.ups), new RegExp(`<select class="dz-pillinput" id="ship-st-${N.ups}"[^>]*>[\\s\\S]*?<option value="transit" selected>In transit</option>`));
-  // AfterShip reports a newer scan (Oct 10, delivered): it wins again.
+  assert.equal(page.run('shippingStatusEntries().size'), 3, 'the stored hand-set statuses are kept');
+  assert.deepEqual([N.parcel, N.ups, N.usa].map((n) => status(page, n)), [['transit', 'aftership'], ['delayed', 'aftership'], ['transit', 'aftership']]);
+  // The cards, the strip, the stale count and the map dot are AfterShip's, exactly as with no hand-set status at all.
+  assert.deepEqual(cards(page), ['3', '1', '1', '5', '0']);
+  assert.deepEqual(strip(page, N.ups), [2, 'red']);
+  assert.deepEqual(page.run('shippingModel().groups.stale.map(s=>s.number)').sort(), [N.usa, N.puro].sort(), 'a newer hand-set status does not count as an update');
+  assert.match(mapOf(page), /<button type="button" class="shp-dot late" style="[^"]*" data-focus-key="ship-dot-CA-ON:toronto"/);
+  // The open row: AfterShip's status and where it came from; no hand-set note; the form stays, its fields off, with a
+  // note that AfterShip's status is in use.
+  page.run(`toggleShipment('${N.ups}')`);
+  assert.equal(factOf(page, N.ups, 'Status'), 'Exception · Customs clearance delay');
+  assert.equal(factTip(page, N.ups, 'Status'), 'From AfterShip, every 2 hours.');
+  assert.doesNotMatch(rowOf(page, N.ups), /<p class="shp-alert/, 'the hand-set note is not shown as the status note');
+  const form = rowOf(page, N.ups).match(/<form class="shp-update print-hide off"[\s\S]*?<\/form>/);
+  assert.ok(form, 'the form is shown, resting');
+  assert.match(form[0], /<span class="shp-update-t" data-tip="For shipments AfterShip can’t track \(shared with everyone\)\. When AfterShip has a status, it’s used instead\.">Update status<\/span>/);
+  assert.match(form[0], new RegExp(`<select class="dz-pillinput" id="ship-st-${N.ups}" disabled`));
+  assert.match(form[0], /<button type="submit" class="dz-btn primary" data-focus-key="ship-save-[^"]+" disabled data-tip="AfterShip’s status is in use\.">Save<\/button>/);
+  assert.match(form[0], /<span id="ship-st-msg-[^"]+" class="shp-msg" role="status">AfterShip’s status is in use\.<\/span>/);
+  // Sent anyway (the fields are off): nothing is saved, the note says why.
+  setStatus(page, N.ups, 'transit', '2026-10-09', 'x');
+  assert.equal(field(page, `ship-st-msg-${N.ups}`).textContent, 'AfterShip’s status is in use.');
+  assert.equal(page.run(`shippingStatusEntries().get('${N.ups}').status`), 'delivered');
+  assert.deepEqual(status(page, N.ups), ['delayed', 'aftership']);
+  // AfterShip reports a newer scan (Oct 10, delivered): its status, as always.
   await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: '2026-10-10T08:00:00.000Z', statuses: { ...AS, [N.ups]: asStatus(N.ups, 'delivered', { slug: 'ups', carrier: 'UPS', deliveredAt: '2026-10-10T09:00:00-04:00', changedAt: '2026-10-10T13:00:00.000Z' }) } }));
   page.run('shpAsLoad(true)');
   await settle();
   assert.deepEqual(status(page, N.ups), ['delivered', 'aftership']);
   assert.equal(factOf(page, N.ups, 'Status'), 'Delivered · 2 days late');
-  // A number AfterShip does not recognise: its words say so, and a hand-set status is all there is.
-  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', error: 'AfterShip does not recognise this tracking number.' } } }));
+
+  // A number AfterShip does not recognise: "Not tracked", AfterShip's words say why, and the form is open for a
+  // status set by hand, which then drives the row and the cards.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', notFound: true, error: 'AfterShip does not recognise this tracking number.' } } }));
   page.run('shpAsLoad(true)');
   await settle();
-  page.run(`toggleShipment('${N.puro}')`);
-  assert.equal(factOf(page, N.puro, 'Status'), 'AfterShip does not recognise this tracking number.', 'no status: AfterShip\'s words say why');
   assert.deepEqual(status(page, N.puro), ['', '']);
+  assert.equal(stateText(page, N.puro), 'Not tracked');
+  page.run(`toggleShipment('${N.puro}')`);
+  assert.equal(factOf(page, N.puro, 'Status'), 'AfterShip does not recognise this tracking number.');
+  assert.equal(factTip(page, N.puro, 'Status'), 'Not tracked by AfterShip.');
+  assert.match(rowOf(page, N.puro), /<form class="shp-update print-hide" /);
+  assert.doesNotMatch(rowOf(page, N.puro), new RegExp(`id="ship-st-${N.puro}" disabled`));
+  assert.deepEqual(cards(page), ['3', '1', '1', '5', '0']);
+  setStatus(page, N.puro, 'delivered', '2026-10-08', 'Signed for at the dock');
+  assert.deepEqual(status(page, N.puro), ['delivered', 'hand']);
+  assert.match(page.els.toast.innerHTML, /335123456789: Delivered Oct 8 saved for everyone\./);
+  assert.equal(factOf(page, N.puro, 'Status'), 'Delivered · Oct 8 · 22 days late');
+  assert.equal(factTip(page, N.puro, 'Status'), 'Set by hand, with its date (AfterShip has no status for it).');
+  assert.match(rowOf(page, N.puro), /<p class="shp-alert calm">Signed for at the dock<\/p>/);
+  assert.deepEqual(cards(page), ['3', '1', '2', '4', '0']);
+  // Freight AfterShip has only as Pending, with no carrier scan: AfterShip's Pending until someone sets one by hand.
+  assert.deepEqual(status(page, N.freight), ['shipped', 'aftership']);
+  page.run(`toggleShipment('${N.freight}')`);
+  assert.match(rowOf(page, N.freight), /<form class="shp-update print-hide" /);
+  setStatus(page, N.freight, 'transit', '2026-10-09', 'On the Calgary terminal');
+  assert.deepEqual(status(page, N.freight), ['transit', 'hand']);
+  assert.equal(factOf(page, N.freight, 'Status'), 'In transit · Oct 9');
+  // ... and once AfterShip has a carrier scan for it, AfterShip's status again.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.freight]: asStatus(N.freight, 'delayed', { slug: 'fedex-freight', carrier: 'FedEx Freight', changedAt: '2026-10-09T09:00:00.000Z', lastEvent: { at: '2026-10-09T03:00:00-06:00', city: 'Calgary, AB, CAN', desc: 'Shipment exception' } }) } }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.deepEqual(status(page, N.freight), ['delayed', 'aftership']);
+  assert.match(rowOf(page, N.freight), /<form class="shp-update print-hide off"/);
+  assert.deepEqual(page.errors, []);
+});
+
+// Stored hand-set statuses for the hosted tests: {[`st:<number>`]: entry}, saved Oct 9 (newer than every AfterShip scan).
+const handSet = (list) => Object.fromEntries(list.map(([n, order, st, note = '']) => [`st:${n}`, { order, number: n, status: st, statusDate: '2026-10-09', note, by: 'Sam', at: '2026-10-09T12:00:00.000Z' }]));
+async function siteWith(statuses, shipments = {}) {
+  const site = await hostedSite({ index: { ...INDEX, statuses } });
+  await site.kv.put('overrides', JSON.stringify({ v: 1, rows: {}, shipments, savedAt: '' }));
+  return site;
+}
+
+test('the cards, the Status filter, the Delayed list and the Progress sort count by AfterShip\'s state; hand-set ones for the same numbers change nothing', async () => {
+  const site = await siteWith(AS, handSet([[N.parcel, '600', 'delivered'], [N.usa, '601', 'delayed', 'Held'], [N.ups, '603', 'transit'], [N.delivered, '604', 'delayed', 'Damaged']]));
+  const page = await hostedBrowser(site, 'Pat');
+  // In transit: parcel, usa (InTransit) and freight (Pending); Delayed: ups (Exception); Delivered this week: delivered;
+  // Not delivered: the other five.
+  assert.deepEqual(cards(page), ['3', '1', '1', '5', '0']);
+  assert.deepEqual(page.run('Object.fromEntries(Object.entries(shippingModel().groups).map(([k,v])=>[k,v.map(s=>s.number).sort()]))'), {
+    transit: [N.parcel, N.usa, N.freight].sort(), delayed: [N.ups], delivered: [N.delivered], open: [N.parcel, N.usa, N.freight, N.ups, N.puro].sort(),
+    stale: [N.usa, N.puro].sort(), priority: [], 'prio-done': [], 'prio-open': [],
+  });
+  const pick = (v) => { page.run(`shpPickStatus('${v}')`); return tableRows(page); };
+  assert.deepEqual(pick('delayed'), [N.ups]);
+  assert.deepEqual(pick('delivered'), [N.delivered]);
+  assert.deepEqual(pick('transit').sort(), [N.parcel, N.usa].sort());
+  assert.deepEqual(pick('shipped'), [N.freight]);
+  assert.deepEqual(pick('none'), [N.puro]);
+  pick('');
+  // The Delayed list: only AfterShip's delayed one, with its latest scan (not a hand-set note).
+  assert.deepEqual([...html(page).matchAll(/data-focus-key="ship-d-([^"]+)"/g)].map((x) => x[1]), [N.ups]);
+  assert.doesNotMatch(html(page), /shp-li-why">(Held|Damaged)/);
+  // Progress: no status, shipped, in transit, delayed, delivered.
+  page.run("shpSort('progress')");
+  assert.deepEqual(tableRows(page), [N.puro, N.freight, N.usa, N.parcel, N.ups, N.delivered]);
+  assert.deepEqual(page.errors, []);
+});
+
+test('a shipment AfterShip has not checked yet shows No status and counts as not delivered only; one it does not recognise says Not tracked', async () => {
+  const site = await hostedSite({ index: INDEX });
+  const page = await hostedBrowser(site, 'Pat');
+  // N.puro: no AfterShip record yet.
+  assert.deepEqual(status(page, N.puro), ['', '']);
+  assert.equal(stateText(page, N.puro), 'No status');
+  assert.deepEqual(strip(page, N.puro), [1, '']);
+  const groupsOf = (n) => page.run(`Object.entries(shippingModel().groups).filter(([,v])=>v.some(s=>s.number==='${n}')).map(([k])=>k)`);
+  assert.deepEqual(groupsOf(N.puro), ['open', 'stale']);
+  assert.match(html(page), /data-focus-key="ship-kpi-open"[\s\S]*?<span class="shp-tile-s">1 with no status yet<\/span>/);
+  page.run(`toggleShipment('${N.puro}')`);
+  assert.equal(factOf(page, N.puro, 'Status'), 'No status yet');
+  assert.equal(factTip(page, N.puro, 'Status'), 'AfterShip has not checked it yet.');
+  assert.match(rowOf(page, N.puro), /data-tip="335123456789 \(Purolator\): No status\. Click to hide details\."/);
+  assert.equal(mapNote(page), '5 shipments waiting for AfterShip', 'all but the delivered one, placed by its delivery scan');
+  // AfterShip does not recognise it: Not tracked; still not delivered, in no status card.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, statuses: { ...AS, [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', notFound: true, error: 'AfterShip does not recognise this tracking number.' } } }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.equal(stateText(page, N.puro), 'Not tracked');
+  assert.match(rowOf(page, N.puro), /data-tip="335123456789 \(Purolator\): Not tracked by AfterShip\. Click to hide details\."/);
+  assert.match(rowOf(page, N.puro), /<span class="sr-only">Not tracked by AfterShip\.<\/span>/);
+  assert.deepEqual(groupsOf(N.puro), ['open', 'stale']);
+  assert.deepEqual(cards(page), ['3', '1', '1', '5', '0']);
+  page.run("shpPickStatus('none')");
+  assert.deepEqual(tableRows(page), [N.puro]);
+  assert.equal(mapNote(page), '4 shipments waiting for AfterShip · 1 not tracked by AfterShip');
+  assert.deepEqual(page.errors, []);
+});
+
+test('a status set by hand counts where AfterShip has none (not recognised, or Pending with no scan): the cards, the Delayed list and the map follow it', async () => {
+  const statuses = {
+    ...AS,
+    // Freight AfterShip holds as Pending (no carrier scan) but knows the destination: Denver, CO.
+    [N.freight]: { ...AS[N.freight], destCity: 'Denver', destState: 'CO', destCountry: 'USA' },
+    // Purolator: AfterShip does not recognise the number.
+    [N.puro]: { ...asStatus(N.puro, 'shipped'), state: '', tag: '', status: 'Not tracked by AfterShip', notFound: true, error: 'AfterShip does not recognise this tracking number.' },
+  };
+  const page = await hostedBrowser(await siteWith(statuses, handSet([[N.freight, '602', 'delivered'], [N.puro, '606', 'delayed', 'Held at the Purolator depot']])), 'Pat');
+  assert.deepEqual(status(page, N.freight), ['delivered', 'hand']);
+  assert.deepEqual(status(page, N.puro), ['delayed', 'hand']);
+  // In transit: parcel, usa; Delayed: ups and puro; Delivered this week: delivered and freight; Not delivered: four.
+  assert.deepEqual(cards(page), ['2', '2', '2', '4', '0']);
+  assert.match(html(page), new RegExp(`class="shp-li exc" data-focus-key="ship-d-${N.puro}"[\\s\\S]*?<span class="shp-li-why">Held at the Purolator depot</span>`));
+  // The map: the Denver dot is Delivered (teal) by the hand-set status; the Purolator one is not on it (not tracked).
+  assert.match(mapOf(page), /<button type="button" class="shp-dot done" style="[^"]*" data-focus-key="ship-dot-US-CO:denver"/);
+  assert.equal(mapNote(page), '3 shipments waiting for AfterShip · 1 not tracked by AfterShip');
+  page.run(`toggleShipment('${N.freight}')`);
+  assert.equal(factOf(page, N.freight, 'Status'), 'Delivered · Oct 9 · On time');
+  assert.equal(factTip(page, N.freight, 'Status'), 'Set by hand, with its date (AfterShip has no status for it).');
+  assert.deepEqual(page.errors, []);
+});
+
+test('Cross-border: AfterShip\'s destination country when it has one, else the SAP ship-to country', async () => {
+  const statuses = {
+    ...AS,
+    // SAP: Canada; AfterShip: Seattle, WA, USA -> cross-border.
+    [N.parcel]: { ...AS[N.parcel], destCity: 'Seattle', destState: 'WA', destCountry: 'USA' },
+    // SAP: United States; AfterShip: Winnipeg, MB, Canada -> not cross-border.
+    [N.usa]: { ...AS[N.usa], destCity: 'Winnipeg', destState: 'MB', destCountry: 'CAN' },
+  };
+  const page = await asPage(ROWS, statuses);
+  const dest = (n) => page.run(`(s=>[s.dest,s.destFrom,s.crossBorder])(shippingModel().list.find(x=>x.number==='${n}'))`);
+  assert.deepEqual(dest(N.parcel), ['US', 'AfterShip', true]);
+  assert.deepEqual(dest(N.usa), ['CA', 'AfterShip', false]);
+  // No destination country from AfterShip (no record, or none in it): the SAP ship-to country.
+  assert.deepEqual(dest(N.puro), ['CA', 'SAP', false]);
+  assert.deepEqual(dest(N.ups), ['CA', 'SAP', false]);
+  assert.deepEqual(dest(N.delivered), ['US', 'AfterShip', true], 'delivered in Columbus, OH, USA');
+  assert.deepEqual(page.run('shippingModel().cross.map(s=>s.number)').sort(), [N.parcel, N.delivered].sort());
+  // The list: undelivered ones only.
+  assert.deepEqual(crossRows(page), [[N.parcel, 'SO 600 · Seattle, WA']]);
+  assert.match(html(page), /Undelivered shipments going outside Canada \(AfterShip’s destination country, else the SAP ship-to country\), delayed first\./);
+  assert.deepEqual(page.errors, []);
+});
+
+test('Add tracking # stays: a hand-added number is listed with the SAP deliveries and gets its status, cards and map dot from AfterShip', async () => {
+  const M = '770022223333';
+  const statuses = { ...AS, [M]: asStatus(M, 'transit', { changedAt: '2026-10-08T20:00:00.000Z', destCity: 'Dallas', destState: 'TX', destCountry: 'USA', lastEvent: { at: '2026-10-08T14:00:00-06:00', city: 'Amarillo, TX, US', desc: 'In transit' } }) };
+  // Added by hand on Oct 8 to order 600; someone also set Delivered by hand for it, which AfterShip's status overrides.
+  const site = await siteWith(statuses, { [M]: { number: M, order: '600', by: 'Sam', at: '2026-10-08T15:00:00.000Z', deleted: false }, ...handSet([[M, '600', 'delivered']]) });
+  const page = await hostedBrowser(site, 'Pat');
+  assert.deepEqual(listed(page).sort(), [...REAL, M].sort());
+  assert.equal(page.run('shippingModel().manualCount'), 1);
+  assert.deepEqual(status(page, M), ['transit', 'aftership']);
+  assert.deepEqual(cards(page), ['4', '1', '1', '6', '0']);
+  assert.deepEqual(strip(page, M), [2, '']);
+  assert.equal(lastLoc(page, M), 'Amarillo, US');
+  assert.match(rowOf(page, M), /<span class="shp-ord"><b>SO 600<\/b><em>Firefly RV<\/em><\/span>/);
+  assert.match(mapOf(page), /<button type="button" class="shp-dot moving" style="[^"]*" data-focus-key="ship-dot-US-TX:dallas"/);
+  // The Shipments card says how many were added by hand; the Add tracking # button and its form are still there.
+  assert.match(html(page), /Deliveries shipped in the 30 days to 2026-10-08 and 1 number added by hand\. Delayed first, delivered last\./);
+  assert.match(html(page), /data-focus-key="ship-add-toggle"[^>]*>Add tracking #<\/button>/);
+  page.run('shipToggleAdd()');
+  assert.match(html(page), /<form class="shp-add print-hide" onsubmit="return shippingAddManual\(event\)">/);
+  // The list sent to the Worker carries it, so AfterShip keeps tracking it.
+  assert.deepEqual(site.kv.json('tracking:wanted').manual, [M]);
   assert.deepEqual(page.errors, []);
 });
 
@@ -831,8 +1015,8 @@ function destOptions(page) {
 const factTip = (page, number, label) => (rowOf(page, number).match(new RegExp(`<div class="shp-fact" data-tip="([^"]*)"><span>${label}</span>`)) || [])[1];
 
 // The map takes AfterShip's destination only: a file copy (no AfterShip) puts nothing on it and says how many wait,
-// whatever ship-to address SAP has; Cross-border stays on the SAP ship-to country.
-test('2v6.9 cities: no AfterShip destination, no dot: a file copy\'s shipments wait for AfterShip; SAP\'s ship-to address is not used; Cross-border stays SAP\'s', async () => {
+// whatever ship-to address SAP has; with no AfterShip destination, Cross-border falls back to the SAP ship-to country.
+test('2v6.9 cities: no AfterShip destination, no dot: a file copy\'s shipments wait for AfterShip; SAP\'s ship-to address is not used; Cross-border falls back to SAP\'s', async () => {
   const withCity = [...SHIP_HEADERS, 'ShipToCity', 'ShipToState'];
   const page = await shipPage({ files: [{ name: 'kpi.xls', bytes: utf16Tsv(withCity, ROWS.map((r) => ({ ...r, ShipToCity: 'Elkhart', ShipToState: 'IN' }))) }] });
   assert.deepEqual(REAL.map((n) => toOf(page, n)), REAL.map(() => ['', '', '', '', '']));
@@ -841,8 +1025,8 @@ test('2v6.9 cities: no AfterShip destination, no dot: a file copy\'s shipments w
   assert.equal(mapNote(page), '6 shipments waiting for AfterShip');
   assert.match(mapOf(page), /<span class="shp-pillnote" data-tip="In the table, not on the map\.\n• Waiting: AfterShip has not checked these yet, or the carrier has not given a destination yet\.\n• Not tracked: AfterShip does not recognise the number\.">/);
   assert.match(mapOf(page), /<div class="dz-meta">0 shipments from Lacombe · 0 destinations<\/div>/);
-  // Cross-border and the details' Ship to: the SAP ship-to country.
-  assert.deepEqual(page.run(`[${JSON.stringify(N.usa)},${JSON.stringify(N.parcel)}].map(n=>(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number===n)))`), [['US', true], ['CA', false]]);
+  // Cross-border and the details' Ship to: the SAP ship-to country (AfterShip has no destination country here).
+  assert.deepEqual(page.run(`[${JSON.stringify(N.usa)},${JSON.stringify(N.parcel)}].map(n=>(s=>[s.dest,s.destFrom,s.crossBorder])(shippingModel().list.find(x=>x.number===n)))`), [['US', 'SAP', true], ['CA', 'SAP', false]]);
   page.run(`toggleShipment('${N.usa}')`);
   assert.equal(factOf(page, N.usa, 'Ship to'), 'United States (US)');
   assert.equal(factTip(page, N.usa, 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
@@ -911,14 +1095,15 @@ test('2v6.9 cities: the Order Map puts dots at AfterShip destination cities; nea
 
 // Where a dot goes is AfterShip's alone: its destination city and state; else once delivered the place of the
 // delivery scan; else its destination state or country; nothing for a number it has not checked or does not track.
-// The country is AfterShip's (three letters read as two); SAP's ship-to country only fills in one AfterShip leaves out.
-// The details say where it came from; Cross-border stays on the SAP ship-to country. A shared snapshot keeps them.
+// The country is AfterShip's (three letters read as two), else the one its US state or Canadian province names; never
+// SAP's ship-to country (owner, 2v9). The details say where it came from; Cross-border follows AfterShip's destination
+// country. A shared snapshot keeps them.
 test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once delivered, else its state or country; its country, not SAP\'s; nothing until it has one', async () => {
   const statuses = {
     ...AS,
     // US delivery: AfterShip's destination.
     [N.usa]: { ...AS[N.usa], destCity: 'Dallas', destState: 'TX', destCountry: 'USA' },
-    // SAP says Canada; AfterShip's destination is Seattle, WA: the map follows AfterShip, Cross-border stays SAP's.
+    // SAP says Canada; AfterShip's destination is Seattle, WA: the map and Cross-border follow AfterShip.
     [N.parcel]: { ...AS[N.parcel], destCity: 'Seattle', destState: 'WA', destCountry: 'USA' },
     // No city, a province: the province.
     [N.ups]: { ...AS[N.ups], destState: 'ON', destCountry: 'CAN' },
@@ -933,11 +1118,12 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.deepEqual(toOf(page, N.delivered), ['Columbus', 'OH', 'US', 'AfterShip', 'US-OH:columbus']);
   assert.deepEqual(toOf(page, N.freight), ['', '', '', '', '']);
   assert.deepEqual(toOf(page, N.puro), ['', '', '', '', '']);
-  assert.deepEqual(page.run(`(s=>[s.dest,s.crossBorder])(shippingModel().list.find(x=>x.number==='${N.parcel}'))`), ['CA', false]);
+  assert.deepEqual(page.run(`(s=>[s.dest,s.destFrom,s.crossBorder])(shippingModel().list.find(x=>x.number==='${N.parcel}'))`), ['US', 'AfterShip', true]);
   assert.deepEqual(mapDots(page).map((d) => d.label).sort(), ['Columbus, OH: 1 shipment', 'Dallas, TX: 1 shipment', 'Ontario, Canada: 1 shipment', 'Seattle, WA: 1 shipment']);
   // Off the map: the one waiting for AfterShip and the one it does not track, apart.
   assert.equal(mapNote(page), '1 shipment waiting for AfterShip · 1 not tracked by AfterShip');
-  // The details say where it came from; the Cross-border list (SAP's: the US one on its way) names its city.
+  // The details say where it came from; the Cross-border list (by AfterShip's country: the two US ones on their way)
+  // names their cities.
   page.run(`toggleShipment('${N.usa}');toggleShipment('${N.parcel}');toggleShipment('${N.ups}');toggleShipment('${N.puro}')`);
   assert.equal(factOf(page, N.usa, 'Ship to'), 'Dallas, TX · United States (US)');
   assert.equal(factTip(page, N.usa, 'Ship to'), 'Destination from AfterShip (the carrier).');
@@ -945,7 +1131,7 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.equal(factOf(page, N.ups, 'Ship to'), 'Ontario · Canada (CA)', 'only a province: its name');
   assert.equal(factOf(page, N.puro, 'Ship to'), 'Canada (CA)');
   assert.equal(factTip(page, N.puro, 'Ship to'), 'Ship-to country in SAP; AfterShip has no destination yet.');
-  assert.deepEqual(crossRows(page), [[N.usa, 'SO 601 · Dallas, TX']]);
+  assert.deepEqual(crossRows(page), [[N.usa, 'SO 601 · Dallas, TX'], [N.parcel, 'SO 600 · Seattle, WA']]);
   // The rule on its own: [city, state, country, from].
   const place = (s, as) => page.run(`(p=>[p.city,p.region,p.country,p.from])(shipToPlace(${JSON.stringify(s)},${JSON.stringify(as)}))`);
   assert.deepEqual(place({ country: 'US' }, null), ['', '', '', ''], 'not checked yet');
@@ -953,7 +1139,10 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   assert.deepEqual(place({ country: 'CA' }, { destCity: 'Seattle', destState: 'WA', destCountry: 'USA' }), ['Seattle', 'WA', 'US', 'AfterShip']);
   assert.deepEqual(place({ country: '' }, { destCity: 'London', destState: '', destCountry: 'GBR' }), ['London', '', 'GB', 'AfterShip']);
   assert.deepEqual(place({ country: 'US' }, { destCity: 'Dallas', destState: 'TX', destCountry: 'US' }), ['Dallas', 'TX', 'US', 'AfterShip'], 'two letters too');
-  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Winnipeg', destState: 'MB', destCountry: '' }), ['Winnipeg', 'MB', 'CA', 'AfterShip'], 'no AfterShip country: SAP\'s');
+  assert.deepEqual(place({ country: 'CA' }, { destCity: 'Winnipeg', destState: 'MB', destCountry: '' }), ['Winnipeg', 'MB', 'CA', 'AfterShip'], 'no AfterShip country: its province\'s');
+  assert.deepEqual(place({ country: 'US' }, { destCity: 'Winnipeg', destState: 'MB', destCountry: '' }), ['Winnipeg', 'MB', 'CA', 'AfterShip'], 'not SAP\'s');
+  assert.deepEqual(place({ country: 'US' }, { destCity: 'Springfield', destState: '', destCountry: '' }), ['Springfield', '', '', 'AfterShip'], 'no country from AfterShip: none, never SAP\'s');
+  assert.equal(page.run("shipPlaceKey({toCity:'Springfield',toCountry:'',country:'US'})"), '', 'so no dot');
   assert.deepEqual(place({ country: 'CA' }, { state: 'delivered', destCity: '', destCountry: '', lastEvent: { city: 'Buffalo, NY, USA' } }), ['Buffalo', 'NY', 'US', 'AfterShip'], 'the scan\'s own country');
   assert.deepEqual(place({ country: 'CA' }, { state: 'transit', destCity: '', destCountry: '', lastEvent: { city: 'Winnipeg, MB, CAN' } }), ['', '', '', '']);
   assert.deepEqual(place({ country: 'US' }, { state: 'transit', destCity: '', destState: 'TX', destCountry: 'USA' }), ['', 'TX', 'US', 'AfterShip']);
@@ -968,6 +1157,7 @@ test('2v6.9 cities: AfterShip\'s destination city, else the delivery scan once d
   // No city of its own but the destination as the carrier writes it: that place (its country when it names one).
   assert.deepEqual(place({ country: 'US' }, { destRaw: 'ELKHART, IN, USA' }), ['ELKHART', 'IN', 'US', 'AfterShip']);
   assert.deepEqual(place({ country: 'US' }, { destRaw: 'Goshen, IN' }), ['Goshen', 'IN', 'US', 'AfterShip']);
+  assert.deepEqual(place({ country: 'CA' }, { destRaw: 'Goshen, IN' }), ['Goshen', 'IN', 'US', 'AfterShip'], 'the state\'s country, not SAP\'s');
   assert.equal(page.run("shipPlaceKey({toCountry:'US',toCity:'ELKHART',toRegion:'IN'})"), 'US-IN:elkhart');
   // A shared snapshot keeps them: AfterShip's statuses travel with it.
   let payload = '';
@@ -1141,7 +1331,8 @@ test('2v6.9 cities: the Destination filter, a shared dot\'s pick, the Ship to de
     assert.deepEqual(tableRows(page), [], q);
   }
   page.run("shipSearch('')");
-  // Cross-border (SAP ship-to country outside Canada, not delivered): each names its city, else the country.
+  // Cross-border (outside Canada by AfterShip's destination country, else the SAP ship-to country for the one AfterShip
+  // has not checked; not delivered): each names its city, else the country.
   const where = (i) => (TOWNS[i][0] ? `${TOWNS[i][0]}, ${TOWNS[i][1]}` : i === 8 ? 'United States' : 'United States (US)');
   assert.deepEqual(crossRows(page).sort(), [0, 1, 2, 3, 4, 5, 8, 9].map((i) => [townNum(i), `SO ${700 + i} · ${where(i)}`]).sort());
   assert.deepEqual(page.errors, []);

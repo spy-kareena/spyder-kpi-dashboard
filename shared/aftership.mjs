@@ -29,7 +29,8 @@
  * destCity / destState: the carrier's destination city and state or province; destRaw: the destination as the carrier
  * writes it ("ELKHART, IN, US"), when it gives no city on its own ('' when the carrier gives none). The page's Order Map
  * places a shipment with them.
- * changedAt is the time of the newest carrier event (the page lets a newer hand-set status win over an older one).
+ * changedAt is the time of the newest carrier event (the page's "no update in 2+ days" counts from it). The page uses
+ * this status whenever it has one; a status set by hand counts only for a number with none here.
  */
 
 export const AFTERSHIP_BASE = 'https://api.aftership.com';

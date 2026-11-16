@@ -3,8 +3,25 @@
 The **Shipping** page (top menu) lists recent shipments from SAP delivery tickets, for **every carrier** (FedEx,
 FedEx Freight, UPS, Purolator, Canpar, DHL, Loomis, Day & Ross…). On the hosted site a small scheduled Worker asks
 **AfterShip** about every tracking number **every 2 hours**, and the page shows what it found: Shipped, In transit,
-Delayed or Delivered, with the latest scan and the expected delivery date. A status can still be **set by hand** for
-a number AfterShip cannot track. There is no demo data.
+Delayed or Delivered, with the latest scan and the expected delivery date. There is no demo data.
+
+**Where each part comes from (owner, 2v9):**
+
+| Part | Source |
+|---|---|
+| The shipments (the list) | **SAP**: the delivery tickets with a tracking number, plus numbers typed in with **Add tracking #** |
+| Status, progress strip, ETA, delivered date, last scan, "no update in 2+ days" | **AfterShip** |
+| Order Map (where each dot goes and its colour) | **AfterShip** (its destination; the dot's colour is the shipment's status) |
+| Cards (In transit, Delayed, Delivered this week, Not delivered, Priority delivered / undelivered), Status filter, Delayed list, Progress sort | **AfterShip** status |
+| Cross-border | **AfterShip**'s destination country, else the SAP ship-to country |
+| Order lines, due date, ship date, ship method, customer | **SAP** |
+| Priority tick | The team (ticked by hand; not tracking) |
+
+**AfterShip comes first.** Whenever AfterShip has a status for a number, that status is used, however recent a
+status set by hand is. A status can be **set by hand** only for a number AfterShip has no status for: not checked
+yet, not recognised ("Not tracked"), or still **Pending** with no carrier scan (freight and carriers AfterShip
+cannot follow often stay there). Then the hand-set status drives the row, the cards, the lists and the map dot's
+colour like an AfterShip one, until AfterShip has a status of its own.
 
 ## What the page shows
 
@@ -22,11 +39,13 @@ a number AfterShip cannot track. There is no demo data.
   again for all:
   - **In transit**: Shipped (label created, AfterShip "Pending" or "Info received") or In transit (in transit, out for
     delivery, ready for pickup).
-  - **Delayed**: an exception, a failed delivery attempt, tracking expired, or marked Delayed by hand.
+  - **Delayed**: an exception, a failed delivery attempt or tracking expired (or marked Delayed by hand, for a number
+    AfterShip has no status for).
   - **Delivered this week**: delivered since Monday.
   - **Not delivered** (2v6.9, replaces "No update in 2+ days"): every listed shipment without a Delivered status
-    (shipped, in transit, delayed or no status yet). Its first fact counts the ones with no AfterShip scan and no
-    hand-set status for 2 days or more since they shipped ("3 with no update in 2+ days").
+    (shipped, in transit, delayed, or no status yet: not checked by AfterShip or not tracked by it). Its first fact
+    counts the ones whose status has not changed for 2 days or more (AfterShip's latest carrier scan, or the hand-set
+    status where AfterShip has none), counted from the SAP ship date at the earliest ("3 with no update in 2+ days").
   - **Priority**: the shipments ticked in the Priority column; on its right **Delivered N** and **Undelivered N**,
     each a button that lists those.
 - **Shipments:** the title row says how many and when AfterShip was last read ("22 shipments · Updated 8:04 PM"),
@@ -34,7 +53,8 @@ a number AfterShip cannot track. There is no demo data.
   and USPS marks from the Simple Icons project, CC0; other carriers such as Purolator, Canada Post, Canpar, Loomis or
   Day & Ross get their name in the same chip), a 3-step strip, Shipped → In transit → Delivered (**Delayed** turns the
   middle step red) with "Last: Winnipeg, MB" under it in small grey (AfterShip's last scan place; nothing when
-  unknown), the ETA (AfterShip's expected date, else the due date, over "Due …"; for a delivered one its date over the
+  unknown; "No status" until AfterShip has checked it, "Not tracked" when AfterShip does not recognise the number),
+  the ETA (AfterShip's expected date, else the due date, over "Due …"; for a delivered one its date over the
   due date) and the **Priority** tick. Delayed ones first, then the ones
   with no update for 2+ days, delivered ones last; the column titles sort (Priority: ticked first). 10 a page: the
   page numbers under the table (‹ 1 2 3 ›, the current one a soft grey pill; arrow keys work too); a new filter, search or sort starts at page 1;
@@ -47,15 +67,18 @@ a number AfterShip cannot track. There is no demo data.
   - **Arrow icon** (an arrow out of a box) at the end of each row: opens `https://www.aftership.com/track/<tracking
     number>` in a new tab. AfterShip works out the carrier from the number.
   - Click a row (or press Enter) for its details: **Status** (AfterShip's own status, e.g. "In transit · Arrived at
-    FedEx location", else the status set by hand and its date), the last scan (message, place, time), the expected,
+    FedEx location"; else, only where AfterShip has none, the status set by hand and its date; its tooltip says
+    which), the last scan (message, place, time), the expected,
     due and SAP ship dates, carrier and ship method, **Ship to** (AfterShip's destination, "Elkhart, IN · United
     States (US)"; the SAP ship-to country until AfterShip has one), the delivery's order lines, **Open tracking page**
     and **Update status**.
-- **Update status:** pick **Shipped**, **In transit**, **Delayed** or **Delivered**, a date and an optional note up to
-  200 characters, then **Save**. It counts until AfterShip reports something newer (a later scan); then AfterShip's
-  status shows again. Use it for numbers AfterShip cannot track.
+- **Update status:** for shipments AfterShip can't track. Pick **Shipped**, **In transit**, **Delayed** or
+  **Delivered**, a date and an optional note up to 200 characters, then **Save**. It counts only while AfterShip has
+  no status for the number. When AfterShip has one, the form's fields are greyed out under "AfterShip's status is in
+  use." and a hand-set status changes nothing (it stays saved, and counts again only if AfterShip has none).
 - **Add tracking #:** a tracking number (any carrier) and, optionally, its sales order, for a shipment whose SAP
-  delivery has no tracking number yet. Listed for 45 days; AfterShip picks it up at the next check.
+  delivery has no tracking number yet. Listed for 45 days; AfterShip picks it up at the next check, and its status,
+  map dot and cards then come from AfterShip like every other shipment.
 - **Cross-border** and **Delayed** lists beside the table, 5 a page each with their own page numbers; **About these
   numbers** at the bottom.
 
@@ -81,7 +104,9 @@ these that AfterShip has:
 2. **Once delivered:** the place of the delivery scan.
 3. **Else:** the destination state / province or country.
 
-The country is AfterShip's. The SAP ship-to country only helps when AfterShip names a city without a country.
+The country is AfterShip's (or, when AfterShip gives none, the one its US state or Canadian province names); the
+SAP ship-to address and country are never used for the map (owner, 2v9). A dot's colour is its shipments' status:
+red when one is delayed, indigo while one is on the way, teal when all are delivered.
 
 - **Waiting for AfterShip:** a shipment AfterShip has not checked yet, or one it does not track, is not on the map.
   The map's bottom-left says "3 shipments waiting for AfterShip". Until AfterShip is set up
@@ -102,7 +127,8 @@ The country is AfterShip's. The SAP ship-to country only helps when AfterShip na
   between 641 and 980px, 3 on a phone, busiest first; a picked dot is named first.
 - Clicking a dot lists its shipments (a shared dot: all its cities); clicking it again shows all. The **Destination**
   filter lists the places on the map, and the Shipments search finds the destination city (not country names).
-  **Cross-border** still means a SAP ship-to country outside Canada.
+  **Cross-border** means a destination outside Canada: AfterShip's destination country when it has one, else the
+  SAP ship-to country.
 
 ## Set up AfterShip (once)
 
@@ -156,15 +182,18 @@ In the shared notes store, like line notes (`functions/api/notes.js`, Workers KV
   saved as `false`, so it reaches every browser).
 
 On a static host or a file they stay in that browser (`localStorage` `spyderKpiShipmentsV1`). A **Share snapshot**
-carries the hand-set and AfterShip statuses on screen and the Priority ticks (read-only, no form).
+carries the hand-set and AfterShip statuses on screen and the Priority ticks (read-only, no form). A hand-set status
+is kept even while AfterShip's status is in use; the page just does not use it then.
 
 ## Checking that it works
 
 1. After the setup above, wait for the next even hour (or check the Worker's **Logs**), then open **Shipping** on the
    hosted site: the Shipments title row says "Updated …" and rows show AfterShip statuses.
 2. Click the arrow icon on a row: AfterShip's tracking page opens in a new tab.
-3. Open a row, set **Delayed** with a note and **Save**: the Delayed card goes up by one and the row says "Set by …".
-   When AfterShip has a newer scan for it, its status shows again ("From AfterShip").
+3. Open a row AfterShip has a status for: its **Update status** fields are greyed out and say "AfterShip's status
+   is in use." Open one AfterShip does not track ("Not tracked") or has not checked, set **Delayed** with a note and
+   **Save**: the Delayed card goes up by one and the Status detail's tooltip says it was set by hand. As soon as
+   AfterShip has a status for it, AfterShip's status is used again.
 
 ## Troubleshooting
 
@@ -173,7 +202,8 @@ carries the hand-set and AfterShip statuses on screen and the Priority ticks (re
 | "Automatic tracking isn't set up" | Add `AFTERSHIP_API_KEY` as a Worker secret and deploy the Worker, and add it as a Pages secret (above). A file copy or an IIS copy never has AfterShip. |
 | "AfterShip check stopped: AfterShip refused the API key" | Check the key in AfterShip, then `npx wrangler secret put AFTERSHIP_API_KEY` (Worker) and `npx wrangler pages secret put AFTERSHIP_API_KEY --project-name spyder-kpi-dashboard`. |
 | "AfterShip says too many requests" | Nothing: the rest is read at the next check. |
-| A row has no status | AfterShip has not been asked yet (long list: it takes a few checks), or does not recognise the number (see its details). Set a status by hand. |
+| A row says "No status" or "Not tracked" | AfterShip has not been asked yet (long list: it takes a few checks), or does not recognise the number (see its details). Set a status by hand: it counts until AfterShip has one. |
+| A status set by hand does not show | AfterShip has a status for that number, and AfterShip's status always comes first. |
 | "This export has no TrackingNumber column" | Re-run the updated SAP query and load the new export. |
 | No dots on the map, or "N shipments waiting for AfterShip" | The map shows AfterShip's destinations only. Set up AfterShip (above), deploy the Worker (`npx wrangler deploy` in `workers/shipping-poller`), then click **Update all**. A number AfterShip does not track stays off the map ([Map cities](#map-cities)). |
 | A hand-set status saved on one computer is missing on another | Wait a minute and reload: the store re-reads changes about a minute after each save. |

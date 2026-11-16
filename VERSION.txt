@@ -303,3 +303,13 @@ country (names compared without accents or case). Nearby cities share one dot ("
 city); up to 8 dots are named (5 below 981px, 3 on a phone), busiest first, a picked one first. The Destination filter
 lists the map's places, the details say "Ship to: Elkhart, IN · United States (US)" and the search finds the city;
 Cross-border still means a SAP ship-to country outside Canada. Tests: shipping-page, aftership.
+2v6.9 (ship AfterShip first, owner): the shipments still come from SAP (deliveries with a tracking number, plus Add
+tracking #); their tracking comes from AfterShip. Whenever AfterShip has a status for a number it is used for the row,
+the progress strip, ETA, delivered date, last scan, "no update in 2+ days", the cards, the Status filter, the Delayed
+list, the sort and the Order Map dot, however recent a status set by hand is. Update status stays for shipments
+AfterShip can't track: a hand-set status counts only while AfterShip has none (not checked yet, not recognised,
+or Pending with no carrier scan); while AfterShip's status is in use the form's fields are greyed out under
+"AfterShip's status is in use." Stored hand-set statuses are kept. A number AfterShip does not recognise reads "Not
+tracked". The Order Map never uses the SAP ship-to country (a city with no AfterShip country is placed by its US
+state or Canadian province). Cross-border uses AfterShip's destination country, else the SAP ship-to country.
+Tests: shipping-page.
