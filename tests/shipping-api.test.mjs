@@ -40,7 +40,7 @@ test('GET before any check: empty results, configured = the AfterShip key is set
   assert.equal(res.status, 200);
   assert.equal(res.headers.get('cache-control'), 'no-store');
   const data = await res.json();
-  assert.deepEqual(data, { configured: false, store: true, active: false, polledAt: '', source: '', statuses: {}, errors: [], lastError: null, wanted: { exportAsOf: '', export: [], manual: [], updatedAt: '' }, refreshAfter: '', schedule: '0 */2 * * *', everyHours: 2 });
+  assert.deepEqual(data, { configured: false, store: true, active: false, polledAt: '', source: '', lastCronAt: '', workerRunning: false, statuses: {}, errors: [], lastError: null, wanted: { exportAsOf: '', export: [], manual: [], updatedAt: '' }, refreshAfter: '', schedule: '0 */2 * * *', everyHours: 2 });
   assert.equal((await (await call(asEnv())).json()).configured, true);
 });
 
@@ -53,6 +53,28 @@ test('GET shows only AfterShip results (an old FedEx index is ignored); active w
   await e.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 2, provider: 'aftership', polledAt: recent, source: 'cron', statuses: { [NUMBERS.transit]: { state: 'transit' } }, errors: [] }));
   const got = await (await call(e)).json();
   assert.deepEqual([got.polledAt, got.active, got.configured, got.statuses[NUMBERS.transit].state], [recent, true, false, 'transit']);
+  // An index saved before lastCronAt existed: a Worker check (source cron) counts as its last one.
+  assert.deepEqual([got.source, got.lastCronAt, got.workerRunning], ['cron', recent, true]);
+});
+
+test('GET: lastCronAt is the Worker\'s last check; workerRunning while it checked in the last 2 h 30 min', async () => {
+  const e = env();
+  const t0 = Date.now();
+  const ago = (min) => new Date(t0 - min * 60000).toISOString();
+  const index = (o) => e.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 2, provider: 'aftership', polledAt: ago(5), source: 'refresh', statuses: {}, errors: [], ...o }));
+  const get = async () => { const d = await (await call(e)).json(); return [d.source, d.lastCronAt, d.workerRunning, d.active]; };
+  await index({ lastCronAt: ago(100) });
+  assert.deepEqual(await get(), ['refresh', ago(100), true, true]);
+  await index({ source: 'auto', lastCronAt: ago(149) });
+  assert.deepEqual(await get(), ['auto', ago(149), true, true]);
+  await index({ source: 'auto', lastCronAt: ago(151) });
+  assert.deepEqual(await get(), ['auto', ago(151), false, true], 'more than 2 h 30 min: a run was missed');
+  await index({ source: 'refresh', lastCronAt: '' });
+  assert.deepEqual(await get(), ['refresh', '', false, true], 'the Worker never ran; checks by the board keep the page active');
+  await index({ source: 'refresh', lastCronAt: 'not a date' });
+  assert.deepEqual(await get(), ['refresh', '', false, true]);
+  await index({ source: 'cron', polledAt: ago(200), lastCronAt: ago(200) });
+  assert.deepEqual(await get(), ['cron', ago(200), false, true]);
 });
 
 test('only the dashboard page itself can change the list or ask for a check', async () => {
@@ -152,6 +174,32 @@ test('Refresh now checks AfterShip, GET then shows the results; a second refresh
     assert.ok(!text.includes(SECRET), 'the key is never returned or stored');
   }
   assert.ok(fx.calls.every((c) => c.key === SECRET));
+});
+
+test('the board\'s own check (POST {source:"auto"}) is saved as source auto; Update all (no body) as refresh; the Worker\'s last check is kept', async () => {
+  const e = asEnv();
+  const cronAt = new Date(Date.now() - 3 * 3600e3).toISOString();
+  await e.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 2, provider: 'aftership', polledAt: cronAt, source: 'cron', statuses: {}, errors: [] }));
+  await put(e, { asOf: '2026-10-08', export: [NUMBERS.transit], manual: [] });
+  const fx = fakeAfterShip({ known: [NUMBERS.transit] });
+  const auto = await withAs(fx, () => call(e, { method: 'POST', body: { source: 'auto' }, headers: { 'content-type': 'application/json' } }));
+  assert.equal(auto.status, 200);
+  const saved = e.REPORT_STORE.json(INDEX_KEY);
+  assert.deepEqual([saved.source, saved.lastCronAt], ['auto', cronAt], 'the Worker\'s last check is carried over');
+  let got = await (await call(e)).json();
+  assert.deepEqual([got.source, got.lastCronAt, got.workerRunning, got.polledAt], ['auto', cronAt, false, saved.polledAt]);
+  // The site-wide limit holds for the board's checks too: a second one within 10 minutes is a 429, AfterShip not asked.
+  const before = fx.calls.length;
+  const again = await withAs(fx, () => call(e, { method: 'POST', body: { source: 'auto' } }));
+  assert.equal(again.status, 429);
+  assert.ok(Date.parse((await again.json()).refreshAfter) > Date.now());
+  assert.equal(fx.calls.length, before);
+  for (const [body, want] of [[undefined, 'refresh'], [{ source: 'cron' }, 'refresh'], ['{oops', 'refresh'], [{ source: 'auto', pad: 'x'.repeat(400) }, 'refresh']]) {
+    await e.REPORT_STORE.delete(REFRESH_KEY);
+    assert.equal((await withAs(fx, () => call(e, { method: 'POST', body }))).status, 200);
+    assert.equal(e.REPORT_STORE.json(INDEX_KEY).source, want, JSON.stringify(body));
+    assert.equal(e.REPORT_STORE.json(INDEX_KEY).lastCronAt, cronAt);
+  }
 });
 
 test('a refused AfterShip key: 502 with the reason, and the last results stay', async () => {

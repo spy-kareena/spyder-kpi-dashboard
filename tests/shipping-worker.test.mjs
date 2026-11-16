@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { memoryKv, fakeAfterShip, NUMBERS } from './aftership-fixtures.mjs';
 import worker, { runCheck } from '../workers/shipping-poller/index.mjs';
 import { WANTED_KEY, INDEX_KEY, SCHEDULE } from '../shared/aftership.mjs';
+import { onRequest as shippingApi } from '../functions/api/shipping.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const toml = readFileSync(join(here, '..', 'workers', 'shipping-poller', 'wrangler.toml'), 'utf8');
@@ -43,6 +44,23 @@ test('scheduled() checks the wanted numbers with a mocked AfterShip and saves th
   assert.equal(index.statuses[NUMBERS.delivered].state, 'delivered');
   assert.ok(fx.calls.every((c) => c.url.startsWith('https://api.aftership.com/tracking/2026-07/trackings')));
   assert.ok(logs.some((l) => /checked 3 tracking numbers \(3 read from AfterShip, 0 added\)/.test(l)), logs.join('\n'));
+});
+
+// 2v9 (owner): the page can tell whether the 2-hourly checks run (workerRunning), and says so when they do not.
+test('each scheduled run is recorded as the Worker\'s last check (lastCronAt); the API then says the Worker runs', async () => {
+  const kv = memoryKv({ [WANTED_KEY]: { v: 1, exportAsOf: '2026-10-08', export: [NUMBERS.transit], manual: [] } });
+  const env = { REPORT_STORE: kv, AFTERSHIP_API_KEY: 'key' };
+  const get = async () => (await shippingApi({ request: new Request('https://kpi.example.test/api/shipping'), env, params: {} })).json();
+  const before = await get();
+  assert.deepEqual([before.lastCronAt, before.workerRunning], ['', false], 'not run yet');
+  await scheduled(env, fakeAfterShip({ known: [NUMBERS.transit] }));
+  const index = kv.json(INDEX_KEY);
+  assert.equal(index.lastCronAt, index.polledAt);
+  const after = await get();
+  assert.deepEqual([after.source, after.lastCronAt, after.workerRunning], ['cron', index.polledAt, true]);
+  // Its last run more than 2 h 30 min ago (one run missed): not running.
+  await kv.put(INDEX_KEY, JSON.stringify({ ...index, polledAt: new Date(Date.now() - 600e3).toISOString(), source: 'auto', lastCronAt: new Date(Date.now() - 151 * 60e3).toISOString() }));
+  assert.equal((await get()).workerRunning, false);
 });
 
 test('without the AfterShip key or KV it skips quietly and writes nothing', async () => {

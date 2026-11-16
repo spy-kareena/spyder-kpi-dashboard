@@ -896,6 +896,7 @@ test('Update all: asks AfterShip now (POST /api/shipping), busy while it runs, t
   page.run('shpAsRefreshAll()');
   await settle();
   assert.equal(posts.length, 1, 'a click while busy does nothing');
+  assert.equal(posts[0].body, undefined, 'a click is saved as Update all (source refresh)');
   assert.equal(reads(), before + 1, 'read again after the check');
   assert.match(html(page), /<span>Update all<\/span>/);
   assert.match(page.run('shpAsUpdatedText()'), /^Updated \d{1,2}:04 [AP]M$/);
@@ -912,6 +913,259 @@ test('Update all: asks AfterShip now (POST /api/shipping), busy while it runs, t
   const file = await shipPage();
   assert.doesNotMatch(html(file), /shp-updall|shp-upd"/);
   assert.match(html(file), /<span class="dz-meta"><span class="shp-count">6 shipments<\/span><\/span>/);
+});
+
+// 2v9 (owner): "updates from AfterShip every 2 hrs, automated, and 'Updated' is the time the data was pulled". The
+// scheduled Worker checks every even hour; when it does not run (not set up yet, or a missed run), the open board asks
+// AfterShip itself with the same POST as Update all ({source:'auto'}), quietly, at most once per 15 minutes per browser,
+// within the site-wide 10-minute limit. The page clock is set per test (Date.now); the server's clock is the real one.
+const HOUR = 3600e3;
+const AT = Date.parse('2026-10-09T15:30:00Z'); // the board's clock: 1 h 30 min after the 14:00 UTC check
+const iso = (t) => new Date(t).toISOString();
+// A hosted site whose POST /api/shipping is a stand-in: answer(init) gives the response, else a check is saved at the
+// board's clock (site.now) with the source the board sent.
+async function autoSite({ polledAt, source = 'cron', lastCronAt, key = true, limited = false } = {}) {
+  const index = polledAt ? { ...INDEX, polledAt, source, ...(lastCronAt === undefined ? {} : { lastCronAt }) } : null;
+  const site = await hostedSite({ index, key });
+  if (limited) await site.kv.put('tracking:refresh', new Date().toISOString());
+  Object.assign(site, { posts: [], now: AT, answer: null });
+  const real = site.fetch;
+  site.fetch = async (url, init = {}) => {
+    if (url !== '/api/shipping' || init.method !== 'POST') return real(url, init);
+    site.calls.push(`POST ${url}`);
+    site.posts.push(init);
+    if (site.answer) return site.answer(init);
+    const src = init.body && JSON.parse(init.body).source === 'auto' ? 'auto' : 'refresh';
+    await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, ...(site.kv.json('tracking:index') || {}), polledAt: iso(site.now), source: src }));
+    return new Response(JSON.stringify({ polledAt: iso(site.now), statuses: AS, errors: [] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  return site;
+}
+const reply = (status, body) => () => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+// A browser on the hosted site with live data loaded (Sales Order Health opens first); no random wait in tests.
+async function autoBrowser(site, { now = AT, storage = {} } = {}) {
+  const page = loadPage({ today: TODAY, storage: { spyderKpiEditorName: 'Pat', ...storage } });
+  Object.assign(page.ctx, { fetch: site.fetch, location: { href: ORIGIN + '/', protocol: 'https:' } });
+  page.run(`shpAs.jitter=0;Date.now=()=>${now}`);
+  site.now = now;
+  await upload(page, [exportFile()]);
+  await settle();
+  return page;
+}
+const setClock = (page, site, t) => { page.run(`Date.now=()=>${t}`); site.now = t; };
+const gets = (site) => site.calls.filter((c) => c === 'GET /api/shipping').length;
+const NO_WORKER = '<p class="shp-note">Automatic 2-hour checks aren’t running on Cloudflare yet, so the board checks AfterShip whenever someone has it open. Ask your Cloudflare admin to set up the shipping checker (docs/SHIPPING.md).</p>';
+
+test('2v9 (owner): the board asks AfterShip itself, on any page, when the last check is over 2 hours old or there is none; quietly, then it shows the new time', async () => {
+  const site = await autoSite({ polledAt: iso(AT - 2 * HOUR - 60e3) });
+  const page = await autoBrowser(site);
+  assert.equal(page.run('activeTab'), 'weekly', 'Shipping was never opened');
+  assert.equal(site.posts.length, 1, 'one automatic check');
+  assert.equal(site.posts[0].body, '{"source":"auto"}');
+  assert.equal(site.posts[0].headers['content-type'], 'application/json');
+  assert.equal(gets(site), 2, 'read at start (any page), then again after the check');
+  assert.equal(site.kv.json('tracking:index').source, 'auto');
+  assert.equal(page.run('shpAs.data.polledAt'), iso(AT));
+  assert.doesNotMatch(page.els.toast.innerHTML, /AfterShip|Updated/, 'no toast');
+  assert.equal(page.storage.spyderKpiShipAutoV1, String(AT), 'this browser remembers when it asked');
+  // On Shipping: "Updated" is the time of that check; its tip says the board asked and when the next check is due.
+  page.run("setTab('shipping')");
+  const clock = (t) => page.run(`shipClock(new Date(${t}))`);
+  assert.match(html(page), new RegExp(`<span class="shp-upd" data-tip="Last AfterShip check: ${clock(AT)} \\(opened the board\\)\\. Next automatic check about ${clock(Date.parse('2026-10-09T16:00:00Z'))}\\.">Updated ${clock(AT)}</span>`));
+  // Read again later with the new results: nothing more to ask.
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.equal(site.posts.length, 1);
+  // No check at all yet (the Worker never ran): asked at once too.
+  const none = await autoSite({});
+  await autoBrowser(none);
+  assert.deepEqual(none.posts.map((p) => p.body), ['{"source":"auto"}']);
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): no automatic check when the last one is under 2 hours old, within the site-wide 10 minutes, without the AfterShip key, in a file copy or a snapshot', async () => {
+  const fresh = await autoSite({ polledAt: iso(AT - 2 * HOUR + 60e3) });
+  const p1 = await autoBrowser(fresh);
+  assert.equal(gets(fresh), 1, 'read at start');
+  assert.equal(fresh.posts.length, 0);
+  // Someone else asked a moment ago (refreshAfter is ahead): wait for that.
+  const limited = await autoSite({ polledAt: iso(AT - 3 * HOUR), limited: true });
+  const p2 = await autoBrowser(limited);
+  assert.ok(p2.run('shpAs.data.refreshAfter'));
+  assert.equal(limited.posts.length, 0);
+  // No AfterShip key on this site: the Worker alone can check.
+  const off = await autoSite({ polledAt: iso(AT - 3 * HOUR), key: false });
+  const p3 = await autoBrowser(off);
+  assert.equal(off.posts.length, 0);
+  assert.equal(p3.run('shpAsAutoDue()'), false);
+  // A file copy never reads or asks.
+  const file = await shipPage();
+  assert.equal(file.run('shpAsAutoDue()'), false);
+  assert.equal(file.run('shpAs.state'), '');
+  // A shared snapshot opened on the hosted site: never.
+  let payload = '';
+  Object.assign(p1.ctx, { buildSnapshotHtml: (p) => { payload = p.text; return ''; }, downloadPreparedSnapshot() {}, showSnapshotDownloadLink() {} });
+  p1.run("setTab('shipping')");
+  await p1.ctx.exportShareSnapshot();
+  const snap = loadPage({ today: TODAY });
+  const calls = [];
+  Object.assign(snap.ctx, { fetch: async (u, init = {}) => { calls.push(`${init.method || 'GET'} ${u}`); throw new Error('no network'); }, location: { href: ORIGIN + '/', protocol: 'https:' } });
+  snap.run(`shpAs.jitter=0;Date.now=()=>${AT + 5 * HOUR}`);
+  snap.els['embedded-snapshot-data'].dataset.encoding = 'json';
+  snap.els['embedded-snapshot-data'].textContent = payload;
+  await snap.run('loadEmbeddedSnapshot()');
+  snap.run('shpAsAutoMaybe();shpAsAfterSlot(0)');
+  await settle();
+  assert.equal(snap.run('shpAsAutoDue()'), false);
+  assert.deepEqual(calls.filter((c) => /shipping/.test(c)), []);
+  assert.doesNotMatch(html(snap), /Automatic 2-hour checks/);
+  for (const p of [p1, p2, p3, file, snap]) assert.deepEqual(p.errors, []);
+});
+
+test('2v9 (owner): at most one automatic check per 15 minutes in a browser (a reload too); a 429 from the server is quiet and the results are read again', async () => {
+  const site = await autoSite({ polledAt: iso(AT - 3 * HOUR) });
+  site.answer = reply(429, { error: 'Refresh now was used less than 10 minutes ago. Try again in 9 min.', retryAfter: 540, refreshAfter: iso(AT + 9 * 60e3) });
+  const page = await autoBrowser(site);
+  assert.equal(site.posts.length, 1);
+  assert.equal(gets(site), 2, 'limited: just read the results again');
+  assert.doesNotMatch(page.els.toast.innerHTML, /AfterShip|Updated|try again/, 'no toast');
+  page.run('shpAsLoad(true)');
+  await settle();
+  setClock(page, site, AT + 14 * 60e3);
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.equal(site.posts.length, 1, 'not again within 15 minutes, although the results are still old');
+  setClock(page, site, AT + 16 * 60e3);
+  site.answer = null;
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.equal(site.posts.length, 2, '15 minutes on: asked again');
+  assert.equal(page.run('shpAs.data.polledAt'), iso(AT + 16 * 60e3));
+  // A reload 5 minutes later in the same browser (its storage): not again, whatever the results say.
+  const other = await autoSite({ polledAt: iso(AT - 3 * HOUR) });
+  const again = await autoBrowser(other, { now: AT + 21 * 60e3, storage: page.storage });
+  assert.equal(other.posts.length, 0);
+  assert.equal(again.run('shpAsAutoDue()'), false);
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): a few minutes after each even hour the board reads again; when that hour\'s check did not come in it asks, when the Worker did it only reads', async () => {
+  const H14 = Date.parse('2026-10-09T14:00:00Z'), H16 = H14 + 2 * HOUR, H18 = H14 + 4 * HOUR, H20 = H14 + 6 * HOUR;
+  // The 3 minutes after an even hour are that hour's; then the next.
+  const page0 = loadPage({ today: TODAY });
+  assert.deepEqual([H16 - 60e3, H16 + 60e3, H16 + 3 * 60e3, H16 + 100 * 60e3].map((t) => page0.run(`shpAsNextSlot(${t})`)), [H16, H16, H18, H18]);
+  // Last check 15:00 by the board (30 minutes old at 15:30): nothing to do at start.
+  const site = await autoSite({ polledAt: iso(H14 + HOUR), source: 'auto' });
+  const page = await autoBrowser(site);
+  assert.equal(site.posts.length, 0);
+  assert.equal(page.run('Boolean(shpAs.timer)'), true, 'the next look is set, whichever page is open');
+  // 16:04: no 16:00 check came in (polledAt still 15:00): the board asks.
+  setClock(page, site, H16 + 4 * 60e3);
+  page.run(`shpAsSlotDue(${H16})`);
+  await settle();
+  assert.equal(site.posts.length, 1);
+  assert.equal(page.run('shpAs.data.polledAt'), iso(H16 + 4 * 60e3));
+  assert.equal(page.run('Boolean(shpAs.timer)'), true, 'and the next one is set');
+  // 18:00: the Worker checked (18:00:05); at 18:04 the board only reads it.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: iso(H18 + 5000), source: 'cron', lastCronAt: new Date().toISOString() }));
+  setClock(page, site, H18 + 4 * 60e3);
+  const before = gets(site);
+  page.run(`shpAsSlotDue(${H18})`);
+  await settle();
+  assert.equal(gets(site), before + 1);
+  assert.equal(site.posts.length, 1);
+  assert.equal(page.run('shpAs.data.workerRunning'), true);
+  // 20:04 with the board out of view: nothing then; back in view, it reads and asks (the 20:00 check did not come).
+  page.ctx.document.visibilityState = 'hidden';
+  setClock(page, site, H20 + 4 * 60e3);
+  page.run(`shpAsSlotDue(${H20})`);
+  await settle();
+  assert.equal(gets(site), before + 1, 'out of view: not read');
+  assert.equal(page.run('shpAs.missed'), H20);
+  setClock(page, site, H20 + 40 * 60e3);
+  page.ctx.document.visibilityState = 'visible';
+  page.dispatch('visibilitychange', {});
+  await settle();
+  assert.equal(site.posts.length, 2);
+  assert.equal(page.run('shpAs.missed'), 0);
+  // While the Worker runs, the minutes right after an even hour are its own: at 16:01 a 2-hour-old result is left to
+  // it; at 16:04, still no 16:00 check: the board asks.
+  const w = await autoSite({ polledAt: iso(H14 + 5000), lastCronAt: new Date().toISOString() });
+  const wp = await autoBrowser(w, { now: H16 + 60e3 });
+  assert.equal(wp.run('shpAs.data.workerRunning'), true);
+  assert.equal(w.posts.length, 0);
+  setClock(wp, w, H16 + 4 * 60e3);
+  wp.run(`shpAsSlotDue(${H16})`);
+  await settle();
+  assert.equal(w.posts.length, 1);
+  assert.deepEqual([page.errors, wp.errors], [[], []]);
+  for (const p of [page, wp]) p.run('clearTimeout(shpAs.timer);shpAs.timer=null');
+});
+
+test('2v9 (owner): "Updated" is the time the data was pulled and changes as soon as a newer check is read; its tip says who checked and when the next check is', async () => {
+  const site = await autoSite({ polledAt: iso(AT - HOUR) });
+  const page = await autoBrowser(site);
+  page.run("setTab('shipping')");
+  const clock = (t) => page.run(`shipClock(new Date(${t}))`);
+  const upd = () => (html(page).match(/<span class="shp-upd" data-tip="([^"]*)">([^<]*)<\/span>/) || []).slice(1);
+  const next = `Next automatic check about ${clock(Date.parse('2026-10-09T16:00:00Z'))}.`;
+  assert.deepEqual(upd(), [`Last AfterShip check: ${clock(AT - HOUR)} (automatic every 2 hours). ${next}`, `Updated ${clock(AT - HOUR)}`]);
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: iso(AT - 5 * 60e3), source: 'refresh' }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.deepEqual(upd(), [`Last AfterShip check: ${clock(AT - 5 * 60e3)} (Update all). ${next}`, `Updated ${clock(AT - 5 * 60e3)}`], 'redrawn at once');
+  assert.equal(site.posts.length, 0);
+  // Yesterday's check: the date too.
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: '2026-10-08T15:00:00.000Z', source: 'auto' }));
+  page.run(`shpAs.autoAt=${AT}`); // asked a moment ago: this read only shows it
+  page.run('shpAsLoad(true)');
+  await settle();
+  const day = page.run("shipTimeLabel('2026-10-08T15:00:00.000Z')");
+  assert.match(day, /^Oct 8, /);
+  assert.deepEqual(upd(), [`Last AfterShip check: ${day} (opened the board). ${next}`, `Updated ${day}`]);
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): a quiet note while the 2-hourly checks are not running on Cloudflare: only on a site with the AfterShip key, gone once the Worker checks', async () => {
+  // The Worker last checked on Oct 9 (by the server's clock, long ago): not running.
+  const site = await autoSite({ polledAt: iso(AT - HOUR) });
+  const page = await autoBrowser(site);
+  page.run("setTab('shipping')");
+  assert.equal(page.run('shpAs.data.workerRunning'), false);
+  assert.ok(html(page).includes(NO_WORKER));
+  assert.doesNotMatch(html(page), /shp-note warn">Automatic 2-hour/, 'not a warning');
+  await site.kv.put('tracking:index', JSON.stringify({ ...INDEX, polledAt: iso(AT - HOUR), lastCronAt: new Date().toISOString() }));
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.ok(!html(page).includes('Automatic 2-hour checks'), 'the Worker runs: no note');
+  // No AfterShip key on this site (nothing the board can do): no such note.
+  const off = await autoBrowser(await autoSite({ polledAt: iso(AT - HOUR), key: false }));
+  off.run("setTab('shipping')");
+  assert.ok(!html(off).includes('Automatic 2-hour checks'));
+  const file = await shipPage();
+  assert.ok(!html(file).includes('Automatic 2-hour checks'));
+  assert.deepEqual(page.errors, []);
+});
+
+test('2v9 (owner): an automatic check that fails for a reason someone must fix says so once; other failures are quiet', async () => {
+  const refused = 'AfterShip refused the API key. Check AFTERSHIP_API_KEY (Worker and Pages secrets).';
+  const site = await autoSite({ polledAt: iso(AT - 3 * HOUR) });
+  site.answer = reply(502, { error: refused, refreshAfter: iso(AT + 60e3) });
+  const page = await autoBrowser(site);
+  assert.equal(site.posts.length, 1);
+  assert.ok(page.els.toast.innerHTML.includes(refused));
+  page.els.toast.innerHTML = '';
+  setClock(page, site, AT + 16 * 60e3);
+  page.run('shpAsLoad(true)');
+  await settle();
+  assert.equal(site.posts.length, 2);
+  assert.equal(page.els.toast.innerHTML, '', 'the same reason is not said again');
+  const blip = await autoSite({ polledAt: iso(AT - 3 * HOUR) });
+  blip.answer = reply(502, { error: 'AfterShip could not be reached.' });
+  const p2 = await autoBrowser(blip);
+  assert.equal(blip.posts.length, 1);
+  assert.doesNotMatch(p2.els.toast.innerHTML, /AfterShip|did not go through/);
+  assert.deepEqual([page.errors, p2.errors], [[], []]);
 });
 
 test('2v6.9 layout: on a wide screen the map card spans the page, the cards lie over its faded right part and the view keeps every dot left of them', async () => {
@@ -1363,6 +1617,9 @@ async function hostedSite({ index = null, key = true } = {}) {
   site.fetch = async (url, init = {}) => {
     site.calls.push(`${init.method || 'GET'} ${url}`);
     if (!fns[url]) return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
+    // AfterShip itself is never asked from these tests: a check the page asks for (Update all, or the board's own one
+    // after an even hour, should a test page still be open then) is refused unless the test answers it.
+    if (url === '/api/shipping' && init.method === 'POST') return new Response(JSON.stringify({ error: 'Refresh now was used less than 10 minutes ago. Try again in 10 min.' }), { status: 429, headers: { 'content-type': 'application/json' } });
     return fns[url]({ request: new Request(ORIGIN + url, { ...init, headers: { ...(init.headers || {}), Origin: ORIGIN } }), env, params: {} });
   };
   return site;

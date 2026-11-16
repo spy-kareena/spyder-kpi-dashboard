@@ -82,6 +82,8 @@ function site(page, { status = siteStatus(), answers = [] } = {}) {
   page.ctx.fetch = async (url, init = {}) => {
     calls.push({ url, init, body: init.body ? JSON.parse(init.body) : undefined });
     if (url === '/api/ai/status') return typeof status === 'function' ? status() : { ok: true, status: 200, json: async () => status };
+    // The board reads the Shipping page's AfterShip results whenever it loads data on the hosted site: not part of these tests.
+    if (url === '/api/shipping') return { ok: false, status: 404, headers: { get: () => 'text/plain' }, json: async () => null };
     const next = answers.shift();
     if (typeof next === 'function') return next(url, init);
     if (!next) throw new Error(`no answer queued for ${url}`);

@@ -8405,6 +8405,7 @@ async function handleFiles(files,{adding=false,restoring=false,live=false,keepVi
     if(keepView&&hadReport)lastRenderedRows=allLoadedRows;
     showResults();
     if(keepView&&hadReport&&scrollY&&typeof window.scrollTo==='function')window.scrollTo(0,scrollY);
+    if(typeof shpAsBoot==='function')shpAsBoot(); // AfterShip results on any page (the board's own check needs them)
     // Live data is kept apart (liveSave): a file added to it is kept with it, never in the shared report or import copy.
     if(!restoring&&!live){if(liveMode()&&liveState.sig.kpi)liveSave();else{saveReportFiles(loadedFiles);shareReportFiles(loadedFiles);}}
     impFinish(imp);
@@ -19792,11 +19793,20 @@ function shippingFromSnapshot(d){
 // every 5 minutes), when its browser tab comes back into view, and a few minutes after each scheduled check while it
 // stays open. It also sends the list it shows (PUT, only when it changed), so the Worker knows what to track. A file
 // copy or a static host has no /api/shipping: statuses are then set by hand only, and one note says so.
+// 2v9 (owner, updates every 2 hours): the board reads /api/shipping as soon as it has data, on any page, and while it is
+// open and in view it asks AfterShip itself (the same POST as Update all, quietly) when the last check is over 2 hours
+// old, or when an even hour's scheduled check did not come in (the Worker is not set up or missed a run). See
+// shpAsAutoMaybe.
 const SHP_AS_EVERY_MS=2*3600000;  // schedule '0 */2 * * *' (shared/aftership.mjs, the Worker's wrangler.toml)
 const SHP_AS_FRESH_MS=5*60000;    // a re-read at most this often (page open, tab back in view)
 const SHP_AS_AFTER_MS=3*60000;    // re-read this long after each scheduled check, so its results are in
-// state: '' not read yet, 'off' no /api/shipping here, 'ok' read. sent: the last list sent (PUT).
-let shpAs={data:null,at:0,loading:false,state:'',timer:null,sent:'',sendTimer:null,sig:'',refreshing:false};
+const SHP_AS_AUTO_GAP_MS=15*60000; // the board's own check: at most once per 15 minutes in one browser
+const SHP_AS_JITTER_MS=60000;     // ...after a random wait of up to a minute, so open browsers do not all ask at once
+const SHP_AS_AUTO_KEY='spyderKpiShipAutoV1'; // when this browser last asked (localStorage, survives a reload)
+// state: '' not read yet, 'off' no /api/shipping here, 'ok' read. sent: the last list sent (PUT). slot: the even hour
+// the read under way follows (its check is looked for); missed: an even hour passed while the board was out of view;
+// autoAt / autoTimer / autoMsg: the board's own check (last asked, waiting, last error shown); jitter: its longest wait.
+let shpAs={data:null,at:0,loading:false,state:'',timer:null,sent:'',sendTimer:null,sig:'',refreshing:false,slot:0,missed:0,autoAt:0,autoTimer:null,autoMsg:'',jitter:SHP_AS_JITTER_MS};
 function shpAsStatuses(){
   if(isSnapshotView)return shippingState.snapshotAs&&shippingState.snapshotAs.statuses||{};
   const d=shpAs.data;
@@ -19822,6 +19832,11 @@ function shpAsLocalTime(v){
 }
 // The next scheduled check: the next even hour, UTC.
 function shpAsNextCheck(now=Date.now()){return (Math.floor(now/SHP_AS_EVERY_MS)+1)*SHP_AS_EVERY_MS;}
+// The last scheduled check: the latest even hour, UTC, at or before now.
+function shpAsLastSlot(now=Date.now()){return Math.floor(now/SHP_AS_EVERY_MS)*SHP_AS_EVERY_MS;}
+// The check the next re-read follows: the last one while its 3 minutes are not up yet, else the next one.
+function shpAsNextSlot(now=Date.now()){const last=shpAsLastSlot(now);return now<last+SHP_AS_AFTER_MS?last:shpAsNextCheck(now);}
+const shpAsHidden=()=>typeof document!=='undefined'&&document.visibilityState==='hidden';
 // The short text a status from AfterShip carries: the latest scan, else AfterShip's own words.
 function shpAsNote(a){
   if(!a)return '';
@@ -19837,6 +19852,12 @@ function shpAsNoteLine(){
   if(shpAsOn()&&e&&e.message&&!(Date.parse(e.at||'')<at))return ['warn',`AfterShip check stopped: ${String(e.message).slice(0,160)}`];
   return null;
 }
+// 2v9 (owner): one quiet line while the scheduled Worker does not run (no check of its own in the last 2 h 30 min,
+// workerRunning from /api/shipping) on a site with the AfterShip key: the board then checks while someone has it open.
+const SHP_AS_NO_WORKER='Automatic 2-hour checks aren’t running on Cloudflare yet, so the board checks AfterShip whenever someone has it open. Ask your Cloudflare admin to set up the shipping checker (docs/SHIPPING.md).';
+function shpAsWorkerNote(){
+  return shpAsCanRefresh()&&shpAs.data.workerRunning===false?['',SHP_AS_NO_WORKER]:null;
+}
 function shpAsLoad(force){
   if(isSnapshotView||shpAs.loading||!shippingApiPossible())return;
   if(!force&&shpAs.at&&Date.now()-shpAs.at<SHP_AS_FRESH_MS)return;
@@ -19844,13 +19865,17 @@ function shpAsLoad(force){
   shpAs.at=Date.now();
   const done=d=>{
     shpAs.loading=false;
+    const slot=shpAs.slot;
+    shpAs.slot=0;
     if(d!==undefined){shpAs.data=d&&typeof d==='object'&&d.store?d:null;shpAs.state=shpAs.data?'ok':'off';}
     shpAsSchedule();
     if(shpAs.data)shpAsQueueSend(0);
     // Redraw only when something on the page changes, so typing and focus are left alone.
     const d2=shpAs.data||{};
-    const sig=JSON.stringify([shpAs.state,d2.polledAt,d2.configured,d2.active,d2.lastError,Object.keys(d2.statuses||{}).length,d2.statuses&&Object.values(d2.statuses).map(x=>x&&x.checkedAt).join()]);
+    const sig=JSON.stringify([shpAs.state,d2.polledAt,d2.source,d2.configured,d2.active,d2.workerRunning,d2.lastError,Object.keys(d2.statuses||{}).length,d2.statuses&&Object.values(d2.statuses).map(x=>x&&x.checkedAt).join()]);
     if(sig!==shpAs.sig){shpAs.sig=sig;if(activeTab==='shipping'&&!isSnapshotView)renderResults();}
+    // A fresh read: the board's own check, when the last one is too old or the even hour's check did not come in.
+    if(d&&shpAs.data)shpAsAutoMaybe(slot);
   };
   let req;
   try{req=fetch('/api/shipping',{headers:{accept:'application/json'},cache:'no-store',credentials:'same-origin'});}catch(e){done(null);return;}
@@ -19861,22 +19886,76 @@ function shpAsLoad(force){
     })
     .then(d=>done(d),()=>done(shpAs.data?undefined:null)); // a network blip keeps what was read
 }
-// The next read: a few minutes after the next scheduled check, while Shipping is open and in view.
+// The next read: a few minutes after the next scheduled check, while the board is open (Shipping, or any page where
+// this site has the AfterShip key) and in view. Out of view, that hour's look waits until the board is back in view.
 function shpAsSchedule(){
   if(shpAs.timer)clearTimeout(shpAs.timer);
   shpAs.timer=null;
   if(shpAs.state!=='ok')return;
-  const now=Date.now();
-  shpAs.timer=setTimeout(()=>{
-    shpAs.timer=null;
-    const hidden=typeof document!=='undefined'&&document.visibilityState==='hidden';
-    if(activeTab==='shipping'&&!hidden)shpAsLoad(true);
-  },shpAsNextCheck(now)-now+SHP_AS_AFTER_MS);
+  const now=Date.now(),slot=shpAsNextSlot(now);
+  shpAs.timer=setTimeout(()=>shpAsSlotDue(slot),Math.max(0,slot+SHP_AS_AFTER_MS-now));
   if(shpAs.timer&&typeof shpAs.timer.unref==='function')shpAs.timer.unref();
 }
+function shpAsSlotDue(slot){
+  shpAs.timer=null;
+  if(shpAsHidden()){shpAs.missed=slot;shpAsSchedule();return;}
+  shpAsAfterSlot(slot);
+}
+// Reads the results the even hour's check should have saved (and asks AfterShip itself if they are not there).
+function shpAsAfterSlot(slot){
+  shpAs.missed=0;
+  if(activeTab!=='shipping'&&!shpAsCanRefresh()){shpAsSchedule();return;}
+  shpAs.slot=slot;
+  if(!shpAs.loading)shpAsLoad(true); // a read under way looks for it instead
+}
 try{
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&activeTab==='shipping')shpAsLoad(false);});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState!=='visible')return;
+    if(shpAs.missed){shpAsAfterSlot(shpAs.missed);return;}
+    if(activeTab!=='shipping'&&!shpAsCanRefresh())return;
+    shpAsLoad(false);
+    if(!shpAs.loading)shpAsAutoMaybe(); // read in the last 5 minutes: decide on what was read
+  });
 }catch(e){/* no document events (tests) */}
+// 2v9 (owner): the board's own AfterShip check, so the statuses keep coming every 2 hours even when the scheduled
+// Worker is not set up or misses a run. Due when this site has the AfterShip key (never in a snapshot, a file copy or
+// on a static host); the site-wide limit allows it (refreshAfter: once per 10 minutes for everyone); this browser has
+// not asked in the last 15 minutes; the last check is at least 15 minutes old; and either it is more than 2 hours old
+// (or there is none), or, after an even hour (slot), that hour's check did not come in. While the Worker runs, the
+// first minutes after an even hour are left to it (the re-read 3 minutes on looks again).
+function shpAsAutoLast(){
+  let t=0;
+  try{t=Number(localStorage.getItem(SHP_AS_AUTO_KEY))||0;}catch(e){/* this visit only */}
+  return Math.max(shpAs.autoAt||0,t);
+}
+function shpAsAutoDue(now=Date.now(),slot=0){
+  if(!shpAsCanRefresh()||shpAs.refreshing)return false;
+  const d=shpAs.data;
+  if(now-shpAsAutoLast()<SHP_AS_AUTO_GAP_MS)return false;
+  const until=Date.parse(d.refreshAfter||'');
+  if(isFinite(until)&&until>now)return false;
+  const polled=Date.parse(d.polledAt||'');
+  if(!isFinite(polled))return true;
+  if(now-polled<SHP_AS_AUTO_GAP_MS)return false;
+  if(slot)return polled<slot;
+  if(d.workerRunning&&now<shpAsLastSlot(now)+SHP_AS_AFTER_MS)return false;
+  return now-polled>SHP_AS_EVERY_MS;
+}
+// Waits a random moment (up to shpAs.jitter), then asks, if it is still due and the board still in view. Several open
+// browsers may all decide to ask: the server's site-wide limit lets one through, the others just read the results.
+function shpAsAutoMaybe(slot=0){
+  if(shpAs.autoTimer||shpAsHidden()||!shpAsAutoDue(Date.now(),slot))return;
+  const wait=Math.floor(Math.random()*Math.max(0,Number(shpAs.jitter)||0));
+  shpAs.autoTimer=setTimeout(()=>{
+    shpAs.autoTimer=null;
+    if(shpAsHidden()){if(slot)shpAs.missed=slot;return;}
+    if(shpAsAutoDue(Date.now(),slot))shpAsRefreshAll(true);
+  },wait);
+  if(shpAs.autoTimer&&typeof shpAs.autoTimer.unref==='function')shpAs.autoTimer.unref();
+}
+// Reads /api/shipping once the board has data (start-up, live data, a loaded report), on any page, without waiting
+// for it: the board's own check needs to know how old the last one is.
+function shpAsBoot(){if(!isSnapshotView&&shippingApiPossible()&&hasLoadedData())shpAsLoad(false);}
 // Sends the tracking list the page shows (export numbers newest first, then hand-added ones, with the carrier the
 // ship method names), so the Worker asks AfterShip about them. Only when it changed since the last send.
 function shpAsQueueSend(delay=1500){
@@ -20408,8 +20487,19 @@ function shippingHeadMeta(){
 function shpAsUpdatedText(){
   const at=shpAsOn()?Date.parse(shpAsPolledAt()):NaN;
   if(!isFinite(at))return '';
-  const when=new Date(at);
-  return `Updated ${shipYmd(when)===shipYmd(Date.now())?shipClock(when):shipTimeLabel(when.toISOString())}`;
+  return `Updated ${shpAsWhen(at)}`;
+}
+// A time in this browser's time zone: "2:04 PM" today, else "Nov 14, 2:04 PM".
+function shpAsWhen(t){const when=new Date(t);return shipYmd(when)===shipYmd(Date.now())?shipClock(when):shipTimeLabel(when.toISOString());}
+// 2v9 (owner): its tooltip says when AfterShip was last asked, by what, and when the next check is about due.
+const SHP_AS_SOURCE={cron:'automatic every 2 hours',refresh:'Update all',auto:'opened the board'};
+function shpAsUpdatedTip(){
+  const at=Date.parse(shpAsPolledAt());
+  if(!isFinite(at))return 'Last AfterShip check (every 2 hours).';
+  const src=isSnapshotView?'':String(shpAs.data&&shpAs.data.source||'');
+  const how=Object.prototype.hasOwnProperty.call(SHP_AS_SOURCE,src)?SHP_AS_SOURCE[src]:'';
+  const next=isSnapshotView?'':` Next automatic check about ${shpAsWhen(shpAsNextCheck())}.`;
+  return `Last AfterShip check: ${shpAsWhen(at)}${how?` (${how})`:''}.${next}`;
 }
 // 2v6.9 Update all: asks AfterShip about every shipment now (POST /api/shipping, "refresh now": once per 10 minutes
 // for the whole site), then reads the results again and redraws. Only where this site has the AfterShip key.
@@ -20419,28 +20509,36 @@ function renderShipUpdateAll(){
   const busy=!!shpAs.refreshing;
   return `<button type="button" class="dz-btn shp-updall${busy?' busy':''}" data-focus-key="ship-update-all" onclick="shpAsRefreshAll()"${busy?' aria-busy="true" aria-disabled="true"':''}${tipAttr(busy?'Checking every shipment now.':'Check every shipment now (once per 10 minutes).')}>${dzIconSvg('refresh')}<span>${busy?'Updating…':'Update all'}</span></button>`;
 }
-function shpAsRefreshAll(){
+// auto (2v9): the board's own check (shpAsAutoMaybe): sent as {source:'auto'}, quiet (a toast only for an error
+// someone must fix, once a visit), and it counts toward this browser's 15 minutes.
+function shpAsRefreshAll(auto){
+  auto=auto===true;
   if(shpAs.refreshing||!shpAsCanRefresh())return;
   shpAs.refreshing=true;
-  renderResults();
+  if(auto){shpAs.autoAt=Date.now();try{localStorage.setItem(SHP_AS_AUTO_KEY,String(shpAs.autoAt));}catch(e){/* this visit only */}}
+  if(!auto||activeTab==='shipping')renderResults();
   const fail='The update did not go through. Try again in a minute.';
   let req;
-  try{req=fetch('/api/shipping',{method:'POST',headers:{accept:'application/json'},cache:'no-store',credentials:'same-origin'});}catch(e){req=Promise.reject(e);}
+  const init={method:'POST',headers:{accept:'application/json'},cache:'no-store',credentials:'same-origin'};
+  if(auto)Object.assign(init,{headers:{accept:'application/json','content-type':'application/json'},body:'{"source":"auto"}'});
+  try{req=fetch('/api/shipping',init);}catch(e){req=Promise.reject(e);}
   Promise.resolve(req)
     .then(r=>Promise.resolve(r&&typeof r.json==='function'?r.json():null).catch(()=>null).then(d=>{
       if(r&&r.status===429){
         const t=Date.parse(d&&d.refreshAfter||'');
         return {msg:`Updated less than 10 minutes ago, try again at ${shipClock(new Date(isFinite(t)?t:Date.now()+10*60000))}.`};
       }
-      if(!r||!r.ok)return {msg:String(d&&d.error||fail).slice(0,200)};
+      if(!r||!r.ok)return {msg:String(d&&d.error||fail).slice(0,200),fix:!!(d&&/API key|AFTERSHIP_API_KEY|REPORT_STORE/.test(String(d.error||'')))};
       return {ok:true};
     }),()=>({msg:fail}))
-    .then(({ok,msg})=>{
+    .then(({ok,msg,fix})=>{
       shpAs.refreshing=false;
       // Read the results again; the redraw also ends the busy state.
       shpAs.sig='';
       shpAsLoad(true);
       if(!shpAs.loading&&activeTab==='shipping')renderResults();
+      if(auto&&(ok||!fix||msg===shpAs.autoMsg))return; // limited (someone else just asked) or a passing failure: quiet
+      if(auto)shpAs.autoMsg=msg;
       const text=ok?'Every shipment updated from AfterShip.':msg;
       if(typeof showToast==='function')showToast(text);else if(typeof announce==='function')announce(text);
     });
@@ -21024,6 +21122,8 @@ function renderShippingPage(m){
   if(!shippingHasTrackingColumn())notes.push(['','This export has no TrackingNumber column; run the updated KPI query in SAP, or add numbers by hand with Add tracking #.']);
   const asNote=shpAsNoteLine();
   if(asNote)notes.push(asNote);
+  const workerNote=shpAsWorkerNote();
+  if(workerNote)notes.push(workerNote);
   const notesHtml=notes.map(([tone,text])=>`<p class="shp-note${tone?` ${tone}`:''}">${esc(text)}</p>`).join('');
 
   const about=`<details class="about rise rise-5">${aboutSummary()}<div class="about-body"><ul class="about-list">${aboutItems([
@@ -21087,7 +21187,7 @@ function renderShippingPage(m){
     ${shpPager('list',page,pages,'Shipments')}`;
   // The title row: the count, when AfterShip was read, and Update all.
   const upd=shpAsUpdatedText();
-  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr('Last AfterShip check (every 2 hours).')}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
+  const listMeta=`<span class="shp-count">${esc(shipPlural(shown.length,'shipment','shipments'))}</span>${upd?`<span class="shp-upd"${tipAttr(shpAsUpdatedTip())}>${esc(upd)}</span>`:''}${renderShipUpdateAll()}`;
   const list=dzCard({title:'Shipments',meta:listMeta,cls:'shp-main shp-ships',tip:`${listSub.charAt(0).toUpperCase()}${listSub.slice(1)}. Delayed first, delivered last.`,body:tableBody});
   const side=`<div class="shp-side">${renderShipCross(fl,model.today)}${renderShipDelayed(fl)}</div>`;
   // 2v6.9: the map card across the page with the small cards over its faded right part (stacked, cards first, below

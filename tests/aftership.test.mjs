@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { memoryKv, fakeAfterShip, TRACKINGS, NUMBERS } from './aftership-fixtures.mjs';
 import {
   normalizeTracking, pollTracking, wantedNumbers, cleanTrackingNumber, splitTrackingNumbers, aftershipConfigured, slugForCarrier,
-  carrierName, maxPerRun, maxCalls, AfterShipError, TAG_STATE, TAGS, INDEX_KEY, WANTED_KEY, IDS_KEY, LIST_BATCH, MAX_PER_RUN, MAX_CALLS,
+  carrierName, maxPerRun, maxCalls, AfterShipError, TAG_STATE, TAGS, INDEX_KEY, WANTED_KEY, IDS_KEY, LIST_BATCH, MAX_PER_RUN, MAX_CALLS, lastCronOf,
 } from '../shared/aftership.mjs';
 
 const NOW = Date.parse('2026-10-09T16:00:00Z');
@@ -266,6 +266,33 @@ test('a number AfterShip no longer has is added again at the next check; KV read
   await assert.rejects(pollTracking(broken, { fetch: fx.fetch, now: NOW }), /could not be read/);
   assert.equal(broken.REPORT_STORE.puts.length, 0);
   await assert.rejects(pollTracking({ REPORT_STORE: memoryKv() }), /AFTERSHIP_API_KEY/);
+});
+
+// 2v9 (owner, updates every 2 hours): the index says when the scheduled Worker last checked, apart from the other checks.
+test('lastCronAt: set by each Worker check (source cron), carried through Update all and the board\'s own checks', async () => {
+  const e = env({ export: [NUMBERS.transit], manual: [] });
+  const fx = fakeAfterShip({ known: [NUMBERS.transit] });
+  const first = await poll(e, fx, { source: 'refresh' });
+  assert.deepEqual([first.source, first.lastCronAt], ['refresh', ''], 'no Worker check yet');
+  const cron = await poll(e, fx, { now: NOW + 3600e3 });
+  assert.deepEqual([cron.source, cron.lastCronAt, cron.polledAt], ['cron', new Date(NOW + 3600e3).toISOString(), new Date(NOW + 3600e3).toISOString()]);
+  const auto = await poll(e, fx, { source: 'auto', now: NOW + 3 * 3600e3 });
+  assert.deepEqual([auto.source, auto.lastCronAt, auto.polledAt], ['auto', cron.polledAt, new Date(NOW + 3 * 3600e3).toISOString()]);
+  const click = await poll(e, fx, { source: 'refresh', now: NOW + 4 * 3600e3 });
+  assert.equal(click.lastCronAt, cron.polledAt);
+  assert.equal(e.REPORT_STORE.json(INDEX_KEY).lastCronAt, cron.polledAt);
+  // A check that fails keeps the stored one (and the results).
+  await assert.rejects(poll(e, fakeAfterShip({ status: () => 401 }), { source: 'auto', now: NOW + 5 * 3600e3 }), /refused the API key/);
+  assert.deepEqual([e.REPORT_STORE.json(INDEX_KEY).lastCronAt, e.REPORT_STORE.json(INDEX_KEY).polledAt], [cron.polledAt, click.polledAt]);
+  // An index saved before lastCronAt existed: its polledAt counts when that check was the Worker's.
+  const old = env({ export: [NUMBERS.transit], manual: [] });
+  await old.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 2, provider: 'aftership', polledAt: '2026-10-09T14:00:03.000Z', source: 'cron', statuses: {} }));
+  assert.equal((await poll(old, fx, { source: 'refresh' })).lastCronAt, '2026-10-09T14:00:03.000Z');
+  const older = env({ export: [NUMBERS.transit], manual: [] });
+  await older.REPORT_STORE.put(INDEX_KEY, JSON.stringify({ v: 2, provider: 'aftership', polledAt: '2026-10-09T14:00:03.000Z', source: 'refresh', statuses: {} }));
+  assert.equal((await poll(older, fx, { source: 'auto' })).lastCronAt, '');
+  assert.equal(lastCronOf({ provider: 'aftership', source: 'cron', polledAt: 'nope' }), '');
+  assert.equal(lastCronOf(null), '');
 });
 
 let failed = 0;

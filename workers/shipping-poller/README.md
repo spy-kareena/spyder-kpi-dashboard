@@ -11,7 +11,14 @@ A small scheduled Worker that asks AfterShip **every 2 hours** about the trackin
 
 Full setup is in [docs/SHIPPING.md](../../docs/SHIPPING.md).
 
-## Set up once
+**Easiest: from the Cloudflare dashboard, no API token or command line.** Cloudflare builds and deploys this Worker
+from GitHub (Workers & Pages › Create › Import a repository, root directory `workers/shipping-poller`, deploy command
+`npx wrangler deploy`, production branch `main`), then you add the `AFTERSHIP_API_KEY` secret once. Step by step:
+[Turn on the automatic 2-hour checks](../../docs/SHIPPING.md#turn-on-the-automatic-2-hour-checks). Until the Worker
+runs, the dashboard checks AfterShip itself while someone has it open, and its Shipping page says the 2-hour checks
+aren't running on Cloudflare yet.
+
+## Set up once (command line)
 
 Run these in this folder (`workers/shipping-poller`), signed in to the Cloudflare account that hosts the dashboard
 (`npx wrangler login`), with Node.js 20 or newer:

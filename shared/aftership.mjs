@@ -16,8 +16,11 @@
  * Workers KV keys (the namespace bound as REPORT_STORE, next to the shared report):
  *   tracking:wanted     {v, updatedAt, exportAsOf, export:[numbers], manual:[numbers], carriers:{[number]: label}}
  *                       what to track (sent by the page)
- *   tracking:index      {v, provider, polledAt, source, count, polled, created, waiting, statuses:{[number]: status},
- *                       errors, lastError}  the results the page reads
+ *   tracking:index      {v, provider, polledAt, source, lastCronAt, count, polled, created, waiting,
+ *                       statuses:{[number]: status}, errors, lastError}  the results the page reads. source: 'cron'
+ *                       (the Worker's 2-hourly check), 'refresh' (Update all) or 'auto' (the board's own check when
+ *                       the 2-hourly one is late or missing); lastCronAt: polledAt of the Worker's last check, kept
+ *                       through the other checks ('' until the Worker has run)
  *   tracking:aftership  {v, ids:{[number]: {id, slug, at} | {failedAt, error}}}  numbers already added to AfterShip
  *   tracking:refresh    time of the last "Refresh now" (the 10-minute limit)
  *
@@ -321,6 +324,15 @@ async function listBatch(env, fetchImpl, numbers, budget) {
   return { trackings, complete: false, calls, message: 'More pages than this check could read; the rest comes next time.' };
 }
 
+// When the scheduled Worker last checked (source 'cron'): the index's lastCronAt, or, in an index saved before
+// lastCronAt existed, its polledAt when that check was the Worker's. '' when it never ran.
+export function lastCronOf(doc) {
+  const d = doc && typeof doc === 'object' ? doc : {};
+  const at = typeof d.lastCronAt === 'string' && Number.isFinite(Date.parse(d.lastCronAt)) ? d.lastCronAt : '';
+  if (at) return at;
+  return d.provider === 'aftership' && d.source === 'cron' && Number.isFinite(Date.parse(d.polledAt || '')) ? String(d.polledAt) : '';
+}
+
 function scrub(message, env) {
   let m = String(message || 'AfterShip tracking failed.');
   const key = String(env && env.AFTERSHIP_API_KEY || '');
@@ -459,7 +471,7 @@ export async function pollTracking(env, opts = {}) {
   }
   const polled = Object.keys(results).length;
   const doc = {
-    v: 2, provider: 'aftership', polledAt: iso(now), source, count: numbers.length, polled, created,
+    v: 2, provider: 'aftership', polledAt: iso(now), source, lastCronAt: source === 'cron' ? iso(now) : lastCronOf(prev), count: numbers.length, polled, created,
     waiting: Math.max(0, pending.length - polled), calls, statuses,
     errors: errors.slice(0, 20).map((e) => ({ ...e, message: scrub(e.message, env) })),
   };

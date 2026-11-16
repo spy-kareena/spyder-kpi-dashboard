@@ -5,6 +5,11 @@ FedEx Freight, UPS, Purolator, Canpar, DHL, Loomis, Day & Ross…). On the hoste
 **AfterShip** about every tracking number **every 2 hours**, and the page shows what it found: Shipped, In transit,
 Delayed or Delivered, with the latest scan and the expected delivery date. There is no demo data.
 
+**Every 2 hours, automatically (2v9, owner).** The scheduled Worker checks on every even hour (UTC). Until it is set
+up on Cloudflare, or when it misses a run, the open board checks AfterShip itself (below), so the statuses still move
+every 2 hours while someone has the board open. To have the checks run whether or not anyone has the board open, set
+up the Worker once: [Turn on the automatic 2-hour checks](#turn-on-the-automatic-2-hour-checks).
+
 **Where each part comes from (owner, 2v9):**
 
 | Part | Source |
@@ -29,7 +34,10 @@ colour like an AfterShip one, until AfterShip has a status of its own.
 - **Bar:** the **Carrier**, **Customer**, **Status** and **Destination** filters (Destination lists the places on the
   map, and is left out on a phone) and **Add tracking #**. Without AfterShip (a file copy, a static web server, or no
   key yet) one short line says "Automatic tracking isn't set up, so statuses are set by hand." If the last check
-  stopped (a refused key, too many requests), one line says why.
+  stopped (a refused key, too many requests), one line says why. While the scheduled Worker has not checked for
+  2 h 30 min (not set up yet, or stopped), a quiet line says "Automatic 2-hour checks aren't running on Cloudflare yet,
+  so the board checks AfterShip whenever someone has it open. Ask your Cloudflare admin to set up the shipping checker
+  (docs/SHIPPING.md)." It goes away after the Worker's first check.
 - **Map and status cards:** the delivery map across the page; on its right the map fades out (like at its top and
   bottom) and the five cards sit small over that part, two a row, Priority across both. The map's view keeps every
   dot and arc left of the cards. Below 981px the cards sit above the map, two a row. Each dot is AfterShip's
@@ -48,8 +56,11 @@ colour like an AfterShip one, until AfterShip has a status of its own.
     status where AfterShip has none), counted from the SAP ship date at the earliest ("3 with no update in 2+ days").
   - **Priority**: the shipments ticked in the Priority column; on its right **Delivered N** and **Undelivered N**,
     each a button that lists those.
-- **Shipments:** the title row says how many and when AfterShip was last read ("22 shipments · Updated 8:04 PM"),
-  and has **Update all** (below). One row per tracking number: the carrier's logo before the number (FedEx, UPS, DHL
+- **Shipments:** the title row says how many and when the data was last pulled from AfterShip ("22 shipments ·
+  Updated 8:04 PM"; "Updated Nov 14, 8:04 PM" before today, in this computer's time zone), and has **Update all**
+  (below). "Updated" is the time of the last AfterShip check, whoever made it, and changes on screen as soon as a newer
+  one is read. Its tooltip says who made it and when the next is due: "Last AfterShip check: 2:04 PM (automatic every
+  2 hours). Next automatic check about 4:00 PM." (or "(Update all)", or "(opened the board)" for the board's own check). One row per tracking number: the carrier's logo before the number (FedEx, UPS, DHL
   and USPS marks from the Simple Icons project, CC0; other carriers such as Purolator, Canada Post, Canpar, Loomis or
   Day & Ross get their name in the same chip), a 3-step strip, Shipped → In transit → Delivered (**Delayed** turns the
   middle step red) with "Last: Winnipeg, MB" under it in small grey (AfterShip's last scan place; nothing when
@@ -134,24 +145,75 @@ red when one is delayed, indigo while one is on the way, teal when all are deliv
 
 1. In AfterShip (https://admin.aftership.com), open the API keys settings and create a key. Every number added counts
    toward the AfterShip plan's monthly shipments.
-2. Add the key as a **Worker secret** and deploy the Worker (Node.js 20 or newer, signed in with `npx wrangler login`):
-
-   ```
-   cd workers/shipping-poller
-   npx wrangler secret put AFTERSHIP_API_KEY
-   npx wrangler deploy
-   ```
-
-   `wrangler.toml` there already has the cron (`crons = ["0 */2 * * *"]`, every even hour UTC) and the same
-   `REPORT_STORE` KV namespace as the site. More in [workers/shipping-poller/README.md](../workers/shipping-poller/README.md).
-3. Add the same key as a **Pages secret** (the page then knows tracking is on, and `POST /api/shipping` can check at
-   once), then redeploy the site:
+2. Set up the scheduled Worker with that key: [Turn on the automatic 2-hour checks](#turn-on-the-automatic-2-hour-checks)
+   (in the Cloudflare dashboard, no command line), or with the wrangler command line
+   ([Alternative: the wrangler command line](#alternative-the-wrangler-command-line)).
+3. Add the same key as a **Pages secret** (the page then knows tracking is on; **Update all** and the board's own
+   checks can ask AfterShip), then redeploy the site: in the Cloudflare dashboard, **Workers & Pages ›
+   spyder-kpi-dashboard › Settings › Variables and Secrets › Add**, type **Secret**, name `AFTERSHIP_API_KEY`; or
 
    ```
    npx wrangler pages secret put AFTERSHIP_API_KEY --project-name spyder-kpi-dashboard
    ```
 
 The key is only ever sent to AfterShip; it is never stored in KV or returned to the page.
+
+## Turn on the automatic 2-hour checks
+
+For whoever manages the Cloudflare account. The checks every 2 hours run in a small scheduled Worker,
+`spyder-shipping-poller` (the code is in this repository, `workers/shipping-poller`). Cloudflare builds and deploys it
+from GitHub, like the site, so no API token or command line is needed. Once it runs, the statuses move every 2 hours
+whether or not anyone has the board open, and the board's note "Automatic 2-hour checks aren't running on Cloudflare
+yet" goes away.
+
+1. **Create the Worker from the repository.** In the Cloudflare dashboard: **Workers & Pages › Create › Import a
+   repository** (connect GitHub if asked), pick **spy-kareena/spyder-kpi-dashboard**, then:
+   - **Project name:** `spyder-shipping-poller` (it must match `name` in `workers/shipping-poller/wrangler.toml`).
+   - **Root directory** (under Advanced settings): `workers/shipping-poller`
+   - **Build command:** leave empty. **Deploy command:** `npx wrangler deploy`
+   - **Production branch:** `main` (Settings › Build › Branch control, if it is not asked here).
+
+   Save and deploy. The first build reads `wrangler.toml` there: the schedule, the KV namespace and no public URL. It
+   also bundles `shared/aftership.mjs` from the repository root, the same AfterShip code the site uses. Each later
+   push to `main` redeploys it.
+2. **Add the AfterShip key.** After the first deploy: **Workers & Pages › spyder-shipping-poller › Settings ›
+   Variables and Secrets › Add**, type **Secret**, name `AFTERSHIP_API_KEY`, value: the same key as the Pages project
+   (step 3 above). Choose **Secret**, not a plain variable: later deploys keep secrets. Without the key each run stops
+   at once and the Worker's log says "AFTERSHIP_API_KEY is not set".
+3. **Check the schedule.** **Settings › Trigger Events** (Triggers) shows the cron `0 */2 * * *` (every even hour,
+   UTC). It comes from `wrangler.toml` (`[triggers] crons`); do not add another one by hand.
+4. **Check the storage.** The `[[kv_namespaces]]` id in `workers/shipping-poller/wrangler.toml` must be the KV
+   namespace the Pages project binds as `REPORT_STORE` (**Workers & Pages › spyder-kpi-dashboard › Settings ›
+   Bindings**; the id is under **Storage & Databases › KV**). If it is not, change the id in `wrangler.toml` on `main`
+   (that redeploys the Worker). A wrong id makes the Worker check AfterShip into a store the site never reads.
+5. **Check that it works.** After the next even hour (UTC; the tooltip on the board's "Updated" gives it in local time), open
+   `https://<the dashboard's address>/api/shipping` while signed in: it shows `"workerRunning": true` and
+   `"source": "cron"`, and the board's note "Automatic 2-hour checks aren't running on Cloudflare yet" is gone (reload
+   Shipping). Each run is listed under **spyder-shipping-poller › Logs** (Observability), with a line such as
+   `checked 42 tracking numbers (17 read from AfterShip, 3 added)`.
+
+**Workers Free plan:** a run may make 50 requests, so a check asks AfterShip at most 40 times and reads at most 150
+numbers, stalest first; a longer list goes round over several checks (the log line says how many are left). The
+board's own checks and **Update all** keep to the same limits. On **Workers Paid**, raise both in
+`workers/shipping-poller/wrangler.toml` (uncomment `[vars]`: `AFTERSHIP_MAX_PER_RUN` up to 600,
+`AFTERSHIP_MAX_CALLS` up to 900) to read the whole list every time.
+
+**To pause the checks:** remove the cron under **Settings › Trigger Events** (or delete the Worker). The board then
+checks while it is open (above), and its note comes back.
+
+### Alternative: the wrangler command line
+
+With Node.js 20 or newer, signed in with `npx wrangler login` to the Cloudflare account that hosts the dashboard:
+
+```
+cd workers/shipping-poller
+npx wrangler secret put AFTERSHIP_API_KEY
+npx wrangler deploy
+```
+
+`wrangler.toml` there already has the cron (`crons = ["0 */2 * * *"]`, every even hour UTC) and the same
+`REPORT_STORE` KV namespace as the site (check the id as in step 4). More in
+[workers/shipping-poller/README.md](../workers/shipping-poller/README.md).
 
 ## How it works
 
@@ -165,8 +227,19 @@ The key is only ever sent to AfterShip; it is never stored in KV or returned to 
   transit; AttemptFail, Exception, Expired → Delayed; Delivered → Delivered (with the delivery date).
 - **`/api/shipping`** (`functions/api/shipping.js`): `GET` returns the last results (`configured` = the AfterShip key
   is set on the site), `PUT` saves the page's list, `POST` checks now (at most once per 10 minutes for the whole site).
-- **Page:** reads `GET /api/shipping` when Shipping opens (at most every 5 minutes), when its browser tab comes back
-  into view, and 3 minutes after each 2-hourly check while it stays open.
+- **Page:** reads `GET /api/shipping` as soon as it has data (at start, on any page), when Shipping opens (at most
+  every 5 minutes), when its browser tab comes back into view, and 3 minutes after each 2-hourly check while it stays
+  open. `GET` also says who made the last check (`source`: `cron` the Worker, `refresh` Update all, `auto` the board),
+  when the Worker last checked (`lastCronAt`) and whether it runs (`workerRunning`: a check of its own in the last
+  2 h 30 min).
+- **The board's own check (2v9):** while the board is open and in view (any page) on a site with the AfterShip key,
+  it asks AfterShip itself, with the same `POST /api/shipping` as **Update all** (body `{"source":"auto"}`), when the
+  last check is more than 2 hours old (or there is none), or when, 3 minutes after an even hour, that hour's check has
+  not come in (the Worker is not set up or missed a run). It does so quietly (a message only for a problem someone must
+  fix, such as a refused key), after a random wait of up to a minute, at most once per 15 minutes per browser, and
+  never within the site-wide 10 minutes (several open browsers: one asks, the others just read the results). While the
+  Worker runs, the first minutes after an even hour are left to it. Never in a snapshot, a file copy or on a static
+  host, and never without the key on the site (then only the Worker can check).
 - **Errors:** a refused key (401) or too many requests (429) keeps the last results; the page shows one line with the
   reason, and the Worker's run shows in **Workers & Pages → spyder-shipping-poller → Logs**. A number AfterShip does not
   recognise shows "AfterShip does not recognise this tracking number" in its details and is offered again a day later.
@@ -188,7 +261,8 @@ is kept even while AfterShip's status is in use; the page just does not use it t
 ## Checking that it works
 
 1. After the setup above, wait for the next even hour (or check the Worker's **Logs**), then open **Shipping** on the
-   hosted site: the Shipments title row says "Updated …" and rows show AfterShip statuses.
+   hosted site: the Shipments title row says "Updated …" (its tooltip: "automatic every 2 hours") and rows show
+   AfterShip statuses; there is no "Automatic 2-hour checks aren't running" note.
 2. Click the arrow icon on a row: AfterShip's tracking page opens in a new tab.
 3. Open a row AfterShip has a status for: its **Update status** fields are greyed out and say "AfterShip's status
    is in use." Open one AfterShip does not track ("Not tracked") or has not checked, set **Delayed** with a note and
@@ -200,6 +274,8 @@ is kept even while AfterShip's status is in use; the page just does not use it t
 | What you see | What to do |
 |---|---|
 | "Automatic tracking isn't set up" | Add `AFTERSHIP_API_KEY` as a Worker secret and deploy the Worker, and add it as a Pages secret (above). A file copy or an IIS copy never has AfterShip. |
+| "Automatic 2-hour checks aren't running on Cloudflare yet" | The scheduled Worker has not checked for 2 h 30 min: set it up ([Turn on the automatic 2-hour checks](#turn-on-the-automatic-2-hour-checks)), or check its secret, schedule, KV id and **Logs**. Until then the board checks while it is open. |
+| "Updated" does not move | Nobody had the board open and the Worker is not set up (see the row above), or AfterShip refused the key (the note says so). **Update all** checks at once. |
 | "AfterShip check stopped: AfterShip refused the API key" | Check the key in AfterShip, then `npx wrangler secret put AFTERSHIP_API_KEY` (Worker) and `npx wrangler pages secret put AFTERSHIP_API_KEY --project-name spyder-kpi-dashboard`. |
 | "AfterShip says too many requests" | Nothing: the rest is read at the next check. |
 | A row says "No status" or "Not tracked" | AfterShip has not been asked yet (long list: it takes a few checks), or does not recognise the number (see its details). Set a status by hand: it counts until AfterShip has one. |

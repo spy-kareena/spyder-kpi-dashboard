@@ -2,10 +2,13 @@
  * AfterShip tracking for the Shipping page (see docs/SHIPPING.md). Needs the Workers KV namespace bound to this
  * Pages project as REPORT_STORE (the same one as functions/api/report.js). The password gate in
  * functions/_middleware.js runs first.
- *   GET  /api/shipping -> the last AfterShip results: {configured, store, active, polledAt, source, statuses, lastError,
- *                         errors, wanted:{exportAsOf, export, manual, updatedAt}, refreshAfter, schedule, everyHours}
+ *   GET  /api/shipping -> the last AfterShip results: {configured, store, active, polledAt, source, lastCronAt,
+ *                         workerRunning, statuses, lastError, errors, wanted:{exportAsOf, export, manual, updatedAt},
+ *                         refreshAfter, schedule, everyHours}
  *                         configured: the AfterShip key is set here; active: a check ran in the last 6 hours (the
- *                         Worker can have the key without this site having it).
+ *                         Worker can have the key without this site having it); source: who made the last check
+ *                         ('cron' the Worker, 'refresh' Update all, 'auto' the board's own check); lastCronAt: the
+ *                         Worker's last check; workerRunning: it checked in the last 2 h 30 min (one missed run at most).
  *   PUT  /api/shipping -> body {asOf:'YYYY-MM-DD', export:[numbers], manual:[numbers], carriers?:{[number]: label}}:
  *                         the tracking numbers the page lists from the export and the ones added by hand, with the
  *                         carrier named by the SAP ship method (only known carriers become AfterShip slugs). An older
@@ -14,17 +17,22 @@
  *   POST /api/shipping -> checks AfterShip now ("Refresh now"), at most once per 10 minutes for the whole site (a try
  *                         that failed can be repeated after 1 minute). Like each 2-hourly check it asks about the
  *                         numbers still moving, stalest first, within the per-check limits of shared/aftership.mjs.
- * The 2-hourly checks run in the scheduled Worker workers/shipping-poller. The AfterShip key (AFTERSHIP_API_KEY) is
- * only needed here for "Refresh now" and the configured flag; nothing here ever returns it.
+ *                         Optional body {source:'auto'}: the board's own check (saved as source 'auto'); without it the
+ *                         check is saved as 'refresh' (Update all).
+ * The 2-hourly checks run in the scheduled Worker workers/shipping-poller; while it does not run (or misses a run), the
+ * open board asks for a check itself with POST {source:'auto'} (index.html shpAsAutoMaybe). The AfterShip key
+ * (AFTERSHIP_API_KEY) is only needed here for those checks, "Refresh now" and the configured flag; nothing here ever
+ * returns it.
  */
 import {
-  pollTracking, aftershipConfigured, cleanTrackingNumber, slugForCarrier, readJsonStrict, INDEX_KEY, WANTED_KEY, REFRESH_KEY,
-  REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL, SCHEDULE,
+  pollTracking, aftershipConfigured, cleanTrackingNumber, slugForCarrier, readJsonStrict, lastCronOf, INDEX_KEY, WANTED_KEY,
+  REFRESH_KEY, REFRESH_SECONDS, MAX_EXPORT, MAX_MANUAL, SCHEDULE,
 } from '../../shared/aftership.mjs';
 
 const MAX_BODY = 64 * 1024;
 const MAX_LIST = 2000; // longer lists are refused rather than cut
 const ACTIVE_HOURS = 6; // a check this recent means the Worker is running
+const WORKER_MINUTES = 150; // a Worker check this recent (2 h 30 min) means its schedule runs
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -35,7 +43,7 @@ export async function onRequest(context) {
   // The session cookie is SameSite=Lax, and only the dashboard page itself may change the list or spend AfterShip calls.
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json(403, { error: 'Cross-site request refused.' });
   if (request.method === 'PUT') return saveWanted(request, store);
-  return refreshNow(store, env);
+  return refreshNow(store, env, await refreshSource(request));
 }
 
 // Reads for showing: a failed KV read counts as nothing saved (no results yet, no Refresh now limit).
@@ -54,12 +62,16 @@ async function readStatuses(store, env) {
   const ours = i.provider === 'aftership';
   const polledAt = ours ? String(i.polledAt || '') : '';
   const t = Date.parse(polledAt);
+  const lastCronAt = ours ? lastCronOf(i) : '';
+  const c = Date.parse(lastCronAt);
   return json(200, {
     configured: aftershipConfigured(env),
     store: true,
     active: Number.isFinite(t) && Date.now() - t < ACTIVE_HOURS * 3600 * 1000,
     polledAt,
     source: ours ? String(i.source || '') : '',
+    lastCronAt,
+    workerRunning: Number.isFinite(c) && Date.now() - c < WORKER_MINUTES * 60 * 1000,
     statuses: ours && i.statuses && typeof i.statuses === 'object' ? i.statuses : {},
     errors: ours && Array.isArray(i.errors) ? i.errors : [],
     lastError: ours ? i.lastError || null : null,
@@ -137,7 +149,18 @@ async function saveWanted(request, store) {
   return json(200, { saved: !unchanged, keptNewerExport: older, exportAsOf: next.exportAsOf, export: next.export.length, manual: next.manual.length });
 }
 
-async function refreshNow(store, env) {
+// The board's own check sends {"source":"auto"}; anything else (Update all sends no body) is a 'refresh'.
+async function refreshSource(request) {
+  try {
+    if (Number(request.headers.get('content-length') || 0) > 256) return 'refresh';
+    const text = await request.text();
+    if (!text || text.length > 256) return 'refresh';
+    const body = JSON.parse(text);
+    return body && body.source === 'auto' ? 'auto' : 'refresh';
+  } catch (err) { return 'refresh'; }
+}
+
+async function refreshNow(store, env, source = 'refresh') {
   if (!aftershipConfigured(env)) {
     return json(503, { configured: false, error: 'The AfterShip key is not set up on this site yet (AFTERSHIP_API_KEY), so it cannot check now. The checks every 2 hours run if the shipping poller Worker has its key.' });
   }
@@ -153,7 +176,7 @@ async function refreshNow(store, env) {
   const retryAt = now + 60 * 1000;
   try { await store.put(REFRESH_KEY, new Date(retryAt - REFRESH_SECONDS * 1000).toISOString(), { expirationTtl: 60 }); } catch (err) { /* checked anyway */ }
   try {
-    const doc = await pollTracking(env, { now, source: 'refresh' });
+    const doc = await pollTracking(env, { now, source });
     try { await store.put(REFRESH_KEY, new Date(now).toISOString(), { expirationTtl: REFRESH_SECONDS }); } catch (err) { /* the 1-minute hold stays */ }
     return json(200, { polledAt: doc.polledAt, statuses: doc.statuses, errors: doc.errors, lastError: doc.lastError || null, count: doc.count, polled: doc.polled, created: doc.created, waiting: doc.waiting, refreshAfter: refreshAfter(new Date(now).toISOString(), now) });
   } catch (err) {
