@@ -67,6 +67,15 @@ test('README, IT hosting notes and the owner checklist name every secret, the KV
   assert.match(read('README.md'), /\(docs\/OWNER_CHECKLIST\.md\)/);
 });
 
+test('Cloudflare Access sign-in: its two settings are named in the README, the IT hosting notes, the owner checklist and docs/ACCESS.md', () => {
+  for (const file of ['README.md', 'docs/IT_HOSTING_README.md', 'docs/OWNER_CHECKLIST.md', 'docs/ACCESS.md']) {
+    const text = read(file);
+    for (const name of ['ACCESS_TEAM_DOMAIN', 'ACCESS_AUD']) assert.ok(text.includes(name), `${file} names ${name}`);
+  }
+  assert.match(read('README.md'), /\(docs\/ACCESS\.md\)/);
+  assert.doesNotMatch(pages, /^\s*(ACCESS_TEAM_DOMAIN|ACCESS_AUD)\s*=/m, 'set in Cloudflare, not in wrangler.toml');
+});
+
 let failed = 0;
 for (const t of tests) {
   try { await t.fn(); console.log(`ok   ${t.name}`); }

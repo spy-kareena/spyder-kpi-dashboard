@@ -1,11 +1,13 @@
 /**
  * Names of the people who edit shared notes, kept for everyone who signs in so the "Your name" dialog can offer them
  * as one-click choices. Same Workers KV namespace as the notes (binding REPORT_STORE, key 'people'; see
- * docs/IT_HOSTING_README.md). The password gate in functions/_middleware.js runs first.
- *   GET  /api/people -> {v:1, people:[{name, firstSeen, lastSeen}]}, the most recently seen first
+ * docs/IT_HOSTING_README.md). The sign-in gate in functions/_middleware.js runs first.
+ *   GET  /api/people -> {v:1, people:[{name, firstSeen, lastSeen, byEmail?}]}, the most recently seen first
  *   POST /api/people    body {name}
  *        Adds the name, or marks it as seen when it is already saved (in any capitalisation: the first spelling
  *        stays). Returns {saved, name, people}: `name` as stored, `saved` whether Workers KV was written.
+ *        With Cloudflare Access sign-in on, the server adds byEmail: the address Access verified for whoever last
+ *        sent the name (never taken from the page), and a POST with no name uses the name made from that address.
  *   DELETE /api/people  body {name}
  *        Removes the name (any capitalisation) from the list, e.g. a typo or a person who left. Returns
  *        {removed, people}; removing a name that is not there changes nothing. A browser that still uses the name
@@ -13,7 +15,7 @@
  * Names not seen for 180 days are left out when the list is read, and dropped from Workers KV at the next save.
  * A name is trimmed and its spaces collapsed, then must be 1 to 40 characters: letters (any language), spaces and
  * . ' - only, with at least one letter. At most 300 names are kept: a new one beyond that replaces the name seen
- * longest ago. Names are not checked against accounts (the site has one shared password).
+ * longest ago. Names are not checked against accounts (byEmail only records who sent the name).
  * Workers KV is written only when the list changes, or when a name was last seen more than a day ago (the page sends
  * its name at most once a day), so page opens cost no writes. POST and DELETE must come from the dashboard page
  * itself (same origin). 500 when the stored list cannot be read (nothing is written); 429 with Retry-After when
@@ -28,6 +30,7 @@ const PUT_RETRY_MS = 1100; // Workers KV: one write per second to the same key
 const NAME_MAX = 40;
 const NAME_RE = /^[\p{L}\p{M} .'-]+$/u;
 const HAS_LETTER_RE = /\p{L}/u;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+$/;
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -49,7 +52,11 @@ export async function onRequest(context) {
   if (text.length > MAX_BODY) return tooLarge();
   let body;
   try { body = JSON.parse(text); } catch (err) { return json(400, { error: 'The name is not valid JSON.' }); }
-  const name = body && typeof body === 'object' && !Array.isArray(body) ? cleanName(body.name) : '';
+  const sent = body && typeof body === 'object' && !Array.isArray(body) ? body.name : undefined;
+  const who = signedInPerson(context);
+  // No name sent (missing or blank) by someone Cloudflare Access signed in: the name made from their address.
+  const blank = sent === undefined || sent === null || (typeof sent === 'string' && !sent.trim());
+  const name = cleanName(blank && who && request.method === 'POST' ? who.name : sent);
   if (!name) return json(400, { error: `A name is 1 to ${NAME_MAX} letters, spaces and . ' - (at least one letter).` });
 
   // A failed read must never be taken for "no names yet": the new list would replace everyone's.
@@ -75,8 +82,9 @@ export async function onRequest(context) {
   let changed = stale > 0; // names gone stale are dropped from the stored list with this save
   if (found) {
     if (now - time(found.lastSeen) > SEEN_EVERY_MS) { found.lastSeen = iso; changed = true; }
+    if (who && found.byEmail !== who.email) { found.byEmail = who.email; changed = true; }
   } else {
-    people.push({ name, firstSeen: iso, lastSeen: iso });
+    people.push({ name, firstSeen: iso, lastSeen: iso, ...(who ? { byEmail: who.email } : {}) });
     changed = true;
   }
   people = order(people).slice(0, MAX_PEOPLE); // full: the name seen longest ago gives way to the new one
@@ -98,6 +106,13 @@ async function save(store, people) {
     }
   }
   return null;
+}
+
+// The person Cloudflare Access signed in (functions/_middleware.js checked the token): {email, name}, else null.
+function signedInPerson(context) {
+  const u = context && context.data && context.data.user;
+  if (!u || u.via !== 'access' || typeof u.email !== 'string' || !u.email) return null;
+  return { email: u.email, name: typeof u.name === 'string' ? u.name : '' };
 }
 
 // Trimmed, spaces collapsed, curly apostrophes made straight; '' when it is not a name by the rules above.
@@ -125,6 +140,7 @@ async function readPeople(store) {
     if (!name || seen.has(name.toLowerCase())) continue;
     seen.add(name.toLowerCase());
     const entry = { name, firstSeen: isoOr(p.firstSeen), lastSeen: isoOr(p.lastSeen) };
+    if (typeof p.byEmail === 'string' && p.byEmail.length <= 254 && EMAIL_RE.test(p.byEmail)) entry.byEmail = p.byEmail;
     // Last seen, else first seen; a name with neither date is kept (its age is not known).
     const at = time(entry.lastSeen) || time(entry.firstSeen);
     if (at && at < oldest) { stale++; continue; }

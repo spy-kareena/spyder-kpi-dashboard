@@ -58,11 +58,12 @@ The gear opens Settings, also before an export is loaded. A category bar at the 
 
 ## Hosting
 
-Cloudflare Pages serves the site (project `spyder-kpi-dashboard`, deployed from GitHub `spy-kareena/spyder-kpi-dashboard`, branch `main`). `functions/_middleware.js` is the sign-in gate: one shared password and a 14-day session cookie; `/logout` signs out. Shared data lives in the KV binding `REPORT_STORE`. **First deploy or new Cloudflare account: follow [docs/OWNER_CHECKLIST.md](docs/OWNER_CHECKLIST.md).**
+Cloudflare Pages serves the site (project `spyder-kpi-dashboard`, deployed from GitHub `spy-kareena/spyder-kpi-dashboard`, branch `main`). `functions/_middleware.js` is the sign-in gate: Cloudflare Access, where each person signs in with their own email ([docs/ACCESS.md](docs/ACCESS.md)), and / or one shared password with a 14-day session cookie; `/logout` signs out and `/api/me` says who is signed in. Shared data lives in the KV binding `REPORT_STORE`. **First deploy or new Cloudflare account: follow [docs/OWNER_CHECKLIST.md](docs/OWNER_CHECKLIST.md).**
 
 Secrets are set with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`, never in this repo:
 
-- `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): required. Without them every page returns "not configured", and changing either one signs everyone out.
+- `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`: recommended. Sign-in through Cloudflare Access: the Zero Trust team domain (`spyder`, `spyder.cloudflareaccess.com` or its `https://` address) and the Access application's AUD tag (several separated by commas). Set both or neither; every request must then carry a valid Access token, and notes record the signed-in email. Setup and retiring the password: [docs/ACCESS.md](docs/ACCESS.md).
+- `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): the shared password, needed unless Cloudflare Access is on. With both Access and the password set, people need both (the changeover); delete `DASHBOARD_PASSWORD` to retire the password. With neither, every page returns "not configured". Changing either one signs everyone out.
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`: optional. Set at least one to turn on Ask AI.
 - `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Live SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
 - `AFTERSHIP_API_KEY`: optional, also a Worker secret in `workers/shipping-poller`. Shipping statuses from AfterShip every 2 hours ([docs/SHIPPING.md](docs/SHIPPING.md)).
@@ -82,12 +83,12 @@ This runs every `tests/*.test.js` and `*.test.mjs` file: the page's scripts, the
 ## Files
 
 - `index.html`: the whole app (HTML, CSS and JavaScript, with SheetJS Community Edition 0.20.3 built in as `<script id="sheetjs-lib">`)
-- `functions/`: Cloudflare Pages Functions (sign-in, report, notes, people, history, Ask AI proxy, Live SAP)
+- `functions/`: Cloudflare Pages Functions (sign-in, who is signed in, report, notes, people, history, Ask AI proxy, Live SAP)
 - `mcp/`: the MCP connector
 - `queries/`: SAP HANA queries for the KPI export and the supply / demand snapshot
-- `docs/`: user quick start, owner checklist, hosting notes, Ask AI, MCP connector, Shipping and Live SAP
+- `docs/`: user quick start, owner checklist, hosting notes, Cloudflare Access sign-in, Ask AI, MCP connector, Shipping and Live SAP
 - `tests/`: the test suite; `samples/`: a tiny fake export for a smoke test
-- `assets/`: the logo for the sign-in page (the only file served before sign-in)
+- `assets/`: the logo for the sign-in page (the only file served before the password sign-in)
 - `shared/`, `workers/`: the AfterShip code and the Worker that checks it every 2 hours; `web.config`: IIS; `wrangler.toml`: Pages config; `VERSION.txt`: release notes
 
 ## Changing the page

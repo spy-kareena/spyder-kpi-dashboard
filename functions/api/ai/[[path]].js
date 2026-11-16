@@ -101,7 +101,7 @@ export async function onRequest(context) {
   const method = path === 'status' ? 'GET' : path === 'chat' ? 'POST' : null;
   if (!method) return json(404, { error: { code: 'not_found', message: 'Not found.' } });
   if (request.method !== method) return json(405, { error: { code: 'method', message: `Use ${method}.` } }, { Allow: method });
-  return path === 'status' ? status(env) : chat(request, env);
+  return path === 'status' ? status(env) : chat(request, env, context.data);
 }
 
 async function status(env) {
@@ -117,7 +117,7 @@ async function status(env) {
   return json(200, { hosted: true, configured: providers.some((p) => p.configured), providers });
 }
 
-async function chat(request, env) {
+async function chat(request, env, data) {
   // The session cookie is SameSite=Lax; only the dashboard page itself may spend the site's AI keys.
   if (request.headers.get('Origin') !== new URL(request.url).origin) return json(403, { error: { code: 'origin', message: 'Cross-site request refused.' } });
   if (Number(request.headers.get('content-length') || 0) > MAX_BODY_BYTES) return tooLarge();
@@ -138,7 +138,7 @@ async function chat(request, env) {
   if (checked.error) return bad(checked.error);
   const { system, messages, tools } = checked;
   const final = body.final === true;
-  const capped = await spendingCap(request, env, p);
+  const capped = await spendingCap(request, env, p, data);
   if (capped) return capped;
 
   if (p.dialect === 'anthropic') {
@@ -207,7 +207,7 @@ function checkConversation(p, body) {
 // s: {session: requests this minute}}, holds both counts, so a request costs one KV read and one write. KV is not
 // atomic, so this is a soft cap (the provider console's spend limit stays the backstop); if KV cannot be read or
 // written the question goes through. Without REPORT_STORE nothing is counted.
-async function spendingCap(request, env, p) {
+async function spendingCap(request, env, p, data) {
   const store = env && env.REPORT_STORE;
   if (p.tier !== 'paid' || !store) return null;
   const now = new Date();
@@ -218,7 +218,7 @@ async function spendingCap(request, env, p) {
   try { doc = await store.get(key, { type: 'json' }); } catch (err) { doc = null; }
   const today = Number(doc && doc.n) || 0;
   const sessions = doc && doc.m === minute && doc.s && typeof doc.s === 'object' && !Array.isArray(doc.s) ? doc.s : {};
-  const who = await sessionId(request);
+  const who = await sessionId(request, data);
   const mine = Number(sessions[who]) || 0;
   const set = String(env.AI_DAILY_REQUESTS ?? '').trim();
   const daily = set === '' ? NaN : Math.floor(Number(set));
@@ -231,14 +231,18 @@ async function spendingCap(request, env, p) {
   return null;
 }
 
-// A short, one-way id of the sign-in session (from its cookie), so the per-minute count is per browser session.
-async function sessionId(request) {
+// A short, one-way id of who is asking, so the per-minute count is per person: the Cloudflare Access account when
+// functions/_middleware.js found one (context.data.user), else the password sign-in session (from its cookie), else the IP.
+async function sessionId(request, data) {
+  const user = data && data.user;
+  const account = user && user.via === 'access' && user.email ? `access:${user.email}`
+    : user && user.via === 'access-service' && user.service ? `service:${user.service}` : '';
   let cookie = '';
   for (const part of String(request.headers.get('Cookie') || '').split(';')) {
     const [k, ...rest] = part.trim().split('=');
     if (k === SESSION_COOKIE) cookie = rest.join('=');
   }
-  const basis = cookie || `ip:${request.headers.get('CF-Connecting-IP') || ''}`;
+  const basis = account || cookie || `ip:${request.headers.get('CF-Connecting-IP') || ''}`;
   const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(basis)));
   return [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

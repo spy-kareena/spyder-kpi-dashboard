@@ -2225,6 +2225,7 @@ button.ohl-cust.sel,button.ohl-age.sel{background:var(--dz-indigo-bg)}
 /* Note editor: name and comment pickers, and who wrote a note */
 .note-write{display:grid;gap:8px;min-width:0}
 .note-editor select.note-name,.note-editor select.note-comment{width:100%}
+.note-editor .note-name-ro{display:block;padding:6px 0;font-size:13px;font-weight:500;color:var(--dz-ink-1);overflow-wrap:anywhere}
 .ohl-note-by{display:grid;gap:1px;margin-top:6px;max-width:160px;font-size:11.5px;line-height:1.3;text-align:left}
 .ohl-note-t{color:var(--dz-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ohl-note-w{color:var(--dz-ink-5)}
@@ -4598,6 +4599,11 @@ button.ohc2-name:focus-visible{outline-offset:-2px}
 .stg-layout .stg-reset:disabled{opacity:.45;cursor:default}
 .stg-val{font-size:13.5px;color:var(--dz-ink-2);font-variant-numeric:tabular-nums}
 .stg-btns{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+/* General, signed in through Cloudflare Access: the name, the email in grey under it, Sign out beside them */
+.stg-layout .stg-who-row .stg-ctl{gap:8px 16px}
+.stg-who{display:grid;gap:1px;min-width:0;text-align:right}
+.stg-who-n{font-size:13.5px;font-weight:500;color:var(--dz-ink-1)}
+.stg-who-e{font-size:12.5px;color:var(--dz-ink-4);overflow-wrap:anywhere}
 .stg-block{padding:14px 0}
 .stg-panel>.stg-now.stg-block{margin:0}
 .stg-layout .stg-kv{grid-template-columns:120px minmax(0,1fr);gap:16px;padding:8px 0;font-size:13.5px}
@@ -4659,6 +4665,7 @@ button.ohc2-name:focus-visible{outline-offset:-2px}
   .stg-layout .stg-ctl{flex:1 1 100%;justify-content:flex-start}
   .stg-layout .stg-select{max-width:none;flex:1}
   .stg-layout .stg-bgs,.stg-btns{justify-content:flex-start}
+  .stg-layout .stg-who{flex:1 1 auto;text-align:left}
   .stg-layout .stg-kv{grid-template-columns:minmax(0,1fr);gap:2px}
   .stg-layout .stg-hp-list,.stg-notes-block .stg-list{grid-template-columns:minmax(0,1fr)}
   .stg-layout .stg-hp-list>.stg-row:nth-child(2){border-top:1px solid var(--dz-line-6)}
@@ -6859,6 +6866,8 @@ let notePeopleAsked=false;
 // Who is writing: the names saved for everyone (the same list as the Your name dialog) plus "Add a new name".
 // Picking one makes it this browser's editor name, so the note is stamped with it.
 function renderNoteNameSelect(r){
+  // Signed in through Cloudflare Access: the sign-in's name, nothing to pick.
+  if(accessId)return `<span class="note-name note-name-ro"${tipAttr('From your company sign-in; saved with the note.')}>${esc(accessId.name)}</span>`;
   if(!notePeopleAsked&&!sharedPeople.length&&typeof canSharePeople==='function'&&canSharePeople()){
     notePeopleAsked=true;
     loadPeople().then(ok=>{if(ok&&sharedPeople.length&&document.querySelector('select.note-name'))renderResults();});
@@ -6872,6 +6881,7 @@ function renderNoteNameSelect(r){
   </select>`;
 }
 function pickNoteName(sel){
+  if(accessId)return;
   const v=sel.value;
   if(v==='__new'){sel.value=readEditor()||'';askEditorName(true);return;}
   const name=normalizeEditorName(v);
@@ -12919,7 +12929,7 @@ function stgSeg(key,items,label,dis,fn=`stgSet('${key}',`){
 }
 // General: your name (stamped on the notes you save) and the page a load opens on.
 function stgGeneralSection(dis){
-  if(!stgPeopleAsked&&!sharedPeople.length&&typeof canSharePeople==='function'&&canSharePeople()){
+  if(!accessId&&!stgPeopleAsked&&!sharedPeople.length&&typeof canSharePeople==='function'&&canSharePeople()){
     stgPeopleAsked=true;
     loadPeople().then(ok=>{if(ok&&sharedPeople.length&&activeTab==='settings')renderResults();});
   }
@@ -12931,8 +12941,10 @@ function stgGeneralSection(dis){
   const pages=stgStartPages().filter(([,id])=>!stgPageHidden(id));
   const now=(stgStartPages().find(p=>p[1]===stgStartTab())||stgStartPages()[0])[0];
   const start=stgSelect('stg-startPage','startPage',pages.map(([v,id])=>[v,NAV_LABELS[id]||PAGE_TITLES[id]||id]),now,"stgSet('startPage',this.value)",{dis});
+  // Signed in through Cloudflare Access: who, read only, with Sign out instead of the picker.
+  const who=accessId?stgRow('Your name','From your company sign-in.',`<span class="stg-who"><span class="stg-who-n">Signed in as ${esc(accessId.name)}</span><span class="stg-who-e">${esc(accessId.email)}</span></span><button type="button" class="dz-btn print-hide" id="stg-signout" data-focus-key="stg-signout" onclick="accessSignOut()"${tipAttr('Sign out of the board in this browser.')}>Sign out</button>`,{cls:'stg-who-row'}):'';
   return stgSection('general',
-    stgRow('Your name','Shown on the notes you save.',select,{labelFor:'stg-name'})
+    (who||stgRow('Your name','Shown on the notes you save.',select,{labelFor:'stg-name'}))
     +stgRow('Start page','The page a new load opens on.',start,{labelFor:'stg-startPage'}),
     {tip:'General\n• Your name is stamped on the notes you save\n• Start page: hidden pages are not offered'});
 }
@@ -16990,6 +17002,11 @@ initStreamAUi();
 const NOTE_MAX_LENGTH=4000;
 // The editor's name: null = never asked, '' = skipped (Not now), else the name.
 const NOTES_EDITOR_KEY='spyderKpiEditorName';
+// Signed in through Cloudflare Access (see "Who is signed in" below): {name, email, logoutUrl}, else null. While set,
+// its name is the editor's name (readEditor); the name picked before in this browser stays in NOTES_EDITOR_KEY.
+let accessId=null;
+// {email, name}: the last sign-in seen in this browser, so the next open starts with it until /api/me answers.
+const ACCESS_ID_KEY='spyderKpiAccessIdV1';
 // Initials saved before 2v2: stamped on edits until the name is given, and shown as a hint (not a value) in the name box.
 const NOTES_INITIALS_KEY='spyderKpiEditor';
 // {name, at}: when this browser last sent its name to the shared list (at most once a day, PEOPLE_SEEN_MS).
@@ -17063,8 +17080,9 @@ function persistClearedSoon(){
 const isSafeNoteKey=k=>k!=='__proto__'&&k!=='constructor'&&k!=='prototype';
 const notesHasOwn=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 // The editor's name: null = never asked, '' = skipped, else the name. A value that is not a name (edited by hand)
-// counts as never asked.
+// counts as never asked. Signed in through Cloudflare Access: the sign-in's name.
 function readEditor(){
+  if(accessId)return accessId.name;
   let v=null;
   try{v=localStorage.getItem(NOTES_EDITOR_KEY);}catch(err){return null;}
   return v===null||v===''?v:normalizeEditorName(v)||null;
@@ -17445,8 +17463,9 @@ function sharedNotesSidebarLine(){
     tip='No shared storage here; Share snapshot carries your notes.';
   }else return '';
   const name=readEditor();
-  // The name lives in Settings (Profile card): the link opens it on the name picker.
-  const who=s.state==='shared'?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="dzMenuClose();stgShowCard('profile','stg-name')" data-tip="${esc(name?`Your notes show “${name}”; change it in Settings.`:'Set the name shown with the notes you save.')}">${name?'Change name in Settings':'Set your name in Settings'}</button>`:'';
+  // The name lives in Settings (Profile card): the link opens it on the name picker (none when the name comes from
+  // the company sign-in: there is nothing to change).
+  const who=s.state==='shared'&&!accessId?`<br><button type="button" class="link-btn notes-editor-btn" data-focus-key="notes-editor" onclick="dzMenuClose();stgShowCard('profile','stg-name')" data-tip="${esc(name?`Your notes show “${name}”; change it in Settings.`:'Set the name shown with the notes you save.')}">${name?'Change name in Settings':'Set your name in Settings'}</button>`:'';
   return `<span class="notes-sync" data-tip="${esc(tip)}">${text}</span>${who}`;
 }
 
@@ -17515,10 +17534,11 @@ async function postEditorName(name){
     const data=await res.json();
     if(isSnapshotView)return false;
     adoptPeople(data&&data.people);
-    // The server keeps the first spelling of a name (any capitalisation): this browser uses it too.
+    // The server keeps the first spelling of a name (any capitalisation): this browser uses it too (not a sign-in's
+    // name, which is not kept in NOTES_EDITOR_KEY).
     const stored=normalizeEditorName(data&&data.name);
     let sent=name;
-    if(stored&&stored!==name&&stored.toLowerCase()===name.toLowerCase()&&readEditor()===name){
+    if(stored&&stored!==name&&stored.toLowerCase()===name.toLowerCase()&&readEditor()===name&&!accessId){
       try{localStorage.setItem(NOTES_EDITOR_KEY,stored);sent=stored;}catch(err){/* keeps the spelling typed */}
       renderSidebar();
     }
@@ -17547,7 +17567,8 @@ function peopleOnOpen(){
   }else if(!editorAnswered())loadPeople();
 }
 function askEditorName(force=false){
-  if(editorDialogOpen||isSnapshotView)return;
+  // Signed in through Cloudflare Access: the name comes from the sign-in, never asked.
+  if(editorDialogOpen||isSnapshotView||accessId)return;
   if(!force&&(editorAsked||sharedNotes.state!=='shared'||editorAnswered()))return;
   editorAsked=true;
   // Opened after the current click or redraw, so focus goes back to the control in use when it closes.
@@ -17562,7 +17583,7 @@ function editorChipsHtml(filter=''){
   return list.map(p=>`<span class="editor-pick"><button type="button" class="editor-chip" data-name="${esc(p.name)}"${p.name.toLowerCase()===current?' aria-current="true"':''} data-tip="Use this name.">${esc(p.name)}</button><button type="button" class="editor-chip-x" data-remove="${esc(p.name)}" aria-label="${esc(`Remove ${p.name}`)}" data-tip="Remove this name from the list for everyone.">×</button></span>`).join('');
 }
 function openEditorDialog(){
-  if(editorDialogOpen||isSnapshotView)return;
+  if(editorDialogOpen||isSnapshotView||accessId)return;
   const d=document.createElement('dialog');
   // Older browsers (and the test page) have no modal dialog: edits are then saved without a name.
   if(!d||typeof d.showModal!=='function')return;
@@ -17686,6 +17707,90 @@ function finishEditorDialog(name){
   }
   renderSidebar();
   flushSharedNotesSoon();
+}
+
+// --- Who is signed in (Cloudflare Access) ---
+// On the hosted site behind Cloudflare Access, GET /api/me (functions/api/me.js) names the person signed in:
+// {v:1, auth:{access, password}, user:{email, name}|null, logoutUrl}. Their name is then the editor's name (readEditor)
+// on notes, delivery statuses and the Priority tick: the name the sign-in itself gives (Microsoft or Google, from
+// /cdn-cgi/access/get-identity) when there is one, else the one /api/me makes from the email. The Your name question
+// and the name pickers step aside, Settings > General shows "Signed in as ..." with Sign out (logoutUrl), and the name
+// joins the shared list of names (peopleOnOpen, like a picked name). A name picked before in this browser is kept and
+// comes back when the board is opened without Access. The server stamps shared writes with the verified email itself:
+// the page sends the name only, as before. Asked once when the page opens, never waited for. A file copy and a shared
+// snapshot ask nothing; a site with only the shared password, or without /api/me, has no sign-in. The email stays in
+// this browser (ACCESS_ID_KEY; not in Export settings, snapshots or Ask AI).
+const ACCESS_ID_WAIT=4000; // ms to wait for get-identity before using the name /api/me gives
+let accessAsked=false;
+function accessEmail(v){
+  const s=String(v??'').trim();
+  return s.length<=254&&/^[^\s@<>"']+@[^\s@<>"']+$/.test(s)?s:'';
+}
+// A name the notes take (normalizeEditorName): other characters become spaces, cut to EDITOR_NAME_MAX.
+function accessCleanName(v){
+  return normalizeEditorName(v)||normalizeEditorName(String(v??'').normalize('NFC').replace(/[^\p{L}\p{M} .'-]+/gu,' ').replace(/\s+/g,' ').trim().slice(0,EDITOR_NAME_MAX));
+}
+// Sign out goes to a path on this site only.
+const accessLogoutUrl=v=>/^\/(?![/\\])[^\s"'<>\\]*$/.test(String(v??''))?String(v):'/logout';
+function accessCached(){
+  try{
+    const v=JSON.parse(localStorage.getItem(ACCESS_ID_KEY)||'null');
+    const email=accessEmail(v&&v.email),name=accessCleanName(v&&v.name);
+    return email&&name?{name,email,logoutUrl:'/logout'}:null;
+  }catch(err){return null;}
+}
+// Takes the sign-in (null: none), remembers it here, and draws again what shows the name.
+function accessSet(next){
+  const was=accessId?`${accessId.email}\n${accessId.name}`:'';
+  accessId=next;
+  try{
+    if(next)localStorage.setItem(ACCESS_ID_KEY,JSON.stringify({email:next.email,name:next.name}));
+    else localStorage.removeItem(ACCESS_ID_KEY);
+  }catch(err){/* asked again at the next open */}
+  if((next?`${next.email}\n${next.name}`:'')===was)return;
+  if(next&&canSharePeople())peopleOnOpen();
+  renderSidebar();
+  if(activeTab==='settings'||document.querySelector('.note-name'))renderResults();
+}
+// The name the sign-in gives (Microsoft or Google), for the same email only; '' when there is none.
+async function accessIdentityName(email){
+  try{
+    const res=await fetch('/cdn-cgi/access/get-identity',{cache:'no-store',credentials:'same-origin'});
+    if(!res.ok||!/json/i.test(res.headers.get('content-type')||''))return '';
+    const id=await res.json();
+    if(!id||typeof id!=='object'||(id.email&&String(id.email).trim().toLowerCase()!==email.toLowerCase()))return '';
+    return accessCleanName(id.name);
+  }catch(err){return '';}
+}
+// Page open (startApp): starts with the sign-in seen here last time, then asks /api/me. Any failure means no sign-in.
+async function accessLoad(){
+  if(accessAsked||!canShareNotes())return;
+  accessAsked=true;
+  const cached=accessCached();
+  if(cached)accessSet(cached);
+  let me=null;
+  try{
+    const res=await fetch('/api/me',{cache:'no-store',credentials:'same-origin'});
+    if(res.ok&&/json/i.test(res.headers.get('content-type')||''))me=await res.json();
+  }catch(err){me=null;}
+  const user=me&&typeof me==='object'&&me.user&&typeof me.user==='object'?me.user:null;
+  const email=accessEmail(user&&user.email);
+  let name='';
+  if(email){
+    let timer;
+    name=await Promise.race([accessIdentityName(email),new Promise(r=>{timer=setTimeout(()=>r(''),ACCESS_ID_WAIT);})]);
+    clearTimeout(timer);
+    name=name||accessCleanName(user.name);
+  }
+  if(isSnapshotView)return;
+  accessSet(email&&name?{name,email,logoutUrl:accessLogoutUrl(me.logoutUrl)}:null);
+}
+// Settings > General > Sign out: notes waiting to be saved go first, then the site's sign-out page.
+function accessSignOut(){
+  const url=accessId?accessId.logoutUrl:'/logout';
+  flushSharedNotes({all:true,keepalive:true});
+  try{localStorage.removeItem(ACCESS_ID_KEY);}catch(err){/* /api/me answers at the next open */}
+  location.href=url;
 }
 
 // --- Small icons on the little tiles (2v6.1) ---
@@ -23171,7 +23276,7 @@ function startApp(){
   loadEmbeddedSnapshot();
   if(!isSnapshotView&&stgValue('dataSource')==='import'){const next={...stgStore()};delete next.dataSource;stgWrite(next);}
   if(liveMode())liveStart();
-  syncSharedNotes();loadAtRiskHistory();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}
+  syncSharedNotes();loadAtRiskHistory();accessLoad();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startApp);
 else startApp();

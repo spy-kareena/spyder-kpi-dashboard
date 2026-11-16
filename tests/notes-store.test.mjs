@@ -28,12 +28,12 @@ function kv() {
   };
   return store;
 }
-function call({ method = 'GET', body, env, origin = ORIGIN, headers = {} }) {
+function call({ method = 'GET', body, env, origin = ORIGIN, headers = {}, data }) {
   const h = { 'content-type': 'application/json', ...headers };
   if (origin) h.Origin = origin;
   const init = { method, headers: h };
   if (body !== undefined) init.body = typeof body === 'string' ? body : JSON.stringify(body);
-  return onRequest({ request: new Request(ORIGIN + '/api/notes', init), env, params: {} });
+  return onRequest({ request: new Request(ORIGIN + '/api/notes', init), env, params: {}, data });
 }
 const stored = async (env) => JSON.parse(await env.REPORT_STORE.get('overrides', { type: 'text' }) || 'null');
 const T = (s) => new Date(Date.UTC(2026, 9, 8, 15, 0, s)).toISOString();
@@ -388,6 +388,45 @@ test('cleared-line markers older than 180 days are dropped on every save, not on
   const writes = env.REPORT_STORE.puts;
   await call({ method: 'PATCH', env, body: { rows: { [KEY_A]: { notes: 'x', at: T(1) } } } });
   assert.equal(env.REPORT_STORE.puts, writes);
+});
+
+// context.data.user as functions/_middleware.js sets it after checking a Cloudflare Access token (made-up address).
+const ACCESS_USER = { email: 'jamie.rivera@example.test', name: 'Jamie Rivera', via: 'access' };
+
+test('Cloudflare Access: each saved entry records the verified address (byEmail); no name sent takes the Access name', async () => {
+  const env = { REPORT_STORE: kv() };
+  const data = { user: ACCESS_USER };
+  const res = await call({ method: 'PATCH', env, data, body: {
+    rows: { [KEY_A]: { notes: 'Typed name kept', by: 'KK', at: T(1) }, [KEY_B]: { status: 'Hold', at: T(1) } },
+    shipments: { '1Z999': { order: '500', number: '1Z999', at: T(1) }, 'st:1Z999': { order: '500', number: '1Z999', status: 'delayed', at: T(1) }, 'pr:1Z999': { order: '500', number: '1Z999', priority: true, by: '', at: T(1) } },
+  } });
+  assert.equal(res.status, 200);
+  const out = await res.json();
+  assert.equal(out.applied, 5);
+  assert.deepEqual(out.rows[KEY_A], { notes: 'Typed name kept', by: 'KK', at: T(1), byEmail: ACCESS_USER.email }, 'a name the page sent is kept');
+  assert.deepEqual(out.rows[KEY_B], { status: 'Hold', by: 'Jamie Rivera', at: T(1), byEmail: ACCESS_USER.email });
+  const doc = await stored(env);
+  for (const id of ['1Z999', 'st:1Z999', 'pr:1Z999']) {
+    assert.equal(doc.shipments[id].byEmail, ACCESS_USER.email, id);
+    assert.equal(doc.shipments[id].by, 'Jamie Rivera', id);
+  }
+  assert.equal(doc.shipments['st:1Z999'].status, 'delayed');
+  assert.equal(doc.shipments['pr:1Z999'].priority, true);
+  // A line someone else saves later carries their address; one the page tries to stamp itself is not believed.
+  const other = { user: { email: 'sam.lee@example.test', name: 'Sam Lee', via: 'access' } };
+  await call({ method: 'PATCH', env, data: other, body: { rows: { [KEY_A]: { notes: 'Ships Friday', by: 'Sam Lee', byEmail: 'boss@example.test', at: T(2) } } } });
+  assert.deepEqual((await stored(env)).rows[KEY_A], { notes: 'Ships Friday', by: 'Sam Lee', at: T(2), byEmail: 'sam.lee@example.test' });
+});
+
+test('shared password (no Access identity): entries keep their old shape, and a byEmail sent by the page is dropped', async () => {
+  for (const data of [undefined, {}, { user: { via: 'password' } }, { user: { service: 'abc.access', via: 'access-service' } }]) {
+    const env = { REPORT_STORE: kv() };
+    const res = await call({ method: 'PATCH', env, data, body: { rows: { [KEY_A]: { notes: 'x', byEmail: 'boss@example.test', at: T(1) } }, shipments: { 'st:1Z9': { order: '1', number: '1Z9', status: 'shipped', by: 'KK', at: T(1) } } } });
+    assert.equal(res.status, 200);
+    const doc = await stored(env);
+    assert.deepEqual(doc.rows[KEY_A], { notes: 'x', by: '', at: T(1) }, JSON.stringify(data));
+    assert.deepEqual(doc.shipments['st:1Z9'], { order: '1', number: '1Z9', status: 'shipped', by: 'KK', at: T(1) });
+  }
 });
 
 let failed = 0;

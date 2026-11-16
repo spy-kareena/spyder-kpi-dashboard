@@ -23,10 +23,10 @@ globalThis.fetch = async (url, init = {}) => {
   return new Response(typeof r.body === 'string' ? r.body : JSON.stringify(r.body), { status: r.status || 200, headers: { 'content-type': 'application/json' } });
 };
 
-function call(path, { method = 'GET', body, env = KEYS, origin = ORIGIN, headers = {} } = {}) {
+function call(path, { method = 'GET', body, env = KEYS, origin = ORIGIN, headers = {}, data } = {}) {
   const h = { ...headers };
   if (origin) h.Origin = origin;
-  return onRequest({ request: new Request(ORIGIN + path, { method, body: typeof body === 'string' || body === undefined ? body : JSON.stringify(body), headers: h }), env, params: {} });
+  return onRequest({ request: new Request(ORIGIN + path, { method, body: typeof body === 'string' || body === undefined ? body : JSON.stringify(body), headers: h }), env, params: {}, data });
 }
 const chat = (body, opts = {}) => call('/api/ai/chat', { method: 'POST', body, ...opts });
 const QUESTION = [{ role: 'user', content: 'What is at risk?' }];
@@ -401,6 +401,28 @@ test('paid providers are capped per session per minute and per site per day (KV 
   // KV failing never blocks a question.
   const broken = { get: async () => { throw new Error('KV GET failed: 503'); }, put: async () => { throw new Error('KV PUT failed: 429'); } };
   assert.equal((await chat({ provider: 'anthropic', model: 'claude-haiku-5-5', messages: QUESTION }, { env: { ...KEYS, REPORT_STORE: broken } })).status, 200);
+});
+
+test('with Cloudflare Access sign-in, the per-minute cap counts per person (their Access address), not per office IP', async () => {
+  const map = new Map();
+  const store = {
+    async get(k, opts) { if (!map.has(k)) return null; const v = map.get(k); return opts && opts.type === 'json' ? JSON.parse(v) : v; },
+    async put(k, v) { map.set(k, v); },
+  };
+  const env = { ...KEYS, REPORT_STORE: store };
+  reset((u) => (/\/models$/.test(u) ? { status: 500, body: {} } : { body: { content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn' } }));
+  if (new Date().getSeconds() > 50) await new Promise((r) => setTimeout(r, (61 - new Date().getSeconds()) * 1000));
+  // Everyone behind one office IP, no password session cookie (Access only): made-up addresses.
+  // The smallest model the proxy lists for this provider (models can't be read here, so the built-in list is used).
+  const model = (await body(await call('/api/ai/status', { env }))).providers[0].models.at(-1);
+  const ask = (email) => chat({ provider: 'anthropic', model, messages: QUESTION }, { env, headers: { 'CF-Connecting-IP': '203.0.113.7' }, data: { user: { email, name: '', via: 'access' } } });
+  for (let i = 0; i < 15; i++) assert.equal((await ask('jamie.rivera@example.test')).status, 200, `request ${i + 1}`);
+  assert.equal((await ask('jamie.rivera@example.test')).status, 429);
+  assert.equal((await ask('sam.lee@example.test')).status, 200, 'a colleague on the same IP is not held back');
+  const day = new Date().toISOString().slice(0, 10);
+  const doc = JSON.parse(map.get(`ai:day:anthropic:${day}`));
+  assert.equal(Object.keys(doc.s).length, 2);
+  assert.ok(!JSON.stringify(doc).includes('example.test'), 'only a one-way id is stored, not the address');
 });
 
 let failed = 0;

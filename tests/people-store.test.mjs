@@ -34,12 +34,12 @@ function kv() {
   };
   return store;
 }
-function call({ method = 'GET', body, env, origin = ORIGIN, headers = {} }) {
+function call({ method = 'GET', body, env, origin = ORIGIN, headers = {}, data }) {
   const h = { 'content-type': 'application/json', ...headers };
   if (origin) h.Origin = origin;
   const init = { method, headers: h };
   if (body !== undefined) init.body = typeof body === 'string' ? body : JSON.stringify(body);
-  return onRequest({ request: new Request(ORIGIN + '/api/people', init), env, params: {} });
+  return onRequest({ request: new Request(ORIGIN + '/api/people', init), env, params: {}, data });
 }
 const post = (env, name, extra = {}) => call({ method: 'POST', env, body: { name }, ...extra });
 const stored = (env) => JSON.parse(env.REPORT_STORE.map.get('people') || 'null');
@@ -360,6 +360,54 @@ test('names not seen for 180 days drop off: left out of every read, removed from
   const removed = await (await del(env, 'Nobody')).json();
   assert.equal(removed.removed, false);
   assert.deepEqual(stored(env).people.map((p) => p.name), ['Aaron']);
+});
+
+// context.data.user as functions/_middleware.js sets it after checking a Cloudflare Access token (made-up addresses).
+const JAMIE = { user: { email: 'jamie.rivera@example.test', name: 'Jamie Rivera', via: 'access' } };
+const SAM = { user: { email: 'sam.lee@example.test', name: 'Sam Lee', via: 'access' } };
+
+test('Cloudflare Access: a saved name records the verified address of whoever sent it (byEmail); no name sent takes the Access name', async () => {
+  const env = { REPORT_STORE: kv() };
+  let res = await post(env, 'Kareena', { data: JAMIE });
+  assert.equal(res.status, 200);
+  let out = await res.json();
+  assert.equal(out.saved, true);
+  assert.equal(stored(env).people[0].byEmail, 'jamie.rivera@example.test');
+  // Sent again the same day by the same person: no write. By someone else: their address, one write.
+  const writes = env.REPORT_STORE.puts;
+  assert.equal((await (await post(env, 'kareena', { data: JAMIE })).json()).saved, false);
+  assert.equal(env.REPORT_STORE.puts, writes);
+  out = await (await post(env, 'Kareena', { data: SAM })).json();
+  assert.equal(out.saved, true);
+  assert.equal(stored(env).people[0].byEmail, 'sam.lee@example.test');
+  // GET lists it with the name.
+  const list = await (await call({ env })).json();
+  assert.deepEqual(Object.keys(list.people[0]).sort(), ['byEmail', 'firstSeen', 'lastSeen', 'name']);
+  // No name (missing, null or blank): the name Access gave; a page-sent byEmail is never believed.
+  for (const body of [{}, { name: '' }, { name: '   ' }, { name: null, byEmail: 'boss@example.test' }]) {
+    res = await call({ method: 'POST', env, data: JAMIE, body });
+    assert.equal(res.status, 200, JSON.stringify(body));
+    assert.equal((await res.json()).name, 'Jamie Rivera');
+  }
+  const jamie = stored(env).people.find((p) => p.name === 'Jamie Rivera');
+  assert.equal(jamie.byEmail, 'jamie.rivera@example.test');
+  // A name that breaks the rules is still refused, Access or not; DELETE never falls back to the Access name.
+  assert.equal((await post(env, 'Bob!', { data: JAMIE })).status, 400);
+  assert.equal((await call({ method: 'DELETE', env, data: JAMIE, body: {} })).status, 400);
+  assert.ok(stored(env).people.some((p) => p.name === 'Jamie Rivera'));
+});
+
+test('shared password (no Access identity): names keep their old shape; no name is still refused; a bad stored byEmail is dropped', async () => {
+  const env = { REPORT_STORE: kv() };
+  for (const data of [undefined, { user: { via: 'password' } }, { user: { service: 'abc.access', via: 'access-service' } }]) {
+    assert.equal((await call({ method: 'POST', env, data, body: {} })).status, 400);
+  }
+  await post(env, 'Kareena', { data: { user: { via: 'password' } } });
+  assert.deepEqual(Object.keys(stored(env).people[0]).sort(), ['firstSeen', 'lastSeen', 'name']);
+  seed(env, [{ name: 'Alex', firstSeen: ago(0), lastSeen: ago(0), byEmail: 'not an address' }, { name: 'Lee', firstSeen: ago(0), lastSeen: ago(0), byEmail: 'lee@example.test' }]);
+  const people = (await (await call({ env })).json()).people;
+  assert.equal(people.find((p) => p.name === 'Alex').byEmail, undefined);
+  assert.equal(people.find((p) => p.name === 'Lee').byEmail, 'lee@example.test');
 });
 
 let failed = 0;

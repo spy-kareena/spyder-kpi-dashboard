@@ -2,7 +2,7 @@
  * Shared notes: the override status, note, Us / Them cause and "deleted" flag people set on order lines, plus
  * tracking numbers typed in by hand for the Shipping page, kept for everyone who signs in. Uses the same Workers KV
  * namespace as the shared report (binding REPORT_STORE, key 'overrides'; see docs/IT_HOSTING_README.md). The
- * password gate in functions/_middleware.js runs first.
+ * sign-in gate in functions/_middleware.js runs first.
  *   GET   /api/notes -> {v:1, rows:{[rowKey]:entry}, shipments:{[id]:entry}, savedAt}
  *   PATCH /api/notes    body {rows?:{[rowKey]:entry}, shipments?:{[id]:entry}}
  *         Each key is merged on its own: the entry with the newer `at` wins, a tie keeps the stored one. Returns
@@ -11,13 +11,16 @@
  *         are left out of the reply and counted in `skipped`, for the page to send again.
  *         500 when the stored notes cannot be read (nothing is written); 429 with Retry-After when Workers KV is
  *         busy (one write per second to the key), so the page sends the batch again.
- * Row entry: {status, notes, cause:'us'|'them'|'', deleted, kitClean, by, at}. kitClean (2v6.5) is the Kit Clean?
+ * Row entry: {status, notes, cause:'us'|'them'|'', deleted, kitClean, by, at, byEmail?}. kitClean (2v6.5) is the Kit Clean?
  * tick on a purchase-order line: true or false, only true is stored. `by` is the editor's name (the same rules as
  * functions/api/people.js: up to 40 letters, spaces and . ' -; initials saved before 2v2 are still taken), `at` the
  * time of the edit (ISO, never later than the server's clock). An entry with no status, note, cause, deleted flag or
  * kitClean tick records that the line was cleared; it is kept for 180 days so other browsers drop their copy (older markers are
  * dropped on every save). When storage runs full (2 MB), the entries edited longest ago go (`pruned` in the reply).
- * Shipment entry: {order, number, carrier?, status?, statusDate?, note?, priority?, deleted?, by, at}. A tracking number
+ * byEmail (both kinds of entry): with Cloudflare Access sign-in on, the email address Access verified for whoever saved
+ * that version of the entry, added here by the server (never taken from the page). When the page sends no name (by),
+ * the name made from that address is stored as by. Entries saved with the shared password alone have no byEmail.
+ * Shipment entry: {order, number, carrier?, status?, statusDate?, note?, priority?, deleted?, by, at, byEmail?}. A tracking number
  * added by hand is keyed by the number; the manual delivery status someone set on the Shipping page is keyed
  * 'st:<number>' (status 'shipped' | 'transit' | 'delayed' | 'delivered' | '' for none, statusDate YYYY-MM-DD or '', note
  * up to 200 characters); the Priority tick (2v6.9) is keyed 'pr:<number>' (priority true or false, both stored so an
@@ -77,6 +80,7 @@ export async function onRequest(context) {
   if (incoming.error) return json(400, { error: incoming.error });
 
   const now = Date.now();
+  const who = signedInPerson(context);
   let doc;
   // A failed read must never be taken for "nothing saved": the merged document would replace everyone's notes.
   // (Not 503: the page reads 503 as "no shared storage on this site" and stops sharing.)
@@ -96,7 +100,7 @@ export async function onRequest(context) {
       // Lines new to the server are capped per request (edits to stored lines are not), so one request cannot
       // fill the storage with made-up keys. The page sends at most this many per request.
       if (!current && ++added > MAX_NEW_KEYS) { skipped++; continue; }
-      if (!current || entry.at > time(current.at)) { doc[kind][key] = { ...entry, at: new Date(entry.at).toISOString() }; applied++; }
+      if (!current || entry.at > time(current.at)) { doc[kind][key] = attribute({ ...entry, at: new Date(entry.at).toISOString() }, who); applied++; }
       out[kind][key] = doc[kind][key];
       sent.add(`${kind}|${key}`);
     }
@@ -204,6 +208,21 @@ function shipmentEntry(raw) {
   if (raw.priority !== undefined) { if (typeof raw.priority !== 'boolean') return { error: 'priority must be true or false.' }; entry.priority = raw.priority; }
   if (raw.deleted !== undefined) { if (typeof raw.deleted !== 'boolean') return { error: 'deleted must be true or false.' }; if (raw.deleted) entry.deleted = true; }
   return { ...entry, by: head.by, at: head.at };
+}
+
+// The person Cloudflare Access signed in (functions/_middleware.js checked the token): {email, name}, else null.
+function signedInPerson(context) {
+  const u = context && context.data && context.data.user;
+  if (!u || u.via !== 'access' || typeof u.email !== 'string' || !u.email) return null;
+  return { email: u.email, name: editorName(typeof u.name === 'string' ? u.name : '') || '' };
+}
+
+// A saved entry with the verified address of whoever saved it, and their name when the page sent none.
+function attribute(entry, who) {
+  if (!who) return entry;
+  if (!entry.by && who.name) entry.by = who.name;
+  entry.byEmail = who.email;
+  return entry;
 }
 
 // The name as stored (trimmed, spaces collapsed, curly apostrophes made straight), '' for none, null when refused.
