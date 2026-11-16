@@ -432,9 +432,10 @@ test('clearing a line and restoring deleted lines reach the other browsers too',
   // 2v7: the deleted lines are listed in the Settings Data Check card (it was a pill in the page head).
   b.run("setTab('settings')");
   assert.match(html(b), /1 line you deleted is hidden/);
-  // 2v9: no where-it-is-kept words on Settings (owner).
+  // 2v9: no where-it-is-kept words for the notes on Settings (owner). The line at the top of Settings that says where
+  // the settings themselves are kept (stgStatusHtml; tests/settings-sync.test.js) is left out of this check.
   assert.match(html(b), /Deleted lines<\/span><span class="stg-help">Left out of every page and KPI\.<\/span>/);
-  assert.doesNotMatch(html(b), /for everyone who signs in|in this browser/);
+  assert.doesNotMatch(html(b).replace(/<div class="stg-status rise" id="stg-status">[\s\S]*?<\/p><\/div>/, ''), /for everyone who signs in|in this browser/);
 
   // a clears the note and restores the line: the entries go, and markers tell the server.
   clock(a, '2026-10-08T16:00:00Z');

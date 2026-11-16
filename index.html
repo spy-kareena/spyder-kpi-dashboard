@@ -4683,6 +4683,29 @@ button.ohc2-name:focus-visible{outline-offset:-2px}
   .stg-panel{box-shadow:none;border:1px solid var(--gray-300);border-radius:6px;padding:0 .12in}
   .stg-notes-block .stg-list{max-height:none}
 }
+/* Where settings are kept (stgStatusHtml): one quiet line over the two panes. Team settings (Cloudflare Access): a small
+   Team chip by the label, "Set by your admin" with a lock for anyone but an admin, and About's Reset team settings that
+   asks in place (Reset for everyone / Cancel). Tokens only, so light and dark both follow the theme. */
+.stg-status{display:grid;gap:4px;max-width:1048px;margin:0 0 18px;padding:0 6px;font-size:13px;line-height:1.5;color:var(--dz-ink-3)}
+.stg-status-l{display:flex;align-items:flex-start;gap:8px;margin:0}
+.stg-status-l>svg{flex:none;width:15px;height:15px;margin-top:2px;color:var(--dz-ink-4)}
+.stg-status-t{min-width:0;overflow-wrap:anywhere}
+.stg-status-when[data-tip]{text-decoration:underline dotted var(--dz-ink-5);text-underline-offset:3px}
+.stg-status .warn-text{display:block;margin-top:2px}
+.stg-lt{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.stg-layout .dz-chip.stg-team{gap:4px;padding:2px 8px 2px 6px;font-size:11.5px;font-weight:600;letter-spacing:.01em;background:var(--dz-teal-bg);color:var(--dz-teal)}
+.stg-team-ico{flex:none;width:13px;height:13px}
+.stg-team-hint{display:inline-flex;align-items:center;gap:5px;margin-top:3px;font-size:12px;font-weight:500;color:var(--dz-ink-3)}
+.stg-team-hint>svg{flex:none;width:12px;height:12px;color:var(--dz-ink-4)}
+.stg-ask{align-items:center}
+.stg-ask-q{margin-right:4px;font-size:13.5px;font-weight:500;color:var(--dz-ink-1)}
+.stg-layout .dz-btn.stg-danger{background:var(--dz-risk-bg);border-color:transparent;color:var(--dz-risk-text)}
+.stg-layout .dz-btn.stg-danger:hover{filter:brightness(.97)}
+@media (max-width:640px){
+  .stg-status{margin-bottom:12px;padding:0 2px}
+  .stg-ask-q{flex:1 1 100%}
+}
+@media print{.stg-status-l>svg{display:none}}
 /* 2v9 (owner): end Settings layout */
 /* 2v9:monthly-move */
 /* Monthly's sections on Sales Order Health (2v9): the older tables sit flat in glass cards (.misc-flat); the card's meta
@@ -12714,6 +12737,17 @@ function stgStore(){
 function stgValue(key){
   const s=stgSpec()[key];
   if(!s)return undefined;
+  // Team settings on (stgTeam, Cloudflare Access): a team key reads the team's value, its default while the team has none.
+  if(stgTeam&&stgIsTeamKey(key)){
+    const t=stgTeam.settings,v=t&&Object.prototype.hasOwnProperty.call(t,key)?s.check(t[key]):undefined;
+    return v===undefined?s.def():v;
+  }
+  return stgLocalValue(key);
+}
+// The value this browser keeps (its store, else the default), team settings or not.
+function stgLocalValue(key){
+  const s=stgSpec()[key];
+  if(!s)return undefined;
   const store=stgStore();
   if(Object.prototype.hasOwnProperty.call(store,key)){const v=s.check(store[key]);if(v!==undefined)return v;}
   return s.def();
@@ -12754,13 +12788,15 @@ function stgSet(key,value){
   const s=stgSpec()[key];
   const v=s?s.check(value):undefined;
   if(v===undefined)return false;
+  if(stgTeam&&stgIsTeamKey(key))return stgTeamSet(key,v); // one copy for everyone: admins only, saved on the server
   if(JSON.stringify(v)===JSON.stringify(stgValue(key)))return true;
   const next={...stgStore()};
   if(JSON.stringify(v)===JSON.stringify(s.def()))delete next[key];else next[key]=v;
   if(key==='hiddenPages'){next.hiddenMonthly2v69=true;next.hiddenSupply2v69=true;} // 2v9: a choice made after the Supply pages and Monthly were hidden is kept as made
   const saved=stgWrite(next);
   stgAfterChange([key]);
-  showToast(saved?'Saved':'Changed for now: this browser does not keep settings');
+  const kept=stgAccountChanged([key]);
+  showToast(saved||kept?'Saved':'Changed for now: this browser does not keep settings');
   return true;
 }
 function stgAfterChange(keys){
@@ -12771,16 +12807,18 @@ function stgAfterChange(keys){
   const results=document.getElementById('results-screen');
   if(results&&results.style.display==='block')renderResults();else renderSidebar();
 }
+// With team settings on, Reset (like Export and Import) covers your own settings only (stgOwnKeys).
 function stgResetAll(){
   if(isSnapshotView)return;
-  const keys=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k));
+  const keys=stgOwnKeys().filter(k=>!stgIsDefault(k));
   if(!keys.length)return;
-  if(typeof confirm==='function'&&!confirm('Put every setting back to its default?'))return;
+  if(typeof confirm==='function'&&!confirm(stgTeam?'Put your own settings back to their defaults? Team settings stay.':'Put every setting back to its default?'))return;
   const next={...stgStore()};
-  Object.keys(stgSpec()).forEach(k=>delete next[k]);
+  stgOwnKeys().forEach(k=>delete next[k]);
   const saved=stgWrite(next);
   stgAfterChange(keys);
-  showToast(saved?'Settings back to their defaults':'Defaults for now: this browser does not keep settings');
+  const kept=stgAccountChanged(keys);
+  showToast(saved||kept?(stgTeam?'Your settings are back to their defaults':'Settings back to their defaults'):'Defaults for now: this browser does not keep settings');
 }
 // Settings changed in another tab of this browser apply here too.
 // Only the settings that really changed are passed on.
@@ -12791,6 +12829,359 @@ window.addEventListener('storage',e=>{
   const keys=Object.keys(before).filter(k=>JSON.stringify(stgValue(k))!==before[k]);
   if(keys.length)stgAfterChange(keys);
 });
+
+// --- Settings saved to your account, and team settings (Cloudflare Access) ---
+// Behind Cloudflare Access (accessLoad found the person signed in), settings follow the person instead of the browser:
+// • Personal settings (how the board looks and opens: every stgSpec key but the team ones) live in the person's account.
+//   When the page opens, GET /api/prefs (functions/api/prefs.js) puts the account's copy over this browser's (each value
+//   checked like any setting, unknown or bad ones skipped); this browser keeps a copy for the next open and for when the
+//   server cannot be reached. An account with none yet takes this browser's settings, once. Every later change (stgSet,
+//   Import, Reset) is sent STG_TIMING.save ms after the last one (PUT, every personal key; never the email or a team
+//   key), once more if it fails, at once when the page is hidden. A failure never holds the page up.
+// • Team settings (the rules behind the numbers: stgTeamKeys) are one copy for everyone when GET /api/team-settings says
+//   enabled: stgValue then reads the team's value (the default while the team has none) instead of this browser's, so
+//   everyone sees the same red / amber / green. Only admins (canEdit) change them: a change is sent STG_TIMING.save ms
+//   after the last one (PUT, the changed keys only) and goes back to the server's value if it is refused. An admin's
+//   first visit, while the team has never saved any, saves this browser's values for everyone (their setup carries
+//   over). Settings marks those rows Team; for anyone else they are read only ("Set by your admin").
+// The team settings seen last are kept here (STG_TEAM_CACHE), so the next open counts with them before the server answers.
+// Without a sign-in (only the shared password, a file copy, a shared snapshot) nothing is asked: settings stay in this
+// browser, as before.
+const STG_TIMING={save:800,retry:2500};
+const STG_TEAM_CACHE='spyderKpiTeamSettingsV1';
+const STG_TEAM_SEEN='spyderKpiTeamSeenV1'; // this browser has had team settings: it never seeds them (a reset stays reset)
+function stgTeamKeys(){return ['atRiskTarget','toleranceDays','horizon','otdGoalSales','otdGoalVendors','noteCommentsSo','noteCommentsPo'];}
+function stgIsTeamKey(key){return stgTeamKeys().includes(key);}
+function stgPersonalKeys(){return Object.keys(stgSpec()).filter(k=>!stgIsTeamKey(k));}
+// What Export, Import and Reset to defaults cover: every setting, or your own only while team settings are on.
+function stgOwnKeys(){return stgTeam?stgPersonalKeys():Object.keys(stgSpec());}
+// vars, not let: stgValue reads stgTeam while the page loads, before this line runs (undefined there: no team settings).
+// stgTeam: null = off (this browser's values), else {settings, server, savedAt, savedBy, history, canEdit, pending, ...}.
+var stgTeam=null;
+// stgAcct.state: '' not asked, 'loading', 'on' (the account keeps your settings), 'off' (no account copy on this site),
+// 'failed' (not reachable when the page opened: this browser's copy for this visit).
+var stgAcct={state:'',timer:null,busy:false,again:false,touched:new Set()};
+async function stgGet(url){
+  try{
+    const res=await fetch(url,{cache:'no-store',credentials:'same-origin'});
+    const data=res.ok&&/json/i.test(res.headers.get('content-type')||'')?await res.json():null;
+    const ok=!!data&&typeof data==='object'&&!Array.isArray(data);
+    return {ok,status:res.status,body:ok?data:null};
+  }catch(err){return {ok:false,status:0,body:null};}
+}
+// PUT a JSON body: {ok, status, body, message (the server's reason: error.message, or error / message as text)}.
+// status 0: the server was not reached.
+async function stgPut(url,body,keepalive=false){
+  try{
+    const res=await fetch(url,{method:'PUT',cache:'no-store',credentials:'same-origin',keepalive,headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    let data=null;
+    try{if(/json/i.test(res.headers.get('content-type')||''))data=await res.json();}catch(err){data=null;}
+    data=data&&typeof data==='object'&&!Array.isArray(data)?data:null;
+    const e=data&&data.error;
+    const said=e&&typeof e==='object'?e.message:data?e||data.message:'';
+    return {ok:res.ok,status:res.status,body:data,message:typeof said==='string'?said.replace(/\s+/g,' ').trim().slice(0,160):''};
+  }catch(err){return {ok:false,status:0,body:null,message:''};}
+}
+// After accessLoad (me: the /api/me answer, null without a sign-in): the account's settings and the team settings,
+// asked together, then what changes is drawn again. Never waited for by the page.
+async function stgCloudLoad(me){
+  if(!me||!accessId||isSnapshotView||!canShareNotes()){stgCloudOff();return;}
+  stgAcct.state='loading';stgAcct.touched=new Set();
+  const [p,t]=await Promise.all([stgGet('/api/prefs'),me.teamSettings===false?null:stgGet('/api/team-settings')]);
+  if(isSnapshotView||!accessId){stgCloudOff();return;}
+  const keys=new Set();
+  stgAccountApply(p,keys);
+  stgTeamApply(t,keys);
+  stgRedraw(keys);
+}
+// No sign-in: this browser's settings, as before (team settings seen at the last open are dropped).
+function stgCloudOff(){
+  clearTimeout(stgAcct.timer);stgAcct.timer=null;stgAcct.state='';
+  const keys=new Set();
+  stgTeamUse(null,keys);
+  try{localStorage.removeItem(STG_TEAM_CACHE);}catch(err){/* nothing kept */}
+  if(keys.size)stgAfterChange([...keys]);
+}
+function stgRedraw(keys){
+  if(keys.size)stgAfterChange([...keys]);
+  else if(activeTab==='settings')renderResults();
+}
+// The account's copy over this browser's; keys collects the settings whose value that changes.
+function stgAccountApply(r,keys){
+  if(!r.ok){stgAcct.state=r.status===0||r.status>=500?'failed':'off';return;}
+  stgAcct.state='on';
+  const prefs=r.body.prefs;
+  // First sign-in (the account has none): this browser's settings become the account's.
+  if(!prefs||typeof prefs!=='object'||Array.isArray(prefs)||!Object.keys(prefs).length){stgAccountSave(1);return;}
+  const spec=stgSpec(),next={...stgStore()},changed=[];
+  stgPersonalKeys().forEach(k=>{
+    if(!Object.prototype.hasOwnProperty.call(prefs,k)||stgAcct.touched.has(k))return; // a change made while it was read stays
+    const v=spec[k].check(prefs[k]);
+    // The page always opens on Live SAP (startApp): an account left on Import files does not switch it.
+    if(v===undefined||(k==='dataSource'&&v!=='live'))return;
+    if(JSON.stringify(v)===JSON.stringify(stgValue(k)))return;
+    changed.push(k);
+    if(JSON.stringify(v)===JSON.stringify(spec[k].def()))delete next[k];else next[k]=v;
+    if(k==='hiddenPages'){next.hiddenMonthly2v69=true;next.hiddenSupply2v69=true;}
+  });
+  if(changed.length){stgWrite(next);changed.forEach(k=>keys.add(k));}
+  if(stgAcct.touched.size)stgAccountSoon();
+}
+// A change to settings: personal ones go to the account (soon) while it keeps them. true when the account keeps them.
+function stgAccountChanged(keys){
+  const own=keys.filter(k=>!stgIsTeamKey(k));
+  if(!own.length||!(stgAcct.state==='on'||stgAcct.state==='loading'))return false;
+  if(stgAcct.state==='loading')own.forEach(k=>stgAcct.touched.add(k));
+  else stgAccountSoon();
+  return true;
+}
+function stgAccountSoon(delay=STG_TIMING.save,tries=1){
+  clearTimeout(stgAcct.timer);
+  stgAcct.timer=setTimeout(()=>{stgAcct.timer=null;stgAccountSave(tries);},delay);
+}
+// Every personal setting as this page has it: never a team setting, never who you are.
+function stgPersonalPrefs(){return Object.fromEntries(stgPersonalKeys().map(k=>[k,stgValue(k)]));}
+async function stgAccountSave(tries=1){
+  if(stgAcct.state!=='on')return false;
+  if(stgAcct.busy){stgAcct.again=true;return false;}
+  stgAcct.busy=true;
+  const r=await stgPut('/api/prefs',{prefs:stgPersonalPrefs()});
+  stgAcct.busy=false;
+  if(stgAcct.again){stgAcct.again=false;if(!stgAcct.timer)stgAccountSoon(0);} // changed meanwhile: send what it is now
+  else if(!r.ok&&!stgAcct.timer){
+    if(tries>0)stgAccountSoon(STG_TIMING.retry,0);
+    else showToast('Not saved to your account: this browser keeps the change');
+  }
+  return r.ok;
+}
+// Team settings from the server: the team keys only, each checked like any setting; null when there are none.
+function stgTeamClean(s){
+  if(!s||typeof s!=='object'||Array.isArray(s))return null;
+  const spec=stgSpec(),out={};
+  stgTeamKeys().forEach(k=>{
+    if(!Object.prototype.hasOwnProperty.call(s,k))return;
+    const v=spec[k].check(s[k]);
+    if(v!==undefined)out[k]=v;
+  });
+  return out;
+}
+function stgTeamNew(b){
+  const settings=stgTeamClean(b.settings);
+  return {settings,server:settings,savedAt:typeof b.savedAt==='string'||typeof b.savedAt==='number'?b.savedAt:'',savedBy:typeof b.savedBy==='string'?b.savedBy:'',
+    history:Array.isArray(b.history)?b.history.filter(h=>h&&typeof h==='object').slice(0,20):[],canEdit:b.canEdit===true,
+    pending:{},timer:null,busy:false,again:false,error:'',asking:false};
+}
+// Puts team settings in use (null: off); keys collects the team settings whose value that changes.
+function stgTeamUse(next,keys){
+  const before=stgTeamKeys().map(k=>JSON.stringify(stgValue(k)));
+  if(stgTeam&&stgTeam!==next)clearTimeout(stgTeam.timer);
+  stgTeam=next;
+  stgTeamKeys().forEach((k,i)=>{if(JSON.stringify(stgValue(k))!==before[i])keys.add(k);});
+}
+// GET /api/team-settings: enabled puts them in use. An admin whose team has never saved any (no settings, no date, no
+// history) and whose browser never had them saves this browser's values for everyone, once.
+function stgTeamApply(r,keys){
+  const b=r&&r.ok?r.body:null;
+  if(!b||b.enabled!==true){stgTeamUse(null,keys);stgTeamCacheWrite();return;}
+  const team=stgTeamNew(b);
+  let seen=false;
+  try{seen=!!localStorage.getItem(STG_TEAM_SEEN);}catch(err){seen=false;}
+  const seed=team.canEdit&&team.settings===null&&!team.savedAt&&!team.history.length&&!seen;
+  if(seed){team.settings=Object.fromEntries(stgTeamKeys().map(k=>[k,stgLocalValue(k)]));team.pending={...team.settings};}
+  stgTeamUse(team,keys);
+  try{localStorage.setItem(STG_TEAM_SEEN,'1');}catch(err){/* the server's date and history still stop a second seed */}
+  stgTeamCacheWrite();
+  if(seed)stgTeamSave({quiet:true});
+}
+function stgTeamCacheWrite(){
+  try{
+    if(stgTeam)localStorage.setItem(STG_TEAM_CACHE,JSON.stringify({settings:stgTeam.server,savedAt:stgTeam.savedAt,savedBy:stgTeam.savedBy,canEdit:stgTeam.canEdit}));
+    else localStorage.removeItem(STG_TEAM_CACHE);
+  }catch(err){/* asked again at the next open */}
+}
+// Page open (startApp), before anything is counted: the team settings seen here last time, while the sign-in seen here
+// last time is there (accessCached). /api/team-settings then says what they are now.
+function stgTeamBoot(){
+  if(isSnapshotView||!canShareNotes()||!accessCached())return;
+  let c=null;
+  try{c=JSON.parse(localStorage.getItem(STG_TEAM_CACHE)||'null');}catch(err){c=null;}
+  if(!c||typeof c!=='object'||Array.isArray(c))return;
+  const keys=new Set();
+  stgTeamUse(stgTeamNew(c),keys);
+  if(keys.size){stgSync();invalidateMetrics();}
+}
+// An admin's change to a team setting: in use at once, sent for everyone STG_TIMING.save ms after the last change (the
+// changed keys only). Anyone else: refused (their controls are read only).
+function stgTeamSet(key,v){
+  const team=stgTeam;
+  if(!team.canEdit){showToast('Set by your admin');return false;}
+  if(JSON.stringify(v)===JSON.stringify(stgValue(key)))return true;
+  team.settings={...(team.settings||{}),[key]:v};
+  team.pending[key]=v;
+  team.error='';
+  stgAfterChange([key]);
+  stgTeamSoon();
+  return true;
+}
+function stgTeamSoon(delay=STG_TIMING.save,tries=1){
+  const team=stgTeam;
+  if(!team)return;
+  clearTimeout(team.timer);
+  team.timer=setTimeout(()=>{team.timer=null;stgTeamSave({tries});},delay);
+}
+// The team's values again from the server's copy and the changes not sent yet; keys collects what that changes.
+function stgTeamRebase(team,keys){
+  const before=stgTeamKeys().map(k=>JSON.stringify(stgValue(k)));
+  team.settings=team.server||Object.keys(team.pending).length?{...(team.server||{}),...team.pending}:null;
+  stgTeamKeys().forEach((k,i)=>{if(JSON.stringify(stgValue(k))!==before[i])keys.add(k);});
+}
+function stgTeamWhy(r){
+  return r.message||(r.status===403?'Only admins can change team settings.':r.status===400?'The server did not take that value.':'The server could not be reached.');
+}
+async function stgTeamSave({tries=1,quiet=false}={}){
+  const team=stgTeam;
+  if(!team||!Object.keys(team.pending).length)return false;
+  if(team.busy){team.again=true;return false;}
+  const sent=team.pending;
+  team.pending={};team.busy=true;
+  const r=await stgPut('/api/team-settings',{settings:sent});
+  team.busy=false;
+  if(stgTeam!==team)return false; // turned off or read again meanwhile
+  const keys=new Set();
+  if(r.ok){
+    const b=r.body||{};
+    team.server=stgTeamClean(b.settings)||{...(team.server||{}),...sent};
+    if(typeof b.savedAt==='string'||typeof b.savedAt==='number')team.savedAt=b.savedAt;
+    if(typeof b.savedBy==='string')team.savedBy=b.savedBy;
+    // The reply has the GET's shape (history included); a server without it gets this change added here.
+    team.history=Array.isArray(b.history)?b.history.filter(h=>h&&typeof h==='object').slice(0,20):[{at:team.savedAt,by:team.savedBy,keys:Object.keys(sent)},...team.history].slice(0,20);
+    team.error='';
+    stgTeamRebase(team,keys);
+    stgTeamCacheWrite();
+    if(!quiet)showToast('Saved for everyone');
+  }else if((r.status===0||r.status===429||r.status>=500)&&tries>0){ // not reached, or busy: once more
+    team.pending={...sent,...team.pending}; // once more, with anything changed meanwhile
+    team.again=false;
+    if(!team.timer)stgTeamSoon(STG_TIMING.retry,0);
+    return false;
+  }else{
+    // Refused (400 names a bad value, 403: not an admin) or still failing: back to the server's value, and why.
+    if(r.status===403){team.canEdit=false;team.pending={};}
+    team.error=stgTeamWhy(r);
+    stgTeamRebase(team,keys);
+    showToast(`Not saved for everyone: ${team.error}`);
+  }
+  if(team.again){team.again=false;if(Object.keys(team.pending).length&&!team.timer)stgTeamSoon(0);}
+  stgRedraw(keys);
+  return r.ok;
+}
+// About > Reset team settings: asks in the page first (stgTeam.asking), then PUT {reset:true}.
+function stgTeamResetAsk(on){
+  if(!stgTeam||!stgTeam.canEdit||stgTeam.busy)return;
+  stgTeam.asking=!!on;
+  renderResults();
+  const el=typeof document.querySelector==='function'?document.querySelector(`[data-focus-key="${on?'stg-team-reset-no':'stg-team-reset'}"]`):null;
+  if(el&&el.focus)el.focus({preventScroll:true});
+}
+async function stgTeamReset(){
+  const team=stgTeam;
+  if(!team||!team.canEdit||team.busy)return false;
+  clearTimeout(team.timer);team.timer=null;team.pending={}; // changes not sent yet are part of what is reset
+  team.busy=true;
+  if(activeTab==='settings')renderResults();
+  const r=await stgPut('/api/team-settings',{reset:true});
+  team.busy=false;
+  if(stgTeam!==team)return false;
+  team.asking=false;
+  const keys=new Set();
+  if(r.ok){
+    const b=r.body||{};
+    team.server=stgTeamClean(b.settings);
+    if(typeof b.savedAt==='string'||typeof b.savedAt==='number')team.savedAt=b.savedAt;
+    if(typeof b.savedBy==='string')team.savedBy=b.savedBy;
+    team.history=Array.isArray(b.history)?b.history.filter(h=>h&&typeof h==='object').slice(0,20):[{at:team.savedAt,by:team.savedBy,keys:['reset']},...team.history].slice(0,20);
+    team.error='';
+    stgTeamRebase(team,keys);
+    stgTeamCacheWrite();
+    showToast('Team settings are back to their defaults for everyone');
+  }else{
+    if(r.status===403)team.canEdit=false;
+    team.error=stgTeamWhy(r);
+    showToast(`Not reset: ${team.error}`);
+  }
+  stgRedraw(keys);
+  // Back on the button, or on About's heading once the button is off (everything at its default).
+  const el=(typeof document.querySelector==='function'&&document.querySelector('[data-focus-key="stg-team-reset"]:not(:disabled)'))||document.getElementById('stg-h-about');
+  if(el&&el.focus)el.focus({preventScroll:true});
+  return r.ok;
+}
+// A change waiting for its delay is sent at once (keepalive) when the page is hidden or closed, so the next open, where
+// the account's copy wins, has it.
+function stgFlushNow(){
+  if(stgAcct.timer&&stgAcct.state==='on'){clearTimeout(stgAcct.timer);stgAcct.timer=null;stgPut('/api/prefs',{prefs:stgPersonalPrefs()},true);}
+  const team=stgTeam;
+  if(team&&team.timer&&Object.keys(team.pending).length){
+    clearTimeout(team.timer);team.timer=null;
+    const sent=team.pending;team.pending={};
+    stgPut('/api/team-settings',{settings:sent},true);
+  }
+}
+if(typeof addEventListener==='function')addEventListener('pagehide',stgFlushNow);
+if(typeof document!=='undefined'&&typeof document.addEventListener==='function')document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')stgFlushNow();});
+// "Pat Lee" from a name or an email ("pat.lee@…"); "you" for the person signed in here; '' when there is neither.
+function stgTeamWho(v){
+  const s=String(v??'').trim();
+  if(!s)return '';
+  if(accessId&&(s.toLowerCase()===accessId.email.toLowerCase()||s===accessId.name))return 'you';
+  if(!s.includes('@'))return accessCleanName(s)||'';
+  return accessCleanName(s.split('@')[0].replace(/[._+-]+/g,' ').replace(/(^|\s)(\p{L})/gu,(m,a,c)=>a+c.toUpperCase()))||'';
+}
+function stgTeamWhen(v){
+  const t=typeof v==='number'?v:Date.parse(String(v??''));
+  if(!Number.isFinite(t)||t<=0)return '';
+  return new Date(t).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+const STG_TEAM_NAMES={atRiskTarget:'At-risk target',toleranceDays:'On-track tolerance',horizon:'Look-ahead window',otdGoalSales:'Sales on-time goal',
+  otdGoalVendors:'Vendor on-time goal',noteCommentsSo:'Sales-order comments',noteCommentsPo:'Purchase-order comments',reset:'Reset to defaults'};
+// The status line's tip: the last few team changes, one a line.
+function stgTeamHistoryTip(){
+  const rows=stgTeam.history.slice(0,5).map(h=>{
+    const keys=(Array.isArray(h.keys)?h.keys:[]).map(k=>STG_TEAM_NAMES[k]).filter(Boolean);
+    const what=keys.length>3?`${keys.slice(0,3).join(', ')} and ${fmtNum(keys.length-3)} more`:keys.join(', ');
+    const who=stgTeamWho(h.by),when=stgTeamWhen(h.at);
+    return `• ${[when,who].filter(Boolean).join(', ')||'Changed'}${what?`: ${what}`:''}`;
+  });
+  return rows.length?`Recent team changes\n${rows.join('\n')}`:'';
+}
+const STG_TEAM_SVG='<svg class="stg-team-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M16 5a3.2 3.2 0 0 1 0 6.2M17.6 14.3a5.5 5.5 0 0 1 2.9 5.2"/></svg>';
+const STG_LOCK_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+// A team setting's chip (team settings on): who it applies to and who can change it.
+function stgTeamChip(){
+  const tip=stgTeam&&stgTeam.canEdit?"Applies to everyone. You're an admin, so your change is saved for the whole team.":'Applies to everyone. Only admins can change it.';
+  return `<span class="dz-chip stg-team"${tipAttr(tip)}>${STG_TEAM_SVG}Team</span>`;
+}
+// A team setting's control is read only for anyone but an admin.
+function stgTeamDis(dis){return dis||(stgTeam&&!stgTeam.canEdit?' disabled':'');}
+// The lines at the top of Settings: where your settings are kept, then (team settings on) the team settings.
+function stgStatusHtml(){
+  if(isSnapshotView)return '';
+  const a=stgAcct.state,acct=!!accessId&&(a==='on'||a==='loading');
+  const where=acct?`Your settings are saved to your account (${esc(accessId.email)}).`
+    :accessId&&a==='failed'?'Your account could not be reached, so your settings are saved in this browser for now.'
+    :'Settings are saved in this browser.';
+  const line=(icon,text)=>`<p class="stg-status-l">${icon}<span class="stg-status-t">${text}</span></p>`;
+  const icon=acct?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18.5h10a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 9.1 4.75 4.75 0 0 0 7 18.5z"/></svg>'
+    :'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>';
+  let team='';
+  if(stgTeam){
+    const parts=['Rows marked Team apply to everyone and only admins can change them.'];
+    const who=stgTeamWho(stgTeam.savedBy),when=stgTeamWhen(stgTeam.savedAt);
+    if(who||when)parts.push(`<span class="stg-status-when"${tipAttr(stgTeamHistoryTip())}>Team settings last changed${who?` by ${esc(who)}`:''}${when?` on ${esc(when)}`:''}.</span>`);
+    if(stgTeam.error)parts.push(`<span class="warn-text">The last team change was not saved: ${esc(stgTeam.error)}</span>`);
+    team=line(STG_TEAM_SVG,parts.join(' '));
+  }
+  return `<div class="stg-status rise" id="stg-status">${line(icon,where)}${team}</div>`;
+}
 
 // --- Controls ---
 let stgNotesKind='so';  // the comment list shown on the Notes card: 'so' | 'po'
@@ -12909,10 +13300,14 @@ function stgSection(key,body,{tip='',meta=''}={}){
     <div class="stg-panel">${body}</div></section>`;
 }
 // One setting: the label and a short grey hint at the left, the control at the right; when they do not fit side by side
-// the control drops under the label. labelFor ties the label to an input.
-function stgRow(label,help,control,{labelFor='',cls=''}={}){
-  const l=labelFor?`<label class="stg-label" for="${labelFor}">${esc(label)}</label>`:`<span class="stg-label">${esc(label)}</span>`;
-  return `<div class="stg-row${cls?` ${cls}`:''}"><div class="stg-l">${l}${help?`<span class="stg-help">${help}</span>`:''}</div><div class="stg-ctl">${control}</div></div>`;
+// the control drops under the label. labelFor ties the label to an input. team: a team setting, which carries the Team
+// chip while team settings are on, and says who sets it to anyone but an admin.
+function stgRow(label,help,control,{labelFor='',cls='',team=false}={}){
+  let l=labelFor?`<label class="stg-label" for="${labelFor}">${esc(label)}</label>`:`<span class="stg-label">${esc(label)}</span>`;
+  const t=team&&!!stgTeam;
+  if(t)l=`<span class="stg-lt">${l}${stgTeamChip()}</span>`;
+  const hint=t&&!stgTeam.canEdit?`<span class="stg-team-hint">${STG_LOCK_SVG}Set by your admin</span>`:'';
+  return `<div class="stg-row${cls?` ${cls}`:''}${t?' stg-team-row':''}"><div class="stg-l">${l}${help?`<span class="stg-help">${help}</span>`:''}${hint}</div><div class="stg-ctl">${control}</div></div>`;
 }
 function stgSelect(id,key,options,current,onchange,{dis='',label=''}={}){
   return `<select class="dz-pillinput stg-select" id="${id}" data-focus-key="${id}" onchange="${esc(onchange)}"${label?` aria-label="${esc(label)}"`:''}${dis}>${options.map(([v,t])=>`<option value="${esc(v)}"${String(v)===String(current)?' selected':''}>${esc(t)}</option>`).join('')}</select>`;
@@ -12950,20 +13345,21 @@ function stgGeneralSection(dis){
 }
 // Sales Orders: the at-risk target, the tolerance, the look-ahead window, lines a page, the opening view, the on-time goal.
 function stgSalesSection(dis){
+  const td=stgTeamDis(dis); // team settings: read only for anyone but an admin
   const body=[
-    stgRow('At-risk target','Amber up to twice it, red above.',stgNum('stg-target','atRiskTarget',1,50,'%',dis),{labelFor:'stg-target'}),
-    stgRow('On-track tolerance','Days late that still count as on track.',stgNum('stg-tolerance','toleranceDays',0,14,'days',dis),{labelFor:'stg-tolerance'}),
-    stgRow('Look-ahead window','Lines due within it count.',stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis}),{labelFor:'stg-horizon'}),
+    stgRow('At-risk target','Amber up to twice it, red above.',stgNum('stg-target','atRiskTarget',1,50,'%',td),{labelFor:'stg-target',team:true}),
+    stgRow('On-track tolerance','Days late that still count as on track.',stgNum('stg-tolerance','toleranceDays',0,14,'days',td),{labelFor:'stg-tolerance',team:true}),
+    stgRow('Look-ahead window','Lines due within it count.',stgSelect('stg-horizon','horizon',STG_HORIZONS.map(([v,t])=>[v,t]),stgValue('horizon'),"stgSet('horizon',this.value)",{dis:td}),{labelFor:'stg-horizon',team:true}),
     stgRow('Lines a page','',stgSeg('linesShown',[[10,'10'],[20,'20'],[50,'50']],'Lines a page',dis)),
     stgRow('Opening view','The view Sales Order Health opens on.',stgSeg('openingView',[['leading','Leading'],['lagging','Lagging'],['supply','Supply / Demand']],'Opening view',dis)),
-    stgRow('On-time goal','The goal line on sales on-time charts.',stgNum('stg-otdGoalSales','otdGoalSales',50,100,'%',dis),{labelFor:'stg-otdGoalSales'})
+    stgRow('On-time goal','The goal line on sales on-time charts.',stgNum('stg-otdGoalSales','otdGoalSales',50,100,'%',td),{labelFor:'stg-otdGoalSales',team:true})
   ].join('');
   return stgSection('sales',body,{tip:'Sales Orders\n• At-risk target: share of open value at risk\n• Tolerance: days late still on track\n• Look-ahead: lines due within it count\n• Defaults: 5%, 2 days, 1 month, 10, Leading, 90%'});
 }
 // Purchase Orders: the vendor on-time goal and the view Purchase Order Health opens on.
 function stgPoSection(dis){
   const body=[
-    stgRow('On-time goal','The goal line on vendor on-time charts.',stgNum('stg-otdGoalVendors','otdGoalVendors',50,100,'%',dis),{labelFor:'stg-otdGoalVendors'}),
+    stgRow('On-time goal','The goal line on vendor on-time charts.',stgNum('stg-otdGoalVendors','otdGoalVendors',50,100,'%',stgTeamDis(dis)),{labelFor:'stg-otdGoalVendors',team:true}),
     stgRow('Opening view','The view Purchase Order Health opens on.',stgSeg('poOpeningView',[['open','Open'],['received','Received']],'Purchase order opening view',dis))
   ].join('');
   return stgSection('po',body,{tip:'Purchase Orders\n• On-time goal: received by the original date\n• Defaults: 90%, Open'});
@@ -12974,10 +13370,12 @@ function stgNotesSection(dis){
     {label:'Sales orders',on:kind==='so',key:'stg-notes-so',onclick:"stgSetNotesKind('so')"},
     {label:'Purchase orders',on:kind==='po',key:'stg-notes-po',onclick:"stgSetNotesKind('po')"}
   ],{label:'Comment list',cls:'stg-seg'});
-  const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr('Remove from the picker.')}${dis}>×</button></li>`).join('');
-  const add=isSnapshotView?'':`<form class="stg-add print-hide" onsubmit="event.preventDefault();stgAddComment('${kind}',this)"><input type="text" class="dz-pillinput" maxlength="120" placeholder="Add a comment" aria-label="${esc(`New ${what} comment`)}" data-focus-key="stg-add-${kind}" autocomplete="off"><button type="submit" class="dz-btn" data-focus-key="stg-add-btn-${kind}">Add</button></form>`;
-  const reset=!stgIsDefault(key)&&!isSnapshotView?`<button type="button" class="link-btn stg-link print-hide" data-focus-key="stg-reset-${kind}" onclick="stgResetList('${kind}')"${tipAttr(`Put back the ${fmtNum(stgSpec()[key].def().length)} ready-made ${what} comments.`)}>Reset list</button>`:'';
-  const body=`${stgRow('Ready-made comments','The choices in the comment picker on order lines.',tabs,{cls:'stg-row-top'})}
+  // A team setting: anyone but an admin sees the list read only (no ×, Add or Reset list to use).
+  const td=stgTeamDis(dis),locked=!!td&&!dis;
+  const items=list.map((c,k)=>`<li class="stg-item"><span class="stg-item-t">${esc(c)}</span><button type="button" class="stg-x print-hide" data-focus-key="stg-x-${kind}-${k}" aria-label="${esc(`Remove “${c}”`)}" onclick="stgRemoveComment('${kind}',${k})"${tipAttr(locked?'Set by your admin.':'Remove from the picker.')}${td}>×</button></li>`).join('');
+  const add=isSnapshotView?'':`<form class="stg-add print-hide" onsubmit="event.preventDefault();stgAddComment('${kind}',this)"><input type="text" class="dz-pillinput" maxlength="120" placeholder="Add a comment" aria-label="${esc(`New ${what} comment`)}" data-focus-key="stg-add-${kind}" autocomplete="off"${td}><button type="submit" class="dz-btn" data-focus-key="stg-add-btn-${kind}"${td}>Add</button></form>`;
+  const reset=!stgIsDefault(key)&&!isSnapshotView&&!locked?`<button type="button" class="link-btn stg-link print-hide" data-focus-key="stg-reset-${kind}" onclick="stgResetList('${kind}')"${tipAttr(`Put back the ${fmtNum(stgSpec()[key].def().length)} ready-made ${what} comments.`)}>Reset list</button>`:'';
+  const body=`${stgRow('Ready-made comments','The choices in the comment picker on order lines.',tabs,{cls:'stg-row-top',team:true})}
     <div class="stg-block stg-notes-block"><ul class="stg-list" aria-label="${esc(`${kind==='po'?'Purchase-order':'Sales-order'} comments`)}">${items||'<li class="stg-empty">None: the picker offers Custom comment only.</li>'}</ul>
     ${add}${reset?`<div class="stg-list-foot">${reset}</div>`:''}</div>`;
   return stgSection('notes',body,{tip:'Notes\n• The choices in the comment picker on order lines'});
@@ -13133,8 +13531,9 @@ function stgPagesSection(dis){
      meta:dzChip(hidden.length?`${fmtNum(hidden.length)} hidden`:'None hidden',hidden.length?'':'teal')});
 }
 // Export / import: the settings (not your name) as a small JSON file, to move them to another browser or share them.
+// While team settings are on, your own settings only (stgOwnKeys): the team's are the same for everyone.
 function stgExport(){
-  const data={app:'spyder-kpi-dashboard',kind:'settings',version:stgVersion(),settings:Object.fromEntries(Object.keys(stgSpec()).map(k=>[k,stgValue(k)]))};
+  const data={app:'spyder-kpi-dashboard',kind:'settings',version:stgVersion(),settings:Object.fromEntries(stgOwnKeys().map(k=>[k,stgValue(k)]))};
   try{
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const a=document.createElement('a');
@@ -13156,7 +13555,7 @@ function stgImport(input){
     const src=data&&typeof data==='object'&&data.settings&&typeof data.settings==='object'?data.settings:null;
     if(!src||isSnapshotView){showToast('That file is not a Spyder KPI settings file');return;}
     const spec=stgSpec(),next={...stgStore()},changed=[];
-    Object.keys(spec).forEach(k=>{
+    stgOwnKeys().forEach(k=>{
       if(!Object.prototype.hasOwnProperty.call(src,k))return;
       const v=spec[k].check(src[k]);
       if(v===undefined)return;
@@ -13166,20 +13565,33 @@ function stgImport(input){
     if(!changed.length){showToast('Settings already match that file');return;}
     const saved=stgWrite(next);
     stgAfterChange(changed);
-    showToast(saved?`${fmtNum(changed.length)} ${changed.length===1?'setting':'settings'} loaded`:'Loaded for now: this browser does not keep settings');
+    const kept=stgAccountChanged(changed);
+    showToast(saved||kept?`${fmtNum(changed.length)} ${changed.length===1?'setting':'settings'} loaded`:'Loaded for now: this browser does not keep settings');
   };
   reader.onerror=()=>showToast('Could not read that file');
   reader.readAsText(f);
 }
 // About: the version, how many settings differ from their defaults, Export / Import settings and Reset to defaults.
+// While team settings are on, Export, Import and Reset to defaults cover your own settings (stgOwnKeys), and an admin
+// also gets Reset team settings (stgTeamResetRow).
 function stgAboutSection(){
-  const changed=Object.keys(stgSpec()).filter(k=>!stgIsDefault(k)).length,ro=isSnapshotView;
-  const move=ro?'':stgRow('Your settings','Save to a file or load one. Your name is left out.',`<div class="stg-btns print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr('Save settings to a file; your name is left out.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr('Load a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`);
-  const reset=stgRow('Defaults','Every setting back to its default. Your name stays.',`<button type="button" class="dz-btn stg-reset print-hide" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(changed?'Reset every setting; your name stays.':'Every setting is at its default.')}>Reset to defaults</button>`);
+  const own=stgOwnKeys(),team=!!stgTeam,changed=own.filter(k=>!stgIsDefault(k)).length,ro=isSnapshotView;
+  const move=ro?'':stgRow('Your settings',team?'Your own settings only. Your name is left out.':'Save to a file or load one. Your name is left out.',`<div class="stg-btns print-hide"><button type="button" class="dz-btn" data-focus-key="stg-export" onclick="stgExport()"${tipAttr(team?'Save your own settings to a file; team settings and your name are left out.':'Save settings to a file; your name is left out.')}>Export settings</button><button type="button" class="dz-btn" data-focus-key="stg-import" onclick="stgImportPick()"${tipAttr(team?'Load your own settings from a file; team settings in it are skipped.':'Load a file made with Export settings.')}>Import settings</button><input type="file" id="stg-import-file" accept=".json,application/json" hidden onchange="stgImport(this)"></div>`);
+  const resetTip=team?(changed?'Reset your own settings; team settings and your name stay.':'Your own settings are at their defaults.'):(changed?'Reset every setting; your name stays.':'Every setting is at its default.');
+  const reset=stgRow('Defaults',team?'Your own settings back to their defaults. Team settings stay.':'Every setting back to its default. Your name stays.',`<button type="button" class="dz-btn stg-reset print-hide" data-focus-key="stg-reset-all" onclick="stgResetAll()"${changed&&!ro?'':' disabled'}${tipAttr(resetTip)}>Reset to defaults</button>`);
   const body=stgRow('Version','',`<span class="stg-val">${esc(stgVersion())}</span>`)
-    +stgRow('Changed','',`<span class="stg-val">${changed?esc(`${fmtNum(changed)} of ${fmtNum(Object.keys(stgSpec()).length)} settings`):'None'}</span>`)
-    +move+reset;
-  return stgSection('about',body,{tip:'About\n• Export and Import move your settings to another browser'});
+    +stgRow('Changed','',`<span class="stg-val">${changed?esc(`${fmtNum(changed)} of ${team?'your ':''}${fmtNum(own.length)} settings`):'None'}</span>`)
+    +move+reset+(team&&stgTeam.canEdit&&!ro?stgTeamResetRow():'');
+  return stgSection('about',body,{tip:team?'About\n• Export and Import move your own settings to another browser\n• Team settings stay the same for everyone':'About\n• Export and Import move your settings to another browser'});
+}
+// About > Team settings (admins): Reset team settings, then, in its place, the question and the two answers.
+function stgTeamResetRow(){
+  const t=stgTeam,atDefault=stgTeamKeys().every(k=>stgIsDefault(k));
+  if(t.asking){
+    const ctl=`<div class="stg-btns stg-ask print-hide" role="group" aria-label="Reset team settings for everyone?"><span class="stg-ask-q">Reset for everyone?</span><button type="button" class="dz-btn stg-danger" data-focus-key="stg-team-reset-yes" onclick="stgTeamReset()"${t.busy?' disabled aria-busy="true"':''}${tipAttr('Every team setting goes back to its default for everyone.')}>${t.busy?'Resetting…':'Reset for everyone'}</button><button type="button" class="dz-btn" data-focus-key="stg-team-reset-no" onclick="stgTeamResetAsk(false)"${t.busy?' disabled':''}${tipAttr('Keep the team settings as they are.')}>Cancel</button></div>`;
+    return stgRow('Team settings','Everyone gets the defaults back. This cannot be undone.',ctl,{cls:'stg-team-reset-row'});
+  }
+  return stgRow('Team settings','Back to the defaults for everyone.',`<button type="button" class="dz-btn stg-reset print-hide" data-focus-key="stg-team-reset" onclick="stgTeamResetAsk(true)"${atDefault?' disabled':''}${tipAttr(atDefault?'Every team setting is at its default.':'Put every team setting back to its default for everyone. Asks first.')}>Reset team settings</button>`,{cls:'stg-team-reset-row'});
 }
 // Data check (it was a pill in every page head): the header gear's dot level, red | yellow | ''.
 function stgDataCheckLevel(){return dcReport().level;}
@@ -13232,7 +13644,7 @@ function stgRenderPage(){
   const dc=dcReport();
   const secs=[stgGeneralSection(dis),stgDataSection(dis,dc),stgSalesSection(dis),stgPoSection(dis),stgDisplaySection(dis),
     stgPagesSection(dis),stgNotesSection(dis),stgAiSection(dis),stgAboutSection()];
-  return `${note}<div class="stg-layout">${stgNavHtml(dc)}<div class="stg-main">${secs.join('')}</div></div>`;
+  return `${note}${stgStatusHtml()}<div class="stg-layout">${stgNavHtml(dc)}<div class="stg-main">${secs.join('')}</div></div>`;
 }
 // The section list: one button per section (aria-current on the one on screen). Data carries the gear's dot while the
 // Data check reports something to fix or review.
@@ -17784,11 +18196,14 @@ async function accessLoad(){
   }
   if(isSnapshotView)return;
   accessSet(email&&name?{name,email,logoutUrl:accessLogoutUrl(me.logoutUrl)}:null);
+  // Settings: the account's copy and the team settings (stgCloudLoad), with a sign-in only.
+  await stgCloudLoad(email&&name?me:null);
 }
 // Settings > General > Sign out: notes waiting to be saved go first, then the site's sign-out page.
 function accessSignOut(){
   const url=accessId?accessId.logoutUrl:'/logout';
   flushSharedNotes({all:true,keepalive:true});
+  stgFlushNow(); // a settings change waiting for its delay goes to the account first
   try{localStorage.removeItem(ACCESS_ID_KEY);}catch(err){/* /api/me answers at the next open */}
   location.href=url;
 }
@@ -23275,6 +23690,7 @@ renderUploadPages();
 function startApp(){
   loadEmbeddedSnapshot();
   if(!isSnapshotView&&stgValue('dataSource')==='import'){const next={...stgStore()};delete next.dataSource;stgWrite(next);}
+  stgTeamBoot(); // the team settings seen here last time, before anything is counted (Cloudflare Access only)
   if(liveMode())liveStart();
   syncSharedNotes();loadAtRiskHistory();accessLoad();if(!isSnapshotView){cmLoad();if(!liveMode())sapLiveCheck();}
 }

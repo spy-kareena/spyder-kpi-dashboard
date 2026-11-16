@@ -49,7 +49,8 @@ The gear opens Settings, also before an export is loaded. A category bar at the 
 ## Shared or per browser
 
 - **Shared** on the hosted site (Workers KV binding `REPORT_STORE`): the last loaded report (`functions/api/report.js`); notes, overrides, causes, deleted lines, Kit Clean ticks and shipping statuses (`functions/api/notes.js`, newest edit per line wins); the list of names (`functions/api/people.js`); and the weekly at-risk history behind "new this week" and first-flagged dates (`functions/api/history.js`, 52 weeks).
-- **Per browser:** Settings, Ask AI consent, folded lists and theme. Without the server (a file copy or IIS), everything stays in that browser.
+- **Per person and per team** once Cloudflare Access is on ([docs/ACCESS.md](docs/ACCESS.md#admins-and-team-settings)): personal settings (theme, background, Christmas theme, lines shown, opening views, start page, folded lists, Import report, data source, hidden pages) are saved to each person's sign-in (`functions/api/prefs.js`); team settings (at-risk target, on-track tolerance, look-ahead window, on-time goals, ready-made note comments) are one copy for everyone, changed only by the admins in `ADMIN_EMAILS` (`functions/api/team-settings.js`, last 20 changes kept).
+- **Per browser:** Ask AI consent and folded lists; Settings too until Access is on (and, for team settings, until `ADMIN_EMAILS` names an admin). Without the server (a file copy or IIS), everything stays in that browser.
 
 ## Ask AI and the MCP connector
 
@@ -58,11 +59,12 @@ The gear opens Settings, also before an export is loaded. A category bar at the 
 
 ## Hosting
 
-Cloudflare Pages serves the site (project `spyder-kpi-dashboard`, deployed from GitHub `spy-kareena/spyder-kpi-dashboard`, branch `main`). `functions/_middleware.js` is the sign-in gate: Cloudflare Access, where each person signs in with their own email ([docs/ACCESS.md](docs/ACCESS.md)), and / or one shared password with a 14-day session cookie; `/logout` signs out and `/api/me` says who is signed in. Shared data lives in the KV binding `REPORT_STORE`. **First deploy or new Cloudflare account: follow [docs/OWNER_CHECKLIST.md](docs/OWNER_CHECKLIST.md).**
+Cloudflare Pages serves the site (project `spyder-kpi-dashboard`, deployed from GitHub `spy-kareena/spyder-kpi-dashboard`, branch `main`). `functions/_middleware.js` is the sign-in gate: Cloudflare Access, where each person signs in with their own email ([docs/ACCESS.md](docs/ACCESS.md)), and / or one shared password with a 14-day session cookie; `/logout` signs out and `/api/me` says who is signed in (and whether they are an admin). Shared data lives in the KV binding `REPORT_STORE`. **First deploy or new Cloudflare account: follow [docs/OWNER_CHECKLIST.md](docs/OWNER_CHECKLIST.md).**
 
 Secrets are set with `npx wrangler pages secret put <NAME> --project-name spyder-kpi-dashboard`, never in this repo:
 
 - `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`: recommended. Sign-in through Cloudflare Access: the Zero Trust team domain (`spyder`, `spyder.cloudflareaccess.com` or its `https://` address) and the Access application's AUD tag (several separated by commas). Set both or neither; every request must then carry a valid Access token, and notes record the signed-in email. Setup and retiring the password: [docs/ACCESS.md](docs/ACCESS.md).
+- `ADMIN_EMAILS`: optional, with Cloudflare Access. The admins who may change the team settings: their email addresses separated by commas (for example `name@spydercontrols.com, other@spydercontrols.com`). Without it, team settings stay in each browser. [docs/ACCESS.md](docs/ACCESS.md#admins-and-team-settings).
 - `DASHBOARD_PASSWORD` and `SESSION_SECRET` (32 or more random characters): the shared password, needed unless Cloudflare Access is on. With both Access and the password set, people need both (the changeover); delete `DASHBOARD_PASSWORD` to retire the password. With neither, every page returns "not configured". Changing either one signs everyone out.
 - `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`: optional. Set at least one to turn on Ask AI.
 - `SAP_BRIDGE_URL`, `SAP_BRIDGE_KEY`, `CF_ACCESS_CLIENT_ID`, `CF_ACCESS_CLIENT_SECRET`: optional. Turn on Live SAP through the SAP bridge ([docs/LIVE_SAP.md](docs/LIVE_SAP.md)).
@@ -83,7 +85,7 @@ This runs every `tests/*.test.js` and `*.test.mjs` file: the page's scripts, the
 ## Files
 
 - `index.html`: the whole app (HTML, CSS and JavaScript, with SheetJS Community Edition 0.20.3 built in as `<script id="sheetjs-lib">`)
-- `functions/`: Cloudflare Pages Functions (sign-in, who is signed in, report, notes, people, history, Ask AI proxy, Live SAP)
+- `functions/`: Cloudflare Pages Functions (sign-in, who is signed in, report, notes, people, history, personal and team settings, Ask AI proxy, Live SAP)
 - `mcp/`: the MCP connector
 - `queries/`: SAP HANA queries for the KPI export and the supply / demand snapshot
 - `docs/`: user quick start, owner checklist, hosting notes, Cloudflare Access sign-in, Ask AI, MCP connector, Shipping and Live SAP

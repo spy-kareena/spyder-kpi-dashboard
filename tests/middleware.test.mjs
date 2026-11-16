@@ -2,15 +2,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, createHmac } from 'node:crypto';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // The Pages function is an ES module in a .js file; load its source as a module from a data: URL.
 const source = readFileSync(join(here, '..', 'functions', '_middleware.js'), 'utf8');
 const { onRequest, resetAccessKeys, nameFromEmail, teamOrigin } = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
-const meSource = readFileSync(join(here, '..', 'functions', 'api', 'me.js'), 'utf8');
-const me = await import('data:text/javascript;base64,' + Buffer.from(meSource).toString('base64'));
+// Imported by file URL: me.js imports ../../shared/admins.mjs.
+const me = await import(pathToFileURL(join(here, '..', 'functions', 'api', 'me.js')).href);
 
 const PASSWORD = 'correct horse battery';
 const SESSION_SECRET = 's'.repeat(40);
@@ -521,16 +521,37 @@ test('/api/me: who is signed in and which sign-in is on, in each mode', async ()
     return res.json();
   };
   const person = { email: EMAIL, name: 'Jamie Rivera' };
-  assert.deepEqual(await ask({ token: await jwt() }), { v: 1, auth: { access: true, password: false }, user: person, logoutUrl: '/logout' });
+  const off = { admin: false, teamSettings: false }; // no ADMIN_EMAILS: no admins, team settings stay per browser
+  assert.deepEqual(await ask({ token: await jwt() }), { v: 1, auth: { access: true, password: false }, user: person, logoutUrl: '/logout', ...off });
   const login = await visit('/login', { method: 'POST', env: BOTH_ENV, token: await jwt(), form: { password: PASSWORD } });
-  assert.deepEqual(await ask({ env: BOTH_ENV, token: await jwt(), cookie: sessionCookie(login.res) }), { v: 1, auth: { access: true, password: true }, user: person, logoutUrl: '/logout' });
+  assert.deepEqual(await ask({ env: BOTH_ENV, token: await jwt(), cookie: sessionCookie(login.res) }), { v: 1, auth: { access: true, password: true }, user: person, logoutUrl: '/logout', ...off });
   const pw = await call('/login', { method: 'POST', form: { password: PASSWORD } });
-  assert.deepEqual(await ask({ env: ENV, cookie: sessionCookie(pw) }), { v: 1, auth: { access: false, password: true }, user: null, logoutUrl: '/logout' });
-  assert.deepEqual(await ask({ token: await jwt({ email: undefined, common_name: 'abc123.access' }) }), { v: 1, auth: { access: true, password: false }, user: null, logoutUrl: '/logout' });
+  assert.deepEqual(await ask({ env: ENV, cookie: sessionCookie(pw) }), { v: 1, auth: { access: false, password: true }, user: null, logoutUrl: '/logout', ...off });
+  assert.deepEqual(await ask({ token: await jwt({ email: undefined, common_name: 'abc123.access' }) }), { v: 1, auth: { access: true, password: false }, user: null, logoutUrl: '/logout', ...off });
   // Only GET; and never past the gate without a sign-in.
   const post = await visit('/api/me', { method: 'POST', token: await jwt(), then: (ctx) => me.onRequest(ctx) });
   assert.equal(post.res.status, 405);
   await apiRefused(...Object.values(await visit('/api/me', { then: (ctx) => me.onRequest(ctx) })));
+});
+
+test('/api/me: admin and teamSettings follow ADMIN_EMAILS (any separator or capitalisation; junk ignored)', async () => {
+  const ask = async (opts) => {
+    const { res } = await visit('/api/me', { ...opts, then: (ctx) => me.onRequest(ctx) });
+    assert.equal(res.status, 200);
+    const out = await res.json();
+    return { admin: out.admin, teamSettings: out.teamSettings };
+  };
+  const admins = ' Jamie.Rivera@Example.TEST ;lee@example.test,\n not-an-address, @example.test ';
+  const adminEnv = { ...ACCESS_ENV, ADMIN_EMAILS: admins };
+  assert.deepEqual(await ask({ env: adminEnv, token: await jwt() }), { admin: true, teamSettings: true });
+  assert.deepEqual(await ask({ env: adminEnv, token: await jwt({ email: 'LEE@example.test' }) }), { admin: true, teamSettings: true });
+  assert.deepEqual(await ask({ env: adminEnv, token: await jwt({ email: 'sam@example.test' }) }), { admin: false, teamSettings: true }, 'not an admin');
+  assert.deepEqual(await ask({ env: adminEnv, token: await jwt({ email: undefined, common_name: 'abc123.access' }) }), { admin: false, teamSettings: true }, 'service token');
+  // Only junk in ADMIN_EMAILS: team settings stay off.
+  assert.deepEqual(await ask({ env: { ...ACCESS_ENV, ADMIN_EMAILS: 'jamie, ; @example.test' }, token: await jwt() }), { admin: false, teamSettings: false });
+  // Without Access (shared password alone) nobody is an admin, whatever ADMIN_EMAILS says.
+  const pw = await call('/login', { method: 'POST', form: { password: PASSWORD } });
+  assert.deepEqual(await ask({ env: { ...ENV, ADMIN_EMAILS: admins }, cookie: sessionCookie(pw) }), { admin: false, teamSettings: false });
 });
 
 test('/logout with Access on clears the password session and goes to Cloudflare Access sign-out', async () => {

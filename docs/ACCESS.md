@@ -10,6 +10,8 @@ themselves, and nobody is locked out on the way: the shared password keeps worki
 - The board knows who is signed in. Notes, overrides and Shipping statuses saved while signed in this way also store
   the email address Cloudflare checked (`byEmail`), next to the name shown on the board.
 - Adding or removing a person is one edit in Cloudflare. Nobody shares or changes a password again.
+- Settings follow people: each person's look and opening page are saved to their sign-in, and the rules behind the
+  numbers are one copy for everyone, changed only by the admins you name ([Admins and team settings](#admins-and-team-settings)).
 
 ## How it works
 
@@ -151,6 +153,41 @@ back, add `DASHBOARD_PASSWORD` again and redeploy.
   `CF_ACCESS_CLIENT_SECRET`) for the bridge's own tunnel application ([LIVE_SAP.md](LIVE_SAP.md)). That has nothing to
   do with signing people in: leave it as it is, and do not put its AUD tag in `ACCESS_AUD`.
 
+## Admins and team settings
+
+With Access on, the board saves settings to people's sign-ins instead of to each browser. There are two kinds:
+
+- **Personal settings** change how the board looks and opens, for one person. Each person sets their own and they
+  follow them to any computer they sign in on: the theme, the background, the Christmas theme, how many lines the
+  lists show, the view Sales Order Health opens on, the view Purchase Orders opens on, the page the board opens on,
+  whether line lists start folded or open, when the Import report shows, the data source (Live SAP or Import files) and
+  the hidden pages. Nobody else sees them. They work as soon as Access is on; nothing else to set.
+- **Team settings** are the rules behind the numbers, one copy for everyone: the at-risk target, the on-track
+  tolerance (days), the look-ahead window, the on-time goals for sales orders and for vendors, and the ready-made note
+  comments for sales-order and purchase-order lines. Everyone sees the same numbers, and only **admins** can change
+  them. The board keeps the last 20 changes (when, who, which settings).
+
+Name the admins in one secret:
+
+1. **Workers & Pages > spyder-kpi-dashboard > Settings > Variables and Secrets** > **Add**: name `ADMIN_EMAILS`, type
+   **Secret**, value the admins' work email addresses separated by commas, for example
+   `name@spydercontrols.com, other@spydercontrols.com`. Add it to **Production** and to **Preview**.
+   From a terminal: `npx wrangler pages secret put ADMIN_EMAILS --project-name spyder-kpi-dashboard`
+2. Redeploy (step 6).
+3. Signed in as an admin, open `/api/me`: it shows `"admin":true` and `"teamSettings":true`. Anyone else sees
+   `"admin":false`.
+
+- **Add or remove an admin:** edit `ADMIN_EMAILS` and redeploy. Cloudflare does not show a secret's value again, so
+  type the whole list each time. Commas, semicolons or spaces between addresses all work, capitals do not matter, and
+  anything that is not an email address is ignored. Each admin must sign in to Access with exactly that address.
+- **Before Access is on** (the shared password alone), everything stays in each browser, as today: the shared
+  password cannot tell people apart. With Access on but no admin named in `ADMIN_EMAILS`, personal settings follow
+  people and team settings stay in each browser.
+- **Turning team settings off:** delete `ADMIN_EMAILS` and redeploy. Each browser goes back to its own copy; the saved
+  team settings stay in storage (key `team-settings`) for when admins are named again.
+- Both kinds are kept in the board's shared storage (`REPORT_STORE`, already set up for the shared notes). A person's
+  settings are stored under a one-way code made from their email address, not the address itself.
+
 ## If something is wrong
 
 | What you see | Why | Fix |
@@ -162,3 +199,5 @@ back, add `DASHBOARD_PASSWORD` again and redeploy.
 | Cloudflare says your account does not have access | Your email is not in the policy | Add it to the policy |
 | `/api/me` shows `"access":false` | The settings are not in this deployment (Preview and Production have their own) | Add them to both, redeploy |
 | The board's password page still shows after step 8 | `DASHBOARD_PASSWORD` is still set in this environment, or no redeploy yet | Delete it from both, redeploy |
+| `/api/me` shows `"admin":false` for someone who should be an admin | Their address is not in `ADMIN_EMAILS` exactly as they sign in (see `"user"` in the same answer), the secret is not in this environment, or no redeploy yet | Fix `ADMIN_EMAILS` (Production and Preview), redeploy |
+| `/api/me` shows `"teamSettings":false` with Access on | `ADMIN_EMAILS` is missing in this environment or holds no valid email address | Add it, redeploy |

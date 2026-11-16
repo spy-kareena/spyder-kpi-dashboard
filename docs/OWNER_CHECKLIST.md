@@ -19,7 +19,7 @@ Never commit the SAP export, the Clear To Build workbook or any key.
 
    `SESSION_SECRET` is 32 or more random characters (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` makes one). Changing it signs everyone out.
 
-   To have everyone sign in with their own work email instead (Cloudflare Access: `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`) and later retire the shared password without locking anyone out, follow [ACCESS.md](ACCESS.md).
+   To have everyone sign in with their own work email instead (Cloudflare Access: `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`) and later retire the shared password without locking anyone out, follow [ACCESS.md](ACCESS.md). With Access on, `ADMIN_EMAILS` names the admins who may change the team settings ([ACCESS.md, Admins and team settings](ACCESS.md#admins-and-team-settings)).
 
 3. **Turn on shared storage (one KV namespace, bound as `REPORT_STORE`).** It holds the shared report, notes (including Shipping statuses) and at-risk history.
 
