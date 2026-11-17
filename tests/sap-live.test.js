@@ -6,7 +6,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { loadPage, sapExport, sapRow, createSuite } = require('./harness');
+const { loadPage, sapExport, sapRow, createSuite, kpiBridge, kpiFiles } = require('./harness');
 
 const { test, run } = createSuite();
 const ORIGIN = 'https://kpi.example.test';
@@ -29,7 +29,11 @@ const api = async () => {
 
 // A site: /api/sap/* goes to the real function; the function's fetch reaches the stand-in bridge. Other /api calls
 // (notes, report, history) answer 404 so the page keeps everything in this browser.
-function fakeSite({ env = ENV, bridge = { kpi: { status: 200, body: BRIDGE_KPI }, 'supply-demand': { status: 502, body: '{"error":"not today"}' } } } = {}) {
+// 2v6.9 (four queries): the KPI data is four reports (kpiBridge deals BRIDGE_KPI's rows out to them).
+const KPI_FILES = kpiFiles('2026-09-24');
+// A row added to the sales orders report: the first data row with another document number.
+const plusRow = (r, docnum) => ({ ...r, body: r.body + BRIDGE_KPI.split('\r\n')[1].replace(/\t\d+\t/, `\t${docnum}\t`) + '\r\n' });
+function fakeSite({ env = ENV, bridge = { ...kpiBridge(BRIDGE_KPI), 'supply-demand': { status: 502, body: '{"error":"not today"}' } } } = {}) {
   const site = { calls: [], bridgeCalls: [], bridge, down: false };
   globalThis.fetch = async (url, init) => {
     const u = new URL(String(url));
@@ -38,7 +42,7 @@ function fakeSite({ env = ENV, bridge = { kpi: { status: 200, body: BRIDGE_KPI }
     if (site.down) throw new TypeError('fetch failed');
     const r = site.bridge[name] || { status: 404, body: '{"error":"unknown"}' };
     const headers = r.status === 200
-      ? { 'content-type': 'text/tab-separated-values; charset=utf-8', 'content-disposition': `attachment; filename="SAP_live_${name === 'kpi' ? 'KPI' : 'supply_demand'}_2026-09-24.txt"`, ...(r.headers || {}) }
+      ? { 'content-type': 'text/tab-separated-values; charset=utf-8', 'content-disposition': `attachment; filename="SAP_live_${name === 'supply-demand' ? 'supply_demand' : name}_2026-09-24.txt"`, ...(r.headers || {}) }
       : { 'content-type': 'application/json' };
     return new Response(r.body, { status: r.status, headers });
   };
@@ -86,7 +90,7 @@ test('without a bridge nothing changes: no Load from SAP, no Refresh from SAP', 
   await page.ctx.handleFiles([{ name: 'export.xls', bytes: sapExport([sapRow()]) }]);
   assert.ok(!header(page).includes('Refresh'));
   await page.ctx.loadFromSap();
-  assert.ok(!site.calls.some((c) => c.includes('/api/sap/kpi')), 'a call while not set up does nothing');
+  assert.ok(!site.calls.some((c) => c.includes('/api/sap/sales-orders')), 'a call while not set up does nothing');
 });
 
 test('a static host, a file:// copy or a shared snapshot never asks for /api/sap', async () => {
@@ -102,7 +106,7 @@ test('a static host, a file:// copy or a shared snapshot never asks for /api/sap
   assert.equal(page.run('canLoadFromSap()'), false, 'a snapshot never offers it');
 });
 
-test('Load from SAP reads the live KPI report and shows the same lines as the export', async () => {
+test('Load from SAP reads the four live KPI reports and shows the same lines as the export', async () => {
   const site = fakeSite();
   const page = await openPage(site);
   await page.ctx.sapLiveCheck();
@@ -112,9 +116,9 @@ test('Load from SAP reads the live KPI report and shows the same lines as the ex
   await settle();
   const s = summary(page);
   assert.equal(s.rows, 5);
-  assert.deepEqual(s.files, ['SAP_live_KPI_2026-09-24.txt']);
+  assert.deepEqual(s.files, KPI_FILES);
   assert.equal(s.asOf, '2026-9-10', 'the export date comes from the query (ExportDate)');
-  assert.deepEqual(site.bridgeCalls.map((c) => c.path).sort(), ['/api/reports/kpi?refresh=1', '/api/reports/supply-demand?refresh=1']);
+  assert.deepEqual(site.bridgeCalls.map((c) => c.path).sort(), ['/api/reports/po-receipts?refresh=1', '/api/reports/purchase-orders?refresh=1', '/api/reports/sales-deliveries?refresh=1', '/api/reports/sales-orders?refresh=1', '/api/reports/supply-demand?refresh=1']);
   assert.ok(site.bridgeCalls.every((c) => c.key === 'bridge-key'));
   assert.equal(page.els['results-screen'].style.display, 'block');
   assert.match(page.els['toast'].innerHTML, /supply \/ demand snapshot could not be read, so the supply pages have no data for now/);
@@ -153,31 +157,32 @@ test('Refresh from SAP replaces an uploaded export; Clear To Build, the Logican 
   `);
   await page.ctx.loadFromSap();
   await settle();
-  assert.deepEqual(page.run('globalThis.__sent'), ['SAP_live_KPI_2026-09-24.txt', 'ctb.xlsx', 'logican.xlsx', 'supply.xls']);
+  assert.deepEqual(page.run('globalThis.__sent'), [...KPI_FILES, 'ctb.xlsx', 'logican.xlsx', 'supply.xls']);
 
   // With the live supply / demand snapshot, the old one is replaced too.
-  const site2 = fakeSite({ bridge: { kpi: { status: 200, body: BRIDGE_KPI }, 'supply-demand': { status: 200, body: 'ItemCode\tDemandOpenQty\tUsableSupplyQty\tMonthlyNetQty\r\nSPY-100\t1\t1\t0\r\n' } } });
+  const site2 = fakeSite({ bridge: { ...kpiBridge(BRIDGE_KPI), 'supply-demand': { status: 200, body: 'ItemCode\tDemandOpenQty\tUsableSupplyQty\tMonthlyNetQty\r\nSPY-100\t1\t1\t0\r\n' } } });
   page.ctx.fetch = site2.fetch;
   page.run('__addOthers()');
   await page.ctx.loadFromSap();
   await settle();
-  assert.deepEqual(page.run('globalThis.__sent'), ['SAP_live_KPI_2026-09-24.txt', 'SAP_live_supply_demand_2026-09-24.txt', 'ctb.xlsx', 'logican.xlsx']);
+  assert.deepEqual(page.run('globalThis.__sent'), [...KPI_FILES, 'SAP_live_supply_demand_2026-09-24.txt', 'ctb.xlsx', 'logican.xlsx']);
 });
 
 test('when SAP cannot be read: on the load screen the error shows there; on a report the report stays and a toast says why', async () => {
-  const down = fakeSite({ bridge: { kpi: { status: 502, body: JSON.stringify({ error: "SAP report 'kpi' failed: (10, 'authentication failed')" }) } } });
+  // One of the four failing is enough: a board with three of them would be wrong. The message names the report.
+  const down = fakeSite({ bridge: { ...kpiBridge(BRIDGE_KPI), 'sales-deliveries': { status: 502, body: JSON.stringify({ error: "SAP HANA refused the bridge's sign-in. (bridge log ref ab12cd34)" }) } } });
   const page = await openPage(down);
   await page.ctx.sapLiveCheck();
   page.ctx.showUpload();
   await page.ctx.loadFromSap();
   assert.equal(page.run('allLoadedRows.length'), 0);
   assert.equal(page.els['upload-screen'].style.display, 'block');
-  assert.match(page.els['upload-error'].textContent, /Load from SAP did not work: SAP report 'kpi' failed: \(10, 'authentication failed'\)\./);
+  assert.match(page.els['upload-error'].textContent, /Load from SAP did not work: Sales deliveries: SAP HANA refused the bridge's sign-in\. \(bridge log ref ab12cd34\)\./);
 
   await page.ctx.handleFiles([{ name: 'export.xls', bytes: sapExport([sapRow(), sapRow({ DocumentNumber: '501' })]) }]);
   await settle();
   const unreachable = fakeSite();
-  page.ctx.fetch = async (url, init) => (String(url).startsWith('/api/sap/kpi') ? Promise.reject(new TypeError('offline')) : unreachable.fetch(url, init));
+  page.ctx.fetch = async (url, init) => (String(url).startsWith('/api/sap/po-receipts') ? Promise.reject(new TypeError('offline')) : unreachable.fetch(url, init));
   await page.ctx.loadFromSap();
   assert.equal(page.run('allLoadedRows.length'), 2, 'the loaded report stays');
   assert.deepEqual(page.run('loadedFiles.map(f=>f.name)'), ['export.xls']);
@@ -194,7 +199,7 @@ test('a second click while SAP is being read does nothing', async () => {
   await page.ctx.loadFromSap();
   await first;
   await settle();
-  assert.equal(site.calls.filter((c) => c.startsWith('GET /api/sap/kpi')).length, 1);
+  assert.equal(site.calls.filter((c) => c.startsWith('GET /api/sap/sales-orders')).length, 1);
 });
 
 test('markup: the buttons carry tips; the version is the same in the page and VERSION.txt', () => {
@@ -235,17 +240,18 @@ async function openLive(site, { storage = {}, liveRec = null, importFiles = null
 // The supply / demand snapshot with the bridge's columns (so the import report has nothing to say).
 const SD_HEAD = ['ExportDate', 'ItemCode', 'ItemDescription', 'ItemGroupName', 'WarehouseCode', 'WarehouseName', 'MonthStart', 'YearMonth', 'DemandOpenQty', 'DemandNoCommitQty', 'DemandOpenValue', 'UsableSupplyQty', 'RescheduledSupplyQty', 'UnconfirmedSupplyQty', 'NoCommitSupplyQty', 'LateSupplyQty', 'RiskSupplyQty', 'DemandOrderCount', 'MonthlyNetQty', 'CumulativeNetQty', 'MonthlyCoverageStatus', 'CumulativeCoverageStatus', 'SupplyRiskFlag'];
 const SD_FULL = [SD_HEAD.join('\t'), ['2026-09-10', 'SPY-100', 'Controller board', 'Electronics', '01', 'Spyder - Lacombe', '2026-09-01', '2026-09', '10', '0', '12500', '4', '0', '0', '0', '0', '0', '2', '-6', '-6', 'Short', 'Short', 'OK'].join('\t')].join('\r\n') + '\r\n';
-const liveSite = (opts) => fakeSite({ bridge: { kpi: { status: 200, body: BRIDGE_KPI, headers: { 'x-refreshed-at': '2026-09-24T09:58:00-06:00', 'x-row-count': '5' } }, 'supply-demand': { status: 200, body: SD_FULL } }, ...opts });
+const liveSite = (opts) => fakeSite({ bridge: { ...kpiBridge(BRIDGE_KPI, { headers: { 'x-refreshed-at': '2026-09-24T09:58:00-06:00' } }), 'supply-demand': { status: 200, body: SD_FULL } }, ...opts });
+const KPI_CALLS = ['GET /api/sap/sales-orders', 'GET /api/sap/sales-deliveries', 'GET /api/sap/purchase-orders', 'GET /api/sap/po-receipts'];
 const sapCalls = (site) => site.calls.filter((c) => c.includes('/api/sap/'));
 
 test('live is the default: start-up reads SAP (status, then both reports through the 5-minute cache), not the saved report', async () => {
   const site = liveSite();
   const page = await openLive(site, { importFiles: [{ name: 'old-import.xls', bytes: sapExport([sapRow()]) }] });
   assert.equal(page.run("stgValue('dataSource')"), 'live');
-  assert.deepEqual(sapCalls(site), ['GET /api/sap/status', 'GET /api/sap/kpi', 'GET /api/sap/supply-demand']);
+  assert.deepEqual(sapCalls(site), ['GET /api/sap/status', ...KPI_CALLS, 'GET /api/sap/supply-demand']);
   assert.ok(!site.calls.some((c) => c.includes('/api/report')), 'the shared report is not read');
-  assert.deepEqual(site.bridgeCalls.map((c) => c.path).sort(), ['/api/reports/kpi', '/api/reports/supply-demand']);
-  assert.deepEqual(summary(page).files, ['SAP_live_KPI_2026-09-24.txt', 'SAP_live_supply_demand_2026-09-24.txt']);
+  assert.deepEqual(site.bridgeCalls.map((c) => c.path).sort(), ['/api/reports/po-receipts', '/api/reports/purchase-orders', '/api/reports/sales-deliveries', '/api/reports/sales-orders', '/api/reports/supply-demand']);
+  assert.deepEqual(summary(page).files, [...KPI_FILES, 'SAP_live_supply_demand_2026-09-24.txt']);
   assert.equal(summary(page).rows, 5);
   assert.equal(page.els['results-screen'].style.display, 'block');
   assert.equal(page.run('liveState.status'), 'ok');
@@ -307,12 +313,12 @@ test('every 5 minutes: read again without refresh=1; the same text changes nothi
   page.run("setTab('purchaseorders');poVendorFilter=['TTI'];globalThis.__rows=allLoadedRows;globalThis.__loads=0;const h=handleFiles;handleFiles=(...a)=>{__loads++;return h(...a);}");
   page.timers.fire();
   await until(() => !page.run('liveState.busy'), 'poll');
-  assert.deepEqual(sapCalls(site).slice(3), ['GET /api/sap/kpi', 'GET /api/sap/supply-demand'], 'no refresh=1, no status');
+  assert.deepEqual(sapCalls(site).slice(6), [...KPI_CALLS, 'GET /api/sap/supply-demand'], 'no refresh=1, no status');
   assert.equal(page.run('__loads'), 0, 'identical data is not loaded again');
   assert.equal(page.run('allLoadedRows===__rows'), true);
   assert.deepEqual(page.timers.live(), [300000]);
   // New text from SAP: loaded in place, on the same page with the same filter.
-  site.bridge.kpi = { ...site.bridge.kpi, body: BRIDGE_KPI.replace(/\r\n$/, '') + '\r\n' + BRIDGE_KPI.split('\r\n')[1].replace(/\t\d+\t/, '\t9999\t') + '\r\n' };
+  site.bridge['sales-orders'] = plusRow(site.bridge['sales-orders'], 9999);
   page.timers.fire();
   await until(() => page.run('__loads') === 1 && !page.run('liveState.busy'), 'reload');
   await settle();
@@ -334,10 +340,10 @@ test('a read that falls due while the page is hidden waits until it is visible a
   assert.equal(sapCalls(site).length, before, 'nothing read while hidden');
   page.ctx.document.visibilityState = 'visible';
   page.dispatch('visibilitychange', {});
-  await until(() => sapCalls(site).length === before + 2 && !page.run('liveState.busy'), 'read on visible');
+  await until(() => sapCalls(site).length === before + 5 && !page.run('liveState.busy'), 'read on visible');
   page.dispatch('visibilitychange', {});
   await settle();
-  assert.equal(sapCalls(site).length, before + 2, 'only once');
+  assert.equal(sapCalls(site).length, before + 5, 'only once');
 });
 
 test('SAP cannot be read: the data stays, the dot turns red, retries at 30 s, 1, 2, then 5 min; one toast; green again on recovery', async () => {
@@ -371,7 +377,8 @@ test('a stale answer (the bridge sends its last good result because SAP is down)
   const site = liveSite();
   const page = await openLive(site);
   page.run('globalThis.__rows=allLoadedRows');
-  site.bridge.kpi = { ...site.bridge.kpi, headers: { 'x-refreshed-at': '2026-09-24T09:40:00-06:00', 'x-stale': '1' } };
+  // One of the four stale is enough: the oldest read time is the one shown.
+  site.bridge['purchase-orders'] = { ...site.bridge['purchase-orders'], headers: { 'x-refreshed-at': '2026-09-24T09:40:00-06:00', 'x-stale': '1' } };
   page.timers.fire();
   await until(() => page.run('liveState.status') === 'down', 'stale');
   assert.equal(page.run('liveState.stale'), true);
@@ -444,7 +451,7 @@ test('a Data Source left on Import files opens on Live SAP; the saved import is 
   await settle();
   assert.equal(page.run("stgValue('dataSource')"), 'live');
   assert.ok(!site.calls.includes('GET /api/report'), 'the uploaded report is not asked for');
-  assert.ok(site.calls.some((c) => /\/api\/sap\/kpi/.test(c)), 'SAP is read');
+  assert.ok(site.calls.some((c) => /\/api\/sap\/sales-orders/.test(c)), 'SAP is read');
   assert.ok(summary(page).files[0].startsWith('SAP_live'), 'live data, not the old export');
   assert.match(header(page), /live-pulse ok/);
 });
@@ -462,7 +469,7 @@ test('Settings > Data Source: Live SAP / Import files, the status, Refresh now (
   assert.match(card(), /<dt>Last pull<\/dt><dd>just now <span class="stg-when">[^<]+<\/span><\/dd>/);
   assert.match(card(), />Refresh now<\/button>/);
   page.ctx.loadFromSap();
-  await until(() => site.bridgeCalls.some((c) => c.path === '/api/reports/kpi?refresh=1') && !page.run('liveState.busy'), 'refresh now');
+  await until(() => site.bridgeCalls.some((c) => c.path === '/api/reports/sales-orders?refresh=1') && !page.run('liveState.busy'), 'refresh now');
   assert.match(page.els['toast'].innerHTML, /Up to date: no changes in SAP\./);
   // To import: live reading stops, Settings stays open; 2v9 (owner): the last import is not reopened.
   page.run("stgSet('dataSource','import')");
@@ -490,7 +497,7 @@ test('in live mode Add file keeps a Clear To Build / Logican file with the live 
   assert.ok(page.liveDb.last.files.some((f) => f.name === 'ctb.xlsx'), 'kept in the live copy');
   assert.equal(page.importDb.last, undefined, 'not in the import copy');
   assert.ok(!site.calls.some((c) => c.startsWith('PUT')));
-  site.bridge.kpi = { ...site.bridge.kpi, body: BRIDGE_KPI + BRIDGE_KPI.split('\r\n')[1].replace(/\t\d+\t/, '\t9998\t') + '\r\n' };
+  site.bridge['sales-orders'] = plusRow(site.bridge['sales-orders'], 9998);
   page.timers.fire();
   await until(() => page.run('allLoadedRows.length') === 6 && !page.run('liveState.busy'), 'reload');
   assert.ok(summary(page).files.includes('ctb.xlsx'));
@@ -540,5 +547,49 @@ test('the last live data is shared: saved after a live read, and shown by a new 
   assert.deepEqual(b.errors, []);
 });
 const page0Ok = (p) => !p.run('liveState.busy') && p.run('liveState.status') === 'ok';
+
+// 2v6.9 (four queries): the four KPI queries saved in Query Manager, as the SAP bridge serves them (tests/fixtures/qm-bridge:
+// the bridge repo's own synthetic output, with the queries' real columns: 50 to 54 each, DeliveredQuantity, Buyer, ...).
+const QM_BRIDGE = Object.fromEntries(['sales-orders', 'sales-deliveries', 'purchase-orders', 'po-receipts'].map((n) => [n, fs.readFileSync(path.join(__dirname, 'fixtures', 'qm-bridge', `${n}.txt`), 'utf8')]));
+
+test('the four Query Manager KPI reports, as the bridge serves them, load as one report like the four exports', async () => {
+  const bridge = { 'supply-demand': { status: 502, body: '{"error":"not today"}' } };
+  for (const [n, body] of Object.entries(QM_BRIDGE)) bridge[n] = { status: 200, body, headers: { 'x-row-count': '3' } };
+  const site = fakeSite({ bridge });
+  // Import mode, with its own settings (other tests switch the shared IMPORT storage to live).
+  const page = await openPage(site, { storage: { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) } });
+  await page.ctx.sapLiveCheck();
+  await page.ctx.loadFromSap();
+  await settle();
+  const s = summary(page);
+  assert.equal(s.rows, 12, '3 lines from each report');
+  assert.deepEqual(s.files, KPI_FILES);
+  assert.equal(s.asOf, '2026-9-10');
+  assert.deepEqual(JSON.parse(page.run('JSON.stringify([...new Set(allLoadedRows.map(r=>r.sourceType+" / "+r.orderType))].sort())')),
+    ['Purchase Order / PO Receipt', 'Purchase Order / Purchase Order', 'Sales Order / Sales Delivery', 'Sales Order / Sales Order']);
+  assert.ok(page.run('allLoadedRows.every(r=>typeof r.deliveredQuantity==="number"&&r.deliveredQuantity>0)'), 'DeliveredQuantity is read');
+  assert.deepEqual(page.run('dataQualityIssues.filter(i=>i.kind==="file").map(i=>i.message)'), [], 'every file is recognised');
+  // Same lines as uploading the same four files by hand.
+  const upload = loadPage({ storage: { spyderKpiSettings: JSON.stringify({ dataSource: 'import' }) } });
+  await upload.ctx.handleFiles(Object.entries(QM_BRIDGE).map(([n, body]) => ({ name: `${n}.txt`, bytes: new Uint8Array(Buffer.from(body, 'utf8')) })));
+  await settle();
+  const pick = 'JSON.stringify(allLoadedRows.map(r=>[r.documentNumber,r.orderType,r.lineNumber,r.itemCode,+r.dueDate,r.quantity,r.deliveredQuantity,r.amountLocal,r.status]).sort())';
+  assert.equal(page.run(pick), upload.run(pick));
+});
+
+test('the four reports are one read: the oldest refresh time is shown, and one stale report makes it stale', async () => {
+  const times = ['2026-09-24T09:58:00-06:00', '2026-09-24T09:31:00-06:00', '2026-09-24T09:58:00-06:00', '2026-09-24T09:50:00-06:00'];
+  const kpi = kpiBridge(BRIDGE_KPI);
+  Object.keys(kpi).forEach((n, i) => { kpi[n].headers = { 'x-refreshed-at': times[i] }; });
+  const site = fakeSite({ bridge: { ...kpi, 'supply-demand': { status: 200, body: SD_FULL } } });
+  const page = await openLive(site);
+  assert.equal(page.run('liveState.status'), 'ok');
+  assert.equal(page.run('liveState.dataAt'), Date.parse('2026-09-24T09:31:00-06:00'));
+  site.bridge['po-receipts'] = { ...site.bridge['po-receipts'], headers: { 'x-refreshed-at': '2026-09-24T09:50:00-06:00', 'x-stale': '1' } };
+  page.timers.fire();
+  await until(() => page.run('liveState.status') === 'down', 'stale');
+  assert.equal(page.run('liveState.stale'), true);
+  assert.equal(summary(page).rows, 5, 'the data on screen stays');
+});
 
 run();

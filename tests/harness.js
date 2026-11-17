@@ -207,4 +207,17 @@ function checkPhoneSort(page, { marker, prefix, dirKey, colOf = (v) => v, legacy
   return { heads, options };
 }
 
-module.exports = { HTML, INDEX, loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite, checkPhoneSort };
+// 2v6.9 (four queries): Live SAP reads the KPI data as four bridge reports (the four Query Manager KPI queries). A
+// stand-in bridge serves one KPI text as those four: the header row on each, the data rows dealt out in turn (every
+// report gets at least one row when there are four or more). r: the rest of each entry ({status, headers}).
+const KPI_REPORTS = ['sales-orders', 'sales-deliveries', 'purchase-orders', 'po-receipts'];
+function kpiBridge(text, r = {}) {
+  const lines = String(text).split('\r\n').filter((l) => l !== '');
+  const parts = KPI_REPORTS.map(() => [lines[0]]);
+  lines.slice(1).forEach((l, i) => parts[i % KPI_REPORTS.length].push(l));
+  return Object.fromEntries(KPI_REPORTS.map((name, i) => [name, { status: 200, ...r, body: parts[i].join('\r\n') + '\r\n' }]));
+}
+// The files Live SAP loads for those four reports when the stand-in names them SAP_live_<report>_<date>.txt.
+const kpiFiles = (date) => KPI_REPORTS.map((n) => `SAP_live_${n}_${date}.txt`);
+
+module.exports = { HTML, INDEX, loadPage, upload, SAP_HEADERS, sapRow, sapExport, utf16Tsv, createSuite, checkPhoneSort, KPI_REPORTS, kpiBridge, kpiFiles };

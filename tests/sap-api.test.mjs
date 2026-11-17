@@ -36,16 +36,16 @@ test('status says whether the site has a bridge, and never shows the address or 
 
 test('a report is passed through as the bridge sent it; the keys go only to the bridge', async () => {
   bridge(200, 'ExportDate\tSourceType\r\n2026-11-09\tSales Order\r\n', {
-    'content-type': 'text/tab-separated-values', 'content-disposition': 'attachment; filename="SAP_live_KPI_2026-11-09.txt"', 'x-row-count': '1', 'x-refreshed-at': '2026-11-09T08:00:00',
+    'content-type': 'text/tab-separated-values', 'content-disposition': 'attachment; filename="SAP_live_Sales_Orders_2026-11-09.txt"', 'x-row-count': '1', 'x-refreshed-at': '2026-11-09T08:00:00',
   });
-  const res = await call('kpi?refresh=1');
+  const res = await call('sales-orders?refresh=1');
   assert.equal(res.status, 200);
   assert.equal(await res.text(), 'ExportDate\tSourceType\r\n2026-11-09\tSales Order\r\n');
   assert.match(res.headers.get('content-type'), /tab-separated-values/);
-  assert.match(res.headers.get('content-disposition'), /SAP_live_KPI_2026-11-09\.txt/);
+  assert.match(res.headers.get('content-disposition'), /SAP_live_Sales_Orders_2026-11-09\.txt/);
   assert.equal(res.headers.get('x-row-count'), '1');
   assert.equal(res.headers.get('cache-control'), 'no-store');
-  assert.equal(seen.url, 'https://sap-bridge.example.test/api/reports/kpi?refresh=1');
+  assert.equal(seen.url, 'https://sap-bridge.example.test/api/reports/sales-orders?refresh=1');
   assert.equal(seen.redirect, 'manual');
   assert.deepEqual(seen.headers, { 'X-API-Key': 'bridge-key', 'CF-Access-Client-Id': 'id.access', 'CF-Access-Client-Secret': 'access-secret' });
   await call('supply-demand');
@@ -56,40 +56,45 @@ test('a stale answer (SAP down, the bridge sent its last good result) is passed 
   bridge(200, 'ExportDate\tSourceType\r\n2026-11-09\tSales Order\r\n', {
     'content-type': 'text/tab-separated-values', 'x-row-count': '1', 'x-refreshed-at': '2026-11-12T10:42:05-06:00', 'x-stale': '1',
   });
-  const res = await call('kpi');
+  const res = await call('sales-orders');
   assert.equal(res.status, 200);
   assert.equal(res.headers.get('x-stale'), '1');
   assert.equal(res.headers.get('x-refreshed-at'), '2026-11-12T10:42:05-06:00');
   bridge(200, 'x', { 'content-type': 'text/tab-separated-values' });
-  assert.equal((await call('kpi')).headers.get('x-stale'), '', 'a fresh answer has no X-Stale');
+  assert.equal((await call('sales-orders')).headers.get('x-stale'), '', 'a fresh answer has no X-Stale');
 });
 
-test('only the two reports, only GET; without a bridge a clear 503', async () => {
+test('only the four KPI reports and supply / demand, only GET; without a bridge a clear 503', async () => {
   bridge(200, 'x');
-  for (const p of ['../report', 'kpi/extra', 'drop', '']) assert.equal((await call(p)).status, 404, p);
+  // 2v6.9 (four queries): the single KPI query is no longer read; production orders and the forecast not yet.
+  for (const p of ['../report', 'sales-orders/extra', 'drop', '', 'kpi', 'production-kitting', 'mrp-forecast']) assert.equal((await call(p)).status, 404, p);
   assert.equal(seen, null, 'nothing was sent to the bridge');
-  const post = await call('kpi', { method: 'POST' });
+  for (const p of ['sales-orders', 'sales-deliveries', 'purchase-orders', 'po-receipts', 'supply-demand']) {
+    assert.equal((await call(p)).status, 200, p);
+    assert.equal(seen.url, `https://sap-bridge.example.test/api/reports/${p}`);
+  }
+  const post = await call('sales-orders', { method: 'POST' });
   assert.equal(post.status, 405);
   assert.equal(post.headers.get('allow'), 'GET');
-  const off = await call('kpi', { env: {} });
+  const off = await call('sales-orders', { env: {} });
   assert.equal(off.status, 503);
   assert.match((await off.json()).error, /not set up/);
-  assert.equal((await call('kpi', { env: { ...ENV, SAP_BRIDGE_URL: 'not a url' } })).status, 503);
+  assert.equal((await call('sales-orders', { env: { ...ENV, SAP_BRIDGE_URL: 'not a url' } })).status, 503);
 });
 
 test('bridge errors, Access refusals and an unreachable bridge become short messages', async () => {
-  bridge(502, JSON.stringify({ error: "SAP report 'kpi' failed: invalid column name" }), { 'content-type': 'application/json' });
-  let res = await call('kpi');
+  bridge(502, JSON.stringify({ error: "SAP report 'sales-orders' failed: invalid column name" }), { 'content-type': 'application/json' });
+  let res = await call('sales-orders');
   assert.equal(res.status, 502);
   assert.match((await res.json()).error, /invalid column name/);
   bridge(401, 'nope');
-  assert.match((await (await call('kpi')).json()).error, /answered 401/);
+  assert.match((await (await call('sales-orders')).json()).error, /answered 401/);
   bridge(302, '', { location: 'https://team.cloudflareaccess.com/login' });
-  assert.match((await (await call('kpi')).json()).error, /Cloudflare Access refused/);
+  assert.match((await (await call('sales-orders')).json()).error, /Cloudflare Access refused/);
   bridge(200, '<html>Sign in</html>', { 'content-type': 'text/html' });
-  assert.match((await (await call('kpi')).json()).error, /Cloudflare Access refused/);
+  assert.match((await (await call('sales-orders')).json()).error, /Cloudflare Access refused/);
   globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
-  res = await call('kpi');
+  res = await call('sales-orders');
   assert.equal(res.status, 502);
   assert.match((await res.json()).error, /could not be reached/);
 });

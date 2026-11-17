@@ -313,3 +313,12 @@ or Pending with no carrier scan); while AfterShip's status is in use the form's 
 tracked". The Order Map never uses the SAP ship-to country (a city with no AfterShip country is placed by its US
 state or Canadian province). Cross-border uses AfterShip's destination country, else the SAP ship-to country.
 Tests: shipping-page.
+2v6.9 (four queries, owner): Live SAP reads the KPI data as the four KPI queries saved in Query Manager (Kareena - Qry,
+10.19: 1. Sales Orders, 2. Sales Deliveries, 3. Purchase Order Lines, 4. PO Receipts GRPO), the ones exported and
+uploaded by hand, instead of queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql. The SAP bridge serves
+each as a report (sales-orders, sales-deliveries, purchase-orders, po-receipts; functions/api/sap allows those and
+supply-demand, no longer kpi); Load from SAP, start-up and the 5-minute read fetch all four and load them as four files,
+merged like four uploads. All four must come; if one fails the message names it; the read is stale if any is, and as old
+as its oldest. Supply / demand is read as before. Copies of the six saved queries in queries/query-manager/ (5 and 6,
+production orders and the MRP forecast, are not read by any page yet). Needs the bridge with the six reports. Tests:
+sap-live, sap-api, bridge-data, christmas-santa (harness: kpiBridge, kpiFiles).

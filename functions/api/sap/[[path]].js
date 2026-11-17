@@ -1,7 +1,9 @@
-// Live SAP (2v6.7): the KPI query and the supply / demand snapshot read straight from SAP B1 HANA.
+// Live SAP (2v6.7): the KPI queries and the supply / demand snapshot read straight from SAP B1 HANA.
 //
 //   GET /api/sap/status          -> {configured: true|false}; the page shows Load from SAP only when true
-//   GET /api/sap/kpi             -> the KPI query as a tab-delimited file (the layout of SAP's Export to Excel)
+//   GET /api/sap/sales-orders, /sales-deliveries, /purchase-orders, /po-receipts
+//                                -> the four KPI queries saved in Query Manager (Kareena - Qry, 10.19), each as a
+//                                   tab-delimited file (the layout of SAP's Export to Excel); 2v6.9 (four queries)
 //   GET /api/sap/supply-demand   -> the supply / demand snapshot, the same way
 //   ?refresh=1                   -> skip the bridge's 5-minute cache (the bridge allows one every 30 s)
 //   Headers passed on from the bridge: X-Row-Count, X-Refreshed-At (ISO, with a UTC offset on newer bridges) and
@@ -15,13 +17,13 @@
 //                                   truncated?, rows}); only the names and params in QUERIES pass, checked here first
 //
 // The sign-in gate in functions/_middleware.js runs first, so only signed-in users get here. The data comes from the
-// SAP bridge (github.com/DavidP-M/SAP-app), a small read-only service on the company network that runs the same SQL as
-// queries/*.sql, published with Cloudflare Tunnel. Its address and keys are Pages secrets; none of them reach the browser:
+// SAP bridge (github.com/DavidP-M/SAP-app), a small read-only service on the company network that runs the saved Query
+// Manager queries (copies in queries/query-manager/) and queries/*.sql, published with Cloudflare Tunnel. Its address and keys are Pages secrets; none of them reach the browser:
 //   SAP_BRIDGE_URL                 the tunnel address, e.g. https://sap-bridge.example.com
 //   SAP_BRIDGE_KEY                 one of the bridge's API_KEYS
 //   CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET   the Cloudflare Access service token in front of the tunnel
 // Without SAP_BRIDGE_URL and SAP_BRIDGE_KEY the site works exactly as before: files are uploaded by hand.
-const REPORTS = new Set(['kpi', 'supply-demand']);
+const REPORTS = new Set(['sales-orders', 'sales-deliveries', 'purchase-orders', 'po-receipts', 'supply-demand']);
 // The only lookups and params the browser may ask the bridge for. Each param is int (min / max), str (max length;
 // letters, digits, space . _ / -) or one of a list of values; required, or else the bridge's default applies.
 const DOCNUM = { type: 'int', required: true, min: 1, max: 2147483647 };
