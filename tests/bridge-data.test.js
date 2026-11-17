@@ -7,7 +7,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { loadPage, createSuite } = require('./harness');
+const { loadPage, createSuite, KPI_REPORTS, kpiBridge } = require('./harness');
 
 const { test, run } = createSuite();
 const ORIGIN = 'https://kpi.example.test';
@@ -69,7 +69,9 @@ async function livePage(kpiText, sdText) {
       const u = String(url);
       calls.push(u);
       if (u === '/api/sap/status') return new Response('{"configured":true}', { headers: { 'content-type': 'application/json' } });
-      if (u.startsWith('/api/sap/kpi')) return answer(kpiText, 'SAP_live_KPI_2026-09-10.txt');
+      // 2v6.9 (four queries): the KPI text comes as the four KPI reports (its rows dealt out to them).
+      const kpi = KPI_REPORTS.find((n) => u.startsWith(`/api/sap/${n}`));
+      if (kpi) return answer(kpiBridge(kpiText)[kpi].body, `SAP_live_${kpi}_2026-09-10.txt`);
       if (u.startsWith('/api/sap/supply-demand')) return sdText ? answer(sdText, 'SAP_live_supply_demand_2026-09-10.txt') : new Response('{"error":"no"}', { status: 502 });
       return new Response('', { status: 404 });
     },

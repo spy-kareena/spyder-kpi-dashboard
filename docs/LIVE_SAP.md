@@ -1,7 +1,9 @@
 # Live SAP (2v6.7, live by default since 2v6.8)
 
-The dashboard reads the KPI query and the supply / demand snapshot straight from SAP Business One, instead of someone
-running them in Query Manager and uploading the export. The live data goes through the same steps as an upload: the
+The dashboard reads the KPI data and the supply / demand snapshot straight from SAP Business One, instead of someone
+running the queries in Query Manager and uploading the exports. Since 2v6.9 (four queries) the KPI data is the four KPI
+queries saved in Query Manager (Kareena - Qry, 10.19: sales orders, sales deliveries, purchase order lines, PO receipts),
+the ones that were exported and uploaded by hand; copies are in `queries/query-manager/`. The live data goes through the same steps as an upload: the
 same numbers, Data Check, notes and overrides.
 
 **Live SAP is the default data source.** Settings → **Data Source** switches between **Live SAP** and **Import files**
@@ -11,12 +13,13 @@ this site" with a **Use import files** button.
 ## How it fits together
 
 ```
-Browser ── /api/sap/kpi ──> functions/api/sap ──> Cloudflare Tunnel + Access ──> SAP bridge ──SELECT──> SAP B1 HANA
+Browser ── /api/sap/* ───> functions/api/sap ──> Cloudflare Tunnel + Access ──> SAP bridge ──SELECT──> SAP B1 HANA
  (signed in)               (holds the keys)       (service token)                (company network) (read-only user)
 ```
 
 - **The SAP bridge** is a small read-only service on the company network: [github.com/DavidP-M/SAP-app](https://github.com/DavidP-M/SAP-app).
-  It runs the same SQL as `queries/` with a HANA user that can only read. It can't change anything in SAP.
+  It runs the saved Query Manager queries (`queries/query-manager/`) and the supply / demand snapshot with a HANA user
+  that can only read. It can't change anything in SAP.
 - **`functions/api/sap/[[path]].js`** sits behind the sign-in gate. It calls the bridge with the keys below and returns the
   report as the tab-delimited file SAP's Export to Excel makes. None of the keys reach the browser.
 - **`GET /api/sap/status`** tells the page whether the site has a bridge (`{"configured": true}`). It shows nothing else.
@@ -47,7 +50,10 @@ browser keeps that choice).
 
 ## Live mode (the default)
 
-- **When the page opens** it reads `/api/sap/status`, then `/api/sap/kpi` and `/api/sap/supply-demand`. The last saved
+- **When the page opens** it reads `/api/sap/status`, then the four KPI reports (`/api/sap/sales-orders`,
+  `sales-deliveries`, `purchase-orders`, `po-receipts`) and `/api/sap/supply-demand`. The four come in as four files,
+  merged like four uploads; all four must come (a board with some of them would be wrong), and the read is as old as
+  its oldest report. If one fails, the message names it. The last saved
   report and the last import are not reopened.
 - **Every 5 minutes** while the page is open and visible it reads both again, through the bridge's 5-minute cache (no
   `refresh=1`), so SAP is asked at most once per 5 minutes however many people have the page open. A read that falls
@@ -101,9 +107,11 @@ with tabs and line breaks made spaces. The page reads all of it exactly like a Q
 
 ## Keeping the queries in step
 
-The bridge keeps its own copy of the SQL (`sql/kpi_dashboard.sql`, `sql/supply_demand.sql` in the bridge repo). When a
-query in `queries/` changes, copy it to the bridge too, and to the saved query in Query Manager if people still export
-by hand.
+The saved queries in Query Manager are the source: the bridge keeps each byte for byte (`sql/qm_*.sql` in the bridge
+repo, its tests pin the text) and `queries/query-manager/` has copies. When a saved query changes, update the bridge
+and restart it, then copy the file here. The supply / demand snapshot is `queries/sap_b1_hana_supply_demand_snapshot_v2.sql`
+(the bridge's `sql/supply_demand.sql`). `queries/sap_b1_hana_kpi_current_dashboard_so_po_with_lagging.sql` is no longer
+read live.
 
 ## Tests
 

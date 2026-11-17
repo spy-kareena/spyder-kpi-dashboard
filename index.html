@@ -6112,7 +6112,7 @@ details.data-check>summary{font-size:13px}
         <div class="upload-current" id="upload-current" hidden></div>
       </aside>
     </div>
-    <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the KPI query and supply / demand straight from SAP."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
+    <div class="sap-live-row rise rise-2" id="sap-live-row" hidden><button type="button" class="dz-btn primary" id="sap-live-btn" onclick="loadFromSap()" data-tip="Read the four KPI queries and supply / demand straight from SAP."><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>Load from SAP</button><span class="sap-live-note">Live from SAP: no export needed. Clear To Build and the Logican sheet are still added as files.</span></div>
     <div class="live-load rise rise-2" id="live-load" role="status" hidden></div>
     <div id="upload-error" style="display:none" class="error-box" role="alert"></div>
     <section class="dz-card misc-pages rise rise-3" aria-labelledby="pg-upload-pages" data-group="upload-pages"><div class="dz-card-head"><h2 class="dz-title sm" id="pg-upload-pages">What each page shows</h2></div><div class="upload-pages" id="upload-pages"></div></section>
@@ -7871,8 +7871,29 @@ async function sapLiveCheck(){
   }catch(err){sapLive.configured=false;}
   if(sapLive.configured){renderSidebar();renderUploadState();}
 }
-// One report from /api/sap/<name> as a File, named by the bridge (SAP_live_KPI_<date>.txt). The KPI report must work;
-// supply / demand is optional and gives null when it does not.
+// 2v6.9 (four queries, owner): the KPI data is the four queries saved in Query Manager (Kareena - Qry, 10.19: sales
+// orders, sales deliveries, purchase order lines, PO receipts), the ones exported and uploaded by hand. The bridge serves
+// each as its own report; they come in as four files that handleFiles merges like four uploads. All four must come: a
+// board with some of them would show wrong numbers. Production orders and the MRP forecast (queries 5 and 6) are not read
+// yet: no page uses them.
+const SAP_KPI_REPORTS=[['sales-orders','Sales orders'],['sales-deliveries','Sales deliveries'],['purchase-orders','Purchase order lines'],['po-receipts','PO receipts']];
+// The four KPI reports as one read: {parts (one liveFetch answer each), text (all four, for the signature), refreshedAt
+// (the oldest of the four: the data is as old as its oldest part), stale (any of them), rows (all four)}. When they all
+// fail the same way (no bridge, bridge down) the message is that one; else it names the report that failed.
+async function liveFetchKpi({refresh=false}={}){
+  const got=await Promise.allSettled(SAP_KPI_REPORTS.map(([name])=>liveFetch(name,{refresh,required:true})));
+  const failed=got.map((g,i)=>g.status==='rejected'?{err:g.reason,label:SAP_KPI_REPORTS[i][1]}:null).filter(Boolean);
+  if(failed.length){
+    const {err,label}=failed[0];
+    if(!err||err.notSetUp||err.message==='the site could not be reached'||(failed.length===got.length&&failed.every(f=>f.err&&f.err.message===err.message)))throw err;
+    throw Object.assign(new Error(`${label}: ${err.message}`),{notSetUp:false});
+  }
+  const parts=got.map(g=>g.value);
+  const times=parts.map(p=>p.refreshedAt).filter(Boolean);
+  return {parts,text:parts.map(p=>p.text).join('\u0000'),refreshedAt:times.length?Math.min(...times):0,stale:parts.some(p=>p.stale),rows:parts.reduce((n,p)=>n+p.rows,0)};
+}
+// One report from /api/sap/<name> as a File, named by the bridge (SAP_live_Sales_Orders_<date>.txt). Supply / demand is
+// optional and gives null when it does not come.
 async function sapLiveFile(name,required){
   const r=await liveFetch(name,{refresh:true,required});
   return r?liveFileOf(r):null;
@@ -7913,11 +7934,11 @@ async function loadFromSap(){
   const onUpload=document.getElementById('upload-screen').style.display==='block'||!hasLoadedData();
   showLoading('Reading live data from SAP…');
   try{
-    const [kpi,sd]=await Promise.all([sapLiveFile('kpi',true),sapLiveFile('supply-demand',false)]);
-    // Clear To Build and the Logican sheet stay; an uploaded SAP export is replaced by the live one. If the live
+    const [kpi,sd]=await Promise.all([liveFetchKpi({refresh:true}),sapLiveFile('supply-demand',false)]);
+    // Clear To Build and the Logican sheet stay; uploaded SAP exports are replaced by the live ones. If the live
     // supply / demand snapshot did not come, the one already loaded stays too.
     const keep=loadedFiles.filter(f=>{const k=sapFileKind(f);return k==='cm'||k==='ctb'||(k==='sd'&&!sd);});
-    await handleFiles([kpi,...(sd?[sd]:[]),...keep]);
+    await handleFiles([...kpi.parts.map(liveFileOf),...(sd?[sd]:[]),...keep]);
     const keptSd=keep.some(f=>sapFileKind(f)==='sd');
     if(hasLoadedData()&&!sd)showToast(keptSd?'Loaded live from SAP. The supply / demand snapshot could not be read; the one loaded before stays.':'Loaded live from SAP. The supply / demand snapshot could not be read, so the supply pages have no data for now.');
   }catch(err){
@@ -8065,8 +8086,8 @@ function liveStop(){
   liveState.timer=liveState.labelTimer=null;
   Object.assign(liveState,{status:'',fails:0,missed:false,stale:false,message:'',downSince:0});
 }
-// One live read: the KPI report (required) and the supply / demand snapshot (optional; the one loaded stays if it
-// does not come). manual (Refresh now): skips the bridge's cache and says how it went.
+// One live read: the four KPI reports (all required) and the supply / demand snapshot (optional; the one loaded stays if
+// it does not come). manual (Refresh now): skips the bridge's cache and says how it went.
 async function liveRead({manual=false}={}){
   if(!liveState.on||liveState.status==='off'||liveState.busy)return;
   liveState.busy=sapLive.busy=true;
@@ -8075,14 +8096,14 @@ async function liveRead({manual=false}={}){
   if(first)showLoading('Reading live data from SAP…');
   else if(manual)liveRender();
   try{
-    const [kpi,sd]=await Promise.all([liveFetch('kpi',{refresh:manual,required:true}),liveFetch('supply-demand',{refresh:manual})]);
+    const [kpi,sd]=await Promise.all([liveFetchKpi({refresh:manual}),liveFetch('supply-demand',{refresh:manual})]);
     if(!liveState.on)return;
     const sig={kpi:liveSig(kpi.text),sd:sd?liveSig(sd.text):''};
     const same=hasLoadedData()&&sig.kpi===liveState.sig.kpi&&(!sd||sig.sd===liveState.sig.sd);
     if(!same){
       // Clear To Build and the Logican sheet stay; the SAP data is replaced (supply / demand only when it came).
       const keep=loadedFiles.filter(f=>{const k=sapFileKind(f);return k==='cm'||k==='ctb'||(k==='sd'&&!sd);});
-      const ok=await handleFiles([liveFileOf(kpi),...(sd?[liveFileOf(sd)]:[]),...keep],{restoring:true,live:true,keepView:!first||liveOnSettings()});
+      const ok=await handleFiles([...kpi.parts.map(liveFileOf),...(sd?[liveFileOf(sd)]:[]),...keep],{restoring:true,live:true,keepView:!first||liveOnSettings()});
       if(!ok)throw new Error('the live data could not be read');
       liveState.sig={kpi:sig.kpi,sd:sd?sig.sd:keep.some(f=>sapFileKind(f)==='sd')?liveState.sig.sd:''};
       if(!sd&&(first||manual))showToast(keep.some(f=>sapFileKind(f)==='sd')?'The supply / demand snapshot could not be read; the one loaded before stays.':'The supply / demand snapshot could not be read, so the supply pages have no data for now.');

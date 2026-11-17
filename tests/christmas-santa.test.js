@@ -8,7 +8,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { HTML, loadPage, createSuite } = require('./harness');
+const { HTML, loadPage, createSuite, kpiBridge } = require('./harness');
 
 const { test, run } = createSuite();
 const CSS = HTML.match(/<style[^>]*>([\s\S]*?)<\/style>/g).join('\n');
@@ -35,13 +35,13 @@ const api = async () => {
   return sapApi;
 };
 function liveSite() {
-  const site = { calls: [], down: false, bridge: { kpi: { status: 200, body: BRIDGE_KPI, headers: { 'x-refreshed-at': '2026-09-24T09:58:00-06:00', 'x-row-count': '5' } }, 'supply-demand': { status: 200, body: SD_FULL } } };
+  const site = { calls: [], down: false, bridge: { ...kpiBridge(BRIDGE_KPI, { headers: { 'x-refreshed-at': '2026-09-24T09:58:00-06:00' } }), 'supply-demand': { status: 200, body: SD_FULL } } };
   globalThis.fetch = async (url) => {
     const name = new URL(String(url)).pathname.replace('/api/reports/', '');
     if (site.down) throw new TypeError('fetch failed');
     const r = site.bridge[name] || { status: 404, body: '{"error":"unknown"}' };
     const headers = r.status === 200
-      ? { 'content-type': 'text/tab-separated-values; charset=utf-8', 'content-disposition': `attachment; filename="SAP_live_${name === 'kpi' ? 'KPI' : 'supply_demand'}_2026-09-24.txt"`, ...(r.headers || {}) }
+      ? { 'content-type': 'text/tab-separated-values; charset=utf-8', 'content-disposition': `attachment; filename="SAP_live_${name === 'supply-demand' ? 'supply_demand' : name}_2026-09-24.txt"`, ...(r.headers || {}) }
       : { 'content-type': 'application/json' };
     return new Response(r.body, { status: r.status, headers });
   };
